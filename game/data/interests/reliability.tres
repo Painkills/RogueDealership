@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Interest" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/vehicle.tres" id="1_xs76l"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_3t12y"]
+
+[resource]
+script = ExtResource("2_3t12y")
+id = &"reliability"
+display_name = "Reliability"
+category = ExtResource("1_xs76l")
+blurb = "will it break"

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Interest" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/person.tres" id="1_38wpo"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_il3eb"]
+
+[resource]
+script = ExtResource("2_il3eb")
+id = &"stability"
+display_name = "Stability"
+category = ExtResource("1_38wpo")
+blurb = "does my income hold up"

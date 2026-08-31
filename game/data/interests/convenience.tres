@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Interest" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/person.tres" id="1_6aqxl"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_4kw8a"]
+
+[resource]
+script = ExtResource("2_4kw8a")
+id = &"convenience"
+display_name = "Convenience"
+category = ExtResource("1_6aqxl")
+blurb = "how much hassle is this"

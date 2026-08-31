@@ -11,8 +11,11 @@ func _init() -> void:
 	var crashed: Array[String] = []
 	for path in _test_scripts():
 		var script: GDScript = load(path)
-		if script == null:
-			crashed.append("%s failed to load" % path)
+		# A script with a PARSE ERROR loads as a broken GDScript, not as null,
+		# and calling new() on it aborts _init() so quit() never runs. That is
+		# the state every task is in at its red step, so it has to be handled.
+		if script == null or not script.can_instantiate():
+			crashed.append("%s did not compile" % path)
 			continue
 		var suite = script.new()
 		suite.h = h

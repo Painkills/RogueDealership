@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Interest" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/vehicle.tres" id="1_okqb1"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_t6vqq"]
+
+[resource]
+script = ExtResource("2_t6vqq")
+id = &"security"
+display_name = "Security"
+category = ExtResource("1_okqb1")
+blurb = "will it get taken"

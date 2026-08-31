@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Interest" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/deal.tres" id="1_f7aje"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_rw2lr"]
+
+[resource]
+script = ExtResource("2_rw2lr")
+id = &"value_retention"
+display_name = "Value Retention"
+category = ExtResource("1_f7aje")
+blurb = "what's it worth later"

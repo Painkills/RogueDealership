@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Interest" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/deal.tres" id="1_fyomc"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_uqwn8"]
+
+[resource]
+script = ExtResource("2_uqwn8")
+id = &"equity"
+display_name = "Equity"
+category = ExtResource("1_fyomc")
+blurb = "am I upside-down"

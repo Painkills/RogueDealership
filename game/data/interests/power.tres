@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Interest" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/vehicle.tres" id="1_ijt1p"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_aeh3d"]
+
+[resource]
+script = ExtResource("2_aeh3d")
+id = &"power"
+display_name = "Power"
+category = ExtResource("1_ijt1p")
+blurb = "what can it do"

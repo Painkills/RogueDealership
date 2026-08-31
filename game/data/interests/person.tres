@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="Category" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/category.gd" id="1_tgywo"]
+
+[resource]
+script = ExtResource("1_tgywo")
+id = &"person"
+display_name = "Person"
+blurb = "their life"

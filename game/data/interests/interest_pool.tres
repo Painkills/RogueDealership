@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="InterestPool" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/category.gd" id="1_6vg3t"]
+[ext_resource type="Resource" path="res://data/interests/vehicle.tres" id="2_85tif"]
+[ext_resource type="Resource" path="res://data/interests/deal.tres" id="3_vtrah"]
+[ext_resource type="Resource" path="res://data/interests/person.tres" id="4_lh4yw"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_wk41v"]
+[ext_resource type="Resource" path="res://data/interests/reliability.tres" id="6_lclw5"]
+[ext_resource type="Resource" path="res://data/interests/security.tres" id="7_akuu6"]
+[ext_resource type="Resource" path="res://data/interests/power.tres" id="8_tjgw4"]
+[ext_resource type="Resource" path="res://data/interests/affordability.tres" id="9_e0nq2"]
+[ext_resource type="Resource" path="res://data/interests/equity.tres" id="10_nsopj"]
+[ext_resource type="Resource" path="res://data/interests/value_retention.tres" id="11_slvcg"]
+[ext_resource type="Resource" path="res://data/interests/stability.tres" id="12_cs1nu"]
+[ext_resource type="Resource" path="res://data/interests/convenience.tres" id="13_rj5b0"]
+[ext_resource type="Resource" path="res://data/interests/status.tres" id="14_ob485"]
+[ext_resource type="Script" path="res://scripts/model/data/interest_pool.gd" id="15_wkyj5"]
+
+[resource]
+script = ExtResource("15_wkyj5")
+design_rule = "Exactly 3 categories x 3 interests = 9, and every interest has exactly one product answering it. The count is load-bearing: appeal = appeal_step x (interest_count - rank), so a tenth interest silently reflates every appeal number in the game. Categories exist so a read can hand you PARTIAL information - \"they are a Vehicle person\" is worth a tick precisely because it narrows nine to three rather than to one."
+categories = Array[ExtResource("1_6vg3t")]([ExtResource("2_85tif"), ExtResource("3_vtrah"), ExtResource("4_lh4yw")])
+interests = Array[ExtResource("5_wk41v")]([ExtResource("6_lclw5"), ExtResource("7_akuu6"), ExtResource("8_tjgw4"), ExtResource("9_e0nq2"), ExtResource("10_nsopj"), ExtResource("11_slvcg"), ExtResource("12_cs1nu"), ExtResource("13_rj5b0"), ExtResource("14_ob485")])

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="Category" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/category.gd" id="1_gf3t8"]
+
+[resource]
+script = ExtResource("1_gf3t8")
+id = &"vehicle"
+display_name = "Vehicle"
+blurb = "the car itself"
