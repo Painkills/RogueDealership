@@ -1,0 +1,28 @@
+{
+  "_DESIGN_RULE": "Each non-baseline archetype isolates EXACTLY ONE axis as an additive delta on the base, so you can always tell which resource you are failing at. An archetype stressing two axes at once makes that undiagnosable. The axes are: reveal1 / reveal2 (how much Trust before they open up) and patience / decay (how long they stay). Note that patience and decay are TWO SEPARATE ways to express the Patience axis - Rushed uses decay, starting level with the baseline and simply burning three times faster. That is deliberate: it makes 'starts high, burns fast' possible, which is a far better triage trap than a visibly low starting number. Cards are never weakened; only the bar a given customer sets is raised.",
+
+  "base": { "reveal1": 3, "reveal2": 9, "patience": 14, "decay": 1 },
+
+  "archetypes": [
+    {
+      "id": "easygoing", "name": "Easygoing",
+      "reveal1": 3, "reveal2": 9, "patience": 14, "decay": 1,
+      "axis": "none - baseline/tutorial"
+    },
+    {
+      "id": "rushed", "name": "Rushed",
+      "reveal1": 3, "reveal2": 9, "patience": 14, "decay": 3,
+      "axis": "Patience only, via burn rate - opens up as easily as anyone, but under 5 rounds on the clock"
+    },
+    {
+      "id": "guarded", "name": "Guarded",
+      "reveal1": 6, "reveal2": 13, "patience": 14, "decay": 1,
+      "axis": "Reveals only - slow to open up, but sits still while you work"
+    },
+    {
+      "id": "reserved", "name": "Reserved",
+      "reveal1": 3, "reveal2": 14, "patience": 14, "decay": 1,
+      "axis": "Second reveal only - tells you one need immediately, buries the other"
+    }
+  ]
+}

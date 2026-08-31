@@ -1,0 +1,40 @@
+{
+  "_DESIGN_RULE": "Ticks are the scarce currency, not margin - a tick burns every customer on the floor at once. So the big concession is TICK-cheap and MARGIN-expensive, and the small one is the reverse; a card better than another on both axes is a bug. No card may move appeal by a full appeal_step (5) for free, or it becomes a substitute for reading the customer and diagnosis stops paying. Every support card pays for its tick in exactly one of three currencies: your margin, their patience, or information.",
+  "cards": [
+    {"id": "explain", "name": "Explain the Product", "ticks": 1, "copies": 3, "starter": true,
+     "needs_offer": true, "appeal": 4,
+     "text": "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."},
+
+    {"id": "discount", "name": "Offer a Discount", "ticks": 1, "copies": 2, "starter": true,
+     "needs_offer": true, "appeal": 8, "margin": -300,
+     "text": "You come down on it. The biggest move you can make in a single tick, and you pay for it out of your own pocket."},
+
+    {"id": "pad", "name": "Pad the Deal", "ticks": 1, "copies": 1, "starter": true,
+     "needs_offer": true, "appeal": -5, "margin": 400,
+     "text": "You quietly widen the spread. Play it BEFORE you start conceding - padding a deal you have already dragged to the line just pushes it back under."},
+
+    {"id": "smalltalk", "name": "Small Talk", "ticks": 1, "copies": 1, "starter": true,
+     "needs_offer": false, "patience": 5,
+     "text": "Kids, weather, the drive over. Buys one person time; the tick still costs everyone else theirs."},
+
+    {"id": "readroom", "name": "Read the Room", "ticks": 1, "copies": 1, "starter": true,
+     "needs_offer": false, "reveal": "room",
+     "text": "You shut up and watch. Tells you their LINE - how high Appeal has to climb before they say yes - and which THIRD of the board they actually care about, before you spend a tick putting a product in front of them."},
+
+    {"id": "framing", "name": "Payment Framing", "ticks": 1, "copies": 1, "starter": false,
+     "needs_offer": true, "appeal": 4, "margin": -150,
+     "text": "'That's eleven dollars a month.' Half the price of a discount for half the movement."},
+
+    {"id": "bundle", "name": "Bundle It In", "ticks": 1, "copies": 1, "starter": false,
+     "needs_offer": true, "appeal_per_sale": 4,
+     "text": "'Since we're already doing the other two...' Worth nothing on your first offer to someone and enormous on your fourth."},
+
+    {"id": "fearmonger", "name": "Fearmonger", "ticks": 1, "copies": 1, "starter": false,
+     "needs_offer": true, "appeal": 7, "patience": -4,
+     "text": "You describe, vividly, what happens to people who skip it. It works. It also costs them a third of their afternoon."},
+
+    {"id": "hardclose", "name": "Hard Close", "ticks": 2, "copies": 1, "starter": false,
+     "needs_offer": true, "appeal": 12, "patience": -6,
+     "text": "You stop being pleasant about it. Two ticks off the whole floor, six off theirs, and it moves them further than anything else you own."}
+  ]
+}

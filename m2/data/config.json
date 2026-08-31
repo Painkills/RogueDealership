@@ -1,0 +1,26 @@
+{
+  "_DESIGN_RULE": "Every number the game plays with lives here and nowhere else, so a retune is a data edit and test_engine.py catches it if a RULE moved instead of a number. appeal_step is load-bearing against interests.json: appeal = appeal_step * (interest_count - rank), so rank 1 opens at 40 and rank 9 at 0. Cards must always move LESS than one appeal_step, or a card becomes a substitute for a good read and diagnosis stops paying.",
+
+  "shift_ticks": 24,
+  "quota": 3600,
+  "floor_size": 3,
+  "walk_up_ticks": 4,
+
+  "hand_size": 4,
+  "approach_ticks": 1,
+  "place_ticks": 1,
+  "dig_ticks": 1,
+  "failed_offer_patience": 1,
+
+  "appeal_step": 5,
+  "threshold_per_sale": 3,
+  "patience_per_sale": 3,
+  "patience_jitter": 2,
+
+  "arrival_patience_min_fraction": 0.6,
+  "arrival_patience_floor": 4,
+  "leaving_soon_at": 4,
+
+  "prior_slip": 0.2,
+  "unique_archetypes_on_floor": true
+}

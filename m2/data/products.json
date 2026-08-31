@@ -1,0 +1,40 @@
+{
+  "_DESIGN_RULE": "One product per interest, exactly - nine interests, nine products, no gaps and no doubles. The STARTER six are two per category, which is load-bearing twice over: a category read is always actionable, and the Karen's demanded category is always servable. Margins are a ladder deliberately uncorrelated with how often an interest gets ranked highly, so their number one might be the $600 concierge plan while the $1,600 service contract sits seventh - that mismatch is the decision the whole game exists to produce. A new product must take an interest away from an existing one or it does not go in.",
+  "products": [
+    {"id": "vsc", "name": "Vehicle Service Contract", "interest": "reliability", "category": "vehicle",
+     "margin": 1600, "copies": 1, "starter": true,
+     "text": "Covers the repair bill when it breaks after the factory walks away."},
+
+    {"id": "gap", "name": "GAP Insurance", "interest": "equity", "category": "deal",
+     "margin": 1400, "copies": 1, "starter": true,
+     "text": "Pays the difference when the loan outlives the car."},
+
+    {"id": "ppp", "name": "Payment Protection Plan", "interest": "stability", "category": "person",
+     "margin": 1200, "copies": 1, "starter": true,
+     "text": "Life, disability and job loss. The payment gets made even when they can't."},
+
+    {"id": "theft", "name": "Anti-Theft & Key Protection", "interest": "security", "category": "vehicle",
+     "margin": 800, "copies": 1, "starter": true,
+     "text": "Etching, tracking, and a replacement key that doesn't cost a weekend."},
+
+    {"id": "flex", "name": "Payment Flex Plan", "interest": "affordability", "category": "deal",
+     "margin": 700, "copies": 1, "starter": true,
+     "text": "Skip-a-payment and a deferred first month, for when the budget is thin."},
+
+    {"id": "concierge", "name": "Concierge & Roadside Plan", "interest": "convenience", "category": "person",
+     "margin": 600, "copies": 1, "starter": true,
+     "text": "Pickup, delivery, loaners, roadside. They never sit in a waiting room."},
+
+    {"id": "perf", "name": "Performance & Tow Package", "interest": "power", "category": "vehicle",
+     "margin": 1100, "copies": 1, "starter": false,
+     "text": "Tow rating, all-weather traction, and a badge that says so."},
+
+    {"id": "tvp", "name": "Trade-In Value Protection", "interest": "value_retention", "category": "deal",
+     "margin": 1000, "copies": 1, "starter": false,
+     "text": "Guarantees a floor under what it books for at trade-in."},
+
+    {"id": "appearance", "name": "Appearance & Wheel Package", "interest": "status", "category": "person",
+     "margin": 900, "copies": 1, "starter": false,
+     "text": "Ceramic coat, tint, and wheels people look at."}
+  ]
+}

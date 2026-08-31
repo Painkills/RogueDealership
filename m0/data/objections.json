@@ -1,0 +1,22 @@
+[
+  { "_DESIGN_RULE": "Each turn rolls a SEVERITY: quiet (no objection at all), standard, heavy (1.5x damage), or rider (damage plus the rider effect). So an objection that has a rider usually behaves as plain damage - the rider is occasional. Weights live in engine DEFAULT_CFG. Objections also belong to a CATEGORY, and counter cards answer the category, not the specific objection. That way a new objection dropped into an existing category is immediately counterable by cards that already exist, instead of silently being uncounterable. Categories: price, doubt, stall." },
+
+  { "id": "price_objection", "name": "It's Out Of My Budget", "category": "price", "damage": 6,
+    "flavour": "The number has not changed in twenty minutes. They will say it again." },
+
+  { "id": "competitor_quote", "name": "The Dealer Down The Road", "category": "price", "damage": 5,
+    "rider": "raise_threshold", "line": "vehicle", "amount": 2,
+    "flavour": "They have a screenshot. It is a different model year. It does not matter." },
+
+  { "id": "dont_need_extras", "name": "I Don't Need All These Extras", "category": "doubt", "damage": 4,
+    "rider": "lock_line", "line": "protection",
+    "flavour": "Their brother-in-law says warranties are a scam. He is right." },
+
+  { "id": "preapproved", "name": "I'm Pre-Approved At My Credit Union", "category": "doubt", "damage": 5,
+    "rider": "knock_buyin", "line": "financing", "amount": 3,
+    "flavour": "Financing was where the money was. They have found this out." },
+
+  { "id": "talk_to_spouse", "name": "Let Me Talk To My Spouse", "category": "stall", "damage": 3,
+    "rider": "drain_energy", "amount": 1,
+    "flavour": "They are going to step outside and call nobody." }
+]

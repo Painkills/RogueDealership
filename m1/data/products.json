@@ -1,0 +1,12 @@
+{
+  "_DESIGN_RULE": "Exactly 6 products, strictly 1:1 with the 6 needs - one dedicated pure answer each, no duals, no product answering two needs. Products are NOT deck cards: they live in an always-visible tray (see cards.json). Margins form a deliberate 7-6-5-4-3-2 ladder so that WHICH need you reveal is itself a result worth caring about - a flat payout would make the reveal outcome interchangeable. Customer-facing price is not tracked; the Affordability need already represents it.",
+
+  "products": [
+    { "id": "vsc",             "name": "Vehicle Service Contract",       "needs": ["reliability"],   "margin": 7 },
+    { "id": "life_disability", "name": "Life and Disability Protection", "needs": ["health"],        "margin": 6 },
+    { "id": "gap",             "name": "GAP Insurance",                  "needs": ["equity"],        "margin": 5 },
+    { "id": "tire_wheel",      "name": "Tire & Wheel Protection",        "needs": ["durability"],    "margin": 4 },
+    { "id": "payment_flex",    "name": "Payment Flex Plan",              "needs": ["affordability"], "margin": 3 },
+    { "id": "key_replacement", "name": "Key Replacement",                "needs": ["security"],      "margin": 2 }
+  ]
+}

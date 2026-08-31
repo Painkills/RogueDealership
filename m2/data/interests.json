@@ -1,0 +1,21 @@
+{
+  "_DESIGN_RULE": "Exactly 3 categories x 3 interests = 9, and every interest has exactly one product answering it in products.json. The count is load-bearing: appeal = config.appeal_step x (interest_count - rank), so a 10th interest silently reflates every appeal number in the game. If you must change the count, expect to retune every LINE with it. Categories exist so a read can hand you PARTIAL information - 'they are a Vehicle person' is worth a tick precisely because it narrows nine to three rather than to one.",
+  "categories": {
+    "vehicle": {"name": "Vehicle", "blurb": "the car itself"},
+    "deal":    {"name": "Deal",    "blurb": "the money"},
+    "person":  {"name": "Person",  "blurb": "their life"}
+  },
+  "interests": {
+    "reliability": {"name": "Reliability", "category": "vehicle", "blurb": "will it break"},
+    "security":    {"name": "Security",    "category": "vehicle", "blurb": "will it get taken"},
+    "power":       {"name": "Power",       "category": "vehicle", "blurb": "what can it do"},
+
+    "affordability":   {"name": "Affordability",   "category": "deal", "blurb": "can I make the payment"},
+    "equity":          {"name": "Equity",          "category": "deal", "blurb": "am I upside-down"},
+    "value_retention": {"name": "Value Retention", "category": "deal", "blurb": "what's it worth later"},
+
+    "stability":   {"name": "Stability",   "category": "person", "blurb": "does my income hold up"},
+    "convenience": {"name": "Convenience", "category": "person", "blurb": "how much hassle is this"},
+    "status":      {"name": "Status",      "category": "person", "blurb": "how do I look in it"}
+  }
+}

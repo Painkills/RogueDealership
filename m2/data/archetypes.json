@@ -1,0 +1,87 @@
+{
+  "_DESIGN_RULE": "Every archetype exists to teach exactly ONE play pattern, and its numbers and actions are chosen to force that pattern rather than to decorate it. State the pattern in 'pattern' before writing any numbers; if you cannot state it in one sentence, the archetype is not designed yet. A RESOURCE archetype moves one number off base so you can always tell which resource you are failing at; a READ archetype leaves the numbers alone and differs only in priors. Priors must be reliable but not certain - 'top' interests are seeded into ranks 1-3 and 'bottom' into 7-9, everything else shuffles, and prior_slip means each seeding can fail - because a prior that is never wrong is a lookup table, not a read. Actions are TELEGRAPHED on arrival: you play around known behaviour, and stepping in the trap is on you. Keep at least two archetypes in the player's favour, or the system reads as punishment instead of personality - a favour can be an action (Tech pays a premium) or a property (Family First never gets harder, Lay-Down starts low).",
+  "base": {"threshold": 35, "patience": 16},
+  "archetypes": [
+    {"id": "easygoing", "name": "Easygoing", "kind": "resource",
+     "pattern": "This is how the loop works.",
+     "threshold": 35, "patience": 16, "top": [], "bottom": [],
+     "tell": "pleasant, unhurried, no strong opinions about anything",
+     "actions": []},
+
+    {"id": "laydown", "name": "Lay-Down Larry", "kind": "resource",
+     "pattern": "Take the free money and LEAVE - they are worth two fast sales, not six ticks of optimising.",
+     "threshold": 20, "patience": 16, "top": [], "bottom": [],
+     "tell": "already nodding, and has not asked a single question",
+     "actions": []},
+
+    {"id": "hawk", "name": "Budget Hawk", "kind": "resource",
+     "pattern": "Over-build appeal BEFORE you ask, and pay for it in margin.",
+     "threshold": 40, "patience": 16,
+     "top": ["affordability", "equity"], "bottom": ["status", "power"],
+     "tell": "brought a printout, and keeps saying 'out the door'",
+     "actions": [
+       {"id": "shops_you", "name": "Tells you what the other guy quoted",
+        "tell": "ANY offer that falls short moves their line +5",
+        "trigger": {"type": "on_offer", "short_at": 1},
+        "effect": {"threshold": 5},
+        "line": "\"I had another dealer at less than that.\""}
+     ]},
+
+    {"id": "kicker", "name": "Tire Kicker", "kind": "resource",
+     "pattern": "Do not diagnose. Sell them SOMETHING, now.",
+     "threshold": 35, "patience": 9, "top": [], "bottom": [],
+     "tell": "keeps glancing at the lot, half out of the chair already",
+     "actions": [
+       {"id": "antsy", "name": "Half out of the chair already",
+        "tell": "every 4 ticks they are on the floor, they lose 2 more patience",
+        "trigger": {"type": "every", "ticks": 4},
+        "effect": {"patience_self": -2},
+        "line": "\"How long is this going to take?\""}
+     ]},
+
+    {"id": "tech", "name": "Tech Enthusiast", "kind": "read",
+     "pattern": "Hunt the bullseye. Do not grind a mediocre product upward when the right one pays a premium.",
+     "threshold": 35, "patience": 16,
+     "top": ["security", "power"], "bottom": ["affordability"],
+     "tell": "asked about the drivetrain before asking about the price",
+     "actions": [
+       {"id": "bullseye", "name": "Pays up for the right toy",
+        "tell": "a sale on their 1st or 2nd interest banks an extra $300",
+        "trigger": {"type": "on_sale", "rank_better_than": 3},
+        "effect": {"margin_bonus": 300},
+        "line": "\"Now THAT I actually want.\""}
+     ]},
+
+    {"id": "family", "name": "Family First", "kind": "read",
+     "pattern": "Sell them their favourites, fast. They never get harder - but fishing below their top five bleeds them.",
+     "threshold": 35, "patience": 16, "threshold_per_sale": 0,
+     "top": ["stability", "reliability"], "bottom": ["status"],
+     "tell": "there are two car seats in the trade-in",
+     "actions": [
+       {"id": "not_here_for_that", "name": "Not what they came in for",
+        "tell": "offering anything outside their top five costs 4 patience, sold or not",
+        "trigger": {"type": "on_offer", "rank_worse_than": 5},
+        "effect": {"patience_self": -4},
+        "line": "\"...that's really not what we're here for.\""}
+     ]},
+
+    {"id": "karen", "name": "The Karen", "kind": "resource",
+     "pattern": "See to them FIRST, and give them what they actually came in for.",
+     "threshold": 35, "patience": 16, "top": [], "bottom": [],
+     "demands_category": true,
+     "tell": "has already asked who the manager is, twice",
+     "actions": [
+       {"id": "manager", "name": "Asks for the manager, loudly",
+        "tell": "every 5 ticks, EVERYONE ELSE on the floor loses 1 patience",
+        "trigger": {"type": "every", "ticks": 5},
+        "effect": {"patience_floor": -1},
+        "line": "\"Is there someone else I can speak to?\""}
+     ]}
+  ],
+  "names": [
+    "Sandra Okonkwo", "Marcus Reyes", "Dee Whitfield", "Priya Raman", "Tom Bergeron",
+    "Alice Nakamura", "Ray Castellano", "Nadia Haddad", "Glen Murphy", "Bev Chalmers",
+    "Oscar Delgado", "Junie Park", "Hank Voss", "Imani Brooks", "Wes Kowalczyk",
+    "Lorna Fitch", "Dmitri Sokolov", "Carmen Ruiz", "Ellis Tran", "Maureen Doyle"
+  ]
+}

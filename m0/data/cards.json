@@ -1,0 +1,24 @@
+[
+  { "_DESIGN_RULE": "Lean deck: 7 card types, 2 copies each, nothing line-restricted. Pitch budget: 1 energy = +4 buy-in, +1 buy-in per point of patience spent. EVERY pitch costs patience - that is what makes over-pitching expensive: buy-in built above their hidden number is clock you burned for nothing. test_engine.py enforces the budget." },
+
+  { "id": "pitch", "name": "Pitch", "cost": 1, "buyin": 5, "patience_cost": 1, "copies": 4, "starter": true,
+    "flavour": "It has lane assist. Do you know what lane assist is? Neither do I." },
+
+  { "id": "hard_pitch", "name": "Hard Pitch", "cost": 1, "buyin": 9, "patience_cost": 5, "copies": 2, "starter": true,
+    "flavour": "I can only hold this price until you leave the building." },
+
+  { "id": "small_talk", "name": "Small Talk", "cost": 0, "rapport": 3, "copies": 2, "starter": true,
+    "flavour": "This weather, right? Anyway. About the financing." },
+
+  { "id": "build_rapport", "name": "Build Rapport", "cost": 1, "rapport": 7, "copies": 4, "starter": true,
+    "flavour": "Your kid plays travel soccer? MY kid plays travel soccer." },
+
+  { "id": "minor_markup", "name": "Markup", "cost": 1, "markup": 0.25, "starter": true,
+    "flavour": "Nobody reads the second page." },
+
+  { "id": "goodwill_discount", "name": "Goodwill Discount", "cost": 1, "markup": -0.25, "starter": true,
+    "flavour": "Let me see what I can do. (I can do exactly this.)" },
+
+  { "id": "key_question", "name": "Key Question", "cost": 1, "rapport_cost": 4, "knowledge": true, "starter": true,
+    "flavour": "So what's the commute like? Asking for entirely selfless reasons." }
+]

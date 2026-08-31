@@ -1,0 +1,58 @@
+[
+  { "_DESIGN_RULE": "budget is a WALLET, shared across all three lines, and it is visible. Every sale draws it down. Offers are never blocked - a sale bigger than what is left goes through anyway, you got them to stretch - but once the wallet hits zero the sale is over. Catalogue is $11,400 at list, so nobody can have everything. Products cost the same for everyone." },
+
+  {
+    "id": "budget_buyer",
+    "name": "Budget Buyer",
+    "patience": 50,
+    "balk": 2.0,
+    "budget": 6500,
+    "thresholds": { "vehicle": 14, "protection": 9,  "financing": 19 },
+    "objection_pool": ["price_objection", "dont_need_extras", "talk_to_spouse"],
+    "knowledge": [
+      { "id": "tight_budget",  "name": "Every Dollar Counts", "line": "financing",  "buyin": 7,
+        "flavour": "They have a spreadsheet. On paper. In the car." },
+      { "id": "handy",         "name": "Does His Own Repairs", "line": "vehicle",   "buyin": 6,
+        "flavour": "He will not need the warranty. He needs to hear otherwise." },
+      { "id": "burned_before", "name": "Burned By A Dealer Once", "line": "protection", "buyin": 8,
+        "flavour": "Somebody in 2011 did this job badly and I am paying for it." }
+    ],
+    "flavour": "Has a number. Has had that number since 2019. Will say the number forty times."
+  },
+  {
+    "id": "family_first",
+    "name": "Family First",
+    "patience": 55,
+    "balk": 1.4,
+    "budget": 10000,
+    "thresholds": { "vehicle": 15, "protection": 8,  "financing": 18 },
+    "objection_pool": ["dont_need_extras", "talk_to_spouse", "price_objection"],
+    "knowledge": [
+      { "id": "soccer_practice", "name": "Soccer Practice", "line": "protection", "buyin": 8,
+        "flavour": "Three kids, four days a week, one set of upholstery." },
+      { "id": "new_baby",        "name": "One On The Way",  "line": "protection", "buyin": 7,
+        "flavour": "Say the word 'safety' and watch the pupils dilate." },
+      { "id": "long_commute",    "name": "Ninety Minute Commute", "line": "vehicle", "buyin": 7,
+        "flavour": "They live in that seat. Sell them the seat." }
+    ],
+    "flavour": "Will buy anything with the word 'safety' printed on it. Cannot be rushed."
+  },
+  {
+    "id": "tech_enthusiast",
+    "name": "Tech Enthusiast",
+    "patience": 50,
+    "balk": 1.0,
+    "budget": 13000,
+    "thresholds": { "vehicle": 7,  "protection": 19, "financing": 13 },
+    "objection_pool": ["competitor_quote", "talk_to_spouse", "preapproved"],
+    "knowledge": [
+      { "id": "gadget_lover", "name": "Owns Every Gadget", "line": "vehicle", "buyin": 9,
+        "flavour": "He already knows the trim levels better than I do." },
+      { "id": "leases_always", "name": "Always Leases",    "line": "financing", "buyin": 7,
+        "flavour": "New car every three years. Forever. It is a lifestyle." },
+      { "id": "read_forums",  "name": "Read The Forums",   "line": "vehicle", "buyin": 5,
+        "flavour": "He has opinions about the infotainment firmware." }
+    ],
+    "flavour": "Wants the screen. Already configured it online. Will leave if bored."
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "_DESIGN_RULE": "A FLAT list of exactly 6 needs, paired 1:1 with the 6 products. v2's 3x3 categories existed to power a two-tier category-then-specific reveal; that reveal is gone (Trust thresholds now reveal a need outright), so categories would be pure decoration and were deleted. The count of 6 is load-bearing on the blind-pitch gamble: 2 needs out of 6 is a 33% blind hit, and each miss narrows it (2/5, 2/4, 2/3). Change 6 and you change the whole risk curve.",
+
+  "needs": {
+    "reliability":   { "name": "Reliability",   "was": "Mechanical" },
+    "health":        { "name": "Health",        "was": "Health" },
+    "equity":        { "name": "Equity",        "was": "Upside-down" },
+    "durability":    { "name": "Durability",    "was": "Wear" },
+    "affordability": { "name": "Affordability", "was": "Strain" },
+    "security":      { "name": "Security",      "was": "Loss" }
+  }
+}

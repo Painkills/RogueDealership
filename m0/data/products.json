@@ -1,0 +1,23 @@
+{
+  "_comment": "Two products per line. The cheap opener is your probe - offer it, learn something about their number, then cash in on the expensive one behind it.",
+  "vehicle": [
+    { "id": "roof_rack",   "name": "Roof Rack",   "sticker":  900, "base_buyin": 6,
+      "flavour": "Forty dollars of aluminium and a story about kayaks." },
+    { "id": "tow_package", "name": "Tow Package", "sticker": 3600, "base_buyin": 6,
+      "flavour": "You do not own a boat. Yet." },
+    { "id": "nitro_boost", "name": "Nitro Boost", "sticker": 5600, "base_buyin": 6,
+      "flavour": "With this, you'll hit at least 30 speed." }
+  ],
+  "protection": [
+    { "id": "paint_protect",     "name": "Paint Protection",   "sticker":  900, "base_buyin": 6,
+      "flavour": "It is wax. It is nine hundred dollars of wax." },
+    { "id": "extended_warranty", "name": "Extended Warranty",  "sticker": 2800, "base_buyin": 6,
+      "flavour": "Statistically you will never use this. Emotionally, you need it." }
+  ],
+  "financing": [
+    { "id": "doc_fee",        "name": "Doc Fee",        "sticker":  600, "base_buyin": 6,
+      "flavour": "A fee for processing the paperwork that creates the fee." },
+    { "id": "term_extension", "name": "Term Extension", "sticker": 2600, "base_buyin": 6,
+      "flavour": "Ninety-six months is basically a mortgage with cupholders." }
+  ]
+}

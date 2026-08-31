@@ -1,0 +1,26 @@
+{
+  "_DESIGN_RULE": "The deck holds NOTHING but Trust cards. Products are not in here - they sit in an always-visible tray, because v2 measured 12 of 26 deck slots as dead weight you could not legally play until you had diagnosed something. There are no Question cards either: crossing a Trust threshold reveals a need by itself, so building Trust IS asking. That leaves Trust exactly two outlets, and every card below is one of them: raise it (Small Talk, Genuine Connection, Common Ground) or cash it out for Patience (Reassure). Any new card must be one of those two things, or it is a third job for Trust and the model stops being legible. Cards cost 1 ACTION by default - the shared action budget across the whole floor is the triage puzzle. Small Talk is the ONE deliberate exception at 0 actions: it is the cheap tempo card that lets you touch a second customer in a round you had already committed elsewhere. Note what a 0-action card is and is not - it is never a question of WHETHER to play it, only of WHO gets it, so keep such cards weak enough that the who is the whole decision. A 0-action card strong enough to be the main way you build Trust would delete the triage puzzle outright.",
+
+  "cards": [
+    {
+      "id": "small_talk", "name": "Small Talk", "type": "rapport",
+      "targets": "customer", "trust": 2, "copies": 3, "actions": 0,
+      "text": "+2 Trust, and it costs no action. Free to play, so the only question is who gets it - use it to nudge someone over a threshold in a round you spent elsewhere."
+    },
+    {
+      "id": "genuine_connection", "name": "Genuine Connection", "type": "rapport",
+      "targets": "customer", "trust": 4, "copies": 5,
+      "text": "+4 Trust. Bread and butter - one of these clears most first reveals outright."
+    },
+    {
+      "id": "common_ground", "name": "Common Ground", "type": "rapport",
+      "targets": "floor", "trust": 2, "copies": 3,
+      "text": "+2 Trust to EVERY customer still on the floor. Rewards spreading attention instead of tunnelling one customer."
+    },
+    {
+      "id": "reassure", "name": "Reassure", "type": "convert",
+      "targets": "customer", "trust": 0, "copies": 3,
+      "text": "Spend 3 Trust to buy 5 Patience. Never un-reveals what you already learned, but it does throw away progress toward the next reveal - and it buys far fewer rounds on a fast burner."
+    }
+  ]
+}

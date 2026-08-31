@@ -1,0 +1,43 @@
+{
+  "_DESIGN_RULE": "Bands are the FOG and the number is the payoff. Placing a product shows only the band; offering reveals the exact shortfall and that interest's rank. The hidden information in this game is the priority list, never the arithmetic of an offer already on the table - a gap nobody can bracket is decoration, which is how m0's threshold died. Bands must stay sorted ascending on max_gap and the last must be unreachable-high. Gaps run 0 to about 45 on the appeal_step 5 scale, so a band boundary of 5 is exactly one place on their list.",
+  "bands": [
+    {"max_gap": 5, "label": "ALMOST", "lines": [
+      "\"...yeah, okay. What would that run me?\"",
+      "\"Hm. I'm listening.\"",
+      "\"You're close. Talk to me.\""
+    ]},
+    {"max_gap": 12, "label": "WARM", "lines": [
+      "\"I mean, I can see the argument.\"",
+      "\"Maybe. I'd have to think about it.\"",
+      "\"That's not crazy.\""
+    ]},
+    {"max_gap": 22, "label": "COOL", "lines": [
+      "\"I'm not sure I'd ever really use that.\"",
+      "\"That's not really what I'm here for.\"",
+      "\"Doesn't do much for me, honestly.\""
+    ]},
+    {"max_gap": 99, "label": "COLD", "lines": [
+      "\"No. Absolutely not.\"",
+      "\"You're barking up the wrong tree.\"",
+      "\"I genuinely could not care less about that.\""
+    ]}
+  ],
+  "placed": {
+    "ALMOST": ["They pick it up and turn it over.", "They are already reading the second page."],
+    "WARM":   ["They lean in a little.", "They nod along, non-committally."],
+    "COOL":   ["They lean back.", "They glance at the clock."],
+    "COLD":   ["They do not touch it.", "They are already shaking their head."]
+  },
+  "accept": [
+    "\"Alright. Put it on there.\"",
+    "\"Yeah, okay. That one makes sense.\"",
+    "\"Fine. Add it.\"",
+    "\"You know what, sure.\""
+  ],
+  "walk": [
+    "\"I'm gonna think about it.\"",
+    "\"You know what, I've got somewhere to be.\"",
+    "\"Let me talk to my wife and I'll call you.\"",
+    "\"...I'm just gonna take the car, thanks.\""
+  ]
+}
