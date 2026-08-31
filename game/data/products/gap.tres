@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProductCardDef" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/equity.tres" id="1_2umkk"]
+[ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_gu0vk"]
+
+[resource]
+script = ExtResource("2_gu0vk")
+interest = ExtResource("1_2umkk")
+margin = 1400
+upgraded_margin = 1700
+id = &"gap"
+display_name = "GAP Insurance"
+text = "Pays the difference when the loan outlives the car."
+starter = true

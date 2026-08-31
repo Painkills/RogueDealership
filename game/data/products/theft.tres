@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProductCardDef" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/security.tres" id="1_by407"]
+[ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_1muci"]
+
+[resource]
+script = ExtResource("2_1muci")
+interest = ExtResource("1_by407")
+margin = 800
+upgraded_margin = 1100
+id = &"theft"
+display_name = "Anti-Theft & Key Protection"
+text = "Etching, tracking, and a replacement key that doesn't cost a weekend."
+starter = true

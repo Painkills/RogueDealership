@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProductCardDef" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/affordability.tres" id="1_4feyp"]
+[ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_5xkvp"]
+
+[resource]
+script = ExtResource("2_5xkvp")
+interest = ExtResource("1_4feyp")
+margin = 700
+upgraded_margin = 1000
+id = &"flex"
+display_name = "Payment Flex Plan"
+text = "Skip-a-payment and a deferred first month, for when the budget is thin."
+starter = true

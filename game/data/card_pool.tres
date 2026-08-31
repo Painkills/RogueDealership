@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardPool" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/card_def.gd" id="1_5qpsd"]
+[ext_resource type="Resource" path="res://data/products/vsc.tres" id="2_hscg4"]
+[ext_resource type="Resource" path="res://data/products/gap.tres" id="3_gi1uw"]
+[ext_resource type="Resource" path="res://data/products/ppp.tres" id="4_xx7y5"]
+[ext_resource type="Resource" path="res://data/products/theft.tres" id="5_k4djq"]
+[ext_resource type="Resource" path="res://data/products/flex.tres" id="6_h75vu"]
+[ext_resource type="Resource" path="res://data/products/concierge.tres" id="7_g1n1m"]
+[ext_resource type="Resource" path="res://data/products/perf.tres" id="8_htk13"]
+[ext_resource type="Resource" path="res://data/products/tvp.tres" id="9_oxnd7"]
+[ext_resource type="Resource" path="res://data/products/appearance.tres" id="10_gunhf"]
+[ext_resource type="Script" path="res://scripts/model/data/card_pool.gd" id="11_5hkca"]
+
+[resource]
+script = ExtResource("11_5hkca")
+design_rule = "One product per interest, exactly - nine interests, nine products, no gaps and no doubles. The STARTER six are two per category, which is load-bearing twice over: a category read is always actionable, and the Karen's demanded category is always servable. Margins are a ladder deliberately uncorrelated with how often an interest is ranked highly, so their number one might be the $600 concierge plan while the $1,600 service contract sits seventh. Ticks are the scarce currency, so the big concession is tick-cheap and margin-expensive and the small one is the reverse; a card better than another on both axes is a bug. No support card may move appeal by a full appeal_step for free, or it becomes a substitute for reading the customer and diagnosis stops paying."
+cards = Array[ExtResource("1_5qpsd")]([ExtResource("2_hscg4"), ExtResource("3_gi1uw"), ExtResource("4_xx7y5"), ExtResource("5_k4djq"), ExtResource("6_h75vu"), ExtResource("7_g1n1m"), ExtResource("8_htk13"), ExtResource("9_oxnd7"), ExtResource("10_gunhf")])

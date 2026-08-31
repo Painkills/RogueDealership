@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProductCardDef" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/stability.tres" id="1_q7v6b"]
+[ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_bej78"]
+
+[resource]
+script = ExtResource("2_bej78")
+interest = ExtResource("1_q7v6b")
+margin = 1200
+upgraded_margin = 1500
+id = &"ppp"
+display_name = "Payment Protection Plan"
+text = "Life, disability and job loss. The payment gets made even when they can't."
+starter = true

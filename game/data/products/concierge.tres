@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProductCardDef" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/convenience.tres" id="1_25u84"]
+[ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_b7lbm"]
+
+[resource]
+script = ExtResource("2_b7lbm")
+interest = ExtResource("1_25u84")
+margin = 600
+upgraded_margin = 900
+id = &"concierge"
+display_name = "Concierge & Roadside Plan"
+text = "Pickup, delivery, loaners, roadside. They never sit in a waiting room."
+starter = true

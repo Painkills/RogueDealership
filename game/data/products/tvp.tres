@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ProductCardDef" format=3]
+
+[ext_resource type="Resource" path="res://data/interests/value_retention.tres" id="1_uotsg"]
+[ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_4tnw0"]
+
+[resource]
+script = ExtResource("2_4tnw0")
+interest = ExtResource("1_uotsg")
+margin = 1000
+upgraded_margin = 1300
+id = &"tvp"
+display_name = "Trade-In Value Protection"
+text = "Guarantees a floor under what it books for at trade-in."
