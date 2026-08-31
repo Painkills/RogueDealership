@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ShiftConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/shift_config.gd" id="1_khiuw"]
+
+[resource]
+script = ExtResource("1_khiuw")
+design_rule = "Every number the game plays with lives here and nowhere else, so a retune is a data edit and the tests catch it if a RULE moved instead of a number. appeal_step is load-bearing against the interest pool: appeal = appeal_step x (interest_count - rank), so rank 1 opens at 40 and rank 9 at 0. Cards must always move LESS than one appeal_step for free, or a card becomes a substitute for a good read and diagnosis stops paying."
