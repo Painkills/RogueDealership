@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_bckoi"]
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_p84xo"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_line.gd" id="3_kyjyw"]
+[ext_resource type="Script" path="res://scripts/model/triggers/on_offer.gd" id="4_qdd1g"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_jnbft"]
+[ext_resource type="Resource" path="res://data/interests/status.tres" id="6_pq1hs"]
+[ext_resource type="Resource" path="res://data/interests/power.tres" id="7_bj5p4"]
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="8_ut76j"]
+[ext_resource type="Resource" path="res://data/interests/affordability.tres" id="9_5fsrg"]
+[ext_resource type="Resource" path="res://data/interests/equity.tres" id="10_r357r"]
+
+[sub_resource type="Resource" id="Resource_vwsqn"]
+script = ExtResource("3_kyjyw")
+amount = 5
+
+[sub_resource type="Resource" id="Resource_1n0gk"]
+script = ExtResource("4_qdd1g")
+short_at = 1
+
+[sub_resource type="Resource" id="Resource_xslj5"]
+script = ExtResource("1_bckoi")
+id = &"shops_you"
+display_name = "Tells you what the other guy quoted"
+tell = "ANY offer that falls short moves their Line +5"
+dialogue = "\"I had another dealer at less than that.\""
+trigger = SubResource("Resource_1n0gk")
+effects = Array[ExtResource("2_p84xo")]([SubResource("Resource_vwsqn")])
+
+[resource]
+script = ExtResource("8_ut76j")
+id = &"hawk"
+display_name = "Budget Hawk"
+pattern = "Over-build appeal BEFORE you ask, and pay for it in margin."
+tell = "brought a printout, and keeps saying 'out the door'"
+line = 40
+top_interests = Array[ExtResource("5_jnbft")]([ExtResource("9_5fsrg"), ExtResource("10_r357r")])
+bottom_interests = Array[ExtResource("5_jnbft")]([ExtResource("6_pq1hs"), ExtResource("7_bj5p4")])
+actions = Array[ExtResource("1_bckoi")]([SubResource("Resource_xslj5")])

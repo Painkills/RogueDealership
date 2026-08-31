@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_fi3b8"]
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_esk8w"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience_floor.gd" id="3_aolr7"]
+[ext_resource type="Script" path="res://scripts/model/triggers/every.gd" id="4_av1kr"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_iwdap"]
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="6_f00xy"]
+
+[sub_resource type="Resource" id="Resource_en01u"]
+script = ExtResource("3_aolr7")
+amount = -1
+
+[sub_resource type="Resource" id="Resource_co4dd"]
+script = ExtResource("4_av1kr")
+
+[sub_resource type="Resource" id="Resource_jts1c"]
+script = ExtResource("1_fi3b8")
+id = &"manager"
+display_name = "Asks for the manager, loudly"
+tell = "every 5 ticks, EVERYONE ELSE on the floor loses 1 patience"
+dialogue = "\"Is there someone else I can speak to?\""
+trigger = SubResource("Resource_co4dd")
+effects = Array[ExtResource("2_esk8w")]([SubResource("Resource_en01u")])
+
+[resource]
+script = ExtResource("6_f00xy")
+id = &"karen"
+display_name = "The Karen"
+pattern = "See to them FIRST, and give them what they actually came in for."
+tell = "has already asked who the manager is, twice"
+demands_category = true
+actions = Array[ExtResource("1_fi3b8")]([SubResource("Resource_jts1c")])

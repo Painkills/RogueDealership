@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_syiqa"]
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_q8rar"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="3_oj240"]
+[ext_resource type="Script" path="res://scripts/model/triggers/on_offer.gd" id="4_m1acs"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_kagv6"]
+[ext_resource type="Resource" path="res://data/interests/status.tres" id="6_xystn"]
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="7_7gpfm"]
+[ext_resource type="Resource" path="res://data/interests/stability.tres" id="8_i77n1"]
+[ext_resource type="Resource" path="res://data/interests/reliability.tres" id="9_d0jgs"]
+
+[sub_resource type="Resource" id="Resource_r4edv"]
+script = ExtResource("3_oj240")
+amount = -4
+
+[sub_resource type="Resource" id="Resource_5stk6"]
+script = ExtResource("4_m1acs")
+rank_worse_than = 5
+
+[sub_resource type="Resource" id="Resource_idwwe"]
+script = ExtResource("1_syiqa")
+id = &"not_here_for_that"
+display_name = "Not what they came in for"
+tell = "offering anything outside their top five costs 4 patience, sold or not"
+dialogue = "\"...that's really not what we're here for.\""
+trigger = SubResource("Resource_5stk6")
+effects = Array[ExtResource("2_q8rar")]([SubResource("Resource_r4edv")])
+
+[resource]
+script = ExtResource("7_7gpfm")
+id = &"family"
+display_name = "Family First"
+pattern = "Sell them their favourites, fast. They never get harder - but fishing below their top five bleeds them."
+tell = "there are two car seats in the trade-in"
+line_per_sale = 0
+top_interests = Array[ExtResource("5_kagv6")]([ExtResource("8_i77n1"), ExtResource("9_d0jgs")])
+bottom_interests = Array[ExtResource("5_kagv6")]([ExtResource("6_xystn")])
+actions = Array[ExtResource("1_syiqa")]([SubResource("Resource_idwwe")])

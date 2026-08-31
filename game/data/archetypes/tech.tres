@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_miwln"]
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_tbny2"]
+[ext_resource type="Script" path="res://scripts/model/effects/margin_bonus.gd" id="3_o067f"]
+[ext_resource type="Script" path="res://scripts/model/triggers/on_sale.gd" id="4_fwu7y"]
+[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_ccba3"]
+[ext_resource type="Resource" path="res://data/interests/affordability.tres" id="6_ctt4j"]
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="7_ms7hp"]
+[ext_resource type="Resource" path="res://data/interests/security.tres" id="8_ojyvg"]
+[ext_resource type="Resource" path="res://data/interests/power.tres" id="9_bpiu1"]
+
+[sub_resource type="Resource" id="Resource_nc07q"]
+script = ExtResource("3_o067f")
+amount = 300
+
+[sub_resource type="Resource" id="Resource_dv2g6"]
+script = ExtResource("4_fwu7y")
+rank_better_than = 3
+
+[sub_resource type="Resource" id="Resource_a55j1"]
+script = ExtResource("1_miwln")
+id = &"bullseye"
+display_name = "Pays up for the right toy"
+tell = "a sale on their 1st or 2nd interest banks an extra $300"
+dialogue = "\"Now THAT I actually want.\""
+trigger = SubResource("Resource_dv2g6")
+effects = Array[ExtResource("2_tbny2")]([SubResource("Resource_nc07q")])
+
+[resource]
+script = ExtResource("7_ms7hp")
+id = &"tech"
+display_name = "Tech Enthusiast"
+pattern = "Hunt the bullseye. Do not grind a mediocre product upward when the right one pays a premium."
+tell = "asked about the drivetrain before asking about the price"
+top_interests = Array[ExtResource("5_ccba3")]([ExtResource("8_ojyvg"), ExtResource("9_bpiu1")])
+bottom_interests = Array[ExtResource("5_ccba3")]([ExtResource("6_ctt4j")])
+actions = Array[ExtResource("1_miwln")]([SubResource("Resource_a55j1")])
