@@ -495,7 +495,78 @@ func band_for(gap: int) -> String:
 	return "COLD"
 
 
-## Stub until Task 8 fills it in. The signature already matches its
-## replacement, so the calls above keep working unchanged.
-func fire(_trigger_type: StringName, _c, _extra: Dictionary = {}) -> Array:
-	return []
+# ---------------------------------------------------------------------- actions
+func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
+	## The objection engine. Everything a customer does to you comes through
+	## here, so adding an archetype is a data edit and never a code change.
+	if c == null:
+		return []
+	var fired := []
+	for act in c.archetype.actions:
+		if act.trigger == null or _trigger_name(act.trigger) != trigger_type:
+			continue
+
+		if trigger_type == &"every":
+			# Cadence is the caller's job: the trigger itself has no memory.
+			var last: int = int(c.action_state.get(act.id, 0))
+			if c.ticks_on_floor - last < (act.trigger as Every).ticks:
+				continue
+			c.action_state[act.id] = c.ticks_on_floor
+		else:
+			var probe := _context(c)
+			probe.rank = int(extra.get("rank", 0))
+			probe.short = int(extra.get("short", 0))
+			if not act.trigger.matches(probe):
+				continue
+			if act.trigger is PatienceBelow \
+					and (act.trigger as PatienceBelow).once \
+					and c.action_state.has(act.id):
+				continue
+			if act.cooldown > 0 and c.action_state.has(act.id) \
+					and tick - int(c.action_state[act.id]) < act.cooldown:
+				continue
+			c.action_state[act.id] = tick
+
+		var ctx := _context(c)
+		ctx.rank = int(extra.get("rank", 0))
+		ctx.short = int(extra.get("short", 0))
+		# Dictionaries are references, so MarginBonus mutating ctx.sale updates
+		# the very entry already sitting in the customer's unsigned deal.
+		ctx.sale = extra.get("sale", {})
+		var bonus_before: int = int(ctx.sale.get("bonus", 0))
+
+		var descriptions: Array[String] = []
+		var floor_wide := false
+		for e in act.effects:
+			e.apply(ctx)
+			descriptions.append(e.describe())
+			if e is ChangePatienceFloor:
+				floor_wide = true
+
+		if not ctx.sale.is_empty():
+			stat["margin_bonus"] = int(stat["margin_bonus"]) \
+				+ int(ctx.sale.get("bonus", 0)) - bonus_before
+
+		stat["actions_fired"] = int(stat["actions_fired"]) + 1
+		action_log.append({
+			"key": c.key,
+			"customer": c.display_name,
+			"name": act.display_name,
+			"dialogue": act.dialogue,
+			"descriptions": descriptions,
+			"floor_wide": floor_wide,
+		})
+		fired.append(act)
+	return fired
+
+
+func _trigger_name(t: Trigger) -> StringName:
+	if t is OnOffer:
+		return &"on_offer"
+	if t is OnSale:
+		return &"on_sale"
+	if t is Every:
+		return &"every"
+	if t is PatienceBelow:
+		return &"patience_below"
+	return &""
