@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_8vwyo"]
+[ext_resource type="Script" path="res://scripts/model/effects/reveal_room.gd" id="2_mxwf3"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_kqu7d"]
+
+[sub_resource type="Resource" id="Resource_ej50r"]
+script = ExtResource("2_mxwf3")
+
+[sub_resource type="Resource" id="Resource_a4ajm"]
+script = ExtResource("2_mxwf3")
+
+[resource]
+script = ExtResource("3_kqu7d")
+needs_offer = false
+effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])
+upgraded_effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_a4ajm")])
+id = &"readroom"
+display_name = "Read the Room"
+text = "You shut up and watch. Tells you their LINE - how high Appeal has to climb before they say yes - and which THIRD of the board they actually care about, before you spend a tick putting a product in front of them."
+starter = true

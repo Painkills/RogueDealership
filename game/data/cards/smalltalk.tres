@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eqeo5"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_vesdw"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_la8pn"]
+
+[sub_resource type="Resource" id="Resource_r5yyh"]
+script = ExtResource("2_vesdw")
+amount = 5
+
+[sub_resource type="Resource" id="Resource_jnmxs"]
+script = ExtResource("2_vesdw")
+amount = 8
+
+[resource]
+script = ExtResource("3_la8pn")
+needs_offer = false
+effects = Array[ExtResource("1_eqeo5")]([SubResource("Resource_r5yyh")])
+upgraded_effects = Array[ExtResource("1_eqeo5")]([SubResource("Resource_jnmxs")])
+id = &"smalltalk"
+display_name = "Small Talk"
+text = "Kids, weather, the drive over. Buys one person time; the tick still costs everyone else theirs."
+starter = true

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_75fpj"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_appeal.gd" id="2_ahtpb"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_m8x0i"]
+
+[sub_resource type="Resource" id="Resource_crdwm"]
+script = ExtResource("2_ahtpb")
+amount = 4
+
+[sub_resource type="Resource" id="Resource_s6afa"]
+script = ExtResource("2_ahtpb")
+amount = 7
+
+[resource]
+script = ExtResource("3_m8x0i")
+effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_crdwm")])
+upgraded_effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_s6afa")])
+id = &"explain"
+display_name = "Explain the Product"
+text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."
+copies = 3
+starter = true

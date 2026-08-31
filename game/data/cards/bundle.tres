@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_1jlqr"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_appeal.gd" id="2_rd8rl"]
+[ext_resource type="Script" path="res://scripts/model/effects/scale_by_sales.gd" id="3_xf33c"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_p12a6"]
+
+[sub_resource type="Resource" id="Resource_6ilyx"]
+script = ExtResource("2_rd8rl")
+amount = 4
+
+[sub_resource type="Resource" id="Resource_dq0bg"]
+script = ExtResource("3_xf33c")
+inner = SubResource("Resource_6ilyx")
+
+[sub_resource type="Resource" id="Resource_o4eqb"]
+script = ExtResource("2_rd8rl")
+amount = 6
+
+[sub_resource type="Resource" id="Resource_21l6v"]
+script = ExtResource("3_xf33c")
+inner = SubResource("Resource_o4eqb")
+
+[resource]
+script = ExtResource("4_p12a6")
+effects = Array[ExtResource("1_1jlqr")]([SubResource("Resource_dq0bg")])
+upgraded_effects = Array[ExtResource("1_1jlqr")]([SubResource("Resource_21l6v")])
+id = &"bundle"
+display_name = "Bundle It In"
+text = "'Since we're already doing the other two...' Worth nothing on your first offer to someone and enormous on your fourth."

@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_j6e0e"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_appeal.gd" id="2_hj4h7"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_margin.gd" id="3_h2pb5"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_u77cc"]
+
+[sub_resource type="Resource" id="Resource_g0c8w"]
+script = ExtResource("2_hj4h7")
+amount = 4
+
+[sub_resource type="Resource" id="Resource_6eqqo"]
+script = ExtResource("3_h2pb5")
+amount = -150
+
+[sub_resource type="Resource" id="Resource_cpvyu"]
+script = ExtResource("2_hj4h7")
+amount = 6
+
+[sub_resource type="Resource" id="Resource_3cq0c"]
+script = ExtResource("3_h2pb5")
+amount = -150
+
+[resource]
+script = ExtResource("4_u77cc")
+effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_g0c8w"), SubResource("Resource_6eqqo")])
+upgraded_effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_cpvyu"), SubResource("Resource_3cq0c")])
+id = &"framing"
+display_name = "Payment Framing"
+text = "'That's eleven dollars a month.' Half the price of a discount for half the movement."
