@@ -570,3 +570,37 @@ func _trigger_name(t: Trigger) -> StringName:
 	if t is PatienceBelow:
 		return &"patience_below"
 	return &""
+
+
+func report() -> Dictionary:
+	var lost_at_bell := 0
+	if is_over():
+		for c in seated():
+			lost_at_bell += c.unsigned_margin()
+	var offers: int = int(stat["offers"])
+	return {
+		"margin_banked": margin_banked,
+		"quota": quota,
+		"made_quota": margin_banked >= quota,
+		"ticks": tick,
+		"tick_budget": tick_budget,
+		"customers_seen": served,
+		"customers_signed": int(stat["customers_signed"]),
+		"customers_walked": int(stat["customers_walked"]),
+		"sales": int(stat["sales"]),
+		"offers": offers,
+		"failed_offers": int(stat["failed_offers"]),
+		"close_rate": (float(stat["sales"]) / offers) if offers > 0 else 0.0,
+		"margin_conceded": int(stat["margin_conceded"]),
+		"margin_padded": int(stat["margin_padded"]),
+		"margin_bonus": int(stat["margin_bonus"]),
+		"margin_lost_to_walks": lost_to_walks,
+		"margin_lost_to_closing": lost_at_bell,
+		"actions_fired": int(stat["actions_fired"]),
+		"digs": int(stat["digs"]),
+		"approaches": int(stat["approaches"]),
+		"ticks_cards": int(stat["ticks_cards"]),
+		"ticks_place": int(stat["ticks_place"]),
+		"ticks_digs": int(stat["ticks_digs"]),
+		"ticks_approach": int(stat["ticks_approach"]),
+	}
