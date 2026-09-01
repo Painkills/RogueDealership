@@ -1,4 +1,3 @@
-class_name Format
 extends Node
 ## Autoload. Pure display formatting - no model knowledge, no state.
 
@@ -10,10 +9,10 @@ func patience_color(cur: int, max_val: int) -> Color:
 	var top: int = max(1, max_val)
 	var frac: float = float(cur) / float(top)
 	if frac > 0.5:
-		return Palette.color(&"patience_ok") # warning-ignore:identifier_not_found
+		return Palette.color(&"patience_ok")
 	if frac > 0.25:
-		return Palette.color(&"patience_warn") # warning-ignore:identifier_not_found
-	return Palette.color(&"patience_bad") # warning-ignore:identifier_not_found
+		return Palette.color(&"patience_warn")
+	return Palette.color(&"patience_bad")
 
 func _grouped(n: int) -> String:
 	var s := str(n)

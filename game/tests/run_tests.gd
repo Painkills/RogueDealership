@@ -8,8 +8,11 @@ extends SceneTree
 
 func _init() -> void:
 	var h := Harness.new()
-	var palette := Palette.new()
-	var format := Format.new()
+	# Load autoload scripts and create instances
+	var format_script = load("res://scripts/view/format.gd")
+	var palette_script = load("res://scripts/view/palette.gd")
+	var format = format_script.new() if format_script else null
+	var palette = palette_script.new() if palette_script else null
 	var crashed: Array[String] = []
 	for path in _test_scripts():
 		var script: GDScript = load(path)
@@ -21,8 +24,10 @@ func _init() -> void:
 			continue
 		var suite = script.new()
 		suite.h = h
-		suite.palette = palette
-		suite.format = format
+		if format and "Format" in suite:
+			suite.Format = format
+		if palette and "Palette" in suite:
+			suite.Palette = palette
 		for m in suite.get_method_list():
 			if m.name.begins_with("test_"):
 				suite.call(m.name)

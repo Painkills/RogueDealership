@@ -1,4 +1,3 @@
-class_name Palette
 extends Node
 ## Autoload. Every color in the game is looked up by ROLE, never written as a
 ## literal hex in a scene script - so the whole palette can be repainted by
