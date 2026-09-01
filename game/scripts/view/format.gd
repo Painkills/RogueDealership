@@ -1,0 +1,27 @@
+class_name Format
+extends Node
+## Autoload. Pure display formatting - no model knowledge, no state.
+
+func money(n: int) -> String:
+	var sign := "-" if n < 0 else ""
+	return "%s$%s" % [sign, _grouped(abs(n))]
+
+func patience_color(cur: int, max_val: int) -> Color:
+	var top: int = max(1, max_val)
+	var frac: float = float(cur) / float(top)
+	if frac > 0.5:
+		return Palette.color(&"patience_ok") # warning-ignore:identifier_not_found
+	if frac > 0.25:
+		return Palette.color(&"patience_warn") # warning-ignore:identifier_not_found
+	return Palette.color(&"patience_bad") # warning-ignore:identifier_not_found
+
+func _grouped(n: int) -> String:
+	var s := str(n)
+	var out := ""
+	var count := 0
+	for i in range(s.length() - 1, -1, -1):
+		out = s[i] + out
+		count += 1
+		if count % 3 == 0 and i != 0:
+			out = "," + out
+	return out
