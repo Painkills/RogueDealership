@@ -1,9 +1,6 @@
 extends RefCounted
 var h: Harness
 
-const Format = preload("res://scripts/view/format.gd")
-const Palette = preload("res://scripts/view/palette.gd")
-
 func test_money_formats_with_commas_and_no_decimals() -> void:
 	h.eq("sixteen hundred", Format.money(1600), "$1,600")
 	h.eq("six hundred", Format.money(600), "$600")
