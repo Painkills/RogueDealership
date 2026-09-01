@@ -1,7 +1,8 @@
 extends RefCounted
 var h: Harness
-var Format: Node
-var Palette: Node
+
+const Format = preload("res://scripts/view/format.gd")
+const Palette = preload("res://scripts/view/palette.gd")
 
 func test_money_formats_with_commas_and_no_decimals() -> void:
 	h.eq("sixteen hundred", Format.money(1600), "$1,600")
@@ -30,7 +31,7 @@ func test_every_named_role_returns_a_distinct_color() -> void:
 		&"patience_bad", &"action", &"alert", &"accent"]
 	var seen := {}
 	for r in roles:
-		var c: Color = Palette.color(r)
+		var c := Palette.color(r)
 		h.check("%s resolves to a real color" % r, c != null)
 		seen[c.to_html()] = true
 	h.check("roles are visually distinct (%d colors for %d roles)"
