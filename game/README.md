@@ -10,7 +10,7 @@ godot --headless --path game --script res://tests/run_tests.gd
 ```
 
 ```
-513 checks, 513 passed, 0 failed
+564 checks, 564 passed, 0 failed
 ```
 
 > **[`m2/README.md`](../m2/README.md) is the rules spec.** This project implements
@@ -142,3 +142,109 @@ that only matter in Godot:
 - **m2 is still editable.** Once the Godot rules are authoritative, m2 should be
   frozen as reference — keeping both editable is exactly the drift this project
   has avoided three times. That decision comes due at G2.
+
+---
+
+## G1 — playable on screen
+
+G1 is the view layer on top of G0's model. Five scenes — `HandCard`,
+`FloorCard`, `CustomerPanel`, `ReportPanel`, and `ShiftController`, which
+instances the other four and owns the live `Shift` — plus two static support
+classes, `Palette` and `Format`. The whole shift plays end to end with a
+mouse: approach a chair, play or dig cards, offer, close, watch the report,
+restart.
+
+### Layout
+
+```
+game/
+  scenes/
+    hand_card.tscn         one card in your hand
+    floor_card.tscn        one chair on the floor (portrait, patience, unsigned)
+    customer_panel.tscn    the negotiation view for whoever you're with
+    report.tscn            end-of-shift report
+    shift.tscn             the whole game — instances the other four, run/main_scene
+  scripts/view/
+    hand_card.gd
+    floor_card.gd
+    customer_panel.gd
+    appeal_bar.gd          sub-component inside customer_panel.tscn, not its own scene
+    report_panel.gd        script for both report.tscn and the overlay baked into shift.tscn
+    shift_controller.gd    shift.tscn's script — owns the Shift, wires every signal, keyboard
+    palette.gd              static class_name, the 16-colour palette by role (GODOT_SPEC.md §7)
+    format.gd               static class_name, money/patience text shared by every scene
+```
+
+`Palette` and `Format` were originally planned as autoloads. Godot's
+`--headless --script` test runner doesn't instantiate project autoloads at
+all — not even for compile-time symbol resolution — so they're plain static
+`class_name` classes instead, called the same way (`Palette.color(...)`,
+`Format.money(...)`) but with no scene-tree dependency. That's a better fit
+for two stateless helpers anyway; nothing else in this codebase uses an
+autoload for something that isn't shared mutable state.
+
+### Information model
+
+One rule governs the whole screen, carried over from `GODOT_SPEC.md` §6:
+patience and the unsigned total are **always live for all three floor
+chairs** — those are the triage inputs, and hiding them would create
+frustration instead of tension. Negotiation detail — the appeal bar, their
+Line, what ranks you've learned — is drawn **only for the customer you're
+currently with**. An unattended chair shows who they are, how long they
+have, and what's at risk, and nothing else. Hovering a floor card shows that
+customer's `WHAT THEY DO` panel — their archetype's actions and tells, built
+from the same `describe()` the model already uses — so "this one is draining
+the whole floor" is one mouse-over away, not a tick spent finding out.
+
+### Keyboard mirror
+
+Mouse-first, with a keyboard mirror of every action, 15 in total:
+
+| Key | Action |
+|---|---|
+| `1`–`4` | play hand card 1–4 |
+| `Shift`+`1`–`4` | dig hand card 1–4 (discard and redraw) |
+| `A` / `B` / `C` | approach chair 1 / 2 / 3 |
+| `O` | offer |
+| `D` | drop |
+| `Shift`+`C` | close |
+| `F` | step back to the floor, without closing |
+
+Two of these weren't in this plan's original scope. `dig_1`–`dig_4` exist
+because Global Constraints required a keyboard mirror for dig and no draft of
+this plan — including the one about to be dispatched — had ever actually
+wired one; the gap was only caught while writing Task 9. `floor_key` (`F`)
+exists because Task 6's own manual-verification notes flagged that there was
+no way to step back to the floor view without closing the customer you were
+with, and that gap sat unfixed until Task 9 added it. Both were found by
+someone reading the actual wiring, not planned up front.
+
+### Open
+
+**No task in this implementation ever ran with an interactive display.**
+Neither the controller session nor any subagent could launch the editor and
+press Play — every "manual verification" step in Tasks 6, 7, and 9 was
+rescoped, out of necessity, into scripted headless checks: construct a
+`SceneTree`, drive it through state transitions or synthetic `InputEventKey`
+events, and assert on node state the same way a human's eyes would check it.
+Those checks are real, not theater — Task 1's fix loop found that Godot's
+`--script` mode never instantiates project autoloads, not even for
+compile-time symbol resolution, which forced Palette/Format off autoloads
+entirely; Task 9's driver found that an action registered without an
+explicit `shift_pressed` also fires on Shift-held input, which made
+`close_key` (Shift+C) unreachable until the `_unhandled_input` branches were
+reordered. But a script can only confirm that the wiring does what the code
+says it does. It cannot confirm the screen reads well, that the information
+model actually resolves the tension it's meant to, or that any of this is
+fun. G1's stated goal — more legible than the CLI it replaces — has not been
+judged by anyone yet. That happens the first time a human runs
+`godot --path game --editor`, presses Play, and looks at it.
+
+Smaller, known gaps, all deliberate:
+
+- **No shop, no run layer, no save.** One shift, played once, then a report
+  screen with a restart button. That's G2.
+- **No real art.** Coloured rects in the exact slot sizes and palette roles
+  `GODOT_SPEC.md` §7 specifies, so dropping real art in later moves no
+  anchors.
+- **No sound.** Nothing plays; nothing is wired to play anything.
