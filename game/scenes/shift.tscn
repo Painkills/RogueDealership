@@ -1,0 +1,67 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="1_2f8nr"]
+[ext_resource type="PackedScene" path="res://scenes/report.tscn" id="2_drehl"]
+[ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="3_cajfp"]
+
+[node name="ShiftController" type="Control" unique_id=1978611468]
+layout_mode = 3
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_2f8nr")
+
+[node name="Background" type="ColorRect" parent="." unique_id=217979448]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Root" type="VBoxContainer" parent="." unique_id=632220627]
+layout_mode = 0
+
+[node name="TopBar" type="HBoxContainer" parent="Root" unique_id=774517948]
+layout_mode = 2
+
+[node name="TickLabel" type="Label" parent="Root/TopBar" unique_id=1468847579]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="BankedLabel" type="Label" parent="Root/TopBar" unique_id=47983351]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AtRiskLabel" type="Label" parent="Root/TopBar" unique_id=13792120]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FloorRow" type="HBoxContainer" parent="Root" unique_id=1987404079]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CustomerSlot" type="Control" parent="Root" unique_id=2036006228]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EmptySlotLabel" type="Label" parent="Root/CustomerSlot" unique_id=1738849429]
+unique_name_in_owner = true
+layout_mode = 0
+text = "Stand with a customer to negotiate."
+
+[node name="HandRow" type="HBoxContainer" parent="Root" unique_id=1327234262]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EventLog" type="RichTextLabel" parent="Root" unique_id=622296783]
+unique_name_in_owner = true
+layout_mode = 2
+bbcode_enabled = true
+scroll_following = true
+
+[node name="ReportOverlay" type="PanelContainer" parent="." unique_id=529154639 instance=ExtResource("2_drehl")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("3_cajfp")
