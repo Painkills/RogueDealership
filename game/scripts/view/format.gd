@@ -1,11 +1,12 @@
-extends Node
-## Autoload. Pure display formatting - no model knowledge, no state.
+class_name Format extends RefCounted
+## Pure display formatting - no model knowledge, no state. Static methods,
+## not an autoload, for the same reason as Palette (see palette.gd).
 
-func money(n: int) -> String:
+static func money(n: int) -> String:
 	var sign := "-" if n < 0 else ""
 	return "%s$%s" % [sign, _grouped(abs(n))]
 
-func patience_color(cur: int, max_val: int) -> Color:
+static func patience_color(cur: int, max_val: int) -> Color:
 	var top: int = max(1, max_val)
 	var frac: float = float(cur) / float(top)
 	if frac > 0.5:
@@ -14,7 +15,7 @@ func patience_color(cur: int, max_val: int) -> Color:
 		return Palette.color(&"patience_warn")
 	return Palette.color(&"patience_bad")
 
-func _grouped(n: int) -> String:
+static func _grouped(n: int) -> String:
 	var s := str(n)
 	var out := ""
 	var count := 0

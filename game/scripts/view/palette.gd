@@ -1,7 +1,9 @@
-extends Node
-## Autoload. Every color in the game is looked up by ROLE, never written as a
-## literal hex in a scene script - so the whole palette can be repainted by
-## editing this one file.
+class_name Palette extends RefCounted
+## Every color in the game is looked up by ROLE, never written as a literal
+## hex in a scene script - so the whole palette can be repainted by editing
+## this one file. Static methods, not an autoload: godot --headless --script
+## (this project's whole test invocation) never instantiates autoloads, and
+## since this class is pure and stateless it needs no instance anyway.
 
 const ROLES := {
 	&"bg": "1a1a2e",
@@ -22,7 +24,7 @@ const ROLES := {
 	&"neutral_3": "555577",
 }
 
-func color(role: StringName) -> Color:
+static func color(role: StringName) -> Color:
 	if not ROLES.has(role):
 		push_error("Palette: unknown role %s" % role)
 		return Color.MAGENTA
