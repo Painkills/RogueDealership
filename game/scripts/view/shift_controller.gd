@@ -47,6 +47,8 @@ func _register_keyboard_actions() -> void:
 func _bind_key(action: StringName, keycode: Key, shift: bool = false) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action)
+	if not InputMap.action_get_events(action).is_empty():
+		return
 	var ev := InputEventKey.new()
 	ev.keycode = keycode
 	ev.shift_pressed = shift
@@ -87,6 +89,7 @@ func _start_new_shift() -> void:
 	_shift = Shift.new(cfg, interests, cards, archetypes, randi(), [])
 	_events_seen = 0
 	_actions_seen = 0
+	_event_log.clear()
 	_report_overlay.visible = false
 
 	for c in _floor_cards:
@@ -102,6 +105,7 @@ func _start_new_shift() -> void:
 		_customer_panel.queue_free()
 	_customer_panel = CustomerPanelScene.instantiate()
 	_customer_slot.add_child(_customer_panel)
+	_customer_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_customer_panel.offer_pressed.connect(_on_offer)
 	_customer_panel.close_pressed.connect(_on_close)
 	_customer_panel.drop_pressed.connect(_on_drop)
@@ -123,7 +127,9 @@ func _on_drop() -> void:
 func _on_hand_card_pressed(index: int) -> void:
 	_apply(_shift.play_card(index))
 
-func _apply(_res: Result) -> void:
+func _apply(res: Result) -> void:
+	if not res.ok:
+		_event_log.append_text("[color=red]%s[/color]\n" % res.msg)
 	_render()
 	if _shift.is_over():
 		_show_report()

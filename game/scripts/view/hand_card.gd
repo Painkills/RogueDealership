@@ -23,7 +23,7 @@ func setup(inst: CardInstance) -> void:
 	_cost.text = "%dt" % def.ticks
 	if inst.is_product():
 		var p := def as ProductCardDef
-		_kind.text = "PRODUCT  $%s" % Format.money(inst.margin())
+		_kind.text = "PRODUCT  %s" % Format.money(inst.margin())
 		_kind.modulate = Palette.color(&"margin")
 		_effect.text = p.interest.category.display_name + " . " + p.interest.display_name
 	else:

@@ -37,7 +37,7 @@ func setup(customer, forced_band: String = "") -> void:
 		child.queue_free()
 	for u in customer.unsigned:
 		var lbl := Label.new()
-		lbl.text = "%s $%s" % [u["product"].display_name, Format.money(u["margin"])]
+		lbl.text = "%s %s" % [u["product"].display_name, Format.money(u["margin"])]
 		_unsigned_row.add_child(lbl)
 	var risk: int = customer.unsigned_margin()
 	if risk > 0:
@@ -48,13 +48,11 @@ func setup(customer, forced_band: String = "") -> void:
 
 	var o = customer.offer
 	_offer_box.visible = o != null
-	_offer_btn.disabled = o == null
-	_drop_btn.disabled = o == null
 	if o != null:
 		_offer_name.text = o.product.display_name
 		_offer_category.text = "%s . %s" % [o.product.interest.category.display_name,
 			o.product.interest.display_name]
-		_offer_margin.text = "$%s" % Format.money(o.margin)
+		_offer_margin.text = "%s" % Format.money(o.margin)
 
 		if not o.revealed:
 			_appeal_bar.set_state(0, customer.line, 40, forced_band)

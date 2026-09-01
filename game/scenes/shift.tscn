@@ -4,57 +4,62 @@
 [ext_resource type="PackedScene" path="res://scenes/report.tscn" id="2_drehl"]
 [ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="3_cajfp"]
 
-[node name="ShiftController" type="Control" unique_id=1978611468]
+[node name="ShiftController" type="Control" unique_id=1525654493]
 layout_mode = 3
 anchors_preset = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_2f8nr")
 
-[node name="Background" type="ColorRect" parent="." unique_id=217979448]
+[node name="Background" type="ColorRect" parent="." unique_id=785678344]
 unique_name_in_owner = true
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Root" type="VBoxContainer" parent="." unique_id=632220627]
+[node name="Root" type="VBoxContainer" parent="." unique_id=2132737167]
 layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
 
-[node name="TopBar" type="HBoxContainer" parent="Root" unique_id=774517948]
+[node name="TopBar" type="HBoxContainer" parent="Root" unique_id=1602375955]
 layout_mode = 2
 
-[node name="TickLabel" type="Label" parent="Root/TopBar" unique_id=1468847579]
+[node name="TickLabel" type="Label" parent="Root/TopBar" unique_id=863670361]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="BankedLabel" type="Label" parent="Root/TopBar" unique_id=47983351]
+[node name="BankedLabel" type="Label" parent="Root/TopBar" unique_id=1370671019]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="AtRiskLabel" type="Label" parent="Root/TopBar" unique_id=13792120]
+[node name="AtRiskLabel" type="Label" parent="Root/TopBar" unique_id=1301696750]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="FloorRow" type="HBoxContainer" parent="Root" unique_id=1987404079]
+[node name="FloorRow" type="HBoxContainer" parent="Root" unique_id=3460165]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="CustomerSlot" type="Control" parent="Root" unique_id=2036006228]
+[node name="CustomerSlot" type="Control" parent="Root" unique_id=854589298]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="EmptySlotLabel" type="Label" parent="Root/CustomerSlot" unique_id=1738849429]
+[node name="EmptySlotLabel" type="Label" parent="Root/CustomerSlot" unique_id=787931645]
 unique_name_in_owner = true
 layout_mode = 0
 text = "Stand with a customer to negotiate."
 
-[node name="HandRow" type="HBoxContainer" parent="Root" unique_id=1327234262]
+[node name="HandRow" type="HBoxContainer" parent="Root" unique_id=29717649]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="EventLog" type="RichTextLabel" parent="Root" unique_id=622296783]
+[node name="EventLog" type="RichTextLabel" parent="Root" unique_id=1292049002]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 3
 bbcode_enabled = true
 scroll_following = true
 

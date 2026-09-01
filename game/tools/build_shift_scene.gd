@@ -15,6 +15,7 @@ func _init() -> void:
 
 	var vbox := VBoxContainer.new()
 	vbox.name = "Root"
+	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(vbox)
 	vbox.owner = root
 
@@ -49,6 +50,8 @@ func _init() -> void:
 
 	var customer_slot := Control.new()
 	customer_slot.name = "CustomerSlot"
+	customer_slot.custom_minimum_size = Vector2(0, 160)
+	customer_slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	customer_slot.unique_name_in_owner = true
 	vbox.add_child(customer_slot)
 	customer_slot.owner = root
@@ -71,6 +74,7 @@ func _init() -> void:
 	event_log.name = "EventLog"
 	event_log.bbcode_enabled = true
 	event_log.scroll_following = true
+	event_log.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	event_log.unique_name_in_owner = true
 	vbox.add_child(event_log)
 	event_log.owner = root
@@ -79,6 +83,7 @@ func _init() -> void:
 	var report_overlay := report_scene.instantiate()
 	report_overlay.name = "ReportOverlay"
 	report_overlay.visible = false
+	report_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	report_overlay.unique_name_in_owner = true
 	root.add_child(report_overlay)
 	report_overlay.owner = root

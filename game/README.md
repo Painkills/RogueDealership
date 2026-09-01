@@ -160,7 +160,7 @@ restart.
 game/
   scenes/
     hand_card.tscn         one card in your hand
-    floor_card.tscn        one chair on the floor (portrait, patience, unsigned)
+    floor_card.tscn        one chair on the floor (name, archetype, patience, unsigned)
     customer_panel.tscn    the negotiation view for whoever you're with
     report.tscn            end-of-shift report
     shift.tscn             the whole game — instances the other four, run/main_scene
@@ -244,7 +244,10 @@ Smaller, known gaps, all deliberate:
 
 - **No shop, no run layer, no save.** One shift, played once, then a report
   screen with a restart button. That's G2.
-- **No real art.** Coloured rects in the exact slot sizes and palette roles
-  `GODOT_SPEC.md` §7 specifies, so dropping real art in later moves no
-  anchors.
+- **No real art.** Floor card and hand card slots use the exact sizes and
+  palette roles `GODOT_SPEC.md` §7 specifies. The portrait and icon slots §7
+  also defines were never built — no task's design included them — and most
+  palette roles are applied ad hoc per-script rather than through a shared
+  `Theme` resource. Both are open for a later polish pass, not implemented
+  placeholders waiting for art.
 - **No sound.** Nothing plays; nothing is wired to play anything.
