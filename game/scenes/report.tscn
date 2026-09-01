@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="1_66ide"]
+
+[node name="ReportPanel" type="PanelContainer" unique_id=529154639]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_66ide")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=529799301]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=1781558454]
+layout_mode = 2
+text = "CLOSING TIME"
+
+[node name="BankedLabel" type="Label" parent="VBoxContainer" unique_id=1146802537]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CustomersLabel" type="Label" parent="VBoxContainer" unique_id=1305922334]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="OffersLabel" type="Label" parent="VBoxContainer" unique_id=642955110]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MarginMovedLabel" type="Label" parent="VBoxContainer" unique_id=1122717759]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LostLabel" type="Label" parent="VBoxContainer" unique_id=1626740112]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=988410068]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Play Again"
