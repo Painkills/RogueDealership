@@ -18,19 +18,12 @@ func _ready() -> void:
 
 func setup(inst: CardInstance) -> void:
 	instance = inst
-	var def := inst.card
-	_name.text = def.display_name
-	_cost.text = "%dt" % def.ticks
+	# Wording lives in CardText so this face and the 3D one cannot drift apart.
+	_name.text = CardText.title(inst)
+	_cost.text = CardText.cost(inst)
+	_effect.text = CardText.body(inst)
 	if inst.is_product():
-		var p := def as ProductCardDef
-		_kind.text = "PRODUCT  %s" % Format.money(inst.margin())
+		_kind.text = "PRODUCT  %s" % CardText.margin(inst)
 		_kind.modulate = Palette.color(&"margin")
-		_effect.text = p.interest.category.display_name + " . " + p.interest.display_name
 	else:
-		var s := def as SupportCardDef
 		_kind.text = ""
-		var effects := s.upgraded_effects if inst.upgraded and not s.upgraded_effects.is_empty() else s.effects
-		var parts: Array[String] = []
-		for e in effects:
-			parts.append(e.describe())
-		_effect.text = ", ".join(parts)
