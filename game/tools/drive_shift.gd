@@ -60,6 +60,7 @@ func _process(_delta: float) -> bool:
 	_check_drop_plays_a_card()
 	_check_refused_drop_comes_home()
 	_check_the_action_buttons_stay_on_screen()
+	_check_the_customer_actually_shows_their_data()
 
 	print("")
 	if _failures.is_empty():
@@ -222,14 +223,53 @@ func _check_the_action_buttons_stay_on_screen() -> void:
 		% [needed.y, slot.size.y], slot.size.y >= needed.y)
 
 	var screen_h: float = ProjectSettings.get_setting("display/window/size/viewport_height")
+	# The buttons belong to the PLAYER now, not to the customer panel - they live
+	# on the controller's action bar and outlive whoever is in the seat.
 	for name in ["OfferButton", "DropButton", "CloseButton"]:
-		var b := panel.get_node_or_null(NodePath("%" + name)) as Control
+		var b := _controller.get_node_or_null(NodePath("%" + name)) as Control
 		if b == null:
 			_check("%s exists" % name, false)
 			continue
 		var r := Rect2(b.global_position, b.size)
 		_check("%s is on screen with an offer up (%s)" % [name, r],
 			r.end.y <= screen_h and r.position.y >= 0.0)
+
+## The reported bug: none of the customer's own data showed up. It was real -
+## patience, the walk-out alert and the archetype's behaviours only ever existed
+## on FloorCard's hover panel, which is hidden while negotiating. So the moment
+## you sat down with someone, everything about them disappeared.
+func _check_the_customer_actually_shows_their_data() -> void:
+	var shift = _controller._shift
+	if shift.at == null:
+		_press(KEY_A)
+	if shift.at == null:
+		_check("could get to a customer at all", false)
+		return
+	var who = shift.chairs[int(shift.at)]
+
+	var card = _controller._customer_cards[int(shift.at)]
+	_check("their card names them (%s)" % card._name.text,
+		card._name.text == who.display_name)
+	_check("their card names their archetype (%s)" % card._archetype.text,
+		card._archetype.text.contains(who.archetype.display_name))
+	_check("their card shows patience (%s)" % card._patience.text,
+		card._patience.text.contains(str(who.patience)))
+
+	var panel = _controller._customer_panel
+	var behaviour := panel.get_node("%BehaviourLabel") as Label
+	_check("the panel says what they DO (%s)" % behaviour.text.substr(0, 40),
+		not behaviour.text.is_empty())
+	# The baked placeholder must have been overwritten by real data. Without this
+	# the check passes on the scene's own default text and proves nothing.
+	_check("and it is live data, not the editor placeholder",
+		not behaviour.text.begins_with("(what this archetype"))
+	if who.archetype.actions.is_empty():
+		_check("an archetype with no actions says so plainly",
+			behaviour.text.contains("just sit"))
+	else:
+		_check("an archetype WITH actions names one (%s)"
+			% who.archetype.actions[0].display_name,
+			behaviour.text.contains(who.archetype.actions[0].display_name))
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

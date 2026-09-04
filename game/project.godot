@@ -26,9 +26,6 @@ window/stretch/mode="canvas_items"
 
 [gui]
 
-; Every 2D panel here was authored against the old 960x540 base and sets no font
-; size of its own. Raising the default scales all of them at once, rather than
-; sprinkling overrides through three builder scripts.
 theme/default_font_size=26
 
 [rendering]

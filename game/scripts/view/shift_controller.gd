@@ -50,11 +50,16 @@ const HAND_Y_SEAT := -4.4
 @onready var _customer_slot: Control = %CustomerSlot
 @onready var _empty_slot_label: Label = %EmptySlotLabel
 @onready var _event_log: RichTextLabel = %EventLog
+@onready var _action_bar: Control = %ActionBar
+@onready var _offer_btn: Button = %OfferButton
+@onready var _drop_btn: Button = %DropButton
+@onready var _close_btn: Button = %CloseButton
 @onready var _report_overlay = %ReportOverlay
 
 var _shift: Shift
 var _chair_zones: Array = []
 var _seat_cams: Array = []
+var _customer_cards: Array = []
 var _framing_tween: Tween
 var _framed_at = null            ## which seat the camera is currently framing
 var _floor_cards: Array = []
@@ -71,6 +76,16 @@ func _ready() -> void:
 
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
 	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
+	_customer_cards = [%Customer0, %Customer1, %Customer2]
+
+	# The buttons are the PLAYER's, so they are wired once here rather than
+	# rebuilt with each customer panel. Clicking a customer's card walks you to
+	# them, which is why a seat needs no separate hit target.
+	_offer_btn.pressed.connect(_on_offer)
+	_drop_btn.pressed.connect(_on_drop)
+	_close_btn.pressed.connect(_on_close)
+	for i in range(_customer_cards.size()):
+		_customer_cards[i].card_3d_mouse_down.connect(_on_chair_pressed.bind(i))
 	for zone in _chair_zones:
 		_drag.add_card_collection(zone)
 	_drag.add_card_collection(_hand_zone)
@@ -179,14 +194,14 @@ func _start_new_shift() -> void:
 		fc.pressed.connect(_on_chair_pressed)
 		_floor_cards.append(fc)
 
+	var preview := _customer_slot.get_node_or_null(^"PanelPreview")
+	if preview != null:
+		preview.free()          # editor-only placeholder; the real one follows
 	if _customer_panel:
 		_customer_panel.queue_free()
 	_customer_panel = CustomerPanelScene.instantiate()
 	_customer_slot.add_child(_customer_panel)
 	_customer_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_customer_panel.offer_pressed.connect(_on_offer)
-	_customer_panel.close_pressed.connect(_on_close)
-	_customer_panel.drop_pressed.connect(_on_drop)
 
 	_render()
 
@@ -303,6 +318,8 @@ func _render() -> void:
 		if risk > 0 else "nothing unsigned"
 
 	_apply_framing()
+	for i in range(_customer_cards.size()):
+		_customer_cards[i].setup(_shift.chairs[i])
 	for i in range(_floor_cards.size()):
 		_floor_cards[i].setup(_shift.chairs[i], _shift.walk_up[i], i)
 	_position_floor_cards()
@@ -373,7 +390,7 @@ func _position_floor_cards() -> void:
 			continue
 
 		card.scale = Vector2.ONE
-		var anchor: Vector3 = _chair_zones[i].global_position + Vector3(0, -CARD_HALF_HEIGHT, 0)
+		var anchor: Vector3 = _customer_cards[i].global_position + Vector3(0, -CARD_HALF_HEIGHT, 0)
 		if _camera.is_position_behind(anchor):
 			card.visible = false
 			continue

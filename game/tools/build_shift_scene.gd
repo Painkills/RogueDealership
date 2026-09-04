@@ -1,52 +1,54 @@
 extends SceneTree
-## Builds res://scenes/shift.tscn - a 3D card table with a 2D HUD over it.
+## Builds res://scenes/shift.tscn.
 ##
-## Two things this scene is built to do that the first attempt did not:
+## The layout follows one rule: THINGS THAT ARE YOURS ARE ANCHORED TO THE SCREEN,
+## THINGS THAT ARE THEIRS ARE ANCHORED TO THEM.
 ##
-## READABLE IN THE EDITOR. Every zone carries a labelled, translucent marker and
-## every HUD label ships with placeholder text, so opening the scene shows what
-## goes where without running it. The controller overwrites the placeholders on
-## the first render; the zone markers stay, because "drag here to dig" is worth
-## saying at runtime too.
+##   yours  - the shift log (far right), your hand (bottom of the table), and
+##            the OFFER / DROP / CLOSE bar (middle). These never move, because
+##            they belong to you, and you are what the camera carries around.
+##   theirs - a customer CARD at each seat carrying name, portrait, archetype
+##            and patience, plus a detail panel beside it for everything wordier:
+##            what their archetype does to you, what is on the table unsigned,
+##            and what you have learned about their priorities.
 ##
-## TWO FRAMINGS. The floor is a wide shot of three seats with your hand dropped
-## out of the way; negotiating pushes in on one seat and lifts the hand into
-## reach. shift_controller.gd tweens between Marker3D framings rather than
-## hard-coded transforms, so both are draggable in the editor.
+## Two framings: a wide floor shot of all three seats, and a push-in on one.
+## Seats sit far enough apart that the push-in physically excludes the others.
+## Both framings are Marker3D nodes so they can be dragged in the editor.
+##
+## Everything is authored to be legible WITHOUT running: seats hold a customer
+## card reading "- empty -", zones carry labelled translucent slabs, and every
+## HUD label ships with placeholder text.
 
 const COLLECTION := "res://addons/card_3d/scenes/card_collection_3d.tscn"
+const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
+const CUSTOMER_PANEL := "res://scenes/customer_panel.tscn"
 const REPORT := "res://scenes/report.tscn"
 
 # --- table geometry, world units -------------------------------------------
-# Chairs are far enough apart that pushing the camera in on one puts the others
-# outside the frame - that is what makes the two modes read differently without
-# hiding anything by hand.
-# Seat spacing and the seat framing are chosen together: at SEAT_CAM_Z the
-# camera sees about +/-9.7 units, so neighbours 12 away fall outside the shot.
-# That is what makes "you are with ONE customer" true visually rather than by
-# hiding anything.
-const CHAIR_X := [-12.0, 0.0, 12.0]
-const CHAIR_Y := 2.4
-const PILE_Y := 2.4
-const DRAW_X := -21.0
-const DISCARD_X := 21.0
-## Hand sits low and mostly out of shot on the floor, and lifts into reach once
-## you are with someone - "your cards come up".
-const HAND_Y_FLOOR := -13.0
-const HAND_Y_SEAT := -4.4
+const CHAIR_X := [-14.0, 0.0, 14.0]
+const CUSTOMER_Y := 4.0      ## their card
+const CHAIR_Y := 0.2         ## the offer slot in front of them
+const PILE_Y := 4.0
+const DRAW_X := -24.0
+const DISCARD_X := 24.0
+const HAND_Y_FLOOR := -13.0  ## dropped out of shot while you survey the floor
+const HAND_Y_SEAT := -4.4    ## up in reach once you sit down
 const FAN_ANGLE := 62.0
 const FAN_RADIUS := 9.5
 
 const CAM_FOV := 60.0
-## Far enough back that the three seat panels all fit LEFT of the side panel.
-const FLOOR_CAM := Vector3(0.0, 4.0, 32.0)
-const FLOOR_CAM_PITCH := -6.0
-const SEAT_CAM_Y := -1.0
-const SEAT_CAM_Z := 9.5
-const SEAT_CAM_PITCH := -6.0
+## Offset right, so the table composes into the space LEFT of the log panel.
+const FLOOR_CAM := Vector3(5.0, 2.0, 24.0)
+const FLOOR_CAM_PITCH := -5.0
+const SEAT_CAM_Y := -0.2
+const SEAT_CAM_Z := 11.0
+const SEAT_CAM_PITCH := -4.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
-const PANEL_RECT := Rect2(1480, 40, 416, 1000)
+const DETAIL_RECT := Rect2(48, 140, 560, 900)
+const ACTION_RECT := Rect2(700, 902, 460, 96)
+const LOG_RECT := Rect2(1480, 40, 416, 1000)
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -62,8 +64,6 @@ func _init() -> void:
 	root.add_child(cam)
 	cam.owner = root
 
-	# Framings as Markers, not constants in the script: they show up as gizmos
-	# in the editor and can be dragged to retune the shot without a rebuild.
 	var floor_mark := Marker3D.new()
 	floor_mark.name = "CameraFloor"
 	floor_mark.position = FLOOR_CAM
@@ -74,7 +74,7 @@ func _init() -> void:
 
 	var light := DirectionalLight3D.new()
 	light.name = "DirectionalLight3D"
-	light.position = Vector3(0, 10, 16)
+	light.position = Vector3(0, 12, 18)
 	light.rotation_degrees = Vector3(-38, -22, 0)
 	light.light_energy = 1.2
 	light.shadow_enabled = true
@@ -96,7 +96,7 @@ func _init() -> void:
 	we.owner = root
 
 	var felt := QuadMesh.new()
-	felt.size = Vector2(120, 70)
+	felt.size = Vector2(140, 80)
 	var felt_mat := StandardMaterial3D.new()
 	felt_mat.albedo_color = Palette.color(&"bg")
 	felt_mat.roughness = 0.95
@@ -114,13 +114,25 @@ func _init() -> void:
 	table.owner = root
 
 	var collection_scene: PackedScene = load(COLLECTION)
+	var customer_scene: PackedScene = load(CUSTOMER_CARD)
 
 	for i in range(3):
+		# The person: a card, baked into the scene so a seat is never an
+		# invisible empty node in the editor.
+		var who := customer_scene.instantiate()
+		who.name = "Customer%d" % i
+		who.position = Vector3(CHAIR_X[i], CUSTOMER_Y, 0.0)
+		who.unique_name_in_owner = true
+		table.add_child(who)
+		who.owner = root
+
+		# The offer slot in front of them.
 		var chair := _collection(collection_scene, "Chair%d" % i,
 			Vector3(CHAIR_X[i], CHAIR_Y, 0.0), table, root)
 		chair.card_layout_strategy = PileCardLayout.new()
-		_mark(chair, root, "SEAT %s" % ["A", "B", "C"][i], Palette.color(&"appeal"))
-		# One marker per seat, so each seat framing is authored, not computed.
+		_mark(chair, root, "SEAT %s\nplay a card here" % ["A", "B", "C"][i],
+			Palette.color(&"appeal"))
+
 		var seat_cam := Marker3D.new()
 		seat_cam.name = "SeatCam%d" % i
 		seat_cam.position = Vector3(CHAIR_X[i], SEAT_CAM_Y, SEAT_CAM_Z)
@@ -176,9 +188,8 @@ func _collection(scene: PackedScene, node_name: String, pos: Vector3,
 	c.owner = owner_root
 	return c
 
-## A labelled translucent slab behind a zone. Visible in the editor - which is
-## the point, since a CardCollection3D is otherwise an invisible empty node -
-## and left visible at runtime because it tells the player where to drop.
+## A labelled translucent slab behind a zone - the only thing that makes a
+## CardCollection3D visible in the editor, and a useful "drop here" at runtime.
 func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color) -> void:
 	var slab := QuadMesh.new()
 	slab.size = Vector2(2.9, 3.9)
@@ -205,7 +216,7 @@ func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color) -> void:
 	label.shaded = false
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.position = Vector3(0, 2.45, 0.02)
+	label.position = Vector3(0, -2.35, 0.02)
 	zone.add_child(label)
 	label.owner = owner_root
 
@@ -223,6 +234,7 @@ func _build_hud(root: Node) -> void:
 	layer.add_child(hud)
 	hud.owner = root
 
+	# --- yours: the shift bar ---------------------------------------------
 	var top := HBoxContainer.new()
 	top.name = "TopBar"
 	top.position = Vector2(28, 18)
@@ -231,7 +243,6 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(top)
 	top.owner = root
 
-	# Placeholder text so the editor shows what each slot is for.
 	var placeholders := {
 		"TickLabel": "tick 0/24",
 		"BankedLabel": "banked $0 / $3,600",
@@ -247,13 +258,52 @@ func _build_hud(root: Node) -> void:
 		top.add_child(l)
 		l.owner = root
 
-	# ONE panel. On the floor it is the shift log; with a customer the
-	# negotiation takes the top of it and the log keeps the bottom. Two panels
-	# flanking the table were ambiguous AND sat where the cards are.
+	# --- theirs: the detail panel, beside their card ----------------------
+	var detail := Control.new()
+	detail.name = "CustomerSlot"
+	detail.position = DETAIL_RECT.position
+	detail.size = DETAIL_RECT.size
+	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	detail.unique_name_in_owner = true
+	hud.add_child(detail)
+	detail.owner = root
+
+	var empty := Label.new()
+	empty.name = "EmptySlotLabel"
+	empty.text = "Nobody selected.\n\nClick a customer's card, or press A / B / C."
+	empty.autowrap_mode = TextServer.AUTOWRAP_WORD
+	empty.set_anchors_preset(Control.PRESET_FULL_RECT)
+	empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	empty.unique_name_in_owner = true
+	detail.add_child(empty)
+	empty.owner = root
+
+	# --- yours: the action bar, in the middle where the table is ----------
+	var actions := HBoxContainer.new()
+	actions.name = "ActionBar"
+	actions.position = ACTION_RECT.position
+	actions.size = ACTION_RECT.size
+	actions.add_theme_constant_override("separation", 18)
+	actions.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	actions.unique_name_in_owner = true
+	hud.add_child(actions)
+	actions.owner = root
+
+	for spec in [["OfferButton", "OFFER"], ["DropButton", "DROP"], ["CloseButton", "CLOSE"]]:
+		var b := Button.new()
+		b.name = spec[0]
+		b.text = spec[1]
+		b.custom_minimum_size = Vector2(140, 84)
+		b.add_theme_font_size_override("font_size", 30)
+		b.unique_name_in_owner = true
+		actions.add_child(b)
+		b.owner = root
+
+	# --- yours: the log, far right ----------------------------------------
 	var panel := PanelContainer.new()
 	panel.name = "SidePanel"
-	panel.position = PANEL_RECT.position
-	panel.size = PANEL_RECT.size
+	panel.position = LOG_RECT.position
+	panel.size = LOG_RECT.size
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.unique_name_in_owner = true
 	hud.add_child(panel)
@@ -262,34 +312,12 @@ func _build_hud(root: Node) -> void:
 	var col := VBoxContainer.new()
 	col.name = "Column"
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_theme_constant_override("separation", 12)
 	panel.add_child(col)
 	col.owner = root
-
-	var slot := Control.new()
-	slot.name = "CustomerSlot"
-	slot.custom_minimum_size = Vector2(0, 620)
-	slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.unique_name_in_owner = true
-	col.add_child(slot)
-	slot.owner = root
-
-	var empty := Label.new()
-	empty.name = "EmptySlotLabel"
-	empty.text = "Pick a seat to start negotiating.\n\nClick a seat, or press A / B / C."
-	empty.autowrap_mode = TextServer.AUTOWRAP_WORD
-	empty.add_theme_font_size_override("font_size", 28)
-	empty.set_anchors_preset(Control.PRESET_FULL_RECT)
-	empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	empty.unique_name_in_owner = true
-	slot.add_child(empty)
-	empty.owner = root
 
 	var log_title := Label.new()
 	log_title.name = "LogTitle"
 	log_title.text = "SHIFT LOG"
-	log_title.add_theme_font_size_override("font_size", 24)
 	log_title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	log_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(log_title)
@@ -300,7 +328,6 @@ func _build_hud(root: Node) -> void:
 	log_box.bbcode_enabled = true
 	log_box.scroll_following = true
 	log_box.text = "Walk-ups, offers and objections show up here."
-	log_box.custom_minimum_size = Vector2(0, 300)
 	log_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	log_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	log_box.unique_name_in_owner = true

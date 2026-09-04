@@ -1,0 +1,94 @@
+[gd_scene format=3]
+
+[node name="CustomerFront" type="Control" unique_id=1014499755]
+custom_minimum_size = Vector2(500, 700)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 500.0
+offset_bottom = 700.0
+
+[node name="Background" type="ColorRect" parent="." unique_id=26675648]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.13333334, 0.13333334, 0.23137255, 1)
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=710767415]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1533508208]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PortraitFrame" type="PanelContainer" parent="Margin/Column" unique_id=58939611]
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+
+[node name="PortraitFill" type="ColorRect" parent="Margin/Column/PortraitFrame" unique_id=2103169233]
+layout_mode = 2
+color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+
+[node name="PortraitLabel" type="Label" parent="Margin/Column/PortraitFrame" unique_id=1476308459]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "PORTRAIT"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="Margin/Column" unique_id=1861634327]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+theme_override_font_sizes/font_size = 46
+theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=594020104]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+horizontal_alignment = 1
+
+[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=1234906302]
+custom_minimum_size = Vector2(0, 3)
+layout_mode = 2
+color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+
+[node name="PatienceBar" type="ProgressBar" parent="Margin/Column" unique_id=1941838514]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+show_percentage = false
+
+[node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=1373762576]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+horizontal_alignment = 1
+
+[node name="LineLabel" type="Label" parent="Margin/Column" unique_id=1377556118]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.3647059, 0.65882355, 0.9490196, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+horizontal_alignment = 1

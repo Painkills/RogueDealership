@@ -1,8 +1,12 @@
 extends PanelContainer
-
-signal offer_pressed
-signal close_pressed
-signal drop_pressed
+## Everything about the customer in front of you that is too slow-moving or too
+## wordy for their card: what their archetype actually does to you, what is on
+## the table unsigned, the live offer, and what you have learned about their
+## priorities.
+##
+## The three action buttons used to live here and no longer do - they belong to
+## the player, at a fixed place on screen, not to whichever customer happens to
+## be in front of you.
 
 const ORDINALS := ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"]
 
@@ -16,22 +20,26 @@ const ORDINALS := ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "
 @onready var _appeal_bar: Control = %AppealBar
 @onready var _gap: Label = %GapLabel
 @onready var _known: Label = %KnownLabel
-@onready var _offer_btn: Button = %OfferButton
-@onready var _drop_btn: Button = %DropButton
-@onready var _close_btn: Button = %CloseButton
+@onready var _behaviour: Label = %BehaviourLabel
 
 var _customer
-
-func _ready() -> void:
-	_offer_btn.pressed.connect(func(): offer_pressed.emit())
-	_drop_btn.pressed.connect(func(): drop_pressed.emit())
-	_close_btn.pressed.connect(func(): close_pressed.emit())
 
 func setup(customer, forced_band: String = "") -> void:
 	_customer = customer
 	_header.text = "[%s] %s - %s" % [customer.key, customer.display_name,
 		customer.archetype.display_name]
-	_line.text = "wants %d" % customer.line if customer.known_line else "wants ?"
+	_line.text = "THE LINE  %d" % customer.line if customer.known_line else "THE LINE  ?"
+
+	# What this archetype actually does to you. This is the data that used to
+	# exist ONLY on FloorCard's hover panel - which is hidden while you are
+	# negotiating, so sitting down with someone made their behaviour invisible.
+	var tells: Array[String] = []
+	for act in customer.archetype.actions:
+		tells.append("%s\n   %s" % [act.display_name, act.tell])
+	if tells.is_empty():
+		_behaviour.text = "Nothing. They just sit and listen."
+	else:
+		_behaviour.text = "\n".join(tells)
 
 	for child in _unsigned_row.get_children():
 		child.queue_free()

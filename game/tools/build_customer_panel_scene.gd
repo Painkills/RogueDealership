@@ -24,6 +24,31 @@ func _init() -> void:
 	vbox.add_child(line_label)
 	line_label.owner = root
 
+	var behaviour_title := Label.new()
+	behaviour_title.name = "BehaviourTitle"
+	behaviour_title.text = "WHAT THEY DO"
+	behaviour_title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	vbox.add_child(behaviour_title)
+	behaviour_title.owner = root
+
+	var behaviour := Label.new()
+	behaviour.name = "BehaviourLabel"
+	behaviour.autowrap_mode = TextServer.AUTOWRAP_WORD
+	# Deliberately NOT the same string the runtime can produce for an archetype
+	# with no actions. If the placeholder and a real value can look identical, a
+	# test that reads this label proves nothing - which is exactly what happened.
+	behaviour.text = "(what this archetype does shows here)"
+	behaviour.unique_name_in_owner = true
+	vbox.add_child(behaviour)
+	behaviour.owner = root
+
+	var unsigned_title := Label.new()
+	unsigned_title.name = "UnsignedTitle"
+	unsigned_title.text = "ON THE TABLE, UNSIGNED"
+	unsigned_title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	vbox.add_child(unsigned_title)
+	unsigned_title.owner = root
+
 	var unsigned_row := HBoxContainer.new()
 	unsigned_row.name = "UnsignedRow"
 	unsigned_row.unique_name_in_owner = true
@@ -78,32 +103,6 @@ func _init() -> void:
 	known.unique_name_in_owner = true
 	vbox.add_child(known)
 	known.owner = root
-
-	var action_row := HBoxContainer.new()
-	action_row.name = "ActionRow"
-	vbox.add_child(action_row)
-	action_row.owner = root
-
-	var offer_btn := Button.new()
-	offer_btn.name = "OfferButton"
-	offer_btn.text = "OFFER"
-	offer_btn.unique_name_in_owner = true
-	action_row.add_child(offer_btn)
-	offer_btn.owner = root
-
-	var drop_btn := Button.new()
-	drop_btn.name = "DropButton"
-	drop_btn.text = "DROP"
-	drop_btn.unique_name_in_owner = true
-	action_row.add_child(drop_btn)
-	drop_btn.owner = root
-
-	var close_btn := Button.new()
-	close_btn.name = "CloseButton"
-	close_btn.text = "CLOSE"
-	close_btn.unique_name_in_owner = true
-	action_row.add_child(close_btn)
-	close_btn.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)
