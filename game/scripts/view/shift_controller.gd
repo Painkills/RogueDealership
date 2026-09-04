@@ -31,7 +31,11 @@ const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
 ## How high a hovered hand card lifts. The hand deliberately runs off the bottom
 ## of the screen - big enough to read beats small enough to fit - so this has to
 ## clear the part that is off screen, rather than being the addon's small nudge.
-const HAND_HOVER_LIFT := Vector3(0.0, 1.9, 0.0)
+## The Z is what makes a fanned hand readable: hand cards overlap, so a card
+## raised in place is still half-covered by the one to its right. Coming FORWARD
+## puts it in front of every sibling. It moves the mesh, not the collider, so
+## the card cannot slide out from under its own cursor.
+const HAND_HOVER_LIFT := Vector3(0.0, 1.9, 0.8)
 
 const FRAMING_TWEEN := 0.5
 ## Your things arrive a beat after the camera settles, so the move reads as
@@ -64,6 +68,7 @@ var _chair_zones: Array = []
 var _seat_cams: Array = []
 var _customer_cards: Array = []
 var _customer_flips: Array = []      ## the pair-turning node, one per seat
+var _hover_pads: Array = []          ## the immovable thing the mouse actually finds
 var _customer_details: Array = []
 var _offer_details: Array = []
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
@@ -84,6 +89,7 @@ func _ready() -> void:
 	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
 	_customer_flips = [%CustomerFlip0, %CustomerFlip1, %CustomerFlip2]
+	_hover_pads = [%HoverPad0, %HoverPad1, %HoverPad2]
 	_customer_details = [%CustomerDetail0, %CustomerDetail1, %CustomerDetail2]
 	_offer_details = [%OfferDetail0, %OfferDetail1, %OfferDetail2]
 
@@ -107,12 +113,16 @@ func _ready() -> void:
 	_close_btn.pressed.connect(_on_close)
 	_mode_btn.pressed.connect(_on_mode_pressed)
 
+	# Hover and click belong to the PAD, not to the card. The card turns over,
+	# and a flat collider edge-on has no area at all - so hovering the card made
+	# it flicker between flipped and not, and where you brought the cursor in
+	# from decided whether it settled. The pad never moves.
 	for i in range(_customer_cards.size()):
-		var card = _customer_cards[i]
-		card.chair = i
-		card.card_3d_mouse_down.connect(_on_chair_pressed.bind(i))
-		card.card_3d_mouse_over.connect(_on_customer_hover.bind(i))
-		card.card_3d_mouse_exit.connect(_on_customer_unhover.bind(i))
+		_customer_cards[i].chair = i
+		var pad: StaticBody3D = _hover_pads[i]
+		pad.mouse_entered.connect(_on_customer_hover.bind(i))
+		pad.mouse_exited.connect(_on_customer_unhover.bind(i))
+		pad.input_event.connect(_on_pad_input.bind(i))
 
 	_register_keyboard_actions()
 	_start_new_shift()
@@ -125,10 +135,12 @@ func _register_keyboard_actions() -> void:
 	_bind_key(&"card_2", KEY_2)
 	_bind_key(&"card_3", KEY_3)
 	_bind_key(&"card_4", KEY_4)
-	_bind_key(&"dig_1", KEY_1, true)        # Shift+1..4: dig, distinct from playing
+	_bind_key(&"card_5", KEY_5)
+	_bind_key(&"dig_1", KEY_1, true)        # Shift+1..5: dig, distinct from playing
 	_bind_key(&"dig_2", KEY_2, true)
 	_bind_key(&"dig_3", KEY_3, true)
 	_bind_key(&"dig_4", KEY_4, true)
+	_bind_key(&"dig_5", KEY_5, true)
 	_bind_key(&"chair_a", KEY_A)
 	_bind_key(&"chair_b", KEY_B)
 	_bind_key(&"chair_c", KEY_C)
@@ -152,7 +164,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	# consuming a click here takes it from every card on the table.
 	if _shift == null or _shift.is_over():
 		return
-	if event.is_action_pressed("dig_1"): _try_dig(0)
+	if event.is_action_pressed("dig_5"): _try_dig(4)
+	elif event.is_action_pressed("dig_1"): _try_dig(0)
 	elif event.is_action_pressed("dig_2"): _try_dig(1)
 	elif event.is_action_pressed("dig_3"): _try_dig(2)
 	elif event.is_action_pressed("dig_4"): _try_dig(3)
@@ -160,6 +173,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("card_2"): _try_card(1)
 	elif event.is_action_pressed("card_3"): _try_card(2)
 	elif event.is_action_pressed("card_4"): _try_card(3)
+	elif event.is_action_pressed("card_5"): _try_card(4)
 	elif event.is_action_pressed("chair_a"): _apply(_shift.approach(0))
 	elif event.is_action_pressed("chair_b"): _apply(_shift.approach(1))
 	elif event.is_action_pressed("close_key"): _on_close()
@@ -250,6 +264,20 @@ func _apply(res: Result) -> void:
 
 # --- hover -----------------------------------------------------------------
 
+## The seat pad's click. Ignored when you are already standing there, because the
+## model would only answer "you are already standing with X" and clicking the
+## person you are talking to should not put a refusal in the log.
+func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector3,
+		_shape: int, chair: int) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var click := event as InputEventMouseButton
+	if click.button_index != MOUSE_BUTTON_LEFT or not click.pressed:
+		return
+	if _shift == null or _shift.at == chair:
+		return
+	_on_chair_pressed(chair)
+
 func _on_customer_hover(chair: int) -> void:
 	_hovered = chair
 	_render_hover_flip()
@@ -295,6 +323,12 @@ func _apply_framing() -> void:
 		_show_seat(i, here or not seated)
 		_customer_details[i].reveal(here)
 		_offer_details[i].reveal(here)
+		# The floor is customer cards and nothing else. The product slot and
+		# whatever is sitting in it belong to the negotiation, and its detail
+		# card would otherwise show its blank back down there. What you have left
+		# on someone's table is on their floor card, in one line.
+		_chair_zones[i].visible = seated
+		_offer_details[i].visible = seated
 
 	if _framing_tween != null and _framing_tween.is_running():
 		_framing_tween.kill()
@@ -353,7 +387,7 @@ func _render() -> void:
 
 	var seated: bool = _shift.at != null
 	for i in range(_customer_cards.size()):
-		_customer_cards[i].setup(_shift.chairs[i])
+		_customer_cards[i].setup(_shift.chairs[i], seated and i == int(_shift.at))
 
 	_render_mode_button(seated)
 	_render_details()

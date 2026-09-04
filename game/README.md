@@ -315,6 +315,17 @@ Related and identical in symptom: `get_viewport().physics_object_picking`
 defaults to `false`, and Card3D's whole input path is `StaticBody3D.input_event`.
 The controller sets it in `_ready()`. If nothing responds, check both.
 
+**A hover target must never be the thing the hover moves.** Hovering a customer
+turns their pair over — and while the pair turns, the card's collider turns with
+it. A card is a flat quad with no thickness, so its projected area shrinks to
+nothing on the way round: the ray stopped finding it, the mouse "left", the flip
+reversed, the mouse "entered", and the card stuttered. `probe_input.gd` measured
+it — aimed near the card's edge, the collider was gone from 75° onward and did
+not come back until 180°, which is exactly why it depended on where you brought
+the cursor in from. Every seat now has a `HoverPad`: an invisible box that never
+moves, owning the hover and the click, with the customer card's own collider
+disabled so the two cannot disagree.
+
 **And a third with the same symptom, which is the one that actually shipped:
 never enable a drop zone outside a drag.** Godot's 3D picking fires ONE ray and
 takes the CLOSEST collider, so anything in front of a card owns every click
@@ -403,8 +414,9 @@ what it should, that the rectangles do not collide. None of it can tell you
 whether the composition reads, whether the push-in feels like walking over to
 someone, or whether a hand that runs off the bottom of the screen is comfortable
 to play from. The numbers say a card face lands at 286×400 px on the floor and
-255×358 px at a seat, against a 500×700 authored face — that is a legibility
-argument, not a verdict.
+255×358 px at a seat, and that a hand card shows 151 px of its 271 with its
+neighbour laid over it — all against a 500×700 authored face. That is a
+legibility argument, not a verdict.
 
 Two specific things to look at first, both single constants:
 

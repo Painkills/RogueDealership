@@ -9,7 +9,7 @@ class_name ShiftConfig extends Resource
 @export var floor_size: int = 3
 @export var walk_up_ticks: int = 4
 
-@export var hand_size: int = 4
+@export var hand_size: int = 5
 @export var approach_ticks: int = 1
 @export var place_ticks: int = 1
 @export var dig_ticks: int = 1

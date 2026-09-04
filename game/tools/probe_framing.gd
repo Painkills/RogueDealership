@@ -8,6 +8,8 @@ extends SceneTree
 ##   godot --headless --path game --script res://tools/probe_framing.gd
 
 const SCREEN := Vector2(1920, 1080)
+## What a full hand holds, from ShiftConfig - the fan spaces itself by card count.
+const HAND_SIZE := 5
 
 var _root: Node3D
 var _done := false
@@ -64,12 +66,36 @@ func _frame(cam: Camera3D, label: String, mark: Node3D, seat: int) -> void:
 		var local: Vector3 = raised[name]
 		_rect(cam, name, cam.global_transform * local, Vector2(2.5, 3.5))
 
+	# The fan, card by card. Asked of the LAYOUT rather than of the cards: the
+	# cards are only where the layout says once their tweens have run, and this
+	# tool does not run a frame. What matters is not where the hand sits but how
+	# much of each card its right-hand neighbour leaves showing.
+	if seat >= 0:
+		var hand: CardCollection3D = _root.get_node(^"%Hand")
+		var fan := hand.card_layout_strategy as FanCardLayout
+		var hand_at: Transform3D = cam.global_transform.translated_local(_root.HAND_UP)
+		var last := -99999.0
+		for local in fan.calculate_card_positions(HAND_SIZE):
+			var r := _card_rect(cam, hand_at * (local as Vector3), Vector2(2.5, 3.5))
+			var showing: String = "" if last < -9999.0 \
+				else "   (previous card shows %d px of %d)" \
+					% [int(r.position.x - last), int(r.size.x)]
+			print("  hand card        x %4d..%4d   y %4d..%4d%s"
+				% [int(r.position.x), int(r.end.x), int(r.position.y),
+					int(r.end.y), showing])
+			last = r.position.x
+
 	for pair in [["mode button", "%ModeButton"], ["action column", "%ActionBar"],
 			["log", "%SidePanel"]]:
 		var c := _root.get_node(NodePath(pair[1])) as Control
 		print("  %-16s x %4d..%4d   y %4d..%4d" % [pair[0], int(c.position.x),
 			int(c.position.x + c.size.x), int(c.position.y),
 			int(c.position.y + c.size.y)])
+
+func _card_rect(cam: Camera3D, centre: Vector3, size: Vector2) -> Rect2:
+	var tl := cam.unproject_position(centre + Vector3(-size.x * 0.5, size.y * 0.5, 0))
+	var br := cam.unproject_position(centre + Vector3(size.x * 0.5, -size.y * 0.5, 0))
+	return Rect2(tl, br - tl)
 
 func _rect(cam: Camera3D, label: String, centre: Vector3, size: Vector2) -> void:
 	if cam.is_position_behind(centre):

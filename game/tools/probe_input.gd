@@ -40,6 +40,26 @@ func _physics_process(_delta: float) -> bool:
 	if not hand.cards.is_empty():
 		_report("hand card 0 (floor, stowed)", cam, hand.cards[0])
 
+	print("\n######## does the hover target survive its own flip? ########")
+	var flip := _root.get_node(^"%CustomerFlip1") as Node3D
+	var who := _root.get_node(^"%Customer1") as Node3D
+	var body := who.get_node(^"StaticBody3D") as Node3D
+	# Sample the centre AND a point near the card's left edge, because the
+	# oscillation the player reports depends on where the cursor came in from.
+	var centre := cam.unproject_position(who.global_position)
+	var edge := cam.unproject_position(who.global_position + Vector3(-1.0, 0, 0))
+	for deg in [0, 15, 45, 75, 89, 90, 105, 135, 180]:
+		flip.rotation.y = deg_to_rad(deg)
+		flip.force_update_transform()
+		who.force_update_transform()
+		body.force_update_transform()
+		print("  flip %3d deg   centre -> %-28s edge -> %s"
+			% [deg, _hit_name(cam, centre), _hit_name(cam, edge)])
+	flip.rotation.y = 0.0
+	flip.force_update_transform()
+	who.force_update_transform()
+	body.force_update_transform()
+
 	print("\n################ sitting down ################")
 	var ev := InputEventKey.new()
 	ev.keycode = KEY_A
@@ -65,9 +85,9 @@ func _physics_process(_delta: float) -> bool:
 	print("every chair drop zone, which is a StaticBody3D 3.2 units IN FRONT:")
 	for i in range(3):
 		var dz := _root.get_node(NodePath("%%Chair%d/DropZone/CollisionShape3D" % i)) as CollisionShape3D
-		var body := _root.get_node(NodePath("%%Chair%d/DropZone" % i)) as StaticBody3D
+		var zone_body := _root.get_node(NodePath("%%Chair%d/DropZone" % i)) as StaticBody3D
 		print("  Chair%d zone disabled=%s at world z %.2f (cards sit at 0)"
-			% [i, dz.disabled, body.global_position.z])
+			% [i, dz.disabled, zone_body.global_position.z])
 
 	if not hand.cards.is_empty():
 		_report("hand card 0 (seated, raised)", cam, hand.cards[0])
@@ -77,6 +97,19 @@ func _physics_process(_delta: float) -> bool:
 
 	quit(0)
 	return true
+
+func _hit_name(cam: Camera3D, p: Vector2) -> String:
+	var from := cam.project_ray_origin(p)
+	var q := PhysicsRayQueryParameters3D.create(from, from + cam.project_ray_normal(p) * 200.0)
+	q.collide_with_areas = true
+	q.collide_with_bodies = true
+	var hit := get_root().world_3d.direct_space_state.intersect_ray(q)
+	if hit.is_empty():
+		return "NOTHING"
+	# A Card3D's collider is a child called StaticBody3D, so the card's own name
+	# is on the parent; a HoverPad IS the body and names itself.
+	var body := hit["collider"] as Node
+	return String(body.get_parent().name if body.name == "StaticBody3D" else body.name)
 
 func _report(label: String, cam: Camera3D, node: Node3D) -> void:
 	print("\n--- %s at %s ---" % [label, node.global_position])

@@ -76,10 +76,13 @@ const DISCARD_UP := Vector3(6.35, -3.68, PILE_DEPTH)
 const DISCARD_STOWED := Vector3(6.35, -12.6, PILE_DEPTH)
 const DRAW_UP := Vector3(-7.27, -3.68, PILE_DEPTH)
 const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
-## A shallow fan, not a spread: the piles sit at the bottom corners and the hand
-## has to stay between them.
-const FAN_ANGLE := 34.0
-const FAN_RADIUS := 9.0
+## A LONG, SHALLOW arc. What matters is the gap between adjacent cards, which is
+## radius x sin(angle / (cards + 1)) - so a big radius with a small angle spreads
+## the hand out while keeping it nearly level. The previous 9 / 34 left each card
+## showing only 0.9 of its 2.5 width, so the cards on the left were four fifths
+## covered, and drooped 79 px at the ends into the bargain.
+const FAN_ANGLE := 24.0
+const FAN_RADIUS := 20.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
 const MODE_RECT := Rect2(28, 82, 360, 84)
@@ -186,6 +189,14 @@ func _init() -> void:
 		_detail(detail_scene, "CustomerDetail%d" % i,
 			Vector3(0.0, 0.0, BACK_Z), flip, root)
 
+		# The hover target CANNOT be the card, because the card is what the hover
+		# moves. A rotating quad has no thickness: past about 75 degrees the ray
+		# stops finding it, the mouse "leaves", the flip reverses, the mouse
+		# "enters" again - and the card stutters. This pad sits in front of the
+		# pair and never moves, so what is under the cursor never depends on what
+		# the cursor started.
+		_hover_pad(i, Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), seat, root)
+
 		var chair := _collection(collection_scene, "Chair%d" % i,
 			Vector3(0.0, CHAIR_Y, FACE_Z), seat, root)
 		chair.card_layout_strategy = PileCardLayout.new()
@@ -246,6 +257,26 @@ func _collection(scene: PackedScene, node_name: String, pos: Vector3,
 	parent.add_child(c)
 	c.owner = owner_root
 	return c
+
+## An invisible, immovable slab in front of a seat's customer pair. It owns the
+## hover and the click for that seat; the customer card's own collider is
+## disabled so the two can never disagree about whether the mouse is here.
+## A box, not a quad, so there is no angle at which it has no area.
+func _hover_pad(index: int, pos: Vector3, parent: Node, owner_root: Node) -> void:
+	var body := StaticBody3D.new()
+	body.name = "HoverPad%d" % index
+	body.position = pos
+	body.unique_name_in_owner = true
+	parent.add_child(body)
+	body.owner = owner_root
+
+	var box := BoxShape3D.new()
+	box.size = Vector3(SLOT_SIZE.x, SLOT_SIZE.y, 0.1)
+	var shape := CollisionShape3D.new()
+	shape.name = "CollisionShape3D"
+	shape.shape = box
+	body.add_child(shape)
+	shape.owner = owner_root
 
 ## The back half of a pair: authored FACING AWAY, so at rest it is simply the
 ## back of the card in front of it and costs nothing to hide.

@@ -352,7 +352,7 @@ shows the number.
 There are no `COOL` / `WARM` / `ALMOST` words on screen any more. The band was always a colour
 pretending to be a noun, and it is a colour now.
 
-**Input is mouse-first with keyboard mirrors** of the CLI verbs (`1`–`4` cards, `Shift`+`1`–`4`
+**Input is mouse-first with keyboard mirrors** of the CLI verbs (`1`–`5` cards, `Shift`+`1`–`5`
 dig, `O` offer, `Shift`+`C` close, `A`/`B`/`C` chairs, `F` back to the floor), because the CLI's
 speed for an experienced player is worth keeping. Dragging a product onto a customer is the mouse
 equivalent of `place`; dragging onto the discard is `dig`.
@@ -382,8 +382,15 @@ rendered into them through `SubViewport`s, following Card3D's `example_battle`.*
   legible. The table reads as a table because of the felt and the lighting, not because the camera
   is leaning over it.
 - **Screen sizes to design against** (verified by `tools/probe_framing.gd`, which asks the camera
-  rather than reasoning about field of view): floor card 286×400 px, seat card 255×358 px. Font
-  sizes on the faces are chosen so that at those scales body text stays legible.
+  rather than reasoning about field of view): floor card 286×400 px, seat card 255×358 px, and a
+  hand card showing 151 px of its 271 once its neighbour is laid over it. Font sizes on the faces
+  are chosen so that at those scales body text stays legible.
+- **The hand fans on a long, shallow arc** (radius 20, 24°). What decides legibility is the gap
+  between adjacent cards — `radius × sin(angle / (cards + 1))` — so a big radius with a small angle
+  spreads the hand while keeping it level. Radius 9 at 34° left each card four-fifths covered and
+  drooped 79 px at the ends; this is 56% showing and 21 px of droop.
+- **Hovering a hand card lifts it FORWARD as well as up.** Up alone does nothing about the card
+  overlapping it from the right, which is the half of the problem that is easy to miss.
 - **Palette:** 16 colours, fixed up front, addressed by *role* so art can change without touching
   code — `bg`, `panel`, `panel_hi`, `text`, `text_dim`, `appeal` (blue), `margin` (gold),
   `patience_ok` (green), `patience_warn` (yellow), `patience_bad` (red), `action` (magenta),

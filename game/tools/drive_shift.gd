@@ -58,6 +58,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_floor_view_is_bare()
 	_check_the_floor_cards_are_big_enough_to_read()
 	_check_you_can_actually_click_the_customers()
+	_check_the_hover_target_survives_its_own_flip()
 	_check_hovering_a_customer_turns_their_card_over()
 	_check_table("on arrival")
 
@@ -204,11 +205,8 @@ func _at() -> int:
 ##
 ## So this asks the physics space the same question the engine asks, rather than
 ## asking the scene tree a question that was never the one that mattered.
-func _picks(node: Node3D) -> Node:
+func _pick_at(p: Vector2) -> Node:
 	var cam: Camera3D = _controller._camera
-	if cam.is_position_behind(node.global_position):
-		return null
-	var p := cam.unproject_position(node.global_position)
 	var from := cam.project_ray_origin(p)
 	var q := PhysicsRayQueryParameters3D.create(
 		from, from + cam.project_ray_normal(p) * 200.0)
@@ -217,6 +215,12 @@ func _picks(node: Node3D) -> Node:
 	var hit := get_root().world_3d.direct_space_state.intersect_ray(q)
 	return hit["collider"] if not hit.is_empty() else null
 
+func _picks(node: Node3D) -> Node:
+	var cam: Camera3D = _controller._camera
+	if cam.is_position_behind(node.global_position):
+		return null
+	return _pick_at(cam.unproject_position(node.global_position))
+
 func _check_picks(label: String, node: Node3D) -> void:
 	var hit := _picks(node)
 	var owner_node: Node = hit.get_parent() if hit != null else null
@@ -224,10 +228,54 @@ func _check_picks(label: String, node: Node3D) -> void:
 		% [label, "nothing at all" if hit == null else hit.get_path()],
 		owner_node == node)
 
+## Aimed at the card, but the thing it must find is that seat's PAD - the card's
+## own collider is disabled precisely so the two can never disagree about
+## whether the mouse is here.
+func _check_pad_owns(label: String, chair: int) -> void:
+	var hit := _picks(_controller._customer_cards[chair])
+	_check("the mouse over %s finds seat %d's pad, not %s"
+		% [label, chair, "nothing at all" if hit == null else hit.get_path()],
+		hit == _controller._hover_pads[chair])
+
 func _check_you_can_actually_click_the_customers() -> void:
 	for i in range(3):
-		_check_picks("customer %d on the floor" % i, _controller._customer_cards[i])
+		_check_pad_owns("customer %d on the floor" % i, i)
+		_check("and customer %d's own collider is disabled, so it cannot argue" % i,
+			(_controller._customer_cards[i].get_node(^"StaticBody3D/CollisionShape3D")
+				as CollisionShape3D).disabled)
 	_check_no_drop_zone_is_armed("on the floor")
+
+## The reported bug: "hover makes the card stutter between flipping and not
+## flipping, unless you come in from a certain angle."
+##
+## The cause was that the hover target WAS the thing the hover moved. A card is
+## a flat quad with no thickness, so as it turns its projected area shrinks to
+## nothing: the ray stopped finding it, the mouse "left", the flip reversed, the
+## mouse "entered", forever. Measured with probe_input.gd before the fix - aimed
+## near the card's edge, the collider was gone from 75 degrees onward and did not
+## come back until 180.
+##
+## So this walks the pair through a full turn and asserts what the mouse finds
+## never changes. Both at the centre AND near the edge, because which of the two
+## you were over is what decided whether it settled.
+func _check_the_hover_target_survives_its_own_flip() -> void:
+	var flip = _controller._customer_flips[1]
+	var pad: Node3D = _controller._hover_pads[1]
+	var cam: Camera3D = _controller._camera
+	var probes := {
+		"centre": cam.unproject_position(pad.global_position),
+		"near the edge": cam.unproject_position(
+			pad.global_position + Vector3(-1.0, 0.0, 0.0)),
+	}
+	for deg in [0, 45, 75, 89, 90, 105, 135, 180]:
+		flip.rotation.y = deg_to_rad(deg)
+		(flip as Node3D).force_update_transform()
+		for where in probes:
+			var hit := _pick_at(probes[where])
+			_check("mid-flip at %3d deg, %s of the card still finds the pad (%s)"
+				% [deg, where, "nothing" if hit == null else hit.name], hit == pad)
+	flip.rotation.y = 0.0
+	(flip as Node3D).force_update_transform()
 
 func _check_you_can_actually_click_your_hand() -> void:
 	var hand: CardCollection3D = _controller._hand_zone
@@ -247,9 +295,50 @@ func _check_you_can_actually_click_your_hand() -> void:
 	# The topmost card of the fan has nothing over it, so it must resolve to
 	# exactly itself - which is the strict form of the same question.
 	_check_picks("the top card of the fan", hand.cards[hand.cards.size() - 1])
-	_check_picks("the customer you are sitting with",
-		_controller._customer_cards[_at()])
+	_check_pad_owns("the customer you are sitting with", _at())
 	_check_no_drop_zone_is_armed("at a seat")
+	_check_the_hand_shows_enough_of_every_card()
+
+## The reported bug: "the hand isn't always legible - cards on the far left have
+## some of their info covered by cards on the right."
+##
+## Two causes, both fixed here. The fan was short and steep: adjacent cards sat
+## 0.9 apart on a 2.5-wide card, so each was four fifths covered, and the ends
+## drooped 79 px below the middle. And hovering only lifted a card UP, which
+## does nothing about the card overlapping it from the right - so hovering could
+## not rescue the reading either. The lift now comes FORWARD as well.
+func _check_the_hand_shows_enough_of_every_card() -> void:
+	var cards: Array = _controller._hand_zone.cards
+	if cards.size() < 2:
+		_check("there is more than one card in hand to overlap", false)
+		return
+	var rects: Array[Rect2] = []
+	for c in cards:
+		rects.append(_rect_of(c, CARD))
+	rects.sort_custom(func(a, b): return a.position.x < b.position.x)
+
+	var lowest := 0.0
+	var highest := 99999.0
+	for i in range(rects.size()):
+		lowest = maxf(lowest, rects[i].position.y)
+		highest = minf(highest, rects[i].position.y)
+		if i + 1 >= rects.size():
+			continue
+		# What is left of a card once its right-hand neighbour is laid over it.
+		var showing: float = rects[i + 1].position.x - rects[i].position.x
+		_check("hand card %d still shows %d px of its %d (left edge to the next card)"
+			% [i, int(showing), int(rects[i].size.x)],
+			showing >= rects[i].size.x * 0.45)
+	_check("and the fan is level enough to read across (%d px of droop)"
+		% int(lowest - highest), lowest - highest <= 40.0)
+	# Hovering has to bring a card FORWARD, not just up: raised in place it is
+	# still covered by the card to its right, which is the reported symptom.
+	_check("hovering brings a card toward you, not only upward (%s)"
+		% _controller.HAND_HOVER_LIFT,
+		_controller.HAND_HOVER_LIFT.z > 0.0 and _controller.HAND_HOVER_LIFT.y > 0.0)
+	for c in cards:
+		_check("and every hand card is set up to lift that far",
+			(c as Card3D).hover_pos_move == _controller.HAND_HOVER_LIFT)
 
 ## The permanent guard. A drop zone armed outside a drag is a wall in front of
 ## the whole table, and it is invisible - nothing on screen says why the game
@@ -279,6 +368,18 @@ func _check_floor_view_is_bare() -> void:
 		_check("on the floor your %s is stowed below frame (top %.1f < %.1f)"
 			% [pair[0], z.position.y + CARD.y * 0.5, bottom],
 			z.position.y + CARD.y * 0.5 < bottom)
+	# The floor is customer cards and nothing else. The product slot, whatever is
+	# sitting in it and its detail card all belong to the negotiation - and the
+	# detail card would be showing its blank back down there anyway.
+	for i in range(3):
+		_check("the product slot at seat %d is out of sight on the floor" % i,
+			not _controller._chair_zones[i].visible)
+		_check("and so is seat %d's detail card, which faces away" % i,
+			not _controller._offer_details[i].visible)
+		# One line on the floor card is what tells you a product is still sitting
+		# with someone, now that you cannot see the slot.
+		_check("but the floor card still says what you left with them",
+			_controller._customer_cards[i]._status.visible)
 	_check("no action bar on the floor - there is nobody to act on",
 		not _controller._action_bar.visible)
 	for i in range(3):
@@ -306,8 +407,8 @@ func _check_hovering_a_customer_turns_their_card_over() -> void:
 	_check("and the detail card is now the one in front (%.2f > %.2f)"
 		% [detail.global_position.z, card.global_position.z],
 		detail.global_position.z > card.global_position.z)
-	_check("the customer card is still clickable through the turned pair",
-		_picks(card) != null and _picks(card).get_parent() == card)
+	_check("the pad is untouched by the turn, so the hover cannot cancel itself",
+		_picks(card) == _controller._hover_pads[1])
 	# Only the card you are pointing at.
 	_check("the seats you are not pointing at stay face-front",
 		not _controller._customer_flips[0].showing_back()

@@ -27,6 +27,11 @@ var _patience: Label
 var _status: Label
 
 func _ready() -> void:
+	# The seat's HoverPad owns the mouse, not this card. This card turns over,
+	# and a rotating flat collider vanishes edge-on - which made hovering it
+	# oscillate between flipped and not. A hover target must never be the thing
+	# the hover moves.
+	disable_collision()
 	_bind()
 	_redraw.call_deferred()
 
@@ -50,9 +55,15 @@ func _bind() -> void:
 
 ## `c == null` is an empty chair. The card stays - a seat should not blink out of
 ## existence mid-shift - it just says nobody is there.
-func setup(c) -> void:
+##
+## `seated` only decides whether the status line shows. It is there so the FLOOR
+## can tell you that you left a product with someone; once you are with them the
+## product card is sitting directly below this one, and a line of text repeating
+## what a card already says is just something else to keep in sync.
+func setup(c, seated: bool = false) -> void:
 	_bind()
 	customer = c
+	_status.visible = not seated
 
 	if c == null:
 		_name.text = "- empty -"
