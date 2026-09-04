@@ -23,8 +23,8 @@ const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
 const PILE_DEPTH := -8.6
 const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
 const HAND_STOWED := Vector3(0.0, -12.6, PILE_DEPTH)
-const DISCARD_UP := Vector3(6.35, -3.68, PILE_DEPTH)
-const DISCARD_STOWED := Vector3(6.35, -12.6, PILE_DEPTH)
+const DISCARD_UP := Vector3(7.2, -3.68, PILE_DEPTH)
+const DISCARD_STOWED := Vector3(7.2, -12.6, PILE_DEPTH)
 const DRAW_UP := Vector3(-7.27, -3.68, PILE_DEPTH)
 const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
 
@@ -35,7 +35,7 @@ const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
 ## raised in place is still half-covered by the one to its right. Coming FORWARD
 ## puts it in front of every sibling. It moves the mesh, not the collider, so
 ## the card cannot slide out from under its own cursor.
-const HAND_HOVER_LIFT := Vector3(0.0, 1.9, 0.8)
+const HAND_HOVER_LIFT := Vector3(0.0, 2.5, 0.8)
 
 const FRAMING_TWEEN := 0.5
 ## Your things arrive a beat after the camera settles, so the move reads as
@@ -587,7 +587,10 @@ func _move_card(node: CardFace3D, to_zone: CardCollection3D, ordinal: int) -> vo
 	to_zone.apply_card_layout()
 
 func _dress(node: CardFace3D, zone: StringName) -> void:
-	node.face_down = zone == CardHomes.ZONE_DRAW
+	# Both piles are turned over. A face-up discard is a second hand's worth of
+	# card faces competing for the same glance as the hand right next to it, and
+	# what has already been spent is not a decision you are still making.
+	node.face_down = zone == CardHomes.ZONE_DRAW or zone == CardHomes.ZONE_DISCARD
 	# Only cards in hand are draggable. A placed product must not intercept the
 	# pointer aimed at the zone it sits in.
 	if zone == CardHomes.ZONE_HAND:

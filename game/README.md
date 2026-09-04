@@ -315,6 +315,17 @@ Related and identical in symptom: `get_viewport().physics_object_picking`
 defaults to `false`, and Card3D's whole input path is `StaticBody3D.input_event`.
 The controller sets it in `_ready()`. If nothing responds, check both.
 
+**The view must show everything the model tells the player.** Twice now a rule
+has been set in the model and silently dropped on the way to the screen:
+`customer.demands` (the Karen's "will not sign until they buy from this
+category") is enforced by `close()`, so it never fires, never reaches the event
+log, and appeared nowhere at all; and `customer.known_top_category` — the half
+of Read the Room that narrows nine interests to three — was set by
+`reveal_room()` and then ignored by `known_text()`, which only walked
+`known_ranks`. Both are on the detail card now, and the driver imposes each
+condition rather than waiting for the deal to produce one, because a check that
+only sometimes runs has only sometimes been verified.
+
 **A hover target must never be the thing the hover moves.** Hovering a customer
 turns their pair over — and while the pair turns, the card's collider turns with
 it. A card is a flat quad with no thickness, so its projected area shrinks to
@@ -414,7 +425,7 @@ what it should, that the rectangles do not collide. None of it can tell you
 whether the composition reads, whether the push-in feels like walking over to
 someone, or whether a hand that runs off the bottom of the screen is comfortable
 to play from. The numbers say a card face lands at 286×400 px on the floor and
-255×358 px at a seat, and that a hand card shows 151 px of its 271 with its
+255×358 px at a seat, and that a hand card shows 181 px of its 271 with its
 neighbour laid over it — all against a 500×700 authored face. That is a
 legibility argument, not a verdict.
 

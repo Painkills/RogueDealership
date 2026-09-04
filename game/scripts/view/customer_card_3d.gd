@@ -86,10 +86,17 @@ func setup(c, seated: bool = false) -> void:
 	_status.text = status_text(c)
 	_redraw()
 
-## What their archetype does to you. Shared with the floor tooltip and the detail
-## card so the three can never disagree about what a customer is.
+## What this customer does to you, and what they will not do for you.
+##
+## `demands` comes FIRST and is not an action: it is a standing rule that
+## close() enforces, so it never fires, never appears in the log, and was
+## therefore invisible - a Karen would simply refuse to sign with no stated
+## reason anywhere on screen.
 static func behaviour_text(c) -> String:
 	var tells: Array[String] = []
+	if c.demands != null:
+		tells.append("WILL NOT SIGN until they have bought something in %s."
+			% str(c.demands).capitalize())
 	for act in c.archetype.actions:
 		tells.append("%s - %s" % [act.display_name, act.tell])
 	if tells.is_empty():
@@ -104,13 +111,24 @@ static func unsigned_text(c) -> String:
 		return "nothing agreed yet"
 	return "%s\n(%s at risk)" % ["\n".join(parts), Format.money(c.unsigned_margin())]
 
+## Everything you have worked out about their priority list.
+##
+## `known_top_category` is the whole point of Read the Room - it narrows nine
+## interests to three - and it used to be set by the model and then dropped
+## here, so playing the card looked like it did nothing at all.
 static func known_text(c) -> String:
-	var known: Array[String] = []
+	var lines: Array[String] = []
+	if c.known_top_category != null:
+		lines.append("Their number one is a %s need."
+			% str(c.known_top_category).capitalize())
+	var ranks: Array[String] = []
 	for iid in c.known_ranks:
-		known.append("%s %s" % [str(iid).capitalize(), ORDINALS[int(c.known_ranks[iid])]])
-	if known.is_empty():
+		ranks.append("%s %s" % [str(iid).capitalize(), ORDINALS[int(c.known_ranks[iid])]])
+	if not ranks.is_empty():
+		lines.append(" . ".join(ranks))
+	if lines.is_empty():
 		return "you know nothing about their priorities yet"
-	return " . ".join(known)
+	return "\n".join(lines)
 
 ## The floor card's one non-identity line. Short on purpose: it exists so that
 ## walking away from a live offer is visible from the floor, not to reproduce the

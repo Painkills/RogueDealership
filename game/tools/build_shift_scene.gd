@@ -72,8 +72,8 @@ const PILE_DEPTH := -8.6
 ## to fit entirely inside the strip below the table is a hand you cannot read.
 const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
 const HAND_STOWED := Vector3(0.0, -12.6, PILE_DEPTH)
-const DISCARD_UP := Vector3(6.35, -3.68, PILE_DEPTH)
-const DISCARD_STOWED := Vector3(6.35, -12.6, PILE_DEPTH)
+const DISCARD_UP := Vector3(7.2, -3.68, PILE_DEPTH)
+const DISCARD_STOWED := Vector3(7.2, -12.6, PILE_DEPTH)
 const DRAW_UP := Vector3(-7.27, -3.68, PILE_DEPTH)
 const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
 ## A LONG, SHALLOW arc. What matters is the gap between adjacent cards, which is
@@ -82,7 +82,7 @@ const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
 ## showing only 0.9 of its 2.5 width, so the cards on the left were four fifths
 ## covered, and drooped 79 px at the ends into the bargain.
 const FAN_ANGLE := 24.0
-const FAN_RADIUS := 20.0
+const FAN_RADIUS := 24.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
 const MODE_RECT := Rect2(28, 82, 360, 84)

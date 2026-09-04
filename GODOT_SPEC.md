@@ -352,6 +352,17 @@ shows the number.
 There are no `COOL` / `WARM` / `ALMOST` words on screen any more. The band was always a colour
 pretending to be a noun, and it is a colour now.
 
+**The view must show everything the model tells the player.** Two rules were set by the model and
+then silently dropped on the way to the screen, which is the same failure twice:
+
+- `customer.demands` — the Karen's "will not sign until they have bought from this category". It is
+  enforced by `close()` and so never fires, never reaches the event log, and appeared nowhere. It
+  leads `WHAT THEY DO` now, ahead of the actions, because it is a standing rule and not a
+  behaviour.
+- `customer.known_top_category` — the half of Read the Room that narrows nine interests to three.
+  `known_text()` only ever walked `known_ranks`, which Read the Room does not touch, so the card
+  looked like it did nothing at all.
+
 **Input is mouse-first with keyboard mirrors** of the CLI verbs (`1`–`5` cards, `Shift`+`1`–`5`
 dig, `O` offer, `Shift`+`C` close, `A`/`B`/`C` chairs, `F` back to the floor), because the CLI's
 speed for an experienced player is worth keeping. Dragging a product onto a customer is the mouse
@@ -383,14 +394,21 @@ rendered into them through `SubViewport`s, following Card3D's `example_battle`.*
   is leaning over it.
 - **Screen sizes to design against** (verified by `tools/probe_framing.gd`, which asks the camera
   rather than reasoning about field of view): floor card 286×400 px, seat card 255×358 px, and a
-  hand card showing 151 px of its 271 once its neighbour is laid over it. Font sizes on the faces
+  hand card showing 181 px of its 271 once its neighbour is laid over it. Font sizes on the faces
   are chosen so that at those scales body text stays legible.
-- **The hand fans on a long, shallow arc** (radius 20, 24°). What decides legibility is the gap
+- **The hand fans on a long, shallow arc** (radius 24, 24°). What decides legibility is the gap
   between adjacent cards — `radius × sin(angle / (cards + 1))` — so a big radius with a small angle
   spreads the hand while keeping it level. Radius 9 at 34° left each card four-fifths covered and
-  drooped 79 px at the ends; this is 56% showing and 21 px of droop.
+  drooped 79 px at the ends; this is 67% showing and 26 px of droop.
 - **Hovering a hand card lifts it FORWARD as well as up.** Up alone does nothing about the card
-  overlapping it from the right, which is the half of the problem that is easy to miss.
+  overlapping it from the right, which is the half of the problem that is easy to miss. It also
+  has to lift far enough to bring the card's *bottom* back inside the frame, since the hand runs
+  off the bottom on purpose — 1274 px down to 1036 for the lowest card in the fan.
+- **Both piles are face down.** What has been spent and what has not been dealt are neither of them
+  decisions you are still making, and a face-up discard is a second hand's worth of card faces
+  competing for the same glance as the hand beside it.
+- **A hand holds five.** Four made an all-support hand — no product to place, nothing to do but
+  dig — likely enough to be annoying.
 - **Palette:** 16 colours, fixed up front, addressed by *role* so art can change without touching
   code — `bg`, `panel`, `panel_hi`, `text`, `text_dim`, `appeal` (blue), `margin` (gold),
   `patience_ok` (green), `patience_warn` (yellow), `patience_bad` (red), `action` (magenta),

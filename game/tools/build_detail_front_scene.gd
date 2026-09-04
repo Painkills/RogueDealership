@@ -47,13 +47,13 @@ func _init() -> void:
 	col.owner = root
 
 	# --- header, shared by both bodies -----------------------------------
-	var title := _label("TitleLabel", 36, Palette.color(&"text"))
+	var title := _label("TitleLabel", 40, Palette.color(&"text"))
 	title.text = "Detail Card"
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
 	col.add_child(title)
 	title.owner = root
 
-	var sub := _label("SubLabel", 24, Palette.color(&"accent"))
+	var sub := _label("SubLabel", 27, Palette.color(&"accent"))
 	sub.text = "subtitle"
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
 	col.add_child(sub)
@@ -88,17 +88,17 @@ func _init() -> void:
 	col.add_child(what)
 	what.owner = root
 
-	var margin_title := _label("MarginTitle", 20, Palette.color(&"text_dim"))
+	var margin_title := _label("MarginTitle", 22, Palette.color(&"text_dim"))
 	margin_title.text = "MARGIN"
 	what.add_child(margin_title)
 	margin_title.owner = root
 
-	var margin_label := _label("MarginLabel", 40, Palette.color(&"margin"))
+	var margin_label := _label("MarginLabel", 44, Palette.color(&"margin"))
 	margin_label.text = "$1,600"
 	what.add_child(margin_label)
 	margin_label.owner = root
 
-	var appeal_title := _label("AppealTitle", 20, Palette.color(&"text_dim"))
+	var appeal_title := _label("AppealTitle", 22, Palette.color(&"text_dim"))
 	appeal_title.text = "APPEAL"
 	what.add_child(appeal_title)
 	appeal_title.owner = root
@@ -113,12 +113,12 @@ func _init() -> void:
 	what.add_child(bar)
 	bar.owner = root
 
-	var status := _label("StatusLabel", 30, Palette.color(&"text"))
+	var status := _label("StatusLabel", 32, Palette.color(&"text"))
 	status.text = "12 SHORT"
 	what.add_child(status)
 	status.owner = root
 
-	var hint := _label("HintLabel", 20, Palette.color(&"text_dim"))
+	var hint := _label("HintLabel", 22, Palette.color(&"text_dim"))
 	hint.text = "offer, or read the room, to learn their Line"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
 	what.add_child(hint)
@@ -137,12 +137,12 @@ func _init() -> void:
 
 func _section(parent: Node, root: Node, title_name: String, title_text: String,
 		body_name: String, body_text: String, body_role: StringName) -> void:
-	var t := _label(title_name, 20, Palette.color(&"text_dim"))
+	var t := _label(title_name, 22, Palette.color(&"text_dim"))
 	t.text = title_text
 	parent.add_child(t)
 	t.owner = root
 
-	var b := _label(body_name, 25, Palette.color(body_role))
+	var b := _label(body_name, 28, Palette.color(body_role))
 	b.text = body_text
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD
 	parent.add_child(b)

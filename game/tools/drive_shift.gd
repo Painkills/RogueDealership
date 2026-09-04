@@ -340,6 +340,31 @@ func _check_the_hand_shows_enough_of_every_card() -> void:
 		_check("and every hand card is set up to lift that far",
 			(c as Card3D).hover_pos_move == _controller.HAND_HOVER_LIFT)
 
+	# The reported bug, second half: "it is still not always easy to read the
+	# bottom part of the card." The hand runs off the bottom of the screen on
+	# purpose, so the lift has to be enough to bring the WHOLE card back inside
+	# the frame - measured by actually hovering the lowest card in the fan, not
+	# by trusting the constant.
+	var lowest_card = cards[0]
+	for c in cards:
+		if _rect_of(c, CARD).end.y > _rect_of(lowest_card, CARD).end.y:
+			lowest_card = c
+	var resting := _rect_of(lowest_card, CARD)
+	lowest_card.set_hovered()
+	var hover_tween = lowest_card.hover_tween
+	if hover_tween != null and hover_tween.is_valid():
+		hover_tween.custom_step(2.0)
+	var mesh := lowest_card.get_node(^"CardMesh") as Node3D
+	mesh.force_update_transform()
+	var lifted := _rect_of(mesh, CARD * lowest_card.scale.x)
+	lowest_card.remove_hovered()
+
+	_check("hovering the lowest card in the fan brings its bottom back on screen"
+		+ " (%d -> %d of 1080)" % [int(resting.end.y), int(lifted.end.y)],
+		lifted.end.y <= _screen().y)
+	_check("and its top too, so the whole card is readable (%d)"
+		% int(lifted.position.y), lifted.position.y >= 0.0)
+
 ## The permanent guard. A drop zone armed outside a drag is a wall in front of
 ## the whole table, and it is invisible - nothing on screen says why the game
 ## stopped responding.
@@ -597,6 +622,123 @@ func _check_the_detail_card_shows_what_they_do() -> void:
 	_check("and what you have worked out (%s)" % det._known.text.substr(0, 40),
 		not det._known.text.begins_with("(what you have"))
 
+	# A standing rule, not an action: close() enforces it, so it never fires and
+	# never reaches the log. A Karen who refuses to sign with no reason stated
+	# anywhere on screen is the game lying to you.
+	# Imposed rather than waited for: whether this seed deals a Karen into this
+	# chair is chance, and a check that only sometimes runs has only sometimes
+	# been verified.
+	var was_demands = who.demands
+	who.demands = &"vehicle"
+	_controller._render()
+	_check("a customer who demands a category says so (%s)"
+		% det._does.text.split("\n")[0],
+		det._does.text.contains("WILL NOT SIGN")
+			and det._does.text.to_lower().contains("vehicle"))
+	who.demands = was_demands
+	_controller._render()
+	_check("and a customer who demands nothing does not (%s)"
+		% det._does.text.split("\n")[0],
+		was_demands != null or not det._does.text.contains("WILL NOT SIGN"))
+
+	_check_the_detail_card_is_not_overflowing(det)
+	_check_read_the_room_shows_you_something(det, who)
+
+## The reported bug: "sometimes I play Read the Room and no priority category is
+## revealed." It was never shown at all - reveal_room() sets known_top_category
+## on the customer, and known_text() only ever walked known_ranks, which Read the
+## Room does not touch. The card's own promise, "reveals their Line and the
+## category of their number one", was half true.
+##
+## Driven through the model's own reveal_room(), which is exactly what the
+## RevealRoom effect calls, rather than through whatever happens to be in hand.
+func _check_read_the_room_shows_you_something(det, who) -> void:
+	var was_cat = who.known_top_category
+	var was_line: bool = who.known_line
+	who.known_top_category = null
+	who.known_line = false
+	_controller._render()
+	var before: String = det._known.text
+
+	who.reveal_room()
+	_controller._render()
+	var after: String = det._known.text
+
+	_check("reading the room changes what the card says (was: %s)"
+		% before.substr(0, 40), after != before)
+	_check("and it names the category of their number one (%s)"
+		% after.split("\n")[0],
+		after.to_lower().contains(str(who.known_top_category)))
+
+	who.known_top_category = was_cat
+	who.known_line = was_line
+	_controller._render()
+
+## Bigger type is only an improvement while it still fits. A VBoxContainer whose
+## children want more room than it has does not grow and does not complain - it
+## just runs the last section off the bottom of the card, where nothing but an
+## eye would ever catch it.
+## Measured against the FONT, not against get_combined_minimum_size(): an
+## autowrap Label reports its minimum from its CURRENT width, and this runs on
+## the first frame, before any Control has been laid out - so the container's
+## own answer is computed at width zero and comes back more than double.
+func _check_the_detail_card_is_not_overflowing(det) -> void:
+	var margin := det.get_node(^"FrontViewport/DetailFront/Margin") as MarginContainer
+	var pad_x: float = margin.get_theme_constant("margin_left") \
+		+ margin.get_theme_constant("margin_right")
+	var room: float = det.FRONT_SIZE.y \
+		- margin.get_theme_constant("margin_top") \
+		- margin.get_theme_constant("margin_bottom")
+	var col := det.get_node(^"FrontViewport/DetailFront/Margin/Column") as Control
+	var width: float = det.FRONT_SIZE.x - pad_x
+	var live := _stack_height(col, width)
+	_check("the detail card's contents fit its face (%d of %d px)"
+		% [int(live), int(room)], live <= room)
+
+	# The customer in this seat is one archetype out of seven, and the tallest
+	# block on the card is what they DO. So try the worst the content can
+	# actually produce - through the real formatter, by swapping the archetype
+	# under a live customer rather than writing a second copy of the format here.
+	var who = _controller._shift.chairs[_at()]
+	var was_arch = who.archetype
+	var was_demands = who.demands
+	var worst := ""
+	for arch in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
+		who.archetype = arch
+		who.demands = &"reliability"        # the longest category name there is
+		var text := CustomerCard3D.behaviour_text(who)
+		if text.length() > worst.length():
+			worst = text
+	who.archetype = was_arch
+	who.demands = was_demands
+
+	var was_text: String = det._does.text
+	det._does.text = worst
+	var wanted := _stack_height(col, width)
+	det._does.text = was_text
+	_check("and would still fit for the wordiest customer in the pool (%d of %d px)"
+		% [int(wanted), int(room)], wanted <= room)
+
+func _stack_height(box: Control, width: float) -> float:
+	var total := 0.0
+	var shown := 0
+	for child in box.get_children():
+		if child is not Control or not (child as Control).visible:
+			continue
+		shown += 1
+		if child is Label:
+			var l := child as Label
+			total += l.get_theme_font("font").get_multiline_string_size(
+				l.text, HORIZONTAL_ALIGNMENT_LEFT, width,
+				l.get_theme_font_size("font_size")).y
+		elif child is VBoxContainer:
+			total += _stack_height(child as Control, width)
+		else:
+			total += maxf((child as Control).custom_minimum_size.y, 0.0)
+	if shown > 1:
+		total += float(box.get_theme_constant("separation") * (shown - 1))
+	return total
+
 # --- the appeal meter ------------------------------------------------------
 
 func _put_a_product_on_the_table() -> void:
@@ -829,6 +971,22 @@ func _check_table(when: String) -> void:
 	_check("%s: only hand cards are draggable (%s)"
 		% [when, ", ".join(wrong_collision) if not wrong_collision.is_empty() else "ok"],
 		wrong_collision.is_empty())
+
+	# Both piles are turned over: what is spent and what has not been dealt are
+	# neither of them decisions you are still making, and a face-up discard is a
+	# second hand's worth of faces beside the actual hand.
+	var wrong_face: Array[String] = []
+	for uid in desired:
+		var node = _controller._nodes.get(uid)
+		if node == null:
+			continue
+		var zone: StringName = desired[uid]["zone"]
+		var hidden: bool = zone == CardHomes.ZONE_DRAW or zone == CardHomes.ZONE_DISCARD
+		if node.face_down != hidden:
+			wrong_face.append("uid %d in %s" % [uid, zone])
+	_check("%s: the draw and discard piles are face down (%s)"
+		% [when, ", ".join(wrong_face) if not wrong_face.is_empty() else "ok"],
+		wrong_face.is_empty())
 
 ## Simulate what DragController does on a drop - move the node, then emit - and
 ## confirm the model followed. Only the mouse is faked; the handler is real.
