@@ -54,6 +54,9 @@ func _process(_delta: float) -> bool:
 	_press(KEY_F);            _check_table("after stepping back to the floor")
 	_press(KEY_B);            _check_table("after approaching chair B")
 
+	_check_drop_plays_a_card()
+	_check_refused_drop_comes_home()
+
 	print("")
 	if _failures.is_empty():
 		print("%d checks, all passed" % _checks)
@@ -125,6 +128,59 @@ func _check_panels_clear_of_each_other() -> void:
 		for j in range(i + 1, rects.size()):
 			_check("floor panels %d and %d do not overlap" % [i, j],
 				not r.intersects(rects[j]))
+
+## Simulate what DragController does on a drop - move the node, then emit - and
+## confirm the model followed. Only the mouse is faked; the handler is real.
+func _drop(face, to_zone) -> void:
+	var from = face.get_parent()
+	var at: int = from.cards.find(face)
+	from.remove_card(at)
+	to_zone.append_card(face)
+	_controller._on_drag_card_moved(face, from, to_zone, at, to_zone.cards.size() - 1)
+	_controller._on_drag_stopped(face)
+
+func _check_drop_plays_a_card() -> void:
+	var shift = _controller._shift
+	var hand = _controller._hand_zone
+	if hand.cards.is_empty():
+		_check("there was a card in hand to drag", false)
+		return
+	var face = hand.cards[0]
+	var uid: int = face.uid
+	var before: int = shift.hand.size()
+
+	_drop(face, _controller._chair_zones[1])
+
+	_check("dropping on a chair actually played the card (hand %d -> %d)"
+		% [before, shift.hand.size()], shift.hand.size() < before
+			or CardIndex.of(shift, uid) == -1)
+	_check("and it moved you to that chair", shift.at == 1)
+	_check_table("after dropping a card on chair B")
+
+func _check_refused_drop_comes_home() -> void:
+	## Dropping onto the draw pile is meaningless, so the model is never called
+	## and the card must end up back in hand - carried there by reconciliation,
+	## not by an explicit revert.
+	var shift = _controller._shift
+	var hand = _controller._hand_zone
+	if hand.cards.is_empty():
+		_check("there was a card in hand to bounce", false)
+		return
+	var face = hand.cards[0]
+	var uid: int = face.uid
+	var before: int = shift.hand.size()
+
+	_drop(face, _controller._draw_zone)
+
+	_check("a meaningless drop changes nothing in the model",
+		shift.hand.size() == before)
+	_check("the card is still in hand as far as the model is concerned",
+		CardIndex.of(shift, uid) != -1)
+	_check("and its node came home to the hand zone",
+		face.get_parent() == hand)
+	_check("with an explanation in the log rather than silence",
+		_controller._event_log.get_parsed_text().length() > 0)
+	_check_table("after a refused drop")
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

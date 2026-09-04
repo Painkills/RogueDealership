@@ -67,6 +67,14 @@ func _ready() -> void:
 	_drag.add_card_collection(_draw_zone)
 	_drag.add_card_collection(_discard_zone)
 
+	# Only DragController's card_moved. CardCollection3D has a DIFFERENT signal
+	# of the same name and lower arity for intra-collection reorders, which
+	# move_card() re-emits - and reconciliation calls move_card(). Connecting
+	# both is how this becomes infinitely recursive.
+	_drag.card_moved.connect(_on_drag_card_moved)
+	_drag.drag_started.connect(_on_drag_started)
+	_drag.drag_stopped.connect(_on_drag_stopped)
+
 	_register_keyboard_actions()
 	_start_new_shift()
 	_report_overlay.restart_pressed.connect(_start_new_shift)
@@ -199,6 +207,80 @@ func _apply(res: Result) -> void:
 	_render()
 	if _shift.is_over():
 		_show_report()
+
+# --- dragging --------------------------------------------------------------
+
+func _on_drag_started(card) -> void:
+	_dragging = card as CardFace3D
+
+func _on_drag_stopped(_card) -> void:
+	_dragging = null
+	if _shift == null:
+		return
+	# DragController keeps working on the card AFTER emitting card_moved: it
+	# restores the card's global_position (so the drop point animates) and
+	# re-enables its collision, both of which undo what _dress() just decided.
+	# Settling here, once the library has finished, is what makes a bounced card
+	# actually fly home instead of sticking where it was dropped.
+	_render()
+	for zone in _all_zones():
+		zone.apply_card_layout()
+
+## A card was dropped somewhere new. Ask the router what that means, run it, and
+## let reconciliation put the node wherever the model ends up saying it belongs.
+##
+## There is deliberately no explicit revert. A refusal costs nothing, so the card
+## is still in shift.hand, so CardHomes still says ZONE_HAND, so _reconcile()
+## walks it back on its own - and tweens it, because _move_card() preserves
+## global_position across the reparent. The bounce IS the reconcile.
+func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: int) -> void:
+	if _shift == null or from_coll == to_coll:
+		# Same collection means a hand reorder. The model has no command for it,
+		# and reconciliation will restore model order on the next render - which
+		# is correct, because the 1-4 keys index the model's hand and a view-only
+		# reorder would quietly break that mapping.
+		return
+
+	var face := card as CardFace3D
+	var plan := DropRouter.plan(_shift, face.uid, _zone_name_of(to_coll))
+	var command: StringName = plan["command"]
+
+	if command == DropRouter.IGNORE:
+		return
+	if command == DropRouter.NONE:
+		_event_log.append_text("[color=red]%s[/color]\n" % plan["reason"])
+		_render()
+		return
+
+	if int(plan["approach"]) >= 0:
+		var move := _shift.approach(int(plan["approach"]))
+		if not move.ok:
+			_apply(move)
+			return
+
+	# MANDATORY, not defensive. approach() burns a tick, a tick fires customer
+	# actions, and a Karen's DiscardHand can take the very card being dragged -
+	# so the index resolved before the move may now point at a different card.
+	var idx := CardIndex.of(_shift, face.uid)
+	if idx == -1:
+		_event_log.append_text(
+			"[color=red]That card left your hand before you could play it.[/color]\n")
+		_render()
+		return
+
+	_apply(_shift.dig(idx) if command == DropRouter.DIG else _shift.play_card(idx))
+
+func _zone_name_of(collection) -> StringName:
+	for i in range(_chair_zones.size()):
+		if collection == _chair_zones[i]:
+			return CardHomes.chair_zone(i)
+	if collection == _hand_zone:
+		return CardHomes.ZONE_HAND
+	if collection == _discard_zone:
+		return CardHomes.ZONE_DISCARD
+	if collection == _draw_zone:
+		return CardHomes.ZONE_DRAW
+	return &"unknown"
 
 # --- rendering -------------------------------------------------------------
 
