@@ -15,7 +15,7 @@ func _scene() -> Node3D:
 func test_the_table_has_every_zone_the_controller_expects() -> void:
 	var s := _scene()
 	for path in ["Table/Chair0", "Table/Chair1", "Table/Chair2",
-			"Table/Draw", "Table/Discard", "Table/Hand"]:
+			"Camera3D/Draw", "Camera3D/Discard", "Camera3D/Hand"]:
 		var n := s.get_node_or_null(NodePath(path))
 		h.check("%s exists" % path, n != null)
 		h.check("%s is a CardCollection3D" % path, n is CardCollection3D)
@@ -25,15 +25,63 @@ func test_the_table_has_every_zone_the_controller_expects() -> void:
 	h.check("a DragController", s.get_node_or_null(^"DragController") is DragController)
 	s.free()
 
+func test_your_things_are_parented_to_the_camera_and_theirs_are_not() -> void:
+	## The load-bearing structural idea: the camera IS the player. Hand, draw and
+	## discard ride with it, so moving to a seat carries them for free and the
+	## seat framing only has to contain the customer and their table.
+	var s := _scene()
+	var cam := s.get_node(^"Camera3D")
+	for mine in ["Hand", "Draw", "Discard"]:
+		h.check("%s belongs to the player, so it hangs off the camera" % mine,
+			s.get_node(NodePath("Camera3D/" + mine)).get_parent() == cam)
+	for theirs in ["Chair0", "Chair1", "Chair2", "Customer0", "Customer1", "Customer2"]:
+		h.check("%s belongs to the world, not to you" % theirs,
+			s.get_node(NodePath("Table/" + theirs)).get_parent() != cam)
+	s.free()
+
+func test_your_things_start_stowed_below_the_frame() -> void:
+	## The floor view shows customers and nothing of yours. These sit below the
+	## bottom of frame at their depth and tween up only once you sit down.
+	var s := _scene()
+	var half_height: float = absf(-11.0) * tan(deg_to_rad(60.0 * 0.5))
+	for mine in ["Hand", "Draw", "Discard"]:
+		var z := s.get_node(NodePath("Camera3D/" + mine)) as Node3D
+		h.check("%s starts out of shot (y %.1f, frame bottom %.1f)"
+			% [mine, z.position.y, -half_height],
+			z.position.y < -half_height)
+		h.check("%s sits in front of the camera" % mine, z.position.z < 0.0)
+	s.free()
+
+func test_each_seat_has_a_customer_card_and_a_framing() -> void:
+	var s := _scene()
+	for i in range(3):
+		var who := s.get_node_or_null(NodePath("Table/Customer%d" % i))
+		h.check("Customer%d exists" % i, who != null)
+		h.check("Customer%d is a customer card" % i, who is CustomerCard3D)
+		h.check("SeatCam%d exists to frame them" % i,
+			s.get_node_or_null(NodePath("SeatCam%d" % i)) is Marker3D)
+	h.check("and a floor framing to return to", s.get_node_or_null(^"CameraFloor") is Marker3D)
+	s.free()
+
+func test_the_log_stops_short_of_the_bottom_strip() -> void:
+	## The discard rises into the bottom of the screen when you sit down. A log
+	## that reached the bottom would sit on top of it.
+	var s := _scene()
+	var log_panel := s.get_node(^"%SidePanel") as Control
+	h.check("the log ends well above the bottom (%d of 1080)"
+		% int(log_panel.position.y + log_panel.size.y),
+		log_panel.position.y + log_panel.size.y <= 760.0)
+	s.free()
+
 func test_the_hand_fans_and_the_piles_stack() -> void:
 	## A fan, following example_battle's staging. FanCardLayout also exports its
 	## arc, so unlike LineCardLayout.max_width those values survive packing.
 	var s := _scene()
-	var fan := (s.get_node(^"Table/Hand") as CardCollection3D).card_layout_strategy
+	var fan := (s.get_node(^"Camera3D/Hand") as CardCollection3D).card_layout_strategy
 	h.check("hand fans", fan is FanCardLayout)
 	h.check("with an arc that actually spread", (fan as FanCardLayout).arc_angle_deg > 0.0)
 	h.check("and a radius", (fan as FanCardLayout).arc_radius > 0.0)
-	for path in ["Table/Chair0", "Table/Draw", "Table/Discard"]:
+	for path in ["Table/Chair0", "Camera3D/Draw", "Camera3D/Discard"]:
 		h.check("%s stacks" % path,
 			(s.get_node(NodePath(path)) as CardCollection3D).card_layout_strategy is PileCardLayout)
 	s.free()
@@ -95,8 +143,9 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	var s := _scene()
 	# Addressed by unique name, not by path: the panel layout is expected to keep
 	# moving, and the controller looks these up the same way.
-	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%CustomerSlot",
-			"%EmptySlotLabel", "%EventLog", "%ReportOverlay", "%SidePanel"]:
+	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
+			"%ReportOverlay", "%SidePanel", "%ModeButton", "%ActionBar",
+			"%OfferPanel", "%AppealBar", "%GapLabel", "%Tooltip"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",
 		(s.get_node(^"%EventLog") as RichTextLabel).bbcode_enabled)

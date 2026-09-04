@@ -1,15 +1,18 @@
 extends SceneTree
 ## Builds res://scenes/cards/customer_front_2d.tscn - the face of a CUSTOMER
-## card, drawn the same way a product card is: 2D UI at 500x700, rendered into a
-## SubViewport and used as the card's albedo.
+## card, drawn as 2D UI at 500x700 and rendered to a texture by the card.
 ##
-## A customer is a card too. That is the whole point of the restructure - who you
-## are talking to should be an object on the table with a face, not a line of
-## text in a side panel.
+## The face has two states. On the floor you see only the bare identity - who
+## they are, what type, how much patience is left. Selecting them expands the
+## card, and the Detail block below the rule unhides: what their archetype does
+## to you, and what is sitting on their table unsigned.
+##
+## Both states live in one scene rather than two, so there is nothing to keep in
+## sync and the expansion is a visibility toggle plus a scale tween.
 
 const W := 500
 const H := 700
-const PAD := 30
+const PAD := 26
 
 func _init() -> void:
 	var root := Control.new()
@@ -34,16 +37,14 @@ func _init() -> void:
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 12)
+	col.add_theme_constant_override("separation", 10)
 	margin.add_child(col)
 	col.owner = root
 
-	# Placeholder art, sized to GODOT_SPEC 7's 64x64 portrait slot scaled up to
-	# this face. Says PORTRAIT rather than being an empty rectangle so the scene
-	# is legible in the editor before anything runs.
+	# --- always visible: who they are ------------------------------------
 	var portrait := PanelContainer.new()
 	portrait.name = "PortraitFrame"
-	portrait.custom_minimum_size = Vector2(0, 250)
+	portrait.custom_minimum_size = Vector2(0, 210)
 	col.add_child(portrait)
 	portrait.owner = root
 
@@ -53,52 +54,91 @@ func _init() -> void:
 	portrait.add_child(portrait_fill)
 	portrait_fill.owner = root
 
-	var portrait_label := _label("PortraitLabel", 34, Palette.color(&"text_dim"))
+	var portrait_label := _label("PortraitLabel", 30, Palette.color(&"text_dim"))
 	portrait_label.text = "PORTRAIT"
 	portrait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	portrait_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	portrait.add_child(portrait_label)
 	portrait_label.owner = root
 
-	var name_label := _label("NameLabel", 46, Palette.color(&"text"))
+	var name_label := _label("NameLabel", 44, Palette.color(&"text"))
+	name_label.text = "Customer Name"
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.custom_minimum_size = Vector2(0, 110)
+	name_label.custom_minimum_size = Vector2(0, 100)
 	col.add_child(name_label)
 	name_label.owner = root
 
-	var arch_label := _label("ArchetypeLabel", 32, Palette.color(&"accent"))
+	var arch_label := _label("ArchetypeLabel", 30, Palette.color(&"accent"))
+	arch_label.text = "Archetype"
 	arch_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(arch_label)
 	arch_label.owner = root
+
+	var patience_bar := ProgressBar.new()
+	patience_bar.name = "PatienceBar"
+	patience_bar.min_value = 0
+	patience_bar.max_value = 16
+	patience_bar.value = 12
+	patience_bar.show_percentage = false
+	patience_bar.custom_minimum_size = Vector2(0, 30)
+	col.add_child(patience_bar)
+	patience_bar.owner = root
+
+	var patience_label := _label("PatienceLabel", 30, Palette.color(&"text"))
+	patience_label.text = "patience 12/16"
+	patience_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(patience_label)
+	patience_label.owner = root
+
+	# --- only once you have selected them --------------------------------
+	var detail := VBoxContainer.new()
+	detail.name = "Detail"
+	detail.visible = false
+	detail.add_theme_constant_override("separation", 6)
+	col.add_child(detail)
+	detail.owner = root
 
 	var rule := ColorRect.new()
 	rule.name = "Rule"
 	rule.custom_minimum_size = Vector2(0, 3)
 	rule.color = Palette.color(&"neutral_2")
-	col.add_child(rule)
+	detail.add_child(rule)
 	rule.owner = root
 
-	# Patience is the number you triage on, so it is on the face rather than
-	# buried in a panel - losing it while negotiating is what made the customer
-	# feel like they had no state at all.
-	var patience_bar := ProgressBar.new()
-	patience_bar.name = "PatienceBar"
-	patience_bar.min_value = 0
-	patience_bar.show_percentage = false
-	patience_bar.custom_minimum_size = Vector2(0, 34)
-	col.add_child(patience_bar)
-	patience_bar.owner = root
-
-	var patience_label := _label("PatienceLabel", 34, Palette.color(&"text"))
-	patience_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(patience_label)
-	patience_label.owner = root
-
-	var line_label := _label("LineLabel", 34, Palette.color(&"appeal"))
+	var line_label := _label("LineLabel", 30, Palette.color(&"appeal"))
+	line_label.text = "THE LINE  ?"
 	line_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(line_label)
+	detail.add_child(line_label)
 	line_label.owner = root
+
+	var does_title := _label("DoesTitle", 22, Palette.color(&"text_dim"))
+	does_title.text = "WHAT THEY DO"
+	detail.add_child(does_title)
+	does_title.owner = root
+
+	var does_label := _label("DoesLabel", 24, Palette.color(&"text"))
+	does_label.text = "(their behaviours show here)"
+	does_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	detail.add_child(does_label)
+	does_label.owner = root
+
+	var table_title := _label("TableTitle", 22, Palette.color(&"text_dim"))
+	table_title.text = "UNSIGNED"
+	detail.add_child(table_title)
+	table_title.owner = root
+
+	var table_label := _label("TableLabel", 24, Palette.color(&"margin"))
+	table_label.text = "(what they have agreed to shows here)"
+	table_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	detail.add_child(table_label)
+	table_label.owner = root
+
+	var known_label := _label("KnownLabel", 22, Palette.color(&"text_dim"))
+	known_label.text = "(what you have learned shows here)"
+	known_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	detail.add_child(known_label)
+	known_label.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)

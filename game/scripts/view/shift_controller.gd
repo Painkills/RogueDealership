@@ -1,40 +1,37 @@
 extends Node3D
 ## The whole game: a 3D card table with a 2D HUD over it.
 ##
-## Two rules hold this file together.
+## Three rules hold this file together.
 ##
-## ONE: the model is authoritative and this never guesses. Every command goes
-## through _apply(), and where a card node ends up is never decided by whoever
-## moved it - it is recomputed from model state by CardHomes afterwards. That is
-## why a customer walking out at zero patience takes their unsigned offer to the
-## discard correctly, even though nothing dragged it there.
+## ONE: THE CAMERA IS THE PLAYER. Your hand, draw and discard are children of
+## Camera3D, stowed below frame. They follow you for free; arriving at a seat
+## only tweens them up in camera-local space. That is why the seat framing has to
+## contain the customer and their table and nothing else.
 ##
-## TWO: cards are matched by uid, never rebuilt. G1's _render() freed and
-## recreated the whole hand every frame; in 3D that would free the node a drag
-## is holding and kill every tween mid-flight. _reconcile() diffs instead.
+## TWO: the model is authoritative and this never guesses. Every command goes
+## through _apply(), and where a card node ends up is recomputed from model state
+## by CardHomes afterwards - never decided by whoever moved it. That is why a
+## customer walking out at zero patience takes their unsigned offer to the
+## discard correctly, though nothing dragged it there.
+##
+## THREE: cards are matched by uid, never rebuilt. Freeing and recreating the
+## hand each render would free the node a drag is holding and kill every tween.
 
 const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
-const FloorCardScene := preload("res://scenes/floor_card.tscn")
-const CustomerPanelScene := preload("res://scenes/customer_panel.tscn")
 
-## Gap in pixels between a chair's card and the info panel drawn under it.
-const FLOOR_CARD_GAP := 14.0
-## Half a card's height in world units, from card_3d.tscn's 2.5 x 3.5 PlaneMesh.
-const CARD_HALF_HEIGHT := 1.75
-const SEAT_PANEL_SIZE := Vector2(320, 224)
-## How long the camera takes to move between the floor and a seat.
-const FRAMING_TWEEN := 0.45
-## Where the seats you are NOT with go while negotiating: a small strip, top
-## left, subordinate to the panel but still readable. GODOT_SPEC.md 6 requires
-## patience and unsigned to stay live for every chair, and a customer walking
-## out unnoticed is the exact frustration that rule exists to prevent.
-const STRIP_ORIGIN := Vector2(28, 78)
-const STRIP_SCALE := 0.55
-const STRIP_GAP := 16.0
-## Must match build_shift_scene.gd's HAND_Y_* - the hand's resting height in
-## each framing.
-const HAND_Y_FLOOR := -13.0
-const HAND_Y_SEAT := -4.4
+## Camera-local resting places. Must match build_shift_scene.gd.
+const HAND_UP := Vector3(0.0, -3.2, -11.0)
+const HAND_STOWED := Vector3(0.0, -12.5, -11.0)
+const DISCARD_UP := Vector3(8.6, -4.4, -11.0)
+const DISCARD_STOWED := Vector3(8.6, -13.5, -11.0)
+const DRAW_UP := Vector3(-8.6, -4.4, -11.0)
+const DRAW_STOWED := Vector3(-8.6, -13.5, -11.0)
+
+const FRAMING_TWEEN := 0.5
+## Your things arrive a beat after the camera settles, so the move reads as
+## travelling and then setting your things down.
+const PILE_TWEEN := 0.4
+const PILE_DELAY := 0.18
 
 @onready var _camera: Camera3D = $Camera3D
 @onready var _camera_floor: Marker3D = %CameraFloor
@@ -47,30 +44,37 @@ const HAND_Y_SEAT := -4.4
 @onready var _tick_label: Label = %TickLabel
 @onready var _banked_label: Label = %BankedLabel
 @onready var _at_risk_label: Label = %AtRiskLabel
-@onready var _customer_slot: Control = %CustomerSlot
-@onready var _empty_slot_label: Label = %EmptySlotLabel
 @onready var _event_log: RichTextLabel = %EventLog
+@onready var _mode_btn: Button = %ModeButton
 @onready var _action_bar: Control = %ActionBar
 @onready var _offer_btn: Button = %OfferButton
 @onready var _drop_btn: Button = %DropButton
 @onready var _close_btn: Button = %CloseButton
+@onready var _offer_panel: Control = %OfferPanel
+@onready var _offer_name: Label = %OfferNameLabel
+@onready var _offer_category: Label = %OfferCategoryLabel
+@onready var _offer_margin: Label = %OfferMarginLabel
+@onready var _gap_label: Label = %GapLabel
+@onready var _known_label: Label = %KnownLabel
+@onready var _appeal_bar: Control = %AppealBar
+@onready var _tooltip: Control = %Tooltip
+@onready var _tooltip_label: Label = %TooltipLabel
 @onready var _report_overlay = %ReportOverlay
 
 var _shift: Shift
 var _chair_zones: Array = []
 var _seat_cams: Array = []
 var _customer_cards: Array = []
-var _framing_tween: Tween
-var _framed_at = null            ## which seat the camera is currently framing
-var _floor_cards: Array = []
-var _customer_panel
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
 var _dragging: CardFace3D = null
+var _framing_tween: Tween
+var _framed_at = null
+var _hovered: int = -1
 var _events_seen: int = 0
 var _actions_seen: int = 0
 
 func _ready() -> void:
-	# Card3D receives mouse input through StaticBody3D.input_event, which does
+	# Card3D takes mouse input through StaticBody3D.input_event, which does
 	# nothing at all unless the viewport is picking. It defaults to false.
 	get_viewport().physics_object_picking = true
 
@@ -78,27 +82,32 @@ func _ready() -> void:
 	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
 
-	# The buttons are the PLAYER's, so they are wired once here rather than
-	# rebuilt with each customer panel. Clicking a customer's card walks you to
-	# them, which is why a seat needs no separate hit target.
-	_offer_btn.pressed.connect(_on_offer)
-	_drop_btn.pressed.connect(_on_drop)
-	_close_btn.pressed.connect(_on_close)
-	for i in range(_customer_cards.size()):
-		_customer_cards[i].card_3d_mouse_down.connect(_on_chair_pressed.bind(i))
 	for zone in _chair_zones:
 		_drag.add_card_collection(zone)
 	_drag.add_card_collection(_hand_zone)
 	_drag.add_card_collection(_draw_zone)
 	_drag.add_card_collection(_discard_zone)
 
-	# Only DragController's card_moved. CardCollection3D has a DIFFERENT signal
-	# of the same name and lower arity for intra-collection reorders, which
-	# move_card() re-emits - and reconciliation calls move_card(). Connecting
-	# both is how this becomes infinitely recursive.
+	# Only DragController's card_moved. CardCollection3D has a same-named signal
+	# of lower arity for reorders which move_card() re-emits - and reconciling
+	# calls move_card(). Connecting both makes this recursive.
 	_drag.card_moved.connect(_on_drag_card_moved)
 	_drag.drag_started.connect(_on_drag_started)
 	_drag.drag_stopped.connect(_on_drag_stopped)
+
+	# These belong to the PLAYER, so they are wired once and outlive any
+	# particular customer.
+	_offer_btn.pressed.connect(_on_offer)
+	_drop_btn.pressed.connect(_on_drop)
+	_close_btn.pressed.connect(_on_close)
+	_mode_btn.pressed.connect(_on_mode_pressed)
+
+	for i in range(_customer_cards.size()):
+		var card = _customer_cards[i]
+		card.chair = i
+		card.card_3d_mouse_down.connect(_on_chair_pressed.bind(i))
+		card.card_3d_mouse_over.connect(_on_customer_hover.bind(i))
+		card.card_3d_mouse_exit.connect(_on_customer_unhover.bind(i))
 
 	_register_keyboard_actions()
 	_start_new_shift()
@@ -135,7 +144,7 @@ func _bind_key(action: StringName, keycode: Key, shift: bool = false) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Never handle mouse here: _unhandled_input runs BEFORE physics picking, so
-	# consuming a click here would take it away from every card on the table.
+	# consuming a click here takes it from every card on the table.
 	if _shift == null or _shift.is_over():
 		return
 	if event.is_action_pressed("dig_1"): _try_dig(0)
@@ -174,34 +183,16 @@ func _start_new_shift() -> void:
 	_actions_seen = 0
 	_event_log.clear()
 	_report_overlay.visible = false
+	_hovered = -1
+	_framed_at = -999                     # force the framing to re-apply
 
 	# The ONLY place card nodes are freed. _reconcile() never frees: a freed node
-	# still referenced by DragController or a collection's `cards` array crashes
-	# the next apply_card_layout().
+	# still held by DragController crashes the next apply_card_layout().
 	_dragging = null
 	for zone in _all_zones():
 		for card in zone.remove_all():
 			card.queue_free()
 	_nodes.clear()
-
-	for c in _floor_cards:
-		c.queue_free()
-	_floor_cards.clear()
-	for i in range(_chair_zones.size()):
-		var fc := FloorCardScene.instantiate()
-		_hud.add_child(fc)
-		fc.size = SEAT_PANEL_SIZE
-		fc.pressed.connect(_on_chair_pressed)
-		_floor_cards.append(fc)
-
-	var preview := _customer_slot.get_node_or_null(^"PanelPreview")
-	if preview != null:
-		preview.free()          # editor-only placeholder; the real one follows
-	if _customer_panel:
-		_customer_panel.queue_free()
-	_customer_panel = CustomerPanelScene.instantiate()
-	_customer_slot.add_child(_customer_panel)
-	_customer_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 	_render()
 
@@ -224,6 +215,25 @@ func _on_close() -> void:
 func _on_drop() -> void:
 	_apply(_shift.drop_offer())
 
+## One button, two jobs. With someone: step back to the floor. On the floor with
+## someone to go back to: return to them. The model makes returning to your LAST
+## customer free, so the label can promise that honestly.
+func _on_mode_pressed() -> void:
+	if _shift.at != null:
+		_apply(_shift.leave())
+		return
+	var back := _last_customer_chair()
+	if back != -1:
+		_apply(_shift.approach(back))
+
+func _last_customer_chair() -> int:
+	if _shift.last_customer == null:
+		return -1
+	for i in range(_shift.chairs.size()):
+		if _shift.chairs[i] != null and _shift.chairs[i] == _shift.last_customer:
+			return i
+	return -1
+
 ## Every model command funnels through here. A refusal costs nothing but must
 ## still say why - "the rules never say no" only holds if the player hears it.
 func _apply(res: Result) -> void:
@@ -232,6 +242,180 @@ func _apply(res: Result) -> void:
 	_render()
 	if _shift.is_over():
 		_show_report()
+
+# --- hover -----------------------------------------------------------------
+
+func _on_customer_hover(chair: int) -> void:
+	_hovered = chair
+	_render_tooltip()
+
+func _on_customer_unhover(chair: int) -> void:
+	if _hovered == chair:
+		_hovered = -1
+	_render_tooltip()
+
+## On the floor a customer card carries only identity, so what they DO lives
+## behind a hover. Once you are with them it is on the expanded card instead,
+## which is why the tooltip is suppressed in that framing.
+func _render_tooltip() -> void:
+	var showing: bool = _hovered != -1 and _shift != null and _shift.at == null \
+		and not _report_overlay.visible and _shift.chairs[_hovered] != null
+	_tooltip.visible = showing
+	if not showing:
+		return
+	var c = _shift.chairs[_hovered]
+	_tooltip_label.text = "%s - %s\n\nWHAT THEY DO\n%s" % [
+		c.display_name, c.archetype.display_name, CustomerCard3D.behaviour_text(c)]
+	var p := _camera.unproject_position(
+		_customer_cards[_hovered].global_position + Vector3(0, -2.2, 0))
+	_tooltip.position = Vector2(
+		clampf(p.x - _tooltip.size.x * 0.5, 16.0, 1904.0 - _tooltip.size.x),
+		clampf(p.y + 16.0, 16.0, 1064.0 - _tooltip.size.y))
+
+# --- framing ---------------------------------------------------------------
+
+## Move between the wide floor shot and one seat, and raise or stow the things
+## that belong to you. The two modes have to LOOK different or nothing tells you
+## which one you are in.
+func _apply_framing() -> void:
+	if _framed_at == _shift.at:
+		return
+	_framed_at = _shift.at
+	var seated: bool = _shift.at != null
+	var target: Node3D = _seat_cams[int(_shift.at)] if seated else _camera_floor
+
+	if _framing_tween != null and _framing_tween.is_running():
+		_framing_tween.kill()
+	_framing_tween = create_tween()
+	_framing_tween.set_parallel(true)
+	_framing_tween.set_ease(Tween.EASE_OUT)
+	_framing_tween.set_trans(Tween.TRANS_CUBIC)
+	_framing_tween.tween_property(_camera, "global_position",
+		target.global_position, FRAMING_TWEEN)
+	_framing_tween.tween_property(_camera, "global_rotation",
+		target.global_rotation, FRAMING_TWEEN)
+
+	# Camera-LOCAL, so this is purely "up into view" or "down out of it" - the
+	# piles are already travelling with the camera for free.
+	var delay: float = PILE_DELAY if seated else 0.0
+	_tween_pile(_hand_zone, HAND_UP if seated else HAND_STOWED, delay)
+	_tween_pile(_discard_zone, DISCARD_UP if seated else DISCARD_STOWED, delay)
+	_tween_pile(_draw_zone, DRAW_UP if seated else DRAW_STOWED, delay)
+
+func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
+	_framing_tween.tween_property(zone, "position", to, PILE_TWEEN).set_delay(delay)
+
+# --- rendering -------------------------------------------------------------
+
+func _render() -> void:
+	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget]
+	_banked_label.text = "banked %s / %s" \
+		% [Format.money(_shift.margin_banked), Format.money(_shift.quota)]
+	var risk: int = _shift.margin_at_risk()
+	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
+		if risk > 0 else "nothing unsigned"
+
+	_apply_framing()
+
+	var seated: bool = _shift.at != null
+	for i in range(_customer_cards.size()):
+		_customer_cards[i].setup(_shift.chairs[i], seated and i == int(_shift.at))
+
+	_render_mode_button(seated)
+	_render_offer(seated)
+	_render_tooltip()
+	_action_bar.visible = seated and not _report_overlay.visible
+	_reconcile()
+	_drain_log()
+
+func _render_mode_button(seated: bool) -> void:
+	if _report_overlay.visible:
+		_mode_btn.visible = false
+		return
+	if seated:
+		_mode_btn.visible = true
+		_mode_btn.text = "< RETURN TO FLOOR"
+		return
+	var back := _last_customer_chair()
+	if back == -1:
+		_mode_btn.visible = false
+		return
+	# Going back to whoever you were last with costs nothing (m2/README.md's
+	# free-return rule), and the label says so because otherwise checking the
+	# floor feels like it must be costing you time.
+	_mode_btn.visible = true
+	_mode_btn.text = "BACK TO %s  (free)" % _shift.chairs[back].display_name
+
+func _render_offer(seated: bool) -> void:
+	if not seated or _report_overlay.visible:
+		_offer_panel.visible = false
+		return
+	var c: Customer = _shift.chairs[int(_shift.at)]
+	_known_label.text = CustomerCard3D.known_text(c)
+	var o = c.offer
+	if o == null:
+		_offer_panel.visible = true
+		_offer_name.text = "nothing on the table"
+		_offer_category.text = "drag a product onto them"
+		_offer_margin.text = ""
+		_gap_label.text = ""
+		_appeal_bar.set_state(0, c.line, 40, "")
+		_position_offer_panel()
+		return
+
+	_offer_panel.visible = true
+	_offer_name.text = o.product.display_name
+	_offer_category.text = "%s . %s" % [o.product.interest.category.display_name,
+		o.product.interest.display_name]
+	_offer_margin.text = Format.money(o.margin)
+
+	if not o.revealed:
+		var band := _shift.band_for(c.line - o.appeal)
+		_appeal_bar.set_state(0, c.line, 40, band)
+		_gap_label.text = band
+		_gap_label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	else:
+		_appeal_bar.set_state(o.appeal, c.line, 40, "")
+		var gap: int = c.line - o.appeal
+		if gap <= 0:
+			_gap_label.text = "READY"
+			_gap_label.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
+		else:
+			_gap_label.text = "%d SHORT" % gap
+			_gap_label.add_theme_color_override("font_color", Palette.color(&"alert"))
+	_position_offer_panel()
+
+## Sits to the LEFT of the product on the table, so the numbers are beside the
+## thing they describe rather than in a panel across the room.
+func _position_offer_panel() -> void:
+	if _shift.at == null:
+		return
+	var slot: Vector3 = _chair_zones[int(_shift.at)].global_position
+	if _camera.is_position_behind(slot):
+		return
+	var p := _camera.unproject_position(slot)
+	_offer_panel.position = Vector2(
+		clampf(p.x - _offer_panel.size.x - 150.0, 16.0, 1904.0 - _offer_panel.size.x),
+		clampf(p.y - _offer_panel.size.y * 0.5, 16.0, 1064.0 - _offer_panel.size.y))
+
+func _drain_log() -> void:
+	for line in _shift.events.slice(_events_seen):
+		_event_log.append_text(line + "\n")
+	_events_seen = _shift.events.size()
+	for entry in _shift.action_log.slice(_actions_seen):
+		var color := "red" if entry["floor_wide"] else "purple"
+		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
+			% [color, entry["customer"], entry["key"], entry["name"],
+				", ".join(entry["descriptions"])])
+	_actions_seen = _shift.action_log.size()
+
+func _show_report() -> void:
+	_report_overlay.visible = true
+	_report_overlay.setup(_shift.report())
+	_action_bar.visible = false
+	_offer_panel.visible = false
+	_tooltip.visible = false
+	_mode_btn.visible = false
 
 # --- dragging --------------------------------------------------------------
 
@@ -243,27 +427,25 @@ func _on_drag_stopped(_card) -> void:
 	if _shift == null:
 		return
 	# DragController keeps working on the card AFTER emitting card_moved: it
-	# restores the card's global_position (so the drop point animates) and
-	# re-enables its collision, both of which undo what _dress() just decided.
-	# Settling here, once the library has finished, is what makes a bounced card
-	# actually fly home instead of sticking where it was dropped.
+	# restores global_position and re-enables collision, undoing what _dress()
+	# decided. Settling here, once it has finished, is what makes a bounced card
+	# fly home instead of sticking where it was dropped.
 	_render()
 	for zone in _all_zones():
 		zone.apply_card_layout()
 
 ## A card was dropped somewhere new. Ask the router what that means, run it, and
-## let reconciliation put the node wherever the model ends up saying it belongs.
+## let reconciliation put the node where the model ends up saying it belongs.
 ##
 ## There is deliberately no explicit revert. A refusal costs nothing, so the card
 ## is still in shift.hand, so CardHomes still says ZONE_HAND, so _reconcile()
-## walks it back on its own - and tweens it, because _move_card() preserves
-## global_position across the reparent. The bounce IS the reconcile.
+## walks it back - tweening, because _move_card() preserves global_position.
+## The bounce IS the reconcile.
 func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: int) -> void:
 	if _shift == null or from_coll == to_coll:
-		# Same collection means a hand reorder. The model has no command for it,
-		# and reconciliation will restore model order on the next render - which
-		# is correct, because the 1-4 keys index the model's hand and a view-only
-		# reorder would quietly break that mapping.
+		# Same collection is a hand reorder. The model has no command for it, and
+		# reconciling restores model order next render - which is right, because
+		# the 1-4 keys index the model's hand.
 		return
 
 	var face := card as CardFace3D
@@ -284,8 +466,7 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 			return
 
 	# MANDATORY, not defensive. approach() burns a tick, a tick fires customer
-	# actions, and a Karen's DiscardHand can take the very card being dragged -
-	# so the index resolved before the move may now point at a different card.
+	# actions, and a Karen's DiscardHand can take the very card being dragged.
 	var idx := CardIndex.of(_shift, face.uid)
 	if idx == -1:
 		_event_log.append_text(
@@ -307,113 +488,6 @@ func _zone_name_of(collection) -> StringName:
 		return CardHomes.ZONE_DRAW
 	return &"unknown"
 
-# --- rendering -------------------------------------------------------------
-
-func _render() -> void:
-	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget]
-	_banked_label.text = "banked %s / %s" \
-		% [Format.money(_shift.margin_banked), Format.money(_shift.quota)]
-	var risk: int = _shift.margin_at_risk()
-	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
-		if risk > 0 else "nothing unsigned"
-
-	_apply_framing()
-	for i in range(_customer_cards.size()):
-		_customer_cards[i].setup(_shift.chairs[i])
-	for i in range(_floor_cards.size()):
-		_floor_cards[i].setup(_shift.chairs[i], _shift.walk_up[i], i)
-	_position_floor_cards()
-
-	if _shift.at != null:
-		var cust: Customer = _shift.chairs[_shift.at]
-		var band := ""
-		if cust.offer != null and not cust.offer.revealed:
-			band = _shift.band_for(cust.line - cust.offer.appeal)
-		_customer_panel.visible = true
-		_empty_slot_label.visible = false
-		_customer_panel.setup(cust, band)
-	else:
-		_customer_panel.visible = false
-		_empty_slot_label.visible = true
-
-	_reconcile()
-	_drain_log()
-
-## Move the camera between the wide floor shot and a single seat. The two modes
-## have to LOOK different or nothing tells you which one you are in; pushing in
-## also makes the hand big enough to read, which no amount of font tuning at the
-## old framing achieved.
-func _apply_framing() -> void:
-	var target: Node3D = _camera_floor
-	if _shift != null and _shift.at != null:
-		target = _seat_cams[int(_shift.at)]
-	if _framed_at == _shift.at:
-		return
-	_framed_at = _shift.at
-	if _framing_tween != null and _framing_tween.is_running():
-		_framing_tween.kill()
-	_framing_tween = create_tween()
-	_framing_tween.set_parallel(true)
-	_framing_tween.set_ease(Tween.EASE_OUT)
-	_framing_tween.set_trans(Tween.TRANS_CUBIC)
-	_framing_tween.tween_property(_camera, "global_position",
-		target.global_position, FRAMING_TWEEN)
-	_framing_tween.tween_property(_camera, "global_rotation",
-		target.global_rotation, FRAMING_TWEEN)
-	# "Your cards come up." The hand is dropped out of the shot on the floor and
-	# lifts into reach when you sit down with someone.
-	var hand_y: float = HAND_Y_SEAT if _shift.at != null else HAND_Y_FLOOR
-	_framing_tween.tween_property(_hand_zone, "position:y", hand_y, FRAMING_TWEEN)
-
-## On the floor, each seat's panel sits under its own seat, so who is where is
-## spatial. While negotiating, the seat you are AT is described by the side
-## panel instead, and the other two shrink into a corner strip - present enough
-## to triage, never lined up as equals with the person in front of you.
-func _position_floor_cards() -> void:
-	var negotiating: bool = _shift.at != null
-	var strip_slot := 0
-	for i in range(_floor_cards.size()):
-		var card: Control = _floor_cards[i]
-		if _report_overlay.visible:
-			card.visible = false
-			continue
-
-		if negotiating:
-			if i == int(_shift.at):
-				card.visible = false          # the side panel describes this seat now
-				continue
-			card.visible = true
-			card.scale = Vector2(STRIP_SCALE, STRIP_SCALE)
-			card.position = STRIP_ORIGIN + Vector2(
-				strip_slot * (SEAT_PANEL_SIZE.x * STRIP_SCALE + STRIP_GAP), 0)
-			strip_slot += 1
-			continue
-
-		card.scale = Vector2.ONE
-		var anchor: Vector3 = _customer_cards[i].global_position + Vector3(0, -CARD_HALF_HEIGHT, 0)
-		if _camera.is_position_behind(anchor):
-			card.visible = false
-			continue
-		card.visible = true
-		var p := _camera.unproject_position(anchor)
-		card.position = Vector2(p.x - card.size.x * 0.5, p.y + FLOOR_CARD_GAP)
-
-func _drain_log() -> void:
-	for line in _shift.events.slice(_events_seen):
-		_event_log.append_text(line + "\n")
-	_events_seen = _shift.events.size()
-	for entry in _shift.action_log.slice(_actions_seen):
-		var color := "red" if entry["floor_wide"] else "purple"
-		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
-			% [color, entry["customer"], entry["key"], entry["name"],
-				", ".join(entry["descriptions"])])
-	_actions_seen = _shift.action_log.size()
-
-func _show_report() -> void:
-	_report_overlay.visible = true
-	_report_overlay.setup(_shift.report())
-	_position_floor_cards()
-
 # --- reconciliation --------------------------------------------------------
 
 func _zone_for(zone: StringName) -> CardCollection3D:
@@ -427,7 +501,7 @@ func _zone_for(zone: StringName) -> CardCollection3D:
 	return _chair_zones[chair] if chair >= 0 and chair < _chair_zones.size() else _discard_zone
 
 ## Diff the table against the model. Adds and moves only what changed; never
-## frees, and never touches the card currently under the cursor.
+## frees, and never touches the card under the cursor.
 func _reconcile() -> void:
 	var desired := CardHomes.desired(_shift)
 
@@ -471,7 +545,7 @@ func _move_card(node: CardFace3D, to_zone: CardCollection3D, ordinal: int) -> vo
 func _dress(node: CardFace3D, zone: StringName) -> void:
 	node.face_down = zone == CardHomes.ZONE_DRAW
 	# Only cards in hand are draggable. A placed product must not intercept the
-	# pointer aimed at the zone it is sitting in.
+	# pointer aimed at the zone it sits in.
 	if zone == CardHomes.ZONE_HAND:
 		node.enable_collision()
 	else:
