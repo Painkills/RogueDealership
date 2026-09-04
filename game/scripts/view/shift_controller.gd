@@ -1,31 +1,77 @@
-extends Control
+extends Node3D
+## The whole game: a 3D card table with a 2D HUD over it.
+##
+## Two rules hold this file together.
+##
+## ONE: the model is authoritative and this never guesses. Every command goes
+## through _apply(), and where a card node ends up is never decided by whoever
+## moved it - it is recomputed from model state by CardHomes afterwards. That is
+## why a customer walking out at zero patience takes their unsigned offer to the
+## discard correctly, even though nothing dragged it there.
+##
+## TWO: cards are matched by uid, never rebuilt. G1's _render() freed and
+## recreated the whole hand every frame; in 3D that would free the node a drag
+## is holding and kill every tween mid-flight. _reconcile() diffs instead.
 
+const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
 const FloorCardScene := preload("res://scenes/floor_card.tscn")
-const HandCardScene := preload("res://scenes/hand_card.tscn")
 const CustomerPanelScene := preload("res://scenes/customer_panel.tscn")
 
+## Gap in pixels between a chair's card and the info panel drawn under it.
+const FLOOR_CARD_GAP := 8.0
+## Half a card's height in world units, from card_3d.tscn's 2.5 x 3.5 PlaneMesh.
+const CARD_HALF_HEIGHT := 1.75
+## How wide the hand may spread, in world units. Must be applied at runtime:
+## LineCardLayout.max_width is a plain var rather than @export, so it serializes
+## as nothing and would silently fall back to the library default of 20 - about
+## twice the width of the space the hand has on screen.
+const HAND_MAX_WIDTH := 9.0
+
+@onready var _camera: Camera3D = $Camera3D
+@onready var _drag: DragController = $DragController
+@onready var _hand_zone: CardCollection3D = %Hand
+@onready var _draw_zone: CardCollection3D = %Draw
+@onready var _discard_zone: CardCollection3D = %Discard
+
+@onready var _hud: Control = %HudRoot
 @onready var _tick_label: Label = %TickLabel
 @onready var _banked_label: Label = %BankedLabel
 @onready var _at_risk_label: Label = %AtRiskLabel
-@onready var _floor_row: HBoxContainer = %FloorRow
 @onready var _customer_slot: Control = %CustomerSlot
 @onready var _empty_slot_label: Label = %EmptySlotLabel
-@onready var _hand_row: HBoxContainer = %HandRow
 @onready var _event_log: RichTextLabel = %EventLog
 @onready var _report_overlay = %ReportOverlay
-@onready var _background: ColorRect = %Background
 
 var _shift: Shift
+var _chair_zones: Array = []
 var _floor_cards: Array = []
 var _customer_panel
+var _nodes: Dictionary = {}          ## uid -> CardFace3D
+var _dragging: CardFace3D = null
 var _events_seen: int = 0
 var _actions_seen: int = 0
 
 func _ready() -> void:
+	# Card3D receives mouse input through StaticBody3D.input_event, which does
+	# nothing at all unless the viewport is picking. It defaults to false.
+	get_viewport().physics_object_picking = true
+
+	var hand_layout := _hand_zone.card_layout_strategy as LineCardLayout
+	if hand_layout != null:
+		hand_layout.max_width = HAND_MAX_WIDTH
+
+	_chair_zones = [%Chair0, %Chair1, %Chair2]
+	for zone in _chair_zones:
+		_drag.add_card_collection(zone)
+	_drag.add_card_collection(_hand_zone)
+	_drag.add_card_collection(_draw_zone)
+	_drag.add_card_collection(_discard_zone)
+
 	_register_keyboard_actions()
-	_background.color = Palette.color(&"bg")
 	_start_new_shift()
 	_report_overlay.restart_pressed.connect(_start_new_shift)
+
+# --- input -----------------------------------------------------------------
 
 func _register_keyboard_actions() -> void:
 	_bind_key(&"card_1", KEY_1)
@@ -55,6 +101,8 @@ func _bind_key(action: StringName, keycode: Key, shift: bool = false) -> void:
 	InputMap.action_add_event(action, ev)
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Never handle mouse here: _unhandled_input runs BEFORE physics picking, so
+	# consuming a click here would take it away from every card on the table.
 	if _shift == null or _shift.is_over():
 		return
 	if event.is_action_pressed("dig_1"): _try_dig(0)
@@ -75,11 +123,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _try_card(index: int) -> void:
 	if index < _shift.hand.size():
-		_on_hand_card_pressed(index)
+		_apply(_shift.play_card(index))
 
 func _try_dig(index: int) -> void:
 	if index < _shift.hand.size():
 		_apply(_shift.dig(index))
+
+# --- lifecycle -------------------------------------------------------------
 
 func _start_new_shift() -> void:
 	var cfg: ShiftConfig = load("res://data/shift_config.tres")
@@ -92,12 +142,22 @@ func _start_new_shift() -> void:
 	_event_log.clear()
 	_report_overlay.visible = false
 
+	# The ONLY place card nodes are freed. _reconcile() never frees: a freed node
+	# still referenced by DragController or a collection's `cards` array crashes
+	# the next apply_card_layout().
+	_dragging = null
+	for zone in _all_zones():
+		for card in zone.remove_all():
+			card.queue_free()
+	_nodes.clear()
+
 	for c in _floor_cards:
 		c.queue_free()
 	_floor_cards.clear()
-	for i in range(3):
+	for i in range(_chair_zones.size()):
 		var fc := FloorCardScene.instantiate()
-		_floor_row.add_child(fc)
+		_hud.add_child(fc)
+		fc.size = Vector2(160, 112)
 		fc.pressed.connect(_on_chair_pressed)
 		_floor_cards.append(fc)
 
@@ -112,6 +172,13 @@ func _start_new_shift() -> void:
 
 	_render()
 
+func _all_zones() -> Array:
+	var out := _chair_zones.duplicate()
+	out.append_array([_hand_zone, _draw_zone, _discard_zone])
+	return out
+
+# --- commands --------------------------------------------------------------
+
 func _on_chair_pressed(chair_index: int) -> void:
 	_apply(_shift.approach(chair_index))
 
@@ -124,15 +191,16 @@ func _on_close() -> void:
 func _on_drop() -> void:
 	_apply(_shift.drop_offer())
 
-func _on_hand_card_pressed(index: int) -> void:
-	_apply(_shift.play_card(index))
-
+## Every model command funnels through here. A refusal costs nothing but must
+## still say why - "the rules never say no" only holds if the player hears it.
 func _apply(res: Result) -> void:
 	if not res.ok:
 		_event_log.append_text("[color=red]%s[/color]\n" % res.msg)
 	_render()
 	if _shift.is_over():
 		_show_report()
+
+# --- rendering -------------------------------------------------------------
 
 func _render() -> void:
 	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget]
@@ -142,8 +210,9 @@ func _render() -> void:
 	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
 		if risk > 0 else "nothing unsigned"
 
-	for i in range(3):
+	for i in range(_floor_cards.size()):
 		_floor_cards[i].setup(_shift.chairs[i], _shift.walk_up[i], i)
+	_position_floor_cards()
 
 	if _shift.at != null:
 		var cust: Customer = _shift.chairs[_shift.at]
@@ -157,15 +226,28 @@ func _render() -> void:
 		_customer_panel.visible = false
 		_empty_slot_label.visible = true
 
-	for child in _hand_row.get_children():
-		child.queue_free()
-	for i in range(_shift.hand.size()):
-		var hc := HandCardScene.instantiate()
-		_hand_row.add_child(hc)
-		hc.setup(_shift.hand[i])
-		hc.index = i
-		hc.pressed.connect(_on_hand_card_pressed.bind(i))
+	_reconcile()
+	_drain_log()
 
+## The 2D info panels chase the 3D chairs, not the other way round: the table is
+## authored geometry, and a Control in a Container would have its position
+## overwritten every layout pass anyway.
+func _position_floor_cards() -> void:
+	for i in range(_floor_cards.size()):
+		var card: Control = _floor_cards[i]
+		if _report_overlay.visible:
+			card.visible = false
+			continue
+		var anchor: Vector3 = _chair_zones[i].global_position \
+			+ Vector3(0, -CARD_HALF_HEIGHT, 0)
+		if _camera.is_position_behind(anchor):
+			card.visible = false
+			continue
+		card.visible = true
+		var p := _camera.unproject_position(anchor)
+		card.position = Vector2(p.x - card.size.x * 0.5, p.y + FLOOR_CARD_GAP)
+
+func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
 		_event_log.append_text(line + "\n")
 	_events_seen = _shift.events.size()
@@ -179,3 +261,67 @@ func _render() -> void:
 func _show_report() -> void:
 	_report_overlay.visible = true
 	_report_overlay.setup(_shift.report())
+	_position_floor_cards()
+
+# --- reconciliation --------------------------------------------------------
+
+func _zone_for(zone: StringName) -> CardCollection3D:
+	if zone == CardHomes.ZONE_HAND:
+		return _hand_zone
+	if zone == CardHomes.ZONE_DRAW:
+		return _draw_zone
+	if zone == CardHomes.ZONE_DISCARD:
+		return _discard_zone
+	var chair := CardHomes.chair_of(zone)
+	return _chair_zones[chair] if chair >= 0 and chair < _chair_zones.size() else _discard_zone
+
+## Diff the table against the model. Adds and moves only what changed; never
+## frees, and never touches the card currently under the cursor.
+func _reconcile() -> void:
+	var desired := CardHomes.desired(_shift)
+
+	for uid in desired:
+		if not _nodes.has(uid):
+			var node: CardFace3D = CardFaceScene.instantiate()
+			node.setup(desired[uid]["instance"])
+			_nodes[uid] = node
+			var home := _zone_for(desired[uid]["zone"])
+			home.insert_card(node, clampi(desired[uid]["ordinal"], 0, home.cards.size()))
+
+	for uid in desired:
+		var node: CardFace3D = _nodes[uid]
+		if node == _dragging:
+			continue
+		# Re-rendered every pass on purpose: a product's margin changes under it
+		# while it sits on the table.
+		node.setup(desired[uid]["instance"])
+		var zone: StringName = desired[uid]["zone"]
+		var home := _zone_for(zone)
+		var ordinal: int = desired[uid]["ordinal"]
+		if node.get_parent() != home:
+			_move_card(node, home, ordinal)
+		elif home == _hand_zone and home.cards.find(node) != ordinal:
+			home.move_card(node, clampi(ordinal, 0, home.cards.size() - 1))
+		_dress(node, zone)
+
+func _move_card(node: CardFace3D, to_zone: CardCollection3D, ordinal: int) -> void:
+	# Preserve where the card was on screen across the reparent, so the layout
+	# tween reads as the card travelling rather than teleporting.
+	var was := node.global_position
+	var from := node.get_parent()
+	if from is CardCollection3D:
+		var at: int = (from as CardCollection3D).cards.find(node)
+		if at != -1:
+			(from as CardCollection3D).remove_card(at)
+	to_zone.insert_card(node, clampi(ordinal, 0, to_zone.cards.size()))
+	node.global_position = was
+	to_zone.apply_card_layout()
+
+func _dress(node: CardFace3D, zone: StringName) -> void:
+	node.face_down = zone == CardHomes.ZONE_DRAW
+	# Only cards in hand are draggable. A placed product must not intercept the
+	# pointer aimed at the zone it is sitting in.
+	if zone == CardHomes.ZONE_HAND:
+		node.enable_collision()
+	else:
+		node.disable_collision()

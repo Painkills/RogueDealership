@@ -1,72 +1,175 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="1_2f8nr"]
-[ext_resource type="PackedScene" path="res://scenes/report.tscn" id="2_drehl"]
-[ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="3_cajfp"]
+[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="1_egunk"]
+[ext_resource type="PackedScene" path="res://addons/card_3d/scenes/card_collection_3d.tscn" id="2_x3st5"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/card_collection_3d.gd" id="3_eipls"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/pile_card_layout.gd" id="4_j6hiy"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/drag_strategy.gd" id="5_08s3a"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/line_card_layout.gd" id="6_y0hlp"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/drag_controller.gd" id="7_v32a1"]
+[ext_resource type="PackedScene" path="res://scenes/report.tscn" id="8_e05yq"]
+[ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="9_v4wb7"]
 
-[node name="ShiftController" type="Control" unique_id=1525654493]
+[sub_resource type="Environment" id="Environment_2ydfi"]
+background_mode = 1
+background_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+
+[sub_resource type="Resource" id="Resource_x10gg"]
+script = ExtResource("4_j6hiy")
+
+[sub_resource type="Resource" id="Resource_0ibvx"]
+script = ExtResource("5_08s3a")
+
+[sub_resource type="Resource" id="Resource_2rsky"]
+script = ExtResource("4_j6hiy")
+
+[sub_resource type="Resource" id="Resource_vd5qx"]
+script = ExtResource("5_08s3a")
+
+[sub_resource type="Resource" id="Resource_bex05"]
+script = ExtResource("4_j6hiy")
+
+[sub_resource type="Resource" id="Resource_4415h"]
+script = ExtResource("5_08s3a")
+
+[sub_resource type="Resource" id="Resource_nnevp"]
+script = ExtResource("4_j6hiy")
+
+[sub_resource type="Resource" id="Resource_g8ksb"]
+script = ExtResource("5_08s3a")
+
+[sub_resource type="Resource" id="Resource_wdnfd"]
+script = ExtResource("4_j6hiy")
+
+[sub_resource type="Resource" id="Resource_gogk5"]
+script = ExtResource("5_08s3a")
+
+[sub_resource type="Resource" id="Resource_rf0hl"]
+script = ExtResource("6_y0hlp")
+
+[sub_resource type="Resource" id="Resource_36dmj"]
+script = ExtResource("5_08s3a")
+
+[node name="ShiftRoot" type="Node3D" unique_id=2138891398]
+script = ExtResource("1_egunk")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1595626870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 13)
+current = true
+fov = 60.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1369166969]
+environment = SubResource("Environment_2ydfi")
+
+[node name="Table" type="Node3D" parent="." unique_id=163598676]
+
+[node name="Chair0" type="Node3D" parent="Table" unique_id=1789369699 instance=ExtResource("2_x3st5")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.2, 0)
+script = ExtResource("3_eipls")
+card_layout_strategy = SubResource("Resource_x10gg")
+drag_strategy = SubResource("Resource_0ibvx")
+
+[node name="Chair1" type="Node3D" parent="Table" unique_id=164634335 instance=ExtResource("2_x3st5")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+script = ExtResource("3_eipls")
+card_layout_strategy = SubResource("Resource_2rsky")
+drag_strategy = SubResource("Resource_vd5qx")
+
+[node name="Chair2" type="Node3D" parent="Table" unique_id=178811495 instance=ExtResource("2_x3st5")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6, 2.2, 0)
+script = ExtResource("3_eipls")
+card_layout_strategy = SubResource("Resource_bex05")
+drag_strategy = SubResource("Resource_4415h")
+
+[node name="Draw" type="Node3D" parent="Table" unique_id=542589764 instance=ExtResource("2_x3st5")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 2.2, 0)
+script = ExtResource("3_eipls")
+card_layout_strategy = SubResource("Resource_nnevp")
+drag_strategy = SubResource("Resource_g8ksb")
+
+[node name="Discard" type="Node3D" parent="Table" unique_id=1238444766 instance=ExtResource("2_x3st5")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 2.2, 0)
+script = ExtResource("3_eipls")
+card_layout_strategy = SubResource("Resource_wdnfd")
+drag_strategy = SubResource("Resource_gogk5")
+
+[node name="Hand" type="Node3D" parent="Table" unique_id=1342053459 instance=ExtResource("2_x3st5")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5.8, 0)
+script = ExtResource("3_eipls")
+card_layout_strategy = SubResource("Resource_rf0hl")
+drag_strategy = SubResource("Resource_36dmj")
+
+[node name="DragController" type="Node3D" parent="." unique_id=1731584773]
+script = ExtResource("7_v32a1")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=817788735]
+
+[node name="HudRoot" type="Control" parent="HUD" unique_id=2133467630]
+unique_name_in_owner = true
 layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="TopBar" type="HBoxContainer" parent="HUD/HudRoot" unique_id=11021579]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 8.0
+offset_bottom = 4.0
+mouse_filter = 2
+theme_override_constants/separation = 24
+
+[node name="TickLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=988800676]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="BankedLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1389410338]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AtRiskLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1706016564]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CustomerSlot" type="Control" parent="HUD/HudRoot" unique_id=1965500224]
+unique_name_in_owner = true
 anchors_preset = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-script = ExtResource("1_2f8nr")
+offset_left = 8.0
+offset_top = 300.0
+offset_right = 300.0
+offset_bottom = 532.0
+mouse_filter = 2
 
-[node name="Background" type="ColorRect" parent="." unique_id=785678344]
-unique_name_in_owner = true
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-
-[node name="Root" type="VBoxContainer" parent="." unique_id=2132737167]
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-
-[node name="TopBar" type="HBoxContainer" parent="Root" unique_id=1602375955]
-layout_mode = 2
-
-[node name="TickLabel" type="Label" parent="Root/TopBar" unique_id=863670361]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="BankedLabel" type="Label" parent="Root/TopBar" unique_id=1370671019]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="AtRiskLabel" type="Label" parent="Root/TopBar" unique_id=1301696750]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="FloorRow" type="HBoxContainer" parent="Root" unique_id=3460165]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="CustomerSlot" type="Control" parent="Root" unique_id=854589298]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 160)
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="EmptySlotLabel" type="Label" parent="Root/CustomerSlot" unique_id=787931645]
+[node name="EmptySlotLabel" type="Label" parent="HUD/HudRoot/CustomerSlot" unique_id=1336894147]
 unique_name_in_owner = true
 layout_mode = 0
 text = "Stand with a customer to negotiate."
 
-[node name="HandRow" type="HBoxContainer" parent="Root" unique_id=29717649]
+[node name="EventLog" type="RichTextLabel" parent="HUD/HudRoot" unique_id=1998610966]
 unique_name_in_owner = true
-layout_mode = 2
-
-[node name="EventLog" type="RichTextLabel" parent="Root" unique_id=1292049002]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
+layout_mode = 0
+offset_left = 660.0
+offset_top = 300.0
+offset_right = 952.0
+offset_bottom = 532.0
+mouse_filter = 2
 bbcode_enabled = true
 scroll_following = true
 
-[node name="ReportOverlay" type="PanelContainer" parent="." unique_id=529154639 instance=ExtResource("2_drehl")]
+[node name="ReportOverlay" type="PanelContainer" parent="HUD/HudRoot" unique_id=529154639 instance=ExtResource("8_e05yq")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource("3_cajfp")
+script = ExtResource("9_v4wb7")

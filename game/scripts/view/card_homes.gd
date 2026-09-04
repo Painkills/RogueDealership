@@ -29,22 +29,27 @@ static func chair_of(zone: StringName) -> int:
 	var tail := String(zone).substr(_CHAIR_PREFIX.length())
 	return int(tail) if tail.is_valid_int() else -1
 
-## uid -> {"zone": StringName, "ordinal": int}
+## uid -> {"zone": StringName, "ordinal": int, "instance": CardInstance}
 ##
 ## `ordinal` orders cards within a zone. It is what the hand fan reads; piles
-## use it only so a reshuffle deals in a stable order.
+## use it only so a reshuffle deals in a stable order. `instance` rides along so
+## reconciliation can re-render a card's face without a second lookup - that is
+## what keeps a product's margin honest while it sits on the table.
 static func desired(shift: Shift) -> Dictionary:
 	var out := {}
 	for i in range(shift.draw.size()):
-		out[shift.draw[i].uid] = {"zone": ZONE_DRAW, "ordinal": i}
+		out[shift.draw[i].uid] = _home(ZONE_DRAW, i, shift.draw[i])
 	for i in range(shift.discard.size()):
-		out[shift.discard[i].uid] = {"zone": ZONE_DISCARD, "ordinal": i}
+		out[shift.discard[i].uid] = _home(ZONE_DISCARD, i, shift.discard[i])
 	# Hand and table last: they are the zones a player can see and act on, so if
 	# the model ever did hold a card in two places at once, the visible one wins.
 	for i in range(shift.hand.size()):
-		out[shift.hand[i].uid] = {"zone": ZONE_HAND, "ordinal": i}
+		out[shift.hand[i].uid] = _home(ZONE_HAND, i, shift.hand[i])
 	for i in range(shift.chairs.size()):
 		var c = shift.chairs[i]
 		if c != null and c.offer != null:
-			out[c.offer.instance.uid] = {"zone": chair_zone(i), "ordinal": 0}
+			out[c.offer.instance.uid] = _home(chair_zone(i), 0, c.offer.instance)
 	return out
+
+static func _home(zone: StringName, ordinal: int, inst: CardInstance) -> Dictionary:
+	return {"zone": zone, "ordinal": ordinal, "instance": inst}
