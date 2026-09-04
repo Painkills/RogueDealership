@@ -275,11 +275,17 @@ seats and the negotiation visible at once. That is not what the game is. The por
 out to be the ceiling on legibility rather than a style choice — a 500×700 card face was landing on
 screen at 125 pixels tall. What follows is the design as built.
 
-**Everything is a card.** A customer is a card. What they do is a second card. A product on the
-table is a card. What that product is worth is a fourth card. There is no HUD panel describing
-anything on the table, because a panel positioned by arithmetic kept landing on top of the thing it
-described, and because two surfaces describing one customer is how a customer's data went missing
-twice.
+**Everything is a card, and every card has a back.** A customer is a card; what they do is that
+card's back. A product on the table is a card; what it is worth is that card's back. A "back" is a
+real second card sitting flush behind the first and facing the other way, so hovering can turn the
+**pair** over and sitting down can bring the back out to sit beside its front. There is no HUD
+panel describing anything on the table, because a panel positioned by arithmetic kept landing on
+top of the thing it described, and because two surfaces describing one customer is how a customer's
+data went missing twice.
+
+Both cards of a pair are the same size. A back that is not the same shape as its front is not a
+back — and equal widths are also what make the customer's margin and the product's margin equal by
+construction rather than by two numbers happening to agree.
 
 **The camera is the player.** Your hand, draw pile and discard are children of `Camera3D`, parked
 below the bottom of frame. They travel with you for free, and arriving at a seat only tweens them
@@ -295,29 +301,29 @@ FLOOR                                     SEAT
 |                                |        | +----------+                   |
 | +------+  +------+  +------+   |        | |< BACK TO |     [log]         |
 | |Sandra|  |Marcus|  |empty |   |        | +----------+                   |
-| |Budget|  |Tech  |  |in 2  |   |        |  +------+ +----------+         |
-| |####--|  |######|  |      |   | [log]  |  |Sandra| | what she | [OFFER] |
-| |on the|  |      |  |      |   |        |  |####--| | does,    | [DROP ] |
-| |table:|  |      |  |      |   |        |  +------+ | unsigned | [CLOSE] |
-| |GAP   |  |      |  |      |   |        |  +------+ +----------+         |
-| +------+  +------+  +------+   |        |  | GAP  | | $1,400   |         |
-|    ^ hover: WHAT THEY DO       |        |  | Ins. | | APPEAL   |         |
-|                                |        |  +------+ | [###|..] |         |
-|                                |        |           +----------+         |
-+--------------------------------+        |  [draw]  ( your hand )  [disc] |
+| |Budget|  |Tech  |  |in 2  |   |        | +--------+ +------+            |
+| |####--|  |######|  |      |   | [log]  | |what she| |Sandra|   [OFFER]  |
+| |on the|  |      |  |      |   |        | |does,   | |Budget|   [DROP ]  |
+| |table:|  |      |  |      |   |        | |unsigned| |####--|   [CLOSE]  |
+| |GAP   |  |      |  |      |   |        | +--------+ +------+            |
+| +------+  +------+  +------+   |        | +--------+ +------+            |
+|  ^ hover: the card TURNS OVER  |        | |$1,400  | | GAP  |            |
+|    to show its back            |        | |APPEAL  | | Ins. |            |
+|                                |        | |[###|..]| |      |            |
++--------------------------------+        | +--------+ +------+            |
+                                          |  [draw]  ( your hand )  [disc] |
                                           +--------------------------------+
 ```
 
 - **Floor.** The three customer cards and the top bar. Identity only: portrait, name, archetype,
   patience, and one status line naming what you have left on their table. Nothing of yours is on
-  screen. Hovering a card shows `WHAT THEY DO` — their actions and tells, built from `describe()`.
-  That is the triage tool: "this one is draining the whole floor" decides who you deal with first,
-  and it should be one mouse-over away rather than a tick.
-- **Seat.** The camera pushes in and slides right. Two detail cards slide out from behind the
-  customer and behind the product slot. Your hand, draw and discard rise into frame a beat later.
-  The hand deliberately runs off the bottom of the screen — a hand small enough to fit entirely
-  inside the strip below the table is a hand you cannot read — and a hovered card lifts fully into
-  view.
+  screen. **Hovering a card turns it over**, and its back is `WHAT THEY DO` — their actions and
+  tells, built from `describe()`. That is the triage tool: "this one is draining the whole floor"
+  decides who you deal with first, and it should be one mouse-over away rather than a tick.
+- **Seat.** The camera pushes in. Both detail cards slide out to the **left** of what they describe
+  and turn face-front as they go. Your hand, draw and discard rise into frame a beat later. The hand
+  deliberately runs off the bottom of the screen — a hand small enough to fit entirely inside the
+  strip below the table is a hand you cannot read — and a hovered card lifts fully into view.
 - **The other two seats are hidden while you negotiate.** They have to be: the seats sit close
   enough together for the floor view to be legible, which puts the neighbours inside the seat
   framing. One big button top-left carries the mode, flipping between `RETURN TO FLOOR` and
@@ -367,17 +373,17 @@ rendered into them through `SubViewport`s, following Card3D's `example_battle`.*
 - **Viewport 1920×1080**, `canvas_items` stretch, Forward+ (`rendering_method.web` pinned to
   `gl_compatibility` so the web export survives). The earlier 960×540 `viewport` figure rendered
   the 3D table at 960×540 and upscaled it, which is where the illegibility came from.
-- **A card is a 2.5 × 3.5 quad** with its face authored as ordinary 2D UI at **500×700** and
-  rendered into a `SubViewport` used as the mesh albedo. A **detail card is 4.0 × 3.5 at 800×700** —
-  wider, because it is all prose, and the seat framing has width to spare while it has no height to
-  spare.
+- **Every card is a 2.5 × 3.5 quad** with its face authored as ordinary 2D UI at **500×700** and
+  rendered into a `SubViewport` used as the mesh albedo. Detail cards included: they are the *backs*
+  of other cards, and a back has to be the same shape as its front.
+- **Every slot is exactly one card too.** A marker slab wider than the card it holds puts the
+  product's visible edge somewhere the customer's is not, and the two margins stop matching.
 - **Cameras are unpitched.** Any tilt foreshortens the one thing the whole view exists to make
   legible. The table reads as a table because of the felt and the lighting, not because the camera
   is leaning over it.
 - **Screen sizes to design against** (verified by `tools/probe_framing.gd`, which asks the camera
-  rather than reasoning about field of view): floor card 317×444 px, seat card 254×356 px, detail
-  card 410×359 px. Font sizes on the faces are chosen so that at those scales body text stays
-  legible.
+  rather than reasoning about field of view): floor card 286×400 px, seat card 255×358 px. Font
+  sizes on the faces are chosen so that at those scales body text stays legible.
 - **Palette:** 16 colours, fixed up front, addressed by *role* so art can change without touching
   code — `bg`, `panel`, `panel_hi`, `text`, `text_dim`, `appeal` (blue), `margin` (gold),
   `patience_ok` (green), `patience_warn` (yellow), `patience_bad` (red), `action` (magenta),

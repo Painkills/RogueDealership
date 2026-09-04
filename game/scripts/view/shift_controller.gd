@@ -56,8 +56,6 @@ const PILE_DELAY := 0.18
 @onready var _offer_btn: Button = %OfferButton
 @onready var _drop_btn: Button = %DropButton
 @onready var _close_btn: Button = %CloseButton
-@onready var _tooltip: Control = %Tooltip
-@onready var _tooltip_label: Label = %TooltipLabel
 @onready var _report_overlay = %ReportOverlay
 
 var _shift: Shift
@@ -65,6 +63,7 @@ var _seats: Array = []               ## one Node3D per seat, hidden when elsewhe
 var _chair_zones: Array = []
 var _seat_cams: Array = []
 var _customer_cards: Array = []
+var _customer_flips: Array = []      ## the pair-turning node, one per seat
 var _customer_details: Array = []
 var _offer_details: Array = []
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
@@ -84,6 +83,7 @@ func _ready() -> void:
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
 	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
+	_customer_flips = [%CustomerFlip0, %CustomerFlip1, %CustomerFlip2]
 	_customer_details = [%CustomerDetail0, %CustomerDetail1, %CustomerDetail2]
 	_offer_details = [%OfferDetail0, %OfferDetail1, %OfferDetail2]
 
@@ -252,30 +252,27 @@ func _apply(res: Result) -> void:
 
 func _on_customer_hover(chair: int) -> void:
 	_hovered = chair
-	_render_tooltip()
+	_render_hover_flip()
 
 func _on_customer_unhover(chair: int) -> void:
 	if _hovered == chair:
 		_hovered = -1
-	_render_tooltip()
+	_render_hover_flip()
 
-## On the floor a customer card carries only identity, so what they DO lives
-## behind a hover. Once you are with them it is on the expanded card instead,
-## which is why the tooltip is suppressed in that framing.
-func _render_tooltip() -> void:
-	var showing: bool = _hovered != -1 and _shift != null and _shift.at == null \
-		and not _report_overlay.visible and _shift.chairs[_hovered] != null
-	_tooltip.visible = showing
-	if not showing:
-		return
-	var c = _shift.chairs[_hovered]
-	_tooltip_label.text = "%s - %s\n\nWHAT THEY DO\n%s" % [
-		c.display_name, c.archetype.display_name, CustomerCard3D.behaviour_text(c)]
-	var p := _camera.unproject_position(
-		_customer_cards[_hovered].global_position + Vector3(0, -2.2, 0))
-	_tooltip.position = Vector2(
-		clampf(p.x - _tooltip.size.x * 0.5, 16.0, 1904.0 - _tooltip.size.x),
-		clampf(p.y + 16.0, 16.0, 1064.0 - _tooltip.size.y))
+## On the floor a customer card carries only identity, so what they DO lives on
+## its BACK: hovering turns the pair over. This replaced a HUD tooltip panel,
+## which had to be positioned somewhere it did not collide with anything, and
+## which - being a Control over a 3D table - is one wrong mouse_filter away from
+## swallowing the very hover that summoned it.
+##
+## Suppressed once you are seated, because there the detail card is already out
+## beside them and turning it over would take away what you came to read.
+func _render_hover_flip() -> void:
+	var floor_view: bool = _shift != null and _shift.at == null \
+		and not _report_overlay.visible
+	for i in range(_customer_flips.size()):
+		_customer_flips[i].show_back(
+			floor_view and i == _hovered and _shift.chairs[i] != null)
 
 # --- framing ---------------------------------------------------------------
 
@@ -317,16 +314,27 @@ func _apply_framing() -> void:
 	_tween_pile(_discard_zone, DISCARD_UP if seated else DISCARD_STOWED, delay)
 	_tween_pile(_draw_zone, DRAW_UP if seated else DRAW_STOWED, delay)
 
-## Hiding a Node3D does NOT disable the Area3D underneath it, so a hidden seat
-## would go on quietly accepting drops - you would drag a card into a customer
-## you cannot see, and be walked over to them. The drop zone goes with the
-## picture.
 func _show_seat(index: int, shown: bool) -> void:
 	_seats[index].visible = shown
-	var zone := _chair_zones[index].get_node_or_null(
-		^"DropZone/CollisionShape3D") as CollisionShape3D
-	if zone != null:
-		zone.disabled = not shown
+
+## NEVER enable a drop zone outside a drag.
+##
+## A CardCollection3D's DropZone is a StaticBody3D on a 14 x 4 slab sitting 3.2
+## units IN FRONT of the cards, and Godot's 3D picking uses intersect_ray, which
+## returns only the CLOSEST collider. An enabled drop zone is therefore a wall:
+## the ray aimed at your hand hits Chair0/DropZone and the card never receives
+## input_event or mouse_entered at all. That is why the addon enables them in
+## _drag_card_start() and disables them again in _stop_drag(), and it is why a
+## previous version of this file - which enabled them to stop hidden seats
+## taking drops - made every card in the game untouchable.
+##
+## The hidden seats still must not take drops, so they are re-disabled HERE
+## instead: DragController emits drag_started after enabling them all, so this
+## runs late enough to win, and its own _stop_drag() disables everything again.
+func _refuse_drops_on_hidden_seats() -> void:
+	for i in range(_chair_zones.size()):
+		if not _seats[i].visible:
+			_chair_zones[i].disable_drop_zone()
 
 func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
 	_framing_tween.tween_property(zone, "position", to, PILE_TWEEN).set_delay(delay)
@@ -349,7 +357,7 @@ func _render() -> void:
 
 	_render_mode_button(seated)
 	_render_details()
-	_render_tooltip()
+	_render_hover_flip()
 	_action_bar.visible = seated and not _report_overlay.visible
 	_reconcile()
 	_drain_log()
@@ -407,8 +415,9 @@ func _show_report() -> void:
 	_report_overlay.visible = true
 	_report_overlay.setup(_shift.report())
 	_action_bar.visible = false
-	_tooltip.visible = false
 	_mode_btn.visible = false
+	_hovered = -1
+	_render_hover_flip()
 	# The camera stays where it is - the overlay covers it - but the table itself
 	# must not be left mid-negotiation underneath, with two thirds of the floor
 	# hidden and two detail cards still slid out over a shift that is finished.
@@ -421,6 +430,7 @@ func _show_report() -> void:
 
 func _on_drag_started(card) -> void:
 	_dragging = card as CardFace3D
+	_refuse_drops_on_hidden_seats()
 
 func _on_drag_stopped(_card) -> void:
 	_dragging = null

@@ -1,21 +1,23 @@
 extends SceneTree
 ## Builds res://scenes/cards/detail_front_2d.tscn - the face of a DETAIL card.
 ##
-## A detail card is the second card that slides out from behind the thing it
-## describes when you sit down with someone. There are two of them per seat and
-## they show different things, but they share one face scene with two mutually
-## exclusive body blocks, for the same reason the customer face used to carry its
-## own two states: one scene cannot drift from itself.
+## A detail card is the second card of a pair: it sits flush behind the thing it
+## describes, facing the other way, so the two read as one card with a front and
+## a back. There are two per seat and they show different things, but they share
+## one face scene with two mutually exclusive body blocks, for the same reason
+## the customer face used to carry its own two states: one scene cannot drift
+## from itself.
 ##
 ##   CustomerBody - what they do, what is unsigned, what you have worked out
 ##   OfferBody    - the product, its margin, and the appeal meter
 ##
-## Wider than a playing card (800x700 on a 4.0 x 3.5 quad) because it is all
-## prose, and the seat framing has width to spare while it has no height to spare.
+## 500x700 on a 2.5 x 3.5 quad, exactly like every other card. It was briefly
+## wider, which broke the illusion the moment the pair flipped: a back that is
+## not the same size as its front is not a back.
 
-const W := 800
+const W := 500
 const H := 700
-const PAD := 30
+const PAD := 24
 
 func _init() -> void:
 	var root := Control.new()
@@ -40,18 +42,18 @@ func _init() -> void:
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 10)
+	col.add_theme_constant_override("separation", 8)
 	margin.add_child(col)
 	col.owner = root
 
 	# --- header, shared by both bodies -----------------------------------
-	var title := _label("TitleLabel", 42, Palette.color(&"text"))
+	var title := _label("TitleLabel", 36, Palette.color(&"text"))
 	title.text = "Detail Card"
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
 	col.add_child(title)
 	title.owner = root
 
-	var sub := _label("SubLabel", 28, Palette.color(&"accent"))
+	var sub := _label("SubLabel", 24, Palette.color(&"accent"))
 	sub.text = "subtitle"
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
 	col.add_child(sub)
@@ -67,7 +69,7 @@ func _init() -> void:
 	# --- theirs ----------------------------------------------------------
 	var who := VBoxContainer.new()
 	who.name = "CustomerBody"
-	who.add_theme_constant_override("separation", 4)
+	who.add_theme_constant_override("separation", 2)
 	col.add_child(who)
 	who.owner = root
 
@@ -82,21 +84,21 @@ func _init() -> void:
 	var what := VBoxContainer.new()
 	what.name = "OfferBody"
 	what.visible = false
-	what.add_theme_constant_override("separation", 6)
+	what.add_theme_constant_override("separation", 4)
 	col.add_child(what)
 	what.owner = root
 
-	var margin_title := _label("MarginTitle", 24, Palette.color(&"text_dim"))
+	var margin_title := _label("MarginTitle", 20, Palette.color(&"text_dim"))
 	margin_title.text = "MARGIN"
 	what.add_child(margin_title)
 	margin_title.owner = root
 
-	var margin_label := _label("MarginLabel", 46, Palette.color(&"margin"))
+	var margin_label := _label("MarginLabel", 40, Palette.color(&"margin"))
 	margin_label.text = "$1,600"
 	what.add_child(margin_label)
 	margin_label.owner = root
 
-	var appeal_title := _label("AppealTitle", 24, Palette.color(&"text_dim"))
+	var appeal_title := _label("AppealTitle", 20, Palette.color(&"text_dim"))
 	appeal_title.text = "APPEAL"
 	what.add_child(appeal_title)
 	appeal_title.owner = root
@@ -105,18 +107,18 @@ func _init() -> void:
 	# with their Line, and the marker only appears once you have earned the Line.
 	var bar := Control.new()
 	bar.name = "AppealBar"
-	bar.custom_minimum_size = Vector2(0, 62)
+	bar.custom_minimum_size = Vector2(0, 54)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.set_script(load("res://scripts/view/appeal_bar.gd"))
 	what.add_child(bar)
 	bar.owner = root
 
-	var status := _label("StatusLabel", 34, Palette.color(&"text"))
+	var status := _label("StatusLabel", 30, Palette.color(&"text"))
 	status.text = "12 SHORT"
 	what.add_child(status)
 	status.owner = root
 
-	var hint := _label("HintLabel", 24, Palette.color(&"text_dim"))
+	var hint := _label("HintLabel", 20, Palette.color(&"text_dim"))
 	hint.text = "offer, or read the room, to learn their Line"
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
 	what.add_child(hint)
@@ -135,12 +137,12 @@ func _init() -> void:
 
 func _section(parent: Node, root: Node, title_name: String, title_text: String,
 		body_name: String, body_text: String, body_role: StringName) -> void:
-	var t := _label(title_name, 24, Palette.color(&"text_dim"))
+	var t := _label(title_name, 20, Palette.color(&"text_dim"))
 	t.text = title_text
 	parent.add_child(t)
 	t.owner = root
 
-	var b := _label(body_name, 30, Palette.color(body_role))
+	var b := _label(body_name, 25, Palette.color(body_role))
 	b.text = body_text
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD
 	parent.add_child(b)

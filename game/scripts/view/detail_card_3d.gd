@@ -11,14 +11,19 @@ class_name DetailCard3D extends Card3D
 ## Never dragged, never dropped on. Collision is disabled for its whole life, so
 ## it can never intercept a pointer aimed at the product slot it sits beside.
 
-const FRONT_SIZE := Vector2i(800, 700)
-## Wider than a playing card. Height is what the seat framing is short of, and
-## width is what it has spare, so the prose card spends the width.
-const CARD_SIZE := Vector2(4.0, 3.5)
-## Card half-widths plus a gutter: 1.25 (partner) + 2.0 (self) + gutter.
-const SLIDE_OUT := Vector3(3.47, 0.0, 0.12)
+const FRONT_SIZE := Vector2i(500, 700)
+## Exactly the size of the card it hides behind. A back that is not the same
+## shape as its front is not a back, and the pair has to read as one card.
+const CARD_SIZE := Vector2(2.5, 3.5)
+## LEFT, and far enough that the two half-widths plus a gutter clear. Because
+## both cards are the same width, the same offset gives the customer pair and
+## the product pair an identical margin - it is equal by construction rather
+## than by two numbers agreeing.
+const SLIDE_OUT := Vector3(-2.75, 0.0, 0.03)
 const SLIDE_TWEEN := 0.42
-const SLIDE_DELAY := 0.16
+## Late enough that a pair flipped by hover has finished turning back to face
+## front before this starts moving it - see FlipPair.FLIP_TWEEN.
+const SLIDE_DELAY := 0.32
 
 var _material := StandardMaterial3D.new()
 var _bound := false
@@ -36,11 +41,15 @@ var _status: Label
 var _hint: Label
 
 var _home: Vector3
+var _home_rotation: Vector3
 var _slide_tween: Tween
 var _out := false
 
 func _ready() -> void:
+	# Authored FACING AWAY at home, so at rest it is the back of the card in
+	# front of it. Coming out is a turn as well as a move.
 	_home = position
+	_home_rotation = rotation
 	disable_collision()
 	_bind()
 	_redraw.call_deferred()
@@ -134,9 +143,10 @@ static func meter_scale(appeal: int, line: int) -> int:
 
 # --- where it sits ---------------------------------------------------------
 
-## Out to the right, or back behind its partner. Delayed on the way out so the
-## camera has begun to settle first - the card arriving reads as a consequence
-## of sitting down rather than a thing that happened at the same time.
+## Out to the left and face-front, or back behind its partner and facing away.
+## Delayed on the way out so the camera has begun to settle first - the card
+## arriving reads as a consequence of sitting down rather than something that
+## happened at the same time.
 func reveal(want: bool) -> void:
 	if _out == want:
 		return
@@ -144,11 +154,16 @@ func reveal(want: bool) -> void:
 	if _slide_tween != null and _slide_tween.is_valid() and _slide_tween.is_running():
 		_slide_tween.kill()
 	var to: Vector3 = _home + SLIDE_OUT if want else _home
+	# Turning to face you is half the move. Without it the card would arrive
+	# beside its partner still showing its own back.
+	var to_rot: Vector3 = Vector3.ZERO if want else _home_rotation
+	var delay: float = SLIDE_DELAY if want else 0.0
 	_slide_tween = create_tween()
+	_slide_tween.set_parallel(true)
 	_slide_tween.set_ease(Tween.EASE_OUT)
 	_slide_tween.set_trans(Tween.TRANS_CUBIC)
-	_slide_tween.tween_property(self, "position", to, SLIDE_TWEEN) \
-		.set_delay(SLIDE_DELAY if want else 0.0)
+	_slide_tween.tween_property(self, "position", to, SLIDE_TWEEN).set_delay(delay)
+	_slide_tween.tween_property(self, "rotation", to_rot, SLIDE_TWEEN).set_delay(delay)
 
 func is_out() -> bool:
 	return _out

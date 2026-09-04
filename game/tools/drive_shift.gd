@@ -39,7 +39,9 @@ func _init() -> void:
 	_controller = (load("res://scenes/shift.tscn") as PackedScene).instantiate()
 	get_root().add_child(_controller)
 
-func _process(_delta: float) -> bool:
+## _physics_process, not _process: the pick checks query the physics space, and
+## the space state is only valid to query during a physics frame.
+func _physics_process(_delta: float) -> bool:
 	if _done:
 		return true
 	_done = true
@@ -55,10 +57,13 @@ func _process(_delta: float) -> bool:
 	_check_the_player_rides_the_camera()
 	_check_floor_view_is_bare()
 	_check_the_floor_cards_are_big_enough_to_read()
+	_check_you_can_actually_click_the_customers()
+	_check_hovering_a_customer_turns_their_card_over()
 	_check_table("on arrival")
 
 	_press(KEY_A)
 	_settle()
+	_check_you_can_actually_click_your_hand()
 	_check_seat_view_brings_your_things_up()
 	_check_only_the_seat_you_are_at_is_showing()
 	_check_the_detail_cards_slid_out_clear()
@@ -122,7 +127,41 @@ func _settle() -> void:
 		var st = card._slide_tween
 		if st != null and st.is_valid() and st.is_running():
 			st.custom_step(2.0)
+
+	# A tween writes to the NODE; the physics server only learns about it when
+	# the transform is flushed, which normally happens between frames. The pick
+	# checks run inside this same frame, so flush by hand or every ray reports
+	# "hit nothing" against colliders that are simply still at last frame's
+	# position - a false failure that looks exactly like the real bug.
+	for flip in _controller._customer_flips:
+		var ft = flip._tween
+		if ft != null and ft.is_valid() and ft.is_running():
+			ft.custom_step(2.0)
+
 	_controller._camera.force_update_transform()
+	for flip in _controller._customer_flips:
+		(flip as Node3D).force_update_transform()
+	for card in _controller._customer_details + _controller._offer_details:
+		_flush(card)
+	for zone in _controller._all_zones():
+		zone.force_update_transform()
+		for card in zone.cards:
+			_flush(card)
+	for card in _controller._customer_cards:
+		_flush(card)
+
+func _flush(node: Node3D) -> void:
+	# Each card also owns the tween that walks it to its place in the layout.
+	# Leave those unstepped and the whole hand is still stacked on the
+	# collection's origin, so every card unprojects to the same pixel.
+	if node is Card3D:
+		var pt = (node as Card3D).position_tween
+		if pt != null and pt.is_valid() and pt.is_running():
+			pt.custom_step(2.0)
+	node.force_update_transform()
+	var body := node.get_node_or_null(^"StaticBody3D") as Node3D
+	if body != null:
+		body.force_update_transform()
 
 # --- geometry --------------------------------------------------------------
 
@@ -152,6 +191,77 @@ func _frame_half_height() -> float:
 func _at() -> int:
 	return int(_controller._shift.at)
 
+# --- can you touch it ------------------------------------------------------
+
+## The reported bug, and the most expensive one this project has shipped: "the
+## cards are untouchable, they do not respond to hover nor clicks."
+##
+## Godot's 3D picking fires ONE ray and takes the CLOSEST collider, so anything
+## in front of a card silently owns every click meant for it. What was in front
+## was a CardCollection3D DropZone - a StaticBody3D on a 14 x 4 slab, 3.2 units
+## nearer the camera than the cards - left enabled outside a drag by a previous
+## version of shift_controller.gd.
+##
+## So this asks the physics space the same question the engine asks, rather than
+## asking the scene tree a question that was never the one that mattered.
+func _picks(node: Node3D) -> Node:
+	var cam: Camera3D = _controller._camera
+	if cam.is_position_behind(node.global_position):
+		return null
+	var p := cam.unproject_position(node.global_position)
+	var from := cam.project_ray_origin(p)
+	var q := PhysicsRayQueryParameters3D.create(
+		from, from + cam.project_ray_normal(p) * 200.0)
+	q.collide_with_areas = true
+	q.collide_with_bodies = true
+	var hit := get_root().world_3d.direct_space_state.intersect_ray(q)
+	return hit["collider"] if not hit.is_empty() else null
+
+func _check_picks(label: String, node: Node3D) -> void:
+	var hit := _picks(node)
+	var owner_node: Node = hit.get_parent() if hit != null else null
+	_check("clicking %s reaches it, not %s"
+		% [label, "nothing at all" if hit == null else hit.get_path()],
+		owner_node == node)
+
+func _check_you_can_actually_click_the_customers() -> void:
+	for i in range(3):
+		_check_picks("customer %d on the floor" % i, _controller._customer_cards[i])
+	_check_no_drop_zone_is_armed("on the floor")
+
+func _check_you_can_actually_click_your_hand() -> void:
+	var hand: CardCollection3D = _controller._hand_zone
+	if hand.cards.is_empty():
+		_check("there are cards in hand to click", false)
+		return
+	# Aimed at each card's centre, but only required to reach SOME card in the
+	# hand: they are fanned, so every card but the topmost has its middle
+	# covered by its neighbour, and you click the sliver that is showing. What
+	# must never happen is the ray reaching a drop zone, or nothing at all.
+	for card in hand.cards:
+		var hit := _picks(card)
+		var reached: Node = hit.get_parent() if hit != null else null
+		_check("a hand card's pixels belong to the hand, not to %s"
+			% ("nothing at all" if hit == null else hit.get_path()),
+			reached != null and hand.cards.has(reached))
+	# The topmost card of the fan has nothing over it, so it must resolve to
+	# exactly itself - which is the strict form of the same question.
+	_check_picks("the top card of the fan", hand.cards[hand.cards.size() - 1])
+	_check_picks("the customer you are sitting with",
+		_controller._customer_cards[_at()])
+	_check_no_drop_zone_is_armed("at a seat")
+
+## The permanent guard. A drop zone armed outside a drag is a wall in front of
+## the whole table, and it is invisible - nothing on screen says why the game
+## stopped responding.
+func _check_no_drop_zone_is_armed(when: String) -> void:
+	var armed: Array[String] = []
+	for zone in _controller._all_zones():
+		if not (zone.get_node(^"DropZone/CollisionShape3D") as CollisionShape3D).disabled:
+			armed.append(String(zone.name))
+	_check("%s, with no card in hand-to-table flight, no drop zone is armed (%s)"
+		% [when, "none" if armed.is_empty() else ", ".join(armed)], armed.is_empty())
+
 # --- the floor -------------------------------------------------------------
 
 func _check_the_player_rides_the_camera() -> void:
@@ -176,6 +286,39 @@ func _check_floor_view_is_bare() -> void:
 		_check("seat %d keeps its detail cards tucked away" % i,
 			not _controller._customer_details[i].is_out()
 				and not _controller._offer_details[i].is_out())
+
+## The hover tooltip is gone; what a customer DOES is the back of their card.
+## The pair has to turn as one, or you see the back of the front card and
+## nothing else - which is why the flip lives on the parent and not the cards.
+func _check_hovering_a_customer_turns_their_card_over() -> void:
+	var flip = _controller._customer_flips[1]
+	var detail: DetailCard3D = _controller._customer_details[1]
+	var card: CustomerCard3D = _controller._customer_cards[1]
+
+	_check("at rest the pair is face-front", not flip.showing_back())
+	_check("with the detail card tucked behind (%.2f < %.2f)"
+		% [detail.global_position.z, card.global_position.z],
+		detail.global_position.z < card.global_position.z)
+
+	_controller._on_customer_hover(1)
+	_settle()
+	_check("hovering turns it over", flip.showing_back())
+	_check("and the detail card is now the one in front (%.2f > %.2f)"
+		% [detail.global_position.z, card.global_position.z],
+		detail.global_position.z > card.global_position.z)
+	_check("the customer card is still clickable through the turned pair",
+		_picks(card) != null and _picks(card).get_parent() == card)
+	# Only the card you are pointing at.
+	_check("the seats you are not pointing at stay face-front",
+		not _controller._customer_flips[0].showing_back()
+			and not _controller._customer_flips[2].showing_back())
+
+	_controller._on_customer_unhover(1)
+	_settle()
+	_check("and it turns back when you look away", not flip.showing_back())
+	_check("with the detail behind again (%.2f < %.2f)"
+		% [detail.global_position.z, card.global_position.z],
+		detail.global_position.z < card.global_position.z)
 
 ## The reported bug, in its own words: "when zoomed out its TOO far and is
 ## illegible". The card face is authored at 500x700, so anything under about
@@ -207,33 +350,64 @@ func _check_only_the_seat_you_are_at_is_showing() -> void:
 		_check("seat %d is %s while you are at %d"
 			% [i, "showing" if i == _at() else "hidden", _at()],
 			_controller._seats[i].visible == (i == _at()))
-		# Hiding a Node3D leaves its Area3D live, so a hidden seat would keep
-		# taking drops: you would drag a card into someone you cannot see.
+
+	# A hidden seat must still refuse drops - you should not be able to drag a
+	# card into a customer you cannot see. That is enforced DURING the drag,
+	# after DragController has armed everything, because arming a drop zone
+	# outside a drag walls off the entire table. Simulate the drag start.
+	_controller._on_drag_started(null)
+	for i in range(3):
 		var zone := _controller._chair_zones[i].get_node(
 			^"DropZone/CollisionShape3D") as CollisionShape3D
-		_check("and seat %d %s take a drop" % [i, "can" if i == _at() else "cannot"],
-			zone.disabled == (i != _at()))
+		if i == _at():
+			continue
+		_check("hidden seat %d refuses a drop even mid-drag" % i, zone.disabled)
+	_controller._on_drag_stopped(null)
+	_check_no_drop_zone_is_armed("once the drag is over")
 
 func _check_the_detail_cards_slid_out_clear() -> void:
 	var at := _at()
+	var margins: Array[float] = []
+	# You reach a seat by CLICKING a customer, which means you were hovering them,
+	# which means their pair was turned over. It has to turn back before the
+	# detail card slides, or the slide happens in a mirrored space and the card
+	# travels the wrong way.
+	_check("arriving turns the pair back to face front",
+		not _controller._customer_flips[at].showing_back())
 	for pair in [["customer", _controller._customer_details[at],
-				_controller._customer_cards[at], CARD],
+				_controller._customer_cards[at]],
 			["offer", _controller._offer_details[at],
-				_controller._chair_zones[at], CARD]]:
+				_controller._chair_zones[at]]]:
 		var detail: Node3D = pair[1]
 		var partner: Node3D = pair[2]
 		_check("the %s detail card slid out from behind" % pair[0],
 			detail.is_out() and not detail.position.is_equal_approx(detail.home()))
+		# It comes out facing the other way and has to turn as it goes, or it
+		# arrives beside its partner still showing its own back.
+		_check("and turned to face front (%s)" % detail.rotation,
+			detail.rotation.is_equal_approx(Vector3.ZERO))
 
 		var d := _rect_of(detail, DetailCard3D.CARD_SIZE)
-		var p := _rect_of(partner, pair[3])
-		_check("and it is clear of what it describes (detail x %d.., partner ends %d)"
-			% [int(d.position.x), int(p.end.x)], d.position.x >= p.end.x)
-		_check("on the RIGHT of it, as designed", d.position.x > p.position.x)
+		var p := _rect_of(partner, CARD)
+		_check("and it is clear of what it describes (detail ends %d, partner starts %d)"
+			% [int(d.end.x), int(p.position.x)], d.end.x <= p.position.x)
+		_check("on the LEFT of it, as designed", d.position.x < p.position.x)
 		_check("not on top of it", not d.intersects(p))
+		_check("and it is the same size as what it hides behind (%d x %d vs %d x %d)"
+			% [int(d.size.x), int(d.size.y), int(p.size.x), int(p.size.y)],
+			absf(d.size.x - p.size.x) < 2.0 and absf(d.size.y - p.size.y) < 2.0)
 		_on_screen("%s detail card" % pair[0], d)
 		_check("%s detail stays out of the log's column (ends %d)"
 			% [pair[0], int(d.end.x)], d.end.x <= LOG_EDGE)
+		margins.append(p.position.x - d.end.x)
+
+	# "There should be an equal margin between the main cards and the detail
+	# cards for both product and customer." It is the same offset applied to two
+	# slots of the same width, so this is really checking that the SLOT is still
+	# card-sized - a wider slab behind the product would put its visible edge
+	# somewhere the customer's is not.
+	_check("the two margins match (customer %.0f px, product %.0f px)"
+		% [margins[0], margins[1]], absf(margins[0] - margins[1]) < 2.0)
 
 	for i in range(3):
 		if i == at:

@@ -37,29 +37,64 @@ func test_a_seat_is_one_node_so_the_other_two_can_be_hidden() -> void:
 		h.check("Seat%d is one node" % i, seat != null)
 		if seat == null:
 			continue
-		for child in ["Customer%d" % i, "CustomerDetail%d" % i,
+		for child in ["CustomerFlip%d/Customer%d" % [i, i],
+				"CustomerFlip%d/CustomerDetail%d" % [i, i],
 				"Chair%d" % i, "OfferDetail%d" % i]:
 			h.check("%s hangs off it, so hiding the seat hides it too" % child,
 				seat.get_node_or_null(NodePath(child)) != null)
 	s.free()
 
-func test_the_detail_cards_start_tucked_behind_their_partner() -> void:
-	## "A second card which was hidden behind it, slides out to the right." It is
-	## hidden by being flush behind an opaque card of its own kind - no visibility
-	## flag to get wrong, and nothing to pop when the framing changes.
+func test_a_customer_and_their_sheet_turn_over_together() -> void:
+	## Flipping the two cards INDIVIDUALLY cannot work: the front card is still
+	## the front card afterwards, so all you would see is its own back. The pair
+	## has to turn, which is what putting them under one node buys.
 	var s := _scene()
-	for pair in [["Customer", ""], ["Chair", "Offer"]]:
-		for i in range(3):
-			var front := s.get_node(
-				NodePath("Table/Seat%d/%s%d" % [i, pair[0], i])) as Node3D
-			var detail := s.get_node(NodePath("Table/Seat%d/%sDetail%d"
-				% [i, "Customer" if pair[1] == "" else pair[1], i])) as Node3D
-			h.check("%s detail %d shares its partner's x and y" % [pair[0], i],
+	for i in range(3):
+		var flip := s.get_node_or_null(
+			NodePath("Table/Seat%d/CustomerFlip%d" % [i, i])) as Node3D
+		h.check("CustomerFlip%d exists" % i, flip != null)
+		h.check("and it is the thing that knows how to turn over",
+			flip != null and flip.has_method("show_back"))
+		h.check("holding both halves of the pair", flip != null
+			and flip.get_node_or_null(NodePath("Customer%d" % i)) != null
+			and flip.get_node_or_null(NodePath("CustomerDetail%d" % i)) != null)
+		h.check("and starting face-front", flip != null
+			and flip.rotation.is_equal_approx(Vector3.ZERO))
+	s.free()
+
+func test_every_slot_is_exactly_one_card_wide() -> void:
+	## "There should be an equal margin between the main cards and the detail
+	## cards for both product and customer." The detail comes out by one fixed
+	## offset, so the margins can only differ if the two slots are different
+	## widths - and the product's marker slab used to be wider than its card.
+	var s := _scene()
+	for i in range(3):
+		var slab := s.get_node(
+			NodePath("Table/Seat%d/Chair%d/ZoneSlab" % [i, i])) as MeshInstance3D
+		h.eq("seat %d's slot is exactly a card, so its visible edge is where the "
+			% i + "customer's is", (slab.mesh as QuadMesh).size, CARD)
+	s.free()
+
+func test_the_detail_cards_start_tucked_behind_their_partner() -> void:
+	## "The detail cards are hidden behind the main card." Hidden by being flush
+	## behind an opaque card of its own size, facing the other way - so it is
+	## literally that card's back. No visibility flag to get wrong, and nothing to
+	## pop when the framing changes.
+	var s := _scene()
+	for i in range(3):
+		for pair in [["Seat%d/CustomerFlip%d/Customer%d" % [i, i, i],
+					"Seat%d/CustomerFlip%d/CustomerDetail%d" % [i, i, i]],
+				["Seat%d/Chair%d" % [i, i], "Seat%d/OfferDetail%d" % [i, i]]]:
+			var front := s.get_node(NodePath("Table/" + pair[0])) as Node3D
+			var detail := s.get_node(NodePath("Table/" + pair[1])) as Node3D
+			h.check("%s shares its partner's x and y" % detail.name,
 				is_equal_approx(front.position.x, detail.position.x)
 					and is_equal_approx(front.position.y, detail.position.y))
 			h.check("and sits BEHIND it (%.2f < %.2f)"
 				% [detail.position.z, front.position.z],
 				detail.position.z < front.position.z)
+			h.check("facing the other way, so it IS the back of that card (%s)"
+				% detail.rotation, is_equal_approx(absf(detail.rotation.y), PI))
 	s.free()
 
 func test_a_detail_card_slides_completely_clear_of_what_it_describes() -> void:
@@ -67,13 +102,16 @@ func test_a_detail_card_slides_completely_clear_of_what_it_describes() -> void:
 	## kept landing on top of the product it was describing. Now it is geometry -
 	## and geometry can be checked.
 	var s := _scene()
-	var gap: float = DetailCard3D.SLIDE_OUT.x \
+	var gap: float = absf(DetailCard3D.SLIDE_OUT.x) \
 		- (CARD.x * 0.5 + DetailCard3D.CARD_SIZE.x * 0.5)
 	h.check("slid out, the detail card clears its partner by %.2f" % gap, gap > 0.0)
+	h.check("and it goes LEFT, which is the side the seat framing leaves room on",
+		DetailCard3D.SLIDE_OUT.x < 0.0)
 	var mesh := (s.get_node(^"%CustomerDetail0/CardMesh/CardFrontMesh")
 		as MeshInstance3D).mesh as PlaneMesh
 	h.eq("and the quad really is the size the slide assumes",
 		mesh.size, DetailCard3D.CARD_SIZE)
+	h.eq("which is the size of the card it hides behind", DetailCard3D.CARD_SIZE, CARD)
 	s.free()
 
 func test_the_customer_row_cannot_overlap_the_product_row() -> void:
@@ -83,9 +121,14 @@ func test_the_customer_row_cannot_overlap_the_product_row() -> void:
 	## gone, and this pins the clearance that made them possible.
 	var s := _scene()
 	for i in range(3):
-		var who := s.get_node(NodePath("Table/Seat%d/Customer%d" % [i, i])) as Node3D
+		# Seat-local, summed by hand: the customer now hangs off the flip node, so
+		# its own position.y is zero and comparing the two raw locals would say
+		# the rows are on top of each other whatever the layout does.
+		var flip := s.get_node(NodePath("Table/Seat%d/CustomerFlip%d" % [i, i])) as Node3D
+		var who := s.get_node(NodePath("Table/Seat%d/CustomerFlip%d/Customer%d"
+			% [i, i, i])) as Node3D
 		var chair := s.get_node(NodePath("Table/Seat%d/Chair%d" % [i, i])) as Node3D
-		var apart: float = absf(who.position.y - chair.position.y)
+		var apart: float = absf(flip.position.y + who.position.y - chair.position.y)
 		h.check("seat %d keeps the two rows %.2f apart, clear of a %.2f card"
 			% [i, apart, CARD.y], apart > CARD.y)
 		h.check("and the customer card is unscaled, so it stays that way",
@@ -101,8 +144,9 @@ func test_your_things_are_parented_to_the_camera_and_theirs_are_not() -> void:
 		h.check("%s belongs to the player, so it hangs off the camera" % mine,
 			s.get_node(NodePath("Camera3D/" + mine)).get_parent() == cam)
 	for i in range(3):
-		for theirs in ["Chair%d" % i, "Customer%d" % i, "CustomerDetail%d" % i,
-				"OfferDetail%d" % i]:
+		for theirs in ["Chair%d" % i, "OfferDetail%d" % i,
+				"CustomerFlip%d/Customer%d" % [i, i],
+				"CustomerFlip%d/CustomerDetail%d" % [i, i]]:
 			h.check("%s belongs to the world, not to you" % theirs,
 				s.get_node(NodePath("Table/Seat%d/%s" % [i, theirs])).get_parent() != cam)
 	s.free()
@@ -154,11 +198,11 @@ func test_the_cameras_are_flat_on() -> void:
 func test_each_seat_has_a_customer_card_and_a_framing() -> void:
 	var s := _scene()
 	for i in range(3):
-		var who := s.get_node_or_null(NodePath("Table/Seat%d/Customer%d" % [i, i]))
+		var who := s.get_node_or_null(NodePath("Table/Seat%d/CustomerFlip%d/Customer%d" % [i, i, i]))
 		h.check("Customer%d exists" % i, who != null)
 		h.check("Customer%d is a customer card" % i, who is CustomerCard3D)
 		h.check("CustomerDetail%d is a detail card" % i,
-			s.get_node_or_null(NodePath("Table/Seat%d/CustomerDetail%d" % [i, i]))
+			s.get_node_or_null(NodePath("Table/Seat%d/CustomerFlip%d/CustomerDetail%d" % [i, i, i]))
 				is DetailCard3D)
 		h.check("OfferDetail%d is a detail card" % i,
 			s.get_node_or_null(NodePath("Table/Seat%d/OfferDetail%d" % [i, i]))
@@ -250,7 +294,7 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	# moving, and the controller looks these up the same way.
 	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
 			"%ReportOverlay", "%SidePanel", "%ModeButton", "%ActionBar",
-			"%Tooltip", "%Seat0", "%CustomerDetail0", "%OfferDetail0"]:
+			"%Seat0", "%CustomerFlip0", "%CustomerDetail0", "%OfferDetail0"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",
 		(s.get_node(^"%EventLog") as RichTextLabel).bbcode_enabled)

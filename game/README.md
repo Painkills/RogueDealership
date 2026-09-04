@@ -191,10 +191,11 @@ chairs** — those are the triage inputs, and hiding them would create
 frustration instead of tension. Negotiation detail — the appeal bar, their
 Line, what ranks you've learned — is drawn **only for the customer you're
 currently with**. An unattended chair shows who they are, how long they
-have, and what's at risk, and nothing else. Hovering a floor card shows that
-customer's `WHAT THEY DO` panel — their archetype's actions and tells, built
-from the same `describe()` the model already uses — so "this one is draining
-the whole floor" is one mouse-over away, not a tick spent finding out.
+have, and what's at risk, and nothing else. What a customer DOES is the BACK
+of their card: hovering turns the card over, showing their archetype's actions
+and tells, built from the same `describe()` the model already uses — so "this
+one is draining the whole floor" is one mouse-over away, not a tick spent
+finding out.
 
 ### Keyboard mirror
 
@@ -270,25 +271,32 @@ plainly the first time it actually paid out.
 `Camera3D`, a `WorldEnvironment`, and six `CardCollection3D` zones — three
 chairs, draw, discard, hand.
 
-**Everything on the table is a card, including the words.** A customer is a
-card; what they do is a second card tucked flush behind the first; a product on
-the table is a card; what it is worth is a fourth. Sitting down slides the two
-detail cards out to the right — and that slide is what replaced the earlier idea
-of *growing* the customer card, which scaled it up by a third and drove it
-straight down into the product slot below.
+**Everything on the table is a card, and every card has a back.** A customer is
+a card; what they do is a second card of the same size sitting flush behind the
+first and facing the other way — so it really is that card's back. A product on
+the table is a card; what it is worth is that card's back.
+
+Hovering a customer on the floor turns the **pair** over. Doing it card by card
+cannot work: flip each in place and the front card is still in front, so all you
+see is its own back. The z-order has to come along, which is what rotating a
+shared parent (`FlipPair`) does. Sitting down instead slides both backs out to
+the LEFT and turns them face-front, so you have both halves side by side.
+
+That replaced the earlier idea of *growing* the customer card, which scaled it
+up by a third and drove it straight down into the product slot below.
 
 The HUD keeps only what belongs to the player or to the shift: the top bar, the
-event log, the OFFER / DROP / CLOSE column, the mode button, the floor tooltip
-and the end-of-shift report. It describes nothing that is on the table. Two
-surfaces describing one customer is how a customer's data went missing, and a
-panel positioned by arithmetic is how it kept landing on top of the product it
-was describing. Geometry does that job now, and geometry can be asserted.
+event log, the OFFER / DROP / CLOSE column, the mode button and the end-of-shift
+report. It describes nothing that is on the table. Two surfaces describing one
+customer is how a customer's data went missing, and a panel positioned by
+arithmetic is how it kept landing on top of the product it was describing.
+Geometry does that job now, and geometry can be asserted.
 
 **Sitting down hides the other two seats.** The seats are close enough together
 for the floor view to be legible, which puts the neighbours inside the seat
-framing whether you like it or not. Hiding a `Node3D` does *not* disable the
-`Area3D` under it, so the chair's drop zone is disabled with it — otherwise you
-could drag a card into a customer you cannot see and be walked over to them.
+framing whether you like it or not. A hidden seat must still refuse drops — but
+that is enforced *during* a drag, never by arming a drop zone (see the next
+section, which is the most expensive lesson in this file).
 
 ### Three rules that will bite whoever changes this next
 
@@ -306,6 +314,19 @@ it swallowed the very click that revealed it.
 Related and identical in symptom: `get_viewport().physics_object_picking`
 defaults to `false`, and Card3D's whole input path is `StaticBody3D.input_event`.
 The controller sets it in `_ready()`. If nothing responds, check both.
+
+**And a third with the same symptom, which is the one that actually shipped:
+never enable a drop zone outside a drag.** Godot's 3D picking fires ONE ray and
+takes the CLOSEST collider, so anything in front of a card owns every click
+meant for it. A `CardCollection3D`'s `DropZone` is a `StaticBody3D` on a 14 × 4
+slab sitting **3.2 units nearer the camera than the cards** — a wall. That is
+why the addon arms them in `_drag_card_start()` and disarms them in
+`_stop_drag()`, and why arming one to stop a hidden seat taking drops made every
+card in the game untouchable: hover dead, clicks dead, no error, nothing on
+screen to say why. Hidden seats are disarmed from `drag_started` instead, which
+fires *after* the addon has armed everything. `drive_shift.gd` now fires the
+same ray the engine fires and asserts it reaches the card — and asserts that no
+drop zone is ever armed at rest.
 
 **Cards are reconciled by uid, never rebuilt.** G1's `_render()` freed and
 recreated the hand every pass; in 3D that frees the node a drag is holding and
@@ -335,6 +356,7 @@ godot --headless --path game --import
 godot --headless --path game --script res://tests/run_tests.gd     # the suite
 godot --headless --path game --script res://tools/drive_shift.gd   # a live shift
 godot --headless --path game --script res://tools/probe_framing.gd # where things land
+godot --headless --path game --script res://tools/probe_input.gd   # why nothing is clickable
 ```
 
 `drive_shift.gd` instantiates the real scene, drives it through approach, play,
@@ -356,6 +378,14 @@ them, which is how the camera constants were chosen — it asks the camera rathe
 than reasoning about field of view, and reasoning about field of view is how the
 last three layouts went wrong.
 
+`probe_input.gd` answers the other question that keeps coming back: *why is
+nothing clickable?* There are two systems that can cause it and they have
+identical symptoms, so it asks both — it fires the real camera ray at each
+card's screen centre and prints what the physics space actually returns, and it
+walks the HUD for any visible Control containing that same point without
+`MOUSE_FILTER_IGNORE`. That is what found the drop-zone wall: a ray aimed at a
+hand card came back `Seat0/Chair0/DropZone`.
+
 **A test that runs no checks is a failure.** Three times now a runtime error has
 aborted a check function partway, leaving the remaining checks unrun and the
 summary reporting "all passed" on whatever happened to have executed — twice in
@@ -372,8 +402,8 @@ the wiring matches the model, that no Control blocks picking, that the text says
 what it should, that the rectangles do not collide. None of it can tell you
 whether the composition reads, whether the push-in feels like walking over to
 someone, or whether a hand that runs off the bottom of the screen is comfortable
-to play from. The numbers say a card face lands at 317×444 px on the floor and
-254×356 px at a seat, against a 500×700 authored face — that is a legibility
+to play from. The numbers say a card face lands at 286×400 px on the floor and
+255×358 px at a seat, against a 500×700 authored face — that is a legibility
 argument, not a verdict.
 
 Two specific things to look at first, both single constants:

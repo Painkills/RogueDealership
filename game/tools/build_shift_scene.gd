@@ -6,11 +6,17 @@ extends SceneTree
 ## for free, and arriving at a seat only has to tween them up in camera-local
 ## space.
 ##
-## EVERYTHING IS A CARD. A seat is four of them: the customer, the detail card
-## tucked behind the customer, the product slot, and the detail card tucked
-## behind that. Sitting down slides the two detail cards out to the right. That
-## slide replaced the old "expand the customer card" idea, which grew the card by
-## a third and drove it straight down into the product slot below it.
+## EVERYTHING IS A CARD, AND EVERY CARD HAS A BACK. A seat is four of them: the
+## customer, a detail card tucked behind the customer facing the other way, the
+## product slot, and a detail card tucked behind that. Hovering a customer on
+## the floor turns the PAIR over, so the detail really is the back of the card.
+## Sitting down slides both detail cards out to the LEFT and turns them
+## face-front, so you have both halves side by side.
+##
+## Both cards of a pair are the same size, which is not decoration: a back that
+## is not the same shape as its front is not a back, and equal widths are what
+## make the customer's margin and the product's margin equal BY CONSTRUCTION
+## rather than by two numbers happening to agree.
 ##
 ## Each seat is one Node3D so the two you are not with can be hidden with a
 ## single flag. They have to be: at a spacing wide enough to keep them out of the
@@ -33,8 +39,14 @@ const REPORT := "res://scenes/report.tscn"
 const CHAIR_X := [-4.1, 0.0, 4.1]
 const CUSTOMER_Y := 4.0      ## their card, seat-local
 const CHAIR_Y := 0.0         ## the offer slot in front of them, seat-local
-## Behind its partner by a hair: occluded on the floor, costing nothing.
-const DETAIL_Z := -0.06
+## The two halves of a pair, a hair either side of the pair's own plane, so
+## rotating the pair swaps which one you are looking at.
+const FACE_Z := 0.03
+const BACK_Z := -0.03
+## Every slot is exactly one card. A slot wider than the card it holds would put
+## the product's visible edge somewhere other than the customer's, and the two
+## margins would no longer match.
+const SLOT_SIZE := Vector2(2.5, 3.5)
 
 ## Well behind everything. Your hand rides at PILE_DEPTH in FRONT of the camera,
 ## which puts it at world z = cam_z + PILE_DEPTH; if the felt sat closer than
@@ -44,11 +56,12 @@ const FELT_Z := -8.0
 
 const CAM_FOV := 60.0
 ## Offset right so the three cards compose LEFT of the shift log, and close
-## enough that a 500x700 card face lands near 450 screen pixels tall.
-const FLOOR_CAM := Vector3(2.0, 4.0, 7.36)
-## The seat camera sits well to the RIGHT of the chair, because the two detail
-## cards slide right and the composition's centre goes with them.
-const SEAT_CAM_DX := 4.07
+## enough that a 500x700 card face lands near 400 screen pixels tall. Backed off
+## from 7.36, which left the leftmost card only 25 px from the edge of frame.
+const FLOOR_CAM := Vector3(2.27, 4.0, 8.2)
+## Slightly RIGHT of the chair, because the detail cards come out to the LEFT
+## and the composition's centre goes with them.
+const SEAT_CAM_DX := 0.59
 const SEAT_CAM_Y := 1.40
 const SEAT_CAM_Z := 9.17
 
@@ -75,7 +88,6 @@ const LOG_RECT := Rect2(1480, 40, 416, 690)
 ## A column, not a row. The bottom of the screen belongs to the hand and the two
 ## piles, and a Button laid over a card steals the click meant for the card.
 const ACTION_RECT := Rect2(1140, 296, 300, 336)
-const TOOLTIP_SIZE := Vector2(560, 260)
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -145,7 +157,7 @@ func _init() -> void:
 
 	for i in range(3):
 		# One node per seat, so hiding the two you are not with is one flag each
-		# rather than a hunt through four siblings.
+		# rather than a hunt through five siblings.
 		var seat := Node3D.new()
 		seat.name = "Seat%d" % i
 		seat.position = Vector3(CHAIR_X[i], 0.0, 0.0)
@@ -153,32 +165,35 @@ func _init() -> void:
 		table.add_child(seat)
 		seat.owner = root
 
+		# The customer and their sheet turn over TOGETHER, so they hang off one
+		# node that does the turning. Flipping them individually would leave the
+		# front card still in front, showing you nothing but its own back.
+		var flip := Node3D.new()
+		flip.name = "CustomerFlip%d" % i
+		flip.position = Vector3(0.0, CUSTOMER_Y, 0.0)
+		flip.set_script(load("res://scripts/view/flip_pair.gd"))
+		flip.unique_name_in_owner = true
+		seat.add_child(flip)
+		flip.owner = root
+
 		var who := customer_scene.instantiate()
 		who.name = "Customer%d" % i
-		who.position = Vector3(0.0, CUSTOMER_Y, 0.0)
+		who.position = Vector3(0.0, 0.0, FACE_Z)
 		who.unique_name_in_owner = true
-		seat.add_child(who)
+		flip.add_child(who)
 		who.owner = root
 
-		var who_detail := detail_scene.instantiate()
-		who_detail.name = "CustomerDetail%d" % i
-		who_detail.position = Vector3(0.0, CUSTOMER_Y, DETAIL_Z)
-		who_detail.unique_name_in_owner = true
-		seat.add_child(who_detail)
-		who_detail.owner = root
+		_detail(detail_scene, "CustomerDetail%d" % i,
+			Vector3(0.0, 0.0, BACK_Z), flip, root)
 
 		var chair := _collection(collection_scene, "Chair%d" % i,
-			Vector3(0.0, CHAIR_Y, 0.0), seat, root)
+			Vector3(0.0, CHAIR_Y, FACE_Z), seat, root)
 		chair.card_layout_strategy = PileCardLayout.new()
 		_mark(chair, root, "SEAT %s\ndrag a product here" % ["A", "B", "C"][i],
 			Palette.color(&"appeal"))
 
-		var offer_detail := detail_scene.instantiate()
-		offer_detail.name = "OfferDetail%d" % i
-		offer_detail.position = Vector3(0.0, CHAIR_Y, DETAIL_Z)
-		offer_detail.unique_name_in_owner = true
-		seat.add_child(offer_detail)
-		offer_detail.owner = root
+		_detail(detail_scene, "OfferDetail%d" % i,
+			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
 
 		var seat_cam := Marker3D.new()
 		seat_cam.name = "SeatCam%d" % i
@@ -232,11 +247,24 @@ func _collection(scene: PackedScene, node_name: String, pos: Vector3,
 	c.owner = owner_root
 	return c
 
+## The back half of a pair: authored FACING AWAY, so at rest it is simply the
+## back of the card in front of it and costs nothing to hide.
+func _detail(scene: PackedScene, node_name: String, pos: Vector3,
+		parent: Node, owner_root: Node) -> Node3D:
+	var d := scene.instantiate()
+	d.name = node_name
+	d.position = pos
+	d.rotation = Vector3(0.0, PI, 0.0)
+	d.unique_name_in_owner = true
+	parent.add_child(d)
+	d.owner = owner_root
+	return d
+
 ## A labelled translucent slab behind a zone - the only thing that makes a
 ## CardCollection3D visible in the editor, and a useful "drop here" at runtime.
 func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color) -> void:
 	var slab := QuadMesh.new()
-	slab.size = Vector2(2.9, 3.9)
+	slab.size = SLOT_SIZE
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(tint.r, tint.g, tint.b, 0.16)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -371,27 +399,6 @@ func _build_hud(root: Node) -> void:
 	log_box.unique_name_in_owner = true
 	col.add_child(log_box)
 	log_box.owner = root
-
-	# --- hover tooltip, floor view ----------------------------------------
-	var tip := PanelContainer.new()
-	tip.name = "Tooltip"
-	tip.size = TOOLTIP_SIZE
-	tip.custom_minimum_size = TOOLTIP_SIZE
-	tip.position = Vector2(700, 620)
-	tip.visible = false
-	tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tip.unique_name_in_owner = true
-	hud.add_child(tip)
-	tip.owner = root
-
-	var tip_label := Label.new()
-	tip_label.name = "TooltipLabel"
-	tip_label.text = "WHAT THEY DO\n(hover a customer on the floor)"
-	tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	tip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tip_label.unique_name_in_owner = true
-	tip.add_child(tip_label)
-	tip_label.owner = root
 
 	var report: Control = (load(REPORT) as PackedScene).instantiate()
 	report.name = "ReportOverlay"

@@ -27,7 +27,8 @@ func _process(_delta: float) -> bool:
 
 	var detail := _root.get_node(^"%CustomerDetail0") as Node3D
 	var mesh := (detail.get_node(^"CardMesh/CardFrontMesh") as MeshInstance3D).mesh as PlaneMesh
-	print("detail card mesh: %s   (want 4 x 3.5)" % mesh.size)
+	print("detail card mesh: %s   (must match the card it hides behind, 2.5 x 3.5)"
+		% mesh.size)
 
 	_frame(cam, "FLOOR", _root.get_node(^"%CameraFloor") as Node3D, -1)
 	for i in range(3):
