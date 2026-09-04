@@ -16,3 +16,10 @@ func eq(label: String, got, want) -> void:
 
 func results() -> Dictionary:
 	return {"passed": _passed, "failed": _failures.size(), "failures": _failures}
+
+## How many checks have been recorded at all. The runner watches this across each
+## test function, because a function that runs ZERO checks has either been left
+## empty or has aborted on a runtime error - and an abort otherwise counts as
+## nothing at all, which reads as a pass.
+func total() -> int:
+	return _passed + _failures.size()

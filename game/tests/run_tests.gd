@@ -20,8 +20,19 @@ func _init() -> void:
 		var suite = script.new()
 		suite.h = h
 		for m in suite.get_method_list():
-			if m.name.begins_with("test_"):
-				suite.call(m.name)
+			if not m.name.begins_with("test_"):
+				continue
+			# A runtime error inside a test function aborts THAT FUNCTION and
+			# returns here. Every check it had not reached simply never runs, and
+			# a test contributing nothing is indistinguishable from a test that
+			# passed. This project has been burned by that three times, twice in
+			# the driver and once here - a test_ that loaded a scene which had
+			# been deleted, and quietly counted for nothing for two commits.
+			var before := h.total()
+			suite.call(m.name)
+			if h.total() == before:
+				crashed.append("%s::%s ran no checks - it aborted or is empty"
+					% [path.get_file(), m.name])
 	var r: Dictionary = h.results()
 	for c in crashed:
 		print("FAIL  %s" % c)

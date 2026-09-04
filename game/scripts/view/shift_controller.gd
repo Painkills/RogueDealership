@@ -20,13 +20,18 @@ extends Node3D
 const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
 
 ## Camera-local resting places. Must match build_shift_scene.gd.
-const PILE_DEPTH := -11.0
-const HAND_UP := Vector3(0.0, -3.2, PILE_DEPTH)
-const HAND_STOWED := Vector3(0.0, -12.5, -11.0)
-const DISCARD_UP := Vector3(8.6, -4.4, -11.0)
-const DISCARD_STOWED := Vector3(8.6, -13.5, -11.0)
-const DRAW_UP := Vector3(-8.6, -4.4, -11.0)
-const DRAW_STOWED := Vector3(-8.6, -13.5, -11.0)
+const PILE_DEPTH := -8.6
+const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
+const HAND_STOWED := Vector3(0.0, -12.6, PILE_DEPTH)
+const DISCARD_UP := Vector3(6.35, -3.68, PILE_DEPTH)
+const DISCARD_STOWED := Vector3(6.35, -12.6, PILE_DEPTH)
+const DRAW_UP := Vector3(-7.27, -3.68, PILE_DEPTH)
+const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
+
+## How high a hovered hand card lifts. The hand deliberately runs off the bottom
+## of the screen - big enough to read beats small enough to fit - so this has to
+## clear the part that is off screen, rather than being the addon's small nudge.
+const HAND_HOVER_LIFT := Vector3(0.0, 1.9, 0.0)
 
 const FRAMING_TWEEN := 0.5
 ## Your things arrive a beat after the camera settles, so the move reads as
@@ -56,10 +61,12 @@ const PILE_DELAY := 0.18
 @onready var _report_overlay = %ReportOverlay
 
 var _shift: Shift
+var _seats: Array = []               ## one Node3D per seat, hidden when elsewhere
 var _chair_zones: Array = []
 var _seat_cams: Array = []
 var _customer_cards: Array = []
-var _offer_panels: Array = []
+var _customer_details: Array = []
+var _offer_details: Array = []
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
 var _dragging: CardFace3D = null
 var _framing_tween: Tween
@@ -73,10 +80,12 @@ func _ready() -> void:
 	# nothing at all unless the viewport is picking. It defaults to false.
 	get_viewport().physics_object_picking = true
 
+	_seats = [%Seat0, %Seat1, %Seat2]
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
 	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
-	_offer_panels = [%OfferPanel0, %OfferPanel1, %OfferPanel2]
+	_customer_details = [%CustomerDetail0, %CustomerDetail1, %CustomerDetail2]
+	_offer_details = [%OfferDetail0, %OfferDetail1, %OfferDetail2]
 
 	for zone in _chair_zones:
 		_drag.add_card_collection(zone)
@@ -280,6 +289,16 @@ func _apply_framing() -> void:
 	var seated: bool = _shift.at != null
 	var target: Node3D = _seat_cams[int(_shift.at)] if seated else _camera_floor
 
+	# The seats sit close enough together for the floor view to be readable,
+	# which means the neighbours are unavoidably inside the seat framing. They
+	# are hidden rather than escaped - the mode button is how you check on them,
+	# and it says so.
+	for i in range(_seats.size()):
+		var here: bool = seated and i == int(_shift.at)
+		_show_seat(i, here or not seated)
+		_customer_details[i].reveal(here)
+		_offer_details[i].reveal(here)
+
 	if _framing_tween != null and _framing_tween.is_running():
 		_framing_tween.kill()
 	_framing_tween = create_tween()
@@ -298,6 +317,17 @@ func _apply_framing() -> void:
 	_tween_pile(_discard_zone, DISCARD_UP if seated else DISCARD_STOWED, delay)
 	_tween_pile(_draw_zone, DRAW_UP if seated else DRAW_STOWED, delay)
 
+## Hiding a Node3D does NOT disable the Area3D underneath it, so a hidden seat
+## would go on quietly accepting drops - you would drag a card into a customer
+## you cannot see, and be walked over to them. The drop zone goes with the
+## picture.
+func _show_seat(index: int, shown: bool) -> void:
+	_seats[index].visible = shown
+	var zone := _chair_zones[index].get_node_or_null(
+		^"DropZone/CollisionShape3D") as CollisionShape3D
+	if zone != null:
+		zone.disabled = not shown
+
 func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
 	_framing_tween.tween_property(zone, "position", to, PILE_TWEEN).set_delay(delay)
 
@@ -315,10 +345,10 @@ func _render() -> void:
 
 	var seated: bool = _shift.at != null
 	for i in range(_customer_cards.size()):
-		_customer_cards[i].setup(_shift.chairs[i], seated and i == int(_shift.at))
+		_customer_cards[i].setup(_shift.chairs[i])
 
 	_render_mode_button(seated)
-	_render_offer(seated)
+	_render_details()
 	_render_tooltip()
 	_action_bar.visible = seated and not _report_overlay.visible
 	_reconcile()
@@ -342,69 +372,25 @@ func _render_mode_button(seated: bool) -> void:
 	_mode_btn.visible = true
 	_mode_btn.text = "BACK TO %s  (free)" % _shift.chairs[back].display_name
 
-## Each seat owns its panel, so this only has to pick the right one and hide the
-## rest - no repositioning a shared panel between customers.
-func _render_offer(seated: bool) -> void:
-	for i in range(_offer_panels.size()):
-		_offer_panels[i].visible = seated and i == int(_shift.at) 			and not _report_overlay.visible
-	if not seated or _report_overlay.visible:
-		return
-
-	var chair := int(_shift.at)
-	var c: Customer = _shift.chairs[chair]
-	var panel: Control = _offer_panels[chair]
-	var col: Node = panel.get_node(^"Row/Column")
-	var bar: Control = panel.get_node(^"Row/AppealBar")
-	var name_label := col.get_node(^"OfferNameLabel") as Label
-	var cat_label := col.get_node(^"OfferCategoryLabel") as Label
-	var margin_label := col.get_node(^"OfferMarginLabel") as Label
-	var gap_label := col.get_node(^"GapLabel") as Label
-
-	var o = c.offer
-	if o == null:
-		name_label.text = "nothing on the table"
-		cat_label.text = "drag a product onto them"
-		margin_label.text = ""
-		gap_label.text = ""
-		bar.set_state(0, c.line, 40, "")
-		_position_offer_panel(chair)
-		return
-
-	name_label.text = o.product.display_name
-	cat_label.text = "%s . %s" % [o.product.interest.category.display_name,
-		o.product.interest.display_name]
-	margin_label.text = Format.money(o.margin)
-
-	if not o.revealed:
-		var band := _shift.band_for(c.line - o.appeal)
-		bar.set_state(0, c.line, 40, band)
-		gap_label.text = band
-		gap_label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
-	else:
-		bar.set_state(o.appeal, c.line, 40, "")
-		var gap: int = c.line - o.appeal
-		if gap <= 0:
-			gap_label.text = "READY"
-			gap_label.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
-		else:
-			gap_label.text = "%d SHORT" % gap
-			gap_label.add_theme_color_override("font_color", Palette.color(&"alert"))
-	_position_offer_panel(chair)
-
-## Sits to the LEFT of its OWN seat's product slot, clear of the card, so the
-## numbers are beside the thing they describe.
-func _position_offer_panel(chair: int) -> void:
-	var panel: Control = _offer_panels[chair]
-	var slot: Vector3 = _chair_zones[chair].global_position
-	if _camera.is_position_behind(slot):
-		return
-	# Offset by the card's own half-width in screen space, so the panel clears
-	# the product rather than landing on top of it.
-	var edge := _camera.unproject_position(slot + Vector3(-1.45, 0.0, 0.0))
-	var mid := _camera.unproject_position(slot)
-	panel.position = Vector2(
-		clampf(edge.x - panel.size.x - 24.0, 16.0, 1904.0 - panel.size.x),
-		clampf(mid.y - panel.size.y * 0.5, 16.0, 1064.0 - panel.size.y))
+## The detail cards. There is no positioning to do and no panel to keep clear of
+## anything: each one is a card parked behind the thing it describes, so "beside
+## the product" is geometry the scene already guarantees rather than arithmetic
+## this file has to get right every frame. The shared HUD panel that used to do
+## this job kept landing on top of the very product it was describing.
+##
+## All three seats are refreshed, not just the one you are with. Two of them are
+## occluded so it costs nothing worth counting, and it means a detail card can
+## never slide out carrying what was true the last time you sat down.
+func _render_details() -> void:
+	for i in range(_seats.size()):
+		var c: Customer = _shift.chairs[i]
+		_customer_details[i].show_customer(c)
+		# band_for lives on Shift, so the COOL / WARM / ALMOST thresholds that
+		# decide the meter's colour have exactly one definition, in the model.
+		var band := ""
+		if c != null and c.offer != null:
+			band = _shift.band_for(c.line - c.offer.appeal)
+		_offer_details[i].show_offer(c, band)
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
@@ -421,10 +407,15 @@ func _show_report() -> void:
 	_report_overlay.visible = true
 	_report_overlay.setup(_shift.report())
 	_action_bar.visible = false
-	for panel in _offer_panels:
-		panel.visible = false
 	_tooltip.visible = false
 	_mode_btn.visible = false
+	# The camera stays where it is - the overlay covers it - but the table itself
+	# must not be left mid-negotiation underneath, with two thirds of the floor
+	# hidden and two detail cards still slid out over a shift that is finished.
+	for i in range(_seats.size()):
+		_show_seat(i, true)
+		_customer_details[i].reveal(false)
+		_offer_details[i].reveal(false)
 
 # --- dragging --------------------------------------------------------------
 
@@ -557,5 +548,6 @@ func _dress(node: CardFace3D, zone: StringName) -> void:
 	# pointer aimed at the zone it sits in.
 	if zone == CardHomes.ZONE_HAND:
 		node.enable_collision()
+		node.hover_pos_move = HAND_HOVER_LIFT
 	else:
 		node.disable_collision()

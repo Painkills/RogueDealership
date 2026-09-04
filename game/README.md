@@ -260,9 +260,7 @@ The hand, the piles and the customers' tables are now real 3D cards, using
 [Card3D](https://github.com/tdecker91/Card3D) (MIT, vendored verbatim into
 `addons/card_3d/` — see `VENDORED.md` there). **You play a product by dragging
 it onto a customer.** Dropping on someone you are not standing with approaches
-them first, at the usual tick cost; dropping on the discard pile digs. The
-customer panel, event log, report and top bar stayed 2D — they are text, and
-text is what this port exists to keep legible.
+them first, at the usual tick cost; dropping on the discard pile digs.
 
 The model did not change. Not one line under `scripts/model/`. That isolation is
 the entire reason a UI rewrite of this size was cheap, and it is worth saying
@@ -271,6 +269,26 @@ plainly the first time it actually paid out.
 `shift.tscn` is a `Node3D` table with a `CanvasLayer` HUD over it: a head-on
 `Camera3D`, a `WorldEnvironment`, and six `CardCollection3D` zones — three
 chairs, draw, discard, hand.
+
+**Everything on the table is a card, including the words.** A customer is a
+card; what they do is a second card tucked flush behind the first; a product on
+the table is a card; what it is worth is a fourth. Sitting down slides the two
+detail cards out to the right — and that slide is what replaced the earlier idea
+of *growing* the customer card, which scaled it up by a third and drove it
+straight down into the product slot below.
+
+The HUD keeps only what belongs to the player or to the shift: the top bar, the
+event log, the OFFER / DROP / CLOSE column, the mode button, the floor tooltip
+and the end-of-shift report. It describes nothing that is on the table. Two
+surfaces describing one customer is how a customer's data went missing, and a
+panel positioned by arithmetic is how it kept landing on top of the product it
+was describing. Geometry does that job now, and geometry can be asserted.
+
+**Sitting down hides the other two seats.** The seats are close enough together
+for the floor view to be legible, which puts the neighbours inside the seat
+framing whether you like it or not. Hiding a `Node3D` does *not* disable the
+`Area3D` under it, so the chair's drop zone is disabled with it — otherwise you
+could drag a card into a customer you cannot see and be walked over to them.
 
 ### Three rules that will bite whoever changes this next
 
@@ -314,33 +332,55 @@ library default of 20 units, so it is set at runtime and asserted by the driver.
 
 ```bash
 godot --headless --path game --import
-godot --headless --path game --script res://tests/run_tests.gd   # the suite
-godot --headless --path game --script res://tools/drive_shift.gd # a live shift
+godot --headless --path game --script res://tests/run_tests.gd     # the suite
+godot --headless --path game --script res://tools/drive_shift.gd   # a live shift
+godot --headless --path game --script res://tools/probe_framing.gd # where things land
 ```
 
 `drive_shift.gd` instantiates the real scene, drives it through approach, play,
-offer, dig, close and leave, simulates a drop and a refused drop, and asserts
-after every one that each card sits where the model says and that only hand
-cards are draggable. It cannot live in the suite: `run_tests.gd` works inside
-`_init()`, where `_ready()` has not fired.
+offer, dig, close and leave, simulates a drop and a refused drop, walks the
+appeal meter through red / amber / green, and asserts after every one that each
+card sits where the model says and that only hand cards are draggable. It cannot
+live in the suite: `run_tests.gd` works inside `_init()`, where `_ready()` has
+not fired.
+
+**The layout is asserted in screen pixels, not eyeballed.** Both of the last two
+rounds of "this looks wrong" — the customer card overlapped by the product card,
+and the offer panel landing on top of the product it described — were arithmetic
+that happened to be checked by a human. `drive_shift.gd` now unprojects every
+card in both framings and asserts the rectangles do not intersect, that each
+detail card is wholly to the right of its partner, that nothing reaches into the
+log's column, that no button sits on a card, and that a floor card is at least
+360 px tall. `probe_framing.gd` prints the same numbers instead of asserting
+them, which is how the camera constants were chosen — it asks the camera rather
+than reasoning about field of view, and reasoning about field of view is how the
+last three layouts went wrong.
+
+**A test that runs no checks is a failure.** Three times now a runtime error has
+aborted a check function partway, leaving the remaining checks unrun and the
+summary reporting "all passed" on whatever happened to have executed — twice in
+the driver, and once in the suite, where a `test_` that loaded a deleted scene
+counted for exactly nothing across two commits. `run_tests.gd` now fails any
+`test_` that records zero checks, and `drive_shift.gd` fails if its total falls
+below a floor. Neither guard is optional; a silent abort must never read as a
+pass.
 
 ### Still open
 
-**Nobody has looked at this either.** Every check above is structural — that the
-wiring matches the model, that no Control blocks picking, that the text says
-what it should. None of it can tell you whether `Label3D` text on a
-perspective-projected card is *readable* at 960×540, which `GODOT_SPEC.md` §11
-already names as the real tension in this port. If it is not, the camera is
-head-on and untilted precisely so that tilt is the first knob to turn, and
-rendering the existing 2D card design into a `SubViewport` texture remains the
-fallback.
+**Nobody has looked at this.** Everything above is structural or arithmetic: that
+the wiring matches the model, that no Control blocks picking, that the text says
+what it should, that the rectangles do not collide. None of it can tell you
+whether the composition reads, whether the push-in feels like walking over to
+someone, or whether a hand that runs off the bottom of the screen is comfortable
+to play from. The numbers say a card face lands at 317×444 px on the floor and
+254×356 px at a seat, against a 500×700 authored face — that is a legibility
+argument, not a verdict.
+
+Two specific things to look at first, both single constants:
+
+- `SEAT_CAM_Z` and `FLOOR_CAM` in `tools/build_shift_scene.gd`, or just drag the
+  `CameraFloor` / `SeatCam*` gizmos in the editor.
+- `DetailCard3D.SLIDE_OUT`, which is how far the detail cards travel.
 
 Also unchanged from G1's list: whether any of it is *fun*. Still only answerable
 by playing it.
-
-Two smaller things this deliberately did not do: `GODOT_SPEC.md` §7's pixel font
-is not loaded, so the faces use Godot's default font at sizes chosen to look
-right rather than to be native; and the renderer moved to Forward+ for Card3D,
-with `rendering_method.web` pinned to `gl_compatibility` so §10's browser build
-survives — Godot has no WebGPU backend, so a global switch would have quietly
-forfeited it.

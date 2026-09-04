@@ -269,69 +269,126 @@ mid-mutation, do not.
 
 ## 6. Screen
 
-One screen. The whole point of leaving the terminal is that the floor and the negotiation are
-visible at the same time.
+**Revised at G1.5.** This section used to describe one flat 2D screen at 960×540 with all three
+seats and the negotiation visible at once. That is not what the game is. The port to
+[Card3D](https://github.com/tdecker91/Card3D) made the table three-dimensional, and 960×540 turned
+out to be the ceiling on legibility rather than a style choice — a 500×700 card face was landing on
+screen at 125 pixels tall. What follows is the design as built.
+
+**Everything is a card.** A customer is a card. What they do is a second card. A product on the
+table is a card. What that product is worth is a fourth card. There is no HUD panel describing
+anything on the table, because a panel positioned by arithmetic kept landing on top of the thing it
+described, and because two surfaces describing one customer is how a customer's data went missing
+twice.
+
+**The camera is the player.** Your hand, draw pile and discard are children of `Camera3D`, parked
+below the bottom of frame. They travel with you for free, and arriving at a seat only tweens them
+up in camera-local space. This is the idea the whole layout rests on: the seat framing has to
+contain the customer and their table and nothing of yours.
+
+**Two framings, one table.** The table never moves; the camera does.
 
 ```
-+------------------------------------------------------------------+
-|  ROGUE DEALERSHIP      tick 12/24     $2,400 / $3,600      [=]    |
-+------------------------------------------------------------------+
-|  +------------+   +------------+   +------------+                 |
-|  |  portrait  |   |  portrait  |   |            |                 |
-|  |  Sandra    |   |  Marcus    |   |   empty    |                 |
-|  |  Budget H. |   |  Tech Ent. |   |  in 2      |                 |
-|  |  ####----  |   |  ######--  |   |            |                 |
-|  |  $3,000    |   |            |   |            |                 |
-|  +------------+   +------------+   +------------+                 |
-|      ^ hover: WHAT THEY DO                                        |
-+------------------------------------------------------------------+
-|  WITH  Sandra Okonkwo - Budget Hawk            patience  9/16     |
-|                                                                   |
-|  UNSIGNED   Appearance $900 . Anti-Theft $800    $1,700 at risk   |
-|                                                                   |
-|  ON THE TABLE   GAP Insurance      Deal . Equity        $1,400    |
-|     "I don't lose sleep over that."          their 6th of 9       |
-|     APPEAL [########------|.......]  12 SHORT   [OFFER]  [DROP]   |
-|                                                                   |
-|  YOU KNOW   Equity 6th . Affordability 2nd . line 38     [CLOSE]  |
-+------------------------------------------------------------------+
-|  HAND   [card] [card] [card] [card]      draw 6  discard 4        |
-+------------------------------------------------------------------+
+FLOOR                                     SEAT
++--------------------------------+        +--------------------------------+
+| tick 12/24  $2,400/$3,600      |        | tick 13/24  $2,400/$3,600      |
+|                                |        | +----------+                   |
+| +------+  +------+  +------+   |        | |< BACK TO |     [log]         |
+| |Sandra|  |Marcus|  |empty |   |        | +----------+                   |
+| |Budget|  |Tech  |  |in 2  |   |        |  +------+ +----------+         |
+| |####--|  |######|  |      |   | [log]  |  |Sandra| | what she | [OFFER] |
+| |on the|  |      |  |      |   |        |  |####--| | does,    | [DROP ] |
+| |table:|  |      |  |      |   |        |  +------+ | unsigned | [CLOSE] |
+| |GAP   |  |      |  |      |   |        |  +------+ +----------+         |
+| +------+  +------+  +------+   |        |  | GAP  | | $1,400   |         |
+|    ^ hover: WHAT THEY DO       |        |  | Ins. | | APPEAL   |         |
+|                                |        |  +------+ | [###|..] |         |
+|                                |        |           +----------+         |
++--------------------------------+        |  [draw]  ( your hand )  [disc] |
+                                          +--------------------------------+
 ```
 
-**Information model.** Patience and unsigned total are **always live for all three** — those are
-the triage inputs, and hiding them creates frustration rather than tension. Negotiation detail (the
-appeal bar, their Line, ranks you have learned) shows **only for the customer you are with**.
-Nothing stale is drawn: an unattended customer's card shows who they are, how long they have, and
-what is at risk, and nothing else.
+- **Floor.** The three customer cards and the top bar. Identity only: portrait, name, archetype,
+  patience, and one status line naming what you have left on their table. Nothing of yours is on
+  screen. Hovering a card shows `WHAT THEY DO` — their actions and tells, built from `describe()`.
+  That is the triage tool: "this one is draining the whole floor" decides who you deal with first,
+  and it should be one mouse-over away rather than a tick.
+- **Seat.** The camera pushes in and slides right. Two detail cards slide out from behind the
+  customer and behind the product slot. Your hand, draw and discard rise into frame a beat later.
+  The hand deliberately runs off the bottom of the screen — a hand small enough to fit entirely
+  inside the strip below the table is a hand you cannot read — and a hovered card lifts fully into
+  view.
+- **The other two seats are hidden while you negotiate.** They have to be: the seats sit close
+  enough together for the floor view to be legible, which puts the neighbours inside the seat
+  framing. One big button top-left carries the mode, flipping between `RETURN TO FLOOR` and
+  `BACK TO <name> (free)`. It can promise free because the model already guarantees it — m2's rule
+  that returning to whoever you were last with costs no tick.
 
-**Hover a floor card** to see that customer's `WHAT THEY DO` panel — their actions and tells, built
-from `describe()`. This is the triage tool: "this one is draining the whole floor" is the fact that
-decides who you deal with first, and it should be one mouse-over away rather than a tick.
+**Information model.** Patience and what is unsigned are always live for all three, on the floor
+card itself — those are the triage inputs, and hiding them creates frustration rather than tension.
 
-**Input is mouse-first with keyboard mirrors** of the CLI verbs (`1`–`4` cards, `O` offer, `C`
-close, `A`/`B`/`C` chairs, `X`+digit dig), because the CLI's speed for an experienced player is
-worth keeping.
+The **appeal meter** on a product's detail card carries three things, each answering a different
+question:
+
+| | shows | gated on |
+|---|---|---|
+| fill | how much appeal is on this offer *right now* | never — it is your own number |
+| colour | red far, amber close, green once cleared | never — it is `Shift.band_for()`, which `place()` already returns |
+| marker | where their Line actually is | `customer.known_line` — after you offer, or after Read the Room |
+
+*This narrows the fog, deliberately.* The CLI hid the appeal number until you offered. It is now
+always visible, because appeal cards previously changed nothing you could see and so felt like
+nothing. What stays hidden is the Line, which is the number the fog was actually protecting. The
+colour is the guess the player is meant to be making; the marker is the confirmation. The exact
+gap is still spelled out as a number only once `offer.revealed` — the model's own rule that offering
+shows the number.
+
+There are no `COOL` / `WARM` / `ALMOST` words on screen any more. The band was always a colour
+pretending to be a noun, and it is a colour now.
+
+**Input is mouse-first with keyboard mirrors** of the CLI verbs (`1`–`4` cards, `Shift`+`1`–`4`
+dig, `O` offer, `Shift`+`C` close, `A`/`B`/`C` chairs, `F` back to the floor), because the CLI's
+speed for an experienced player is worth keeping. Dragging a product onto a customer is the mouse
+equivalent of `place`; dragging onto the discard is `dig`.
+
+**The mouse-input rule.** Godot resolves Control GUI input *before* 3D physics picking, so any
+`Control` with `mouse_filter != IGNORE` over the table makes every card inert. Only real `Button`s
+and the end-of-shift report may block. A recursive lint in `test_shift_scene.gd` enforces it, and
+`get_viewport().physics_object_picking = true` (which defaults to *false*) is what makes Card3D's
+whole input path work at all. These two failures look identical; debug them together.
 
 ---
 
-## 7. Pixel art style guide
+## 7. Presentation
 
-Fixed now so nothing has to be re-laid-out later, even though M1 ships with coloured boxes.
+*Formerly "Pixel art style guide". The game is not pixel art — it is flat 3D cards with 2D faces
+rendered into them through `SubViewport`s, following Card3D's `example_battle`.*
 
-- **Base viewport 960×540**, `viewport` stretch, integer scaling, texture filtering off. Clean 2× to
-  1920×1080. *This revises the 640×360 figure discussed earlier:* the game is text-dense — card
-  text, tells, dialogue, a labelled bar — and 640×360 forces a 5×7 font that would reintroduce the
-  exact legibility problem this port exists to solve.
-- **Font:** one pixel font at 16px with an 8px variant for dense rows. Free options that read well
-  at this size: `m6x11` / `m5x7` (Daniel Linssen), or Kenney's pixel set.
-- **Slots:** customer portrait 64×64 · floor card 160×112 · hand card 96×132 · icons 16×16.
+- **Viewport 1920×1080**, `canvas_items` stretch, Forward+ (`rendering_method.web` pinned to
+  `gl_compatibility` so the web export survives). The earlier 960×540 `viewport` figure rendered
+  the 3D table at 960×540 and upscaled it, which is where the illegibility came from.
+- **A card is a 2.5 × 3.5 quad** with its face authored as ordinary 2D UI at **500×700** and
+  rendered into a `SubViewport` used as the mesh albedo. A **detail card is 4.0 × 3.5 at 800×700** —
+  wider, because it is all prose, and the seat framing has width to spare while it has no height to
+  spare.
+- **Cameras are unpitched.** Any tilt foreshortens the one thing the whole view exists to make
+  legible. The table reads as a table because of the felt and the lighting, not because the camera
+  is leaning over it.
+- **Screen sizes to design against** (verified by `tools/probe_framing.gd`, which asks the camera
+  rather than reasoning about field of view): floor card 317×444 px, seat card 254×356 px, detail
+  card 410×359 px. Font sizes on the faces are chosen so that at those scales body text stays
+  legible.
 - **Palette:** 16 colours, fixed up front, addressed by *role* so art can change without touching
   code — `bg`, `panel`, `panel_hi`, `text`, `text_dim`, `appeal` (blue), `margin` (gold),
   `patience_ok` (green), `patience_warn` (yellow), `patience_bad` (red), `action` (magenta),
-  `alert` (red), `accent`, plus three neutrals.
-- **Placeholders are real UI**: coloured rects in the exact slot sizes with the exact palette roles,
-  so dropping art in later moves no anchors.
+  `alert` (red), `accent`, plus three neutrals. Never a hex literal in a scene or a script.
+- **Placeholders are real UI**: every face ships with placeholder text in the exact slots, so the
+  scene is legible in the editor before it is ever run, and so a driver check can tell live data
+  from an authored default.
+
+**Scene-authoring convention.** Builder scripts for `Control` trees, hand-written `.tscn` for
+anything inheriting a Card3D scene — Card3D's customisation model *is* scene inheritance, and a
+builder that loads-and-repacks bakes a copy and severs the link upstream.
 
 Icons are pulled, not drawn — Kenney.nl (CC0) and game-icons.net (CC BY) — per `DESIGN.md` §10.
 

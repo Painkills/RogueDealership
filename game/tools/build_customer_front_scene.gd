@@ -2,13 +2,14 @@ extends SceneTree
 ## Builds res://scenes/cards/customer_front_2d.tscn - the face of a CUSTOMER
 ## card, drawn as 2D UI at 500x700 and rendered to a texture by the card.
 ##
-## The face has two states. On the floor you see only the bare identity - who
-## they are, what type, how much patience is left. Selecting them expands the
-## card, and the Detail block below the rule unhides: what their archetype does
-## to you, and what is sitting on their table unsigned.
+## Identity ONLY: portrait, name, archetype, patience. Everything else about a
+## customer now lives on the detail card that slides out from behind this one
+## when you sit down, which is what stopped this face from having to grow - and
+## a growing card was what kept colliding with the product slot below it.
 ##
-## Both states live in one scene rather than two, so there is nothing to keep in
-## sync and the expansion is a visibility toggle plus a scale tween.
+## The one thing here that is not identity is the status line, and it earns its
+## place: with the floor framed on the customer row alone you would otherwise
+## have no way at all to see that you left a product sitting with someone.
 
 const W := 500
 const H := 700
@@ -37,14 +38,13 @@ func _init() -> void:
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 10)
+	col.add_theme_constant_override("separation", 12)
 	margin.add_child(col)
 	col.owner = root
 
-	# --- always visible: who they are ------------------------------------
 	var portrait := PanelContainer.new()
 	portrait.name = "PortraitFrame"
-	portrait.custom_minimum_size = Vector2(0, 210)
+	portrait.custom_minimum_size = Vector2(0, 268)
 	col.add_child(portrait)
 	portrait.owner = root
 
@@ -54,22 +54,22 @@ func _init() -> void:
 	portrait.add_child(portrait_fill)
 	portrait_fill.owner = root
 
-	var portrait_label := _label("PortraitLabel", 30, Palette.color(&"text_dim"))
+	var portrait_label := _label("PortraitLabel", 32, Palette.color(&"text_dim"))
 	portrait_label.text = "PORTRAIT"
 	portrait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	portrait_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	portrait.add_child(portrait_label)
 	portrait_label.owner = root
 
-	var name_label := _label("NameLabel", 44, Palette.color(&"text"))
+	var name_label := _label("NameLabel", 50, Palette.color(&"text"))
 	name_label.text = "Customer Name"
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.custom_minimum_size = Vector2(0, 100)
+	name_label.custom_minimum_size = Vector2(0, 116)
 	col.add_child(name_label)
 	name_label.owner = root
 
-	var arch_label := _label("ArchetypeLabel", 30, Palette.color(&"accent"))
+	var arch_label := _label("ArchetypeLabel", 32, Palette.color(&"accent"))
 	arch_label.text = "Archetype"
 	arch_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(arch_label)
@@ -81,7 +81,7 @@ func _init() -> void:
 	patience_bar.max_value = 16
 	patience_bar.value = 12
 	patience_bar.show_percentage = false
-	patience_bar.custom_minimum_size = Vector2(0, 30)
+	patience_bar.custom_minimum_size = Vector2(0, 34)
 	col.add_child(patience_bar)
 	patience_bar.owner = root
 
@@ -91,54 +91,12 @@ func _init() -> void:
 	col.add_child(patience_label)
 	patience_label.owner = root
 
-	# --- only once you have selected them --------------------------------
-	var detail := VBoxContainer.new()
-	detail.name = "Detail"
-	detail.visible = false
-	detail.add_theme_constant_override("separation", 6)
-	col.add_child(detail)
-	detail.owner = root
-
-	var rule := ColorRect.new()
-	rule.name = "Rule"
-	rule.custom_minimum_size = Vector2(0, 3)
-	rule.color = Palette.color(&"neutral_2")
-	detail.add_child(rule)
-	rule.owner = root
-
-	var line_label := _label("LineLabel", 30, Palette.color(&"appeal"))
-	line_label.text = "THE LINE  ?"
-	line_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	detail.add_child(line_label)
-	line_label.owner = root
-
-	var does_title := _label("DoesTitle", 22, Palette.color(&"text_dim"))
-	does_title.text = "WHAT THEY DO"
-	detail.add_child(does_title)
-	does_title.owner = root
-
-	var does_label := _label("DoesLabel", 24, Palette.color(&"text"))
-	does_label.text = "(their behaviours show here)"
-	does_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	detail.add_child(does_label)
-	does_label.owner = root
-
-	var table_title := _label("TableTitle", 22, Palette.color(&"text_dim"))
-	table_title.text = "UNSIGNED"
-	detail.add_child(table_title)
-	table_title.owner = root
-
-	var table_label := _label("TableLabel", 24, Palette.color(&"margin"))
-	table_label.text = "(what they have agreed to shows here)"
-	table_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	detail.add_child(table_label)
-	table_label.owner = root
-
-	var known_label := _label("KnownLabel", 22, Palette.color(&"text_dim"))
-	known_label.text = "(what you have learned shows here)"
-	known_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	detail.add_child(known_label)
-	known_label.owner = root
+	var status_label := _label("StatusLabel", 26, Palette.color(&"margin"))
+	status_label.text = "(what is on their table shows here)"
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(status_label)
+	status_label.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)

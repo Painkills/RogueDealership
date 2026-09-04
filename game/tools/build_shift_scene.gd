@@ -2,62 +2,80 @@ extends SceneTree
 ## Builds res://scenes/shift.tscn.
 ##
 ## THE CAMERA IS THE PLAYER. Your hand, your draw pile and your discard are
-## children of Camera3D, parked just below the bottom of frame. They travel with
-## you for free, and arriving at a seat only has to tween them up in camera-local
-## space. This is what makes the seat framing tractable: it has to contain the
-## customer and their table, and nothing of yours.
+## children of Camera3D, parked below the bottom of frame. They travel with you
+## for free, and arriving at a seat only has to tween them up in camera-local
+## space.
 ##
-## Two framings, both Marker3D so they are draggable gizmos in the editor:
-##   floor - all three customer cards, hand stowed, nothing of yours in shot
-##   seat  - one customer, pushed in; neighbours fall outside the frame
+## EVERYTHING IS A CARD. A seat is four of them: the customer, the detail card
+## tucked behind the customer, the product slot, and the detail card tucked
+## behind that. Sitting down slides the two detail cards out to the right. That
+## slide replaced the old "expand the customer card" idea, which grew the card by
+## a third and drove it straight down into the product slot below it.
 ##
-## The floor view is deliberately bare: customer cards and the top bar, with
-## everything else about a customer behind a hover tooltip or the zoom.
+## Each seat is one Node3D so the two you are not with can be hidden with a
+## single flag. They have to be: at a spacing wide enough to keep them out of the
+## seat framing, the floor framing has to retreat so far that the cards are
+## unreadable, which is exactly the state this replaces.
+##
+## The cameras are UNPITCHED. These cards are flat quads with text rendered into
+## them, and any tilt at all foreshortens the one thing the whole view exists to
+## make legible. The table reads as a table because of the felt and the staging,
+## not because the camera is leaning over it.
 
 const COLLECTION := "res://addons/card_3d/scenes/card_collection_3d.tscn"
 const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
+const DETAIL_CARD := "res://scenes/cards/detail_card_3d.tscn"
 const REPORT := "res://scenes/report.tscn"
 
 # --- table geometry, world units -------------------------------------------
-const CHAIR_X := [-17.0, 0.0, 17.0]
-const CUSTOMER_Y := 4.0      ## their card
-const CHAIR_Y := 0.2         ## the offer slot in front of them
+## Close enough together that the floor framing can stay near the cards. The
+## seats overlap in the seat framing and are hidden rather than escaped.
+const CHAIR_X := [-4.1, 0.0, 4.1]
+const CUSTOMER_Y := 4.0      ## their card, seat-local
+const CHAIR_Y := 0.0         ## the offer slot in front of them, seat-local
+## Behind its partner by a hair: occluded on the floor, costing nothing.
+const DETAIL_Z := -0.06
 
 ## Well behind everything. Your hand rides at PILE_DEPTH in FRONT of the camera,
-## which puts it at world z = seat_cam_z + PILE_DEPTH; if the felt sat closer
-## than that the hand would slide behind the table as the camera pushed in and
-## simply vanish. It did. test_shift_scene.gd pins the clearance now.
+## which puts it at world z = cam_z + PILE_DEPTH; if the felt sat closer than
+## that the hand would slide behind the table as the camera pushed in and simply
+## vanish. It did. test_shift_scene.gd pins the clearance now.
 const FELT_Z := -8.0
 
 const CAM_FOV := 60.0
-## Offset right so the three cards compose LEFT of the shift log.
-const FLOOR_CAM := Vector3(6.0, 3.0, 26.0)
-const FLOOR_CAM_PITCH := -6.0
-## Pulled back far enough that the customer card and the offer slot both sit
-## ABOVE the band the hand occupies, instead of the hand covering the table.
-const SEAT_CAM_Y := -0.2
-const SEAT_CAM_Z := 12.8
-const SEAT_CAM_PITCH := -3.0
+## Offset right so the three cards compose LEFT of the shift log, and close
+## enough that a 500x700 card face lands near 450 screen pixels tall.
+const FLOOR_CAM := Vector3(2.0, 4.0, 7.36)
+## The seat camera sits well to the RIGHT of the chair, because the two detail
+## cards slide right and the composition's centre goes with them.
+const SEAT_CAM_DX := 4.07
+const SEAT_CAM_Y := 1.40
+const SEAT_CAM_Z := 9.17
 
 # --- yours, in CAMERA-LOCAL space ------------------------------------------
 # -Z is forward. Stowed positions sit below the bottom of frame at that depth.
-const PILE_DEPTH := -11.0
-const HAND_UP := Vector3(0.0, -3.2, PILE_DEPTH)
-const HAND_STOWED := Vector3(0.0, -12.5, PILE_DEPTH)
-const DISCARD_UP := Vector3(8.6, -4.4, PILE_DEPTH)
-const DISCARD_STOWED := Vector3(8.6, -13.5, PILE_DEPTH)
-const DRAW_UP := Vector3(-8.6, -4.4, PILE_DEPTH)
-const DRAW_STOWED := Vector3(-8.6, -13.5, PILE_DEPTH)
-const FAN_ANGLE := 62.0
-const FAN_RADIUS := 9.5
+const PILE_DEPTH := -8.6
+## The hand deliberately runs off the bottom of the screen. A hand small enough
+## to fit entirely inside the strip below the table is a hand you cannot read.
+const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
+const HAND_STOWED := Vector3(0.0, -12.6, PILE_DEPTH)
+const DISCARD_UP := Vector3(6.35, -3.68, PILE_DEPTH)
+const DISCARD_STOWED := Vector3(6.35, -12.6, PILE_DEPTH)
+const DRAW_UP := Vector3(-7.27, -3.68, PILE_DEPTH)
+const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
+## A shallow fan, not a spread: the piles sit at the bottom corners and the hand
+## has to stay between them.
+const FAN_ANGLE := 34.0
+const FAN_RADIUS := 9.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
-const MODE_RECT := Rect2(28, 82, 360, 76)
+const MODE_RECT := Rect2(28, 82, 360, 84)
 ## Stops well above the bottom strip, which is where the discard rises into.
 const LOG_RECT := Rect2(1480, 40, 416, 690)
-const ACTION_RECT := Rect2(730, 976, 460, 92)
-const OFFER_PANEL_SIZE := Vector2(400, 300)
-const TOOLTIP_SIZE := Vector2(520, 250)
+## A column, not a row. The bottom of the screen belongs to the hand and the two
+## piles, and a Button laid over a card steals the click meant for the card.
+const ACTION_RECT := Rect2(1140, 296, 300, 336)
+const TOOLTIP_SIZE := Vector2(560, 260)
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -69,14 +87,12 @@ func _init() -> void:
 	cam.fov = CAM_FOV
 	cam.current = true
 	cam.position = FLOOR_CAM
-	cam.rotation_degrees = Vector3(FLOOR_CAM_PITCH, 0, 0)
 	root.add_child(cam)
 	cam.owner = root
 
 	var floor_mark := Marker3D.new()
 	floor_mark.name = "CameraFloor"
 	floor_mark.position = FLOOR_CAM
-	floor_mark.rotation_degrees = Vector3(FLOOR_CAM_PITCH, 0, 0)
 	floor_mark.unique_name_in_owner = true
 	root.add_child(floor_mark)
 	floor_mark.owner = root
@@ -125,24 +141,48 @@ func _init() -> void:
 
 	var collection_scene: PackedScene = load(COLLECTION)
 	var customer_scene: PackedScene = load(CUSTOMER_CARD)
+	var detail_scene: PackedScene = load(DETAIL_CARD)
 
 	for i in range(3):
+		# One node per seat, so hiding the two you are not with is one flag each
+		# rather than a hunt through four siblings.
+		var seat := Node3D.new()
+		seat.name = "Seat%d" % i
+		seat.position = Vector3(CHAIR_X[i], 0.0, 0.0)
+		seat.unique_name_in_owner = true
+		table.add_child(seat)
+		seat.owner = root
+
 		var who := customer_scene.instantiate()
 		who.name = "Customer%d" % i
-		who.position = Vector3(CHAIR_X[i], CUSTOMER_Y, 0.0)
+		who.position = Vector3(0.0, CUSTOMER_Y, 0.0)
 		who.unique_name_in_owner = true
-		table.add_child(who)
+		seat.add_child(who)
 		who.owner = root
 
+		var who_detail := detail_scene.instantiate()
+		who_detail.name = "CustomerDetail%d" % i
+		who_detail.position = Vector3(0.0, CUSTOMER_Y, DETAIL_Z)
+		who_detail.unique_name_in_owner = true
+		seat.add_child(who_detail)
+		who_detail.owner = root
+
 		var chair := _collection(collection_scene, "Chair%d" % i,
-			Vector3(CHAIR_X[i], CHAIR_Y, 0.0), table, root)
+			Vector3(0.0, CHAIR_Y, 0.0), seat, root)
 		chair.card_layout_strategy = PileCardLayout.new()
-		_mark(chair, root, "SEAT %s" % ["A", "B", "C"][i], Palette.color(&"appeal"))
+		_mark(chair, root, "SEAT %s\ndrag a product here" % ["A", "B", "C"][i],
+			Palette.color(&"appeal"))
+
+		var offer_detail := detail_scene.instantiate()
+		offer_detail.name = "OfferDetail%d" % i
+		offer_detail.position = Vector3(0.0, CHAIR_Y, DETAIL_Z)
+		offer_detail.unique_name_in_owner = true
+		seat.add_child(offer_detail)
+		offer_detail.owner = root
 
 		var seat_cam := Marker3D.new()
 		seat_cam.name = "SeatCam%d" % i
-		seat_cam.position = Vector3(CHAIR_X[i], SEAT_CAM_Y, SEAT_CAM_Z)
-		seat_cam.rotation_degrees = Vector3(SEAT_CAM_PITCH, 0, 0)
+		seat_cam.position = Vector3(CHAIR_X[i] + SEAT_CAM_DX, SEAT_CAM_Y, SEAT_CAM_Z)
 		seat_cam.unique_name_in_owner = true
 		root.add_child(seat_cam)
 		seat_cam.owner = root
@@ -263,7 +303,7 @@ func _build_hud(root: Node) -> void:
 		l.owner = root
 
 	# --- the one button that changes where you are ------------------------
-	# Big and obvious on purpose: with the other two seats off screen while you
+	# Big and obvious on purpose: with the other two seats hidden while you
 	# negotiate, this is how you check on them, so it must never be a hunt.
 	var mode := Button.new()
 	mode.name = "ModeButton"
@@ -276,15 +316,8 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(mode)
 	mode.owner = root
 
-	# --- theirs: one offer panel per seat, anchored to their product area --
-	# One shared panel repositioned by whoever was selected kept landing on top
-	# of the thing it described. Each seat owns its own now, positioned from its
-	# OWN chair zone, and only the seat you are with is shown.
-	for i in range(3):
-		_offer_panel(i, hud, root)
-
-	# --- yours: the action bar, under the arc of the hand -----------------
-	var actions := HBoxContainer.new()
+	# --- yours: the action column, right of the table and left of the log --
+	var actions := VBoxContainer.new()
 	actions.name = "ActionBar"
 	actions.position = ACTION_RECT.position
 	actions.size = ACTION_RECT.size
@@ -298,8 +331,8 @@ func _build_hud(root: Node) -> void:
 		var b := Button.new()
 		b.name = spec[0]
 		b.text = spec[1]
-		b.custom_minimum_size = Vector2(140, 80)
-		b.add_theme_font_size_override("font_size", 28)
+		b.custom_minimum_size = Vector2(300, 100)
+		b.add_theme_font_size_override("font_size", 30)
 		b.unique_name_in_owner = true
 		actions.add_child(b)
 		b.owner = root
@@ -367,69 +400,3 @@ func _build_hud(root: Node) -> void:
 	report.unique_name_in_owner = true
 	hud.add_child(report)
 	report.owner = root
-
-
-## One seat's product readout. A plain Panel, not a PanelContainer: its size has
-## to be exactly what the controller positions against, and a container would
-## resize it to its contents behind our back - which is why the old shared panel
-## kept ending up over the product instead of beside it.
-func _offer_panel(index: int, hud: Control, root: Node) -> void:
-	var panel := Panel.new()
-	panel.name = "OfferPanel%d" % index
-	panel.size = OFFER_PANEL_SIZE
-	panel.custom_minimum_size = OFFER_PANEL_SIZE
-	panel.position = Vector2(120 + index * 60, 380)
-	panel.visible = index == 0        # editor preview; the controller takes over
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.unique_name_in_owner = true
-	hud.add_child(panel)
-	panel.owner = root
-
-	var row := HBoxContainer.new()
-	row.name = "Row"
-	row.set_anchors_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 14
-	row.offset_top = 14
-	row.offset_right = -14
-	row.offset_bottom = -14
-	row.add_theme_constant_override("separation", 14)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(row)
-	row.owner = root
-
-	# The Line as a column you climb, rather than a bar you fill sideways.
-	var bar := Control.new()
-	bar.name = "AppealBar"
-	bar.custom_minimum_size = Vector2(52, 0)
-	bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.set_script(load("res://scripts/view/appeal_bar.gd"))
-	row.add_child(bar)
-	bar.owner = root
-
-	var col := VBoxContainer.new()
-	col.name = "Column"
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(col)
-	col.owner = root
-
-	# Named, not unique-named: three panels would collide on unique names, and
-	# the controller addresses these through its own panel reference anyway.
-	var specs := [
-		["OfferTitle", "ON THE TABLE", 20, &"text_dim"],
-		["OfferNameLabel", "Vehicle Service Contract", 28, &"text"],
-		["OfferCategoryLabel", "Vehicle . Reliability", 22, &"text_dim"],
-		["OfferMarginLabel", "$1,600", 30, &"margin"],
-		["GapLabel", "12 SHORT", 30, &"alert"],
-	]
-	for spec in specs:
-		var l := Label.new()
-		l.name = spec[0]
-		l.text = spec[1]
-		l.add_theme_font_size_override("font_size", spec[2])
-		l.add_theme_color_override("font_color", Palette.color(spec[3]))
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		col.add_child(l)
-		l.owner = root

@@ -1,6 +1,7 @@
 extends SceneTree
 ## Drives a real shift.tscn and checks the table matches the model after every
-## command, plus the two framings and the things that ride with the camera.
+## command, plus the two framings, the things that ride with the camera, and
+## where every card actually lands ON SCREEN.
 ##
 ## NOT part of run_tests.gd and cannot be: the suite runs inside _init(), and
 ## adding a node to the tree there does not fire _ready() synchronously (found
@@ -9,10 +10,20 @@ extends SceneTree
 ##
 ##   godot --headless --path game --script res://tools/drive_shift.gd
 ##
-## What it CANNOT tell you: whether any of it is legible, whether cards land
-## where you aimed, or whether the movement feels right. Real mouse picking needs
-## a stepped physics space and a real camera ray, and faking it would only
+## The screen-space checks are the point of this file now. "The customer card
+## gets overlapped by the product card" and "the panel is not in position and
+## overlaps the product area" were both found by eye, twice, after being
+## shipped - they are arithmetic, and arithmetic should not need eyes.
+##
+## What it still CANNOT tell you: whether any of it is legible, whether cards
+## land where you aimed, or whether the movement feels right. Real mouse picking
+## needs a stepped physics space and a real camera ray, and faking it would only
 ## produce a test that lies.
+
+const CARD := Vector2(2.5, 3.5)
+## Nothing of the table may reach into the right-hand column, which belongs to
+## the shift log for the whole shift.
+const LOG_EDGE := 1480.0
 
 var _controller: Node3D
 var _done := false
@@ -43,20 +54,28 @@ func _process(_delta: float) -> bool:
 
 	_check_the_player_rides_the_camera()
 	_check_floor_view_is_bare()
+	_check_the_floor_cards_are_big_enough_to_read()
 	_check_table("on arrival")
 
 	_press(KEY_A)
 	_settle()
 	_check_seat_view_brings_your_things_up()
-	_check_the_customer_actually_shows_their_data()
+	_check_only_the_seat_you_are_at_is_showing()
+	_check_the_detail_cards_slid_out_clear()
+	_check_the_seat_layout_does_not_overlap_itself()
+	_check_the_customer_card_shows_who_they_are()
+	_check_the_detail_card_shows_what_they_do()
 	_check_the_action_buttons_stay_on_screen()
 	_check_hud_does_not_overlap_itself()
 	_check_table("after approaching chair A")
 
 	_check_the_mode_button_flips()
 
-	_press(KEY_1);            _settle(); _check_table("after playing hand card 1")
+	_put_a_product_on_the_table()
+	_check_the_meter_shows_your_appeal_but_hides_their_line()
+	_check_the_meter_climbs_and_changes_colour()
 	_press(KEY_O);            _settle(); _check_table("after offering")
+	_check_the_meter_reveals_the_line_once_you_have_asked()
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
 	_press(KEY_B);            _settle(); _check_table("after approaching chair B")
@@ -65,10 +84,10 @@ func _process(_delta: float) -> bool:
 	_check_refused_drop_comes_home()
 
 	print("")
-	# Guards against the failure mode that has now bitten twice: a runtime error
-	# aborts one check function, the remaining checks never run, and the summary
-	# happily reports "all passed" on whatever did.
-	const EXPECTED_MIN := 70
+	# Guards against the failure mode that has now bitten three times: a runtime
+	# error aborts one check function, the remaining checks never run, and the
+	# summary happily reports "all passed" on whatever did.
+	const EXPECTED_MIN := 100
 	if _checks < EXPECTED_MIN:
 		print("FAIL  only %d checks ran, expected at least %d - something aborted"
 			% [_checks, EXPECTED_MIN])
@@ -97,15 +116,43 @@ func _settle() -> void:
 	var t = _controller._framing_tween
 	if t != null and t.is_valid() and t.is_running():
 		t.custom_step(2.0)
-	# Each customer card owns its own expand/contract tween, so stepping the
-	# controller's framing tween alone leaves the cards mid-grow.
-	for card in _controller._customer_cards:
-		var ct = card._scale_tween
-		if ct != null and ct.is_valid() and ct.is_running():
-			ct.custom_step(2.0)
+	# Each detail card owns its own slide tween, so stepping the controller's
+	# framing tween alone leaves them halfway out from behind their partner.
+	for card in _controller._customer_details + _controller._offer_details:
+		var st = card._slide_tween
+		if st != null and st.is_valid() and st.is_running():
+			st.custom_step(2.0)
+	_controller._camera.force_update_transform()
+
+# --- geometry --------------------------------------------------------------
+
+func _screen() -> Vector2:
+	return Vector2(
+		ProjectSettings.get_setting("display/window/size/viewport_width"),
+		ProjectSettings.get_setting("display/window/size/viewport_height"))
+
+## Where a card-shaped thing lands on screen, in pixels.
+func _rect_of(node: Node3D, size: Vector2) -> Rect2:
+	var cam: Camera3D = _controller._camera
+	var centre := node.global_position
+	var tl := cam.unproject_position(centre + Vector3(-size.x * 0.5, size.y * 0.5, 0.0))
+	var br := cam.unproject_position(centre + Vector3(size.x * 0.5, -size.y * 0.5, 0.0))
+	return Rect2(tl, br - tl)
+
+func _on_screen(label: String, r: Rect2) -> void:
+	var s := _screen()
+	_check("%s is on screen (%s)" % [label, r],
+		r.position.x >= 0.0 and r.position.y >= 0.0
+			and r.end.x <= s.x and r.end.y <= s.y)
 
 func _frame_half_height() -> float:
-	return absf(_controller.HAND_UP.z) * tan(deg_to_rad(_controller._camera.fov * 0.5))
+	return absf(_controller.HAND_UP.z) \
+		* tan(deg_to_rad(_controller._camera.fov * 0.5))
+
+func _at() -> int:
+	return int(_controller._shift.at)
+
+# --- the floor -------------------------------------------------------------
 
 func _check_the_player_rides_the_camera() -> void:
 	var cam = _controller._camera
@@ -119,14 +166,30 @@ func _check_floor_view_is_bare() -> void:
 	for pair in [["hand", _controller._hand_zone], ["draw", _controller._draw_zone],
 			["discard", _controller._discard_zone]]:
 		var z := pair[1] as Node3D
-		_check("on the floor your %s is stowed below frame (y %.1f < %.1f)"
-			% [pair[0], z.position.y, bottom], z.position.y < bottom)
+		_check("on the floor your %s is stowed below frame (top %.1f < %.1f)"
+			% [pair[0], z.position.y + CARD.y * 0.5, bottom],
+			z.position.y + CARD.y * 0.5 < bottom)
 	_check("no action bar on the floor - there is nobody to act on",
 		not _controller._action_bar.visible)
-	var any_offer := false
-	for panel in _controller._offer_panels:
-		any_offer = any_offer or panel.visible
-	_check("no offer panel on the floor", not any_offer)
+	for i in range(3):
+		_check("seat %d is visible on the floor" % i, _controller._seats[i].visible)
+		_check("seat %d keeps its detail cards tucked away" % i,
+			not _controller._customer_details[i].is_out()
+				and not _controller._offer_details[i].is_out())
+
+## The reported bug, in its own words: "when zoomed out its TOO far and is
+## illegible". The card face is authored at 500x700, so anything under about
+## half that is a face being thrown away. It used to land at 126 pixels tall.
+func _check_the_floor_cards_are_big_enough_to_read() -> void:
+	for i in range(3):
+		var r := _rect_of(_controller._customer_cards[i], CARD)
+		_check("floor card %d is %d px tall, enough of a 700 px face to read"
+			% [i, int(r.size.y)], r.size.y >= 360.0)
+		_on_screen("floor card %d" % i, r)
+		_check("floor card %d stays out of the log's column (ends %d, log at %d)"
+			% [i, int(r.end.x), int(LOG_EDGE)], r.end.x <= LOG_EDGE)
+
+# --- a seat ----------------------------------------------------------------
 
 func _check_seat_view_brings_your_things_up() -> void:
 	var bottom := -_frame_half_height()
@@ -135,26 +198,271 @@ func _check_seat_view_brings_your_things_up() -> void:
 		_check("sitting down raises your %s into view (y %.1f > %.1f)"
 			% [pair[0], z.position.y, bottom], z.position.y > bottom)
 	_check("and the action bar appears", _controller._action_bar.visible)
-	# Exactly one - each seat owns its own panel, and only the seat you are with
-	# should be showing it.
-	var shown := 0
-	for panel in _controller._offer_panels:
-		if panel.visible:
-			shown += 1
-	_check("exactly one offer panel appears, the one for this seat (%d)" % shown,
-		shown == 1 and _controller._offer_panels[int(_controller._shift.at)].visible)
 
-## The button is the only way back to the floor once the other seats are off
-## screen, so both of its jobs are pinned.
+## The seats are close enough together that the floor view is readable, which
+## puts the neighbours inside the seat framing. So they are hidden - and the
+## mode button, which promises a free return, is the only way back to them.
+func _check_only_the_seat_you_are_at_is_showing() -> void:
+	for i in range(3):
+		_check("seat %d is %s while you are at %d"
+			% [i, "showing" if i == _at() else "hidden", _at()],
+			_controller._seats[i].visible == (i == _at()))
+		# Hiding a Node3D leaves its Area3D live, so a hidden seat would keep
+		# taking drops: you would drag a card into someone you cannot see.
+		var zone := _controller._chair_zones[i].get_node(
+			^"DropZone/CollisionShape3D") as CollisionShape3D
+		_check("and seat %d %s take a drop" % [i, "can" if i == _at() else "cannot"],
+			zone.disabled == (i != _at()))
+
+func _check_the_detail_cards_slid_out_clear() -> void:
+	var at := _at()
+	for pair in [["customer", _controller._customer_details[at],
+				_controller._customer_cards[at], CARD],
+			["offer", _controller._offer_details[at],
+				_controller._chair_zones[at], CARD]]:
+		var detail: Node3D = pair[1]
+		var partner: Node3D = pair[2]
+		_check("the %s detail card slid out from behind" % pair[0],
+			detail.is_out() and not detail.position.is_equal_approx(detail.home()))
+
+		var d := _rect_of(detail, DetailCard3D.CARD_SIZE)
+		var p := _rect_of(partner, pair[3])
+		_check("and it is clear of what it describes (detail x %d.., partner ends %d)"
+			% [int(d.position.x), int(p.end.x)], d.position.x >= p.end.x)
+		_check("on the RIGHT of it, as designed", d.position.x > p.position.x)
+		_check("not on top of it", not d.intersects(p))
+		_on_screen("%s detail card" % pair[0], d)
+		_check("%s detail stays out of the log's column (ends %d)"
+			% [pair[0], int(d.end.x)], d.end.x <= LOG_EDGE)
+
+	for i in range(3):
+		if i == at:
+			continue
+		_check("seat %d's detail cards stayed home" % i,
+			not _controller._customer_details[i].is_out()
+				and not _controller._offer_details[i].is_out())
+
+## The reported bug: "when zoomed in, the customer card gets overlapped by the
+## product card". Four card rectangles, none of which may touch another.
+func _check_the_seat_layout_does_not_overlap_itself() -> void:
+	var at := _at()
+	var rects := {
+		"customer card": _rect_of(_controller._customer_cards[at], CARD),
+		"customer detail": _rect_of(_controller._customer_details[at],
+			DetailCard3D.CARD_SIZE),
+		"product slot": _rect_of(_controller._chair_zones[at], CARD),
+		"offer detail": _rect_of(_controller._offer_details[at],
+			DetailCard3D.CARD_SIZE),
+	}
+	var names := rects.keys()
+	for a in range(names.size()):
+		for b in range(a + 1, names.size()):
+			var ra: Rect2 = rects[names[a]]
+			var rb: Rect2 = rects[names[b]]
+			_check("the %s never overlaps the %s (%s vs %s)"
+				% [names[a], names[b], ra, rb], not ra.intersects(rb))
+	for n in names:
+		_on_screen(n, rects[n])
+		_check("%s is big enough to read (%d px tall)" % [n, int(rects[n].size.y)],
+			rects[n].size.y >= 300.0)
+
+	# The bug before that: the hand rose and covered the product. It is allowed
+	# to run off the bottom of the screen, but not up over the table.
+	var hand_top: float = _controller._camera.unproject_position(
+		_controller._hand_zone.global_position + Vector3(0, CARD.y * 0.5, 0)).y
+	var lowest: float = 0.0
+	for n in names:
+		lowest = maxf(lowest, (rects[n] as Rect2).end.y)
+	_check("your hand stays below the table (hand top %d, table bottom %d)"
+		% [int(hand_top), int(lowest)], hand_top >= lowest)
+
+func _check_the_customer_card_shows_who_they_are() -> void:
+	var shift = _controller._shift
+	if shift.at == null:
+		_check("could get to a customer at all", false)
+		return
+	var who = shift.chairs[_at()]
+	var card = _controller._customer_cards[_at()]
+
+	_check("their card names them (%s)" % card._name.text,
+		card._name.text == who.display_name)
+	_check("their card names their archetype (%s)" % card._archetype.text,
+		card._archetype.text.contains(who.archetype.display_name))
+	_check("their card shows patience (%s)" % card._patience.text,
+		card._patience.text.contains(str(who.patience)))
+	# It used to grow by a third when selected, which is what drove it into the
+	# product slot. Selecting them must change nothing about its size.
+	_check("and selecting them did NOT resize the card (%s)" % card.scale,
+		card.scale.is_equal_approx(Vector3.ONE))
+
+## The reported bug from two rounds ago: none of the customer's own data showed
+## up. It lives on the detail card now, so that is where this looks.
+func _check_the_detail_card_shows_what_they_do() -> void:
+	var who = _controller._shift.chairs[_at()]
+	var det = _controller._customer_details[_at()]
+
+	_check("the detail card names them (%s)" % det._title.text,
+		det._title.text == who.display_name)
+	_check("its customer half is showing", det._customer_body.visible)
+	_check("and its offer half is not - one card, one subject",
+		not det._offer_body.visible)
+	_check("it says what they DO (%s)" % det._does.text.substr(0, 40),
+		not det._does.text.is_empty())
+	_check("and it is live data, not the editor placeholder",
+		not det._does.text.begins_with("(their behaviours"))
+	if who.archetype.actions.is_empty():
+		_check("an archetype with no actions says so plainly",
+			det._does.text.contains("just sit"))
+	else:
+		_check("an archetype WITH actions names one (%s)"
+			% who.archetype.actions[0].display_name,
+			det._does.text.contains(who.archetype.actions[0].display_name))
+	_check("it says what is unsigned (%s)" % det._table.text.substr(0, 40),
+		not det._table.text.begins_with("(what they have"))
+	_check("and what you have worked out (%s)" % det._known.text.substr(0, 40),
+		not det._known.text.begins_with("(what you have"))
+
+# --- the appeal meter ------------------------------------------------------
+
+func _put_a_product_on_the_table() -> void:
+	if _controller._shift.at == null:
+		_check("still with a customer before placing", false)
+		return
+	var face = null
+	for c in _controller._hand_zone.cards:
+		if c.instance != null and c.instance.is_product():
+			face = c
+			break
+	if face == null:
+		_check("there was a product in hand to place", false)
+		return
+	_drop(face, _controller._chair_zones[_at()])
+	_settle()
+	_check("placing a product put it on their table",
+		_controller._shift.at != null
+			and _controller._shift.chairs[_at()].offer != null)
+
+## The change the player asked for: the fill is your own appeal and it moves
+## when you play an appeal card, but the Line stays hidden until you have earned
+## it. The colour is the guess in between - it is what replaced the word "COOL".
+func _check_the_meter_shows_your_appeal_but_hides_their_line() -> void:
+	if _controller._shift.at == null:
+		_check("still seated for the meter checks", false)
+		return
+	var c = _controller._shift.chairs[_at()]
+	if c == null or c.offer == null:
+		_check("there is an offer to meter", false)
+		return
+	var det = _controller._offer_details[_at()]
+	var bar: AppealBar = det._bar
+
+	_check("the offer detail names the product (%s)" % det._title.text,
+		det._title.text == c.offer.product.display_name)
+	_check("its offer half is showing", det._offer_body.visible)
+	_check("and its customer half is not", not det._customer_body.visible)
+	_check("the meter fills with YOUR appeal (%d of %d)" % [bar._appeal, bar._scale],
+		bar._appeal == c.offer.appeal)
+	_check("on a scale that fits both it and the Line",
+		bar._scale >= c.offer.appeal and bar._scale >= c.line)
+	_check("the Line marker is hidden until you know it (known=%s)" % c.known_line,
+		bar._line_known == c.known_line)
+	_check("nothing on this card says COOL or WARM any more",
+		not det._status.text.contains("COOL") and not det._status.text.contains("WARM"))
+	# Red far, amber close, green once cleared - the whole point of the colour.
+	var want: Color = Palette.color(&"patience_ok") if c.offer.appeal >= c.line \
+		else (Palette.color(&"patience_warn") \
+			if _controller._shift.band_for(c.line - c.offer.appeal) in ["ALMOST", "WARM"] \
+			else Palette.color(&"patience_bad"))
+	_check("and the colour says how far off you are (%s)" % bar.fill_color(),
+		bar.fill_color() == want)
+
+## "You need to show me how much appeal I currently have on that bar, and it
+## fills up as I add appeal cards... Red if it's far, yellow if close, green if
+## above." Walked directly rather than through a support card, because WHICH
+## card is in hand is up to the deal: the thing that can actually break is
+## whether the bar re-reads live state every render, and that is what this moves.
+func _check_the_meter_climbs_and_changes_colour() -> void:
+	if _controller._shift.at == null:
+		_check("still seated to walk the meter", false)
+		return
+	var c = _controller._shift.chairs[_at()]
+	if c == null or c.offer == null:
+		_check("there is an offer to walk the meter with", false)
+		return
+	var bar: AppealBar = _controller._offer_details[_at()]._bar
+	var was_appeal: int = c.offer.appeal
+	var was_known: bool = c.known_line
+
+	var rungs := [
+		["far below", maxi(0, c.line - 24), &"patience_bad"],
+		["close", maxi(0, c.line - 6), &"patience_warn"],
+		["cleared", c.line, &"patience_ok"],
+	]
+	var last_fill := -1.0
+	for rung in rungs:
+		c.offer.appeal = int(rung[1])
+		_controller._render()
+		var fill: float = float(bar._appeal) / float(bar._scale)
+		_check("appeal %s: the meter reads %d, not the number from last render"
+			% [rung[0], bar._appeal], bar._appeal == int(rung[1]))
+		_check("appeal %s: and the fill grew (%.2f > %.2f)" % [rung[0], fill, last_fill],
+			fill > last_fill)
+		_check("appeal %s: the colour is %s" % [rung[0], rung[2]],
+			bar.fill_color() == Palette.color(rung[2]))
+		last_fill = fill
+
+	# The one number the fog is protecting. The fill is always honest; the marker
+	# is not drawn until the model says you have earned the Line.
+	# Asked of the same expression _draw() uses, not of a flag beside it.
+	var track := Rect2(0, 0, 400, 60)
+	c.known_line = false
+	_controller._render()
+	_check("with the Line unknown there is nowhere to draw the marker",
+		bar.marker_x(track) < 0.0)
+	c.known_line = true
+	_controller._render()
+	_check("and once you know it, the marker has a place on the bar (%.0f)"
+		% bar.marker_x(track), bar.marker_x(track) >= 0.0)
+
+	c.offer.appeal = was_appeal
+	c.known_line = was_known
+	_controller._render()
+
+func _check_the_meter_reveals_the_line_once_you_have_asked() -> void:
+	if _controller._shift.at == null:
+		_check("still seated after offering", false)
+		return
+	var c = _controller._shift.chairs[_at()]
+	if c == null:
+		_check("they are still in the chair after offering", false)
+		return
+	_check("offering taught you their Line", c.known_line)
+	if c.offer == null:
+		# They signed, so the offer left the table - which is its own correct
+		# outcome and leaves nothing to meter.
+		_check("a sale cleared the table, so the meter has nothing to show",
+			_controller._offer_details[_at()]._title.text == "nothing on the table")
+		return
+	var bar: AppealBar = _controller._offer_details[_at()]._bar
+	_check("so the meter now draws the marker", bar._line_known)
+	_check("at the Line the model actually holds (%d)" % bar._line, bar._line == c.line)
+
+# --- the mode button -------------------------------------------------------
+
+## The button is the only way back to the floor once the other seats are hidden,
+## so both of its jobs are pinned.
 func _check_the_mode_button_flips() -> void:
 	var btn = _controller._mode_btn
 	_check("with someone, it offers the way out (%s)" % btn.text,
 		btn.visible and btn.text.to_lower().contains("floor"))
 
-	var who = _controller._shift.chairs[int(_controller._shift.at)]
+	var who = _controller._shift.chairs[_at()]
 	_controller._on_mode_pressed()          # step back to the floor
 	_settle()
 	_check("pressing it puts you back on the floor", _controller._shift.at == null)
+	_check("and the seats you could not see are back",
+		_controller._seats[0].visible and _controller._seats[1].visible
+			and _controller._seats[2].visible)
 	_check("on the floor it offers the way back (%s)" % btn.text,
 		btn.visible and btn.text.contains(who.display_name))
 	# m2/README.md: returning to whoever you were last with is free. The label
@@ -167,82 +475,48 @@ func _check_the_mode_button_flips() -> void:
 		_controller._shift.tick == before)
 	_check("and you are with them again", _controller._shift.at != null)
 
-func _check_the_customer_actually_shows_their_data() -> void:
-	var shift = _controller._shift
-	if shift.at == null:
-		_check("could get to a customer at all", false)
-		return
-	var who = shift.chairs[int(shift.at)]
-	var card = _controller._customer_cards[int(shift.at)]
-
-	_check("their card names them (%s)" % card._name.text,
-		card._name.text == who.display_name)
-	_check("their card names their archetype (%s)" % card._archetype.text,
-		card._archetype.text.contains(who.archetype.display_name))
-	_check("their card shows patience (%s)" % card._patience.text,
-		card._patience.text.contains(str(who.patience)))
-	_check("selecting them expands the card", card._detail.visible)
-	_check("and the card grew (%s)" % card.scale, card.scale.x > 1.0)
-
-	# The reported bug: none of the customer's own data showed up, because their
-	# behaviours only ever existed on a hover panel that is hidden while
-	# negotiating. It is on the expanded card now.
-	_check("the card says what they DO (%s)" % card._does.text.substr(0, 40),
-		not card._does.text.is_empty())
-	_check("and it is live data, not the editor placeholder",
-		not card._does.text.begins_with("(their behaviours"))
-	if who.archetype.actions.is_empty():
-		_check("an archetype with no actions says so plainly",
-			card._does.text.contains("just sit"))
-	else:
-		_check("an archetype WITH actions names one (%s)"
-			% who.archetype.actions[0].display_name,
-			card._does.text.contains(who.archetype.actions[0].display_name))
+# --- the HUD ---------------------------------------------------------------
 
 func _check_the_action_buttons_stay_on_screen() -> void:
 	## The reported bug: OFFER / DROP / CLOSE vanished the moment you put
 	## something on the table. It was a layout overflow, not a disabled state.
-	var screen := _screen()
 	for name in ["OfferButton", "DropButton", "CloseButton"]:
 		var b := _controller.get_node_or_null(NodePath("%" + name)) as Control
 		if b == null:
 			_check("%s exists" % name, false)
 			continue
-		var r := Rect2(b.global_position, b.size)
-		_check("%s is on screen (%s)" % [name, r],
-			r.position.x >= 0.0 and r.position.y >= 0.0
-				and r.end.x <= screen.x and r.end.y <= screen.y)
+		_on_screen(name, Rect2(b.global_position, b.size))
 
 ## The panels kept landing on each other, so this is checked rather than eyeballed.
 func _check_hud_does_not_overlap_itself() -> void:
 	var log_panel := _controller.get_node("%SidePanel") as Control
 	var log_rect := Rect2(log_panel.position, log_panel.size)
 	var bar := Rect2(_controller._action_bar.global_position, _controller._action_bar.size)
-	var active: Control = _controller._offer_panels[int(_controller._shift.at)]
-	var offer := Rect2(active.global_position, active.size)
 	var mode := Rect2(_controller._mode_btn.global_position, _controller._mode_btn.size)
 
-	_check("the action bar clears the log", not bar.intersects(log_rect))
-	_check("the offer panel clears the log", not offer.intersects(log_rect))
-	_check("the offer panel clears the action bar", not offer.intersects(bar))
-	_check("the return button clears the offer panel", not mode.intersects(offer))
-	# The reported bug: the panel overlapped the product area it describes.
-	var slot: Vector3 = _controller._chair_zones[int(_controller._shift.at)].global_position
-	var mid: Vector2 = _controller._camera.unproject_position(slot)
-	var edge: Vector2 = _controller._camera.unproject_position(slot + Vector3(-1.45, 0.0, 0.0))
-	_check("the offer panel sits BESIDE the product, not on it (panel ends %d, card starts %d)"
-		% [int(offer.end.x), int(edge.x)], offer.end.x <= edge.x)
-	_check("and on the correct side of it", offer.end.x < mid.x)
-	for pair in [["action bar", bar], ["offer panel", offer], ["return button", mode]]:
-		var r: Rect2 = pair[1]
-		_check("the %s is on screen (%s)" % [pair[0], r],
-			r.position.x >= 0.0 and r.position.y >= 0.0
-				and r.end.x <= _screen().x and r.end.y <= _screen().y)
+	_check("the action column clears the log", not bar.intersects(log_rect))
+	_check("the return button clears the action column", not mode.intersects(bar))
+	_check("and clears the log", not mode.intersects(log_rect))
 
-func _screen() -> Vector2:
-	return Vector2(
-		ProjectSettings.get_setting("display/window/size/viewport_width"),
-		ProjectSettings.get_setting("display/window/size/viewport_height"))
+	# Buttons are the only STOP controls over a 3D table, so any button sitting
+	# on a card is a click the card will never see.
+	var at := _at()
+	for pair in [["customer card", _rect_of(_controller._customer_cards[at], CARD)],
+			["customer detail", _rect_of(_controller._customer_details[at],
+				DetailCard3D.CARD_SIZE)],
+			["product slot", _rect_of(_controller._chair_zones[at], CARD)],
+			["offer detail", _rect_of(_controller._offer_details[at],
+				DetailCard3D.CARD_SIZE)]]:
+		var card: Rect2 = pair[1]
+		_check("the action column does not sit on the %s" % pair[0],
+			not bar.intersects(card))
+		_check("nor does the return button sit on the %s" % pair[0], not mode.intersects(card))
+		_check("nor does the log sit on the %s" % pair[0], not log_rect.intersects(card))
+
+	for pair in [["action column", bar], ["return button", mode]]:
+		_on_screen(pair[0], pair[1])
+
+# --- the table matches the model -------------------------------------------
 
 ## Every card the model knows about must have exactly one node, parented to the
 ## collection CardHomes says it belongs in - and there must be no others.

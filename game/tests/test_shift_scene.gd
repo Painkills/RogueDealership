@@ -1,20 +1,21 @@
 extends RefCounted
 ## Structure of the table scene, checked without putting it in a tree.
 ##
-## instantiate() builds the whole node tree, so names, types, parenting and
-## mouse filters are all assertable headlessly. Anything needing _ready() lives
-## in tools/drive_shift.gd instead, because run_tests.gd works inside _init()
-## where _ready() has not fired yet.
+## instantiate() builds the whole node tree, so names, types, parenting, mouse
+## filters and world positions are all assertable headlessly. Anything needing
+## _ready() lives in tools/drive_shift.gd instead, because run_tests.gd works
+## inside _init() where _ready() has not fired yet.
 var h: Harness
 
 const SCENE := "res://scenes/shift.tscn"
+const CARD := Vector2(2.5, 3.5)          ## the Card3D plane, from card_3d.tscn
 
 func _scene() -> Node3D:
 	return (load(SCENE) as PackedScene).instantiate() as Node3D
 
 func test_the_table_has_every_zone_the_controller_expects() -> void:
 	var s := _scene()
-	for path in ["Table/Chair0", "Table/Chair1", "Table/Chair2",
+	for path in ["Table/Seat0/Chair0", "Table/Seat1/Chair1", "Table/Seat2/Chair2",
 			"Camera3D/Draw", "Camera3D/Discard", "Camera3D/Hand"]:
 		var n := s.get_node_or_null(NodePath(path))
 		h.check("%s exists" % path, n != null)
@@ -25,31 +26,102 @@ func test_the_table_has_every_zone_the_controller_expects() -> void:
 	h.check("a DragController", s.get_node_or_null(^"DragController") is DragController)
 	s.free()
 
+func test_a_seat_is_one_node_so_the_other_two_can_be_hidden() -> void:
+	## Load-bearing. The seats sit close enough together for the floor view to be
+	## readable, which means the neighbours are inside the seat framing whether
+	## you like it or not - so sitting down hides them, and that has to be one
+	## flag rather than a hunt through four siblings each time.
+	var s := _scene()
+	for i in range(3):
+		var seat := s.get_node_or_null(NodePath("Table/Seat%d" % i)) as Node3D
+		h.check("Seat%d is one node" % i, seat != null)
+		if seat == null:
+			continue
+		for child in ["Customer%d" % i, "CustomerDetail%d" % i,
+				"Chair%d" % i, "OfferDetail%d" % i]:
+			h.check("%s hangs off it, so hiding the seat hides it too" % child,
+				seat.get_node_or_null(NodePath(child)) != null)
+	s.free()
+
+func test_the_detail_cards_start_tucked_behind_their_partner() -> void:
+	## "A second card which was hidden behind it, slides out to the right." It is
+	## hidden by being flush behind an opaque card of its own kind - no visibility
+	## flag to get wrong, and nothing to pop when the framing changes.
+	var s := _scene()
+	for pair in [["Customer", ""], ["Chair", "Offer"]]:
+		for i in range(3):
+			var front := s.get_node(
+				NodePath("Table/Seat%d/%s%d" % [i, pair[0], i])) as Node3D
+			var detail := s.get_node(NodePath("Table/Seat%d/%sDetail%d"
+				% [i, "Customer" if pair[1] == "" else pair[1], i])) as Node3D
+			h.check("%s detail %d shares its partner's x and y" % [pair[0], i],
+				is_equal_approx(front.position.x, detail.position.x)
+					and is_equal_approx(front.position.y, detail.position.y))
+			h.check("and sits BEHIND it (%.2f < %.2f)"
+				% [detail.position.z, front.position.z],
+				detail.position.z < front.position.z)
+	s.free()
+
+func test_a_detail_card_slides_completely_clear_of_what_it_describes() -> void:
+	## The bug this replaces: a shared HUD panel positioned by arithmetic, which
+	## kept landing on top of the product it was describing. Now it is geometry -
+	## and geometry can be checked.
+	var s := _scene()
+	var gap: float = DetailCard3D.SLIDE_OUT.x \
+		- (CARD.x * 0.5 + DetailCard3D.CARD_SIZE.x * 0.5)
+	h.check("slid out, the detail card clears its partner by %.2f" % gap, gap > 0.0)
+	var mesh := (s.get_node(^"%CustomerDetail0/CardMesh/CardFrontMesh")
+		as MeshInstance3D).mesh as PlaneMesh
+	h.eq("and the quad really is the size the slide assumes",
+		mesh.size, DetailCard3D.CARD_SIZE)
+	s.free()
+
+func test_the_customer_row_cannot_overlap_the_product_row() -> void:
+	## The reported bug: "when zoomed in, the customer card gets overlapped by the
+	## product card". It was caused by the customer card scaling up by a third and
+	## unhiding a detail block, which drove it down into the slot below. Both are
+	## gone, and this pins the clearance that made them possible.
+	var s := _scene()
+	for i in range(3):
+		var who := s.get_node(NodePath("Table/Seat%d/Customer%d" % [i, i])) as Node3D
+		var chair := s.get_node(NodePath("Table/Seat%d/Chair%d" % [i, i])) as Node3D
+		var apart: float = absf(who.position.y - chair.position.y)
+		h.check("seat %d keeps the two rows %.2f apart, clear of a %.2f card"
+			% [i, apart, CARD.y], apart > CARD.y)
+		h.check("and the customer card is unscaled, so it stays that way",
+			who.scale.is_equal_approx(Vector3.ONE))
+	s.free()
+
 func test_your_things_are_parented_to_the_camera_and_theirs_are_not() -> void:
 	## The load-bearing structural idea: the camera IS the player. Hand, draw and
-	## discard ride with it, so moving to a seat carries them for free and the
-	## seat framing only has to contain the customer and their table.
+	## discard ride with it, so moving to a seat carries them for free.
 	var s := _scene()
 	var cam := s.get_node(^"Camera3D")
 	for mine in ["Hand", "Draw", "Discard"]:
 		h.check("%s belongs to the player, so it hangs off the camera" % mine,
 			s.get_node(NodePath("Camera3D/" + mine)).get_parent() == cam)
-	for theirs in ["Chair0", "Chair1", "Chair2", "Customer0", "Customer1", "Customer2"]:
-		h.check("%s belongs to the world, not to you" % theirs,
-			s.get_node(NodePath("Table/" + theirs)).get_parent() != cam)
+	for i in range(3):
+		for theirs in ["Chair%d" % i, "Customer%d" % i, "CustomerDetail%d" % i,
+				"OfferDetail%d" % i]:
+			h.check("%s belongs to the world, not to you" % theirs,
+				s.get_node(NodePath("Table/Seat%d/%s" % [i, theirs])).get_parent() != cam)
 	s.free()
 
 func test_your_things_start_stowed_below_the_frame() -> void:
 	## The floor view shows customers and nothing of yours. These sit below the
-	## bottom of frame at their depth and tween up only once you sit down.
+	## bottom of frame at their own depth and tween up only once you sit down.
+	## Read from the scene, not from a literal: a depth change must move this.
 	var s := _scene()
-	var half_height: float = absf(-11.0) * tan(deg_to_rad(60.0 * 0.5))
+	var fov: float = (s.get_node(^"Camera3D") as Camera3D).fov
 	for mine in ["Hand", "Draw", "Discard"]:
 		var z := s.get_node(NodePath("Camera3D/" + mine)) as Node3D
-		h.check("%s starts out of shot (y %.1f, frame bottom %.1f)"
-			% [mine, z.position.y, -half_height],
-			z.position.y < -half_height)
+		var half_height: float = absf(z.position.z) * tan(deg_to_rad(fov * 0.5))
 		h.check("%s sits in front of the camera" % mine, z.position.z < 0.0)
+		# The card TOP has to clear the frame, not the card's origin, or a stowed
+		# pile still shows its top edge along the bottom of the screen.
+		h.check("%s starts fully out of shot (top %.1f, frame bottom %.1f)"
+			% [mine, z.position.y + CARD.y * 0.5, -half_height],
+			z.position.y + CARD.y * 0.5 < -half_height)
 	s.free()
 
 func test_your_hand_is_never_behind_the_table() -> void:
@@ -68,12 +140,29 @@ func test_your_hand_is_never_behind_the_table() -> void:
 			% [name, hand_world_z, felt_z], hand_world_z > felt_z)
 	s.free()
 
+func test_the_cameras_are_flat_on() -> void:
+	## These cards are flat quads with 500x700 of text rendered into them. Any
+	## tilt foreshortens the exact thing the whole view exists to make legible,
+	## and legibility is what three rounds of this have been about.
+	var s := _scene()
+	for name in ["CameraFloor", "SeatCam0", "SeatCam1", "SeatCam2", "Camera3D"]:
+		var r: Vector3 = (s.get_node(NodePath(name)) as Node3D).rotation
+		h.check("%s looks straight at the cards (%s)" % [name, r],
+			r.is_equal_approx(Vector3.ZERO))
+	s.free()
+
 func test_each_seat_has_a_customer_card_and_a_framing() -> void:
 	var s := _scene()
 	for i in range(3):
-		var who := s.get_node_or_null(NodePath("Table/Customer%d" % i))
+		var who := s.get_node_or_null(NodePath("Table/Seat%d/Customer%d" % [i, i]))
 		h.check("Customer%d exists" % i, who != null)
 		h.check("Customer%d is a customer card" % i, who is CustomerCard3D)
+		h.check("CustomerDetail%d is a detail card" % i,
+			s.get_node_or_null(NodePath("Table/Seat%d/CustomerDetail%d" % [i, i]))
+				is DetailCard3D)
+		h.check("OfferDetail%d is a detail card" % i,
+			s.get_node_or_null(NodePath("Table/Seat%d/OfferDetail%d" % [i, i]))
+				is DetailCard3D)
 		h.check("SeatCam%d exists to frame them" % i,
 			s.get_node_or_null(NodePath("SeatCam%d" % i)) is Marker3D)
 	h.check("and a floor framing to return to", s.get_node_or_null(^"CameraFloor") is Marker3D)
@@ -97,7 +186,7 @@ func test_the_hand_fans_and_the_piles_stack() -> void:
 	h.check("hand fans", fan is FanCardLayout)
 	h.check("with an arc that actually spread", (fan as FanCardLayout).arc_angle_deg > 0.0)
 	h.check("and a radius", (fan as FanCardLayout).arc_radius > 0.0)
-	for path in ["Table/Chair0", "Camera3D/Draw", "Camera3D/Discard"]:
+	for path in ["Table/Seat0/Chair0", "Camera3D/Draw", "Camera3D/Discard"]:
 		h.check("%s stacks" % path,
 			(s.get_node(NodePath(path)) as CardCollection3D).card_layout_strategy is PileCardLayout)
 	s.free()
@@ -161,7 +250,7 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	# moving, and the controller looks these up the same way.
 	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
 			"%ReportOverlay", "%SidePanel", "%ModeButton", "%ActionBar",
-			"%OfferPanel0", "%OfferPanel1", "%OfferPanel2", "%Tooltip"]:
+			"%Tooltip", "%Seat0", "%CustomerDetail0", "%OfferDetail0"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",
 		(s.get_node(^"%EventLog") as RichTextLabel).bbcode_enabled)
@@ -169,32 +258,15 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 		s.get_node_or_null(^"HUD") is CanvasLayer)
 	s.free()
 
-func test_the_floor_row_container_is_gone() -> void:
-	## Floor cards are positioned by unproject_position() now. A Container would
-	## overwrite position on every layout pass and fight the camera.
+func test_the_hud_no_longer_owns_any_of_the_table() -> void:
+	## Everything the HUD used to say about a customer or a product is on a card
+	## now. Two surfaces describing one customer is how the data went missing in
+	## the first place, and a panel over the table is how the clicks went missing.
 	var s := _scene()
-	h.check("no FloorRow", s.get_node_or_null(^"HUD/HudRoot/FloorRow") == null)
-	h.check("no HandRow either - the hand is on the table now",
-		s.get_node_or_null(^"HUD/HudRoot/HandRow") == null)
+	for gone in ["HUD/HudRoot/FloorRow", "HUD/HudRoot/HandRow",
+			"HUD/HudRoot/OfferPanel0", "HUD/HudRoot/CustomerPanel"]:
+		h.check("no %s" % gone, s.get_node_or_null(NodePath(gone)) == null)
 	s.free()
-
-func test_a_floor_card_only_blocks_the_mouse_where_its_button_is() -> void:
-	## Floor cards are instantiated at runtime so the scene lint above never sees
-	## them - but they float over the table, and one of them shipped the exact
-	## bug this checks: HoverPanel is revealed by hovering the card it covers, so
-	## as a STOP node it swallowed the very click that revealed it.
-	var fc := (load("res://scenes/floor_card.tscn") as PackedScene).instantiate() as Control
-	h.eq("the panel itself lets the mouse through", fc.mouse_filter,
-		Control.MOUSE_FILTER_IGNORE)
-	var offenders: Array[String] = []
-	for c in _controls_under(fc):
-		if c is Button:
-			continue
-		if c.mouse_filter != Control.MOUSE_FILTER_IGNORE:
-			offenders.append("%s (%s)" % [c.name, c.get_class()])
-	h.check("only its button blocks, found: %s" % ", ".join(offenders), offenders.is_empty())
-	h.check("and it does have a button to click", _find_first(fc, "Button") != null)
-	fc.free()
 
 func _controls_under(node: Node) -> Array[Control]:
 	var out: Array[Control] = []
