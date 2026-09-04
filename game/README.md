@@ -251,3 +251,96 @@ Smaller, known gaps, all deliberate:
   `Theme` resource. Both are open for a later polish pass, not implemented
   placeholders waiting for art.
 - **No sound.** Nothing plays; nothing is wired to play anything.
+
+---
+
+## G1.5 — the cards became 3D
+
+The hand, the piles and the customers' tables are now real 3D cards, using
+[Card3D](https://github.com/tdecker91/Card3D) (MIT, vendored verbatim into
+`addons/card_3d/` — see `VENDORED.md` there). **You play a product by dragging
+it onto a customer.** Dropping on someone you are not standing with approaches
+them first, at the usual tick cost; dropping on the discard pile digs. The
+customer panel, event log, report and top bar stayed 2D — they are text, and
+text is what this port exists to keep legible.
+
+The model did not change. Not one line under `scripts/model/`. That isolation is
+the entire reason a UI rewrite of this size was cheap, and it is worth saying
+plainly the first time it actually paid out.
+
+`shift.tscn` is a `Node3D` table with a `CanvasLayer` HUD over it: a head-on
+`Camera3D`, a `WorldEnvironment`, and six `CardCollection3D` zones — three
+chairs, draw, discard, hand.
+
+### Three rules that will bite whoever changes this next
+
+**One stray `Control` makes every card in the game dead.** Godot resolves
+Control GUI input *before* 3D physics picking, so any Control with
+`mouse_filter != IGNORE` under the cursor eats the click. `ColorRect`,
+`PanelContainer` and `RichTextLabel` all default to `STOP`; `Container`
+defaults to `PASS`, which also blocks. G1's full-rect background `ColorRect` is
+gone for exactly this reason, replaced by the `WorldEnvironment`. Only real
+`Button`s and the report overlay may block. `test_shift_scene.gd` lints it, and
+that lint is also the regression test G1's floor-card bug never had — its
+`HoverPanel` was revealed by hovering the card it covered, so as a `STOP` node
+it swallowed the very click that revealed it.
+
+Related and identical in symptom: `get_viewport().physics_object_picking`
+defaults to `false`, and Card3D's whole input path is `StaticBody3D.input_event`.
+The controller sets it in `_ready()`. If nothing responds, check both.
+
+**Cards are reconciled by uid, never rebuilt.** G1's `_render()` freed and
+recreated the hand every pass; in 3D that frees the node a drag is holding and
+kills every tween. `CardHomes.desired()` derives where each card belongs purely
+from model state and `_reconcile()` moves only the difference. Nothing frees a
+card node outside `_start_new_shift()` — a freed node still held by
+`DragController` crashes the next `apply_card_layout()`.
+
+This is also why there is no revert path for a refused drop: the model still has
+the card in hand, so reconciliation walks it home on its own, tweening because
+`_move_card()` preserves `global_position` across the reparent. **The bounce is
+the reconcile.**
+
+**Scene inheritance cannot come from a builder script.** Load-instantiate-repack
+bakes a *copy* and severs the link to upstream, so `card_face_3d.tscn` is
+hand-authored `.tscn` text instead — a scene whose *root* node carries
+`instance=ExtResource(...)` is an inheritance. Everything else is still built by
+`tools/build_*_scene.gd`, which is fine because instancing *does* survive
+packing. What does not survive is any strategy property that is not `@export`:
+`LineCardLayout.max_width` serialized as nothing and silently reverted to the
+library default of 20 units, so it is set at runtime and asserted by the driver.
+
+### Verifying it
+
+```bash
+godot --headless --path game --import
+godot --headless --path game --script res://tests/run_tests.gd   # the suite
+godot --headless --path game --script res://tools/drive_shift.gd # a live shift
+```
+
+`drive_shift.gd` instantiates the real scene, drives it through approach, play,
+offer, dig, close and leave, simulates a drop and a refused drop, and asserts
+after every one that each card sits where the model says and that only hand
+cards are draggable. It cannot live in the suite: `run_tests.gd` works inside
+`_init()`, where `_ready()` has not fired.
+
+### Still open
+
+**Nobody has looked at this either.** Every check above is structural — that the
+wiring matches the model, that no Control blocks picking, that the text says
+what it should. None of it can tell you whether `Label3D` text on a
+perspective-projected card is *readable* at 960×540, which `GODOT_SPEC.md` §11
+already names as the real tension in this port. If it is not, the camera is
+head-on and untilted precisely so that tilt is the first knob to turn, and
+rendering the existing 2D card design into a `SubViewport` texture remains the
+fallback.
+
+Also unchanged from G1's list: whether any of it is *fun*. Still only answerable
+by playing it.
+
+Two smaller things this deliberately did not do: `GODOT_SPEC.md` §7's pixel font
+is not loaded, so the faces use Godot's default font at sizes chosen to look
+right rather than to be native; and the renderer moved to Forward+ for Card3D,
+with `rendering_method.web` pinned to `gl_compatibility` so §10's browser build
+survives — Godot has no WebGPU backend, so a global switch would have quietly
+forfeited it.

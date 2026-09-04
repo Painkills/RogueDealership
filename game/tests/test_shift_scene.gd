@@ -91,6 +91,24 @@ func test_the_floor_row_container_is_gone() -> void:
 		s.get_node_or_null(^"HUD/HudRoot/HandRow") == null)
 	s.free()
 
+func test_a_floor_card_only_blocks_the_mouse_where_its_button_is() -> void:
+	## Floor cards are instantiated at runtime so the scene lint above never sees
+	## them - but they float over the table, and one of them shipped the exact
+	## bug this checks: HoverPanel is revealed by hovering the card it covers, so
+	## as a STOP node it swallowed the very click that revealed it.
+	var fc := (load("res://scenes/floor_card.tscn") as PackedScene).instantiate() as Control
+	h.eq("the panel itself lets the mouse through", fc.mouse_filter,
+		Control.MOUSE_FILTER_IGNORE)
+	var offenders: Array[String] = []
+	for c in _controls_under(fc):
+		if c is Button:
+			continue
+		if c.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+			offenders.append("%s (%s)" % [c.name, c.get_class()])
+	h.check("only its button blocks, found: %s" % ", ".join(offenders), offenders.is_empty())
+	h.check("and it does have a button to click", _find_first(fc, "Button") != null)
+	fc.free()
+
 func _controls_under(node: Node) -> Array[Control]:
 	var out: Array[Control] = []
 	for child in node.get_children():

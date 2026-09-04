@@ -2,56 +2,61 @@
 
 [ext_resource type="Script" path="res://scripts/view/floor_card.gd" id="1_h8n7p"]
 
-[node name="FloorCard" type="PanelContainer" unique_id=1396335695]
+[node name="FloorCard" type="PanelContainer" unique_id=620548035]
 custom_minimum_size = Vector2(160, 112)
+mouse_filter = 2
 script = ExtResource("1_h8n7p")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=412741927]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=2054207276]
 layout_mode = 2
+mouse_filter = 2
 
-[node name="NameLabel" type="Label" parent="VBoxContainer" unique_id=818531758]
+[node name="NameLabel" type="Label" parent="VBoxContainer" unique_id=2073650817]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="ArchetypeLabel" type="Label" parent="VBoxContainer" unique_id=1184305558]
+[node name="ArchetypeLabel" type="Label" parent="VBoxContainer" unique_id=1173123227]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="PatienceBar" type="ProgressBar" parent="VBoxContainer" unique_id=1802499961]
+[node name="PatienceBar" type="ProgressBar" parent="VBoxContainer" unique_id=1413608099]
 unique_name_in_owner = true
 layout_mode = 2
+mouse_filter = 2
 show_percentage = false
 
-[node name="PatienceLabel" type="Label" parent="VBoxContainer" unique_id=733032938]
+[node name="PatienceLabel" type="Label" parent="VBoxContainer" unique_id=1648822817]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="UnsignedLabel" type="Label" parent="VBoxContainer" unique_id=476115840]
+[node name="UnsignedLabel" type="Label" parent="VBoxContainer" unique_id=680682532]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="AlertLabel" type="Label" parent="VBoxContainer" unique_id=1871936297]
+[node name="AlertLabel" type="Label" parent="VBoxContainer" unique_id=1421242932]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Clicker" type="Button" parent="." unique_id=754830873]
+[node name="Clicker" type="Button" parent="." unique_id=332512370]
 unique_name_in_owner = true
 layout_mode = 2
 flat = true
 
-[node name="HoverPanel" type="PanelContainer" parent="." unique_id=78444193]
+[node name="HoverPanel" type="PanelContainer" parent="." unique_id=2008123276]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
+mouse_filter = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HoverPanel" unique_id=773807814]
+[node name="VBoxContainer" type="VBoxContainer" parent="HoverPanel" unique_id=1432996134]
 layout_mode = 2
+mouse_filter = 2
 
-[node name="HoverTitle" type="Label" parent="HoverPanel/VBoxContainer" unique_id=1855108239]
+[node name="HoverTitle" type="Label" parent="HoverPanel/VBoxContainer" unique_id=2026263824]
 layout_mode = 2
 text = "WHAT THEY DO"
 
-[node name="HoverBody" type="Label" parent="HoverPanel/VBoxContainer" unique_id=487236889]
+[node name="HoverBody" type="Label" parent="HoverPanel/VBoxContainer" unique_id=195225158]
 unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 2

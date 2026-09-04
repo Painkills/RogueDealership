@@ -53,11 +53,11 @@ func _shift2_karen() -> Shift:
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), 1, [&"karen", &"easygoing"])
 
-func test_a_products_category_and_interest_are_reachable_the_way_hand_card_reads_them() -> void:
+func test_a_products_category_and_interest_are_reachable_the_way_a_card_face_reads_them() -> void:
 	var pool: CardPool = load("res://data/card_pool.tres")
 	var vsc := pool.by_id(&"vsc") as ProductCardDef
 	h.check("interest is set", vsc.interest != null)
 	h.check("category is reachable through interest",
 		vsc.interest.category != null)
-	h.eq("category display name is what HandCard prints",
+	h.eq("category display name is what a card face prints",
 		vsc.interest.category.display_name, "Vehicle")

@@ -4,10 +4,15 @@ func _init() -> void:
 	var root := PanelContainer.new()
 	root.name = "FloorCard"
 	root.custom_minimum_size = Vector2(160, 112)
+	# Only Clicker blocks the mouse. Everything else here is IGNORE so the panel
+	# cannot swallow a click aimed at its own button, or - now that it floats
+	# over a 3D table - block card picking behind it.
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.set_script(load("res://scripts/view/floor_card.gd"))
 
 	var vbox := VBoxContainer.new()
 	vbox.name = "VBoxContainer"
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(vbox)
 	vbox.owner = root
 
@@ -27,6 +32,7 @@ func _init() -> void:
 	patience_bar.name = "PatienceBar"
 	patience_bar.min_value = 0
 	patience_bar.show_percentage = false
+	patience_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	patience_bar.unique_name_in_owner = true
 	vbox.add_child(patience_bar)
 	patience_bar.owner = root
@@ -60,12 +66,18 @@ func _init() -> void:
 	var hover := PanelContainer.new()
 	hover.name = "HoverPanel"
 	hover.visible = false
+	# IGNORE, not the PanelContainer default of STOP. This panel is revealed by
+	# hovering the card it covers, so as a STOP node it swallowed the click that
+	# revealed it - which is why floor cards never responded to the mouse in G1 -
+	# and over a 3D table it would additionally block card picking underneath.
+	hover.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover.unique_name_in_owner = true
 	root.add_child(hover)
 	hover.owner = root
 
 	var hover_vbox := VBoxContainer.new()
 	hover_vbox.name = "VBoxContainer"
+	hover_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hover.add_child(hover_vbox)
 	hover_vbox.owner = root
 
