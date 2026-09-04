@@ -1,0 +1,94 @@
+[gd_scene format=3]
+
+[node name="CardFront" type="Control" unique_id=396258160]
+custom_minimum_size = Vector2(500, 700)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 500.0
+offset_bottom = 700.0
+
+[node name="Background" type="ColorRect" parent="." unique_id=837794688]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.13333334, 0.13333334, 0.23137255, 1)
+
+[node name="Inset" type="ColorRect" parent="." unique_id=1552811090]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+color = Color(0.18039216, 0.18039216, 0.2901961, 1)
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=1294405319]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 34
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 34
+
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=334005540]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=643251724]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=1352766530]
+custom_minimum_size = Vector2(0, 130)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 46
+theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+autowrap_mode = 2
+
+[node name="CostLabel" type="Label" parent="Margin/Column/Header" unique_id=973651551]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+horizontal_alignment = 2
+
+[node name="KindLabel" type="Label" parent="Margin/Column" unique_id=1348698454]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+
+[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=727665456]
+custom_minimum_size = Vector2(0, 3)
+layout_mode = 2
+color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+
+[node name="BodyLabel" type="Label" parent="Margin/Column" unique_id=2105102088]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=1005576850]
+layout_mode = 2
+theme_override_font_sizes/font_size = 68
+theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+horizontal_alignment = 1

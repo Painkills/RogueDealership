@@ -25,13 +25,31 @@ func test_the_table_has_every_zone_the_controller_expects() -> void:
 	h.check("a DragController", s.get_node_or_null(^"DragController") is DragController)
 	s.free()
 
-func test_the_hand_lays_out_in_a_line_and_the_piles_stack() -> void:
+func test_the_hand_fans_and_the_piles_stack() -> void:
+	## A fan, following example_battle's staging. FanCardLayout also exports its
+	## arc, so unlike LineCardLayout.max_width those values survive packing.
 	var s := _scene()
-	h.check("hand is a line",
-		(s.get_node(^"Table/Hand") as CardCollection3D).card_layout_strategy is LineCardLayout)
+	var fan := (s.get_node(^"Table/Hand") as CardCollection3D).card_layout_strategy
+	h.check("hand fans", fan is FanCardLayout)
+	h.check("with an arc that actually spread", (fan as FanCardLayout).arc_angle_deg > 0.0)
+	h.check("and a radius", (fan as FanCardLayout).arc_radius > 0.0)
 	for path in ["Table/Chair0", "Table/Draw", "Table/Discard"]:
 		h.check("%s stacks" % path,
 			(s.get_node(NodePath(path)) as CardCollection3D).card_layout_strategy is PileCardLayout)
+	s.free()
+
+func test_the_cards_have_something_to_sit_on_and_something_to_light_them() -> void:
+	## Without these the cards float on a flat fill and read as decals. The
+	## reference example stages a lit surface for exactly this reason.
+	var s := _scene()
+	var felt := s.get_node_or_null(^"Felt") as MeshInstance3D
+	h.check("there is a table surface", felt != null)
+	h.check("big enough to fill the shot", felt != null and felt.mesh is QuadMesh
+		and (felt.mesh as QuadMesh).size.x >= 30.0)
+	h.check("sitting behind the cards, not through them", felt.position.z < 0.0)
+	var light := s.get_node_or_null(^"DirectionalLight3D") as DirectionalLight3D
+	h.check("there is a key light", light != null)
+	h.check("casting shadows, so cards sit ON the table", light != null and light.shadow_enabled)
 	s.free()
 
 func test_the_background_is_the_environment_not_a_control() -> void:
@@ -44,8 +62,12 @@ func test_the_background_is_the_environment_not_a_control() -> void:
 	h.check("there is a WorldEnvironment", we != null)
 	h.check("painting a flat colour", we != null and we.environment != null
 		and we.environment.background_mode == Environment.BG_COLOR)
-	h.eq("in the palette's bg role", we.environment.background_color, Palette.color(&"bg"))
-	h.check("and no ColorRect survives anywhere", _find_first(s, "ColorRect") == null)
+	h.eq("in a palette role, not a hex literal", we.environment.background_color,
+		Palette.color(&"neutral_1"))
+	# Scoped to the HUD on purpose: card faces legitimately use ColorRects inside
+	# their own SubViewport, where nothing can be in front of the table.
+	h.check("and no ColorRect is left covering the HUD",
+		_find_first(s.get_node(^"HUD"), "ColorRect") == null)
 	s.free()
 
 func test_no_hud_control_can_swallow_a_click_meant_for_the_table() -> void:

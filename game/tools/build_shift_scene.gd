@@ -1,36 +1,37 @@
 extends SceneTree
 ## Builds res://scenes/shift.tscn - a 3D card table with a 2D HUD over it.
 ##
-## Why a builder script and not the editor: every scene in this project is
-## generated this way, it diffs readably, and it is the only option in a session
-## with no display. The one thing it CANNOT produce is scene inheritance
-## (load-instantiate-repack bakes a copy and severs the link), which is why
-## card_face_3d.tscn is hand-authored .tscn text instead. Instancing is fine -
-## pack() preserves it - so the card collections below are real instances of the
-## vendored card_collection_3d.tscn.
+## Staging follows Card3D's own example_battle, which is the reference for how
+## this is supposed to look: a lit table surface, a directional light with soft
+## shadows so cards sit ON something, a camera close enough that a card is a
+## real object rather than a stamp, and a FAN for the hand.
 ##
-## Collections MUST be instanced from that scene, never CardCollection3D.new():
-## the class's @export setters reach into $DropZone/CollisionShape3D, which only
-## the scene provides.
+## Collections MUST be instanced from card_collection_3d.tscn, never
+## CardCollection3D.new(): the class's @export setters reach into
+## $DropZone/CollisionShape3D, which only the scene provides.
+##
+## Only a strategy's TYPE and its @export values survive packing. FanCardLayout
+## exports arc_angle_deg and arc_radius so those stick; LineCardLayout.max_width
+## is a plain var and would not, which is why the hand fans instead.
 
 const COLLECTION := "res://addons/card_3d/scenes/card_collection_3d.tscn"
 const REPORT := "res://scenes/report.tscn"
 
-# Table geometry, in world units. The camera sits head-on at CAM_Z with no tilt:
-# legibility is this port's stated risk (GODOT_SPEC.md 11), and foreshortened
-# Label3D text is the thing most likely to make it fail, so the cards face the
-# viewer squarely. Tilt is the first knob to turn once someone can actually see
-# it - Card3D still gives hover-lift and drag-tilt in 3D either way.
-const CAM_Z := 13.0
-const CAM_Y := -1.0
+# Table geometry, in world units. Camera is head-on and untilted: legibility is
+# this port's stated risk (GODOT_SPEC.md 11), so the faces point straight at the
+# viewer. Tilt is the first knob to turn once someone can see it.
+const CAM_Z := 11.0
+const CAM_Y := -0.5
 const CAM_FOV := 60.0
 
-const CHAIR_Y := 2.2
-const CHAIR_X := [-4.6, 0.0, 4.6]
-const PILE_Y := 2.2
-const DRAW_X := -10.5
-const DISCARD_X := 10.5
-const HAND_Y := -5.8
+const CHAIR_Y := 2.4
+const CHAIR_X := [-4.4, 0.0, 4.4]
+const PILE_Y := 2.4
+const DRAW_X := -9.3
+const DISCARD_X := 9.3
+const HAND_Y := -4.4
+const FAN_ANGLE := 60.0
+const FAN_RADIUS := 9.0
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -45,20 +46,48 @@ func _init() -> void:
 	root.add_child(cam)
 	cam.owner = root
 
+	# Cards are lit, not unlit: the shading is most of what makes them read as
+	# objects lying on a surface rather than decals.
+	var light := DirectionalLight3D.new()
+	light.name = "DirectionalLight3D"
+	light.position = Vector3(0, 6, 12)
+	light.rotation_degrees = Vector3(-32, -18, 0)
+	light.light_energy = 1.15
+	light.shadow_enabled = true
+	light.shadow_opacity = 0.6
+	light.shadow_blur = 4.0
+	root.add_child(light)
+	light.owner = root
+
 	# Replaces G1's full-rect ColorRect background. That ColorRect would have
 	# made every card in the game unclickable: Godot resolves Control GUI input
 	# before physics picking, and ColorRect defaults to MOUSE_FILTER_STOP.
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Palette.color(&"bg")
+	env.background_color = Palette.color(&"neutral_1")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color.WHITE
-	env.ambient_light_energy = 1.0
+	env.ambient_light_color = Palette.color(&"panel_hi")
+	env.ambient_light_energy = 0.9
 	var we := WorldEnvironment.new()
 	we.name = "WorldEnvironment"
 	we.environment = env
 	root.add_child(we)
 	we.owner = root
+
+	# The surface the cards sit on. A QuadMesh is already in the XY plane facing
+	# +Z, so it needs no rotation the way a PlaneMesh would.
+	var felt := QuadMesh.new()
+	felt.size = Vector2(60, 40)
+	var felt_mat := StandardMaterial3D.new()
+	felt_mat.albedo_color = Palette.color(&"bg")
+	felt_mat.roughness = 0.95
+	var table_mesh := MeshInstance3D.new()
+	table_mesh.name = "Felt"
+	table_mesh.mesh = felt
+	table_mesh.material_override = felt_mat
+	table_mesh.position = Vector3(0, 0, -0.6)
+	root.add_child(table_mesh)
+	table_mesh.owner = root
 
 	var table := Node3D.new()
 	table.name = "Table"
@@ -86,15 +115,16 @@ func _init() -> void:
 
 	var hand := _collection(collection_scene, "Hand",
 		Vector3(0.0, HAND_Y, 0.0), table, root)
-	# Only the strategy's TYPE survives packing. LineCardLayout.max_width is a
-	# plain var, not @export, so it serializes as nothing and reverts to the
-	# library default of 20 units on load - wide enough to run off screen.
-	# shift_controller.gd sets it at runtime instead; see HAND_MAX_WIDTH there.
-	hand.card_layout_strategy = LineCardLayout.new()
+	var fan := FanCardLayout.new()
+	fan.arc_angle_deg = FAN_ANGLE
+	fan.arc_radius = FAN_RADIUS
+	hand.card_layout_strategy = fan
 	zones.append(hand)
 
 	var drag := DragController.new()
 	drag.name = "DragController"
+	# Cards ride in front of the table while dragged, so they never clip into it.
+	drag.card_drag_plane = Plane(Vector3(0, 0, 1), 1.5)
 	root.add_child(drag)
 	drag.owner = root
 
@@ -108,8 +138,6 @@ func _init() -> void:
 		quit(1)
 		return
 	print("saved shift.tscn with %d card collections" % zones.size())
-	# pack() has copied everything; free the scratch tree so real errors are not
-	# buried under leak warnings on the next build.
 	root.free()
 	quit(0)
 
@@ -131,7 +159,7 @@ func _build_hud(root: Node) -> void:
 
 	# Everything here is IGNORE unless it is a real button or a solid panel that
 	# SHOULD block the table. A single stray STOP Control over the table makes
-	# every card inert; see test_hud_input.gd.
+	# every card inert; see test_shift_scene.gd.
 	var hud := Control.new()
 	hud.name = "HudRoot"
 	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -142,9 +170,9 @@ func _build_hud(root: Node) -> void:
 
 	var top := HBoxContainer.new()
 	top.name = "TopBar"
-	top.position = Vector2(8, 4)
+	top.position = Vector2(10, 6)
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.add_theme_constant_override("separation", 24)
+	top.add_theme_constant_override("separation", 26)
 	hud.add_child(top)
 	top.owner = root
 
@@ -156,13 +184,12 @@ func _build_hud(root: Node) -> void:
 		top.add_child(l)
 		l.owner = root
 
-	# Free-floating, NOT in a container: _render() drives their positions from
-	# the 3D chair zones via unproject_position(), and a Container would
-	# overwrite position on every layout pass.
+	# Bottom-left, clear of the fanned hand in the centre and the log on the
+	# right. Floor panels sit above all three, under their own chairs.
 	var slot := Control.new()
 	slot.name = "CustomerSlot"
-	slot.position = Vector2(8, 300)
-	slot.size = Vector2(292, 232)
+	slot.position = Vector2(8, 350)
+	slot.size = Vector2(262, 184)
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.unique_name_in_owner = true
 	hud.add_child(slot)
@@ -171,6 +198,8 @@ func _build_hud(root: Node) -> void:
 	var empty := Label.new()
 	empty.name = "EmptySlotLabel"
 	empty.text = "Stand with a customer to negotiate."
+	empty.autowrap_mode = TextServer.AUTOWRAP_WORD
+	empty.size = Vector2(262, 60)
 	empty.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	empty.unique_name_in_owner = true
 	slot.add_child(empty)
@@ -180,8 +209,8 @@ func _build_hud(root: Node) -> void:
 	log_box.name = "EventLog"
 	log_box.bbcode_enabled = true
 	log_box.scroll_following = true
-	log_box.position = Vector2(660, 300)
-	log_box.size = Vector2(292, 232)
+	log_box.position = Vector2(690, 350)
+	log_box.size = Vector2(262, 184)
 	log_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	log_box.unique_name_in_owner = true
 	hud.add_child(log_box)

@@ -21,11 +21,6 @@ const CustomerPanelScene := preload("res://scenes/customer_panel.tscn")
 const FLOOR_CARD_GAP := 8.0
 ## Half a card's height in world units, from card_3d.tscn's 2.5 x 3.5 PlaneMesh.
 const CARD_HALF_HEIGHT := 1.75
-## How wide the hand may spread, in world units. Must be applied at runtime:
-## LineCardLayout.max_width is a plain var rather than @export, so it serializes
-## as nothing and would silently fall back to the library default of 20 - about
-## twice the width of the space the hand has on screen.
-const HAND_MAX_WIDTH := 9.0
 
 @onready var _camera: Camera3D = $Camera3D
 @onready var _drag: DragController = $DragController
@@ -55,10 +50,6 @@ func _ready() -> void:
 	# Card3D receives mouse input through StaticBody3D.input_event, which does
 	# nothing at all unless the viewport is picking. It defaults to false.
 	get_viewport().physics_object_picking = true
-
-	var hand_layout := _hand_zone.card_layout_strategy as LineCardLayout
-	if hand_layout != null:
-		hand_layout.max_width = HAND_MAX_WIDTH
 
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
 	for zone in _chair_zones:

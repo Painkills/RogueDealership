@@ -1,47 +1,59 @@
 class_name CardFace3D extends Card3D
 ## One physical card on the table.
 ##
-## Inherits the vendored Card3D scene and hangs Label3D text on its front. The
-## labels live under CardMesh/Front, NOT under the root: face_down rotates
-## CardMesh by PI, so text parented anywhere else would keep facing the camera
-## and float over the card's own back.
+## The face is ordinary 2D UI (card_front_2d.tscn, 500x700) rendered into a
+## SubViewport and used as the front mesh's albedo. This is the pattern Card3D's
+## own example_battle uses, and it is why the type is readable: the face is
+## authored large and minified onto the card, rather than being drawn at final
+## size like Label3D text is.
 ##
-## setup() is re-run on every reconcile rather than only on creation, which is
-## what keeps a product's margin honest while ChangeMargin mutates the live
-## offer underneath it. That is the whole reason this face is text nodes and not
-## a baked texture.
+## The viewport only re-renders when something changed - UPDATE_ONCE after every
+## write - so four cards in hand are not four extra viewports rendering forever.
 
-## World units per font pixel. One number decides how big every word on every
-## card is; tune here, not per-label. See PIXEL_SIZE in card_face_3d.tscn - the
-## scene and this constant must agree.
-const PIXEL_SIZE := 0.02
+const FRONT_SIZE := Vector2i(500, 700)   ## exactly the mesh's 2.5 x 3.5 aspect
 
 var uid: int = -1
 var instance: CardInstance
 
-# Resolved on first use, NOT @onready. Reconciliation calls setup() on a card
-# the moment it is instantiated, before it has been added to a collection and
-# therefore before _ready() has run - at which point @onready vars are still
-# null. The child nodes themselves exist as soon as the scene is instantiated,
-# so looking them up on demand is always safe and @onready is not.
-var _name: Label3D
-var _cost: Label3D
-var _kind: Label3D
-var _body: Label3D
-var _margin: Label3D
+var _material := StandardMaterial3D.new()
+var _bound := false
+var _viewport: SubViewport
+var _name: Label
+var _cost: Label
+var _kind: Label
+var _body: Label
+var _margin: Label
 
-func _resolve_labels() -> void:
-	if _name != null:
+func _ready() -> void:
+	_bind()
+	# Deferred because a SubViewport has not rendered a frame yet at _ready, and
+	# binding its texture before that leaves the card blank until something else
+	# happens to dirty it.
+	_redraw.call_deferred()
+
+## Child nodes exist from instantiate(), but the viewport's texture is only
+## meaningful once we are in the tree - so text can be written any time, while
+## the material is attached here.
+func _bind() -> void:
+	if _bound:
 		return
-	var front := $CardMesh/Front
-	_name = front.get_node(^"NameLabel")
-	_cost = front.get_node(^"CostLabel")
-	_kind = front.get_node(^"KindLabel")
-	_body = front.get_node(^"BodyLabel")
-	_margin = front.get_node(^"MarginLabel")
+	_bound = true
+	_viewport = $FrontViewport
+	var front: Control = $FrontViewport/CardFront
+	_name = front.get_node(^"Margin/Column/Header/NameLabel")
+	_cost = front.get_node(^"Margin/Column/Header/CostLabel")
+	_kind = front.get_node(^"Margin/Column/KindLabel")
+	_body = front.get_node(^"Margin/Column/BodyLabel")
+	_margin = front.get_node(^"Margin/Column/MarginLabel")
+
+	_viewport.size = FRONT_SIZE
+	_viewport.disable_3d = true
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	_material.albedo_texture = _viewport.get_texture()
+	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
 
 func setup(inst: CardInstance) -> void:
-	_resolve_labels()
+	_bind()
 	instance = inst
 	uid = inst.uid
 
@@ -51,15 +63,16 @@ func setup(inst: CardInstance) -> void:
 	_body.text = CardText.body(inst)
 	_margin.text = CardText.margin(inst)
 
-	_name.modulate = Palette.color(&"text")
-	_cost.modulate = Palette.color(&"text_dim")
-	_body.modulate = Palette.color(&"text")
 	if inst.is_product():
-		_kind.modulate = Palette.color(&"accent")
-		_margin.modulate = Palette.color(&"margin")
+		_kind.add_theme_color_override("font_color", Palette.color(&"accent"))
 	else:
-		_kind.modulate = Palette.color(&"action")
-		_margin.modulate = Palette.color(&"text_dim")
-
+		_kind.add_theme_color_override("font_color", Palette.color(&"action"))
 	# An upgraded card should be obvious without reading it.
-	_name.outline_modulate = Palette.color(&"appeal") if inst.upgraded else Palette.color(&"neutral_1")
+	_name.add_theme_color_override("font_color",
+		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
+
+	_redraw()
+
+func _redraw() -> void:
+	if _viewport != null:
+		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE

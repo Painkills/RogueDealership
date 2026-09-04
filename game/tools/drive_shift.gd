@@ -20,6 +20,11 @@ var _failures: Array[String] = []
 var _checks := 0
 
 func _init() -> void:
+	# The controller seeds its shift from randi(), so without pinning the global
+	# RNG this driver plays a DIFFERENT game every run and its failures wander.
+	# Found the hard way: a run that reported "all passed" had simply been dealt
+	# a kind shift.
+	seed(20260903)
 	_controller = (load("res://scenes/shift.tscn") as PackedScene).instantiate()
 	get_root().add_child(_controller)
 
@@ -38,10 +43,8 @@ func _process(_delta: float) -> bool:
 	_check("and found a camera to ray through", _controller._drag._camera != null)
 	_check("a shift is running", _controller._shift != null)
 	_check("three floor panels", _controller._floor_cards.size() == 3)
-	_check("the hand was narrowed from the library default",
-		is_equal_approx(
-			(_controller._hand_zone.card_layout_strategy as LineCardLayout).max_width,
-			_controller.HAND_MAX_WIDTH))
+	_check("the hand fans, the way the reference example stages one",
+		_controller._hand_zone.card_layout_strategy is FanCardLayout)
 
 	_check_table("on arrival")
 	_check_panels_clear_of_each_other()
@@ -142,19 +145,30 @@ func _drop(face, to_zone) -> void:
 func _check_drop_plays_a_card() -> void:
 	var shift = _controller._shift
 	var hand = _controller._hand_zone
-	if hand.cards.is_empty():
-		_check("there was a card in hand to drag", false)
+	# Must be a PRODUCT. Most support cards carry needs_offer, so dropping one on
+	# a customer with nothing on the table is refused - correctly - and would be
+	# testing the bounce path rather than the play path.
+	var face = null
+	for c in hand.cards:
+		if c.instance != null and c.instance.is_product():
+			face = c
+			break
+	if face == null:
+		_check("there was a product in hand to drag onto someone", false)
 		return
-	var face = hand.cards[0]
 	var uid: int = face.uid
 	var before: int = shift.hand.size()
 
 	_drop(face, _controller._chair_zones[1])
 
-	_check("dropping on a chair actually played the card (hand %d -> %d)"
-		% [before, shift.hand.size()], shift.hand.size() < before
-			or CardIndex.of(shift, uid) == -1)
-	_check("and it moved you to that chair", shift.at == 1)
+	_check("dropping on a chair reached the model (hand %d -> %d, uid gone: %s)"
+		% [before, shift.hand.size(), CardIndex.of(shift, uid) == -1],
+		CardIndex.of(shift, uid) == -1)
+	# at can legitimately be null again afterwards: place() burns a tick, and if
+	# that tick empties the chair you are standing at, the model vacates you.
+	_check("and it took you to that chair (at=%s, chair1=%s)"
+		% [shift.at, "empty" if shift.chairs[1] == null else "seated"],
+		shift.at == 1 or shift.chairs[1] == null)
 	_check_table("after dropping a card on chair B")
 
 func _check_refused_drop_comes_home() -> void:
