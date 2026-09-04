@@ -8,10 +8,12 @@ var _line: int = 0
 var _scale: int = 40
 var _band: String = ""
 
-func set_state(appeal: int, line: int, scale: int, band: String) -> void:
+## `full_scale`, not `scale` - Control already has a `scale` property and
+## shadowing it here produced a warning on every load.
+func set_state(appeal: int, line: int, full_scale: int, band: String) -> void:
 	_appeal = appeal
 	_line = line
-	_scale = max(1, scale)
+	_scale = max(1, full_scale)
 	_band = band
 	queue_redraw()
 

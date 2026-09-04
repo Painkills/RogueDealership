@@ -20,10 +20,17 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 
 [display]
 
-window/size/viewport_width=960
-window/size/viewport_height=540
-window/stretch/mode="viewport"
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/stretch/mode="canvas_items"
+
+[gui]
+
+; Every 2D panel here was authored against the old 960x540 base and sets no font
+; size of its own. Raising the default scales all of them at once, rather than
+; sprinkling overrides through three builder scripts.
+theme/default_font_size=26
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=0
+anti_aliasing/quality/msaa_3d=2

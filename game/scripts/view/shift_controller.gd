@@ -18,11 +18,26 @@ const FloorCardScene := preload("res://scenes/floor_card.tscn")
 const CustomerPanelScene := preload("res://scenes/customer_panel.tscn")
 
 ## Gap in pixels between a chair's card and the info panel drawn under it.
-const FLOOR_CARD_GAP := 8.0
+const FLOOR_CARD_GAP := 14.0
 ## Half a card's height in world units, from card_3d.tscn's 2.5 x 3.5 PlaneMesh.
 const CARD_HALF_HEIGHT := 1.75
+const SEAT_PANEL_SIZE := Vector2(320, 224)
+## How long the camera takes to move between the floor and a seat.
+const FRAMING_TWEEN := 0.45
+## Where the seats you are NOT with go while negotiating: a small strip, top
+## left, subordinate to the panel but still readable. GODOT_SPEC.md 6 requires
+## patience and unsigned to stay live for every chair, and a customer walking
+## out unnoticed is the exact frustration that rule exists to prevent.
+const STRIP_ORIGIN := Vector2(28, 78)
+const STRIP_SCALE := 0.55
+const STRIP_GAP := 16.0
+## Must match build_shift_scene.gd's HAND_Y_* - the hand's resting height in
+## each framing.
+const HAND_Y_FLOOR := -13.0
+const HAND_Y_SEAT := -4.4
 
 @onready var _camera: Camera3D = $Camera3D
+@onready var _camera_floor: Marker3D = %CameraFloor
 @onready var _drag: DragController = $DragController
 @onready var _hand_zone: CardCollection3D = %Hand
 @onready var _draw_zone: CardCollection3D = %Draw
@@ -39,6 +54,9 @@ const CARD_HALF_HEIGHT := 1.75
 
 var _shift: Shift
 var _chair_zones: Array = []
+var _seat_cams: Array = []
+var _framing_tween: Tween
+var _framed_at = null            ## which seat the camera is currently framing
 var _floor_cards: Array = []
 var _customer_panel
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
@@ -52,6 +70,7 @@ func _ready() -> void:
 	get_viewport().physics_object_picking = true
 
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
+	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
 	for zone in _chair_zones:
 		_drag.add_card_collection(zone)
 	_drag.add_card_collection(_hand_zone)
@@ -156,7 +175,7 @@ func _start_new_shift() -> void:
 	for i in range(_chair_zones.size()):
 		var fc := FloorCardScene.instantiate()
 		_hud.add_child(fc)
-		fc.size = Vector2(160, 112)
+		fc.size = SEAT_PANEL_SIZE
 		fc.pressed.connect(_on_chair_pressed)
 		_floor_cards.append(fc)
 
@@ -283,6 +302,7 @@ func _render() -> void:
 	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
 		if risk > 0 else "nothing unsigned"
 
+	_apply_framing()
 	for i in range(_floor_cards.size()):
 		_floor_cards[i].setup(_shift.chairs[i], _shift.walk_up[i], i)
 	_position_floor_cards()
@@ -302,17 +322,58 @@ func _render() -> void:
 	_reconcile()
 	_drain_log()
 
-## The 2D info panels chase the 3D chairs, not the other way round: the table is
-## authored geometry, and a Control in a Container would have its position
-## overwritten every layout pass anyway.
+## Move the camera between the wide floor shot and a single seat. The two modes
+## have to LOOK different or nothing tells you which one you are in; pushing in
+## also makes the hand big enough to read, which no amount of font tuning at the
+## old framing achieved.
+func _apply_framing() -> void:
+	var target: Node3D = _camera_floor
+	if _shift != null and _shift.at != null:
+		target = _seat_cams[int(_shift.at)]
+	if _framed_at == _shift.at:
+		return
+	_framed_at = _shift.at
+	if _framing_tween != null and _framing_tween.is_running():
+		_framing_tween.kill()
+	_framing_tween = create_tween()
+	_framing_tween.set_parallel(true)
+	_framing_tween.set_ease(Tween.EASE_OUT)
+	_framing_tween.set_trans(Tween.TRANS_CUBIC)
+	_framing_tween.tween_property(_camera, "global_position",
+		target.global_position, FRAMING_TWEEN)
+	_framing_tween.tween_property(_camera, "global_rotation",
+		target.global_rotation, FRAMING_TWEEN)
+	# "Your cards come up." The hand is dropped out of the shot on the floor and
+	# lifts into reach when you sit down with someone.
+	var hand_y: float = HAND_Y_SEAT if _shift.at != null else HAND_Y_FLOOR
+	_framing_tween.tween_property(_hand_zone, "position:y", hand_y, FRAMING_TWEEN)
+
+## On the floor, each seat's panel sits under its own seat, so who is where is
+## spatial. While negotiating, the seat you are AT is described by the side
+## panel instead, and the other two shrink into a corner strip - present enough
+## to triage, never lined up as equals with the person in front of you.
 func _position_floor_cards() -> void:
+	var negotiating: bool = _shift.at != null
+	var strip_slot := 0
 	for i in range(_floor_cards.size()):
 		var card: Control = _floor_cards[i]
 		if _report_overlay.visible:
 			card.visible = false
 			continue
-		var anchor: Vector3 = _chair_zones[i].global_position \
-			+ Vector3(0, -CARD_HALF_HEIGHT, 0)
+
+		if negotiating:
+			if i == int(_shift.at):
+				card.visible = false          # the side panel describes this seat now
+				continue
+			card.visible = true
+			card.scale = Vector2(STRIP_SCALE, STRIP_SCALE)
+			card.position = STRIP_ORIGIN + Vector2(
+				strip_slot * (SEAT_PANEL_SIZE.x * STRIP_SCALE + STRIP_GAP), 0)
+			strip_slot += 1
+			continue
+
+		card.scale = Vector2.ONE
+		var anchor: Vector3 = _chair_zones[i].global_position + Vector3(0, -CARD_HALF_HEIGHT, 0)
 		if _camera.is_position_behind(anchor):
 			card.visible = false
 			continue

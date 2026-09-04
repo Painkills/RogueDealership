@@ -59,6 +59,7 @@ func _process(_delta: float) -> bool:
 
 	_check_drop_plays_a_card()
 	_check_refused_drop_comes_home()
+	_check_the_action_buttons_stay_on_screen()
 
 	print("")
 	if _failures.is_empty():
@@ -125,12 +126,18 @@ func _check_panels_clear_of_each_other() -> void:
 		rects.append(Rect2(card.position, card.size))
 	for i in range(rects.size()):
 		var r: Rect2 = rects[i]
-		_check("floor panel %d is on screen (%s)" % [i, r],
+		var screen := Vector2(
+			ProjectSettings.get_setting("display/window/size/viewport_width"),
+			ProjectSettings.get_setting("display/window/size/viewport_height"))
+		_check("floor panel %d is on screen (%s in %s)" % [i, r, screen],
 			r.position.x >= 0 and r.position.y >= 0
-				and r.end.x <= 960 and r.end.y <= 540)
+				and r.end.x <= screen.x and r.end.y <= screen.y)
 		for j in range(i + 1, rects.size()):
 			_check("floor panels %d and %d do not overlap" % [i, j],
 				not r.intersects(rects[j]))
+		var panel: Control = _controller.get_node("%SidePanel")
+		_check("floor panel %d does not sit under the side panel" % i,
+			not r.intersects(Rect2(panel.position, panel.size)))
 
 ## Simulate what DragController does on a drop - move the node, then emit - and
 ## confirm the model followed. Only the mouse is faked; the handler is real.
@@ -195,6 +202,34 @@ func _check_refused_drop_comes_home() -> void:
 	_check("with an explanation in the log rather than silence",
 		_controller._event_log.get_parsed_text().length() > 0)
 	_check_table("after a refused drop")
+
+## The reported bug: OFFER / DROP / CLOSE vanished the moment you put something
+## on the table. Not a disabled state - a layout overflow. The panel's minimum
+## grows from 116 to 248px when the offer box appears, and the slot holding it
+## was 184px, so the button row was pushed off the bottom of the screen.
+func _check_the_action_buttons_stay_on_screen() -> void:
+	var shift = _controller._shift
+	if shift.at == null:
+		_press(KEY_A)
+	var panel = _controller._customer_panel
+	var slot: Control = _controller.get_node("%CustomerSlot")
+	var box: Control = panel.get_node("%OfferBox")
+
+	box.visible = true
+	panel.queue_sort()
+	var needed: Vector2 = panel.get_combined_minimum_size()
+	_check("the slot fits the panel with an offer on the table (needs %d, has %d)"
+		% [needed.y, slot.size.y], slot.size.y >= needed.y)
+
+	var screen_h: float = ProjectSettings.get_setting("display/window/size/viewport_height")
+	for name in ["OfferButton", "DropButton", "CloseButton"]:
+		var b := panel.get_node_or_null(NodePath("%" + name)) as Control
+		if b == null:
+			_check("%s exists" % name, false)
+			continue
+		var r := Rect2(b.global_position, b.size)
+		_check("%s is on screen with an offer up (%s)" % [name, r],
+			r.end.y <= screen_h and r.position.y >= 0.0)
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

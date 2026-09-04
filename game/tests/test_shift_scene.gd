@@ -93,13 +93,13 @@ func test_no_hud_control_can_swallow_a_click_meant_for_the_table() -> void:
 
 func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	var s := _scene()
-	for path in ["HUD/HudRoot/TopBar/TickLabel", "HUD/HudRoot/TopBar/BankedLabel",
-			"HUD/HudRoot/TopBar/AtRiskLabel", "HUD/HudRoot/CustomerSlot",
-			"HUD/HudRoot/CustomerSlot/EmptySlotLabel", "HUD/HudRoot/EventLog",
-			"HUD/HudRoot/ReportOverlay"]:
-		h.check("%s exists" % path, s.get_node_or_null(NodePath(path)) != null)
+	# Addressed by unique name, not by path: the panel layout is expected to keep
+	# moving, and the controller looks these up the same way.
+	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%CustomerSlot",
+			"%EmptySlotLabel", "%EventLog", "%ReportOverlay", "%SidePanel"]:
+		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",
-		(s.get_node(^"HUD/HudRoot/EventLog") as RichTextLabel).bbcode_enabled)
+		(s.get_node(^"%EventLog") as RichTextLabel).bbcode_enabled)
 	h.check("the HUD is a CanvasLayer, so it is not subject to the 3D transform",
 		s.get_node_or_null(^"HUD") is CanvasLayer)
 	s.free()

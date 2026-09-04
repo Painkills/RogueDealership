@@ -3,8 +3,8 @@ class_name Format extends RefCounted
 ## not an autoload, for the same reason as Palette (see palette.gd).
 
 static func money(n: int) -> String:
-	var sign := "-" if n < 0 else ""
-	return "%s$%s" % [sign, _grouped(abs(n))]
+	var minus := "-" if n < 0 else ""
+	return "%s$%s" % [minus, _grouped(abs(n))]
 
 static func patience_color(cur: int, max_val: int) -> Color:
 	var top: int = max(1, max_val)
