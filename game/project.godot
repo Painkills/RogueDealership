@@ -15,8 +15,8 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Rogue Dealership"
-config/features=PackedStringArray("4.7", "GL Compatibility")
 run/main_scene="res://scenes/shift.tscn"
+config/features=PackedStringArray("4.7", "Forward Plus")
 
 [display]
 
@@ -27,4 +27,6 @@ window/stretch/mode="viewport"
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-renderer/rendering_method="gl_compatibility"
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.web="gl_compatibility"
+anti_aliasing/quality/msaa_3d=0
