@@ -65,6 +65,15 @@ func _process(_delta: float) -> bool:
 	_check_refused_drop_comes_home()
 
 	print("")
+	# Guards against the failure mode that has now bitten twice: a runtime error
+	# aborts one check function, the remaining checks never run, and the summary
+	# happily reports "all passed" on whatever did.
+	const EXPECTED_MIN := 70
+	if _checks < EXPECTED_MIN:
+		print("FAIL  only %d checks ran, expected at least %d - something aborted"
+			% [_checks, EXPECTED_MIN])
+		_failures.append("check count collapsed")
+
 	if _failures.is_empty():
 		print("%d checks, all passed" % _checks)
 		quit(0)
@@ -114,7 +123,10 @@ func _check_floor_view_is_bare() -> void:
 			% [pair[0], z.position.y, bottom], z.position.y < bottom)
 	_check("no action bar on the floor - there is nobody to act on",
 		not _controller._action_bar.visible)
-	_check("no offer panel on the floor", not _controller._offer_panel.visible)
+	var any_offer := false
+	for panel in _controller._offer_panels:
+		any_offer = any_offer or panel.visible
+	_check("no offer panel on the floor", not any_offer)
 
 func _check_seat_view_brings_your_things_up() -> void:
 	var bottom := -_frame_half_height()
@@ -123,7 +135,14 @@ func _check_seat_view_brings_your_things_up() -> void:
 		_check("sitting down raises your %s into view (y %.1f > %.1f)"
 			% [pair[0], z.position.y, bottom], z.position.y > bottom)
 	_check("and the action bar appears", _controller._action_bar.visible)
-	_check("and the offer panel appears", _controller._offer_panel.visible)
+	# Exactly one - each seat owns its own panel, and only the seat you are with
+	# should be showing it.
+	var shown := 0
+	for panel in _controller._offer_panels:
+		if panel.visible:
+			shown += 1
+	_check("exactly one offer panel appears, the one for this seat (%d)" % shown,
+		shown == 1 and _controller._offer_panels[int(_controller._shift.at)].visible)
 
 ## The button is the only way back to the floor once the other seats are off
 ## screen, so both of its jobs are pinned.
@@ -199,13 +218,21 @@ func _check_hud_does_not_overlap_itself() -> void:
 	var log_panel := _controller.get_node("%SidePanel") as Control
 	var log_rect := Rect2(log_panel.position, log_panel.size)
 	var bar := Rect2(_controller._action_bar.global_position, _controller._action_bar.size)
-	var offer := Rect2(_controller._offer_panel.global_position, _controller._offer_panel.size)
+	var active: Control = _controller._offer_panels[int(_controller._shift.at)]
+	var offer := Rect2(active.global_position, active.size)
 	var mode := Rect2(_controller._mode_btn.global_position, _controller._mode_btn.size)
 
 	_check("the action bar clears the log", not bar.intersects(log_rect))
 	_check("the offer panel clears the log", not offer.intersects(log_rect))
 	_check("the offer panel clears the action bar", not offer.intersects(bar))
 	_check("the return button clears the offer panel", not mode.intersects(offer))
+	# The reported bug: the panel overlapped the product area it describes.
+	var slot: Vector3 = _controller._chair_zones[int(_controller._shift.at)].global_position
+	var mid: Vector2 = _controller._camera.unproject_position(slot)
+	var edge: Vector2 = _controller._camera.unproject_position(slot + Vector3(-1.45, 0.0, 0.0))
+	_check("the offer panel sits BESIDE the product, not on it (panel ends %d, card starts %d)"
+		% [int(offer.end.x), int(edge.x)], offer.end.x <= edge.x)
+	_check("and on the correct side of it", offer.end.x < mid.x)
 	for pair in [["action bar", bar], ["offer panel", offer], ["return button", mode]]:
 		var r: Rect2 = pair[1]
 		_check("the %s is on screen (%s)" % [pair[0], r],

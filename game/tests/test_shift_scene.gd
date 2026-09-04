@@ -52,6 +52,22 @@ func test_your_things_start_stowed_below_the_frame() -> void:
 		h.check("%s sits in front of the camera" % mine, z.position.z < 0.0)
 	s.free()
 
+func test_your_hand_is_never_behind_the_table() -> void:
+	## The bug this catches: the hand rides at a fixed depth IN FRONT of the
+	## camera, so its world Z is camera_z + depth. With the felt at z=-1.2 and the
+	## seat camera at z=9 that put the hand at -2 - BEHIND the table. It rose into
+	## view during the camera's approach and then slid behind the felt and
+	## vanished, which read as "the hand pops up for an instant".
+	var s := _scene()
+	var felt_z: float = (s.get_node(^"Felt") as Node3D).position.z
+	var depth: float = (s.get_node(^"Camera3D/Hand") as Node3D).position.z   # negative
+	for name in ["CameraFloor", "SeatCam0", "SeatCam1", "SeatCam2"]:
+		var cam_z: float = (s.get_node(NodePath(name)) as Node3D).position.z
+		var hand_world_z: float = cam_z + depth
+		h.check("from %s the hand sits in front of the felt (%.1f > %.1f)"
+			% [name, hand_world_z, felt_z], hand_world_z > felt_z)
+	s.free()
+
 func test_each_seat_has_a_customer_card_and_a_framing() -> void:
 	var s := _scene()
 	for i in range(3):
@@ -145,7 +161,7 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	# moving, and the controller looks these up the same way.
 	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
 			"%ReportOverlay", "%SidePanel", "%ModeButton", "%ActionBar",
-			"%OfferPanel", "%AppealBar", "%GapLabel", "%Tooltip"]:
+			"%OfferPanel0", "%OfferPanel1", "%OfferPanel2", "%Tooltip"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",
 		(s.get_node(^"%EventLog") as RichTextLabel).bbcode_enabled)

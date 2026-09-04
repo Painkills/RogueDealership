@@ -19,17 +19,25 @@ const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
 const REPORT := "res://scenes/report.tscn"
 
 # --- table geometry, world units -------------------------------------------
-const CHAIR_X := [-14.0, 0.0, 14.0]
+const CHAIR_X := [-17.0, 0.0, 17.0]
 const CUSTOMER_Y := 4.0      ## their card
 const CHAIR_Y := 0.2         ## the offer slot in front of them
 
+## Well behind everything. Your hand rides at PILE_DEPTH in FRONT of the camera,
+## which puts it at world z = seat_cam_z + PILE_DEPTH; if the felt sat closer
+## than that the hand would slide behind the table as the camera pushed in and
+## simply vanish. It did. test_shift_scene.gd pins the clearance now.
+const FELT_Z := -8.0
+
 const CAM_FOV := 60.0
 ## Offset right so the three cards compose LEFT of the shift log.
-const FLOOR_CAM := Vector3(5.0, 4.0, 20.0)
+const FLOOR_CAM := Vector3(6.0, 3.0, 26.0)
 const FLOOR_CAM_PITCH := -6.0
-const SEAT_CAM_Y := 2.4
-const SEAT_CAM_Z := 9.0
-const SEAT_CAM_PITCH := -4.0
+## Pulled back far enough that the customer card and the offer slot both sit
+## ABOVE the band the hand occupies, instead of the hand covering the table.
+const SEAT_CAM_Y := -0.2
+const SEAT_CAM_Z := 12.8
+const SEAT_CAM_PITCH := -3.0
 
 # --- yours, in CAMERA-LOCAL space ------------------------------------------
 # -Z is forward. Stowed positions sit below the bottom of frame at that depth.
@@ -48,7 +56,7 @@ const MODE_RECT := Rect2(28, 82, 360, 76)
 ## Stops well above the bottom strip, which is where the discard rises into.
 const LOG_RECT := Rect2(1480, 40, 416, 690)
 const ACTION_RECT := Rect2(730, 976, 460, 92)
-const OFFER_PANEL_SIZE := Vector2(400, 470)
+const OFFER_PANEL_SIZE := Vector2(400, 300)
 const TOOLTIP_SIZE := Vector2(520, 250)
 
 func _init() -> void:
@@ -97,7 +105,7 @@ func _init() -> void:
 	we.owner = root
 
 	var felt := QuadMesh.new()
-	felt.size = Vector2(160, 90)
+	felt.size = Vector2(220, 130)
 	var felt_mat := StandardMaterial3D.new()
 	felt_mat.albedo_color = Palette.color(&"bg")
 	felt_mat.roughness = 0.95
@@ -105,7 +113,7 @@ func _init() -> void:
 	table_mesh.name = "Felt"
 	table_mesh.mesh = felt
 	table_mesh.material_override = felt_mat
-	table_mesh.position = Vector3(0, 0, -1.2)
+	table_mesh.position = Vector3(0, 0, FELT_Z)
 	root.add_child(table_mesh)
 	table_mesh.owner = root
 
@@ -268,61 +276,12 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(mode)
 	mode.owner = root
 
-	# --- what is on the table, beside it ----------------------------------
-	var offer := PanelContainer.new()
-	offer.name = "OfferPanel"
-	offer.size = OFFER_PANEL_SIZE
-	offer.custom_minimum_size = OFFER_PANEL_SIZE
-	offer.position = Vector2(300, 380)
-	offer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	offer.unique_name_in_owner = true
-	hud.add_child(offer)
-	offer.owner = root
-
-	var offer_row := HBoxContainer.new()
-	offer_row.name = "Row"
-	offer_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	offer_row.add_theme_constant_override("separation", 14)
-	offer.add_child(offer_row)
-	offer_row.owner = root
-
-	# The Line as a column you climb, rather than a bar you fill sideways.
-	var bar := Control.new()
-	bar.name = "AppealBar"
-	bar.custom_minimum_size = Vector2(56, 0)
-	bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.set_script(load("res://scripts/view/appeal_bar.gd"))
-	bar.unique_name_in_owner = true
-	offer_row.add_child(bar)
-	bar.owner = root
-
-	var offer_col := VBoxContainer.new()
-	offer_col.name = "Column"
-	offer_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	offer_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	offer_row.add_child(offer_col)
-	offer_col.owner = root
-
-	var offer_specs := [
-		["OfferTitle", "ON THE TABLE", 22, &"text_dim"],
-		["OfferNameLabel", "Vehicle Service Contract", 30, &"text"],
-		["OfferCategoryLabel", "Vehicle . Reliability", 24, &"text_dim"],
-		["OfferMarginLabel", "$1,600", 34, &"margin"],
-		["GapLabel", "12 SHORT", 34, &"alert"],
-		["KnownLabel", "(what you have learned shows here)", 22, &"text_dim"],
-	]
-	for spec in offer_specs:
-		var l := Label.new()
-		l.name = spec[0]
-		l.text = spec[1]
-		l.add_theme_font_size_override("font_size", spec[2])
-		l.add_theme_color_override("font_color", Palette.color(spec[3]))
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		l.unique_name_in_owner = true
-		offer_col.add_child(l)
-		l.owner = root
+	# --- theirs: one offer panel per seat, anchored to their product area --
+	# One shared panel repositioned by whoever was selected kept landing on top
+	# of the thing it described. Each seat owns its own now, positioned from its
+	# OWN chair zone, and only the seat you are with is shown.
+	for i in range(3):
+		_offer_panel(i, hud, root)
 
 	# --- yours: the action bar, under the arc of the hand -----------------
 	var actions := HBoxContainer.new()
@@ -408,3 +367,69 @@ func _build_hud(root: Node) -> void:
 	report.unique_name_in_owner = true
 	hud.add_child(report)
 	report.owner = root
+
+
+## One seat's product readout. A plain Panel, not a PanelContainer: its size has
+## to be exactly what the controller positions against, and a container would
+## resize it to its contents behind our back - which is why the old shared panel
+## kept ending up over the product instead of beside it.
+func _offer_panel(index: int, hud: Control, root: Node) -> void:
+	var panel := Panel.new()
+	panel.name = "OfferPanel%d" % index
+	panel.size = OFFER_PANEL_SIZE
+	panel.custom_minimum_size = OFFER_PANEL_SIZE
+	panel.position = Vector2(120 + index * 60, 380)
+	panel.visible = index == 0        # editor preview; the controller takes over
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.unique_name_in_owner = true
+	hud.add_child(panel)
+	panel.owner = root
+
+	var row := HBoxContainer.new()
+	row.name = "Row"
+	row.set_anchors_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 14
+	row.offset_top = 14
+	row.offset_right = -14
+	row.offset_bottom = -14
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(row)
+	row.owner = root
+
+	# The Line as a column you climb, rather than a bar you fill sideways.
+	var bar := Control.new()
+	bar.name = "AppealBar"
+	bar.custom_minimum_size = Vector2(52, 0)
+	bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.set_script(load("res://scripts/view/appeal_bar.gd"))
+	row.add_child(bar)
+	bar.owner = root
+
+	var col := VBoxContainer.new()
+	col.name = "Column"
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(col)
+	col.owner = root
+
+	# Named, not unique-named: three panels would collide on unique names, and
+	# the controller addresses these through its own panel reference anyway.
+	var specs := [
+		["OfferTitle", "ON THE TABLE", 20, &"text_dim"],
+		["OfferNameLabel", "Vehicle Service Contract", 28, &"text"],
+		["OfferCategoryLabel", "Vehicle . Reliability", 22, &"text_dim"],
+		["OfferMarginLabel", "$1,600", 30, &"margin"],
+		["GapLabel", "12 SHORT", 30, &"alert"],
+	]
+	for spec in specs:
+		var l := Label.new()
+		l.name = spec[0]
+		l.text = spec[1]
+		l.add_theme_font_size_override("font_size", spec[2])
+		l.add_theme_color_override("font_color", Palette.color(spec[3]))
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(l)
+		l.owner = root

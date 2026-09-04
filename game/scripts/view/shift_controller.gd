@@ -20,7 +20,8 @@ extends Node3D
 const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
 
 ## Camera-local resting places. Must match build_shift_scene.gd.
-const HAND_UP := Vector3(0.0, -3.2, -11.0)
+const PILE_DEPTH := -11.0
+const HAND_UP := Vector3(0.0, -3.2, PILE_DEPTH)
 const HAND_STOWED := Vector3(0.0, -12.5, -11.0)
 const DISCARD_UP := Vector3(8.6, -4.4, -11.0)
 const DISCARD_STOWED := Vector3(8.6, -13.5, -11.0)
@@ -50,13 +51,6 @@ const PILE_DELAY := 0.18
 @onready var _offer_btn: Button = %OfferButton
 @onready var _drop_btn: Button = %DropButton
 @onready var _close_btn: Button = %CloseButton
-@onready var _offer_panel: Control = %OfferPanel
-@onready var _offer_name: Label = %OfferNameLabel
-@onready var _offer_category: Label = %OfferCategoryLabel
-@onready var _offer_margin: Label = %OfferMarginLabel
-@onready var _gap_label: Label = %GapLabel
-@onready var _known_label: Label = %KnownLabel
-@onready var _appeal_bar: Control = %AppealBar
 @onready var _tooltip: Control = %Tooltip
 @onready var _tooltip_label: Label = %TooltipLabel
 @onready var _report_overlay = %ReportOverlay
@@ -65,6 +59,7 @@ var _shift: Shift
 var _chair_zones: Array = []
 var _seat_cams: Array = []
 var _customer_cards: Array = []
+var _offer_panels: Array = []
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
 var _dragging: CardFace3D = null
 var _framing_tween: Tween
@@ -81,6 +76,7 @@ func _ready() -> void:
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
 	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
+	_offer_panels = [%OfferPanel0, %OfferPanel1, %OfferPanel2]
 
 	for zone in _chair_zones:
 		_drag.add_card_collection(zone)
@@ -346,57 +342,69 @@ func _render_mode_button(seated: bool) -> void:
 	_mode_btn.visible = true
 	_mode_btn.text = "BACK TO %s  (free)" % _shift.chairs[back].display_name
 
+## Each seat owns its panel, so this only has to pick the right one and hide the
+## rest - no repositioning a shared panel between customers.
 func _render_offer(seated: bool) -> void:
+	for i in range(_offer_panels.size()):
+		_offer_panels[i].visible = seated and i == int(_shift.at) 			and not _report_overlay.visible
 	if not seated or _report_overlay.visible:
-		_offer_panel.visible = false
-		return
-	var c: Customer = _shift.chairs[int(_shift.at)]
-	_known_label.text = CustomerCard3D.known_text(c)
-	var o = c.offer
-	if o == null:
-		_offer_panel.visible = true
-		_offer_name.text = "nothing on the table"
-		_offer_category.text = "drag a product onto them"
-		_offer_margin.text = ""
-		_gap_label.text = ""
-		_appeal_bar.set_state(0, c.line, 40, "")
-		_position_offer_panel()
 		return
 
-	_offer_panel.visible = true
-	_offer_name.text = o.product.display_name
-	_offer_category.text = "%s . %s" % [o.product.interest.category.display_name,
+	var chair := int(_shift.at)
+	var c: Customer = _shift.chairs[chair]
+	var panel: Control = _offer_panels[chair]
+	var col: Node = panel.get_node(^"Row/Column")
+	var bar: Control = panel.get_node(^"Row/AppealBar")
+	var name_label := col.get_node(^"OfferNameLabel") as Label
+	var cat_label := col.get_node(^"OfferCategoryLabel") as Label
+	var margin_label := col.get_node(^"OfferMarginLabel") as Label
+	var gap_label := col.get_node(^"GapLabel") as Label
+
+	var o = c.offer
+	if o == null:
+		name_label.text = "nothing on the table"
+		cat_label.text = "drag a product onto them"
+		margin_label.text = ""
+		gap_label.text = ""
+		bar.set_state(0, c.line, 40, "")
+		_position_offer_panel(chair)
+		return
+
+	name_label.text = o.product.display_name
+	cat_label.text = "%s . %s" % [o.product.interest.category.display_name,
 		o.product.interest.display_name]
-	_offer_margin.text = Format.money(o.margin)
+	margin_label.text = Format.money(o.margin)
 
 	if not o.revealed:
 		var band := _shift.band_for(c.line - o.appeal)
-		_appeal_bar.set_state(0, c.line, 40, band)
-		_gap_label.text = band
-		_gap_label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+		bar.set_state(0, c.line, 40, band)
+		gap_label.text = band
+		gap_label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	else:
-		_appeal_bar.set_state(o.appeal, c.line, 40, "")
+		bar.set_state(o.appeal, c.line, 40, "")
 		var gap: int = c.line - o.appeal
 		if gap <= 0:
-			_gap_label.text = "READY"
-			_gap_label.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
+			gap_label.text = "READY"
+			gap_label.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
 		else:
-			_gap_label.text = "%d SHORT" % gap
-			_gap_label.add_theme_color_override("font_color", Palette.color(&"alert"))
-	_position_offer_panel()
+			gap_label.text = "%d SHORT" % gap
+			gap_label.add_theme_color_override("font_color", Palette.color(&"alert"))
+	_position_offer_panel(chair)
 
-## Sits to the LEFT of the product on the table, so the numbers are beside the
-## thing they describe rather than in a panel across the room.
-func _position_offer_panel() -> void:
-	if _shift.at == null:
-		return
-	var slot: Vector3 = _chair_zones[int(_shift.at)].global_position
+## Sits to the LEFT of its OWN seat's product slot, clear of the card, so the
+## numbers are beside the thing they describe.
+func _position_offer_panel(chair: int) -> void:
+	var panel: Control = _offer_panels[chair]
+	var slot: Vector3 = _chair_zones[chair].global_position
 	if _camera.is_position_behind(slot):
 		return
-	var p := _camera.unproject_position(slot)
-	_offer_panel.position = Vector2(
-		clampf(p.x - _offer_panel.size.x - 150.0, 16.0, 1904.0 - _offer_panel.size.x),
-		clampf(p.y - _offer_panel.size.y * 0.5, 16.0, 1064.0 - _offer_panel.size.y))
+	# Offset by the card's own half-width in screen space, so the panel clears
+	# the product rather than landing on top of it.
+	var edge := _camera.unproject_position(slot + Vector3(-1.45, 0.0, 0.0))
+	var mid := _camera.unproject_position(slot)
+	panel.position = Vector2(
+		clampf(edge.x - panel.size.x - 24.0, 16.0, 1904.0 - panel.size.x),
+		clampf(mid.y - panel.size.y * 0.5, 16.0, 1064.0 - panel.size.y))
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
@@ -413,7 +421,8 @@ func _show_report() -> void:
 	_report_overlay.visible = true
 	_report_overlay.setup(_shift.report())
 	_action_bar.visible = false
-	_offer_panel.visible = false
+	for panel in _offer_panels:
+		panel.visible = false
 	_tooltip.visible = false
 	_mode_btn.visible = false
 
