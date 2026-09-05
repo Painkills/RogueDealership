@@ -1,6 +1,7 @@
 # Rogue Dealership — Godot architecture spec
 
-> **Status:** design, not yet built · **Engine:** Godot 4 (GDScript) · **Team:** solo · **Cost:** $0
+> **Status:** G0 and G1 built and playtested, merged to `master` — G2 (the run layer) is next.
+> **Engine:** Godot 4 (GDScript) · **Team:** solo · **Cost:** $0
 > **This document is the ARCHITECTURE.** The rules are specified by
 > [`m2/README.md`](m2/README.md), which stays the source of truth for what the game *does*. If this
 > document and m2 disagree about a rule, m2 wins and this document is wrong.

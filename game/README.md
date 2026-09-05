@@ -429,21 +429,23 @@ pass.
 
 ### Still open
 
-**Nobody has looked at this.** Everything above is structural or arithmetic: that
-the wiring matches the model, that no Control blocks picking, that the text says
-what it should, that the rectangles do not collide. None of it can tell you
-whether the composition reads, whether the push-in feels like walking over to
-someone, or whether a hand that runs off the bottom of the screen is comfortable
-to play from. The numbers say a card face lands at 286×400 px on the floor and
-255×358 px at a seat, and that a hand card shows 181 px of its 271 with its
-neighbour laid over it — all against a 500×700 authored face. That is a
-legibility argument, not a verdict.
+**Somebody has looked at this now, and it played.** Everything above is
+structural or arithmetic - that the wiring matches the model, that no Control
+blocks picking, that the rectangles do not collide - and none of it could have
+answered whether the composition reads or the push-in feels like walking over to
+someone. That took several rounds of the same person actually sitting down with
+it: reporting cards that would not respond, a hover that stuttered, a hand whose
+left edge disappeared under the one to its right, a softlock when the floor
+emptied out. Every one of those was a real defect this file's checks could not
+see, and every one is fixed and pinned by a check now. The two single-constant
+knobs this section used to point at - `SEAT_CAM_Z`/`FLOOR_CAM` in
+`tools/build_shift_scene.gd`, and `DetailCard3D.SLIDE_OUT` - are exactly what
+those rounds tuned; they are not open questions any more.
 
-Two specific things to look at first, both single constants:
+What playing it produced, unprompted: "this is fun, this iteration feels
+engaging." That is G1's own exit criterion in `GODOT_SPEC.md` §10.
 
-- `SEAT_CAM_Z` and `FLOOR_CAM` in `tools/build_shift_scene.gd`, or just drag the
-  `CameraFloor` / `SeatCam*` gizmos in the editor.
-- `DetailCard3D.SLIDE_OUT`, which is how far the detail cards travel.
-
-Also unchanged from G1's list: whether any of it is *fun*. Still only answerable
-by playing it.
+What is still genuinely unverified, because two people who already know the
+design are not the same test as a stranger: whether it reads to someone sitting
+down with no context, and how the pacing holds up across a full shift played at
+real speed rather than in the short bursts each feedback round has been so far.
