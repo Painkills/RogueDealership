@@ -88,6 +88,7 @@ func _physics_process(_delta: float) -> bool:
 
 	_check_drop_plays_a_card()
 	_check_refused_drop_comes_home()
+	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 
 	print("")
 	# Guards against the failure mode that has now bitten three times: a runtime
@@ -1050,6 +1051,45 @@ func _check_refused_drop_comes_home() -> void:
 	_check("with an explanation in the log rather than silence",
 		_controller._event_log.get_parsed_text().length() > 0)
 	_check_table("after a refused drop")
+
+## The reported softlock: "if the last customer leaves when other chairs are
+## empty you are stuck forever - you cannot play cards so you cannot move the
+## ticks to get new people in chairs."
+##
+## The model half is covered by test_waiting.gd. What this pins is the VIEW half,
+## which is where the trap actually was: dig can move the clock without a
+## customer, but dig goes through your hand, and your hand is stowed below the
+## bottom of the screen the whole time you are out on the floor. So there was
+## genuinely nothing on screen to press.
+##
+## Runs last, because it empties the floor to get there.
+func _check_an_empty_floor_does_not_end_the_shift() -> void:
+	var shift = _controller._shift
+	if shift.is_over():
+		_check("the shift was still running, so an empty floor means something", false)
+		return
+	for c in shift.seated():
+		c.patience = 0
+	shift._settle_patience()
+	_check("every chair is empty with the clock still going (tick %d of %d)"
+		% [shift.tick, shift.tick_budget],
+		shift.seated().is_empty() and not shift.is_over())
+
+	var before: int = shift.tick
+	var logged: int = _controller._event_log.get_parsed_text().length()
+	# There is no input left to make on an empty floor, so this is the view
+	# acting by itself - through the same funnel every command goes through.
+	_controller._apply(Result.new(true, "", "test"))
+	_settle()
+
+	_check("time moved on without being asked (%d -> %d)" % [before, shift.tick],
+		shift.tick > before)
+	_check("and there is somebody to sell to again, or the shift is over",
+		not shift.seated().is_empty() or shift.is_over())
+	_check("with the jump written down rather than silently skipped",
+		_controller._event_log.get_parsed_text().length() > logged)
+	_check("and the log says how long it took",
+		_controller._event_log.get_parsed_text().contains("later"))
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

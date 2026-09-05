@@ -213,6 +213,9 @@ func _start_new_shift() -> void:
 			card.queue_free()
 	_nodes.clear()
 
+	# A shift is dealt with people in it, but this is the other door into the
+	# view besides _apply(), and an empty floor is a dead end from either.
+	_let_time_pass_on_an_empty_floor()
 	_render()
 
 func _all_zones() -> Array:
@@ -258,9 +261,29 @@ func _last_customer_chair() -> int:
 func _apply(res: Result) -> void:
 	if not res.ok:
 		_event_log.append_text("[color=red]%s[/color]\n" % res.msg)
+	_let_time_pass_on_an_empty_floor()
 	_render()
 	if _shift.is_over():
 		_show_report()
+
+## An empty floor is not a decision, it is a wait, so it is not something to make
+## the player press a button for. It is also the one state the view cannot get
+## itself out of: your hand is stowed off screen while you are on the floor, and
+## everything else that moves the clock needs a customer to move it on.
+##
+## Loops because one wait seats one person, and a walk-up timer that was already
+## running down can leave the floor empty again immediately. The guard is not
+## defensive dressing: this runs inside a UI callback, and a wait that ever
+## returned ok without advancing would hang the game rather than just misbehave.
+func _let_time_pass_on_an_empty_floor() -> void:
+	var guard := 0
+	while not _shift.is_over() and _shift.seated().is_empty():
+		guard += 1
+		if guard > _shift.tick_budget:
+			push_error("wait() stopped advancing the clock")
+			break
+		if not _shift.wait().ok:
+			break
 
 # --- hover -----------------------------------------------------------------
 

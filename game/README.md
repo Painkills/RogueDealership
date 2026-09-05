@@ -315,6 +315,16 @@ Related and identical in symptom: `get_viewport().physics_object_picking`
 defaults to `false`, and Card3D's whole input path is `StaticBody3D.input_event`.
 The controller sets it in `_ready()`. If nothing responds, check both.
 
+**An empty floor used to stop time for good.** Every command that moves the
+clock needs a customer to move it on — except `dig`, and `dig` goes through your
+hand, which the view stows below the bottom of the screen while you are out on
+the floor. So the last customer walking out of a floor with empty chairs left
+nothing on screen to press and a tick counter that would never reach the end of
+the shift. `Shift.wait()` is the way out; the view calls it by itself, in a loop,
+because an empty floor is not a decision. Two things make that safe: `wait()`
+always advances the clock by at least one tick, and it refuses while anybody is
+still seated so it can never become a general skip-time button.
+
 **The view must show everything the model tells the player.** Twice now a rule
 has been set in the model and silently dropped on the way to the screen:
 `customer.demands` (the Karen's "will not sign until they buy from this

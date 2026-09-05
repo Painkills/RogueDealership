@@ -282,6 +282,43 @@ func leave() -> Result:
 	return Result.new(true, "You step back out onto the floor.", "move")
 
 
+func wait() -> Result:
+	## The only command that moves the clock without a customer, and it exists
+	## for exactly one state: every chair empty.
+	##
+	## Everything else that burns a tick needs somebody to burn it on - approach,
+	## place, support, offer, close - and the one exception, dig, reaches the
+	## clock only through your hand, which is not on screen while you are out on
+	## the floor. So the last customer walking out of a floor with empty chairs
+	## used to stop time permanently: nothing to press, nobody to approach, and a
+	## tick counter that would never reach the end of the shift.
+	##
+	## Refused while anybody is still seated, deliberately. Being able to skip
+	## time at will is a different game - the pressure a Karen puts on the whole
+	## floor only means anything if you cannot simply wait her out.
+	if is_over():
+		return Result.new(false, "The floor is closed.")
+	if not seated().is_empty():
+		return Result.new(false,
+			"There are people on the floor - go and sell to them.")
+
+	var n := _ticks_until_the_door_opens()
+	events.append("... %d ticks later ..." % n)
+	_burn(n, "wait")
+	return Result.new(true, "%d ticks later." % n, "wait", {"ticks": n})
+
+
+func _ticks_until_the_door_opens() -> int:
+	## The soonest walk-up, or whatever is left of the shift if nobody is due
+	## before it ends. Never less than one: _burn ignores a zero, and a wait that
+	## does not move the clock is the deadlock it was written to break.
+	var soonest: int = tick_budget - tick
+	for i in range(chairs.size()):
+		if chairs[i] == null:
+			soonest = mini(soonest, walk_up[i])
+	return maxi(1, soonest)
+
+
 func play_card(index: int) -> Result:
 	var pair := _here()
 	if pair[1] != null:

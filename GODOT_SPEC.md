@@ -249,6 +249,19 @@ The model exposes command methods that mirror m2 exactly, each returning a `Resu
 | `drop_offer()` | 0 | concessions lost |
 | `close()` | 0 | the only thing that banks margin |
 | `dig(hand_index)` | 1 | discard and draw |
+| `wait()` | as many as it takes | **not in m2.** Only legal with every chair empty |
+
+`wait()` is the one command here that m2 does not have, and it exists because the port introduced a
+softlock m2 could not have. Every other command that moves the clock needs a customer to move it
+on; the single exception, `dig`, reaches the clock through your hand — and the 3D view stows your
+hand below the bottom of the screen the whole time you are out on the floor. So the last customer
+walking out of a floor with empty chairs stopped time permanently: nothing to press, nobody to
+approach, and a tick counter that would never reach the end of the shift.
+
+It refuses while anybody is still seated, deliberately. Being able to skip time at will is a
+different game — the pressure a Karen puts on the whole floor only means something if you cannot
+wait her out. And the ticks it burns are charged to the shift like any others, because an empty
+floor is usually a floor you emptied.
 
 `Result(ok, message, kind, data)` carries the outcome, and **`ok == false` means nothing at all was
 spent** — not the tick, not the card. That convention is worth preserving verbatim; it is what
