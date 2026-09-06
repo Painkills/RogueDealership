@@ -44,9 +44,26 @@ func _process(_delta: float) -> bool:
 	run.money = 100000
 	_root._shop_view._render()
 	var bought: CardDef = shop.offers[0]
+	var uids_before := {}
+	var same_def_uids_before := {}
+	for c in run.deck.cards:
+		uids_before[c.uid] = true
+		if c.card == bought:
+			same_def_uids_before[c.uid] = true
 	var res := shop.buy(bought)
 	_check("bought %s (%s)" % [bought.display_name, res.msg], res.ok)
 	_check("the deck grew", run.deck.cards.size() == deck_before + 1)
+
+	# Pin down exactly which instance the purchase created, by uid - not by
+	# assuming Deck.add() appends, and not by matching CardDef alone, which an
+	# old copy already in the deck would satisfy just as well.
+	var new_uid = null
+	for c in run.deck.cards:
+		if not uids_before.has(c.uid):
+			new_uid = c.uid
+	_check("the purchase created exactly one new instance", new_uid != null)
+	_check("its uid is distinct from any pre-existing copy of the same card",
+		new_uid != null and not same_def_uids_before.has(new_uid))
 
 	_root._shop_view.done.emit()
 	_check("leaving the shop opens the floor again", not _root._shop_view.visible)
@@ -56,19 +73,19 @@ func _process(_delta: float) -> bool:
 		_root._shift_view._shift.quota == run.quota_for(2))
 
 	# The point of the whole milestone: the purchase came to work with you.
+	# Match on the exact uid the purchase minted, not just the CardDef - an
+	# old copy of the same card already in the deck would satisfy that and
+	# pass even if the new instance never made it into the shift at all.
 	var uids := {}
 	for c in _root._shift_view._shift.draw:
 		uids[c.uid] = true
 	for c in _root._shift_view._shift.hand:
 		uids[c.uid] = true
-	var found := false
-	for c in run.deck.cards:
-		if c.card == bought and uids.has(c.uid):
-			found = true
-	_check("and the card you bought is in the shift's deck", found)
+	_check("and the card you bought is in the shift's deck",
+		new_uid != null and uids.has(new_uid))
 
 	print("")
-	const EXPECTED_MIN := 14
+	const EXPECTED_MIN := 16
 	if _checks < EXPECTED_MIN:
 		print("FAIL  only %d checks ran, expected at least %d - something aborted"
 			% [_checks, EXPECTED_MIN])
