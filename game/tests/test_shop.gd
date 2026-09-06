@@ -166,10 +166,10 @@ func test_the_deck_can_never_be_thinned_into_a_softlock() -> void:
 	h.check("which is at least a full hand", r.cfg.min_deck_size >= r.cfg.hand_size)
 
 func test_the_deck_can_never_be_stripped_of_products() -> void:
-	## margin_banked only moves through a placed product's Offer, and money is
-	## what margin_banked clears the quota BY - so a deck with zero products left
-	## can never bank another dollar, and the shop then has $0 forever with no
-	## other income.
+	## margin_banked only moves through a placed product's Offer, and the shop
+	## budget only ever grows by what margin_banked clears the quota BY - so a
+	## deck with zero products left can never bank another dollar, and that
+	## budget is frozen forever with no other income.
 	## The run keeps playing but is already dead. Same shape as the softlock
 	## test above, guarded on composition rather than size.
 	var r := _run(1000000)

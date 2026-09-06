@@ -82,12 +82,27 @@ func _phase_0_open_and_finish_shift() -> void:
 	var r0: Dictionary = _run.reports[0]
 	_check("with only what that shift banked OVER quota (%d banked, %d quota)"
 		% [int(r0["margin_banked"]), int(r0["quota"])],
-		_run.money == maxi(0, int(r0["margin_banked"]) - int(r0["quota"])))
+		_run.money == RunState.bonus_from(r0))
 	# This driver digs the clock away rather than selling anything, so it always
 	# lands on the missed-quota branch. Pin that down, or the check above is
 	# 0 == max(0, 0 - 3600) and proves nothing about the subtraction.
 	_check("which after a shift that banked nothing is nothing",
-		not bool(r0["made_quota"]) and _run.money == 0)
+		not bool(r0["made_quota"]) and _run.money == 0 and _run.last_bonus == 0)
+	# The panel you were just looking at had to show that number before
+	# finish_shift() ran at all, so the two must agree.
+	var panel = _root._shift_view._report_overlay
+	_check("and the report panel's own bonus line agrees",
+		panel._bonus.text.contains("No bonus"))
+	# Missing quota is the only branch this driver's own play can reach, and the
+	# line that ANNOUNCES a bonus is the whole point of the feature. Drive it
+	# directly rather than leave the copy that matters unrendered by any test.
+	var over: Dictionary = r0.duplicate()
+	over["margin_banked"] = int(r0["quota"]) + 900
+	over["made_quota"] = true
+	panel.setup(over)
+	_check("and announces the bonus when there is one (%s)" % panel._bonus.text,
+		panel._bonus.text.contains("$900") and panel._bonus.text.contains("bonus"))
+	panel.setup(r0)
 
 ## The audited bug: the Column VBox wanted more height than the 48px margins
 ## leave inside a 1080-tall viewport, so DoneButton rendered 63px below the

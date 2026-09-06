@@ -2,39 +2,43 @@
 
 [ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="1_66ide"]
 
-[node name="ReportPanel" type="PanelContainer" unique_id=2034966513]
+[node name="ReportPanel" type="PanelContainer" unique_id=498564633]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_66ide")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=795437701]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=117721464]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=663445683]
+[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=867722333]
 layout_mode = 2
 text = "CLOSING TIME"
 
-[node name="BankedLabel" type="Label" parent="VBoxContainer" unique_id=1976609279]
+[node name="BankedLabel" type="Label" parent="VBoxContainer" unique_id=1279383165]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="CustomersLabel" type="Label" parent="VBoxContainer" unique_id=965240253]
+[node name="BonusLabel" type="Label" parent="VBoxContainer" unique_id=2130490980]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="OffersLabel" type="Label" parent="VBoxContainer" unique_id=1849743873]
+[node name="CustomersLabel" type="Label" parent="VBoxContainer" unique_id=1905984617]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="MarginMovedLabel" type="Label" parent="VBoxContainer" unique_id=702459514]
+[node name="OffersLabel" type="Label" parent="VBoxContainer" unique_id=1008958220]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="LostLabel" type="Label" parent="VBoxContainer" unique_id=415832824]
+[node name="MarginMovedLabel" type="Label" parent="VBoxContainer" unique_id=431007485]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=59997908]
+[node name="LostLabel" type="Label" parent="VBoxContainer" unique_id=939955044]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=649461342]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Continue"

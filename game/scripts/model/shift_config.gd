@@ -45,8 +45,9 @@ class_name ShiftConfig extends Resource
 @export var min_deck_size: int = 8
 ## margin_banked only moves through close(), which only fires on a placed
 ## product's Offer - a deck with no products left can never bank a dollar, and
-## since the shop budget is whatever margin_banked clears the quota by, that
-## shop has $0 forever with no other income. The run is dead but keeps playing.
+## since the shop budget only grows by whatever margin_banked clears the quota
+## by, that budget is frozen forever with no other income. The run is dead but
+## keeps playing.
 ## This floors the same trap
 ## min_deck_size floors, on composition instead of size.
 @export var min_products: int = 3

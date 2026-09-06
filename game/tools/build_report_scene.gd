@@ -23,6 +23,12 @@ func _init() -> void:
 	vbox.add_child(banked)
 	banked.owner = root
 
+	var bonus := Label.new()
+	bonus.name = "BonusLabel"
+	bonus.unique_name_in_owner = true
+	vbox.add_child(bonus)
+	bonus.owner = root
+
 	var customers := Label.new()
 	customers.name = "CustomersLabel"
 	customers.unique_name_in_owner = true

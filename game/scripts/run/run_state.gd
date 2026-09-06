@@ -17,7 +17,8 @@ var rng := RandomNumberGenerator.new()
 
 var deck: Deck
 var shift_number: int = 1            ## 1-based; the shift about to be played
-var money: int = 0                   ## the shop budget: last shift's take OVER quota
+var money: int = 0                   ## the shop budget: every over-quota bonus, stacked
+var last_bonus: int = 0              ## what the shift just played added to it
 var banked_total: int = 0
 var reports: Array[Dictionary] = []
 
@@ -45,13 +46,25 @@ func start_shift() -> Shift:
 		rng.randi(), [], deck, quota_for(shift_number), shift_number)
 
 func finish_shift(report: Dictionary) -> void:
-	## The quota is the house's cut and it comes out first. Only what you banked
-	## OVER it is yours to spend, and then it resets - no wallet to hoard into.
+	## The quota is the house's cut and it comes out first. What you bank OVER it
+	## is a bonus, and bonuses STACK for the length of the run - an overage too
+	## small to buy anything this visit is not wasted, it waits.
 	##
-	## So the quota is a threshold with teeth on both sides: miss it and you get
-	## nothing, scrape past it and you get almost nothing. Neither ends the run.
+	## That is what makes a thin shift survivable. Nothing on the shelf costs less
+	## than the cheapest product, so a reset budget would round most overages to
+	## nothing at all; pooling them turns a run of near-misses into one real
+	## purchase instead of three wasted ones.
+	##
+	## Missing quota still adds nothing - and still never ends the run.
 	reports.append(report)
 	var banked := int(report["margin_banked"])
 	banked_total += banked
-	money = maxi(0, banked - int(report["quota"]))
+	last_bonus = bonus_from(report)
+	money += last_bonus
 	shift_number += 1
+
+static func bonus_from(report: Dictionary) -> int:
+	## Static because the report panel needs this number BEFORE finish_shift runs
+	## - it is on screen while you are still looking at the shift you just played,
+	## and the run does not advance until you press the button.
+	return maxi(0, int(report["margin_banked"]) - int(report["quota"]))

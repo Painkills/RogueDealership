@@ -472,20 +472,32 @@ building its own `Shift` and started being handed one - the run layer is what
 now hands it one, seeded and quota'd for the shift you're on.
 
 **The economy in one sentence:** the quota is the house's cut and comes out
-first, so only what a shift banks OVER its quota reaches the shop - and nothing
-else pays you. `RunState.finish_shift()` sets `money` to
-`maxi(0, margin_banked - quota)`, which makes the quota a threshold with teeth
-on both sides: miss it and you get nothing, scrape past it and you get almost
-nothing. Neither ends the run, and the shop can never invent money you did not
-earn.
+first, so only what a shift banks OVER its quota is yours - and that overage is
+a BONUS that stacks for the length of the run. `RunState.finish_shift()` does
+`money += maxi(0, margin_banked - quota)`, and nothing else pays you.
 
-That is a sharper rule than it looks, because `quota_growth` climbs 15% a shift
-on the stated premise that the deck is getting stronger in the shop to keep
-pace. Under an overage budget that premise only holds while you are beating
-quota by real money - a run that keeps scraping by gets a rising quota against
-a deck that never improved. Whether that pressure is the good kind is a
-playtest question, and `quota`, `quota_growth` and every price are single
-values in `shift_config.tres` and the card `.tres` files if it isn't.
+The stacking is what makes the rule survivable rather than punishing. Nothing
+on any shelf costs less than the cheapest product, so a budget that reset each
+shift would round most overages to nothing at all - beat quota by $300 three
+times and you would have bought exactly nothing. Pooling them turns three thin
+shifts into one real purchase. Missing quota adds nothing, but it never drains
+what earlier shifts already earned, and it still never ends the run.
+
+The number is announced twice, because it is two different questions. The
+report panel says what THIS shift earned ("You exceeded your quota. You got a
+$900 bonus!"), computed by `RunState.bonus_from()` - a static, because the
+panel is on screen while `finish_shift()` has not run yet and the run has not
+advanced. The shop says what the POT is worth now, with the latest addition
+beside it, since a total alone cannot tell you whether the shift you just
+played earned anything.
+
+The open balance question is `quota_growth`, which climbs 15% a shift on the
+stated premise that the deck is getting stronger in the shop to keep pace. That
+premise holds more weakly here than under a flat budget: a run that keeps
+scraping by faces a rising quota against a deck it could not afford to improve,
+and only the pooling saves it. Whether that pressure is the good kind is a
+playtest question - `quota`, `quota_growth` and every price are single values
+in `shift_config.tres` and the card `.tres` files if it isn't.
 
 **The archetype ladder is the run's difficulty curve.** Every
 `CustomerArchetype` declares `min_shift`, and `Shift` only deals customers

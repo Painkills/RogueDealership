@@ -3,6 +3,7 @@ extends PanelContainer
 signal continue_pressed
 
 @onready var _banked: Label = %BankedLabel
+@onready var _bonus: Label = %BonusLabel
 @onready var _customers: Label = %CustomersLabel
 @onready var _offers: Label = %OffersLabel
 @onready var _margin: Label = %MarginMovedLabel
@@ -21,6 +22,22 @@ func setup(r: Dictionary) -> void:
 		Format.money(r["quota"]), verdict]
 	_banked.add_theme_color_override("font_color",
 		Palette.color(&"patience_ok" if r["made_quota"] else &"alert"))
+
+	# The bonus is derived here rather than passed in, because this panel is up
+	# while the run has not advanced yet - finish_shift() does not run until the
+	# button below is pressed. RunState owns the arithmetic either way.
+	var bonus := RunState.bonus_from(r)
+	if bonus > 0:
+		_bonus.text = "You exceeded your quota. You got a %s bonus!" \
+			% Format.money(bonus)
+		_bonus.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
+	elif r["made_quota"]:
+		_bonus.text = "You hit quota on the nose - nothing over, nothing banked."
+		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	else:
+		_bonus.text = "No bonus - you finished %s short of quota." \
+			% Format.money(int(r["quota"]) - int(r["margin_banked"]))
+		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
 	_customers.text = "%d seen, %d signed, %d walked" \
 		% [r["customers_seen"], r["customers_signed"], r["customers_walked"]]
