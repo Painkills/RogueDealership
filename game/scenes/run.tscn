@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/view/run_controller.gd" id="1_nv0xg"]
+[ext_resource type="PackedScene" path="res://scenes/shift.tscn" id="2_wkjl6"]
+[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="3_8hhj8"]
+[ext_resource type="PackedScene" path="res://scenes/shop.tscn" id="4_brq1p"]
+[ext_resource type="Script" path="res://scripts/view/shop_screen.gd" id="5_e6u14"]
+
+[node name="Run" type="Node" unique_id=823013611]
+script = ExtResource("1_nv0xg")
+
+[node name="ShiftView" type="Node3D" parent="." unique_id=925152515 instance=ExtResource("2_wkjl6")]
+script = ExtResource("3_8hhj8")
+
+[node name="ShopView" type="PanelContainer" parent="." unique_id=517712778 instance=ExtResource("4_brq1p")]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("5_e6u14")

@@ -43,3 +43,11 @@ func test_the_vendored_card3d_addon_is_present_and_loadable() -> void:
 		h.check("%s exists" % path, ResourceLoader.exists(path))
 	h.check("the MIT licence travelled with the vendored code",
 		FileAccess.file_exists("res://addons/card_3d/LICENSE"))
+
+func test_the_game_boots_into_the_run_not_a_bare_shift() -> void:
+	## G2 made the run the entry point. A main scene that silently reverts to
+	## shift.tscn would still play - one shift, forever, with no shop - which is
+	## exactly the kind of regression that survives a playtest.
+	h.eq("the main scene is the run",
+		ProjectSettings.get_setting("application/run/main_scene"),
+		"res://scenes/run.tscn")
