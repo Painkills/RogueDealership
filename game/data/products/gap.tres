@@ -7,7 +7,7 @@
 script = ExtResource("2_gu0vk")
 interest = ExtResource("1_2umkk")
 margin = 1400
-upgraded_margin = 1700
+upgraded_margin = 1750
 id = &"gap"
 display_name = "GAP Insurance"
 text = "Pays the difference when the loan outlives the car."

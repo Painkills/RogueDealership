@@ -7,7 +7,7 @@
 script = ExtResource("2_1muci")
 interest = ExtResource("1_by407")
 margin = 800
-upgraded_margin = 1100
+upgraded_margin = 1000
 id = &"theft"
 display_name = "Anti-Theft & Key Protection"
 text = "Etching, tracking, and a replacement key that doesn't cost a weekend."

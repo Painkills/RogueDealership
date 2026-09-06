@@ -7,7 +7,7 @@
 script = ExtResource("2_g1o7f")
 interest = ExtResource("1_xi2cp")
 margin = 900
-upgraded_margin = 1200
+upgraded_margin = 1125
 id = &"appearance"
 display_name = "Appearance & Wheel Package"
 text = "Ceramic coat, tint, and wheels people look at."

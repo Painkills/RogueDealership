@@ -7,7 +7,7 @@
 script = ExtResource("2_sya1t")
 interest = ExtResource("1_lp8aw")
 margin = 1100
-upgraded_margin = 1400
+upgraded_margin = 1375
 id = &"perf"
 display_name = "Performance & Tow Package"
 text = "Tow rating, all-weather traction, and a badge that says so."

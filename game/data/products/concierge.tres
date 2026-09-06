@@ -7,7 +7,7 @@
 script = ExtResource("2_b7lbm")
 interest = ExtResource("1_25u84")
 margin = 600
-upgraded_margin = 900
+upgraded_margin = 750
 id = &"concierge"
 display_name = "Concierge & Roadside Plan"
 text = "Pickup, delivery, loaners, roadside. They never sit in a waiting room."

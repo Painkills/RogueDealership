@@ -56,3 +56,12 @@ func test_lookup_by_id_finds_every_card() -> void:
 	for c in _pool().cards:
 		h.eq("by_id round-trips %s" % c.id, _pool().by_id(c.id), c)
 	h.eq("and returns null for a stranger", _pool().by_id(&"nonsense"), null)
+
+func test_every_product_upgrades_by_exactly_a_quarter() -> void:
+	## The flat +$300 this replaces was regressive - 50% on the $600 concierge
+	## plan and 18.75% on the $1,600 service contract - so "upgraded" meant
+	## something different on every card. Nothing pinned the convention, which is
+	## how it drifted. Every base margin is a multiple of $100, so x1.25 is
+	## always a whole number and no rounding rule is needed.
+	for p in _products():
+		h.eq("%s upgrades by a quarter" % p.id, p.upgraded_margin, p.margin * 5 / 4)

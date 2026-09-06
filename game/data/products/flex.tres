@@ -7,7 +7,7 @@
 script = ExtResource("2_5xkvp")
 interest = ExtResource("1_4feyp")
 margin = 700
-upgraded_margin = 1000
+upgraded_margin = 875
 id = &"flex"
 display_name = "Payment Flex Plan"
 text = "Skip-a-payment and a deferred first month, for when the budget is thin."

@@ -7,7 +7,7 @@
 script = ExtResource("2_jnf47")
 interest = ExtResource("1_07wyo")
 margin = 1600
-upgraded_margin = 1900
+upgraded_margin = 2000
 id = &"vsc"
 display_name = "Vehicle Service Contract"
 text = "Covers the repair bill when it breaks after the factory walks away."

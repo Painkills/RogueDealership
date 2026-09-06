@@ -7,7 +7,7 @@
 script = ExtResource("2_4tnw0")
 interest = ExtResource("1_uotsg")
 margin = 1000
-upgraded_margin = 1300
+upgraded_margin = 1250
 id = &"tvp"
 display_name = "Trade-In Value Protection"
 text = "Guarantees a floor under what it books for at trade-in."

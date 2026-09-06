@@ -100,7 +100,7 @@ func test_re_running_setup_updates_a_live_margin() -> void:
 	inst.upgraded = true
 	c.setup(inst)
 	h.eq("upgraded margin is what the card now shows",
-		(_front(c).get_node(^"MarginLabel") as Label).text, "$1,900")
+		(_front(c).get_node(^"MarginLabel") as Label).text, "$2,000")
 	h.check("and it genuinely changed", before != "$1,900")
 	c.free()
 
