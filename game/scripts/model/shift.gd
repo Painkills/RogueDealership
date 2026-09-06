@@ -38,7 +38,8 @@ var _name_pool: Array = []
 
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
-		p_arch: ArchetypePool, p_seed: int, p_forced: Array = []) -> void:
+		p_arch: ArchetypePool, p_seed: int, p_forced: Array = [],
+		p_deck: Deck = null, p_quota: int = 0) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
@@ -47,7 +48,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	_forced = p_forced
 
 	tick_budget = cfg.shift_ticks
-	quota = cfg.quota
+	# The run climbs the quota shift over shift; a bare shift uses the config's.
+	quota = p_quota if p_quota > 0 else cfg.quota
 	for key in ["cards_played", "offers", "failed_offers", "offers_dropped",
 			"sales", "places", "digs", "approaches", "actions_fired",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
@@ -61,7 +63,9 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		chairs[i] = null
 		walk_up[i] = 0
 
-	var deck := Deck.build_starting(card_pool)
+	# The run hands in its own deck, carrying whatever the shop did to it. A
+	# shift built without one deals the fixed starter deck, exactly as before.
+	var deck := p_deck if p_deck != null else Deck.build_starting(card_pool)
 	draw = deck.cards.duplicate()
 	_shuffle(draw)
 	_draw_up()
