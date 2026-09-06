@@ -33,6 +33,17 @@ class_name ShiftConfig extends Resource
 @export var prior_slip: float = 0.2
 @export var unique_archetypes_on_floor: bool = true
 
+# --- the shop --------------------------------------------------------------
+@export var shop_offers: int = 3
+## An upgrade costs this many times what it gains, so it pays back in that many
+## sales. Both scale with the card, which is what keeps upgrading a cheap card
+## and an expensive one the same decision.
+@export var upgrade_price_multiple: int = 4
+@export var remove_price: int = 500
+## Thinning below a full hand would leave _draw_up unable to fill one: nothing
+## to dig, and nothing to wait for if you are seated. That is a softlock.
+@export var min_deck_size: int = 8
+
 func as_dict() -> Dictionary:
 	return {
 		"appeal_step": appeal_step,

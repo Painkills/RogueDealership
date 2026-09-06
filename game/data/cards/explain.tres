@@ -21,3 +21,4 @@ display_name = "Explain the Product"
 text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."
 copies = 3
 starter = true
+price = 600

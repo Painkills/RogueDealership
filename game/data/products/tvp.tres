@@ -11,3 +11,4 @@ upgraded_margin = 1250
 id = &"tvp"
 display_name = "Trade-In Value Protection"
 text = "Guarantees a floor under what it books for at trade-in."
+price = 1000

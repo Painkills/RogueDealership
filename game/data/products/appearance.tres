@@ -11,3 +11,4 @@ upgraded_margin = 1125
 id = &"appearance"
 display_name = "Appearance & Wheel Package"
 text = "Ceramic coat, tint, and wheels people look at."
+price = 900

@@ -12,3 +12,4 @@ id = &"concierge"
 display_name = "Concierge & Roadside Plan"
 text = "Pickup, delivery, loaners, roadside. They never sit in a waiting room."
 starter = true
+price = 600

@@ -29,3 +29,4 @@ id = &"pad"
 display_name = "Pad the Deal"
 text = "You quietly widen the spread. Play it BEFORE you start conceding - padding a deal you have already dragged to the Line just pushes it back under."
 starter = true
+price = 900

@@ -21,3 +21,4 @@ id = &"smalltalk"
 display_name = "Small Talk"
 text = "Kids, weather, the drive over. Buys one person time; the tick still costs everyone else theirs."
 starter = true
+price = 700

@@ -28,3 +28,4 @@ upgraded_effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_cpvyu"),
 id = &"framing"
 display_name = "Payment Framing"
 text = "'That's eleven dollars a month.' Half the price of a discount for half the movement."
+price = 1000

@@ -12,3 +12,4 @@ id = &"flex"
 display_name = "Payment Flex Plan"
 text = "Skip-a-payment and a deferred first month, for when the budget is thin."
 starter = true
+price = 700

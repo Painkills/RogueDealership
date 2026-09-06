@@ -28,3 +28,4 @@ upgraded_effects = Array[ExtResource("1_1jlqr")]([SubResource("Resource_21l6v")]
 id = &"bundle"
 display_name = "Bundle It In"
 text = "'Since we're already doing the other two...' Worth nothing on your first offer to someone and enormous on your fourth."
+price = 1200

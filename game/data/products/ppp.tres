@@ -12,3 +12,4 @@ id = &"ppp"
 display_name = "Payment Protection Plan"
 text = "Life, disability and job loss. The payment gets made even when they can't."
 starter = true
+price = 1200

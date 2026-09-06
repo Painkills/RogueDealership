@@ -30,3 +30,4 @@ display_name = "Offer a Discount"
 text = "You come down on it. The biggest move you can make in a single tick, and you pay for it out of your own pocket."
 copies = 2
 starter = true
+price = 900

@@ -12,3 +12,4 @@ id = &"vsc"
 display_name = "Vehicle Service Contract"
 text = "Covers the repair bill when it breaks after the factory walks away."
 starter = true
+price = 1600

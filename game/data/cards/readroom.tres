@@ -19,3 +19,4 @@ id = &"readroom"
 display_name = "Read the Room"
 text = "You shut up and watch. Tells you their LINE - how high Appeal has to climb before they say yes - and which THIRD of the board they actually care about, before you spend a tick putting a product in front of them."
 starter = true
+price = 1100

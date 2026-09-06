@@ -28,3 +28,4 @@ upgraded_effects = Array[ExtResource("1_fo6ct")]([SubResource("Resource_k1i42"),
 id = &"fearmonger"
 display_name = "Fearmonger"
 text = "You describe, vividly, what happens to people who skip it. It works. It also costs them a third of their afternoon."
+price = 1000
