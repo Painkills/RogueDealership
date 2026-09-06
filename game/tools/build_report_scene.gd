@@ -49,7 +49,7 @@ func _init() -> void:
 
 	var restart := Button.new()
 	restart.name = "RestartButton"
-	restart.text = "Play Again"
+	restart.text = "Continue"
 	restart.unique_name_in_owner = true
 	vbox.add_child(restart)
 	restart.owner = root

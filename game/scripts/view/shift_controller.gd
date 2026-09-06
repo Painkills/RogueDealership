@@ -43,6 +43,10 @@ const FRAMING_TWEEN := 0.5
 const PILE_TWEEN := 0.4
 const PILE_DELAY := 0.18
 
+## The run layer listens for this. The controller plays ONE shift; deciding
+## what comes next is not its job.
+signal shift_finished(report: Dictionary)
+
 @onready var _camera: Camera3D = $Camera3D
 @onready var _camera_floor: Marker3D = %CameraFloor
 @onready var _drag: DragController = $DragController
@@ -125,8 +129,8 @@ func _ready() -> void:
 		pad.input_event.connect(_on_pad_input.bind(i))
 
 	_register_keyboard_actions()
-	_start_new_shift()
-	_report_overlay.restart_pressed.connect(_start_new_shift)
+	_report_overlay.continue_pressed.connect(
+		func(): shift_finished.emit(_shift.report()))
 
 # --- input -----------------------------------------------------------------
 
@@ -192,12 +196,11 @@ func _try_dig(index: int) -> void:
 
 # --- lifecycle -------------------------------------------------------------
 
-func _start_new_shift() -> void:
-	var cfg: ShiftConfig = load("res://data/shift_config.tres")
-	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
-	var cards: CardPool = load("res://data/card_pool.tres")
-	var archetypes: ArchetypePool = load("res://data/archetype_pool.tres")
-	_shift = Shift.new(cfg, interests, cards, archetypes, randi(), [])
+func setup(shift: Shift) -> void:
+	## Play THIS shift. The run builds it - this file used to construct its own,
+	## which made it the run orchestrator as well as the table, the framing, the
+	## HUD and reconciliation.
+	_shift = shift
 	_events_seen = 0
 	_actions_seen = 0
 	_event_log.clear()
@@ -217,6 +220,14 @@ func _start_new_shift() -> void:
 	# view besides _apply(), and an empty floor is a dead end from either.
 	_let_time_pass_on_an_empty_floor()
 	_render()
+
+## Hiding a Node3D does NOT hide a CanvasLayer child - the HUD is not a
+## CanvasItem and does not inherit the 3D node's visibility. Both have to be
+## told, or stepping into the shop leaves the shift's HUD floating over it.
+func set_active(on: bool) -> void:
+	visible = on
+	($HUD as CanvasLayer).visible = on
+	set_process_unhandled_input(on)
 
 func _all_zones() -> Array:
 	var out := _chair_zones.duplicate()

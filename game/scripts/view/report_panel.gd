@@ -1,6 +1,6 @@
 extends PanelContainer
 
-signal restart_pressed
+signal continue_pressed
 
 @onready var _banked: Label = %BankedLabel
 @onready var _customers: Label = %CustomersLabel
@@ -10,7 +10,10 @@ signal restart_pressed
 @onready var _restart: Button = %RestartButton
 
 func _ready() -> void:
-	_restart.pressed.connect(func(): restart_pressed.emit())
+	_restart.pressed.connect(func(): continue_pressed.emit())
+
+func set_button_text(t: String) -> void:
+	_restart.text = t
 
 func setup(r: Dictionary) -> void:
 	var verdict := "QUOTA MADE" if r["made_quota"] else "MISSED QUOTA"

@@ -2,39 +2,39 @@
 
 [ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="1_66ide"]
 
-[node name="ReportPanel" type="PanelContainer" unique_id=529154639]
+[node name="ReportPanel" type="PanelContainer" unique_id=2034966513]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_66ide")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=529799301]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=795437701]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=1781558454]
+[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=663445683]
 layout_mode = 2
 text = "CLOSING TIME"
 
-[node name="BankedLabel" type="Label" parent="VBoxContainer" unique_id=1146802537]
+[node name="BankedLabel" type="Label" parent="VBoxContainer" unique_id=1976609279]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="CustomersLabel" type="Label" parent="VBoxContainer" unique_id=1305922334]
+[node name="CustomersLabel" type="Label" parent="VBoxContainer" unique_id=965240253]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="OffersLabel" type="Label" parent="VBoxContainer" unique_id=642955110]
+[node name="OffersLabel" type="Label" parent="VBoxContainer" unique_id=1849743873]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="MarginMovedLabel" type="Label" parent="VBoxContainer" unique_id=1122717759]
+[node name="MarginMovedLabel" type="Label" parent="VBoxContainer" unique_id=702459514]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="LostLabel" type="Label" parent="VBoxContainer" unique_id=1626740112]
+[node name="LostLabel" type="Label" parent="VBoxContainer" unique_id=415832824]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=988410068]
+[node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=59997908]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Play Again"
+text = "Continue"

@@ -46,6 +46,17 @@ func _physics_process(_delta: float) -> bool:
 		return true
 	_done = true
 
+	# The controller no longer builds its own shift - the run layer does. The
+	# driver stands in for the run layer here. This has to wait for the first
+	# physics frame, not run alongside add_child() in _init(): the controller's
+	# @onready fields (_event_log, _report_overlay, the card zones setup()
+	# touches) are not populated until _ready() fires, and _ready() does not
+	# fire synchronously on a node added to the tree from within _init().
+	_controller.setup(Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), randi()))
+
 	_check("the viewport is picking, or no card can ever be clicked",
 		get_root().physics_object_picking)
 	_check("the drag controller knows about all six zones",
