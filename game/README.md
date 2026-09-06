@@ -387,6 +387,7 @@ library default of 20 units, so it is set at runtime and asserted by the driver.
 godot --headless --path game --import
 godot --headless --path game --script res://tests/run_tests.gd     # the suite
 godot --headless --path game --script res://tools/drive_shift.gd   # a live shift
+godot --headless --path game --script res://tools/drive_run.gd     # a live run: shift, shop, shift
 godot --headless --path game --script res://tools/probe_framing.gd # where things land
 godot --headless --path game --script res://tools/probe_input.gd   # why nothing is clickable
 ```
