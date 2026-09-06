@@ -9,6 +9,12 @@ class_name ShiftConfig extends Resource
 @export var floor_size: int = 3
 @export var walk_up_ticks: int = 4
 
+# --- the run ---------------------------------------------------------------
+@export var shifts_in_run: int = 5
+## The quota climbs this fraction each shift, so the run keeps pace with a deck
+## that is getting stronger in the shop between them.
+@export var quota_growth: float = 0.15
+
 @export var hand_size: int = 5
 @export var approach_ticks: int = 1
 @export var place_ticks: int = 1

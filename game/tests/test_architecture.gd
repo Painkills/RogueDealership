@@ -5,7 +5,9 @@ var h: Harness
 
 func test_the_model_never_reaches_into_the_view() -> void:
 	## The one line that keeps the headless suite able to drive the real game.
-	for path in _scripts_under("res://scripts/model"):
+	## Covers scripts/run too: a new sibling directory is otherwise silently
+	## outside the rules this project treats as non-negotiable.
+	for path in _scripts_under("res://scripts/model") + _scripts_under("res://scripts/run"):
 		var src := FileAccess.get_file_as_string(path)
 		h.check("%s does not import the view" % path.get_file(),
 			not src.contains("scripts/view"))
@@ -16,7 +18,10 @@ func test_nothing_in_the_model_calls_the_global_rng() -> void:
 	## Bare randi()/randf()/shuffle() use Godot's GLOBAL rng and would silently
 	## destroy reproducibility. Every call must go through the seeded instance,
 	## which reads as "rng." immediately before the call.
-	for path in _scripts_under("res://scripts/model"):
+	##
+	## Not hypothetical in scripts/run: the shop rolls which cards it offers, and
+	## that is exactly where a bare randi() gets written.
+	for path in _scripts_under("res://scripts/model") + _scripts_under("res://scripts/run"):
 		var src := _code_only(FileAccess.get_file_as_string(path))
 		for banned in ["shuffle()", "randi()", "randf()", "randi_range(",
 				"randf_range("]:
