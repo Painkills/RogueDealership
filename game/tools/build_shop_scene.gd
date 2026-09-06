@@ -46,7 +46,17 @@ func _init() -> void:
 
 	var deck_scroll := ScrollContainer.new()
 	deck_scroll.name = "DeckScroll"
-	deck_scroll.custom_minimum_size = Vector2(0, 420)
+	# A Control is never sized below its own minimum, anchors or not - so at 420
+	# this plus the labels around it summed to 1095 against the 984 the 48px
+	# margins leave inside a 1080-tall viewport, and DoneButton rendered 63px
+	# below the bottom edge with a real 14-card starter deck. 260 leaves 49px of
+	# headroom at the current shop_offers (3) rather than the ~9px a smaller cut
+	# to 300 would, measured with tools/probe_shop_layout.gd against the actual
+	# built scene, and it still shows about four deck rows before the list
+	# itself needs to scroll - which is what the ScrollContainer is there for.
+	# A ScrollContainer's minimum size is exactly this constant, never its
+	# content's, so this number is independent of how large the deck grows.
+	deck_scroll.custom_minimum_size = Vector2(0, 260)
 	col.add_child(deck_scroll)
 	deck_scroll.owner = root
 

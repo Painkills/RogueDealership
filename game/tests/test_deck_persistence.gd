@@ -38,10 +38,16 @@ func test_a_shift_with_no_deck_still_builds_its_own() -> void:
 
 func test_a_deck_comes_out_of_a_shift_exactly_as_it_went_in() -> void:
 	var deck := Deck.build_starting(_pool())
+	# An upgrade bought in the shop has to survive a shift too, same as the
+	# card itself - this is the shop's own persistence claim, not just the
+	# deck's.
+	deck.upgrade(deck.cards[0].uid)
 	var before: int = deck.cards.size()
 	var uids_before: Array[int] = []
+	var upgraded_before: Array[bool] = []
 	for c in deck.cards:
 		uids_before.append(c.uid)
+		upgraded_before.append(c.upgraded)
 
 	var s := _shift(deck)
 	# Burn the clock down. dig is the one command that needs no customer, and
@@ -60,9 +66,12 @@ func test_a_deck_comes_out_of_a_shift_exactly_as_it_went_in() -> void:
 
 	h.eq("the deck still holds every card", deck.cards.size(), before)
 	var uids_after: Array[int] = []
+	var upgraded_after: Array[bool] = []
 	for c in deck.cards:
 		uids_after.append(c.uid)
+		upgraded_after.append(c.upgraded)
 	h.eq("with the same uids in the same order", uids_after, uids_before)
+	h.eq("and the same upgrade flags", upgraded_after, upgraded_before)
 
 func test_an_injected_quota_overrides_the_config() -> void:
 	var deck := Deck.build_starting(_pool())

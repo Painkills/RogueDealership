@@ -364,7 +364,7 @@ drop zone is ever armed at rest.
 recreated the hand every pass; in 3D that frees the node a drag is holding and
 kills every tween. `CardHomes.desired()` derives where each card belongs purely
 from model state and `_reconcile()` moves only the difference. Nothing frees a
-card node outside `_start_new_shift()` — a freed node still held by
+card node outside `setup()` — a freed node still held by
 `DragController` crashes the next `apply_card_layout()`.
 
 This is also why there is no revert path for a refused drop: the model still has
@@ -450,3 +450,101 @@ What is still genuinely unverified, because two people who already know the
 design are not the same test as a stranger: whether it reads to someone sitting
 down with no context, and how the pacing holds up across a full shift played at
 real speed rather than in the short bursts each feedback round has been so far.
+
+---
+
+## G2 — the run layer
+
+G1 played one shift, once, then offered a restart. G2 wraps that in an actual
+run: five shifts, climbing quota, a shop between each one where what you did to
+your deck last time is still true. `RunState` and `Shop` are the whole layer -
+`scripts/run/`, pure `RefCounted` like the model, no scene, no signal, driven by
+the identical object the headless suite drives.
+
+`RunState` owns the run's ONE seeded RNG, the deck, and the money; `Shop` is
+stateless with respect to all of that - it takes a `RunState` in its
+constructor and every verb (`buy`, `remove`, `upgrade`) reads and writes
+straight through it. The split exists so `run_controller.gd` can stay exactly
+what its own doc comment says it is: it owns the `RunState` and decides which
+of two screens you are looking at, and nothing else. That is the same
+discipline `shift_controller.gd` learned the hard way in G1.5, when it stopped
+building its own `Shift` and started being handed one - the run layer is what
+now hands it one, seeded and quota'd for the shift you're on.
+
+**The economy in one sentence:** what you bank in a shift becomes next shift's
+shop budget, and nothing else pays you - `RunState.finish_shift()` sets
+`money` to exactly `margin_banked`, so missing quota costs you the shop, never
+the run itself, and the shop cannot invent money you did not earn.
+
+**The archetype ladder is the run's difficulty curve.** Every
+`CustomerArchetype` declares `min_shift`, and `Shift` only deals customers
+whose `min_shift` has come due - `shift.gd`'s comment on that filter is blunt
+about why: a misauthored `min_shift` must never index an empty array, because
+an empty floor is a stalled game, not a graceful skip. `archetype_pool.tres`'s
+own `design_rule` states the ladder in full: easiest first, an archetype with
+no actions opens the run, a gift comes next, a resource working against you
+after that, and the archetype that punishes the whole floor comes last. G2
+does not add to that ladder; it is what finally plays it end to end, five
+shifts deep, instead of stopping after one.
+
+**Two guards keep the shop from being able to build a run it cannot win.**
+`min_deck_size` (from G1.5) floors the deck's raw SIZE: below a full hand,
+`_draw_up` cannot fill one, so there is nothing to dig and nothing to wait for
+if you are seated - the exact softlock `wait()` exists to fix, reachable
+through the shop if nothing stopped it. `min_products`, new here, floors the
+deck's COMPOSITION instead: `margin_banked` only ever moves through a placed
+product's `Offer`, so a deck with no products left can never bank another
+dollar, and since `money` is set FROM `margin_banked`, that shop then has $0
+forever with no other income. The run keeps playing, but it is already dead -
+which is worse than a softlock, because nothing on screen says so. Both guards
+are the same shape in `Shop.remove()`: refuse and spend nothing, with a message
+that says which floor you hit.
+
+### Layout
+
+```
+game/
+  scenes/
+    shop.tscn            between shifts - add, remove, upgrade, then back to work
+    run.tscn             the main scene: ShiftView + ShopView, run_controller.gd on top
+  scripts/run/           pure RefCounted, like scripts/model/
+    run_state.gd          the run: deck, money, banked_total, the seeded rng
+    shop.gd               the three verbs, each a Result, each a refusal that spends nothing
+  scripts/view/
+    shop_screen.gd         shop.tscn's script - rebuilds both lists after every purchase
+    run_controller.gd      owns the RunState, switches between ShiftView and ShopView
+  tools/
+    build_shop_scene.gd    builds shop.tscn
+    build_run_scene.gd     builds run.tscn
+    drive_run.gd           drives a whole run through a live scene: shift, shop, shift
+```
+
+### Verifying it
+
+```bash
+godot --headless --path game --script res://tools/drive_run.gd   # a live run: shift, shop, shift
+```
+
+`drive_run.gd` instantiates the real main scene, plays a shift out, presses the
+report's own button rather than emitting its signal by hand, buys a card in the
+shop by uid rather than by `CardDef` - an old copy already in the deck would
+satisfy a `CardDef` match even if the purchase never reached the next shift's
+deck at all - and confirms it deals into the next shift. It also measures the
+shop screen in pixels, the same discipline `drive_shift.gd` applies to the
+shift's own HUD: `shop.tscn`'s `DoneButton` is the only way out of the shop,
+and the shop has no keyboard mirror, so a button rendered off-screen is a hard
+softlock with no other way out.
+
+### Open
+
+**No end-of-run screen.** Finishing the fifth shift logs `banked_total` and the
+shift count and rolls a fresh run rather than presenting one. That is out of
+scope for G2 by design - what mattered here was making the end of a run
+*legible*, not building the screen for it. The report button now says FINISH
+THE RUN instead of Continue on that last shift, so pressing it does not read as
+just another shift wrapping up.
+
+**No save.** A run lives entirely in memory; closing the game loses it. m2's
+own G2 note flagged this as the point where m2 itself should be frozen as
+reference rather than kept editable alongside Godot - that decision has not
+been made yet.

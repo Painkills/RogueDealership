@@ -205,6 +205,12 @@ func setup(shift: Shift) -> void:
 	_actions_seen = 0
 	_event_log.clear()
 	_report_overlay.visible = false
+	# The button that ends this shift must not promise "Continue" on the shift
+	# that ends the run - pressing it silently restarts a fresh run underneath,
+	# indistinguishable to the player from the deck-persistence bug this whole
+	# milestone exists to prevent.
+	_report_overlay.set_button_text("FINISH THE RUN"
+		if _shift.shift_number >= _shift.cfg.shifts_in_run else "Continue")
 	_hovered = -1
 	_framed_at = -999                     # force the framing to re-apply
 

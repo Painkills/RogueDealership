@@ -2,79 +2,79 @@
 
 [ext_resource type="Script" path="res://scripts/view/shop_screen.gd" id="1_lx5au"]
 
-[node name="ShopScreen" type="PanelContainer" unique_id=517712778]
+[node name="ShopScreen" type="PanelContainer" unique_id=998867501]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_lx5au")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=116281389]
+[node name="Margin" type="MarginContainer" parent="." unique_id=414276245]
 layout_mode = 2
 theme_override_constants/margin_left = 48
 theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 48
 theme_override_constants/margin_bottom = 48
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=687082744]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=252722030]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=569454286]
+[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=1184010638]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 text = "BETWEEN SHIFTS"
 
-[node name="ShiftLabel" type="Label" parent="Margin/Column" unique_id=821987375]
+[node name="ShiftLabel" type="Label" parent="Margin/Column" unique_id=817379145]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "shift 1 of 5"
 
-[node name="MoneyLabel" type="Label" parent="Margin/Column" unique_id=287406388]
+[node name="MoneyLabel" type="Label" parent="Margin/Column" unique_id=1224172731]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 text = "$0 to spend"
 
-[node name="OnShelfTitle" type="Label" parent="Margin/Column" unique_id=891436662]
+[node name="OnShelfTitle" type="Label" parent="Margin/Column" unique_id=525255430]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "ON THE SHELF"
 
-[node name="OfferRows" type="VBoxContainer" parent="Margin/Column" unique_id=1536524008]
+[node name="OfferRows" type="VBoxContainer" parent="Margin/Column" unique_id=698052734]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="DeckTitle" type="Label" parent="Margin/Column" unique_id=647514450]
+[node name="DeckTitle" type="Label" parent="Margin/Column" unique_id=1565112659]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "YOUR DECK"
 
-[node name="DeckScroll" type="ScrollContainer" parent="Margin/Column" unique_id=1424943256]
-custom_minimum_size = Vector2(0, 420)
+[node name="DeckScroll" type="ScrollContainer" parent="Margin/Column" unique_id=1895232964]
+custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 
-[node name="DeckRows" type="VBoxContainer" parent="Margin/Column/DeckScroll" unique_id=820494210]
+[node name="DeckRows" type="VBoxContainer" parent="Margin/Column/DeckScroll" unique_id=1413723826]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="LogLabel" type="Label" parent="Margin/Column" unique_id=433892262]
+[node name="LogLabel" type="Label" parent="Margin/Column" unique_id=991092542]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.8784314, 0.3529412, 0.3529412, 1)
 
-[node name="DoneButton" type="Button" parent="Margin/Column" unique_id=847723302]
+[node name="DoneButton" type="Button" parent="Margin/Column" unique_id=1555571425]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(420, 96)
 layout_mode = 2

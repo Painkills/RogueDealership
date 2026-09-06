@@ -31,7 +31,13 @@ func _on_shift_finished(report: Dictionary) -> void:
 	_run.finish_shift(report)
 	if _run.is_over():
 		# The run is done. Until there is an end-of-run screen, roll a new one -
-		# the alternative is a dead button on a finished report.
+		# the alternative is a dead button on a finished report. Rolling it
+		# silently would be indistinguishable from the deck-persistence bug this
+		# milestone exists to prevent, so the end of the run is made legible here
+		# through the same channel every other tool in this project reports
+		# through, even though there is no screen for it yet.
+		print("run finished: banked %d across %d shifts"
+			% [_run.banked_total, _run.cfg.shifts_in_run])
 		_start_run()
 		return
 	_show_shop(true)

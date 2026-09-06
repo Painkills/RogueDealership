@@ -43,13 +43,19 @@ func _code_only(src: String) -> String:
 
 func test_runtime_state_classes_are_refcounted_not_resource() -> void:
 	## Resources are cached and shared project-wide, so mutable state on one
-	## leaks between customers and between runs.
-	for file_name in ["shift.gd", "customer.gd", "offer.gd", "card_instance.gd",
-			"deck.gd", "result.gd", "effect_context.gd"]:
-		var src := FileAccess.get_file_as_string(
-			"res://scripts/model/%s" % file_name)
-		h.check("%s exists" % file_name, src != "")
-		h.check("%s extends RefCounted" % file_name,
+	## leaks between customers and between runs. The guard above only rejects
+	## `extends Node`, which `extends Resource` sails straight past - so without
+	## naming scripts/run/'s own files here, "scripts/run/ is pure RefCounted"
+	## is a claim this suite never actually checks.
+	for entry in [["scripts/model", "shift.gd"], ["scripts/model", "customer.gd"],
+			["scripts/model", "offer.gd"], ["scripts/model", "card_instance.gd"],
+			["scripts/model", "deck.gd"], ["scripts/model", "result.gd"],
+			["scripts/model", "effect_context.gd"],
+			["scripts/run", "run_state.gd"], ["scripts/run", "shop.gd"]]:
+		var path := "res://%s/%s" % [entry[0], entry[1]]
+		var src := FileAccess.get_file_as_string(path)
+		h.check("%s exists" % entry[1], src != "")
+		h.check("%s extends RefCounted" % entry[1],
 			src.contains("extends RefCounted"))
 
 func test_two_shifts_built_back_to_back_share_no_state() -> void:

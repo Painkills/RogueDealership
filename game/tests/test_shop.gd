@@ -95,6 +95,52 @@ func test_a_card_cannot_be_upgraded_twice() -> void:
 	h.check("refused", not res.ok)
 	h.eq("and charged nothing", r.money, money_after_first)
 
+func test_a_product_with_no_authored_upgrade_cannot_be_bought() -> void:
+	## upgraded_margin = 0 is product_card_def.gd's documented "no upgrade
+	## authored yet" sentinel, and card_instance.gd's margin() already guards
+	## for it. Without the same guard here, upgrade_gain() returns a NEGATIVE
+	## number, upgrade_price() prices it negative too, the affordability check
+	## passes at any balance, and run.money -= (negative price) CREDITS money.
+	##
+	## A fresh Resource, never a loaded .tres: Resources are cached
+	## project-wide, so mutating one would corrupt every later test in the run.
+	var r := _run()
+	var shop := Shop.new(r)
+	var def := ProductCardDef.new()
+	def.id = &"test_no_upgrade_product"
+	def.display_name = "Test Product"
+	def.price = 100
+	def.margin = 200
+	def.upgraded_margin = 0
+	var inst := r.deck.add(def)
+	var money_before: int = r.money
+	var res := shop.upgrade(inst.uid)
+	h.check("refused (%s)" % res.msg, not res.ok)
+	h.check("and says there is nothing to upgrade",
+		res.msg.to_lower().contains("no upgrade"))
+	h.eq("and nothing was spent", r.money, money_before)
+	h.check("and the instance stayed un-upgraded", not inst.upgraded)
+
+func test_a_support_card_with_no_authored_upgrade_cannot_be_bought() -> void:
+	## shift.gd and card_text.gd both already treat an empty upgraded_effects as
+	## "no upgrade" - the shop must not be the one place that still charges for it.
+	var r := _run()
+	var shop := Shop.new(r)
+	var def := SupportCardDef.new()
+	def.id = &"test_no_upgrade_support"
+	def.display_name = "Test Support"
+	def.price = 100
+	def.effects = []
+	def.upgraded_effects = []
+	var inst := r.deck.add(def)
+	var money_before: int = r.money
+	var res := shop.upgrade(inst.uid)
+	h.check("refused (%s)" % res.msg, not res.ok)
+	h.check("and says there is nothing to upgrade",
+		res.msg.to_lower().contains("no upgrade"))
+	h.eq("and nothing was spent", r.money, money_before)
+	h.check("and the instance stayed un-upgraded", not inst.upgraded)
+
 func test_removing_thins_the_deck() -> void:
 	var r := _run()
 	var shop := Shop.new(r)
@@ -118,3 +164,35 @@ func test_the_deck_can_never_be_thinned_into_a_softlock() -> void:
 	h.check("the deck stopped shrinking at the floor (%d cards)"
 		% r.deck.cards.size(), r.deck.cards.size() >= r.cfg.min_deck_size)
 	h.check("which is at least a full hand", r.cfg.min_deck_size >= r.cfg.hand_size)
+
+func test_the_deck_can_never_be_stripped_of_products() -> void:
+	## margin_banked only moves through a placed product's Offer, and money is
+	## set FROM margin_banked - so a deck with zero products left can never bank
+	## another dollar, and the shop then has $0 forever with no other income.
+	## The run keeps playing but is already dead. Same shape as the softlock
+	## test above, guarded on composition rather than size.
+	var r := _run(1000000)
+	var shop := Shop.new(r)
+	var guard := 0
+	var last_refusal := ""
+	while guard < 100:
+		guard += 1
+		var product: CardInstance = null
+		for c in r.deck.cards:
+			if c.is_product():
+				product = c
+				break
+		if product == null:
+			break
+		var res := shop.remove(product.uid)
+		if not res.ok:
+			last_refusal = res.msg
+			break
+	var remaining := 0
+	for c in r.deck.cards:
+		if c.is_product():
+			remaining += 1
+	h.check("the deck stopped losing products at the floor (%d products)"
+		% remaining, remaining >= r.cfg.min_products)
+	h.check("and the refusal says something useful (%s)" % last_refusal,
+		last_refusal.to_lower().contains("product"))

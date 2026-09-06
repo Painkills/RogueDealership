@@ -3,14 +3,20 @@ extends SceneTree
 ##
 ## The suite covers RunState and Shop as objects. What only a live scene can
 ## answer is whether the two screens actually hand off to each other, and
-## whether a card bought in the shop turns up in the next shift's deck.
-##
-##   godot --headless --path game --script res://tools/drive_run.gd
+## whether a card bought in the shop turns up in the next shift's deck - and,
+## since the shop screen is BUILT rather than hand-tuned, whether its layout
+## actually fits the screen it is built for.
+
+const VIEWPORT := Vector2(1920, 1080)
 
 var _root: Node
-var _done := false
+var _phase := 0
+var _settle_frames := 0
 var _failures: Array[String] = []
 var _checks := 0
+
+var _run: RunState
+var _deck_before: int
 
 func _init() -> void:
 	seed(20260905)
@@ -18,47 +24,107 @@ func _init() -> void:
 	get_root().add_child(_root)
 
 func _process(_delta: float) -> bool:
-	if _done:
-		return true
-	_done = true
+	if _phase == 0:
+		_phase_0_open_and_finish_shift()
+		_phase = 1
+		return false
 
-	var run: RunState = _root._run
-	_check("a run started", run != null)
-	_check("on shift 1", run.shift_number == 1)
+	if _phase == 1:
+		# Container resorts (and therefore every child's real global_position)
+		# are deferred, not synchronous with setup()/_render() - the exact gap
+		# that let the shop's DoneButton render off-screen without a single
+		# check ever catching it. A few idle frames flush that queue; one is
+		# probably enough, but this costs nothing to be generous with.
+		_settle_frames += 1
+		if _settle_frames < 5:
+			return false
+		_check_shop_layout_fits_on_screen()
+		_phase = 2
+		return false
+
+	if _phase == 2:
+		_phase_2_buy_and_leave()
+
+		print("")
+		const EXPECTED_MIN := 20
+		if _checks < EXPECTED_MIN:
+			print("FAIL  only %d checks ran, expected at least %d - something aborted"
+				% [_checks, EXPECTED_MIN])
+			_failures.append("check count collapsed")
+
+		if _failures.is_empty():
+			print("%d checks, all passed" % _checks)
+			quit(0)
+		else:
+			for f in _failures:
+				print("FAIL  " + f)
+			print("%d checks, %d FAILED" % [_checks, _failures.size()])
+			quit(1)
+		return true
+
+	return true
+
+func _phase_0_open_and_finish_shift() -> void:
+	_run = _root._run
+	_check("a run started", _run != null)
+	_check("on shift 1", _run.shift_number == 1)
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
 	_check("and the shift's HUD with it",
 		(_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
 
-	var deck_before: int = run.deck.cards.size()
+	_deck_before = _run.deck.cards.size()
 	_finish_the_shift()
 
 	_check("finishing a shift opens the shop", _root._shop_view.visible)
 	_check("and hides the shift's HUD, not just its table",
 		not (_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
-	_check("the run advanced to shift 2", run.shift_number == 2)
-	_check("with money from the shift just played", run.money == int(
-		run.reports[0]["margin_banked"]))
+	_check("the run advanced to shift 2", _run.shift_number == 2)
+	_check("with money from the shift just played", _run.money == int(
+		_run.reports[0]["margin_banked"]))
 
+## The audited bug: the Column VBox wanted more height than the 48px margins
+## leave inside a 1080-tall viewport, so DoneButton rendered 63px below the
+## bottom edge with the real starter deck already in the shop - no retuning
+## needed to reach it. A Control is never given less than its own reported
+## minimum, anchors or not, so an oversized child forces its ancestors to grow
+## past the viewport rather than clipping - which is exactly why this has to be
+## measured in pixels rather than inferred from the tree.
+func _check_shop_layout_fits_on_screen() -> void:
+	var done_btn := _root._shop_view.get_node(^"Margin/Column/DoneButton") as Control
+	var log_label := _root._shop_view.get_node(^"Margin/Column/LogLabel") as Control
+	_check("the shop has a deck to show (%d cards)" % _run.deck.cards.size(),
+		_run.deck.cards.size() > 0)
+	_on_screen("the shop's Done button",
+		Rect2(done_btn.global_position, done_btn.size))
+	_on_screen("the shop's log label",
+		Rect2(log_label.global_position, log_label.size))
+
+func _on_screen(label: String, r: Rect2) -> void:
+	_check("%s is on screen (%s)" % [label, r],
+		r.position.x >= 0.0 and r.position.y >= 0.0
+			and r.end.x <= VIEWPORT.x and r.end.y <= VIEWPORT.y)
+
+func _phase_2_buy_and_leave() -> void:
 	# Buy the cheapest thing on the shelf, with the money to afford it.
 	var shop: Shop = _root._shop_view._shop
-	run.money = 100000
+	_run.money = 100000
 	_root._shop_view._render()
 	var bought: CardDef = shop.offers[0]
 	var uids_before := {}
 	var same_def_uids_before := {}
-	for c in run.deck.cards:
+	for c in _run.deck.cards:
 		uids_before[c.uid] = true
 		if c.card == bought:
 			same_def_uids_before[c.uid] = true
 	var res := shop.buy(bought)
 	_check("bought %s (%s)" % [bought.display_name, res.msg], res.ok)
-	_check("the deck grew", run.deck.cards.size() == deck_before + 1)
+	_check("the deck grew", _run.deck.cards.size() == _deck_before + 1)
 
 	# Pin down exactly which instance the purchase created, by uid - not by
 	# assuming Deck.add() appends, and not by matching CardDef alone, which an
 	# old copy already in the deck would satisfy just as well.
 	var new_uids: Array = []
-	for c in run.deck.cards:
+	for c in _run.deck.cards:
 		if not uids_before.has(c.uid):
 			new_uids.append(c.uid)
 	_check("the purchase created exactly one new instance", new_uids.size() == 1)
@@ -71,7 +137,7 @@ func _process(_delta: float) -> bool:
 	_check("on a shift that knows which one it is",
 		_root._shift_view._shift.shift_number == 2)
 	_check("running to the climbing quota",
-		_root._shift_view._shift.quota == run.quota_for(2))
+		_root._shift_view._shift.quota == _run.quota_for(2))
 
 	# The point of the whole milestone: the purchase came to work with you.
 	# Match on the exact uid the purchase minted, not just the CardDef - an
@@ -84,23 +150,6 @@ func _process(_delta: float) -> bool:
 		uids[c.uid] = true
 	_check("and the card you bought is in the shift's deck",
 		new_uid != null and uids.has(new_uid))
-
-	print("")
-	const EXPECTED_MIN := 16
-	if _checks < EXPECTED_MIN:
-		print("FAIL  only %d checks ran, expected at least %d - something aborted"
-			% [_checks, EXPECTED_MIN])
-		_failures.append("check count collapsed")
-
-	if _failures.is_empty():
-		print("%d checks, all passed" % _checks)
-		quit(0)
-	else:
-		for f in _failures:
-			print("FAIL  " + f)
-		print("%d checks, %d FAILED" % [_checks, _failures.size()])
-		quit(1)
-	return true
 
 func _finish_the_shift() -> void:
 	## Burn the clock the way test_deck_persistence does, then press the report's
@@ -120,6 +169,13 @@ func _finish_the_shift() -> void:
 		s.is_over())
 	var report = _root._shift_view._report_overlay
 	_check("the report came up", report.visible)
+	var button_text: String = report._restart.text.to_lower()
+	if s.shift_number >= s.cfg.shifts_in_run:
+		_check("and its button no longer says Continue on the last shift (%s)"
+			% report._restart.text, not button_text.contains("continue"))
+	else:
+		_check("and its button still says Continue mid-run (%s)"
+			% report._restart.text, button_text.contains("continue"))
 	report.continue_pressed.emit()
 
 func _check(label: String, ok: bool) -> void:

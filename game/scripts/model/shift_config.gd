@@ -43,6 +43,12 @@ class_name ShiftConfig extends Resource
 ## Thinning below a full hand would leave _draw_up unable to fill one: nothing
 ## to dig, and nothing to wait for if you are seated. That is a softlock.
 @export var min_deck_size: int = 8
+## margin_banked only moves through close(), which only fires on a placed
+## product's Offer - a deck with no products left can never bank a dollar, and
+## since money is set from margin_banked, that shop then has $0 forever with no
+## other income. The run is dead but keeps playing. This floors the same trap
+## min_deck_size floors, on composition instead of size.
+@export var min_products: int = 3
 
 func as_dict() -> Dictionary:
 	return {

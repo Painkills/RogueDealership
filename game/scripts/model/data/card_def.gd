@@ -12,5 +12,7 @@ class_name CardDef extends Resource
 @export var copies: int = 1
 @export var starter: bool = false
 ## What the shop charges to add this card to the deck. Authored rather than
-## derived: support cards have no margin to compute a price from.
-@export var price: int = 800
+## derived: support cards have no margin to compute a price from. Defaults to
+## 0, not some plausible-looking number, so an unpriced card fails
+## test_every_card_carries_a_price() instead of silently passing it.
+@export var price: int = 0

@@ -37,8 +37,18 @@ func upgrade_gain(inst: CardInstance) -> int:
 	## EFFECTS, which have no cash value to read, so its price is pinned to the
 	## card's own price by the same quarter the product ladder uses.
 	if not inst.is_product():
+		var s := inst.card as SupportCardDef
+		# product_card_def.gd's upgraded_margin == 0 means "no upgrade authored
+		# yet", and card_instance.gd's margin() already guards for exactly that.
+		# The support-card equivalent is an empty upgraded_effects - shift.gd and
+		# card_text.gd both treat that as "no upgrade" too. Charging for either
+		# here would be a purchase that changes nothing at all.
+		if s.upgraded_effects.is_empty():
+			return 0
 		return int(round(float(inst.card.price) * 0.25))
 	var p := inst.card as ProductCardDef
+	if p.upgraded_margin <= 0:
+		return 0
 	return p.upgraded_margin - p.margin
 
 func remove_price() -> int:
@@ -64,6 +74,8 @@ func upgrade(uid: int) -> Result:
 		return Result.new(false, "No such card.")
 	if inst.upgraded:
 		return Result.new(false, "%s is already upgraded." % inst.card.display_name)
+	if upgrade_gain(inst) <= 0:
+		return Result.new(false, "%s has no upgrade to buy." % inst.card.display_name)
 	var price := upgrade_price(inst)
 	if run.money < price:
 		return Result.new(false, "You cannot afford to upgrade the %s."
@@ -82,6 +94,13 @@ func remove(uid: int) -> Result:
 	if run.deck.cards.size() <= run.cfg.min_deck_size:
 		return Result.new(false,
 			"You need at least %d cards to work a floor." % run.cfg.min_deck_size)
+	# margin_banked only moves through a placed product's Offer. Strip the deck
+	# of products and the shop has $0 forever with no way to earn it back - the
+	# run keeps playing but is already dead.
+	if inst.is_product() and _product_count() <= run.cfg.min_products:
+		return Result.new(false,
+			"You need at least %d products in the deck to ever bank a dollar."
+				% run.cfg.min_products)
 	var price := remove_price()
 	if run.money < price:
 		return Result.new(false, "You cannot afford to drop the %s."
@@ -96,3 +115,10 @@ func find(uid: int) -> CardInstance:
 		if c.uid == uid:
 			return c
 	return null
+
+func _product_count() -> int:
+	var n := 0
+	for c in run.deck.cards:
+		if c.is_product():
+			n += 1
+	return n
