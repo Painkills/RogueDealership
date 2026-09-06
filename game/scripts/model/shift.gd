@@ -14,6 +14,7 @@ var rng := RandomNumberGenerator.new()
 var tick: int = 0
 var tick_budget: int
 var quota: int
+var shift_number: int = 1          ## which shift of the run; gates archetypes
 var margin_banked: int = 0
 
 var chairs: Array = []
@@ -39,13 +40,14 @@ var _name_pool: Array = []
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int, p_forced: Array = [],
-		p_deck: Deck = null, p_quota: int = 0) -> void:
+		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
 	rng.seed = p_seed
 	_forced = p_forced
+	shift_number = p_shift_number
 
 	tick_budget = cfg.shift_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
@@ -192,18 +194,29 @@ func _pick_archetype() -> CustomerArchetype:
 		var id = _forced[_forced_next % _forced.size()]
 		_forced_next += 1
 		return archetypes.by_id(id)
-	var pool := archetypes.archetypes.duplicate()
+	var pool := _archetypes_available_this_shift()
 	if cfg.unique_archetypes_on_floor:
 		var taken := {}
 		for c in seated():
 			taken[c.archetype.id] = true
-		var fresh := []
+		var fresh: Array[CustomerArchetype] = []
 		for a in pool:
 			if not taken.has(a.id):
 				fresh.append(a)
 		if not fresh.is_empty():
 			pool = fresh
 	return pool[rng.randi_range(0, pool.size() - 1)]
+
+
+func _archetypes_available_this_shift() -> Array[CustomerArchetype]:
+	## The difficulty ladder. Falls back to the whole pool rather than returning
+	## nothing: misauthored min_shift values would otherwise index an empty array
+	## and take the game down, and a floor that is too hard beats no floor at all.
+	var out: Array[CustomerArchetype] = []
+	for a in archetypes.archetypes:
+		if a.min_shift <= shift_number:
+			out.append(a)
+	return out if not out.is_empty() else archetypes.archetypes.duplicate()
 
 
 func _next_name() -> String:

@@ -33,6 +33,7 @@ id = &"tech"
 display_name = "Tech Enthusiast"
 pattern = "Hunt the bullseye. Do not grind a mediocre product upward when the right one pays a premium."
 tell = "asked about the drivetrain before asking about the price"
+min_shift = 2
 top_interests = Array[ExtResource("5_ccba3")]([ExtResource("8_ojyvg"), ExtResource("9_bpiu1")])
 bottom_interests = Array[ExtResource("5_ccba3")]([ExtResource("6_ctt4j")])
 actions = Array[ExtResource("1_miwln")]([SubResource("Resource_a55j1")])

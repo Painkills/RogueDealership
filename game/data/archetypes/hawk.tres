@@ -35,6 +35,7 @@ display_name = "Budget Hawk"
 pattern = "Over-build appeal BEFORE you ask, and pay for it in margin."
 tell = "brought a printout, and keeps saying 'out the door'"
 line = 40
+min_shift = 3
 top_interests = Array[ExtResource("5_jnbft")]([ExtResource("9_5fsrg"), ExtResource("10_r357r")])
 bottom_interests = Array[ExtResource("5_jnbft")]([ExtResource("6_pq1hs"), ExtResource("7_bj5p4")])
 actions = Array[ExtResource("1_bckoi")]([SubResource("Resource_xslj5")])

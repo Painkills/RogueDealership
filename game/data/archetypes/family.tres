@@ -34,6 +34,7 @@ display_name = "Family First"
 pattern = "Sell them their favourites, fast. They never get harder - but fishing below their top five bleeds them."
 tell = "there are two car seats in the trade-in"
 line_per_sale = 0
+min_shift = 2
 top_interests = Array[ExtResource("5_kagv6")]([ExtResource("8_i77n1"), ExtResource("9_d0jgs")])
 bottom_interests = Array[ExtResource("5_kagv6")]([ExtResource("6_xystn")])
 actions = Array[ExtResource("1_syiqa")]([SubResource("Resource_idwwe")])

@@ -12,4 +12,8 @@ class_name CustomerArchetype extends Resource
 @export var top_interests: Array[Interest]
 @export var bottom_interests: Array[Interest]
 @export var demands_category: bool = false
+## The earliest shift this archetype may walk in on. Nine ticks of patience and
+## a floor-wide drain are the two hardest problems in the game, and a first-ever
+## run should open with neither. Defaults to 1, so a bare shift is unaffected.
+@export var min_shift: int = 1
 @export var actions: Array[CustomerAction]

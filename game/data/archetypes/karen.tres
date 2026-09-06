@@ -30,4 +30,5 @@ display_name = "The Karen"
 pattern = "See to them FIRST, and give them what they actually came in for."
 tell = "has already asked who the manager is, twice"
 demands_category = true
+min_shift = 4
 actions = Array[ExtResource("1_fi3b8")]([SubResource("Resource_jts1c")])
