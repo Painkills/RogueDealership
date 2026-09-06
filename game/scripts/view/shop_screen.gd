@@ -26,7 +26,16 @@ func setup(shop: Shop) -> void:
 
 func _render() -> void:
 	var run := _shop.run
-	_money.text = "%s to spend" % Format.money(run.money)
+	# Show the subtraction, not just the remainder. "$400 to spend" after a
+	# $4,000 shift reads as a bug unless the quota that ate the rest is on screen
+	# beside it.
+	if run.reports.is_empty():
+		_money.text = "%s to spend" % Format.money(run.money)
+	else:
+		var last: Dictionary = run.reports.back()
+		_money.text = "%s banked - %s quota  =  %s to spend" % [
+			Format.money(last["margin_banked"]), Format.money(last["quota"]),
+			Format.money(run.money)]
 	_shift_label.text = "shift %d of %d next - quota %s" % [run.shift_number,
 		run.cfg.shifts_in_run, Format.money(run.quota_for(run.shift_number))]
 

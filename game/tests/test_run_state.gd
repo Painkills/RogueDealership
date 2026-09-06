@@ -25,19 +25,29 @@ func test_the_quota_climbs_a_fixed_percentage() -> void:
 	h.eq("shift 4", r.quota_for(4), 5475)
 	h.eq("shift 5", r.quota_for(5), 6296)
 
-func test_finishing_a_shift_sets_the_shop_budget_and_advances() -> void:
-	## What you banked this shift IS the budget for the shop that follows, then
-	## it resets. No wallet to hoard into - one number to reason about.
+func test_only_what_you_bank_over_quota_reaches_the_shop() -> void:
+	## The quota is the house's cut and comes out first. What survives it is the
+	## budget, and then it resets - no wallet to hoard into.
 	var r := _run()
 	r.finish_shift({"margin_banked": 4200, "quota": 3600, "made_quota": true})
 	h.eq("you advance a shift", r.shift_number, 2)
-	h.eq("this shift's take is the shop budget", r.money, 4200)
-	h.eq("and the lifetime total moves", r.banked_total, 4200)
+	h.eq("the shop gets the OVERAGE, not the take", r.money, 600)
+	h.eq("while the lifetime total counts every dollar", r.banked_total, 4200)
 
-	r.finish_shift({"margin_banked": 1000, "quota": 4140, "made_quota": false})
-	h.eq("the budget RESETS rather than accumulating", r.money, 1000)
-	h.eq("but the lifetime total keeps climbing", r.banked_total, 5200)
+	r.finish_shift({"margin_banked": 5000, "quota": 4140, "made_quota": true})
+	h.eq("the budget RESETS rather than accumulating", r.money, 860)
+	h.eq("but the lifetime total keeps climbing", r.banked_total, 9200)
 	h.eq("and every report is kept", r.reports.size(), 2)
+
+func test_missing_quota_and_scraping_it_both_leave_nothing_to_spend() -> void:
+	## The threshold has teeth on both sides, and neither side goes negative.
+	var r := _run()
+	r.finish_shift({"margin_banked": 1000, "quota": 3600, "made_quota": false})
+	h.eq("missing it by a mile buys nothing", r.money, 0)
+	r.finish_shift({"margin_banked": 4140, "quota": 4140, "made_quota": true})
+	h.eq("and landing on it exactly buys nothing either", r.money, 0)
+	r.finish_shift({"margin_banked": 4762, "quota": 4761, "made_quota": true})
+	h.eq("one dollar over is one dollar to spend", r.money, 1)
 
 func test_missing_quota_costs_budget_but_never_the_run() -> void:
 	var r := _run()

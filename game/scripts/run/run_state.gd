@@ -17,7 +17,7 @@ var rng := RandomNumberGenerator.new()
 
 var deck: Deck
 var shift_number: int = 1            ## 1-based; the shift about to be played
-var money: int = 0                   ## the shop budget, set by the last shift
+var money: int = 0                   ## the shop budget: last shift's take OVER quota
 var banked_total: int = 0
 var reports: Array[Dictionary] = []
 
@@ -45,9 +45,13 @@ func start_shift() -> Shift:
 		rng.randi(), [], deck, quota_for(shift_number), shift_number)
 
 func finish_shift(report: Dictionary) -> void:
-	## What you banked this shift IS the shop budget for the one that follows,
-	## and then it resets. Missing quota costs you that budget, never the run.
+	## The quota is the house's cut and it comes out first. Only what you banked
+	## OVER it is yours to spend, and then it resets - no wallet to hoard into.
+	##
+	## So the quota is a threshold with teeth on both sides: miss it and you get
+	## nothing, scrape past it and you get almost nothing. Neither ends the run.
 	reports.append(report)
-	banked_total += int(report["margin_banked"])
-	money = int(report["margin_banked"])
+	var banked := int(report["margin_banked"])
+	banked_total += banked
+	money = maxi(0, banked - int(report["quota"]))
 	shift_number += 1

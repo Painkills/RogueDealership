@@ -79,8 +79,15 @@ func _phase_0_open_and_finish_shift() -> void:
 	_check("and hides the shift's HUD, not just its table",
 		not (_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
 	_check("the run advanced to shift 2", _run.shift_number == 2)
-	_check("with money from the shift just played", _run.money == int(
-		_run.reports[0]["margin_banked"]))
+	var r0: Dictionary = _run.reports[0]
+	_check("with only what that shift banked OVER quota (%d banked, %d quota)"
+		% [int(r0["margin_banked"]), int(r0["quota"])],
+		_run.money == maxi(0, int(r0["margin_banked"]) - int(r0["quota"])))
+	# This driver digs the clock away rather than selling anything, so it always
+	# lands on the missed-quota branch. Pin that down, or the check above is
+	# 0 == max(0, 0 - 3600) and proves nothing about the subtraction.
+	_check("which after a shift that banked nothing is nothing",
+		not bool(r0["made_quota"]) and _run.money == 0)
 
 ## The audited bug: the Column VBox wanted more height than the 48px margins
 ## leave inside a 1080-tall viewport, so DoneButton rendered 63px below the

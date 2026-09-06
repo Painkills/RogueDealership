@@ -167,8 +167,9 @@ func test_the_deck_can_never_be_thinned_into_a_softlock() -> void:
 
 func test_the_deck_can_never_be_stripped_of_products() -> void:
 	## margin_banked only moves through a placed product's Offer, and money is
-	## set FROM margin_banked - so a deck with zero products left can never bank
-	## another dollar, and the shop then has $0 forever with no other income.
+	## what margin_banked clears the quota BY - so a deck with zero products left
+	## can never bank another dollar, and the shop then has $0 forever with no
+	## other income.
 	## The run keeps playing but is already dead. Same shape as the softlock
 	## test above, guarded on composition rather than size.
 	var r := _run(1000000)

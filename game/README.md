@@ -471,10 +471,21 @@ discipline `shift_controller.gd` learned the hard way in G1.5, when it stopped
 building its own `Shift` and started being handed one - the run layer is what
 now hands it one, seeded and quota'd for the shift you're on.
 
-**The economy in one sentence:** what you bank in a shift becomes next shift's
-shop budget, and nothing else pays you - `RunState.finish_shift()` sets
-`money` to exactly `margin_banked`, so missing quota costs you the shop, never
-the run itself, and the shop cannot invent money you did not earn.
+**The economy in one sentence:** the quota is the house's cut and comes out
+first, so only what a shift banks OVER its quota reaches the shop - and nothing
+else pays you. `RunState.finish_shift()` sets `money` to
+`maxi(0, margin_banked - quota)`, which makes the quota a threshold with teeth
+on both sides: miss it and you get nothing, scrape past it and you get almost
+nothing. Neither ends the run, and the shop can never invent money you did not
+earn.
+
+That is a sharper rule than it looks, because `quota_growth` climbs 15% a shift
+on the stated premise that the deck is getting stronger in the shop to keep
+pace. Under an overage budget that premise only holds while you are beating
+quota by real money - a run that keeps scraping by gets a rising quota against
+a deck that never improved. Whether that pressure is the good kind is a
+playtest question, and `quota`, `quota_growth` and every price are single
+values in `shift_config.tres` and the card `.tres` files if it isn't.
 
 **The archetype ladder is the run's difficulty curve.** Every
 `CustomerArchetype` declares `min_shift`, and `Shift` only deals customers
@@ -494,8 +505,8 @@ if you are seated - the exact softlock `wait()` exists to fix, reachable
 through the shop if nothing stopped it. `min_products`, new here, floors the
 deck's COMPOSITION instead: `margin_banked` only ever moves through a placed
 product's `Offer`, so a deck with no products left can never bank another
-dollar, and since `money` is set FROM `margin_banked`, that shop then has $0
-forever with no other income. The run keeps playing, but it is already dead -
+dollar, and since `money` is whatever `margin_banked` clears the quota by, that
+shop then has $0 forever with no other income. The run keeps playing, but it is already dead -
 which is worse than a softlock, because nothing on screen says so. Both guards
 are the same shape in `Shop.remove()`: refuse and spend nothing, with a message
 that says which floor you hit.
