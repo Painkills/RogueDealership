@@ -57,11 +57,12 @@ func _process(_delta: float) -> bool:
 	# Pin down exactly which instance the purchase created, by uid - not by
 	# assuming Deck.add() appends, and not by matching CardDef alone, which an
 	# old copy already in the deck would satisfy just as well.
-	var new_uid = null
+	var new_uids: Array = []
 	for c in run.deck.cards:
 		if not uids_before.has(c.uid):
-			new_uid = c.uid
-	_check("the purchase created exactly one new instance", new_uid != null)
+			new_uids.append(c.uid)
+	_check("the purchase created exactly one new instance", new_uids.size() == 1)
+	var new_uid = new_uids[0] if new_uids.size() == 1 else null
 	_check("its uid is distinct from any pre-existing copy of the same card",
 		new_uid != null and not same_def_uids_before.has(new_uid))
 
