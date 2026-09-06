@@ -101,7 +101,8 @@ func test_re_running_setup_updates_a_live_margin() -> void:
 	c.setup(inst)
 	h.eq("upgraded margin is what the card now shows",
 		(_front(c).get_node(^"MarginLabel") as Label).text, "$2,000")
-	h.check("and it genuinely changed", before != "$1,900")
+	var after: String = (_front(c).get_node(^"MarginLabel") as Label).text
+	h.check("and it genuinely changed", before != after)
 	c.free()
 
 func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
