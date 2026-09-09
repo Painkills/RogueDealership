@@ -15,9 +15,11 @@ func _init(p_run: RunState) -> void:
 
 func _roll_offers() -> void:
 	## Drawn from the RUN's seeded rng, never the global one: two runs from the
-	## same seed must put the same cards on the shelf.
+	## same seed must put the same cards on the shelf. Starter cards are
+	## excluded - every run already opens with one, so the shop is where a run
+	## diverges, not where it doubles up on its own starting deck.
 	var pool: Array[CardDef] = []
-	for c in run.card_pool.cards:
+	for c in run.card_pool.shoppable_cards():
 		pool.append(c)
 	offers.clear()
 	var wanted: int = mini(run.cfg.shop_offers, pool.size())

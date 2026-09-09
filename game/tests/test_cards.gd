@@ -48,6 +48,17 @@ func test_upgrading_one_copy_leaves_the_others_alone() -> void:
 	h.eq("the untouched copy did not", b.margin(), 1600)
 	h.check("and they are distinct instances", a.uid != b.uid)
 
+func test_shoppable_cards_is_exactly_the_pool_minus_starters() -> void:
+	var pool := _pool()
+	var shoppable := pool.shoppable_cards()
+	for c in shoppable:
+		h.check("%s in shoppable_cards is not a starter" % c.id, not c.starter)
+	var non_starter_count := 0
+	for c in pool.cards:
+		if not c.starter:
+			non_starter_count += 1
+	h.eq("every non-starter card is in it", shoppable.size(), non_starter_count)
+
 func test_the_card_pool_states_its_design_rule() -> void:
 	h.check("card pool states its design rule",
 		_pool().design_rule.strip_edges() != "")

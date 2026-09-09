@@ -30,6 +30,20 @@ func test_the_shop_offers_cards_and_they_come_from_the_pool() -> void:
 		h.check("%s is offered only once" % c.id, not seen.has(c.id))
 		seen[c.id] = true
 
+func test_the_shop_never_offers_a_starter_card() -> void:
+	## Every run already opens with the starter deck - offering it too would
+	## let a run stack duplicates of a card everyone already starts with,
+	## instead of the shop being where a run diverges from every other run's.
+	var r := _run(1000000)
+	var seen_ids := {}
+	for _visit in range(30):
+		var shop := Shop.new(r)
+		for c in shop.offers:
+			h.check("%s on the shelf is not a starter card" % c.id, not c.starter)
+			seen_ids[c.id] = true
+	h.check("this swept at least one real offer across all those visits",
+		not seen_ids.is_empty())
+
 func test_two_shops_from_one_seed_offer_the_same_cards() -> void:
 	var a := Shop.new(_run())
 	var b := Shop.new(_run())

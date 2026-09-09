@@ -16,3 +16,14 @@ func starter_cards() -> Array[CardDef]:
 		if c.starter:
 			out.append(c)
 	return out
+
+func shoppable_cards() -> Array[CardDef]:
+	## The shelf's own pool. Starter cards are already in every run's opening
+	## deck - offering them for sale too would let a run stack duplicates of a
+	## card everyone starts with, instead of the shop being where a run
+	## diverges from every other run's deck.
+	var out: Array[CardDef] = []
+	for c in cards:
+		if not c.starter:
+			out.append(c)
+	return out
