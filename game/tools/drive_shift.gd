@@ -73,6 +73,8 @@ func _physics_process(_delta: float) -> bool:
 	_check_you_can_actually_click_the_customers()
 	_check_the_hover_target_survives_its_own_flip()
 	_check_hovering_a_customer_turns_their_card_over()
+	_check_tapping_a_seat_peeks_before_it_approaches()
+	_check_pressing_a_hand_card_lifts_it_like_hovering_would()
 	_check_table("on arrival")
 
 	_press(KEY_A)
@@ -460,6 +462,68 @@ func _check_hovering_a_customer_turns_their_card_over() -> void:
 	_check("with the detail behind again (%.2f < %.2f)"
 		% [detail.global_position.z, card.global_position.z],
 		detail.global_position.z < card.global_position.z)
+
+## Touch has no hover, so a click alone cannot mean "go to them" the way it
+## does for a mouse - hovering already flipped the card before the click ever
+## lands, but a bare tap has flipped nothing. One rule serves both without
+## asking which device this is: the first press on a seat only peeks it; a
+## SECOND press on that already-peeked seat is what approaches.
+func _check_tapping_a_seat_peeks_before_it_approaches() -> void:
+	const CHAIR := 1
+	var down := InputEventMouseButton.new()
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+
+	_check("nobody peeked at rest", _controller._peeked == -1)
+	_check("and the card is face-front, from the hover test above",
+		not _controller._customer_flips[CHAIR].showing_back())
+
+	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, CHAIR)
+	_check("a first tap only peeks - it has not approached",
+		_controller._shift.at == null)
+	_check("and shows their back, the same as hovering would",
+		_controller._customer_flips[CHAIR].showing_back())
+
+	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, CHAIR)
+	_check("a SECOND tap on the already-peeked seat approaches",
+		_controller._shift.at == CHAIR)
+	_check("and clears the peek - it is a real seat now, not a lingering one",
+		_controller._peeked == -1)
+
+	# Leave the floor exactly as the rest of this file's sequence expects it -
+	# nobody standing anywhere, ready for _press(KEY_A) right after this.
+	_controller._apply(_controller._shift.leave())
+	_check("back on the floor for what follows", _controller._shift.at == null)
+
+## card_selected fires on the raw PRESS, before DragController's own threshold
+## check decides whether this becomes a real drag - which is exactly the moment
+## touch needs covered. A mouse never notices: hovering already lifted the card
+## by the time it gets pressed, and re-tweening to the same target is a no-op.
+func _check_pressing_a_hand_card_lifts_it_like_hovering_would() -> void:
+	var hand: CardCollection3D = _controller._hand_zone
+	if hand.cards.is_empty():
+		_check("there is a hand card to press", false)
+		return
+	var card: Card3D = hand.cards[hand.cards.size() - 1]
+	var mesh := card.get_node(^"CardMesh") as Node3D
+
+	card.remove_hovered()
+	if card.hover_tween != null and card.hover_tween.is_valid():
+		card.hover_tween.custom_step(2.0)
+	_check("at rest the mesh sits at home (%s)" % mesh.position,
+		mesh.position.is_equal_approx(Vector3.ZERO))
+
+	hand.card_selected.emit(card)
+	if card.hover_tween != null and card.hover_tween.is_valid():
+		card.hover_tween.custom_step(2.0)
+	_check("a bare press lifts it, same offset hovering would use (%s)" % mesh.position,
+		mesh.position.is_equal_approx(_controller.HAND_HOVER_LIFT))
+
+	hand.card_deselected.emit(card)
+	if card.hover_tween != null and card.hover_tween.is_valid():
+		card.hover_tween.custom_step(2.0)
+	_check("releasing it without a drag settles it back down (%s)" % mesh.position,
+		mesh.position.is_equal_approx(Vector3.ZERO))
 
 ## The reported bug, in its own words: "when zoomed out its TOO far and is
 ## illegible". The card face is authored at 500x700, so anything under about

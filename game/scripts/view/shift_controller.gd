@@ -82,6 +82,7 @@ var _dragging: CardFace3D = null
 var _framing_tween: Tween
 var _framed_at = null
 var _hovered: int = -1
+var _peeked: int = -1                ## touch's stand-in for hover: tap once to peek
 var _events_seen: int = 0
 var _actions_seen: int = 0
 
@@ -111,6 +112,16 @@ func _ready() -> void:
 	_drag.card_moved.connect(_on_drag_card_moved)
 	_drag.drag_started.connect(_on_drag_started)
 	_drag.drag_stopped.connect(_on_drag_stopped)
+
+	# card_selected fires on PRESS, before the addon's own drag-threshold check -
+	# hovering already lifts a card for a mouse, but touch has no hover state at
+	# all, so without this a tap-and-hold shows nothing until you have dragged
+	# far enough to count as a drag. This is hand-only: draw/discard are face
+	# down, and a card already on someone's table isn't re-dragged from there.
+	# Harmless for a mouse - hovering already lifted it, and set_hovered() on an
+	# already-lifted card just re-tweens to the same place.
+	_hand_zone.card_selected.connect(_on_hand_card_pressed)
+	_hand_zone.card_deselected.connect(_on_hand_card_released)
 
 	# These belong to the PLAYER, so they are wired once and outlive any
 	# particular customer.
@@ -220,6 +231,7 @@ func setup(shift: Shift, standing_before: int) -> void:
 	_report_overlay.set_button_text("FINISH THE RUN"
 		if _shift.shift_number >= _shift.cfg.shifts_in_run else "Continue")
 	_hovered = -1
+	_peeked = -1
 	_framed_at = -999                     # force the framing to re-apply
 
 	# The ONLY place card nodes are freed. _reconcile() never frees: a freed node
@@ -315,6 +327,12 @@ func _let_time_pass_on_an_empty_floor() -> void:
 ## The seat pad's click. Ignored when you are already standing there, because the
 ## model would only answer "you are already standing with X" and clicking the
 ## person you are talking to should not put a refusal in the log.
+##
+## On a mouse, hovering already peeked the seat before the click ever arrives -
+## so _hovered is already true and this approaches on the first click, exactly
+## as it always has. Touch has no hover at all, so the first tap only peeks
+## (_peeked), and a SECOND tap on the same, already-peeked seat approaches. One
+## rule serves both inputs without asking which device this is.
 func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector3,
 		_shape: int, chair: int) -> void:
 	if not (event is InputEventMouseButton):
@@ -324,7 +342,27 @@ func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector
 		return
 	if _shift == null or _shift.at == chair:
 		return
-	_on_chair_pressed(chair)
+	if chair == _hovered or chair == _peeked:
+		_peeked = -1
+		_on_chair_pressed(chair)
+	else:
+		_peeked = chair
+		_render_hover_flip()
+
+## Touch's stand-in for the hand's hover-lift: DragController's own
+## _drag_card_start() already un-lifts and takes over positioning once a real
+## drag begins, and "it follows you" from there is already exactly what
+## dragging does - this only has to cover the moment BEFORE that, where a bare
+## press should show what hovering already would.
+func _on_hand_card_pressed(card: Card3D) -> void:
+	card.set_hovered()
+
+## Fires on every release, whether it ended a real drag (already un-lifted by
+## DragController the moment it crossed the drag threshold) or was a tap that
+## never moved. Safe either way - remove_hovered() on an already-resting card
+## is a harmless repeat tween to the position it is already at.
+func _on_hand_card_released(card: Card3D) -> void:
+	card.remove_hovered()
 
 func _on_customer_hover(chair: int) -> void:
 	_hovered = chair
@@ -346,9 +384,16 @@ func _on_customer_unhover(chair: int) -> void:
 func _render_hover_flip() -> void:
 	var floor_view: bool = _shift != null and _shift.at == null \
 		and not _report_overlay.visible
+	# A stale peek left pointing at a chair that emptied out from under it must
+	# not silently haunt whoever sits down there next - cleared here rather than
+	# wherever a chair empties, so every path that could vacate one (walking off,
+	# closing, a walk-up timer) is covered by the one place that already runs
+	# on every render.
+	if _peeked >= 0 and (_shift == null or _shift.chairs[_peeked] == null):
+		_peeked = -1
 	for i in range(_customer_flips.size()):
 		_customer_flips[i].show_back(
-			floor_view and i == _hovered and _shift.chairs[i] != null)
+			floor_view and (i == _hovered or i == _peeked) and _shift.chairs[i] != null)
 
 # --- framing ---------------------------------------------------------------
 
@@ -511,6 +556,7 @@ func _show_report() -> void:
 	_action_bar.visible = false
 	_mode_btn.visible = false
 	_hovered = -1
+	_peeked = -1
 	_render_hover_flip()
 	# The camera stays where it is - the overlay covers it - but the table itself
 	# must not be left mid-negotiation underneath, with two thirds of the floor

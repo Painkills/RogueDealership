@@ -633,3 +633,55 @@ just another shift wrapping up.
 own G2 note flagged this as the point where m2 itself should be frozen as
 reference rather than kept editable alongside Godot - that decision has not
 been made yet.
+
+## Touch - the first pass, ahead of any real mobile build
+
+Two things in this game only ever worked because a mouse can hover, and a
+touchscreen cannot: everything else - approach, place, offer, drag-and-drop -
+is already click/tap-shaped and needed nothing.
+
+**The floor peek.** Hovering a seat used to be the only way to see a
+customer's back (their line, their rules) before committing to them, and the
+SAME `HoverPad` already approached on click - so a plain "tap flips it" cannot
+coexist with a plain "tap approaches" on the identical spot. The rule that
+serves both inputs without asking which one this is: **a press on an
+already-peeked-or-hovered seat approaches; a press on a fresh one only
+peeks.** For a mouse this changes nothing observable - hovering already peeks
+it before the click ever lands, so one click still approaches, exactly as
+before. For touch, which has no hover at all, the first tap peeks and a second
+tap on the same seat commits. `_peeked` is the new, explicit state this needs;
+it self-clears if the seat it points at empties out before a second tap
+arrives, so a stranger who later sits in that same chair can never inherit a
+stale peek.
+
+**The hand-card lift.** Hovering a hand card nudges it up so its bottom -
+otherwise clipped by the card to its right - is legible; this is the addon's
+own `hover_pos_move`, driven purely by `mouse_entered`/`mouse_exited`. Touch
+has nothing to drive that with, but the addon already emits a signal for the
+exact moment that matters: `card_selected`, fired on the raw press, *before*
+`DragController`'s own drag-threshold check has decided whether this becomes a
+real drag at all. Hooking that (and its `card_deselected` counterpart, on
+release) reproduces the same lift a press-and-hold or a press-and-drag would
+want, and does nothing extra for a mouse - hovering has already lifted the
+card by the time it is pressed, and re-tweening to a target it is already at
+is a no-op.
+
+**Deliberately not relied on: Godot's touch-emulates-mouse layer.** It can
+make a touch approximate hover, but `mouse_exited` normally needs a
+*subsequent motion event* to fire, and lifting a finger generates none - a
+card could stay peeked or lifted after release until the next touch landed
+somewhere else. Both fixes above are built entirely on unambiguous press/
+release signals instead (`input_event`'s button state for the floor,
+`card_selected`/`card_deselected` for the hand), so neither depends on that
+emulation working any particular way.
+
+**Still unverified: whether Godot's touch-to-mouse emulation fires its OWN
+`mouse_entered` on a bare touch-down**, ahead of the press handling above. If
+it does, `_hovered` could already read true by the time `_on_pad_input` sees
+the first tap, letting a single tap on a mobile build approach immediately and
+skip the peek - the exact case this feature exists to prevent. Nothing in this
+codebase can settle that from static reading; it needs a real touch build
+(Web export or an Android build) to observe. If it turns out to be true, the
+fix is narrow: gate the `HoverPad`'s `mouse_entered`/`mouse_exited` connections
+out entirely on a touch platform, so peeking is purely tap-driven there with
+no hover fallback at all.
