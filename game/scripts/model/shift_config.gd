@@ -16,6 +16,12 @@ class_name ShiftConfig extends Resource
 @export var quota_growth: float = 0.15
 
 @export var hand_size: int = 5
+## A hand with no product in it is nearly a dead turn: needs_offer defaults to
+## true, so 6 of the 8 starter support cards refuse to play with an empty table
+## and dig is the only move left. This floors that away. 1 fires on the ~2.8% of
+## hands that hold no product at all; 2 would fire on ~24% and hand you a second
+## probe, which is a balance change rather than a guard. 0 disables the bias.
+@export var hand_min_products: int = 1
 @export var approach_ticks: int = 1
 @export var place_ticks: int = 1
 @export var dig_ticks: int = 1

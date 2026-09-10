@@ -523,6 +523,34 @@ which is worse than a softlock, because nothing on screen says so. Both guards
 are the same shape in `Shop.remove()`: refuse and spend nothing, with a message
 that says which floor you hit.
 
+**`hand_min_products` floors the HAND, for the same reason on a smaller scale.**
+A 5-card hand from the 14-card starter deck holds no product at all 2.8% of the
+time (`C(8,5)/C(14,5)`), and that hand is close to paralysis rather than merely
+weak: `needs_offer` defaults to true and only `readroom` and `smalltalk` set it
+false, so six of the eight starter support cards refuse to play with an empty
+table. You get Read the Room, Small Talk, and then `dig` at a tick a card. G1.5
+softened this by raising `hand_size` from 4 to 5, which took it from 7% to 2.8%;
+this takes it to nothing.
+
+`_draw_up` deals off the top of the pile as it always did, *unless* taking the
+top card would strand the hand under the floor - which it only checks once the
+slots left to fill are down to the product deficit itself. So a hand that draws
+products on its own never sees the bias and the shuffle stays honest right up to
+the last card. A floor of 1 fires on ~1 hand in 36. A floor of **2** would fire
+on ~1 in 4 and hand you a second probe on a fifth of all hands, which is a
+balance change rather than a guard - probes are how you read a customer, so that
+number is not a knob to turn casually.
+
+The subtlety is `_recycle_discard()`. Placed products drain into the discard as
+a shift runs, so by mid-shift the draw pile goes product-free while still
+holding plenty of support - and waiting for the pile to empty on its own would
+make the floor lapse exactly when a dead hand hurts most. So when the floor
+needs a product, the pile has none, and the discard *does*, the discard comes
+back early. The promise that buys is worth stating: **if a product is anywhere in
+circulation, you can play a product.** It only fails when all of them are
+sitting in offers on the table, which `_next_draw_index`'s `-1` branch handles
+by dealing the top card - there is nothing to conjure.
+
 ### Layout
 
 ```

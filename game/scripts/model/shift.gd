@@ -232,11 +232,76 @@ func _draw_up() -> void:
 		if draw.is_empty():
 			if discard.is_empty():
 				return
-			draw = discard.duplicate()
-			discard.clear()
-			_shuffle(draw)
-			reshuffles += 1
-		hand.append(draw.pop_back())
+			_recycle_discard()
+		# The floor needs a product for this slot and the pile has none left to
+		# give. Pull the discard back in NOW rather than deal a support card and
+		# lapse: placed products drain into the discard as the shift runs, so by
+		# mid-shift the pile goes product-free while still holding plenty of
+		# support - which is exactly when a dead hand hurts most. Waiting for the
+		# pile to empty on its own would make the floor lapse at the worst time.
+		if _needs_a_product() and _top_product_index() < 0 and _discard_has_product():
+			_recycle_discard()
+		hand.append(draw.pop_at(_next_draw_index()))
+
+
+func _recycle_discard() -> void:
+	## Merged rather than assigned: the early recycle above runs while the pile
+	## still holds support cards, and replacing it outright would delete them
+	## from the deck.
+	draw.append_array(discard)
+	discard.clear()
+	_shuffle(draw)
+	reshuffles += 1
+
+
+func _needs_a_product() -> bool:
+	## True once the slots left to fill are down to the product deficit itself -
+	## so a hand that draws products on its own never triggers the bias, and the
+	## shuffle stays honest right up to the last card.
+	return cfg.hand_min_products - _products_in_hand() \
+		>= cfg.hand_size - hand.size()
+
+
+func _next_draw_index() -> int:
+	## The top of the pile, unless taking it would strand the hand under
+	## hand_min_products - in which case the draw reaches PAST support cards for
+	## the nearest product instead.
+	var top: int = draw.size() - 1
+	if not _needs_a_product():
+		return top
+	var found: int = _top_product_index()
+	# -1 here means no product exists anywhere in circulation - every one of them
+	# is sitting in an offer on the table - so there is nothing to conjure and the
+	# top card is the honest answer. Spelled out because pop_at(-1) would pop the
+	# top card anyway and hide the miss.
+	return found if found >= 0 else top
+
+
+func _products_in_hand() -> int:
+	var n := 0
+	for c in hand:
+		if c.is_product():
+			n += 1
+	return n
+
+
+func _discard_has_product() -> bool:
+	## Gates the early recycle on it being able to HELP. Without this, a deck whose
+	## every product is sitting in an offer would reshuffle on every single draw
+	## and find nothing each time.
+	for c in discard:
+		if c.is_product():
+			return true
+	return false
+
+
+func _top_product_index() -> int:
+	## Scanned from the top down, so the bias takes the product NEAREST the top
+	## and disturbs the shuffle as little as it can.
+	for i in range(draw.size() - 1, -1, -1):
+		if draw[i].is_product():
+			return i
+	return -1
 
 
 func discard_random_from_hand(n: int) -> void:
