@@ -20,6 +20,7 @@ var shift_number: int = 1            ## 1-based; the shift about to be played
 var money: int = 0                   ## the shop budget: every over-quota bonus, stacked
 var last_bonus: int = 0              ## what the shift just played added to it
 var banked_total: int = 0
+var standing: int                    ## the run's HP - no inline default, _init sets it from cfg
 var reports: Array[Dictionary] = []
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
@@ -30,9 +31,10 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	archetypes = p_arch
 	rng.seed = p_seed
 	deck = Deck.build_starting(card_pool)
+	standing = cfg.standing_start
 
 func is_over() -> bool:
-	return shift_number > cfg.shifts_in_run
+	return shift_number > cfg.shifts_in_run or standing <= 0
 
 func quota_for(n: int) -> int:
 	## Compounded rather than stepped, so the curve is one number to retune.
@@ -55,12 +57,15 @@ func finish_shift(report: Dictionary) -> void:
 	## nothing at all; pooling them turns a run of near-misses into one real
 	## purchase instead of three wasted ones.
 	##
-	## Missing quota still adds nothing - and still never ends the run.
+	## Missing quota still adds nothing to the bonus pot - but it is no longer
+	## free. The same delta costs STANDING, the run's HP: enough total wipeouts
+	## and standing hits 0 before shift_number ever would.
 	reports.append(report)
 	var banked := int(report["margin_banked"])
 	banked_total += banked
 	last_bonus = bonus_from(report)
 	money += last_bonus
+	standing = clampi(standing + int(report["standing_delta"]), 0, cfg.standing_start)
 	shift_number += 1
 
 static func bonus_from(report: Dictionary) -> int:

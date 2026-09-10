@@ -349,6 +349,7 @@ func _build_hud(root: Node) -> void:
 	var placeholders := {
 		"TickLabel": "tick 0/24",
 		"BankedLabel": "banked $0 / $3,600",
+		"StandingLabel": "standing 100/100",
 		"AtRiskLabel": "nothing unsigned",
 	}
 	for label_name in placeholders:

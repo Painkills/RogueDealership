@@ -88,6 +88,15 @@ func _phase_0_open_and_finish_shift() -> void:
 	# 0 == max(0, 0 - 3600) and proves nothing about the subtraction.
 	_check("which after a shift that banked nothing is nothing",
 		not bool(r0["made_quota"]) and _run.money == 0 and _run.last_bonus == 0)
+	# The total wipeout costs standing too - but at half a fresh run's meter, not
+	# all of it, so the run must have SURVIVED to reach shift 2 at all. This is
+	# also where a stale _run reference (the exact bug class this project has
+	# already caught once - a controller quietly rolling a fresh RunState out
+	# from under a held reference) would surface: if this landed on 0 instead of
+	# start - 50, either the formula drifted or is_over() ended the run early and
+	# everything past this point is checking a dead object.
+	_check("the wipeout cost standing (%d) but did not end the run" % _run.standing,
+		_run.standing == _run.cfg.standing_start - 50 and not _run.is_over())
 	# The panel you were just looking at had to show that number before
 	# finish_shift() ran at all, so the two must agree.
 	var panel = _root._shift_view._report_overlay
@@ -96,13 +105,30 @@ func _phase_0_open_and_finish_shift() -> void:
 	# Missing quota is the only branch this driver's own play can reach, and the
 	# line that ANNOUNCES a bonus is the whole point of the feature. Drive it
 	# directly rather than leave the copy that matters unrendered by any test.
+	#
+	# panel.setup() is called directly here, bypassing _show_report()'s own
+	# enrichment - so this synthetic dict has to carry standing_before/after/start
+	# itself, computed the same way _show_report() would, or setup() crashes on a
+	# missing key. Before-standing is cfg.standing_start: this is shift 1, so
+	# nothing has touched the meter yet.
 	var over: Dictionary = r0.duplicate()
 	over["margin_banked"] = int(r0["quota"]) + 900
 	over["made_quota"] = true
+	over["standing_delta"] = roundi(
+		900.0 / float(r0["quota"]) * _run.cfg.standing_heal_scale)
+	_set_standing_keys(over, _run.cfg.standing_start)
 	panel.setup(over)
 	_check("and announces the bonus when there is one (%s)" % panel._bonus.text,
 		panel._bonus.text.contains("$900") and panel._bonus.text.contains("bonus"))
-	panel.setup(r0)
+	var r0_shown: Dictionary = r0.duplicate()
+	_set_standing_keys(r0_shown, _run.cfg.standing_start)
+	panel.setup(r0_shown)
+
+func _set_standing_keys(r: Dictionary, standing_before: int) -> void:
+	r["standing_before"] = standing_before
+	r["standing_after"] = clampi(
+		standing_before + int(r["standing_delta"]), 0, _run.cfg.standing_start)
+	r["standing_start"] = _run.cfg.standing_start
 
 ## The audited bug: the Column VBox wanted more height than the 48px margins
 ## leave inside a 1080-tall viewport, so DoneButton rendered 63px below the

@@ -123,27 +123,27 @@ albedo_color = Color(0.3647059, 0.65882355, 0.9490196, 0.16)
 [sub_resource type="QuadMesh" id="QuadMesh_qp1cb"]
 size = Vector2(2.5, 3.5)
 
-[node name="ShiftRoot" type="Node3D" unique_id=925152515]
+[node name="ShiftRoot" type="Node3D" unique_id=2037390822]
 script = ExtResource("1_y0hlp")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=1574711358]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1193997257]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.27, 4, 8.2)
 current = true
 fov = 60.0
 
-[node name="Hand" type="Node3D" parent="Camera3D" unique_id=1085413455 instance=ExtResource("2_v32a1")]
+[node name="Hand" type="Node3D" parent="Camera3D" unique_id=1530851379 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -12.6, -8.6)
 script = ExtResource("3_e05yq")
 card_layout_strategy = SubResource("Resource_gogk5")
 drag_strategy = SubResource("Resource_rf0hl")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Hand" unique_id=1622499680]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Hand" unique_id=2021651306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_36dmj")
 mesh = SubResource("QuadMesh_jd3xi")
 
-[node name="ZoneLabel" type="Label3D" parent="Camera3D/Hand" unique_id=1290883340]
+[node name="ZoneLabel" type="Label3D" parent="Camera3D/Hand" unique_id=1570276531]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3, 0.02)
 double_sided = false
 modulate = Color(0.9098039, 0.75686276, 0.3529412, 1)
@@ -152,19 +152,19 @@ text = "YOUR HAND"
 font_size = 64
 outline_size = 10
 
-[node name="Discard" type="Node3D" parent="Camera3D" unique_id=1088026446 instance=ExtResource("2_v32a1")]
+[node name="Discard" type="Node3D" parent="Camera3D" unique_id=162704675 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, -12.6, -8.6)
 script = ExtResource("3_e05yq")
 card_layout_strategy = SubResource("Resource_b21lq")
 drag_strategy = SubResource("Resource_f1jej")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Discard" unique_id=173928618]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Discard" unique_id=1067880554]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_wmubo")
 mesh = SubResource("QuadMesh_oeuem")
 
-[node name="ZoneLabel" type="Label3D" parent="Camera3D/Discard" unique_id=39165815]
+[node name="ZoneLabel" type="Label3D" parent="Camera3D/Discard" unique_id=804260598]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3, 0.02)
 double_sided = false
 modulate = Color(0.78431374, 0.43529412, 0.8784314, 1)
@@ -174,19 +174,19 @@ drag here to dig"
 font_size = 64
 outline_size = 10
 
-[node name="Draw" type="Node3D" parent="Camera3D" unique_id=580713624 instance=ExtResource("2_v32a1")]
+[node name="Draw" type="Node3D" parent="Camera3D" unique_id=616211539 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.27, -12.6, -8.6)
 script = ExtResource("3_e05yq")
 card_layout_strategy = SubResource("Resource_40fsy")
 drag_strategy = SubResource("Resource_6h2fn")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Draw" unique_id=871336960]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Draw" unique_id=644099593]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_4wc7j")
 mesh = SubResource("QuadMesh_gkmxb")
 
-[node name="ZoneLabel" type="Label3D" parent="Camera3D/Draw" unique_id=107737925]
+[node name="ZoneLabel" type="Label3D" parent="Camera3D/Draw" unique_id=987792237]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3, 0.02)
 double_sided = false
 modulate = Color(0.33333334, 0.33333334, 0.46666667, 1)
@@ -195,66 +195,66 @@ text = "DRAW"
 font_size = 64
 outline_size = 10
 
-[node name="CameraFloor" type="Marker3D" parent="." unique_id=1661745837]
+[node name="CameraFloor" type="Marker3D" parent="." unique_id=1639112277]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.27, 4, 8.2)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1514971168]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=701831052]
 transform = Transform3D(0.92718387, 0.23063084, -0.29519403, 0, 0.7880108, 0.6156615, 0.37460658, -0.5708314, 0.7306309, 0, 12, 18)
 light_energy = 1.2
 shadow_enabled = true
 shadow_opacity = 0.55
 shadow_blur = 3.0
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=872353506]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2040623857]
 environment = SubResource("Environment_bgyb6")
 
-[node name="Felt" type="MeshInstance3D" parent="." unique_id=317208092]
+[node name="Felt" type="MeshInstance3D" parent="." unique_id=1690971871]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
 material_override = SubResource("StandardMaterial3D_h0jj3")
 mesh = SubResource("QuadMesh_2xhf5")
 
-[node name="Table" type="Node3D" parent="." unique_id=404047926]
+[node name="Table" type="Node3D" parent="." unique_id=984476488]
 
-[node name="Seat0" type="Node3D" parent="Table" unique_id=1722806047]
+[node name="Seat0" type="Node3D" parent="Table" unique_id=2103960567]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.1, 0, 0)
 
-[node name="CustomerFlip0" type="Node3D" parent="Table/Seat0" unique_id=1871987641]
+[node name="CustomerFlip0" type="Node3D" parent="Table/Seat0" unique_id=2126679825]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("7_0ibvx")
 
-[node name="Customer0" type="Node3D" parent="Table/Seat0/CustomerFlip0" unique_id=497651362 instance=ExtResource("8_2rsky")]
+[node name="Customer0" type="Node3D" parent="Table/Seat0/CustomerFlip0" unique_id=1862714734 instance=ExtResource("8_2rsky")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 script = ExtResource("9_vd5qx")
 
-[node name="CustomerDetail0" type="Node3D" parent="Table/Seat0/CustomerFlip0" unique_id=321219498 instance=ExtResource("10_bex05")]
+[node name="CustomerDetail0" type="Node3D" parent="Table/Seat0/CustomerFlip0" unique_id=1195379010 instance=ExtResource("10_bex05")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
 script = ExtResource("11_4415h")
 
-[node name="HoverPad0" type="StaticBody3D" parent="Table/Seat0" unique_id=576720361]
+[node name="HoverPad0" type="StaticBody3D" parent="Table/Seat0" unique_id=1836059146]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Seat0/HoverPad0" unique_id=1768944995]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Seat0/HoverPad0" unique_id=1253144462]
 shape = SubResource("BoxShape3D_lu07t")
 
-[node name="Chair0" type="Node3D" parent="Table/Seat0" unique_id=116647015 instance=ExtResource("2_v32a1")]
+[node name="Chair0" type="Node3D" parent="Table/Seat0" unique_id=1350734982 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 script = ExtResource("3_e05yq")
 card_layout_strategy = SubResource("Resource_p4w1v")
 drag_strategy = SubResource("Resource_melxm")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Seat0/Chair0" unique_id=15350339]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Seat0/Chair0" unique_id=653403443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_1p140")
 mesh = SubResource("QuadMesh_vu1k4")
 
-[node name="ZoneLabel" type="Label3D" parent="Table/Seat0/Chair0" unique_id=181864630]
+[node name="ZoneLabel" type="Label3D" parent="Table/Seat0/Chair0" unique_id=711951645]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3, 0.02)
 double_sided = false
 modulate = Color(0.3647059, 0.65882355, 0.9490196, 1)
@@ -264,49 +264,49 @@ drag a product here"
 font_size = 64
 outline_size = 10
 
-[node name="OfferDetail0" type="Node3D" parent="Table/Seat0" unique_id=1970483151 instance=ExtResource("10_bex05")]
+[node name="OfferDetail0" type="Node3D" parent="Table/Seat0" unique_id=777167772 instance=ExtResource("10_bex05")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
 script = ExtResource("11_4415h")
 
-[node name="Seat1" type="Node3D" parent="Table" unique_id=1915128917]
+[node name="Seat1" type="Node3D" parent="Table" unique_id=1753599110]
 unique_name_in_owner = true
 
-[node name="CustomerFlip1" type="Node3D" parent="Table/Seat1" unique_id=1849111651]
+[node name="CustomerFlip1" type="Node3D" parent="Table/Seat1" unique_id=395698760]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("7_0ibvx")
 
-[node name="Customer1" type="Node3D" parent="Table/Seat1/CustomerFlip1" unique_id=1293103838 instance=ExtResource("8_2rsky")]
+[node name="Customer1" type="Node3D" parent="Table/Seat1/CustomerFlip1" unique_id=1637544653 instance=ExtResource("8_2rsky")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 script = ExtResource("9_vd5qx")
 
-[node name="CustomerDetail1" type="Node3D" parent="Table/Seat1/CustomerFlip1" unique_id=1747883971 instance=ExtResource("10_bex05")]
+[node name="CustomerDetail1" type="Node3D" parent="Table/Seat1/CustomerFlip1" unique_id=1866519975 instance=ExtResource("10_bex05")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
 script = ExtResource("11_4415h")
 
-[node name="HoverPad1" type="StaticBody3D" parent="Table/Seat1" unique_id=306970650]
+[node name="HoverPad1" type="StaticBody3D" parent="Table/Seat1" unique_id=913452757]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Seat1/HoverPad1" unique_id=650936120]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Seat1/HoverPad1" unique_id=2143258008]
 shape = SubResource("BoxShape3D_3d7pu")
 
-[node name="Chair1" type="Node3D" parent="Table/Seat1" unique_id=579146100 instance=ExtResource("2_v32a1")]
+[node name="Chair1" type="Node3D" parent="Table/Seat1" unique_id=165914564 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 script = ExtResource("3_e05yq")
 card_layout_strategy = SubResource("Resource_p6lgp")
 drag_strategy = SubResource("Resource_lfq30")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Seat1/Chair1" unique_id=1054397316]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Seat1/Chair1" unique_id=484884636]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_8nvbc")
 mesh = SubResource("QuadMesh_hetbi")
 
-[node name="ZoneLabel" type="Label3D" parent="Table/Seat1/Chair1" unique_id=2120796757]
+[node name="ZoneLabel" type="Label3D" parent="Table/Seat1/Chair1" unique_id=1446383878]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3, 0.02)
 double_sided = false
 modulate = Color(0.3647059, 0.65882355, 0.9490196, 1)
@@ -316,50 +316,50 @@ drag a product here"
 font_size = 64
 outline_size = 10
 
-[node name="OfferDetail1" type="Node3D" parent="Table/Seat1" unique_id=1906809036 instance=ExtResource("10_bex05")]
+[node name="OfferDetail1" type="Node3D" parent="Table/Seat1" unique_id=1897797857 instance=ExtResource("10_bex05")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
 script = ExtResource("11_4415h")
 
-[node name="Seat2" type="Node3D" parent="Table" unique_id=73334979]
+[node name="Seat2" type="Node3D" parent="Table" unique_id=1270669404]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.1, 0, 0)
 
-[node name="CustomerFlip2" type="Node3D" parent="Table/Seat2" unique_id=414503070]
+[node name="CustomerFlip2" type="Node3D" parent="Table/Seat2" unique_id=312869277]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("7_0ibvx")
 
-[node name="Customer2" type="Node3D" parent="Table/Seat2/CustomerFlip2" unique_id=1022453314 instance=ExtResource("8_2rsky")]
+[node name="Customer2" type="Node3D" parent="Table/Seat2/CustomerFlip2" unique_id=459399023 instance=ExtResource("8_2rsky")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 script = ExtResource("9_vd5qx")
 
-[node name="CustomerDetail2" type="Node3D" parent="Table/Seat2/CustomerFlip2" unique_id=1096324868 instance=ExtResource("10_bex05")]
+[node name="CustomerDetail2" type="Node3D" parent="Table/Seat2/CustomerFlip2" unique_id=2042364370 instance=ExtResource("10_bex05")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
 script = ExtResource("11_4415h")
 
-[node name="HoverPad2" type="StaticBody3D" parent="Table/Seat2" unique_id=1577274616]
+[node name="HoverPad2" type="StaticBody3D" parent="Table/Seat2" unique_id=1309065842]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Seat2/HoverPad2" unique_id=436259974]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Seat2/HoverPad2" unique_id=2141770073]
 shape = SubResource("BoxShape3D_8o8kk")
 
-[node name="Chair2" type="Node3D" parent="Table/Seat2" unique_id=1461247520 instance=ExtResource("2_v32a1")]
+[node name="Chair2" type="Node3D" parent="Table/Seat2" unique_id=45049444 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 script = ExtResource("3_e05yq")
 card_layout_strategy = SubResource("Resource_xioc8")
 drag_strategy = SubResource("Resource_n2mdw")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Seat2/Chair2" unique_id=1556304810]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Seat2/Chair2" unique_id=1063904121]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_aada7")
 mesh = SubResource("QuadMesh_qp1cb")
 
-[node name="ZoneLabel" type="Label3D" parent="Table/Seat2/Chair2" unique_id=1738554272]
+[node name="ZoneLabel" type="Label3D" parent="Table/Seat2/Chair2" unique_id=802987051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3, 0.02)
 double_sided = false
 modulate = Color(0.3647059, 0.65882355, 0.9490196, 1)
@@ -369,30 +369,30 @@ drag a product here"
 font_size = 64
 outline_size = 10
 
-[node name="OfferDetail2" type="Node3D" parent="Table/Seat2" unique_id=791688064 instance=ExtResource("10_bex05")]
+[node name="OfferDetail2" type="Node3D" parent="Table/Seat2" unique_id=1523857702 instance=ExtResource("10_bex05")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
 script = ExtResource("11_4415h")
 
-[node name="SeatCam0" type="Marker3D" parent="." unique_id=1953787661]
+[node name="SeatCam0" type="Marker3D" parent="." unique_id=1910986108]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.51, 1.4, 9.17)
 
-[node name="SeatCam1" type="Marker3D" parent="." unique_id=297124515]
+[node name="SeatCam1" type="Marker3D" parent="." unique_id=570709027]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.59, 1.4, 9.17)
 
-[node name="SeatCam2" type="Marker3D" parent="." unique_id=1273228420]
+[node name="SeatCam2" type="Marker3D" parent="." unique_id=142603823]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.69, 1.4, 9.17)
 
-[node name="DragController" type="Node3D" parent="." unique_id=1825503596]
+[node name="DragController" type="Node3D" parent="." unique_id=1425150266]
 script = ExtResource("12_nnevp")
 card_drag_plane = Plane(0, 0, 1, 2)
 
-[node name="HUD" type="CanvasLayer" parent="." unique_id=1873602102]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1201666946]
 
-[node name="HudRoot" type="Control" parent="HUD" unique_id=1543661065]
+[node name="HudRoot" type="Control" parent="HUD" unique_id=1828969402]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -400,7 +400,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="TopBar" type="HBoxContainer" parent="HUD/HudRoot" unique_id=464219239]
+[node name="TopBar" type="HBoxContainer" parent="HUD/HudRoot" unique_id=2073444720]
 layout_mode = 0
 offset_left = 28.0
 offset_top = 18.0
@@ -409,25 +409,31 @@ offset_bottom = 18.0
 mouse_filter = 2
 theme_override_constants/separation = 48
 
-[node name="TickLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=2126116888]
+[node name="TickLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=371799712]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "tick 0/24"
 
-[node name="BankedLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1803147585]
+[node name="BankedLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=329308669]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "banked $0 / $3,600"
 
-[node name="AtRiskLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=842076404]
+[node name="StandingLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1907468017]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "standing 100/100"
+
+[node name="AtRiskLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1568608251]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "nothing unsigned"
 
-[node name="ModeButton" type="Button" parent="HUD/HudRoot" unique_id=1116578669]
+[node name="ModeButton" type="Button" parent="HUD/HudRoot" unique_id=442806478]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 84)
 layout_mode = 0
@@ -438,7 +444,7 @@ offset_bottom = 166.0
 theme_override_font_sizes/font_size = 28
 text = "RETURN TO FLOOR"
 
-[node name="ActionBar" type="VBoxContainer" parent="HUD/HudRoot" unique_id=1629038914]
+[node name="ActionBar" type="VBoxContainer" parent="HUD/HudRoot" unique_id=1055501023]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 1140.0
@@ -448,28 +454,28 @@ offset_bottom = 632.0
 mouse_filter = 2
 theme_override_constants/separation = 18
 
-[node name="OfferButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=1986555849]
+[node name="OfferButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=393688618]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "OFFER"
 
-[node name="DropButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=1923470734]
+[node name="DropButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=1896339442]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "DROP"
 
-[node name="CloseButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=2099356512]
+[node name="CloseButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=2094070825]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 100)
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "CLOSE"
 
-[node name="SidePanel" type="PanelContainer" parent="HUD/HudRoot" unique_id=814060451]
+[node name="SidePanel" type="PanelContainer" parent="HUD/HudRoot" unique_id=554456074]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 1480.0
@@ -478,16 +484,16 @@ offset_right = 1896.0
 offset_bottom = 730.0
 mouse_filter = 2
 
-[node name="Column" type="VBoxContainer" parent="HUD/HudRoot/SidePanel" unique_id=992458175]
+[node name="Column" type="VBoxContainer" parent="HUD/HudRoot/SidePanel" unique_id=1606051852]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="LogTitle" type="Label" parent="HUD/HudRoot/SidePanel/Column" unique_id=998700340]
+[node name="LogTitle" type="Label" parent="HUD/HudRoot/SidePanel/Column" unique_id=374467105]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "SHIFT LOG"
 
-[node name="EventLog" type="RichTextLabel" parent="HUD/HudRoot/SidePanel/Column" unique_id=1418463673]
+[node name="EventLog" type="RichTextLabel" parent="HUD/HudRoot/SidePanel/Column" unique_id=750214658]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
@@ -496,7 +502,7 @@ bbcode_enabled = true
 text = "Walk-ups, offers and objections show up here."
 scroll_following = true
 
-[node name="ReportOverlay" type="PanelContainer" parent="HUD/HudRoot" unique_id=529154639 instance=ExtResource("13_g8ksb")]
+[node name="ReportOverlay" type="PanelContainer" parent="HUD/HudRoot" unique_id=498564633 instance=ExtResource("13_g8ksb")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0

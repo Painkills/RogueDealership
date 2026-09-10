@@ -57,6 +57,7 @@ signal shift_finished(report: Dictionary)
 @onready var _hud: Control = %HudRoot
 @onready var _tick_label: Label = %TickLabel
 @onready var _banked_label: Label = %BankedLabel
+@onready var _standing_label: Label = %StandingLabel
 @onready var _at_risk_label: Label = %AtRiskLabel
 @onready var _event_log: RichTextLabel = %EventLog
 @onready var _mode_btn: Button = %ModeButton
@@ -67,6 +68,7 @@ signal shift_finished(report: Dictionary)
 @onready var _report_overlay = %ReportOverlay
 
 var _shift: Shift
+var _standing_before: int = 0        ## the run's standing when THIS shift started
 var _seats: Array = []               ## one Node3D per seat, hidden when elsewhere
 var _chair_zones: Array = []
 var _seat_cams: Array = []
@@ -196,11 +198,17 @@ func _try_dig(index: int) -> void:
 
 # --- lifecycle -------------------------------------------------------------
 
-func setup(shift: Shift) -> void:
+func setup(shift: Shift, standing_before: int) -> void:
 	## Play THIS shift. The run builds it - this file used to construct its own,
 	## which made it the run orchestrator as well as the table, the framing, the
 	## HUD and reconciliation.
+	##
+	## standing_before travels in separately from the Shift because it belongs to
+	## the RUN, not the shift - Shift has never held a RunState reference, and this
+	## is the one number the report needs from outside the shift it is reporting on.
 	_shift = shift
+	_standing_before = standing_before
+	_standing_label.text = "standing %d/%d" % [_standing_before, shift.cfg.standing_start]
 	_events_seen = 0
 	_actions_seen = 0
 	_event_log.clear()
@@ -487,7 +495,19 @@ func _drain_log() -> void:
 
 func _show_report() -> void:
 	_report_overlay.visible = true
-	_report_overlay.setup(_shift.report())
+	var r := _shift.report()
+	# Enriched here, not in Shift.report(): standing_BEFORE belongs to the run,
+	# which Shift has never held a reference to. This is the first point that
+	# knows both halves - and the only point that can tell a fatal shift from an
+	# ordinary one, so the button override happens right here too.
+	var standing_after: int = clampi(
+		_standing_before + int(r["standing_delta"]), 0, _shift.cfg.standing_start)
+	r["standing_before"] = _standing_before
+	r["standing_after"] = standing_after
+	r["standing_start"] = _shift.cfg.standing_start
+	if standing_after <= 0:
+		_report_overlay.set_button_text("YOU'RE FIRED")
+	_report_overlay.setup(r)
 	_action_bar.visible = false
 	_mode_btn.visible = false
 	_hovered = -1

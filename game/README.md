@@ -480,8 +480,9 @@ The stacking is what makes the rule survivable rather than punishing. Nothing
 on any shelf costs less than the cheapest product, so a budget that reset each
 shift would round most overages to nothing at all - beat quota by $300 three
 times and you would have bought exactly nothing. Pooling them turns three thin
-shifts into one real purchase. Missing quota adds nothing, but it never drains
-what earlier shifts already earned, and it still never ends the run.
+shifts into one real purchase. Missing quota adds nothing to the bonus pot, but
+it never drains what earlier shifts already earned - it does, however, cost you
+somewhere else now. See standing, below.
 
 The number is announced twice, because it is two different questions. The
 report panel says what THIS shift earned ("You exceeded your quota. You got a
@@ -498,6 +499,39 @@ scraping by faces a rising quota against a deck it could not afford to improve,
 and only the pooling saves it. Whether that pressure is the good kind is a
 playtest question - `quota`, `quota_growth` and every price are single values
 in `shift_config.tres` and the card `.tres` files if it isn't.
+
+**Standing is the run's HP - the stake this economy was missing.** Before this,
+`is_over()` was exactly `shift_number > shifts_in_run`: nothing else in a shift's
+outcome ever touched it, so a run could be played badly from the first customer
+to the last and still walk into shift 5 on schedule - a scorecard, not a game
+that can be lost. Now `is_over()` is `shift_number > shifts_in_run OR standing
+<= 0`, and standing moves on the exact same `margin_banked - quota` delta that
+already funds the bonus - one number, two consequences, nothing new for the
+player to learn. `Shift._standing_delta()` is asymmetric on purpose: missing
+quota costs `standing_damage_scale` (50) points at a full miss, beating it heals
+only `standing_heal_scale` (15) at an equal fractional margin - "a bad shift
+makes death more likely," not "one bad shift and you're out." A run starts at
+`standing_start` (100), so one total wipeout is survivable and two in a row is
+not.
+
+The formula lives on `Shift`, not `RunState`, unlike the bonus: `bonus_from()`
+is a static that needs nothing but the report dict, but standing's formula
+needs `cfg.standing_damage_scale`/`standing_heal_scale`, which `Shift` already
+holds and `RunState` does not see until the report comes back. So
+`Shift.report()` embeds `"standing_delta"` as one more fact about what
+happened, the same way it already embeds `made_quota`, and both
+`RunState.finish_shift()` and the report panel just read that key rather than
+computing it twice.
+
+A fatal shift has to look different from a finished one, or the feature is
+invisible - both used to roll a fresh run through the exact same silent
+`_start_run()`, with only a console `print()` telling them apart. The report
+panel now overrides its own title to `YOU'RE FIRED` and its continue button to
+match whenever the shift it is reporting on would take standing to 0, computed
+in `shift_controller._show_report()` - the one place that has both the run's
+pre-shift standing and this shift's own delta, since `Shift` has never held a
+`RunState` reference and `standing_before` travels in through `setup()`
+alongside it instead.
 
 **The archetype ladder is the run's difficulty curve.** Every
 `CustomerArchetype` declares `min_shift`, and `Shift` only deals customers

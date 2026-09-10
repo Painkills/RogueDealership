@@ -14,6 +14,7 @@ func _init() -> void:
 	var title := Label.new()
 	title.name = "TitleLabel"
 	title.text = "CLOSING TIME"
+	title.unique_name_in_owner = true   # overridden to "YOU'RE FIRED" on a fatal shift
 	vbox.add_child(title)
 	title.owner = root
 
@@ -28,6 +29,12 @@ func _init() -> void:
 	bonus.unique_name_in_owner = true
 	vbox.add_child(bonus)
 	bonus.owner = root
+
+	var standing := Label.new()
+	standing.name = "StandingLabel"
+	standing.unique_name_in_owner = true
+	vbox.add_child(standing)
+	standing.owner = root
 
 	var customers := Label.new()
 	customers.name = "CustomersLabel"

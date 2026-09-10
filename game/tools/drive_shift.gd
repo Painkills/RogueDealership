@@ -52,10 +52,12 @@ func _physics_process(_delta: float) -> bool:
 	# @onready fields (_event_log, _report_overlay, the card zones setup()
 	# touches) are not populated until _ready() fires, and _ready() does not
 	# fire synchronously on a node added to the tree from within _init().
+	# A standalone driven shift has no real RunState behind it, so a full meter
+	# is the honest stand-in.
 	_controller.setup(Shift.new(load("res://data/shift_config.tres"),
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), randi()))
+		load("res://data/archetype_pool.tres"), randi()), 100)
 
 	_check("the viewport is picking, or no card can ever be clicked",
 		get_root().physics_object_picking)
@@ -100,6 +102,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_drop_plays_a_card()
 	_check_refused_drop_comes_home()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
+	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 
 	print("")
 	# Guards against the failure mode that has now bitten three times: a runtime
@@ -1101,6 +1104,30 @@ func _check_an_empty_floor_does_not_end_the_shift() -> void:
 		_controller._event_log.get_parsed_text().length() > logged)
 	_check("and the log says how long it took",
 		_controller._event_log.get_parsed_text().contains("later"))
+
+## No unit test can reach this - it needs an instantiated Control tree to read
+## the button and title text a real player would see. A fatal shift and a
+## completed one must not look identical on screen, which is the whole point
+## of a standing meter: this is the only place that ever renders "fired" at all.
+func _check_a_fatal_shift_shows_its_own_report() -> void:
+	var fatal_shift := Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), randi())
+	# A deliberately low standing_before, chosen so this fresh shift's own total
+	# wipeout (margin_banked stays 0, the default damage scale costs half a full
+	# meter) crosses zero. tick == tick_budget is the cheap, direct way to reach
+	# is_over() without playing the shift out - Shift.is_over() is exactly that
+	# comparison and nothing else.
+	const LOW_STANDING := 10
+	_controller.setup(fatal_shift, LOW_STANDING)
+	fatal_shift.tick = fatal_shift.tick_budget
+	_controller._apply(Result.new(true, "", "test"))
+	_check("a fatal shift's report overlay comes up", _controller._report_overlay.visible)
+	_check("and its button says so (%s)" % _controller._report_overlay._restart.text,
+		_controller._report_overlay._restart.text.to_upper().contains("FIRED"))
+	_check("and its title says so (%s)" % _controller._report_overlay._title.text,
+		_controller._report_overlay._title.text.to_upper().contains("FIRED"))
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

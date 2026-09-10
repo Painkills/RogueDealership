@@ -35,13 +35,25 @@ func test_closing_time_forfeits_whatever_is_unsigned() -> void:
 func test_the_report_carries_every_key_the_ui_will_need() -> void:
 	var s := _shift([&"easygoing"])
 	var r: Dictionary = s.report()
-	for key in ["margin_banked", "quota", "made_quota", "ticks", "tick_budget",
-			"customers_seen", "customers_signed", "customers_walked", "sales",
-			"offers", "failed_offers", "close_rate", "margin_conceded",
+	for key in ["margin_banked", "quota", "made_quota", "standing_delta", "ticks",
+			"tick_budget", "customers_seen", "customers_signed", "customers_walked",
+			"sales", "offers", "failed_offers", "close_rate", "margin_conceded",
 			"margin_padded", "margin_bonus", "margin_lost_to_walks",
 			"margin_lost_to_closing", "actions_fired", "digs", "approaches",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach"]:
 		h.check("report has %s" % key, r.has(key))
+
+func test_standing_delta_matches_the_scale_configured() -> void:
+	## Exact 50% steps with both scales set to 100, so the formula's shape is
+	## checked without any rounding-tie ambiguity.
+	var s := _shift([&"easygoing"], {"quota": 1000, "standing_damage_scale": 100.0,
+		"standing_heal_scale": 100.0})
+	s.margin_banked = 500
+	h.eq("a 50% shortfall costs half the scale", int(s.report()["standing_delta"]), -50)
+	s.margin_banked = 1000
+	h.eq("landing exactly on quota is a wash", int(s.report()["standing_delta"]), 0)
+	s.margin_banked = 1500
+	h.eq("a 50% overage heals half the scale", int(s.report()["standing_delta"]), 50)
 
 func test_a_banked_shift_reports_it_made_quota() -> void:
 	var s := _shift([&"easygoing"], {"quota": 1000})

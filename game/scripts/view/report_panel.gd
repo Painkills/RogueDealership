@@ -2,8 +2,10 @@ extends PanelContainer
 
 signal continue_pressed
 
+@onready var _title: Label = %TitleLabel
 @onready var _banked: Label = %BankedLabel
 @onready var _bonus: Label = %BonusLabel
+@onready var _standing: Label = %StandingLabel
 @onready var _customers: Label = %CustomersLabel
 @onready var _offers: Label = %OffersLabel
 @onready var _margin: Label = %MarginMovedLabel
@@ -17,6 +19,15 @@ func set_button_text(t: String) -> void:
 	_restart.text = t
 
 func setup(r: Dictionary) -> void:
+	var fired: bool = int(r["standing_after"]) <= 0
+	# Without this, a fired run and a completed run look IDENTICAL on screen -
+	# same title, same button underneath silently rolling a fresh run. The whole
+	# point of a standing meter is that failure has to be visibly different from
+	# success.
+	_title.text = "YOU'RE FIRED" if fired else "CLOSING TIME"
+	_title.add_theme_color_override("font_color",
+		Palette.color(&"alert" if fired else &"text"))
+
 	var verdict := "QUOTA MADE" if r["made_quota"] else "MISSED QUOTA"
 	_banked.text = "%s of %s - %s" % [Format.money(r["margin_banked"]),
 		Format.money(r["quota"]), verdict]
@@ -38,6 +49,12 @@ func setup(r: Dictionary) -> void:
 		_bonus.text = "No bonus - you finished %s short of quota." \
 			% Format.money(int(r["quota"]) - int(r["margin_banked"]))
 		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+
+	var delta: int = int(r["standing_delta"])
+	_standing.text = "Standing: %d/%d (%s%d)" % [r["standing_after"], r["standing_start"],
+		"+" if delta >= 0 else "", delta]
+	_standing.add_theme_color_override("font_color",
+		Palette.color(&"alert" if fired else (&"patience_ok" if delta > 0 else &"text_dim")))
 
 	_customers.text = "%d seen, %d signed, %d walked" \
 		% [r["customers_seen"], r["customers_signed"], r["customers_walked"]]

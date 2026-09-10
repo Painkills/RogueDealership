@@ -25,7 +25,7 @@ func _start_run() -> void:
 
 func _open_the_floor() -> void:
 	_show_shop(false)
-	_shift_view.setup(_run.start_shift())
+	_shift_view.setup(_run.start_shift(), _run.standing)
 
 func _on_shift_finished(report: Dictionary) -> void:
 	_run.finish_shift(report)

@@ -14,6 +14,17 @@ class_name ShiftConfig extends Resource
 ## The quota climbs this fraction each shift, so the run keeps pace with a deck
 ## that is getting stronger in the shop between them.
 @export var quota_growth: float = 0.15
+## The run's HP. Standing hits 0 and the run ends, same as running out of
+## shifts - a scorecard with no stakes was the whole problem this fixes.
+@export var standing_start: int = 100
+## The same over/under-quota delta that funds the shop bonus also funds
+## standing, so failure has a second consequence without a second resource to
+## learn. Asymmetric on purpose: beating quota by 100% (doubling it) heals only
+## 15, while missing it completely costs 50 - "more likely to die," not "one
+## bad shift and you're out." Both are single numbers, guessed and untested
+## like quota_growth above; retune here, not in code.
+@export var standing_damage_scale: float = 50.0
+@export var standing_heal_scale: float = 15.0
 
 @export var hand_size: int = 5
 ## A hand with no product in it is nearly a dead turn: needs_offer defaults to

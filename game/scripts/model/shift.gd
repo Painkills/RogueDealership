@@ -701,6 +701,7 @@ func report() -> Dictionary:
 		"margin_banked": margin_banked,
 		"quota": quota,
 		"made_quota": margin_banked >= quota,
+		"standing_delta": _standing_delta(),
 		"ticks": tick,
 		"tick_budget": tick_budget,
 		"customers_seen": served,
@@ -723,3 +724,17 @@ func report() -> Dictionary:
 		"ticks_digs": int(stat["ticks_digs"]),
 		"ticks_approach": int(stat["ticks_approach"]),
 	}
+
+
+func _standing_delta() -> int:
+	## The run's HP moves on the same over/under-quota number that already funds
+	## the shop bonus - no second resource, nothing new for the player to read.
+	## Asymmetric: missing costs far more than beating heals, so this reads as
+	## "a bad shift makes death more likely," not "one bad shift and you're out."
+	if quota <= 0:
+		return 0
+	if margin_banked >= quota:
+		var over := float(margin_banked - quota) / float(quota)
+		return roundi(over * cfg.standing_heal_scale)
+	var short := float(quota - margin_banked) / float(quota)
+	return -roundi(short * cfg.standing_damage_scale)

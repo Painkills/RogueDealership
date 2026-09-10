@@ -34,6 +34,7 @@ func _render() -> void:
 		_money.text += "   (+%s from that shift)" % Format.money(run.last_bonus)
 	elif not run.reports.is_empty():
 		_money.text += "   (no bonus that shift)"
+	_money.text += "   |   Standing: %d/%d" % [run.standing, run.cfg.standing_start]
 	_shift_label.text = "shift %d of %d next - quota %s" % [run.shift_number,
 		run.cfg.shifts_in_run, Format.money(run.quota_for(run.shift_number))]
 
