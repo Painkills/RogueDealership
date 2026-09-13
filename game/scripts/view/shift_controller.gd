@@ -83,6 +83,9 @@ var _framing_tween: Tween
 var _framed_at = null
 var _hovered: int = -1
 var _peeked: int = -1                ## touch's stand-in for hover: tap once to peek
+## Injectable so a test can force the touch branch without a real touchscreen -
+## production never overrides this, always the real platform check.
+var _touch_check: Callable = DisplayServer.is_touchscreen_available
 var _events_seen: int = 0
 var _actions_seen: int = 0
 
@@ -330,9 +333,13 @@ func _let_time_pass_on_an_empty_floor() -> void:
 ##
 ## On a mouse, hovering already peeked the seat before the click ever arrives -
 ## so _hovered is already true and this approaches on the first click, exactly
-## as it always has. Touch has no hover at all, so the first tap only peeks
-## (_peeked), and a SECOND tap on the same, already-peeked seat approaches. One
-## rule serves both inputs without asking which device this is.
+## as it always has. Touch has no REAL hover, but confirmed on an actual
+## device: Godot's touch-emulates-mouse layer fires mouse_entered on the touch
+## itself, essentially simultaneously with the press - so _hovered reads true
+## on the very first tap too, and trusting it there skipped the peek entirely.
+## No per-event way to tell a real hover from an emulated one apart, so this
+## asks the platform once instead: a touchscreen NEVER consults _hovered here,
+## only its own explicit _peeked, which only a PRIOR discrete tap can set.
 func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector3,
 		_shape: int, chair: int) -> void:
 	if not (event is InputEventMouseButton):
@@ -342,7 +349,9 @@ func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector
 		return
 	if _shift == null or _shift.at == chair:
 		return
-	if chair == _hovered or chair == _peeked:
+	var already_seen := chair == _peeked if _touch_check.call() \
+		else (chair == _hovered or chair == _peeked)
+	if already_seen:
 		_peeked = -1
 		_on_chair_pressed(chair)
 	else:
@@ -571,6 +580,20 @@ func _show_report() -> void:
 func _on_drag_started(card) -> void:
 	_dragging = card as CardFace3D
 	_refuse_drops_on_hidden_seats()
+	# DragController's own _drag_card_start() just called remove_hovered() on
+	# this card - its ROOT now tracks the pointer directly ("set card position
+	# to under mouse"), so the addon assumes no local offset is needed once a
+	# drag begins. True for a mouse cursor; false for a fingertip, which then
+	# sits on the card's own center for the ENTIRE drag, not just the instant
+	# before it - confirmed on a real device. Reapplying the same lift used
+	# for the pre-drag read is a local offset on the mesh relative to whatever
+	# the root is doing, so it composes correctly with the root tracking the
+	# pointer and with the card's own drag rotation - it does not fight either.
+	# Hand only: nothing else is meant to be read while it is being dragged.
+	# _on_hand_card_released already calls remove_hovered() on every release,
+	# drag or not, so this needs no matching cleanup of its own.
+	if _hand_zone.cards.has(_dragging):
+		_dragging.set_hovered()
 
 func _on_drag_stopped(_card) -> void:
 	_dragging = null

@@ -74,7 +74,9 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_hover_target_survives_its_own_flip()
 	_check_hovering_a_customer_turns_their_card_over()
 	_check_tapping_a_seat_peeks_before_it_approaches()
+	_check_a_touchscreen_never_trusts_hover_to_skip_the_peek()
 	_check_pressing_a_hand_card_lifts_it_like_hovering_would()
+	_check_dragging_a_hand_card_keeps_it_lifted_for_reading()
 	_check_table("on arrival")
 
 	_press(KEY_A)
@@ -495,6 +497,37 @@ func _check_tapping_a_seat_peeks_before_it_approaches() -> void:
 	_controller._apply(_controller._shift.leave())
 	_check("back on the floor for what follows", _controller._shift.at == null)
 
+## The regression a real device found: Godot's touch-emulates-mouse layer
+## fires mouse_entered essentially simultaneously with the touch itself, so
+## _hovered reads true on the very first tap too - trusting it there (as the
+## desktop branch correctly does) skipped the peek and approached immediately.
+## Forces the touch branch via _touch_check, since there is no real touchscreen
+## in a headless run, and deliberately leaves _hovered TRUE throughout - if a
+## touch build ever consulted it again, this is what would catch it.
+func _check_a_touchscreen_never_trusts_hover_to_skip_the_peek() -> void:
+	const CHAIR := 2
+	_controller._touch_check = func(): return true
+	_controller._on_customer_hover(CHAIR)   # what touch's own emulation does
+	_check("hover is armed, exactly as a real device showed it would be",
+		_controller._hovered == CHAIR)
+
+	var down := InputEventMouseButton.new()
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, CHAIR)
+	_check("a touchscreen's first tap still only peeks, hover notwithstanding",
+		_controller._shift.at == null)
+
+	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, CHAIR)
+	_check("its second tap on the same seat approaches",
+		_controller._shift.at == CHAIR)
+
+	_controller._touch_check = DisplayServer.is_touchscreen_available
+	_controller._on_customer_unhover(CHAIR)
+	_controller._apply(_controller._shift.leave())
+	_check("back on the floor, touch check restored", _controller._shift.at == null
+		and not _controller._touch_check.call())
+
 ## card_selected fires on the raw PRESS, before DragController's own threshold
 ## check decides whether this becomes a real drag - which is exactly the moment
 ## touch needs covered. A mouse never notices: hovering already lifted the card
@@ -523,6 +556,36 @@ func _check_pressing_a_hand_card_lifts_it_like_hovering_would() -> void:
 	if card.hover_tween != null and card.hover_tween.is_valid():
 		card.hover_tween.custom_step(2.0)
 	_check("releasing it without a drag settles it back down (%s)" % mesh.position,
+		mesh.position.is_equal_approx(Vector3.ZERO))
+
+## The regression a real device found: DragController's own _drag_card_start()
+## calls remove_hovered() the moment a real drag begins, on the assumption a
+## mouse cursor needs no local offset once the card's ROOT tracks it directly.
+## A fingertip does - it sits on the card's own center for the WHOLE drag, not
+## just the instant before it, unless the lift stays applied throughout.
+func _check_dragging_a_hand_card_keeps_it_lifted_for_reading() -> void:
+	var hand: CardCollection3D = _controller._hand_zone
+	if hand.cards.is_empty():
+		_check("there is a hand card to drag", false)
+		return
+	var card: Card3D = hand.cards[hand.cards.size() - 1]
+	var mesh := card.get_node(^"CardMesh") as Node3D
+
+	# Simulates exactly what DragController._drag_card_start() itself does the
+	# instant a real drag begins - remove_hovered(), then the signal this
+	# fix's own reapplication lives on.
+	card.remove_hovered()
+	_controller._on_drag_started(card)
+	if card.hover_tween != null and card.hover_tween.is_valid():
+		card.hover_tween.custom_step(2.0)
+	_check("the lift survives into an active drag, not just the press before it (%s)"
+		% mesh.position, mesh.position.is_equal_approx(_controller.HAND_HOVER_LIFT))
+
+	card.remove_hovered()   # what _on_hand_card_released already does on release
+	_controller._on_drag_stopped(card)
+	if card.hover_tween != null and card.hover_tween.is_valid():
+		card.hover_tween.custom_step(2.0)
+	_check("and it settles back down once the drag ends (%s)" % mesh.position,
 		mesh.position.is_equal_approx(Vector3.ZERO))
 
 ## The reported bug, in its own words: "when zoomed out its TOO far and is
