@@ -582,17 +582,25 @@ func _on_drag_started(card) -> void:
 	_refuse_drops_on_hidden_seats()
 	# DragController's own _drag_card_start() just called remove_hovered() on
 	# this card - its ROOT now tracks the pointer directly ("set card position
-	# to under mouse"), so the addon assumes no local offset is needed once a
-	# drag begins. True for a mouse cursor; false for a fingertip, which then
-	# sits on the card's own center for the ENTIRE drag, not just the instant
-	# before it - confirmed on a real device. Reapplying the same lift used
-	# for the pre-drag read is a local offset on the mesh relative to whatever
-	# the root is doing, so it composes correctly with the root tracking the
-	# pointer and with the card's own drag rotation - it does not fight either.
+	# to under mouse"), on the assumption no local offset is needed once a drag
+	# begins. Correct for a mouse: the cursor never occluded anything, so the
+	# card should shrink back to normal size and track the pointer exactly,
+	# with nothing hiding where it will actually land. Wrong for a fingertip,
+	# which sits on the card's own center for the WHOLE drag unless something
+	# keeps it clear - confirmed on a real device.
+	#
+	# So this reapplies the SAME hover state, but for touch only. Reapplying it
+	# for a mouse too was tried and was wrong the other way: the card grew AND
+	# stayed lifted for the whole drag, visibly detached from the drop-plane
+	# position DragController was actually tracking underneath it - confirmed
+	# on a real desktop. hover_pos_move is a local offset on the mesh relative
+	# to whatever the root is doing, so on touch it composes correctly with the
+	# root tracking the pointer and with the card's own drag rotation; on mouse
+	# it has no business being there at all.
 	# Hand only: nothing else is meant to be read while it is being dragged.
 	# _on_hand_card_released already calls remove_hovered() on every release,
 	# drag or not, so this needs no matching cleanup of its own.
-	if _hand_zone.cards.has(_dragging):
+	if _touch_check.call() and _hand_zone.cards.has(_dragging):
 		_dragging.set_hovered()
 
 func _on_drag_stopped(_card) -> void:

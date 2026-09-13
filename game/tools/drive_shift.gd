@@ -563,6 +563,12 @@ func _check_pressing_a_hand_card_lifts_it_like_hovering_would() -> void:
 ## mouse cursor needs no local offset once the card's ROOT tracks it directly.
 ## A fingertip does - it sits on the card's own center for the WHOLE drag, not
 ## just the instant before it, unless the lift stays applied throughout.
+##
+## Touch only, deliberately. The first cut of this fix reapplied the lift for
+## EVERY device and that was wrong the other way, confirmed on a real desktop:
+## the dragged card grew AND stayed lifted for the whole drag, visibly detached
+## from the drop-plane position DragController was actually tracking underneath
+## it - exactly the mismatch a mouse cursor never had a reason to need fixed.
 func _check_dragging_a_hand_card_keeps_it_lifted_for_reading() -> void:
 	var hand: CardCollection3D = _controller._hand_zone
 	if hand.cards.is_empty():
@@ -574,11 +580,12 @@ func _check_dragging_a_hand_card_keeps_it_lifted_for_reading() -> void:
 	# Simulates exactly what DragController._drag_card_start() itself does the
 	# instant a real drag begins - remove_hovered(), then the signal this
 	# fix's own reapplication lives on.
+	_controller._touch_check = func(): return true
 	card.remove_hovered()
 	_controller._on_drag_started(card)
 	if card.hover_tween != null and card.hover_tween.is_valid():
 		card.hover_tween.custom_step(2.0)
-	_check("the lift survives into an active drag, not just the press before it (%s)"
+	_check("on touch, the lift survives into an active drag, not just the press before it (%s)"
 		% mesh.position, mesh.position.is_equal_approx(_controller.HAND_HOVER_LIFT))
 
 	card.remove_hovered()   # what _on_hand_card_released already does on release
@@ -587,6 +594,18 @@ func _check_dragging_a_hand_card_keeps_it_lifted_for_reading() -> void:
 		card.hover_tween.custom_step(2.0)
 	_check("and it settles back down once the drag ends (%s)" % mesh.position,
 		mesh.position.is_equal_approx(Vector3.ZERO))
+
+	# The desktop side of the same bug: a mouse must NOT get this reapplied -
+	# a card growing AND staying lifted through the whole drag, detached from
+	# where it will actually land, is the regression a real desktop just found.
+	_controller._touch_check = DisplayServer.is_touchscreen_available
+	card.remove_hovered()
+	_controller._on_drag_started(card)
+	if card.hover_tween != null and card.hover_tween.is_valid():
+		card.hover_tween.custom_step(2.0)
+	_check("on a mouse, the addon's own cancel stands - no reapplied lift (%s)"
+		% mesh.position, mesh.position.is_equal_approx(Vector3.ZERO))
+	_controller._on_drag_stopped(card)
 
 ## The reported bug, in its own words: "when zoomed out its TOO far and is
 ## illegible". The card face is authored at 500x700, so anything under about
