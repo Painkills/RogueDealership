@@ -25,6 +25,11 @@ class_name ShiftConfig extends Resource
 ## like quota_growth above; retune here, not in code.
 @export var standing_damage_scale: float = 50.0
 @export var standing_heal_scale: float = 15.0
+## A walkout costs standing on its own, separate from the quota-delta above -
+## letting people leave should threaten the job by itself, not only a thin
+## till. Uniform per walkout regardless of who they were or what they had
+## unsigned - a guess like every other standing number, not measured play.
+@export var standing_cost_per_walkout: int = 8
 
 @export var hand_size: int = 5
 ## A hand with no product in it is nearly a dead turn: needs_offer defaults to

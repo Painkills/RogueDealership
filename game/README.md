@@ -505,14 +505,30 @@ in `shift_config.tres` and the card `.tres` files if it isn't.
 outcome ever touched it, so a run could be played badly from the first customer
 to the last and still walk into shift 5 on schedule - a scorecard, not a game
 that can be lost. Now `is_over()` is `shift_number > shifts_in_run OR standing
-<= 0`, and standing moves on the exact same `margin_banked - quota` delta that
-already funds the bonus - one number, two consequences, nothing new for the
-player to learn. `Shift._standing_delta()` is asymmetric on purpose: missing
-quota costs `standing_damage_scale` (50) points at a full miss, beating it heals
-only `standing_heal_scale` (15) at an equal fractional margin - "a bad shift
-makes death more likely," not "one bad shift and you're out." A run starts at
-`standing_start` (100), so one total wipeout is survivable and two in a row is
-not.
+<= 0`, and standing has two separate ways to lose ground in one shift, added
+together into one delta. The quota side reuses the exact `margin_banked - quota`
+number that already funds the bonus - one number, two consequences, nothing new
+to learn there. `Shift._standing_delta_from_quota()` is asymmetric on purpose:
+missing quota costs `standing_damage_scale` (50) points at a full miss, beating
+it heals only `standing_heal_scale` (15) at an equal fractional margin - "a bad
+shift makes death more likely," not "one bad shift and you're out." A run
+starts at `standing_start` (100), so one total wipeout is survivable and two in
+a row is not.
+
+**Letting customers walk costs standing on its own, independent of the till.**
+`_burn()` drains every SEATED customer's patience on every tick spent,
+regardless of who you are actually helping - so a floor you neglect empties
+itself even while you make quota elsewhere, and until now that had no
+consequence beyond the margin left unsigned on their table.
+`_standing_delta_from_walkouts()` is `-customers_walked * standing_cost_per_walkout`
+(8), flat per walkout, on top of the quota term - a shift that hits quota with
+a bled-dry floor still bleeds standing for it. This is why the field is a
+customer-count multiplied by a flat rate rather than folded into the quota
+formula: the two failures are independent (a rich shift can still lose people,
+a poor one can still hold its floor), and the report says so as two separate
+lines rather than one blended number a player would have to reverse-engineer -
+`standing_lost_to_walkouts` travels in the report dict alongside
+`standing_delta` for exactly that reason.
 
 The formula lives on `Shift`, not `RunState`, unlike the bonus: `bonus_from()`
 is a static that needs nothing but the report dict, but standing's formula
@@ -675,13 +691,29 @@ release signals instead (`input_event`'s button state for the floor,
 `card_selected`/`card_deselected` for the hand), so neither depends on that
 emulation working any particular way.
 
-**Still unverified: whether Godot's touch-to-mouse emulation fires its OWN
-`mouse_entered` on a bare touch-down**, ahead of the press handling above. If
-it does, `_hovered` could already read true by the time `_on_pad_input` sees
-the first tap, letting a single tap on a mobile build approach immediately and
-skip the peek - the exact case this feature exists to prevent. Nothing in this
-codebase can settle that from static reading; it needs a real touch build
-(Web export or an Android build) to observe. If it turns out to be true, the
-fix is narrow: gate the `HoverPad`'s `mouse_entered`/`mouse_exited` connections
-out entirely on a touch platform, so peeking is purely tap-driven there with
-no hover fallback at all.
+**Confirmed on a real device: yes, touch-to-mouse emulation fires
+`mouse_entered` on a bare touch-down.** A phone approached on the very first
+tap, skipping the peek entirely - exactly the failure mode predicted above,
+now observed rather than theorized. The narrow fix predicted above was also
+the fix applied: `_touch_check` (an injectable `Callable`, defaulting to
+`DisplayServer.is_touchscreen_available`, so a test can force the branch
+without real touch hardware) gates the decision - a touchscreen never
+consults `_hovered` here at all, only its own explicit `_peeked`, which only a
+genuinely prior, discrete tap can set. There is no per-event way to tell a
+real hover from an emulated one apart, so this asks the platform once instead
+of trusting the event.
+
+**The hand-card lift needed the same device-gating, discovered from the
+opposite direction.** `DragController._drag_card_start()` calls
+`remove_hovered()` the instant a real drag begins, on the assumption a mouse
+cursor needs no local offset once the card's root starts tracking it directly.
+The first cut of the touch fix reapplied the lift right after, for every
+device - which fixed touch and broke a real desktop: the dragged card grew
+AND stayed lifted for the *whole* drag, visibly detached from the drop-plane
+position `DragController` was actually tracking underneath it, so where the
+card looked like it would land and where it actually would stopped agreeing.
+The reapplication now goes through the SAME `_touch_check` gate as the floor
+peek - touch keeps the lift through the whole drag (a fingertip sits on the
+card's own center otherwise, for the whole gesture, not just the instant
+before it), a mouse gets exactly the addon's original behaviour back, with
+nothing reapplied at all.

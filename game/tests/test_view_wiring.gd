@@ -14,10 +14,10 @@ func test_report_dictionary_has_every_key_the_report_panel_reads() -> void:
 	var s := _shift()
 	var r := s.report()
 	for key in ["margin_banked", "quota", "made_quota", "standing_delta",
-			"customers_seen", "customers_signed", "customers_walked", "offers",
-			"sales", "close_rate", "failed_offers", "margin_conceded",
-			"margin_padded", "margin_bonus", "margin_lost_to_walks",
-			"margin_lost_to_closing"]:
+			"standing_lost_to_walkouts", "customers_seen", "customers_signed",
+			"customers_walked", "offers", "sales", "close_rate", "failed_offers",
+			"margin_conceded", "margin_padded", "margin_bonus",
+			"margin_lost_to_walks", "margin_lost_to_closing"]:
 		h.check("report has %s, which report_panel.gd reads" % key, r.has(key))
 
 func test_format_money_matches_what_customer_panel_will_show() -> void:

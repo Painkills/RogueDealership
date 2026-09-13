@@ -36,6 +36,12 @@ func _init() -> void:
 	vbox.add_child(standing)
 	standing.owner = root
 
+	var walkouts := Label.new()
+	walkouts.name = "WalkoutsLabel"
+	walkouts.unique_name_in_owner = true
+	vbox.add_child(walkouts)
+	walkouts.owner = root
+
 	var customers := Label.new()
 	customers.name = "CustomersLabel"
 	customers.unique_name_in_owner = true

@@ -112,6 +112,24 @@ func test_repeated_total_failure_ends_the_run_before_it_would_naturally_end() ->
 	h.check("a second wipeout ends the run", r.is_over())
 	h.check("strictly before shift 5", r.shift_number <= r.cfg.shifts_in_run)
 
+func test_letting_customers_walk_can_end_a_run_on_its_own() -> void:
+	## The literal ask: "if you let too many people leave on you you will get
+	## fired." A shift that MEETS quota (no quota-side damage at all) still has
+	## to be able to end the run if enough customers walk out of it.
+	var r := _run()
+	var quota := r.quota_for(1)
+	var walkout_heavy := {"margin_banked": quota, "quota": quota, "made_quota": true,
+		"customers_walked": 7, "standing_delta": -7 * r.cfg.standing_cost_per_walkout}
+	r.finish_shift(walkout_heavy)
+	h.check("meeting quota with a bled-dry floor still survives one shift",
+		not r.is_over())
+	h.eq("costing exactly the walkout rate, nothing from quota",
+		r.standing, r.cfg.standing_start - 7 * r.cfg.standing_cost_per_walkout)
+	r.finish_shift(walkout_heavy)
+	h.check("a second walkout-heavy shift ends the run on its own",
+		r.is_over())
+	h.check("strictly before shift 5", r.shift_number <= r.cfg.shifts_in_run)
+
 func test_standing_clamps_at_both_ends() -> void:
 	var r := _run()
 	r.finish_shift({"margin_banked": 0, "quota": 1000, "made_quota": false,

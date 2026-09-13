@@ -2,48 +2,52 @@
 
 [ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="1_66ide"]
 
-[node name="ReportPanel" type="PanelContainer" unique_id=151070805]
+[node name="ReportPanel" type="PanelContainer" unique_id=413080665]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_66ide")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=2121632240]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1519015524]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=1764557865]
+[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id=51294796]
 unique_name_in_owner = true
 layout_mode = 2
 text = "CLOSING TIME"
 
-[node name="BankedLabel" type="Label" parent="VBoxContainer" unique_id=720875025]
+[node name="BankedLabel" type="Label" parent="VBoxContainer" unique_id=819464644]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="BonusLabel" type="Label" parent="VBoxContainer" unique_id=2142069767]
+[node name="BonusLabel" type="Label" parent="VBoxContainer" unique_id=1947700965]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="StandingLabel" type="Label" parent="VBoxContainer" unique_id=675873406]
+[node name="StandingLabel" type="Label" parent="VBoxContainer" unique_id=1501150979]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="CustomersLabel" type="Label" parent="VBoxContainer" unique_id=1841767543]
+[node name="WalkoutsLabel" type="Label" parent="VBoxContainer" unique_id=658570176]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="OffersLabel" type="Label" parent="VBoxContainer" unique_id=1114887653]
+[node name="CustomersLabel" type="Label" parent="VBoxContainer" unique_id=319758624]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="MarginMovedLabel" type="Label" parent="VBoxContainer" unique_id=1820384089]
+[node name="OffersLabel" type="Label" parent="VBoxContainer" unique_id=1714754789]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="LostLabel" type="Label" parent="VBoxContainer" unique_id=2099619982]
+[node name="MarginMovedLabel" type="Label" parent="VBoxContainer" unique_id=243625517]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=874948184]
+[node name="LostLabel" type="Label" parent="VBoxContainer" unique_id=157291433]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=962628881]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Continue"

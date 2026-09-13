@@ -6,6 +6,7 @@ signal continue_pressed
 @onready var _banked: Label = %BankedLabel
 @onready var _bonus: Label = %BonusLabel
 @onready var _standing: Label = %StandingLabel
+@onready var _walkouts: Label = %WalkoutsLabel
 @onready var _customers: Label = %CustomersLabel
 @onready var _offers: Label = %OffersLabel
 @onready var _margin: Label = %MarginMovedLabel
@@ -55,6 +56,19 @@ func setup(r: Dictionary) -> void:
 		"+" if delta >= 0 else "", delta]
 	_standing.add_theme_color_override("font_color",
 		Palette.color(&"alert" if fired else (&"patience_ok" if delta > 0 else &"text_dim")))
+
+	# A SEPARATE line from the combined standing delta above, on purpose - the
+	# whole point of costing standing on its own is to be legible as its own
+	# cause, not disappear into one number a player has to reverse-engineer.
+	var walked: int = int(r["customers_walked"])
+	var walkout_cost: int = int(r["standing_lost_to_walkouts"])
+	if walked > 0:
+		_walkouts.text = "%d customer%s walked out - cost you %d standing." \
+			% [walked, "" if walked == 1 else "s", walkout_cost]
+		_walkouts.add_theme_color_override("font_color", Palette.color(&"alert"))
+	else:
+		_walkouts.text = "Nobody walked out this shift."
+		_walkouts.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
 	_customers.text = "%d seen, %d signed, %d walked" \
 		% [r["customers_seen"], r["customers_signed"], r["customers_walked"]]

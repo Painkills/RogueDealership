@@ -88,15 +88,27 @@ func _phase_0_open_and_finish_shift() -> void:
 	# 0 == max(0, 0 - 3600) and proves nothing about the subtraction.
 	_check("which after a shift that banked nothing is nothing",
 		not bool(r0["made_quota"]) and _run.money == 0 and _run.last_bonus == 0)
-	# The total wipeout costs standing too - but at half a fresh run's meter, not
-	# all of it, so the run must have SURVIVED to reach shift 2 at all. This is
-	# also where a stale _run reference (the exact bug class this project has
-	# already caught once - a controller quietly rolling a fresh RunState out
-	# from under a held reference) would surface: if this landed on 0 instead of
-	# start - 50, either the formula drifted or is_over() ended the run early and
-	# everything past this point is checking a dead object.
-	_check("the wipeout cost standing (%d) but did not end the run" % _run.standing,
-		_run.standing == _run.cfg.standing_start - 50 and not _run.is_over())
+	# The total wipeout costs standing too - but not all of it, so the run must
+	# have SURVIVED to reach shift 2 at all. This is also where a stale _run
+	# reference (the exact bug class this project has already caught once - a
+	# controller quietly rolling a fresh RunState out from under a held
+	# reference) would surface: if this landed on 0, either the formula drifted
+	# or is_over() ended the run early and everything past this point is
+	# checking a dead object.
+	#
+	# The exact number is not hardcoded here: this driver digs the clock away
+	# and helps nobody, so every seated customer's patience runs out well
+	# before the 24-tick bell regardless of exactly how the archetype pool or
+	# patience numbers get retuned later - asserting against report()'s own
+	# standing_delta proves finish_shift() applied EXACTLY what the shift
+	# computed, which is the actual integration point worth checking, rather
+	# than a magic number this specific play pattern happens to produce today.
+	_check("at least one customer walked out along the way (%d)"
+		% int(r0["customers_walked"]), int(r0["customers_walked"]) > 0)
+	var expected_standing: int = clampi(
+		_run.cfg.standing_start + int(r0["standing_delta"]), 0, _run.cfg.standing_start)
+	_check("the wipeout (and walkouts) cost standing (%d) but did not end the run"
+		% _run.standing, _run.standing == expected_standing and not _run.is_over())
 	# The panel you were just looking at had to show that number before
 	# finish_shift() ran at all, so the two must agree.
 	var panel = _root._shift_view._report_overlay
