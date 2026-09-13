@@ -33,6 +33,10 @@ var state: String = "floor"        ## floor | signed | walked
 var sales: int = 0
 var ticks_on_floor: int = 0
 var action_state: Dictionary = {}  ## action id -> when it last fired
+## One log line per entry into the danger zone, not one per tick spent in it -
+## re-arms the moment patience climbs back out, so a genuine second scare still
+## warns.
+var warned_leaving_soon: bool = false
 
 var _interests: InterestPool
 

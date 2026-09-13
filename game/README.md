@@ -515,20 +515,45 @@ shift makes death more likely," not "one bad shift and you're out." A run
 starts at `standing_start` (100), so one total wipeout is survivable and two in
 a row is not.
 
-**Letting customers walk costs standing on its own, independent of the till.**
-`_burn()` drains every SEATED customer's patience on every tick spent,
-regardless of who you are actually helping - so a floor you neglect empties
-itself even while you make quota elsewhere, and until now that had no
-consequence beyond the margin left unsigned on their table.
-`_standing_delta_from_walkouts()` is `-customers_walked * standing_cost_per_walkout`
-(8), flat per walkout, on top of the quota term - a shift that hits quota with
-a bled-dry floor still bleeds standing for it. This is why the field is a
-customer-count multiplied by a flat rate rather than folded into the quota
-formula: the two failures are independent (a rich shift can still lose people,
-a poor one can still hold its floor), and the report says so as two separate
-lines rather than one blended number a player would have to reverse-engineer -
-`standing_lost_to_walkouts` travels in the report dict alongside
-`standing_delta` for exactly that reason.
+**Letting customers walk costs standing on its own, independent of the till -
+and IMMEDIATELY, not at the report screen five minutes later.** `_burn()`
+drains every SEATED customer's patience on every tick spent, regardless of who
+you are actually helping - so a floor you neglect empties itself even while
+you make quota elsewhere, and until now that had no consequence beyond the
+margin left unsigned on their table.
+
+This is the one place `Shift` genuinely owns a live piece of the run's HP
+rather than only reporting on it after the fact. `Shift.standing` is seeded
+from `RunState.standing` at construction (the same "0 means use the config
+default" convention `quota` already uses), and `_walk()` docks it
+`standing_cost_per_walkout` (8) THE MOMENT someone leaves - `maxi(0, ...)`, so
+a walkout is what can make `is_over()` true, never what makes `standing` read
+negative. `Shift.is_over()` grew the matching clause: `tick >= tick_budget or
+standing <= 0`. Nothing else needed to change for "the run ends the instant
+you get fired" to be true - `_apply()` already checks `is_over()` after every
+single command and shows the report the moment it is true, for whatever
+reason, so a walkout that zeroes standing mid-shift shows YOU'RE FIRED on the
+very same command that caused it, with ticks still left on the clock.
+
+The quota term still can't be evaluated until the shift ends - margin_banked
+isn't final until then - so `report()`'s `standing_delta` is
+`(standing - _initial_standing) + _standing_delta_from_quota()`: whatever
+walkouts already docked live, plus the quota term evaluated fresh at the end.
+`RunState.finish_shift()` didn't need to change at all - it was already just
+applying whatever delta the report handed it, and that delta still means the
+same thing it always did. `standing_lost_to_walkouts` travels in the report
+too, tracked as its own running total in `_walk()` rather than re-derived from
+a formula, so a walkout that hits the floor at 0 reports the dollars - sorry,
+standing - it actually cost, not a theoretical amount partly clamped away.
+
+**A customer about to leave says so in the log first.** `leaving_soon()`
+already existed - it is what turns a low patience number red on their card -
+but it drove no text anywhere. `_settle_patience()` now logs one line per
+ENTRY into that danger zone ("is losing patience"), not one per tick spent in
+it: `Customer.warned_leaving_soon` re-arms the moment patience climbs back out
+above the threshold, so a customer saved once and endangered again gets warned
+again, honestly, rather than either spamming the log every tick or falling
+silent for the rest of the shift after the first scare.
 
 The formula lives on `Shift`, not `RunState`, unlike the bonus: `bonus_from()`
 is a static that needs nothing but the report dict, but standing's formula

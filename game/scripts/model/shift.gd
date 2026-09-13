@@ -16,6 +16,14 @@ var tick_budget: int
 var quota: int
 var shift_number: int = 1          ## which shift of the run; gates archetypes
 var margin_banked: int = 0
+## The run's HP, LIVE during this shift - seeded from RunState.standing at
+## construction (0 means "use cfg's own start", the run is never legitimately
+## AT 0 when a new shift begins, since the run would already be over). A
+## walkout docks it immediately, in _walk(), not just at report() time - see
+## is_over() below.
+var standing: int
+var _initial_standing: int
+var _standing_lost_to_walkouts: int = 0
 
 var chairs: Array = []
 var walk_up: Array[int] = []
@@ -40,7 +48,8 @@ var _name_pool: Array = []
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int, p_forced: Array = [],
-		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1) -> void:
+		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1,
+		p_standing: int = 0) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
@@ -52,6 +61,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	tick_budget = cfg.shift_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
 	quota = p_quota if p_quota > 0 else cfg.quota
+	standing = p_standing if p_standing > 0 else cfg.standing_start
+	_initial_standing = standing
 	for key in ["cards_played", "offers", "failed_offers", "offers_dropped",
 			"sales", "places", "digs", "approaches", "actions_fired",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
@@ -85,7 +96,11 @@ func seated() -> Array:
 
 
 func is_over() -> bool:
-	return tick >= tick_budget
+	## Standing hitting 0 mid-shift ends it immediately, the same as running out
+	## of ticks - checked here rather than only at report() time so the very
+	## next _apply() (already checking is_over() after every command) shows the
+	## report the instant the walkout that did it finishes resolving.
+	return tick >= tick_budget or standing <= 0
 
 
 func margin_at_risk() -> int:
@@ -138,6 +153,17 @@ func _settle_patience() -> void:
 	for i in range(chairs.size()):
 		if chairs[i] != null and chairs[i].patience <= 0:
 			_walk(i)
+	# One log line per ENTRY into the danger zone, not one per tick spent in
+	# it - re-armed the instant patience climbs back out, so a genuine second
+	# scare still warns. A customer this pass just walked out of is already
+	# gone from seated(), so they cannot also log a stale warning here.
+	for c in seated():
+		if c.leaving_soon():
+			if not c.warned_leaving_soon:
+				c.warned_leaving_soon = true
+				events.append("[%s] %s is losing patience." % [c.key, c.display_name])
+		else:
+			c.warned_leaving_soon = false
 
 
 func _walk(chair: int) -> void:
@@ -152,6 +178,21 @@ func _walk(chair: int) -> void:
 		c.offer = null
 	events.append("[%s] %s walks out%s." % [c.key, c.display_name,
 		" with $%d unsigned" % lost if lost > 0 else ""])
+	# Immediate, not deferred to report() - the whole point of costing standing
+	# per walkout is that it should sting the moment it happens, not show up as
+	# a surprise on a screen five minutes later. maxi() rather than a bare
+	# subtraction so a walkout can never be the thing that makes standing READ
+	# negative, only the thing that makes is_over() true.
+	# Immediate, not deferred to report() - the whole point of costing standing
+	# per walkout is that it should sting the moment it happens, not show up as
+	# a surprise on a screen five minutes later. maxi() rather than a bare
+	# subtraction so a walkout can never be the thing that makes standing READ
+	# negative, only the thing that makes is_over() true.
+	var before := standing
+	standing = maxi(0, standing - cfg.standing_cost_per_walkout)
+	_standing_lost_to_walkouts += before - standing
+	events.append("Standing -%d (now %d/%d)." \
+		% [before - standing, standing, cfg.standing_start])
 	_vacate(chair)
 
 
@@ -702,7 +743,7 @@ func report() -> Dictionary:
 		"quota": quota,
 		"made_quota": margin_banked >= quota,
 		"standing_delta": _standing_delta(),
-		"standing_lost_to_walkouts": -_standing_delta_from_walkouts(),
+		"standing_lost_to_walkouts": _standing_lost_to_walkouts,
 		"ticks": tick,
 		"tick_budget": tick_budget,
 		"customers_seen": served,
@@ -728,12 +769,14 @@ func report() -> Dictionary:
 
 
 func _standing_delta() -> int:
-	## The run's HP has two separate ways to lose ground this shift, added
-	## together into one number: the quota-delta (also funds the shop bonus -
-	## no second resource for a miss) and a flat cost per customer who ran out
-	## of patience and walked, independent of the till. Letting people leave
-	## threatens the job on its own; a full till does not excuse an empty floor.
-	return _standing_delta_from_quota() + _standing_delta_from_walkouts()
+	## The NET change RunState folds into its own authoritative total, exactly
+	## as before this shift ever ran live walkout damage. Walkouts already
+	## docked `standing` immediately, in _walk() - (standing - _initial_standing)
+	## is however much of that survived the floor at 0, so a shift this method
+	## never lets the eventual RunState.finish_shift() double-charge. The quota
+	## term is added here because margin_banked is not final until report() is
+	## actually called - it cannot be evaluated any earlier than this.
+	return (standing - _initial_standing) + _standing_delta_from_quota()
 
 
 func _standing_delta_from_quota() -> int:
@@ -746,7 +789,3 @@ func _standing_delta_from_quota() -> int:
 		return roundi(over * cfg.standing_heal_scale)
 	var short := float(quota - margin_banked) / float(quota)
 	return -roundi(short * cfg.standing_damage_scale)
-
-
-func _standing_delta_from_walkouts() -> int:
-	return -int(stat["customers_walked"]) * cfg.standing_cost_per_walkout

@@ -217,12 +217,14 @@ func setup(shift: Shift, standing_before: int) -> void:
 	## which made it the run orchestrator as well as the table, the framing, the
 	## HUD and reconciliation.
 	##
-	## standing_before travels in separately from the Shift because it belongs to
-	## the RUN, not the shift - Shift has never held a RunState reference, and this
-	## is the one number the report needs from outside the shift it is reporting on.
+	## standing_before is what the RUN's standing was before this shift seeded
+	## the Shift's own live copy (Shift.standing, which a walkout now docks
+	## immediately - Shift still holds no RunState reference, it is just handed
+	## the one number it needs to start counting from). Kept here too because
+	## _show_report() needs the ORIGINAL value once the shift is over, by which
+	## point Shift.standing has already moved.
 	_shift = shift
 	_standing_before = standing_before
-	_standing_label.text = "standing %d/%d" % [_standing_before, shift.cfg.standing_start]
 	_events_seen = 0
 	_actions_seen = 0
 	_event_log.clear()
@@ -481,6 +483,10 @@ func _render() -> void:
 	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget]
 	_banked_label.text = "banked %s / %s" \
 		% [Format.money(_shift.margin_banked), Format.money(_shift.quota)]
+	# LIVE now, not the setup()-time snapshot it used to be enough to be - a
+	# walkout can move this mid-shift, and the whole point of costing standing
+	# immediately is for the player to be able to see it happen.
+	_standing_label.text = "standing %d/%d" % [_shift.standing, _shift.cfg.standing_start]
 	var risk: int = _shift.margin_at_risk()
 	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
 		if risk > 0 else "nothing unsigned"
