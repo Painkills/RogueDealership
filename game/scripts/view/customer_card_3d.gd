@@ -49,7 +49,9 @@ func _bind() -> void:
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
-	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	# UPDATE_ALWAYS, not UPDATE_ONCE: see card_face_3d.gd - the one-shot bake
+	# raced dynamic card creation on the Web export.
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
 
@@ -143,4 +145,6 @@ static func status_text(c) -> String:
 
 func _redraw() -> void:
 	if _viewport != null:
-		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+		# UPDATE_ALWAYS, not UPDATE_ONCE: see card_face_3d.gd - the one-shot bake
+		# raced dynamic card creation on the Web export.
+		_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS

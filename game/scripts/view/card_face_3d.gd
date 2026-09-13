@@ -7,8 +7,13 @@ class_name CardFace3D extends Card3D
 ## authored large and minified onto the card, rather than being drawn at final
 ## size like Label3D text is.
 ##
-## The viewport only re-renders when something changed - UPDATE_ONCE after every
-## write - so four cards in hand are not four extra viewports rendering forever.
+## UPDATE_ALWAYS: continuous rather than baked-once-per-write. UPDATE_ONCE
+## raced dynamic card creation on the Web export - hand cards, instantiated
+## during reconciliation rather than once at scene load, rendered blank there
+## while statically-created customer cards (identical technique) did not. A
+## handful of small 500x700 viewports rendering every frame is cheap enough
+## that trading the optimization for a mode no platform can race is the right
+## call - this is a card game, not a scene starved for frame budget.
 
 const FRONT_SIZE := Vector2i(500, 700)   ## exactly the mesh's 2.5 x 3.5 aspect
 
@@ -48,7 +53,7 @@ func _bind() -> void:
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
-	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
 
@@ -75,4 +80,4 @@ func setup(inst: CardInstance) -> void:
 
 func _redraw() -> void:
 	if _viewport != null:
-		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+		_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
