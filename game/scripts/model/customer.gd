@@ -94,6 +94,14 @@ func top_interest_id() -> StringName:
 	return &""
 
 
+## The board they were dealt against. The view needs it to lay their priority
+## list out as a grid, and a customer knowing which nine interests exist is not
+## a leak - the RANKS are the hidden information, and those stay behind
+## known_ranks where they always were.
+func interests() -> InterestPool:
+	return _interests
+
+
 func reveal_room(exact: bool = false) -> void:
 	## The base read narrows nine interests to three and hands you the Line -
 	## which, since offering stopped teaching it, is the ONLY way to learn it.

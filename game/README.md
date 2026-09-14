@@ -1036,3 +1036,62 @@ which is what the next section is for.
 Drop zones are keyed on the **slot's** visibility rather than the seat's, since
 every seat is visible now and only the one you are at has a product slot
 showing.
+
+### The customer card had to start answering "who deserves the next tick"
+
+Since the carousel this face is on screen for all three customers at once, two
+of them at 179 px wide. It has to make the triage call on its own, at that
+size, without anybody sitting down - which the old face could not, because the
+two things you most need are the ones it stated as prose that grew.
+
+Five rows now: who they are, how long they will wait, **what they are asking
+for right now**, **what you know about their list**, and what is riding on them.
+
+**The placeholder portrait is gone.** It was 268 of 700 px - 38% of the card -
+holding a grey rectangle and the word `PORTRAIT`, reserved for art that does
+not exist and is not scheduled. The interest grid lives there. Putting it back
+is an edit to `build_customer_front_scene.gd`.
+
+**The demand telegraph goes above their head**: the short shout the Demand
+authors (`MANAGER?`, `BETTER QUOTE`, `THINKING`) and the fuse remaining, in the
+alert role, with a reserved height so a row that comes and goes does not shove
+everything below it up and down the card every few ticks.
+
+### The interest grid
+
+`known_text()` used to say `"Reliability 1st . Status 7th . Power 3rd"` - a line
+that got longer every time you learned something. It is nine cells in a fixed
+box now, and it says the same thing in the same space every time.
+
+**One row per category, in pool order, and the rows never move.** That is the
+load-bearing part: Read the Room's base effect tells you a *category*, and a
+category you can point at is worth a tick in a way that a category you have to
+remember is not. Within a row, cells you know sort to the front by rank - the
+"arrange themselves in priority order" half - and the rest hold pool order
+behind them, so the row never reshuffles for no reason.
+
+Cell states, from nothing to finished: unknown (a slot you have not filled in,
+not empty space) → category known (the whole row lights) → rank known (filled,
+with the numeral) → their number one (ringed in `accent`, which only upgraded
+Read the Room can reveal) → **sold** (solid `margin` and a tick - the only
+finished state, and the only one that reads at any size).
+
+Drawn rather than assembled from nodes, in the same spirit as `appeal_bar.gd`:
+there are no image assets in this project and nine cells is not a reason to
+start a texture pipeline. The row ordering is a **static, pure** function
+hoisted out of `_draw()` for the same reason `marker_x()` was - a rule that
+only exists inside `_draw()` is a rule no headless suite can ever check.
+
+Numerals are drawn only on the **fronted** card. A flanker renders at 0.358 of
+the authored face, which is where a digit stops surviving the downscale while
+the cell itself still reads perfectly well.
+
+### The check that caught its own layout
+
+The face's new content did not fit. The column wanted **673 px of the 648** the
+card has, and a `VBoxContainer` whose children want more room than it has does
+not grow and does not complain - it runs the last section off the bottom, which
+is how the *detail* card nearly shipped with its tell cut in half two
+milestones ago. The driver now measures the whole column against the face and
+failed on the first run; the grid gave back 26 px and the numeral shrank to fit
+the shorter cell.

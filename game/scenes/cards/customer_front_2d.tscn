@@ -1,19 +1,21 @@
 [gd_scene format=3]
 
-[node name="CustomerFront" type="Control" unique_id=1597873713]
+[ext_resource type="Script" path="res://scripts/view/interest_grid.gd" id="1_ew5d6"]
+
+[node name="CustomerFront" type="Control" unique_id=1572897994]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 500.0
 offset_bottom = 700.0
 
-[node name="Background" type="ColorRect" parent="." unique_id=911624652]
+[node name="Background" type="ColorRect" parent="." unique_id=1171277216]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.13333334, 0.13333334, 0.23137255, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=966175763]
+[node name="Margin" type="MarginContainer" parent="." unique_id=5047859]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -22,30 +24,11 @@ theme_override_constants/margin_top = 26
 theme_override_constants/margin_right = 26
 theme_override_constants/margin_bottom = 26
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=218985878]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=518922049]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="PortraitFrame" type="PanelContainer" parent="Margin/Column" unique_id=793706508]
-custom_minimum_size = Vector2(0, 268)
-layout_mode = 2
-
-[node name="PortraitFill" type="ColorRect" parent="Margin/Column/PortraitFrame" unique_id=447014055]
-layout_mode = 2
-color = Color(0.22745098, 0.22745098, 0.3529412, 1)
-
-[node name="PortraitLabel" type="Label" parent="Margin/Column/PortraitFrame" unique_id=1853588909]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
-text = "PORTRAIT"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="NameLabel" type="Label" parent="Margin/Column" unique_id=1288379840]
+[node name="NameLabel" type="Label" parent="Margin/Column" unique_id=1787580523]
 custom_minimum_size = Vector2(0, 116)
 layout_mode = 2
 theme_override_font_sizes/font_size = 50
@@ -57,7 +40,7 @@ text = "Customer Name"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=1116739171]
+[node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=96711689]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
@@ -67,14 +50,14 @@ theme_override_constants/shadow_offset_y = 3
 text = "Archetype"
 horizontal_alignment = 1
 
-[node name="PatienceBar" type="ProgressBar" parent="Margin/Column" unique_id=144428305]
+[node name="PatienceBar" type="ProgressBar" parent="Margin/Column" unique_id=39902383]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 max_value = 16.0
 value = 12.0
 show_percentage = false
 
-[node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=1975939008]
+[node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=2024869884]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
@@ -84,7 +67,25 @@ theme_override_constants/shadow_offset_y = 3
 text = "patience 12/16"
 horizontal_alignment = 1
 
-[node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=487321623]
+[node name="DemandLabel" type="Label" parent="Margin/Column" unique_id=2131507710]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(0.8784314, 0.3529412, 0.3529412, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+text = "MANAGER?  2t"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="InterestGrid" type="Control" parent="Margin/Column" unique_id=1867210777]
+custom_minimum_size = Vector2(420, 224)
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("1_ew5d6")
+
+[node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=919697256]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)

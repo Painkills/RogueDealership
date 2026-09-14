@@ -87,6 +87,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_offer_detail_slid_out_clear()
 	_check_the_seat_layout_does_not_overlap_itself()
 	_check_the_customer_card_shows_who_they_are()
+	_check_the_customer_card_carries_its_triage_row()
 	_check_the_detail_card_shows_what_they_do()
 	_check_the_action_buttons_stay_on_screen()
 	_check_hud_does_not_overlap_itself()
@@ -827,6 +828,72 @@ func _check_the_customer_card_shows_who_they_are() -> void:
 	# product slot. Selecting them must change nothing about its size.
 	_check("and selecting them did NOT resize the card (%s)" % card.scale,
 		card.scale.is_equal_approx(Vector3.ONE))
+
+## Since the carousel this face is on screen for all three customers at once,
+## two of them at 179 px wide, so it has to answer "who deserves the next tick"
+## on its own. The two things that answer it are the demand telegraph and the
+## interest grid, and neither is a Label whose text a unit test can read - the
+## grid is drawn, so only a live card can say whether it is on screen at all.
+func _check_the_customer_card_carries_its_triage_row() -> void:
+	var shift = _controller._shift
+	var who = shift.chairs[_at()]
+	var card = _controller._customer_cards[_at()]
+	var col: Node = card.get_node(^"FrontViewport/CustomerFront/Margin/Column")
+
+	_check("the placeholder portrait is gone, and its 268 px with it",
+		col.get_node_or_null(^"PortraitFrame") == null)
+
+	var grid := col.get_node_or_null(^"InterestGrid") as Control
+	_check("the interest grid is on the card", grid != null)
+	if grid == null:
+		return
+	_check("it is visible", grid.visible)
+	_check("and it has real room on a 500x700 face (%s)" % grid.size,
+		grid.size.x > 300.0 and grid.size.y > 200.0)
+	# The whole column, not just the grid. A VBoxContainer whose children want
+	# more room than it has does not grow and does not complain - it runs the
+	# last section off the bottom of the card, which is how the detail card
+	# nearly shipped with its own tell cut in half.
+	var wanted: float = 0.0
+	for child in col.get_children():
+		if child is Control:
+			wanted += maxf((child as Control).custom_minimum_size.y,
+				(child as Control).get_combined_minimum_size().y)
+	wanted += col.get_theme_constant("separation") * (col.get_child_count() - 1)
+	_check("everything on the face still fits it (%d of %d px)"
+		% [int(wanted), 700 - 26 * 2], wanted <= float(700 - 26 * 2))
+
+	# Imposed, not waited for: whether this seed seats somebody who happens to
+	# be mid-demand is not what is being checked, and a telegraph that only
+	# renders on a lucky floor is a check that counts for nothing.
+	var telegraph := col.get_node_or_null(^"DemandLabel") as Label
+	_check("there is somewhere above their head to put an ask", telegraph != null)
+	if telegraph == null:
+		return
+	var parked = who.demand
+	var parked_due: int = who.demand_due_tick
+	who.demand = null
+	_controller._render()
+	_check("with nothing being asked, the row is blank (%s)" % telegraph.text,
+		telegraph.text == "")
+
+	var d := Demand.new()
+	d.telegraph = "MANAGER?"
+	d.ticks = 3
+	d.resolve = PlayConcession.new()
+	who.demand = d
+	who.demand_due_tick = shift.tick + 3
+	_controller._render()
+	_check("and when they ask, it shouts it (%s)" % telegraph.text,
+		telegraph.text.contains("MANAGER?"))
+	_check("with the fuse attached (%s)" % telegraph.text,
+		telegraph.text.contains("3t"))
+	_check("in the alert colour, because it is a countdown",
+		telegraph.get_theme_color("font_color") == Palette.color(&"alert"))
+
+	who.demand = parked
+	who.demand_due_tick = parked_due
+	_controller._render()
 
 ## The reported bug from two rounds ago: none of the customer's own data showed
 ## up. It lives on the detail card now, so that is where this looks.

@@ -24,7 +24,13 @@ var _name: Label
 var _archetype: Label
 var _patience_bar: ProgressBar
 var _patience: Label
+var _demand: Label
+var _grid: InterestGrid
 var _status: Label
+## Numerals in the interest grid stop being readable before the cells do, so a
+## card that is going to be drawn small says so once rather than guessing from
+## its own size - the face is authored at 500x700 no matter where it lands.
+var compact: bool = false
 
 func _ready() -> void:
 	# The seat's HoverPad owns the mouse, not this card. This card turns over,
@@ -45,6 +51,8 @@ func _bind() -> void:
 	_archetype = col.get_node(^"ArchetypeLabel")
 	_patience_bar = col.get_node(^"PatienceBar")
 	_patience = col.get_node(^"PatienceLabel")
+	_demand = col.get_node(^"DemandLabel")
+	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
 
 	_viewport.size = FRONT_SIZE
@@ -62,7 +70,7 @@ func _bind() -> void:
 ## can tell you that you left a product with someone; once you are with them the
 ## product card is sitting directly below this one, and a line of text repeating
 ## what a card already says is just something else to keep in sync.
-func setup(c, seated: bool = false) -> void:
+func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_bind()
 	customer = c
 	_status.visible = not seated
@@ -71,8 +79,10 @@ func setup(c, seated: bool = false) -> void:
 		_name.text = "- empty -"
 		_archetype.text = ""
 		_patience.text = ""
+		_demand.text = ""
 		_status.text = ""
 		_patience_bar.visible = false
+		_grid.visible = false
 		_redraw()
 		return
 
@@ -85,6 +95,10 @@ func setup(c, seated: bool = false) -> void:
 	_patience.text = "patience %d/%d" % [c.patience, c.max_patience]
 	_patience.add_theme_color_override("font_color",
 		Palette.color(&"alert") if c.leaving_soon() else Palette.color(&"text"))
+	_demand.text = demand_text(c, tick)
+	_grid.visible = true
+	_grid.set_state(c.interests(), c.known_ranks, c.known_top_category,
+		sold_interests(c), not compact)
 	_status.text = status_text(c)
 	_redraw()
 
@@ -131,6 +145,24 @@ static func known_text(c) -> String:
 	if lines.is_empty():
 		return "you know nothing about their priorities yet"
 	return "\n".join(lines)
+
+## What they are asking for and how long you have, or nothing. The telegraph is
+## authored SHORT for exactly this - it has to fit one line on a card that may
+## be 179 px wide - and the countdown is what turns an event into a decision.
+static func demand_text(c, tick: int) -> String:
+	if c.demand == null:
+		return ""
+	var left: int = maxi(0, c.demand_due_tick - tick)
+	return "%s  %dt" % [c.demand.telegraph, left]
+
+## Which of their interests they have already bought into. The grid lights these
+## rather than the status line listing them, because a list grows and a grid
+## does not.
+static func sold_interests(c) -> Dictionary:
+	var out := {}
+	for u in c.unsigned:
+		out[u["product"].interest.id] = true
+	return out
 
 ## The floor card's one non-identity line. Short on purpose: it exists so that
 ## walking away from a live offer is visible from the floor, not to reproduce the

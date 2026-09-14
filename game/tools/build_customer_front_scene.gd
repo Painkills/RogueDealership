@@ -2,14 +2,18 @@ extends SceneTree
 ## Builds res://scenes/cards/customer_front_2d.tscn - the face of a CUSTOMER
 ## card, drawn as 2D UI at 500x700 and rendered to a texture by the card.
 ##
-## Identity ONLY: portrait, name, archetype, patience. Everything else about a
-## customer now lives on the detail card that slides out from behind this one
-## when you sit down, which is what stopped this face from having to grow - and
-## a growing card was what kept colliding with the product slot below it.
+## Everything you need to TRIAGE, and nothing you need to negotiate. Since the
+## carousel, this face is on screen for all three customers all the time - two
+## of them at 179 px wide - so it has to answer "who deserves the next tick"
+## on its own, at that size, without anybody sitting down.
 ##
-## The one thing here that is not identity is the status line, and it earns its
-## place: with the floor framed on the customer row alone you would otherwise
-## have no way at all to see that you left a product sitting with someone.
+## Five rows: who they are, how long they will wait, what they are asking for
+## right now, what you know about their list, and what is riding on them.
+##
+## THE PORTRAIT BOX IS GONE. It was 268 of 700 px - 38% of the card - holding a
+## grey rectangle and the word PORTRAIT, reserved for art that does not exist
+## and has not been scheduled. The interest grid lives there now. If real
+## portraits ever arrive, putting it back is an edit to this file.
 
 const W := 500
 const H := 700
@@ -42,25 +46,6 @@ func _init() -> void:
 	margin.add_child(col)
 	col.owner = root
 
-	var portrait := PanelContainer.new()
-	portrait.name = "PortraitFrame"
-	portrait.custom_minimum_size = Vector2(0, 268)
-	col.add_child(portrait)
-	portrait.owner = root
-
-	var portrait_fill := ColorRect.new()
-	portrait_fill.name = "PortraitFill"
-	portrait_fill.color = Palette.color(&"neutral_2")
-	portrait.add_child(portrait_fill)
-	portrait_fill.owner = root
-
-	var portrait_label := _label("PortraitLabel", 32, Palette.color(&"text_dim"))
-	portrait_label.text = "PORTRAIT"
-	portrait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	portrait_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	portrait.add_child(portrait_label)
-	portrait_label.owner = root
-
 	var name_label := _label("NameLabel", 50, Palette.color(&"text"))
 	name_label.text = "Customer Name"
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -90,6 +75,36 @@ func _init() -> void:
 	patience_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(patience_label)
 	patience_label.owner = root
+
+	# ABOVE THEIR HEADS. What they are asking for, and how long you have - the
+	# only thing on this card that is a countdown, so it gets the alert role and
+	# a reserved height, because a row that appears and disappears would shove
+	# everything below it up and down the card every few ticks.
+	var demand_label := _label("DemandLabel", 38, Palette.color(&"alert"))
+	demand_label.text = "MANAGER?  2t"
+	demand_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	demand_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	demand_label.custom_minimum_size = Vector2(0, 52)
+	col.add_child(demand_label)
+	demand_label.owner = root
+
+	var grid := Control.new()
+	grid.name = "InterestGrid"
+	grid.set_script(load("res://scripts/view/interest_grid.gd"))
+	# An EXPLICIT box, not a stretch. A bare Control has no intrinsic width, so
+	# left to size_flags it reports 0 until the container next resorts - and
+	# container resorts are deferred, which makes "how wide is the grid" a
+	# question with two answers depending on when you ask. 420 of the 448 the
+	# padding leaves, with the cell arithmetic falling out of it: 3 cells of
+	# 130 and two 14 px gaps.
+	#
+	# 224 tall, not 250: at 250 the column wanted 673 px of the 648 the face
+	# has and ran its status line off the bottom. Cells come out wider than
+	# they are tall, which is fine - they are labelled boxes, not squares.
+	grid.custom_minimum_size = Vector2(420, 224)
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(grid)
+	grid.owner = root
 
 	var status_label := _label("StatusLabel", 26, Palette.color(&"margin"))
 	status_label.text = "(what is on their table shows here)"

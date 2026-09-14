@@ -518,7 +518,13 @@ func _render() -> void:
 
 	var seated: bool = _shift.at != null
 	for i in range(_customer_cards.size()):
-		_customer_cards[i].setup(_shift.chairs[i], seated and i == int(_shift.at))
+		# Keyed on being FRONTED rather than on being seated: the carousel
+		# draws the two flankers small on the floor as well, and that is where
+		# rank numerals stop surviving the SubViewport's downscale.
+		var front: int = int(_shift.at) if seated else _last_station
+		_customer_cards[i].compact = i != front
+		_customer_cards[i].setup(_shift.chairs[i],
+			seated and i == int(_shift.at), _shift.tick)
 
 	_render_mode_button(seated)
 	_render_details()
