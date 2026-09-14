@@ -97,8 +97,14 @@ func _physics_process(_delta: float) -> bool:
 	_put_a_product_on_the_table()
 	_check_the_meter_shows_your_appeal_but_hides_their_line()
 	_check_the_meter_climbs_and_changes_colour()
+	# A Line they cannot clear, so KEY_O below is guaranteed to MISS. Left to the
+	# deal, this customer signs, the table clears, and the fog check has nothing
+	# live to look at - it returns early and counts for almost nothing while
+	# still reporting a pass. Impose the rare case; never wait for it.
+	_fix_the_line_out_of_reach()
 	_press(KEY_O);            _settle(); _check_table("after offering")
-	_check_the_meter_reveals_the_line_once_you_have_asked()
+	_check_the_meter_keeps_the_line_fogged_after_you_have_asked()
+	_put_the_line_back()
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
 	_press(KEY_B);            _settle(); _check_table("after approaching chair B")
@@ -902,6 +908,30 @@ func _stack_height(box: Control, width: float) -> float:
 
 # --- the appeal meter ------------------------------------------------------
 
+## Their real Line, parked while the fog checks run against a guaranteed miss.
+var _parked_line: int = -1
+
+func _fix_the_line_out_of_reach() -> void:
+	if _controller._shift.at == null:
+		_check("still seated to fix the Line", false)
+		return
+	var c = _controller._shift.chairs[_at()]
+	if c == null:
+		_check("someone is in the chair to fix the Line on", false)
+		return
+	_parked_line = c.line
+	c.line = 9999
+	_controller._render()
+
+func _put_the_line_back() -> void:
+	if _parked_line < 0 or _controller._shift.at == null:
+		return
+	var c = _controller._shift.chairs[_at()]
+	if c != null:
+		c.line = _parked_line
+	_parked_line = -1
+	_controller._render()
+
 func _put_a_product_on_the_table() -> void:
 	if _controller._shift.at == null:
 		_check("still with a customer before placing", false)
@@ -1006,7 +1036,12 @@ func _check_the_meter_climbs_and_changes_colour() -> void:
 	c.known_line = was_known
 	_controller._render()
 
-func _check_the_meter_reveals_the_line_once_you_have_asked() -> void:
+## Offering is FREE, so anything it teaches you is free too. It used to teach
+## the Line, which made Read the Room a convenience rather than the one way to
+## see the number - and the status line leaked the same number a second time,
+## independently of whether the marker was drawn. Both are checked here on a
+## live card, because a fog with two exits is not a fog.
+func _check_the_meter_keeps_the_line_fogged_after_you_have_asked() -> void:
 	if _controller._shift.at == null:
 		_check("still seated after offering", false)
 		return
@@ -1014,15 +1049,33 @@ func _check_the_meter_reveals_the_line_once_you_have_asked() -> void:
 	if c == null:
 		_check("they are still in the chair after offering", false)
 		return
-	_check("offering taught you their Line", c.known_line)
+	_check("offering did NOT teach you their Line", not c.known_line)
+	var det = _controller._offer_details[_at()]
 	if c.offer == null:
 		# They signed, so the offer left the table - which is its own correct
 		# outcome and leaves nothing to meter.
 		_check("a sale cleared the table, so the meter has nothing to show",
-			_controller._offer_details[_at()]._title.text == "nothing on the table")
+			det._title.text == "nothing on the table")
 		return
-	var bar: AppealBar = _controller._offer_details[_at()]._bar
-	_check("so the meter now draws the marker", bar._line_known)
+	var bar: AppealBar = det._bar
+	_check("so the meter still refuses to draw the marker", not bar._line_known)
+
+	var fogged: String = det._status.text
+	_check("the status reads a band, not a number (%s)" % fogged,
+		["COLD", "COOL", "WARM", "ALMOST"].has(fogged))
+	_check("and nothing on it spells the gap out (%s)" % fogged,
+		not fogged.contains("SHORT"))
+
+	# The other half of the same rule: the fog has an exit, and this is it.
+	c.reveal_room()
+	_controller._render()
+	_check("reading the room draws the marker after all", bar._line_known)
+	var lifted: String = det._status.text
+	_check("and turns the band into the number (%s)" % lifted,
+		lifted.contains("SHORT") or lifted.begins_with("READY"))
+	c.known_line = false
+	c.known_top_category = null
+	_controller._render()
 	_check("at the Line the model actually holds (%d)" % bar._line, bar._line == c.line)
 
 # --- the mode button -------------------------------------------------------

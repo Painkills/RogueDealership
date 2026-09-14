@@ -53,7 +53,7 @@ func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	h.check("and not the Line", not c.known_line)
 	h.check("and the offer is not revealed", not c.offer.revealed)
 
-func test_offering_is_free_and_reveals_everything() -> void:
+func test_offering_is_free_and_teaches_the_rank_but_never_the_line() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
 	c.line = 99
@@ -64,8 +64,48 @@ func test_offering_is_free_and_reveals_everything() -> void:
 	var r := s.offer()
 	h.eq("offering costs no ticks", s.tick, t)
 	h.check("it teaches you the rank", c.known_ranks.has(&"reliability"))
-	h.check("and the Line", c.known_line)
-	h.eq("and reports the shortfall", int(r.data["short"]), 69)
+	h.check("and marks the offer as asked", c.offer.revealed)
+	h.check("but never the Line", not c.known_line)
+	h.eq("though the model still knows the true shortfall",
+		int(r.data["short"]), 69)
+
+func test_no_amount_of_offering_ever_teaches_the_line() -> void:
+	## The fog has to survive repetition or it is a speed bump, not a rule:
+	## offering is free, so "ask four times" would otherwise be a cheaper Read
+	## the Room that also costs no card.
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	c.line = 99
+	_rank(c, [&"status", &"power", &"reliability"])
+	_hand(s, [&"vsc"])
+	s.place(0)
+	for _i in range(4):
+		s.offer()
+	h.eq("four asks landed", int(s.stat["offers"]), 4)
+	h.check("and their Line is still fogged", not c.known_line)
+
+func test_read_the_room_is_the_only_thing_that_lifts_the_fog() -> void:
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	_rank(c, [&"power"])
+	_hand(s, [&"readroom"])
+	h.check("fogged to begin with", not c.known_line)
+	s.play_card(0)
+	h.check("the read lifts it", c.known_line)
+	h.check("and narrows nine interests to three", c.known_top_category != null)
+	h.check("without naming the one", not c.known_ranks.has(&"power"))
+
+func test_the_upgraded_room_read_names_their_number_one() -> void:
+	## Until it did, upgrading Read the Room bought a second, identical copy of
+	## the same effect for $1,100 and changed nothing observable.
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	_rank(c, [&"power"])
+	_hand(s, [&"readroom"])
+	s.hand[0].upgraded = true
+	s.play_card(0)
+	h.check("it still hands you the Line", c.known_line)
+	h.eq("and names the one outright", int(c.known_ranks.get(&"power", 0)), 1)
 
 func test_a_short_offer_costs_one_patience_and_nothing_else() -> void:
 	var s := _shift([&"easygoing", &"easygoing"])

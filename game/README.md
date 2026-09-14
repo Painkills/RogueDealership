@@ -787,3 +787,40 @@ an empty table - is now `C(9,5)/C(15,5)` = 4.2% rather than 2.8%, so
 card moved every shuffle: `test_shift_clock.gd`'s deliberately barren seed is
 **15** where it was **8**, which is a fact about the deck's size and not about
 either seed.
+
+### The Line is fogged, and Read the Room is the only way through
+
+`offer()` used to set `known_line`. Offering is free, so the exact Line was
+free: ask once, anywhere, and the number was yours for the rest of the shift.
+That made Read the Room a *convenience* - it bought you the Line a tick earlier
+than asking would have - rather than the one thing that could tell you.
+
+Offering now teaches you the **rank** of whatever you just put in front of them,
+and nothing else. Read the Room is the only source of the Line, all shift.
+
+**The fog had two exits and both are closed.** `appeal_bar.marker_x()` already
+refused to draw the marker without `known_line`, but `detail_card_3d.gd` printed
+`"17 SHORT"` right beside it, gated on having *offered* rather than on knowing.
+Having asked still buys you something real - the band - but a band is a read and
+a number is a readout, and only one of those you have paid for. `READY - they
+will sign` is gated the same way and for the same reason: appeal can climb past
+the Line on cards played after a miss, and being told you have cleared a line
+you cannot see is the number wearing a hat.
+
+The model still knows the true gap, and `offer()`'s `Result` still carries it.
+That is deliberate: `_apply()` logs a Result's message only when it is a refusal,
+so nothing player-facing reads it, and the fog belongs in the one layer that can
+decide what a player has earned the right to see.
+
+**The upgrade is real now.** `readroom.tres` authored its `upgraded_effects` as a
+second, identical `RevealRoom` - an $1,100 shop purchase that changed nothing
+observable, which `shop.gd` was happy to sell because it only checks that the
+array is non-empty. `RevealRoom` gained an `exact` flag: the base card narrows
+nine interests to three, the upgrade narrows those three to one. It records the
+answer as `known_ranks[top] = 1` rather than as its own flag, so everything that
+already walks `known_ranks` picked it up for free.
+
+Worth knowing for whoever balances this: "ALMOST" now replaces "3 SHORT" as your
+best read until you spend the tick, which is a real difficulty increase landing
+on top of everything else in G3. It is also the cheapest thing here to walk
+back - restoring `known_line` in `offer()` is one line.

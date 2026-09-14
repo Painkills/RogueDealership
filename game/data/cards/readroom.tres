@@ -9,6 +9,7 @@ script = ExtResource("2_mxwf3")
 
 [sub_resource type="Resource" id="Resource_a4ajm"]
 script = ExtResource("2_mxwf3")
+exact = true
 
 [resource]
 script = ExtResource("3_kqu7d")
@@ -17,6 +18,6 @@ effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])
 upgraded_effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_a4ajm")])
 id = &"readroom"
 display_name = "Read the Room"
-text = "You shut up and watch. Tells you their LINE - how high Appeal has to climb before they say yes - and which THIRD of the board they actually care about, before you spend a tick putting a product in front of them."
+text = "You shut up and watch. Tells you their LINE - how high Appeal has to climb before they say yes, and the ONLY way to learn it - plus which THIRD of the board they actually care about. Upgraded, it names their number one outright."
 starter = true
 price = 1100

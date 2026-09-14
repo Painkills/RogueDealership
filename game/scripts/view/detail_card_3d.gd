@@ -119,23 +119,40 @@ func show_offer(c, band: String) -> void:
 	_margin.text = Format.money(o.margin)
 	_bar.set_state(o.appeal, c.line, meter_scale(o.appeal, c.line), band, c.known_line)
 
-	# The FILL is always honest about your own appeal; only the LINE is fogged.
-	# Which is why the gap is spelled out as a number only once you have offered
-	# and the model has actually told you the number.
-	if o.revealed:
-		var gap: int = c.line - o.appeal
-		if gap <= 0:
-			_status.text = "READY - they will sign"
-			_status.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
-		else:
-			_status.text = "%d SHORT" % gap
-			_status.add_theme_color_override("font_color", _bar.fill_color())
-		_hint.visible = false
-	else:
+	# The FILL is always honest about your own appeal; only the LINE is fogged,
+	# and Read the Room is the ONLY thing that lifts it. Offering used to lift it
+	# too, which quietly made the card optional: ask once, anywhere, and the exact
+	# number was yours for the rest of the shift.
+	#
+	# So the exact gap is gated on known_line rather than on having offered.
+	# Having offered still buys you something real - the band - but a band is a
+	# read and a number is a readout, and only one of those you have paid for.
+	if not o.revealed:
 		_status.text = ""
 		_hint.visible = true
 		_hint.text = "their Line is marked - clear it before you offer" \
-			if c.known_line else "offer, or read the room, to learn their Line"
+			if c.known_line else "read the room to learn their Line"
+		_redraw()
+		return
+
+	_hint.visible = false
+	if not c.known_line:
+		# You asked and they said no. How far off you were is a feeling.
+		_status.text = band
+		_status.add_theme_color_override("font_color", _bar.fill_color())
+		_redraw()
+		return
+
+	# READY is gated behind known_line for the same reason the number is: appeal
+	# can climb past the Line on cards played AFTER a miss, and being told you
+	# have cleared a line you cannot see is the number by another name.
+	var gap: int = c.line - o.appeal
+	if gap <= 0:
+		_status.text = "READY - they will sign"
+		_status.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
+	else:
+		_status.text = "%d SHORT" % gap
+		_status.add_theme_color_override("font_color", _bar.fill_color())
 	_redraw()
 
 ## Never lets the fill or the marker run off the end, and only steps in tens so

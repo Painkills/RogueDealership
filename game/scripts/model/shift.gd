@@ -537,9 +537,13 @@ func offer() -> Result:
 	var rank: int = int(c.ranks[iid])
 	var gap: int = max(0, c.line - o.appeal)
 
+	# Offering teaches you the RANK of what you just put in front of them, and
+	# nothing about their Line. It used to set known_line too, which made Read
+	# the Room a convenience rather than the only way to see the number - ask
+	# once and the fog was gone for the rest of the shift, for free. The gap is
+	# still true in the model; detail_card_3d.gd decides how much of it you see.
 	o.revealed = true
 	c.known_ranks[iid] = rank
-	c.known_line = true
 	stat["offers"] = int(stat["offers"]) + 1
 
 	# They evaluate at the Line they had when you ASKED. A Hawk's reaction to
@@ -559,6 +563,10 @@ func offer() -> Result:
 			% [c.display_name, sale["product"].display_name, sale["margin"]],
 			"sale", {"rank": rank, "margin": sale["margin"],
 				"bonus": sale.get("bonus", 0)})
+	# Exact on purpose, and NOT player-facing: _apply() logs a Result's message
+	# only when it is a refusal. The model always knows the true gap; the fog
+	# lives in the view, which is the only place that can decide how much of it
+	# a player has earned the right to see.
 	return Result.new(true, "%d SHORT." % gap, "miss",
 		{"short": gap, "rank": rank})
 

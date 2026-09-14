@@ -82,9 +82,18 @@ func top_interest_id() -> StringName:
 	return &""
 
 
-func reveal_room() -> void:
+func reveal_room(exact: bool = false) -> void:
+	## The base read narrows nine interests to three and hands you the Line -
+	## which, since offering stopped teaching it, is the ONLY way to learn it.
+	## The upgrade narrows that last three to one.
 	known_line = true
-	known_top_category = _interests.by_id(top_interest_id()).category.id
+	var top := top_interest_id()
+	known_top_category = _interests.by_id(top).category.id
+	# Recorded as a known RANK rather than its own flag: everything that reads
+	# priorities already walks known_ranks, so the upgrade needs no new case
+	# anywhere downstream of here.
+	if exact:
+		known_ranks[top] = 1
 
 
 func owns(product_id: StringName) -> bool:
