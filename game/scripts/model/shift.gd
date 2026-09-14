@@ -377,8 +377,16 @@ func _here() -> Array:
 
 
 func approach(chair: int) -> Result:
-	## Going back to whoever you were last with is free. Only changing your
-	## mind about who to work costs the floor a tick.
+	## Walking is FREE. The clock measures work - cards, digs, waiting for the
+	## door - not distance. Charging a tick to go and look at someone made the
+	## cheapest play "finish whoever you are with and never look up", which is
+	## the exact opposite of a game about deciding who deserves the next tick.
+	##
+	## cfg.approach_ticks survives at 0 rather than being deleted, so the charge
+	## is one number away if free movement turns out to be too loose. What does
+	## NOT survive is the old discount for returning to last_customer: an
+	## asymmetry that made coming back cheaper than going was the shape of the
+	## tunnel vision, so if the charge ever comes back it comes back uniform.
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if chair < 0 or chair >= chairs.size():
@@ -389,12 +397,11 @@ func approach(chair: int) -> Result:
 		return Result.new(false, "You are already standing with %s."
 			% chairs[chair].display_name)
 	var c = chairs[chair]
-	var cost: int = 0 if c == last_customer else cfg.approach_ticks
 	at = chair
 	last_customer = c
 	stat["approaches"] = int(stat["approaches"]) + 1
-	if cost > 0:
-		_burn(cost, "approach")
+	# _burn() no-ops on 0, so the default costs nothing and spends no branch.
+	_burn(cfg.approach_ticks, "approach")
 	return Result.new(true, "You walk over to %s." % c.display_name, "move")
 
 

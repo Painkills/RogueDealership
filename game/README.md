@@ -742,3 +742,33 @@ peek - touch keeps the lift through the whole drag (a fingertip sits on the
 card's own center otherwise, for the whole gesture, not just the instant
 before it), a mouse gets exactly the addon's original behaviour back, with
 nothing reapplied at all.
+
+---
+
+## G3 - the floor demands attention
+
+Two mechanics had quietly made this a game about optimising **one** negotiation,
+when the interesting decision is which negotiation deserves the next tick.
+Walking cost the clock, and customers were passive. G3 removes the first and
+replaces the second.
+
+### Walking is free
+
+`approach()` used to burn `cfg.approach_ticks`, discounted to 0 only when you
+returned to `last_customer`. Stepping out to check on someone else and coming
+back therefore cost **2 of 24 ticks**, and the cheapest play in the game was to
+finish whoever you were with and never look up - a tax on exactly the decision
+the floor exists to pose.
+
+The clock now measures **work** - cards, digs, waiting for the door - not
+distance. `cfg.approach_ticks` survives at 0 rather than being deleted, so the
+charge is one number away if free movement reads as too loose. What did *not*
+survive is the return discount: an asymmetry that made coming back cheaper than
+leaving was the shape of the tunnel vision, so if the charge ever returns it
+returns uniform. `_burn()` already no-ops on 0, so the default spends no branch
+and `ticks_approach` stays in the report, honest and zero.
+
+**This is load-bearing for what comes next.** With movement free, the world no
+longer advances while you walk, so a customer's fuse measures *units of work*,
+not wall-clock beats - which is what will make "leave them alone for a few
+ticks" mean "go do work elsewhere" rather than "stand still".

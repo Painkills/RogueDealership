@@ -167,17 +167,35 @@ func test_margin_can_be_conceded_below_zero_and_banks_as_is() -> void:
 	h.eq("and a loss banks as a loss", c.unsigned_margin(), -300)
 
 # -------------------------------------------------------------------- moving
-func test_going_back_to_the_same_customer_is_free() -> void:
+func test_walking_the_floor_is_free() -> void:
+	## The clock measures WORK, not distance. Checking on someone else and
+	## coming back used to cost 2 of 24 ticks, which made "finish whoever you
+	## are with and never look up" the cheapest play - a tax on the one decision
+	## this game is supposed to be about.
 	var s := _shift([&"easygoing", &"easygoing"])
 	s.approach(0)
-	h.eq("the first walk over costs a tick", s.tick, 1)
+	h.eq("the first walk over is free", s.tick, 0)
 	s.leave()
-	h.eq("stepping out is free", s.tick, 1)
-	s.approach(0)
-	h.eq("going back is free", s.tick, 1)
-	s.leave()
+	h.eq("stepping out is free", s.tick, 0)
 	s.approach(1)
-	h.eq("changing your mind costs a tick", s.tick, 2)
+	h.eq("changing your mind is free too", s.tick, 0)
+	s.approach(2)
+	s.leave()
+	s.approach(0)
+	h.eq("and it stays free however much you shop around", s.tick, 0)
+
+func test_the_approach_charge_is_still_one_number_away() -> void:
+	## approach_ticks survives at 0 rather than being deleted, so free movement
+	## is a tuning decision and not a one-way door. What does NOT survive is the
+	## old discount for walking back to last_customer: an asymmetry that made
+	## returning cheaper than leaving was the shape of the tunnel vision, so if
+	## the charge ever comes back it comes back uniform.
+	var s := _shift([&"easygoing", &"easygoing"], {"approach_ticks": 1})
+	s.approach(0)
+	h.eq("the charge applies when the knob is turned up", s.tick, 1)
+	s.leave()
+	s.approach(0)
+	h.eq("including the walk back to the same person", s.tick, 2)
 
 func test_approaching_who_you_are_already_with_is_refused() -> void:
 	var s := _shift([&"easygoing", &"easygoing"])

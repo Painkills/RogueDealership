@@ -38,7 +38,14 @@ class_name ShiftConfig extends Resource
 ## hands that hold no product at all; 2 would fire on ~24% and hand you a second
 ## probe, which is a balance change rather than a guard. 0 disables the bias.
 @export var hand_min_products: int = 1
-@export var approach_ticks: int = 1
+## 0: walking the floor is free, and the clock measures WORK instead of
+## distance. A tick to cross the floor made checking on someone and coming
+## back cost 2 of 24, so the cheapest play was to never look up - a tax on
+## exactly the decision this game is supposed to be about. Kept as a knob
+## rather than deleted: if free movement reads as too loose, the charge is
+## this one number, and it applies uniformly rather than discounting the
+## walk back to whoever you were last with.
+@export var approach_ticks: int = 0
 @export var place_ticks: int = 1
 @export var dig_ticks: int = 1
 @export var failed_offer_patience: int = 1
