@@ -83,8 +83,8 @@ func _physics_process(_delta: float) -> bool:
 	_settle()
 	_check_you_can_actually_click_your_hand()
 	_check_seat_view_brings_your_things_up()
-	_check_only_the_seat_you_are_at_is_showing()
-	_check_the_detail_cards_slid_out_clear()
+	_check_the_other_two_are_still_on_screen_while_you_work_one()
+	_check_the_offer_detail_slid_out_clear()
 	_check_the_seat_layout_does_not_overlap_itself()
 	_check_the_customer_card_shows_who_they_are()
 	_check_the_detail_card_shows_what_they_do()
@@ -109,6 +109,7 @@ func _physics_process(_delta: float) -> bool:
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
 	_press(KEY_B);            _settle(); _check_table("after approaching chair B")
+	_check_the_table_really_turns()
 
 	_check_drop_plays_a_card()
 	_check_refused_drop_comes_home()
@@ -618,10 +619,17 @@ func _check_dragging_a_hand_card_keeps_it_lifted_for_reading() -> void:
 ## illegible". The card face is authored at 500x700, so anything under about
 ## half that is a face being thrown away. It used to land at 126 pixels tall.
 func _check_the_floor_cards_are_big_enough_to_read() -> void:
+	# The carousel means one of them is nearer than the other two, so there are
+	# two floors rather than one. Whoever is FRONTED keeps the original 360 - the
+	# 28mm lens was chosen so that card lands on the exact pixels it always did.
+	# The flankers are further off and honestly smaller; 240 is what the design
+	# budgeted for them, and it is the number the icon work has to survive.
+	var front: int = _controller._last_station
 	for i in range(3):
 		var r := _rect_of(_controller._customer_cards[i], CARD)
-		_check("floor card %d is %d px tall, enough of a 700 px face to read"
-			% [i, int(r.size.y)], r.size.y >= 360.0)
+		var floor_px: float = 360.0 if i == front else 240.0
+		_check("floor card %d is %d px tall, past the %d it needs"
+			% [i, int(r.size.y), int(floor_px)], r.size.y >= floor_px)
 		_on_screen("floor card %d" % i, r)
 		_check("floor card %d stays out of the log's column (ends %d, log at %d)"
 			% [i, int(r.end.x), int(LOG_EDGE)], r.end.x <= LOG_EDGE)
@@ -636,73 +644,126 @@ func _check_seat_view_brings_your_things_up() -> void:
 			% [pair[0], z.position.y, bottom], z.position.y > bottom)
 	_check("and the action bar appears", _controller._action_bar.visible)
 
-## The seats are close enough together that the floor view is readable, which
-## puts the neighbours inside the seat framing. So they are hidden - and the
-## mode button, which promises a free return, is the only way back to them.
-func _check_only_the_seat_you_are_at_is_showing() -> void:
+## Everything before chair B happens at STATION 0, where the carousel is
+## unrotated and a missing counter-rotation is indistinguishable from a working
+## one - the facing checks above pass either way and prove nothing. This is the
+## first station that actually turns, which makes it the only place the two
+## halves of the turn can be told apart.
+func _check_the_table_really_turns() -> void:
+	var at := _at()
+	var station: float = _controller.station_for(at)
+	_check("chair B is a station that actually turns (%.0f degrees)"
+		% rad_to_deg(station), absf(station) > 0.1)
+	_check("and the table is standing at it (%.1f)"
+		% rad_to_deg(_controller._carousel.rotation.y),
+		absf(_controller._carousel.rotation.y - station) < 0.02)
 	for i in range(3):
-		_check("seat %d is %s while you are at %d"
-			% [i, "showing" if i == _at() else "hidden", _at()],
-			_controller._seats[i].visible == (i == _at()))
+		var yaw: float = _controller._customer_cards[i].global_rotation.y
+		_check("seat %d's card faces the camera THROUGH the turn (%.1f off)"
+			% [i, rad_to_deg(yaw)], absf(yaw) < 0.02)
+	var here := _rect_of(_controller._customer_cards[at], CARD)
+	_check("and whoever you moved to is centred (%d)" % int(here.get_center().x),
+		absf(here.get_center().x - 960.0) < 4.0)
 
-	# A hidden seat must still refuse drops - you should not be able to drag a
-	# card into a customer you cannot see. That is enforced DURING the drag,
-	# after DragController has armed everything, because arming a drop zone
-	# outside a drag walls off the entire table. Simulate the drag start.
+
+## The point of the carousel: sitting down with somebody no longer hides the
+## other two. They turn out to either side, smaller because they are further
+## away, and stay readable the whole time.
+func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
+	var at := _at()
+	for i in range(3):
+		_check("seat %d is showing while you are at %d" % [i, at],
+			_controller._seats[i].visible)
+
+	# Symmetric, and on OPPOSITE sides - the arrangement's whole claim. Right is
+	# (at+1)%3 and left is (at+2)%3, at every station, by construction.
+	var here := _rect_of(_controller._customer_cards[at], CARD)
+	var right := _rect_of(_controller._customer_cards[(at + 1) % 3], CARD)
+	var left := _rect_of(_controller._customer_cards[(at + 2) % 3], CARD)
+	_check("the one you are with is centred (%d)" % int(here.get_center().x),
+		absf(here.get_center().x - 960.0) < 4.0)
+	_check("one of the others fell to the right (%d)" % int(right.position.x),
+		right.position.x > here.end.x)
+	_check("and the other to the left (%d)" % int(left.end.x),
+		left.end.x < here.position.x)
+	_check("evenly, rather than lopsided (%d vs %d)"
+		% [int(here.position.x - left.end.x), int(right.position.x - here.end.x)],
+		absf((here.position.x - left.end.x) - (right.position.x - here.end.x)) < 4.0)
+	_check("they are smaller than the one you are with, not scaled down (%d vs %d)"
+		% [int(left.size.y), int(here.size.y)], left.size.y < here.size.y)
+	_on_screen("left flanker", left)
+	_on_screen("right flanker", right)
+
+	# The carousel really turned, rather than the cards being moved by hand.
+	_check("the table turned to bring them to the front (%.1f vs %.1f degrees)"
+		% [rad_to_deg(_controller._carousel.rotation.y),
+			rad_to_deg(_controller.station_for(at))],
+		absf(_controller._carousel.rotation.y - _controller.station_for(at)) < 0.02)
+
+	# And every seat cancelled that turn, so its cards still face the camera.
+	# NOTHING ELSE HERE WOULD NOTICE IF THIS STOPPED: unprojecting a card centre
+	# says where the card is, never which way it points, so three cards edge-on
+	# to the camera would pass every rectangle check on the page.
+	for i in range(3):
+		var yaw: float = _controller._customer_cards[i].global_rotation.y
+		_check("seat %d's card still faces the camera (%.1f degrees off)"
+			% [i, rad_to_deg(yaw)], absf(yaw) < 0.02)
+	_check("and the right-hand one keeps out of the log (%d of %d)"
+		% [int(right.end.x), int(LOG_EDGE)], right.end.x <= LOG_EDGE)
+
+	# A slot you are not at must still refuse drops - you should not be able to
+	# drag a product onto somebody you are not standing with, however visible
+	# they are. Enforced DURING the drag, after DragController has armed
+	# everything, because arming a drop zone outside a drag walls off the entire
+	# table. Simulate the drag start.
 	_controller._on_drag_started(null)
 	for i in range(3):
 		var zone := _controller._chair_zones[i].get_node(
 			^"DropZone/CollisionShape3D") as CollisionShape3D
-		if i == _at():
+		if i == at:
 			continue
-		_check("hidden seat %d refuses a drop even mid-drag" % i, zone.disabled)
+		_check("seat %d takes no drop even mid-drag" % i, zone.disabled)
+		_check("because its slot is not showing at all", not _controller._chair_zones[i].visible)
 	_controller._on_drag_stopped(null)
 	_check_no_drop_zone_is_armed("once the drag is over")
 
-func _check_the_detail_cards_slid_out_clear() -> void:
+## ONE detail card slides now, not two. The customer detail went back to being
+## purely the back of the floor card - what it used to say when slid out lives
+## on the customer card's own front, and the space it was occupying is where a
+## flanker now sits.
+func _check_the_offer_detail_slid_out_clear() -> void:
 	var at := _at()
-	var margins: Array[float] = []
 	# You reach a seat by CLICKING a customer, which means you were hovering them,
 	# which means their pair was turned over. It has to turn back before the
 	# detail card slides, or the slide happens in a mirrored space and the card
 	# travels the wrong way.
 	_check("arriving turns the pair back to face front",
 		not _controller._customer_flips[at].showing_back())
-	for pair in [["customer", _controller._customer_details[at],
-				_controller._customer_cards[at]],
-			["offer", _controller._offer_details[at],
-				_controller._chair_zones[at]]]:
-		var detail: Node3D = pair[1]
-		var partner: Node3D = pair[2]
-		_check("the %s detail card slid out from behind" % pair[0],
-			detail.is_out() and not detail.position.is_equal_approx(detail.home()))
-		# It comes out facing the other way and has to turn as it goes, or it
-		# arrives beside its partner still showing its own back.
-		_check("and turned to face front (%s)" % detail.rotation,
-			detail.rotation.is_equal_approx(Vector3.ZERO))
 
-		var d := _rect_of(detail, DetailCard3D.CARD_SIZE)
-		var p := _rect_of(partner, CARD)
-		_check("and it is clear of what it describes (detail ends %d, partner starts %d)"
-			% [int(d.end.x), int(p.position.x)], d.end.x <= p.position.x)
-		_check("on the LEFT of it, as designed", d.position.x < p.position.x)
-		_check("not on top of it", not d.intersects(p))
-		_check("and it is the same size as what it hides behind (%d x %d vs %d x %d)"
-			% [int(d.size.x), int(d.size.y), int(p.size.x), int(p.size.y)],
-			absf(d.size.x - p.size.x) < 2.0 and absf(d.size.y - p.size.y) < 2.0)
-		_on_screen("%s detail card" % pair[0], d)
-		_check("%s detail stays out of the log's column (ends %d)"
-			% [pair[0], int(d.end.x)], d.end.x <= LOG_EDGE)
-		margins.append(p.position.x - d.end.x)
+	var detail: Node3D = _controller._offer_details[at]
+	var partner: Node3D = _controller._chair_zones[at]
+	_check("the offer detail card slid out from behind",
+		detail.is_out() and not detail.position.is_equal_approx(detail.home()))
+	# It comes out facing the other way and has to turn as it goes, or it
+	# arrives beside its partner still showing its own back.
+	_check("and turned to face front (%s)" % detail.rotation,
+		detail.rotation.is_equal_approx(Vector3.ZERO))
 
-	# "There should be an equal margin between the main cards and the detail
-	# cards for both product and customer." It is the same offset applied to two
-	# slots of the same width, so this is really checking that the SLOT is still
-	# card-sized - a wider slab behind the product would put its visible edge
-	# somewhere the customer's is not.
-	_check("the two margins match (customer %.0f px, product %.0f px)"
-		% [margins[0], margins[1]], absf(margins[0] - margins[1]) < 2.0)
+	var d := _rect_of(detail, DetailCard3D.CARD_SIZE)
+	var pr := _rect_of(partner, CARD)
+	_check("and it is clear of what it describes (detail ends %d, partner starts %d)"
+		% [int(d.end.x), int(pr.position.x)], d.end.x <= pr.position.x)
+	_check("on the LEFT of it, as designed", d.position.x < pr.position.x)
+	_check("not on top of it", not d.intersects(pr))
+	_check("and it is the same size as what it hides behind (%d x %d vs %d x %d)"
+		% [int(d.size.x), int(d.size.y), int(pr.size.x), int(pr.size.y)],
+		absf(d.size.x - pr.size.x) < 2.0 and absf(d.size.y - pr.size.y) < 2.0)
+	_on_screen("offer detail card", d)
+	_check("offer detail stays out of the log's column (ends %d)" % int(d.end.x),
+		d.end.x <= LOG_EDGE)
 
+	_check("the customer detail stayed home, where it is just a card back",
+		not _controller._customer_details[at].is_out())
 	for i in range(3):
 		if i == at:
 			continue
@@ -711,16 +772,19 @@ func _check_the_detail_cards_slid_out_clear() -> void:
 				and not _controller._offer_details[i].is_out())
 
 ## The reported bug: "when zoomed in, the customer card gets overlapped by the
-## product card". Four card rectangles, none of which may touch another.
+## product card". FIVE rectangles now - the negotiation is three of them and
+## the two flankers are the other two - and none may touch another. The tight
+## seam is the offer detail against the left flanker, which the design put at
+## about 25 px of vertical clearance; it is governed by SEAT_CAM.y alone.
 func _check_the_seat_layout_does_not_overlap_itself() -> void:
 	var at := _at()
 	var rects := {
 		"customer card": _rect_of(_controller._customer_cards[at], CARD),
-		"customer detail": _rect_of(_controller._customer_details[at],
-			DetailCard3D.CARD_SIZE),
 		"product slot": _rect_of(_controller._chair_zones[at], CARD),
 		"offer detail": _rect_of(_controller._offer_details[at],
 			DetailCard3D.CARD_SIZE),
+		"right flanker": _rect_of(_controller._customer_cards[(at + 1) % 3], CARD),
+		"left flanker": _rect_of(_controller._customer_cards[(at + 2) % 3], CARD),
 	}
 	var names := rects.keys()
 	for a in range(names.size()):
@@ -731,8 +795,9 @@ func _check_the_seat_layout_does_not_overlap_itself() -> void:
 				% [names[a], names[b], ra, rb], not ra.intersects(rb))
 	for n in names:
 		_on_screen(n, rects[n])
-		_check("%s is big enough to read (%d px tall)" % [n, int(rects[n].size.y)],
-			rects[n].size.y >= 300.0)
+		var floor_px: float = 240.0 if str(n).ends_with("flanker") else 300.0
+		_check("%s is big enough to read (%d px tall, needs %d)"
+			% [n, int(rects[n].size.y), int(floor_px)], rects[n].size.y >= floor_px)
 
 	# The bug before that: the hand rose and covered the product. It is allowed
 	# to run off the bottom of the screen, but not up over the table.

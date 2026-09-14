@@ -941,3 +941,98 @@ an ask that never happened, and burn the action's own cadence doing it.
 never once read it. It matters now - a demand the customer says out loud reads
 as a person interrupting you, where the same event as a bare stat change reads
 as a rules engine ticking over.
+
+### The table is a carousel, and nobody gets hidden
+
+Approaching someone used to **hide the other two**. That was defensible when
+the only thing you could do about a customer was be standing with them; with
+demands on fuses it is exactly wrong, because the whole decision is about the
+people you are *not* with.
+
+The three seats now sit on a circle. Approaching somebody spins the circle
+until they are at the front, and the other two fall away to either side -
+smaller because they are further off, not because anything scaled them. The
+camera barely moves: one marker for the floor, one for a seat, both unpitched,
+both on the axis.
+
+### Why the lens had to change, and why no radius would have done instead
+
+This is the part worth knowing before anybody touches `CAM_FOV`. With seats on
+a circle of radius `R`, camera at radius `D`, near depth `N = D-R` and far
+depth `F = D+R/2`:
+
+```
+flanker_offset_px            = 0.866 x R x K / F      K = 540 / tan(fov/2)
+flanker_height/active_height = N / F
+```
+
+Eliminate `R` and `D` and exactly one identity is left:
+
+```
+K = 1.7324 x offset_px / (1 - h_far/h_near)
+```
+
+**The flankers' distance from the centre of the screen does not depend on `R`
+or `D` at all - only on focal length.** Widening the circle pushes them outward
+and shrinks them by precisely the amount that cancels it. At `fov 60`, flankers
+at 60% size land around x 744/1176: bunched in the middle, overlapping the
+negotiation, and no radius anywhere fixes it. A longer lens compresses depth so
+they stay large while still subtending a wide angle.
+
+**`CAM_FOV = 28`**, `CAROUSEL_R = 6`, and the two constants were then chosen so
+that:
+
+| | |
+|---|---|
+| the fronted floor card | **286 x 402 px** - pixel-identical to the pre-carousel floor card, so the `>= 360` readability floor survives untouched |
+| the seat's customer card and product slot | **256 x 358 px** at the same pixels they already occupied - the negotiation you already tuned did not move |
+| the flankers | **194 x 272** on the floor, **179 x 251** at a seat - honest perspective, and the number the icon work has to survive |
+
+The tight seam in the whole layout is the offer detail against the left flanker:
+**25 px of vertical clearance**, governed by `SEAT_CAM.y` alone at about 30 px
+per 0.1 unit. Raising it costs headroom against the hand, which has 6 px.
+
+**Only `PILE_DEPTH` changed for your own cards.** Screen offset is
+`y x K / depth`, so scaling the pile depth by the same 2.3157 that `K` grew by
+leaves the hand, the draw pile and the discard on exactly the pixels they were
+on. The fan, the hover lift and every stowed position are untouched.
+
+### Billboarding, solved without billboarding
+
+A flat quad at 120 degrees off-axis renders edge-on. The fix is not a billboard
+material and not a per-frame `look_at`: **each seat carries a local rotation
+that cancels the carousel's**, holding its cards at world yaw 0. The camera
+sits at z 27 against a table spanning ±6, so the worst bearing to a flanker is
+`atan(5.196/30.2) = 9.8 degrees`, and a card viewed from there foreshortens by
+`cos 9.8 = 0.985` - a 1.5% squeeze.
+
+It has to be per-seat: one counter-rotating node above them would undo their
+positions along with their facing. What it buys is that **`FlipPair` is
+untouched** - it turns a node *below* this one, so the hover flip behaves
+exactly as it did - and so are the hover pads, which are boxes rather than
+quads and do not care about 9.8 degrees.
+
+**That counter-rotation had no test and nearly shipped without one.**
+Unprojecting a card's centre says where the card is and nothing about which way
+it points, so three cards edge-on to the camera pass every rectangle check in
+`drive_shift.gd`. Worse, the first facing check written for it ran at station
+0 - where the carousel is unrotated and a missing counter-rotation is
+indistinguishable from a working one - and passed against a deliberately broken
+build. The check that counts runs after moving to chair B, the first station
+that actually turns.
+
+### What else moved
+
+The **action column is on the left now**, under the mode button, mirroring the
+log. The right rail is fully spoken for and the 155 px gutters inside the
+composition are too narrow for a 300 px button. Real cost: OFFER/DROP/CLOSE sit
+further from the product they act on.
+
+The **customer detail card no longer slides out at a seat**. It went back to
+being purely the back of the floor card; the space it used to occupy is where a
+flanker now sits, and what it said belongs on the customer card's own front -
+which is what the next section is for.
+
+Drop zones are keyed on the **slot's** visibility rather than the seat's, since
+every seat is visible now and only the one you are at has a product slot
+showing.

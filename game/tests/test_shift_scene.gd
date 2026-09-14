@@ -15,7 +15,7 @@ func _scene() -> Node3D:
 
 func test_the_table_has_every_zone_the_controller_expects() -> void:
 	var s := _scene()
-	for path in ["Table/Seat0/Chair0", "Table/Seat1/Chair1", "Table/Seat2/Chair2",
+	for path in ["Table/Carousel/Seat0/Chair0", "Table/Carousel/Seat1/Chair1", "Table/Carousel/Seat2/Chair2",
 			"Camera3D/Draw", "Camera3D/Discard", "Camera3D/Hand"]:
 		var n := s.get_node_or_null(NodePath(path))
 		h.check("%s exists" % path, n != null)
@@ -28,12 +28,12 @@ func test_the_table_has_every_zone_the_controller_expects() -> void:
 
 func test_a_seat_is_one_node_so_the_other_two_can_be_hidden() -> void:
 	## Load-bearing. The seats sit close enough together for the floor view to be
-	## readable, which means the neighbours are inside the seat framing whether
-	## you like it or not - so sitting down hides them, and that has to be one
-	## flag rather than a hunt through four siblings each time.
+	## readable. That used to mean sitting down HID the neighbours; since the
+	## carousel it means turning them out to the sides instead. Either way a seat
+	## has to be one node rather than four siblings to chase.
 	var s := _scene()
 	for i in range(3):
-		var seat := s.get_node_or_null(NodePath("Table/Seat%d" % i)) as Node3D
+		var seat := s.get_node_or_null(NodePath("Table/Carousel/Seat%d" % i)) as Node3D
 		h.check("Seat%d is one node" % i, seat != null)
 		if seat == null:
 			continue
@@ -51,7 +51,7 @@ func test_a_customer_and_their_sheet_turn_over_together() -> void:
 	var s := _scene()
 	for i in range(3):
 		var flip := s.get_node_or_null(
-			NodePath("Table/Seat%d/CustomerFlip%d" % [i, i])) as Node3D
+			NodePath("Table/Carousel/Seat%d/CustomerFlip%d" % [i, i])) as Node3D
 		h.check("CustomerFlip%d exists" % i, flip != null)
 		h.check("and it is the thing that knows how to turn over",
 			flip != null and flip.has_method("show_back"))
@@ -70,7 +70,7 @@ func test_every_slot_is_exactly_one_card_wide() -> void:
 	var s := _scene()
 	for i in range(3):
 		var slab := s.get_node(
-			NodePath("Table/Seat%d/Chair%d/ZoneSlab" % [i, i])) as MeshInstance3D
+			NodePath("Table/Carousel/Seat%d/Chair%d/ZoneSlab" % [i, i])) as MeshInstance3D
 		h.eq("seat %d's slot is exactly a card, so its visible edge is where the "
 			% i + "customer's is", (slab.mesh as QuadMesh).size, CARD)
 	s.free()
@@ -85,8 +85,8 @@ func test_the_detail_cards_start_tucked_behind_their_partner() -> void:
 		for pair in [["Seat%d/CustomerFlip%d/Customer%d" % [i, i, i],
 					"Seat%d/CustomerFlip%d/CustomerDetail%d" % [i, i, i]],
 				["Seat%d/Chair%d" % [i, i], "Seat%d/OfferDetail%d" % [i, i]]]:
-			var front := s.get_node(NodePath("Table/" + pair[0])) as Node3D
-			var detail := s.get_node(NodePath("Table/" + pair[1])) as Node3D
+			var front := s.get_node(NodePath("Table/Carousel/" + pair[0])) as Node3D
+			var detail := s.get_node(NodePath("Table/Carousel/" + pair[1])) as Node3D
 			h.check("%s shares its partner's x and y" % detail.name,
 				is_equal_approx(front.position.x, detail.position.x)
 					and is_equal_approx(front.position.y, detail.position.y))
@@ -124,10 +124,10 @@ func test_the_customer_row_cannot_overlap_the_product_row() -> void:
 		# Seat-local, summed by hand: the customer now hangs off the flip node, so
 		# its own position.y is zero and comparing the two raw locals would say
 		# the rows are on top of each other whatever the layout does.
-		var flip := s.get_node(NodePath("Table/Seat%d/CustomerFlip%d" % [i, i])) as Node3D
-		var who := s.get_node(NodePath("Table/Seat%d/CustomerFlip%d/Customer%d"
+		var flip := s.get_node(NodePath("Table/Carousel/Seat%d/CustomerFlip%d" % [i, i])) as Node3D
+		var who := s.get_node(NodePath("Table/Carousel/Seat%d/CustomerFlip%d/Customer%d"
 			% [i, i, i])) as Node3D
-		var chair := s.get_node(NodePath("Table/Seat%d/Chair%d" % [i, i])) as Node3D
+		var chair := s.get_node(NodePath("Table/Carousel/Seat%d/Chair%d" % [i, i])) as Node3D
 		var apart: float = absf(flip.position.y + who.position.y - chair.position.y)
 		h.check("seat %d keeps the two rows %.2f apart, clear of a %.2f card"
 			% [i, apart, CARD.y], apart > CARD.y)
@@ -148,7 +148,7 @@ func test_your_things_are_parented_to_the_camera_and_theirs_are_not() -> void:
 				"CustomerFlip%d/Customer%d" % [i, i],
 				"CustomerFlip%d/CustomerDetail%d" % [i, i]]:
 			h.check("%s belongs to the world, not to you" % theirs,
-				s.get_node(NodePath("Table/Seat%d/%s" % [i, theirs])).get_parent() != cam)
+				s.get_node(NodePath("Table/Carousel/Seat%d/%s" % [i, theirs])).get_parent() != cam)
 	s.free()
 
 func test_your_things_start_stowed_below_the_frame() -> void:
@@ -177,7 +177,7 @@ func test_your_hand_is_never_behind_the_table() -> void:
 	var s := _scene()
 	var felt_z: float = (s.get_node(^"Felt") as Node3D).position.z
 	var depth: float = (s.get_node(^"Camera3D/Hand") as Node3D).position.z   # negative
-	for name in ["CameraFloor", "SeatCam0", "SeatCam1", "SeatCam2"]:
+	for name in ["CameraFloor", "SeatCam"]:
 		var cam_z: float = (s.get_node(NodePath(name)) as Node3D).position.z
 		var hand_world_z: float = cam_z + depth
 		h.check("from %s the hand sits in front of the felt (%.1f > %.1f)"
@@ -189,27 +189,71 @@ func test_the_cameras_are_flat_on() -> void:
 	## tilt foreshortens the exact thing the whole view exists to make legible,
 	## and legibility is what three rounds of this have been about.
 	var s := _scene()
-	for name in ["CameraFloor", "SeatCam0", "SeatCam1", "SeatCam2", "Camera3D"]:
+	for name in ["CameraFloor", "SeatCam", "Camera3D"]:
 		var r: Vector3 = (s.get_node(NodePath(name)) as Node3D).rotation
 		h.check("%s looks straight at the cards (%s)" % [name, r],
 			r.is_equal_approx(Vector3.ZERO))
 	s.free()
 
-func test_each_seat_has_a_customer_card_and_a_framing() -> void:
+func test_each_seat_has_a_customer_card_under_the_carousel() -> void:
 	var s := _scene()
+	var root := "Table/Carousel"
+	h.check("the seats hang off something that turns",
+		s.get_node_or_null(NodePath(root)) is Node3D)
 	for i in range(3):
-		var who := s.get_node_or_null(NodePath("Table/Seat%d/CustomerFlip%d/Customer%d" % [i, i, i]))
+		var seat := "%s/Seat%d" % [root, i]
+		var who := s.get_node_or_null(NodePath("%s/CustomerFlip%d/Customer%d" % [seat, i, i]))
 		h.check("Customer%d exists" % i, who != null)
 		h.check("Customer%d is a customer card" % i, who is CustomerCard3D)
 		h.check("CustomerDetail%d is a detail card" % i,
-			s.get_node_or_null(NodePath("Table/Seat%d/CustomerFlip%d/CustomerDetail%d" % [i, i, i]))
+			s.get_node_or_null(NodePath("%s/CustomerFlip%d/CustomerDetail%d" % [seat, i, i]))
 				is DetailCard3D)
 		h.check("OfferDetail%d is a detail card" % i,
-			s.get_node_or_null(NodePath("Table/Seat%d/OfferDetail%d" % [i, i]))
-				is DetailCard3D)
-		h.check("SeatCam%d exists to frame them" % i,
-			s.get_node_or_null(NodePath("SeatCam%d" % i)) is Marker3D)
+			s.get_node_or_null(NodePath("%s/OfferDetail%d" % [seat, i])) is DetailCard3D)
+	h.check("one seat framing, because the table turns and the camera does not",
+		s.get_node_or_null(^"SeatCam") is Marker3D)
 	h.check("and a floor framing to return to", s.get_node_or_null(^"CameraFloor") is Marker3D)
+	s.free()
+
+func test_the_seats_sit_on_a_circle_at_120_degrees_to_each_other() -> void:
+	## The whole composition rests on this: an equal-sided triangle is what puts
+	## the two you are not with symmetrically left and right of the one you are.
+	var s := _scene()
+	var seats: Array[Vector3] = []
+	for i in range(3):
+		seats.append((s.get_node(NodePath("Table/Carousel/Seat%d" % i)) as Node3D).position)
+	var r: float = seats[0].length()
+	h.check("the circle has a real radius (%.2f)" % r, r > 1.0)
+	for i in range(3):
+		h.check("seat %d is on it (%.2f)" % [i, seats[i].length()],
+			absf(seats[i].length() - r) < 0.01)
+		var next: Vector3 = seats[(i + 1) % 3]
+		var angle := rad_to_deg(seats[i].signed_angle_to(next, Vector3.UP))
+		h.check("and 120 degrees from the next (%.1f)" % angle,
+			absf(absf(angle) - 120.0) < 0.5)
+	h.check("seat 0 starts fronted, so an unturned carousel is a valid view",
+		seats[0].x == 0.0 and seats[0].z > 0.0)
+	s.free()
+
+func test_fronting_a_seat_puts_the_other_two_either_side_of_it() -> void:
+	## Not a claim about pixels - a claim about the arrangement. At every station
+	## the flankers straddle the front seat, and they never both land on one side.
+	var s := _scene()
+	var seats: Array[Vector3] = []
+	for i in range(3):
+		seats.append((s.get_node(NodePath("Table/Carousel/Seat%d" % i)) as Node3D).position)
+	for at in range(3):
+		# The scene root IS the controller, so its static station_for is right here.
+		var turn: float = s.station_for(at)
+		var spun: Array[Vector3] = []
+		for p in seats:
+			spun.append(p.rotated(Vector3.UP, turn))
+		h.check("at station %d the front seat is centred (%.2f)" % [at, spun[at].x],
+			absf(spun[at].x) < 0.01)
+		h.check("at station %d it is also the nearest" % at,
+			spun[at].z > spun[(at + 1) % 3].z and spun[at].z > spun[(at + 2) % 3].z)
+		h.check("at station %d one flanker is right" % at, spun[(at + 1) % 3].x > 1.0)
+		h.check("at station %d the other is left" % at, spun[(at + 2) % 3].x < -1.0)
 	s.free()
 
 func test_the_log_stops_short_of_the_bottom_strip() -> void:
@@ -230,7 +274,7 @@ func test_the_hand_fans_and_the_piles_stack() -> void:
 	h.check("hand fans", fan is FanCardLayout)
 	h.check("with an arc that actually spread", (fan as FanCardLayout).arc_angle_deg > 0.0)
 	h.check("and a radius", (fan as FanCardLayout).arc_radius > 0.0)
-	for path in ["Table/Seat0/Chair0", "Camera3D/Draw", "Camera3D/Discard"]:
+	for path in ["Table/Carousel/Seat0/Chair0", "Camera3D/Draw", "Camera3D/Discard"]:
 		h.check("%s stacks" % path,
 			(s.get_node(NodePath(path)) as CardCollection3D).card_layout_strategy is PileCardLayout)
 	s.free()

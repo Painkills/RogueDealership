@@ -20,7 +20,7 @@ extends Node3D
 const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
 
 ## Camera-local resting places. Must match build_shift_scene.gd.
-const PILE_DEPTH := -8.6
+const PILE_DEPTH := -19.91
 const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
 const HAND_STOWED := Vector3(0.0, -12.6, PILE_DEPTH)
 const DISCARD_UP := Vector3(7.2, -3.68, PILE_DEPTH)
@@ -69,9 +69,13 @@ signal shift_finished(report: Dictionary)
 
 var _shift: Shift
 var _standing_before: int = 0        ## the run's standing when THIS shift started
-var _seats: Array = []               ## one Node3D per seat, hidden when elsewhere
+var _seats: Array = []               ## one Node3D per seat, never hidden now
+## Whoever the carousel is pointed at. Survives stepping out to the floor, so
+## the view does not spin back to seat 0 every time you stand up.
+var _last_station: int = 0
 var _chair_zones: Array = []
-var _seat_cams: Array = []
+var _seat_cam: Marker3D = null
+var _carousel: Node3D = null
 var _customer_cards: Array = []
 var _customer_flips: Array = []      ## the pair-turning node, one per seat
 var _hover_pads: Array = []          ## the immovable thing the mouse actually finds
@@ -96,7 +100,8 @@ func _ready() -> void:
 
 	_seats = [%Seat0, %Seat1, %Seat2]
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
-	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
+	_seat_cam = %SeatCam
+	_carousel = %Carousel
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
 	_customer_flips = [%CustomerFlip0, %CustomerFlip1, %CustomerFlip2]
 	_hover_pads = [%HoverPad0, %HoverPad1, %HoverPad2]
@@ -411,28 +416,37 @@ func _render_hover_flip() -> void:
 ## Move between the wide floor shot and one seat, and raise or stow the things
 ## that belong to you. The two modes have to LOOK different or nothing tells you
 ## which one you are in.
+## Which way the carousel must be turned to put seat `i` at the front. Seat i
+## sits at carousel angle 120*i, so this is simply its negative - and with it
+## applied, seat (i+1)%3 is always on the RIGHT and (i+2)%3 always on the LEFT.
+static func station_for(chair: int) -> float:
+	return deg_to_rad(-120.0 * chair)
+
 func _apply_framing() -> void:
 	if _framed_at == _shift.at:
 		return
 	_framed_at = _shift.at
 	var seated: bool = _shift.at != null
-	var target: Node3D = _seat_cams[int(_shift.at)] if seated else _camera_floor
+	var target: Node3D = _seat_cam if seated else _camera_floor
+	# Staying put on the floor keeps whoever you last dealt with at the front,
+	# which is the same person the mode button offers to take you back to.
+	var station := station_for(int(_shift.at) if seated else _last_station)
+	if seated:
+		_last_station = int(_shift.at)
 
-	# The seats sit close enough together for the floor view to be readable,
-	# which means the neighbours are unavoidably inside the seat framing. They
-	# are hidden rather than escaped - the mode button is how you check on them,
-	# and it says so.
+	# NOBODY IS HIDDEN ANY MORE. The carousel turns instead, so the two you are
+	# not with fall away to either side - smaller because they are further off,
+	# not because anything scaled them. What still belongs only to the seat you
+	# are at is the NEGOTIATION: the product slot and what is sitting in it.
 	for i in range(_seats.size()):
 		var here: bool = seated and i == int(_shift.at)
-		_show_seat(i, here or not seated)
-		_customer_details[i].reveal(here)
+		_show_seat(i, true)
+		# The customer detail no longer slides out at the seat - it is the BACK
+		# of the floor card and nothing else. Its content moved onto the front.
+		_customer_details[i].reveal(false)
 		_offer_details[i].reveal(here)
-		# The floor is customer cards and nothing else. The product slot and
-		# whatever is sitting in it belong to the negotiation, and its detail
-		# card would otherwise show its blank back down there. What you have left
-		# on someone's table is on their floor card, in one line.
-		_chair_zones[i].visible = seated
-		_offer_details[i].visible = seated
+		_chair_zones[i].visible = here
+		_offer_details[i].visible = here
 
 	if _framing_tween != null and _framing_tween.is_running():
 		_framing_tween.kill()
@@ -444,6 +458,12 @@ func _apply_framing() -> void:
 		target.global_position, FRAMING_TWEEN)
 	_framing_tween.tween_property(_camera, "global_rotation",
 		target.global_rotation, FRAMING_TWEEN)
+	_framing_tween.tween_property(_carousel, "rotation:y", station, FRAMING_TWEEN)
+	# Each seat cancels the turn so its cards keep facing the camera. It has to
+	# be per-seat: a single counter-rotating node above them would undo their
+	# positions along with their facing.
+	for seat in _seats:
+		_framing_tween.tween_property(seat, "rotation:y", -station, FRAMING_TWEEN)
 
 	# Camera-LOCAL, so this is purely "up into view" or "down out of it" - the
 	# piles are already travelling with the camera for free.
@@ -466,12 +486,15 @@ func _show_seat(index: int, shown: bool) -> void:
 ## previous version of this file - which enabled them to stop hidden seats
 ## taking drops - made every card in the game untouchable.
 ##
-## The hidden seats still must not take drops, so they are re-disabled HERE
-## instead: DragController emits drag_started after enabling them all, so this
-## runs late enough to win, and its own _stop_drag() disables everything again.
-func _refuse_drops_on_hidden_seats() -> void:
+## The slots you are not at still must not take drops, so they are re-disabled
+## HERE instead: DragController emits drag_started after enabling them all, so
+## this runs late enough to win, and its own _stop_drag() disables everything
+## again. Keyed on the SLOT's own visibility rather than the seat's, because
+## since the carousel arrived every seat is visible and only the one you are at
+## has a product slot showing.
+func _refuse_drops_on_slots_you_are_not_at() -> void:
 	for i in range(_chair_zones.size()):
-		if not _seats[i].visible:
+		if not _chair_zones[i].visible:
 			_chair_zones[i].disable_drop_zone()
 
 func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
@@ -592,7 +615,7 @@ func _show_report() -> void:
 
 func _on_drag_started(card) -> void:
 	_dragging = card as CardFace3D
-	_refuse_drops_on_hidden_seats()
+	_refuse_drops_on_slots_you_are_not_at()
 	# DragController's own _drag_card_start() just called remove_hovered() on
 	# this card - its ROOT now tracks the pointer directly ("set card position
 	# to under mouse"), on the assumption no local offset is needed once a drag

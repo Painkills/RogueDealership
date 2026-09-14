@@ -18,10 +18,28 @@ extends SceneTree
 ## make the customer's margin and the product's margin equal BY CONSTRUCTION
 ## rather than by two numbers happening to agree.
 ##
-## Each seat is one Node3D so the two you are not with can be hidden with a
-## single flag. They have to be: at a spacing wide enough to keep them out of the
-## seat framing, the floor framing has to retreat so far that the cards are
-## unreadable, which is exactly the state this replaces.
+## THE TABLE IS A CAROUSEL AND THE CAMERA BARELY MOVES. The three seats sit on
+## a circle; approaching someone spins the circle until they are at the front,
+## and the other two fall away to either side, smaller by honest perspective
+## rather than by being scaled. Nobody is ever hidden.
+##
+## THE LENS IS WHAT MAKES THAT POSSIBLE, and it is worth knowing why before
+## touching CAM_FOV. With seats on a circle of radius R and the camera at
+## radius D, near depth N = D-R and far depth F = D+R/2:
+##
+##     flanker_offset_px = 0.866 x R x K / F      where K = 540 / tan(fov/2)
+##     flanker_height / active_height = N / F
+##
+## Eliminate R and D and one identity falls out:
+##
+##     K = 1.7324 x offset_px / (1 - h_far/h_near)
+##
+## The flankers' distance from the centre of screen DOES NOT DEPEND ON R OR D
+## AT ALL - only on focal length. Widening the circle pushes them outward and
+## shrinks them by exactly the amount that cancels it. At fov 60, flankers at
+## 60% size land around x 744/1176: clustered in the middle, overlapping the
+## negotiation, and no radius fixes it. A longer lens compresses depth so they
+## stay big while still subtending a wide angle. Hence 28.
 ##
 ## The cameras are UNPITCHED. These cards are flat quads with text rendered into
 ## them, and any tilt at all foreshortens the one thing the whole view exists to
@@ -34,9 +52,10 @@ const DETAIL_CARD := "res://scenes/cards/detail_card_3d.tscn"
 const REPORT := "res://scenes/report.tscn"
 
 # --- table geometry, world units -------------------------------------------
-## Close enough together that the floor framing can stay near the cards. The
-## seats overlap in the seat framing and are hidden rather than escaped.
-const CHAIR_X := [-4.1, 0.0, 4.1]
+## Seats sit on this circle at 0, 120 and 240 degrees. Seat i is at carousel
+## angle 120*i, so fronting it means turning the carousel to -120*i - which
+## puts seat (i+1)%3 on the RIGHT and seat (i+2)%3 on the LEFT, always.
+const CAROUSEL_R := 6.0
 const CUSTOMER_Y := 4.0      ## their card, seat-local
 const CHAIR_Y := 0.0         ## the offer slot in front of them, seat-local
 ## The two halves of a pair, a hair either side of the pair's own plane, so
@@ -48,26 +67,35 @@ const BACK_Z := -0.03
 ## margins would no longer match.
 const SLOT_SIZE := Vector2(2.5, 3.5)
 
-## Well behind everything. Your hand rides at PILE_DEPTH in FRONT of the camera,
-## which puts it at world z = cam_z + PILE_DEPTH; if the felt sat closer than
-## that the hand would slide behind the table as the camera pushed in and simply
-## vanish. It did. test_shift_scene.gd pins the clearance now.
-const FELT_Z := -8.0
+## Well behind everything, and now behind the BACK of the circle (z -3) as well.
+## Your hand rides at PILE_DEPTH in FRONT of the camera, which puts it at world
+## z = cam_z + PILE_DEPTH; if the felt sat closer than that the hand would slide
+## behind the table as the camera pushed in and simply vanish. It did.
+## test_shift_scene.gd pins the clearance now.
+const FELT_Z := -14.0
 
-const CAM_FOV := 60.0
-## Offset right so the three cards compose LEFT of the shift log, and close
-## enough that a 500x700 card face lands near 400 screen pixels tall. Backed off
-## from 7.36, which left the leftmost card only 25 px from the edge of frame.
-const FLOOR_CAM := Vector3(2.27, 4.0, 8.2)
-## Slightly RIGHT of the chair, because the detail cards come out to the LEFT
-## and the composition's centre goes with them.
-const SEAT_CAM_DX := 0.59
-const SEAT_CAM_Y := 1.40
-const SEAT_CAM_Z := 9.17
+## See the header. K = 540 / tan(14deg) = 2165.85.
+const CAM_FOV := 28.0
+## ONE seat camera, not three: the carousel does the moving, so the camera only
+## ever travels between these two points, both on the axis and both unpitched.
+##
+## Near card plane 6.03, so N = 18.90 and a card is 2.5x3.5 x (K/N) = 286x402 px
+## - pixel-identical to the pre-carousel floor card, which is why the >= 360 px
+## readability floor survives untouched for whoever is at the front.
+const FLOOR_CAM := Vector3(0.0, 4.00, 24.93)
+## N = 21.17 here, and K/N = 102.31 against the old framing's 102.33: the
+## negotiation lands on the pixels it already landed on, and the flankers are
+## pure addition on either side of it.
+const SEAT_CAM := Vector3(0.0, 1.40, 27.20)
 
 # --- yours, in CAMERA-LOCAL space ------------------------------------------
 # -Z is forward. Stowed positions sit below the bottom of frame at that depth.
-const PILE_DEPTH := -8.6
+##
+## The ONLY one of these that changed for the 28mm lens. Screen offset is
+## y x K / depth, so scaling the depth by the same 2.3157 that K grew by leaves
+## the hand, the draw pile and the discard on exactly the pixels they were on
+## before - every constant below is untouched, and so is the fan.
+const PILE_DEPTH := -19.91
 ## The hand deliberately runs off the bottom of the screen. A hand small enough
 ## to fit entirely inside the strip below the table is a hand you cannot read.
 const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
@@ -85,12 +113,19 @@ const FAN_ANGLE := 24.0
 const FAN_RADIUS := 24.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
-const MODE_RECT := Rect2(28, 82, 360, 84)
+const MODE_RECT := Rect2(28, 40, 360, 84)
 ## Stops well above the bottom strip, which is where the discard rises into.
 const LOG_RECT := Rect2(1480, 40, 416, 690)
 ## A column, not a row. The bottom of the screen belongs to the hand and the two
 ## piles, and a Button laid over a card steals the click meant for the card.
-const ACTION_RECT := Rect2(1140, 296, 300, 336)
+##
+## LEFT rail now, mirroring the log. The right rail is fully spoken for (log
+## 1480..1896, discard 1607..1879) and the 155 px gutters inside the carousel
+## composition are too narrow for a 300 px button. Real cost: OFFER/DROP/CLOSE
+## sit further from the product they act on. It is the only placement that
+## satisfies "no button sits on a card" for five card rects instead of four.
+const ACTION_RECT := Rect2(96, 300, 330, 340)
+const ACTION_BUTTON := Vector2(330, 100)
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -148,24 +183,39 @@ func _init() -> void:
 	root.add_child(table_mesh)
 	table_mesh.owner = root
 
-	# --- theirs: fixed in the world --------------------------------------
+	# --- theirs: on a turntable ------------------------------------------
 	var table := Node3D.new()
 	table.name = "Table"
 	root.add_child(table)
 	table.owner = root
+
+	# What actually turns. Everything below it rides around; the camera does
+	# not chase anybody.
+	var carousel := Node3D.new()
+	carousel.name = "Carousel"
+	carousel.unique_name_in_owner = true
+	table.add_child(carousel)
+	carousel.owner = root
 
 	var collection_scene: PackedScene = load(COLLECTION)
 	var customer_scene: PackedScene = load(CUSTOMER_CARD)
 	var detail_scene: PackedScene = load(DETAIL_CARD)
 
 	for i in range(3):
-		# One node per seat, so hiding the two you are not with is one flag each
-		# rather than a hunt through five siblings.
+		# One node per seat, carrying its own counter-rotation. A flat quad at
+		# 120 degrees off-axis would render edge-on, so every seat holds its
+		# card pivot at WORLD yaw 0 by cancelling the carousel's rotation. The
+		# camera sits at z 27 against a table spanning +-6, so the worst bearing
+		# to a flanker is atan(5.196/30.2) = 9.8 degrees and a card viewed from
+		# there foreshortens by cos(9.8) = 0.985. A 1.5% squeeze, and no
+		# billboard material, no per-frame look_at, and FlipPair - which turns a
+		# node BELOW this one - carries on working untouched.
+		var theta := deg_to_rad(120.0 * i)
 		var seat := Node3D.new()
 		seat.name = "Seat%d" % i
-		seat.position = Vector3(CHAIR_X[i], 0.0, 0.0)
+		seat.position = Vector3(CAROUSEL_R * sin(theta), 0.0, CAROUSEL_R * cos(theta))
 		seat.unique_name_in_owner = true
-		table.add_child(seat)
+		carousel.add_child(seat)
 		seat.owner = root
 
 		# The customer and their sheet turn over TOGETHER, so they hang off one
@@ -206,12 +256,13 @@ func _init() -> void:
 		_detail(detail_scene, "OfferDetail%d" % i,
 			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
 
-		var seat_cam := Marker3D.new()
-		seat_cam.name = "SeatCam%d" % i
-		seat_cam.position = Vector3(CHAIR_X[i] + SEAT_CAM_DX, SEAT_CAM_Y, SEAT_CAM_Z)
-		seat_cam.unique_name_in_owner = true
-		root.add_child(seat_cam)
-		seat_cam.owner = root
+
+	var seat_cam := Marker3D.new()
+	seat_cam.name = "SeatCam"
+	seat_cam.position = SEAT_CAM
+	seat_cam.unique_name_in_owner = true
+	root.add_child(seat_cam)
+	seat_cam.owner = root
 
 	# --- yours: parented to the camera, stowed below frame ----------------
 	var hand := _collection(collection_scene, "Hand", HAND_STOWED, cam, root)
@@ -231,7 +282,9 @@ func _init() -> void:
 
 	var drag := DragController.new()
 	drag.name = "DragController"
-	drag.card_drag_plane = Plane(Vector3(0, 0, 1), 2.0)
+	# Camera-local 16.60 from SEAT_CAM, the same fraction of the way to the
+	# table that 7.17 was before the lens changed.
+	drag.card_drag_plane = Plane(Vector3(0, 0, 1), 10.60)
 	root.add_child(drag)
 	drag.owner = root
 
@@ -391,7 +444,7 @@ func _build_hud(root: Node) -> void:
 		var b := Button.new()
 		b.name = spec[0]
 		b.text = spec[1]
-		b.custom_minimum_size = Vector2(300, 100)
+		b.custom_minimum_size = ACTION_BUTTON
 		b.add_theme_font_size_override("font_size", 30)
 		b.unique_name_in_owner = true
 		actions.add_child(b)
