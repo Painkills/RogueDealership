@@ -1,0 +1,86 @@
+name: Test and deploy the Web build
+
+# Fires on every push to your working branch, and gives you a manual "Run
+# workflow" button in the Actions tab too, for re-deploying without a new
+# commit. Change the branch name below once this settles onto its long-term
+# home (main, most likely) - it is the only line that needs to move.
+on:
+  push:
+    branches:
+      - worktree-godot-g1
+  workflow_dispatch: {}
+
+# Lets this workflow push to gh-pages using the token GitHub already hands
+# every run for free - no secret to create or paste in anywhere.
+permissions:
+  contents: write
+
+# A second push while one deploy is still running cancels the older one
+# rather than racing it for the gh-pages branch.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2
+  PROJECT_PATH: game
+
+jobs:
+  deploy:
+    name: Suite, drivers, export, deploy
+    runs-on: ubuntu-24.04
+    # barichello/godot-ci bundles this exact Godot version and its export
+    # templates - the same combination this project has been built and
+    # tested against all along, verified against the version this project
+    # actually pins to rather than "whatever latest happens to be".
+    container:
+      image: barichello/godot-ci:4.7.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The image bakes the export templates into root's own home directory,
+      # which is not necessarily where THIS job's $HOME points - so they have
+      # to be moved into place before any --export-* command can find them.
+      # Plain script runs (the suite, the drivers) need no such step; Godot
+      # imports the project itself on first use, since .godot/ is untracked
+      # and every checkout starts from nothing.
+      - name: Move the bundled export templates into place
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+            ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+
+      # Three gates, in the order this project's own README verifies them -
+      # the unit suite, then the two live drivers that reach real physics
+      # picking and screen-space geometry no headless unit test can. Any one
+      # of these failing stops the job here: export and deploy never run.
+      - name: Run the headless suite
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tests/run_tests.gd
+
+      - name: Run the live shift driver
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_shift.gd
+
+      - name: Run the live run driver
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_run.gd
+
+      - name: Export the Web build
+        run: |
+          mkdir -v -p ${{ env.PROJECT_PATH }}/build/web
+          godot --headless --path ${{ env.PROJECT_PATH }} \
+            --export-debug "Web" "build/web/index.html"
+
+      # The exact throwaway-repo push this project has been doing by hand all
+      # session: a fresh git history scoped to just the exported folder,
+      # force-pushed straight to gh-pages. Plain git, no third-party Action,
+      # so there is nothing here you cannot read and understand line by line.
+      - name: Deploy to GitHub Pages
+        working-directory: ${{ env.PROJECT_PATH }}/build/web
+        run: |
+          git init -q
+          git checkout -q -b gh-pages
+          git add -A
+          git -c user.name="github-actions[bot]" \
+            -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Publish Web build (${{ github.sha }})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages
