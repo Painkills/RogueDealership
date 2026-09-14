@@ -83,16 +83,16 @@ func test_describe_agrees_with_apply_for_every_effect() -> void:
 		h.check("%s says something" % e.get_script().resource_path.get_file(),
 			d.strip_edges() != "")
 
-func test_the_starter_deck_is_fourteen_cards() -> void:
+func test_the_starter_deck_is_fifteen_cards() -> void:
 	var total := 0
 	var products := 0
 	for c in _pool().starter_cards():
 		total += c.copies
 		if c is ProductCardDef:
 			products += c.copies
-	h.eq("fourteen cards", total, 14)
+	h.eq("fifteen cards", total, 15)
 	h.eq("six of them products", products, 6)
-	h.eq("eight support", total - products, 8)
+	h.eq("nine support", total - products, 9)
 
 func test_no_starter_card_moves_a_full_place_on_their_list_for_free() -> void:
 	## m2's rule: a card worth a whole rank step becomes a substitute for

@@ -772,3 +772,18 @@ and `ticks_approach` stays in the report, honest and zero.
 longer advances while you walk, so a customer's fuse measures *units of work*,
 not wall-clock beats - which is what will make "leave them alone for a few
 ticks" mean "go do work elsewhere" rather than "stand still".
+
+### A second Small Talk
+
+`smalltalk.tres` is `copies = 2`, taking the starting deck to **15** (6 products,
+9 support). It is the only patience-restoring card in the game, and what comes
+next leans hard on patience, so the second copy is load-bearing rather than
+generous.
+
+Two knock-ons worth knowing. A pure-support opening hand - nearly a dead turn,
+since `needs_offer` defaults to true and 6 of the 9 starter support cards refuse
+an empty table - is now `C(9,5)/C(15,5)` = 4.2% rather than 2.8%, so
+`hand_min_products` earns its keep more often than it used to. And the fifteenth
+card moved every shuffle: `test_shift_clock.gd`'s deliberately barren seed is
+**15** where it was **8**, which is a fact about the deck's size and not about
+either seed.

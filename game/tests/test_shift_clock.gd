@@ -63,10 +63,10 @@ func test_the_shift_ends_at_closing_time() -> void:
 	s._burn(1, "cards")
 	h.check("closing time", s.is_over())
 
-func test_the_starting_deck_is_fourteen_instances() -> void:
+func test_the_starting_deck_is_fifteen_instances() -> void:
 	var s := _shift([&"easygoing"])
 	var total: int = s.draw.size() + s.hand.size() + s.discard.size()
-	h.eq("fourteen cards in play", total, 14)
+	h.eq("fifteen cards in play", total, 15)
 	h.eq("hand filled to size", s.hand.size(), s.cfg.hand_size)
 
 func test_every_card_instance_has_its_own_uid() -> void:
@@ -107,10 +107,10 @@ func _products_in(pile: Array) -> int:
 
 func test_no_opening_hand_is_ever_dealt_without_a_product() -> void:
 	## A hand of pure support against a seated customer is nearly a dead turn:
-	## needs_offer defaults to true, so 6 of the 8 starter support cards refuse to
-	## play with an empty table, leaving Read the Room, Small Talk, and then dig at
-	## a tick a card. Unbiased, C(8,5)/C(14,5) = 2.8% of hands land there - so 300
-	## seeds catch a regression essentially every time.
+	## needs_offer defaults to true, so 6 of the 9 starter support cards refuse to
+	## play with an empty table, leaving Read the Room, two Small Talks, and then
+	## dig at a tick a card. Unbiased, C(9,5)/C(15,5) = 4.2% of hands land there -
+	## so 300 seeds catch a regression essentially every time.
 	var worst := 99
 	for seed_value in range(1, 301):
 		var n := _products_in(_seeded(seed_value).hand)
@@ -120,10 +120,11 @@ func test_no_opening_hand_is_ever_dealt_without_a_product() -> void:
 
 func test_the_floor_is_what_saves_a_hand_that_would_have_had_no_product() -> void:
 	## The paired case, and the reason the sweep above is not just asserting that
-	## decks are usually kind. Seed 8 deals five support cards with the bias off,
+	## decks are usually kind. Seed 15 deals five support cards with the bias off,
 	## and one product with it on - so the floor is doing the work, and nothing
-	## else about the deal moved.
-	const BARREN_SEED := 8
+	## else about the deal moved. (It was seed 8 until Small Talk's second copy
+	## made the deck 15 cards and moved every shuffle.)
+	const BARREN_SEED := 15
 	h.eq("bias off: a hand of pure support",
 		_products_in(_seeded(BARREN_SEED, {"hand_min_products": 0}).hand), 0)
 	var on := _seeded(BARREN_SEED)
