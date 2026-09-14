@@ -25,6 +25,12 @@ class_name InterestGrid extends Control
 const NUMERAL := 52
 const GAP := 14.0
 const RADIUS := 6.0
+## A lit row used to say nothing about WHICH category lit - the reader had to
+## already know pool order by heart to turn "three squares just changed" into
+## "oh, they are a Person person". This column is CategoryIcon.draw()'s badge
+## for each row, reserved on the left so the three columns of cells never move.
+const ICON_COL := 90.0
+const ICON_GAP := 12.0
 
 var _pool: InterestPool = null
 var _known: Dictionary = {}          ## interest id -> rank, 1..9
@@ -67,20 +73,36 @@ func _draw() -> void:
 	if cols == 0:
 		return
 
-	var cw: float = (size.x - GAP * (cols - 1)) / float(cols)
+	var grid_x: float = ICON_COL + ICON_GAP
+	var cw: float = (size.x - grid_x - GAP * (cols - 1)) / float(cols)
 	var ch: float = (size.y - GAP * (rows - 1)) / float(rows)
 	var font := get_theme_default_font()
 
 	for r in range(rows):
 		var cat: Category = _pool.categories[r]
-		# The whole row lights when Read the Room narrows nine to three. It is
-		# the only thing on this card that says what that tick bought you.
+		# The whole row lights when Read the Room narrows nine to three. It used
+		# to be the only thing on this card that said what that tick bought you
+		# - which meant it said nothing at all unless you already knew which
+		# category the lit row WAS. The badge is what answers that now.
 		var in_cat: bool = _top_category != null and cat.id == _top_category
+		_draw_row_icon(Rect2(Vector2(0.0, r * (ch + GAP)), Vector2(ICON_COL, ch)),
+			cat, in_cat)
 		var ordered := row_order(_pool.in_category(cat), _known)
 		for c in range(ordered.size()):
-			var cell := Rect2(Vector2(c * (cw + GAP), r * (ch + GAP)),
+			var cell := Rect2(Vector2(grid_x + c * (cw + GAP), r * (ch + GAP)),
 				Vector2(cw, ch))
 			_draw_cell(cell, ordered[c], in_cat, font)
+
+## The badge shares its row's ground and its row's lit/unlit tint, so it reads
+## as part of the row it labels rather than a caption stuck beside it.
+func _draw_row_icon(row: Rect2, cat: Category, in_top_category: bool) -> void:
+	var ground: Color = Palette.color(&"panel_hi") if in_top_category \
+		else Palette.color(&"neutral_1")
+	draw_rect(row, ground, true)
+	var inset := row.grow(-minf(row.size.x, row.size.y) * 0.14)
+	var tint: Color = Palette.color(&"text") if in_top_category \
+		else Palette.color(&"text_dim")
+	CategoryIcon.draw(self, inset, cat.id, tint)
 
 func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 		font: Font) -> void:

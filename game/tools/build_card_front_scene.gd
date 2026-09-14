@@ -85,11 +85,31 @@ func _init() -> void:
 	col.add_child(rule)
 	rule.owner = root
 
+	# The icon only means something for a PRODUCT, whose body line IS a
+	# category - a support card's body is its effects' own describe() text, and
+	# has no category to show. So the icon is a sibling the running script
+	# shows or hides per card, not something baked into every card alike.
+	var body_row := HBoxContainer.new()
+	body_row.name = "BodyRow"
+	body_row.add_theme_constant_override("separation", 14)
+	body_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(body_row)
+	body_row.owner = root
+
+	var body_icon := Control.new()
+	body_icon.name = "BodyIcon"
+	body_icon.set_script(load("res://scripts/view/category_icon_control.gd"))
+	body_icon.custom_minimum_size = Vector2(44, 44)
+	body_icon.visible = false
+	body_row.add_child(body_icon)
+	body_icon.owner = root
+
 	var body := _label("BodyLabel", 38, Palette.color(&"text"))
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	col.add_child(body)
+	body_row.add_child(body)
 	body.owner = root
 
 	var money := _label("MarginLabel", 68, Palette.color(&"margin"))

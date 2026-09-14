@@ -53,10 +53,28 @@ func _init() -> void:
 	col.add_child(title)
 	title.owner = root
 
+	# Shared by both bodies (an archetype's name has no category; the offer's
+	# DOES), so the icon is a sibling toggled by whichever show_*() ran last
+	# rather than something always drawn.
+	var sub_row := HBoxContainer.new()
+	sub_row.name = "SubRow"
+	sub_row.add_theme_constant_override("separation", 10)
+	col.add_child(sub_row)
+	sub_row.owner = root
+
+	var sub_icon := Control.new()
+	sub_icon.name = "SubIcon"
+	sub_icon.set_script(load("res://scripts/view/category_icon_control.gd"))
+	sub_icon.custom_minimum_size = Vector2(32, 32)
+	sub_icon.visible = false
+	sub_row.add_child(sub_icon)
+	sub_icon.owner = root
+
 	var sub := _label("SubLabel", 27, Palette.color(&"accent"))
 	sub.text = "subtitle"
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
-	col.add_child(sub)
+	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sub_row.add_child(sub)
 	sub.owner = root
 
 	var rule := ColorRect.new()

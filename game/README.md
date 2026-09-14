@@ -1095,3 +1095,64 @@ is how the *detail* card nearly shipped with its tell cut in half two
 milestones ago. The driver now measures the whole column against the face and
 failed on the first run; the grid gave back 26 px and the numeral shrank to fit
 the shorter cell.
+
+
+### Category icons - what a lit square actually means
+
+The interest grid could light a whole row when Read the Room narrowed nine
+interests to three, but it never said WHICH third had lit. "Three squares just
+changed colour" told you something happened; it never told you whether that
+something was Vehicle, Deal, or Person, unless you already had pool order
+memorised.
+
+Three small vector glyphs fix that - a car in profile, a price tag, a
+head-and-shoulders silhouette - drawn by `CategoryIcon`, the same shape every
+time a category needs marking. **Filled, not outlined**: a hairline reads as a
+smudge once a 500x700-authored face lands on a flanker rendering at 0.358 of
+that, and a solid shape survives the downscale a line never does.
+
+**The badge sits to the LEFT of each row now**, reserved as its own column so
+the three cell columns never move. It shares the row's own lit/unlit ground and
+tint - dim `text_dim` when nothing points there yet, bright `text` once Read
+the Room narrows to it - so the icon reads as part of the row it labels rather
+than a caption stuck beside it.
+
+**The same glyph appears wherever a category's name is already written as
+prose**, via a second class, `CategoryIconControl` - a small `Control` any
+Label-based layout can drop in and call `set_category()` on. A hand card's body
+line (`Vehicle . Reliability`) and the offer detail's sub line both carry one
+now, tinted `accent` to match the surrounding text. Neither a support card's
+effects text nor a customer's archetype name gets one - both share the SAME
+label slot with a real category on other occasions, and an empty id hides the
+badge outright rather than reserving a blank square next to text that isn't a
+category at all.
+
+Geometry is exposed as **pure functions** (`car_body()`, `car_wheels()`,
+`tag()`, `person_body()`, ...) for the same reason `InterestGrid.row_order()`
+and `AppealBar.marker_x()` are: `draw_*` calls only work inside a live
+`_draw()`, so the one thing a headless test CAN check is that the three shapes
+are actually shaped like three different things and stay inside the box they
+were given - which is exactly what `test_interest_grid.gd`'s new geometry
+tests do.
+
+### The appeal bar is absolute now
+
+`meter_scale()` recomputed the bar's own endpoint fresh on every render, from
+whatever appeal and Line happened to be true THAT frame. Its own doc comment
+claimed this would never let the bar "rescale under you" - but recomputing
+from live values does exactly that: the scale silently GREW the moment either
+number crossed a multiple of ten, and just as silently SHRANK back the moment
+it dropped below one again. Discount's +8 is the single biggest jump in the
+base deck, so it was the card most likely to push appeal across a boundary and
+visibly yank the bar's own endpoint out from under the fill that had just
+grown - exactly the bug report: *"it shouldn't resize or re-render its highest
+point, particularly when using discount cards."*
+
+Fixed by giving the scale somewhere to **live**: `DetailCard3D` now remembers
+which `Offer` its current scale belongs to, and the scale only ever grows, and
+only when the fill or the Line would otherwise overflow it - never shrinks,
+and never resets just because a number moved. `place()` always builds a fresh
+`Offer` object, even for the same product placed twice, so comparing by
+identity is exactly "is this still the same negotiation" with no extra
+bookkeeping. A genuinely new offer - or an empty table - starts the meter over
+for free.

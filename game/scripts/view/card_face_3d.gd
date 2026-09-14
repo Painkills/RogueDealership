@@ -27,6 +27,7 @@ var _name: Label
 var _cost: Label
 var _kind: Label
 var _body: Label
+var _body_icon: CategoryIconControl
 var _margin: Label
 
 func _ready() -> void:
@@ -48,7 +49,8 @@ func _bind() -> void:
 	_name = front.get_node(^"Margin/Column/Header/NameLabel")
 	_cost = front.get_node(^"Margin/Column/Header/CostLabel")
 	_kind = front.get_node(^"Margin/Column/KindLabel")
-	_body = front.get_node(^"Margin/Column/BodyLabel")
+	_body = front.get_node(^"Margin/Column/BodyRow/BodyLabel")
+	_body_icon = front.get_node(^"Margin/Column/BodyRow/BodyIcon")
 	_margin = front.get_node(^"Margin/Column/MarginLabel")
 
 	_viewport.size = FRONT_SIZE
@@ -66,6 +68,13 @@ func setup(inst: CardInstance) -> void:
 	_cost.text = CardText.cost(inst)
 	_kind.text = CardText.kind(inst)
 	_body.text = CardText.body(inst)
+	# The same glyph the interest grid uses for this row, so a Vehicle Service
+	# Contract and a Vehicle-lit row on a customer's card read as the same fact.
+	if inst.is_product():
+		var p := inst.card as ProductCardDef
+		_body_icon.set_category(p.interest.category.id, Palette.color(&"accent"))
+	else:
+		_body_icon.set_category(&"", Color.WHITE)
 	_margin.text = CardText.margin(inst)
 
 	if inst.is_product():

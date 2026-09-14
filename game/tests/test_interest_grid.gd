@@ -113,3 +113,81 @@ func test_a_customer_carries_the_board_they_were_dealt_against() -> void:
 	h.check("they can name the board", c.interests() != null)
 	h.eq("all nine of it", c.interests().count(), 9)
 	h.check("without giving away a single rank", c.known_ranks.is_empty())
+
+
+# ------------------------------------------------------------- category icons
+## CategoryIcon.draw() itself only works inside a live _draw() - see this
+## file's own header - but the SHAPES it draws are pure functions precisely so
+## a headless test can still check that "car", "tag" and "person" are actually
+## three different things, and that none of them draws outside the box it was
+## given (a card_front row is only 44px tall; a point that drifts out of rect
+## would clip against its neighbour rather than just look ugly).
+
+const CATEGORIES: Array[StringName] = [&"vehicle", &"deal", &"person"]
+
+func _inside(points: PackedVector2Array, rect: Rect2) -> bool:
+	for p in points:
+		if not rect.has_point(p):
+			return false
+	return true
+
+func test_every_glyph_stays_inside_the_rect_it_was_given() -> void:
+	var rect := Rect2(Vector2(4, 4), Vector2(40, 40))    # an off-origin box,
+	# deliberately not (0,0), so a glyph that forgot to add rect.position would
+	# still pass a check anchored at the origin and fail everywhere real.
+	h.check("the car body", _inside(CategoryIcon.car_body(rect), rect))
+	h.check("the car's wheel centres", _inside(CategoryIcon.car_wheels(rect), rect))
+	h.check("the tag", _inside(CategoryIcon.tag(rect), rect))
+	h.check("the person's shoulders", _inside(CategoryIcon.person_body(rect), rect))
+	var head := CategoryIcon.person_head_center(rect)
+	h.check("and the person's head centre", rect.has_point(head))
+
+func test_the_wheels_sit_below_the_cars_own_body() -> void:
+	## The overlap IS the design - see car_wheels()'s own comment - but "below"
+	## is what makes it read as a car sitting on wheels rather than floating
+	## above them.
+	var rect := Rect2(Vector2.ZERO, Vector2(40, 40))
+	var body := CategoryIcon.car_body(rect)
+	var lowest_body := 0.0
+	for p in body:
+		lowest_body = maxf(lowest_body, p.y)
+	for wheel in CategoryIcon.car_wheels(rect):
+		h.check("wheel at y=%.1f sits at or below the body's own lowest point (%.1f)"
+			% [wheel.y, lowest_body], wheel.y >= lowest_body - 0.01)
+
+func test_the_head_sits_above_the_shoulders() -> void:
+	var rect := Rect2(Vector2.ZERO, Vector2(40, 40))
+	var head_y := CategoryIcon.person_head_center(rect).y
+	var shoulders := CategoryIcon.person_body(rect)
+	var highest_shoulder := 999999.0
+	for p in shoulders:
+		highest_shoulder = minf(highest_shoulder, p.y)
+	h.check("head (%.1f) is above the shoulders' own topmost point (%.1f)"
+		% [head_y, highest_shoulder], head_y < highest_shoulder)
+
+func test_the_three_glyphs_are_not_secretly_the_same_shape() -> void:
+	## The whole point of adding icons was to tell three categories apart at a
+	## glance - three functions that all happened to return the same points
+	## would defeat that just as completely as never drawing anything.
+	var rect := Rect2(Vector2.ZERO, Vector2(40, 40))
+	var shapes := [CategoryIcon.car_body(rect), CategoryIcon.tag(rect),
+		CategoryIcon.person_body(rect)]
+	for a in range(shapes.size()):
+		for b in range(a + 1, shapes.size()):
+			h.check("shape %d and shape %d are not the same polygon" % [a, b],
+				shapes[a] != shapes[b])
+
+func test_every_real_category_has_a_matching_glyph() -> void:
+	## If a fourth category ever ships with no matching case in
+	## CategoryIcon.draw(), its row and every card badge for it go quietly
+	## blank rather than obviously broken - draw() fails silently by design (see
+	## its own doc comment) precisely because a badge is not worth a crash, which
+	## is exactly why this has to be checked some OTHER way. Checked against the
+	## real pool data, not a second hardcoded guess at what the categories are.
+	var have: Array = []
+	for cat in _pool().categories:
+		have.append(cat.id)
+	have.sort()
+	var want: Array = CATEGORIES.duplicate()
+	want.sort()
+	h.eq("every real category has a matching glyph", have, want)

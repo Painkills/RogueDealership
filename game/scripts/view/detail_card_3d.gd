@@ -39,6 +39,14 @@ var _margin: Label
 var _bar: AppealBar
 var _status: Label
 var _hint: Label
+var _sub_icon: CategoryIconControl
+
+## Which Offer the current meter scale belongs to, and what that scale is.
+## Offer identity, not value: a NEW product placed on the table is a NEW Offer
+## object even if it is the same card as before, so comparing by reference is
+## exactly "is this the same negotiation" with no extra bookkeeping needed.
+var _meter_offer = null
+var _meter_scale: int = 40
 
 var _home: Vector3
 var _home_rotation: Vector3
@@ -61,7 +69,8 @@ func _bind() -> void:
 	_viewport = $FrontViewport
 	var col: Node = $FrontViewport/DetailFront/Margin/Column
 	_title = col.get_node(^"TitleLabel")
-	_sub = col.get_node(^"SubLabel")
+	_sub = col.get_node(^"SubRow/SubLabel")
+	_sub_icon = col.get_node(^"SubRow/SubIcon")
 	_customer_body = col.get_node(^"CustomerBody")
 	_offer_body = col.get_node(^"OfferBody")
 	_does = _customer_body.get_node(^"DoesLabel")
@@ -91,10 +100,12 @@ func show_customer(c) -> void:
 	if c == null:
 		_title.text = "- empty -"
 		_sub.text = "nobody in this chair"
+		_sub_icon.set_category(&"", Color.WHITE)
 		_redraw()
 		return
 	_title.text = c.display_name
 	_sub.text = c.archetype.display_name
+	_sub_icon.set_category(&"", Color.WHITE)
 	_does.text = CustomerCard3D.behaviour_text(c)
 	_table.text = CustomerCard3D.unsigned_text(c)
 	_known.text = CustomerCard3D.known_text(c)
@@ -110,14 +121,17 @@ func show_offer(c, band: String) -> void:
 	if o == null:
 		_title.text = "nothing on the table"
 		_sub.text = "drag a product onto them" if c != null else ""
+		_sub_icon.set_category(&"", Color.WHITE)
+		_meter_offer = null
 		_redraw()
 		return
 
 	_title.text = o.product.display_name
 	_sub.text = "%s . %s" % [o.product.interest.category.display_name,
 		o.product.interest.display_name]
+	_sub_icon.set_category(o.product.interest.category.id, Palette.color(&"accent"))
 	_margin.text = Format.money(o.margin)
-	_bar.set_state(o.appeal, c.line, meter_scale(o.appeal, c.line), band, c.known_line)
+	_bar.set_state(o.appeal, c.line, _scale_for(o, c.line), band, c.known_line)
 
 	# The FILL is always honest about your own appeal; only the LINE is fogged,
 	# and Read the Room is the ONLY thing that lifts it. Offering used to lift it
@@ -155,10 +169,37 @@ func show_offer(c, band: String) -> void:
 		_status.add_theme_color_override("font_color", _bar.fill_color())
 	_redraw()
 
-## Never lets the fill or the marker run off the end, and only steps in tens so
-## the bar does not silently rescale under you every time appeal moves.
+## The scale a bar would need RIGHT NOW to keep the fill and the marker from
+## running off the end. Pure, and deliberately NOT what gets fed to the bar
+## directly any more - see _scale_for() below for why.
 static func meter_scale(appeal: int, line: int) -> int:
 	return maxi(40, (maxi(appeal, line) / 10 + 1) * 10)
+
+## The bar's own memory of how big it needs to be for THIS negotiation.
+##
+## meter_scale() used to be called fresh on every render, which read its own
+## doc comment's promise backwards: recomputing from the CURRENT appeal and
+## Line on every frame means the scale silently GROWS the moment either one
+## crosses a multiple of ten, and just as silently SHRINKS back the moment it
+## drops below one again - a bar that rescales under you is exactly what a
+## "never resize" comment was supposed to prevent. Discount's +8 is the
+## single biggest jump in the base deck, so it was the card most likely to
+## push appeal across a boundary and visibly yank the bar's own endpoint out
+## from under the fill that had just grown.
+##
+## Fixed by giving the scale somewhere to LIVE: it is keyed to the Offer
+## object's own identity, which is exactly "is this still the same
+## negotiation" - place() always builds a fresh Offer, even for the same
+## product placed twice, so a genuinely new negotiation resets it for free.
+## Within one Offer's life the scale only ever grows, and only when the fill
+## or the Line would otherwise overflow it; it never shrinks.
+func _scale_for(o: Offer, line: int) -> int:
+	if o != _meter_offer:
+		_meter_offer = o
+		_meter_scale = meter_scale(o.appeal, line)
+	else:
+		_meter_scale = maxi(_meter_scale, meter_scale(o.appeal, line))
+	return _meter_scale
 
 # --- where it sits ---------------------------------------------------------
 

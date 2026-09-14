@@ -52,11 +52,31 @@ func test_setup_writes_a_products_words_onto_the_face() -> void:
 	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text,
 		"Vehicle Service Contract")
 	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "PRODUCT")
-	h.eq("what need it answers", (col.get_node(^"BodyLabel") as Label).text,
+	h.eq("what need it answers", (col.get_node(^"BodyRow/BodyLabel") as Label).text,
 		"Vehicle . Reliability")
 	h.eq("margin, formatted the way every other surface formats money",
 		(col.get_node(^"MarginLabel") as Label).text, "$1,600")
 	h.eq("tick cost", (col.get_node(^"Header/CostLabel") as Label).text, "1t")
+	c.free()
+
+func test_a_products_body_carries_the_same_badge_the_interest_grid_uses() -> void:
+	## "The cards should have that same icon next to their category name" - the
+	## SAME glyph, not a lookalike: both read through CategoryIcon.draw().
+	var c := _instance()
+	c.setup(_card(&"vsc"))
+	var icon := _front(c).get_node(^"BodyRow/BodyIcon") as CategoryIconControl
+	h.check("the badge is on the card", icon != null)
+	h.check("and it is showing", icon.visible)
+	h.eq("naming the product's own category", icon._category_id, &"vehicle")
+	c.free()
+
+func test_a_support_cards_body_carries_no_badge() -> void:
+	## Its body is the effects' own describe() text, not a category - a badge
+	## next to it would be a category that does not exist.
+	var c := _instance()
+	c.setup(_card(&"discount"))
+	var icon := _front(c).get_node(^"BodyRow/BodyIcon") as CategoryIconControl
+	h.check("no badge on a support card", not icon.visible)
 	c.free()
 
 func test_setup_writes_a_support_cards_effects_onto_the_face() -> void:
@@ -66,7 +86,7 @@ func test_setup_writes_a_support_cards_effects_onto_the_face() -> void:
 	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, "Offer a Discount")
 	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "SUPPORT")
 	h.check("body is built from the effects' own describe()",
-		(col.get_node(^"BodyLabel") as Label).text.contains("Appeal"))
+		(col.get_node(^"BodyRow/BodyLabel") as Label).text.contains("Appeal"))
 	h.eq("support cards carry no margin of their own",
 		(col.get_node(^"MarginLabel") as Label).text, "")
 	c.free()
@@ -111,7 +131,7 @@ func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
 	## attempt at this unreadable.
 	var c := _instance()
 	var col := _front(c)
-	for name in ["Header/NameLabel", "KindLabel", "BodyLabel", "MarginLabel"]:
+	for name in ["Header/NameLabel", "KindLabel", "BodyRow/BodyLabel", "MarginLabel"]:
 		var l := col.get_node(NodePath(name)) as Label
 		h.check("%s is set well above default size (%d)"
 			% [name, l.get_theme_font_size("font_size")],
@@ -123,7 +143,7 @@ func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
 func test_the_long_fields_wrap() -> void:
 	var c := _instance()
 	var col := _front(c)
-	for name in ["Header/NameLabel", "BodyLabel"]:
+	for name in ["Header/NameLabel", "BodyRow/BodyLabel"]:
 		h.check("%s wraps by word" % name,
 			(col.get_node(NodePath(name)) as Label).autowrap_mode == TextServer.AUTOWRAP_WORD)
 	c.free()
