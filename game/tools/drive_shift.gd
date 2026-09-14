@@ -79,9 +79,20 @@ func _physics_process(_delta: float) -> bool:
 	_check_dragging_a_hand_card_keeps_it_lifted_for_reading()
 	_check_table("on arrival")
 
+	# Hovering chair 0 BEFORE approaching it, rather than pressing KEY_A cold:
+	# a real click always arrives with the pointer already sitting on the pad it
+	# clicked, and KEY_A alone never touches _hovered at all - a check that
+	# pressed KEY_A without this first would find _hovered already at -1 and
+	# pass whether or not the arrival reset code was even there.
+	_controller._on_customer_hover(0)
+	_settle()
+	_check("hovering chair 0 on the floor really did flip it (so the arrival\'s own un-flip is a real test, not a no-op)",
+		_controller._customer_flips[0].showing_back())
 	_press(KEY_A)
 	_settle()
 	_check_you_can_actually_click_your_hand()
+	_check_arriving_leaves_every_card_face_front()
+	_check_you_can_still_flip_a_customer_card_while_seated()
 	_check_seat_view_brings_your_things_up()
 	_check_the_other_two_are_still_on_screen_while_you_work_one()
 	_check_the_offer_detail_slid_out_clear()
@@ -637,6 +648,49 @@ func _check_the_floor_cards_are_big_enough_to_read() -> void:
 
 # --- a seat ----------------------------------------------------------------
 
+## KEY_A above both HOVERS the pad (the mouse is sitting on it, or the peek
+## logic stands in for a touch) AND clicks it, so by the time you arrive the
+## pointer has not moved an inch off the pad you just approached through. If
+## _apply_framing() did not clear that hover, the card you just got to would
+## flip to its back on this very render - hiding the identity you walked up to
+## read. _apply_framing() clears it on every real transition; this is what
+## proves that landed rather than just reading well in a comment.
+func _check_arriving_leaves_every_card_face_front() -> void:
+	for i in range(_controller._customer_flips.size()):
+		_check("seat %d is face-front on arrival, mouse or no mouse" % i,
+			not _controller._customer_flips[i].showing_back())
+
+## The seat used to slide the customer's OWN detail card out beside them, so
+## turning the card itself over made no sense there and was suppressed. G3
+## moved that content onto the FRONT of the card - the interest grid - and
+## stopped sliding the seat's copy out at all, so the back is now the ONLY
+## place their archetype's tells (behaviour_text) still live. There is no
+## reason left to keep it out of reach just because you sat down.
+func _check_you_can_still_flip_a_customer_card_while_seated() -> void:
+	var at := _at()
+	var flip = _controller._customer_flips[at]
+
+	_controller._on_customer_hover(at)
+	_settle()
+	_check("hovering the customer you are WITH still turns their card over",
+		flip.showing_back())
+	_controller._on_customer_unhover(at)
+	_settle()
+	_check("and it settles back once you look away", not flip.showing_back())
+
+	# A flanker too - checking someone else's archetype does not stop just
+	# because you are busy negotiating with a different one.
+	var flanker := (at + 1) % 3
+	var flanker_flip = _controller._customer_flips[flanker]
+	_controller._on_customer_hover(flanker)
+	_settle()
+	_check("a flanker's card turns over too", flanker_flip.showing_back())
+	_check("without disturbing the one you are actually with",
+		not flip.showing_back())
+	_controller._on_customer_unhover(flanker)
+	_settle()
+	_check("and the flanker settles back too", not flanker_flip.showing_back())
+
 func _check_seat_view_brings_your_things_up() -> void:
 	var bottom := -_frame_half_height()
 	for pair in [["hand", _controller._hand_zone], ["discard", _controller._discard_zone]]:
@@ -1033,11 +1087,55 @@ func _stack_height(box: Control, width: float) -> float:
 				l.get_theme_font_size("font_size")).y
 		elif child is VBoxContainer:
 			total += _stack_height(child as Control, width)
+		elif child is HBoxContainer:
+			# SubRow and BodyRow both landed here the moment the category badge
+			# joined them - the fallback below reports 0 for anything that is not
+			# a Label or a VBoxContainer, which would have silently UNDER-measured
+			# every card carrying one and let a real overflow slip past this check.
+			total += _row_height(child as Control, width)
 		else:
 			total += maxf((child as Control).custom_minimum_size.y, 0.0)
 	if shown > 1:
 		total += float(box.get_theme_constant("separation") * (shown - 1))
 	return total
+
+## _stack_height's companion for a HORIZONTAL row: height is the TALLEST
+## child, not their sum, and a child that expands to fill (SubLabel and
+## BodyLabel both do, beside their fixed-width icon) only gets whatever width
+## is left after its fixed-width siblings and the row's own separations - the
+## same width a real HBoxContainer would actually hand it.
+func _row_height(box: Control, width: float) -> float:
+	var shown: Array[Control] = []
+	for child in box.get_children():
+		if child is Control and (child as Control).visible:
+			shown.append(child as Control)
+	if shown.is_empty():
+		return 0.0
+
+	var fixed := 0.0
+	var flexible := 0
+	for c in shown:
+		if c.size_flags_horizontal & Control.SIZE_EXPAND_FILL:
+			flexible += 1
+		else:
+			fixed += maxf(c.custom_minimum_size.x, 0.0)
+	if shown.size() > 1:
+		fixed += float(box.get_theme_constant("separation") * (shown.size() - 1))
+	var each_width: float = maxf(10.0, (width - fixed) / maxf(1, flexible))
+
+	var tallest := 0.0
+	for c in shown:
+		if c is Label:
+			var l := c as Label
+			var w: float = each_width \
+				if c.size_flags_horizontal & Control.SIZE_EXPAND_FILL \
+				else c.custom_minimum_size.x
+			tallest = maxf(tallest, l.get_theme_font("font").get_multiline_string_size(
+				l.text, HORIZONTAL_ALIGNMENT_LEFT, w,
+				l.get_theme_font_size("font_size")).y)
+		else:
+			tallest = maxf(tallest, c.custom_minimum_size.y)
+	return tallest
 
 # --- the appeal meter ------------------------------------------------------
 

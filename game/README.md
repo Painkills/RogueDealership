@@ -1156,3 +1156,32 @@ and never resets just because a number moved. `place()` always builds a fresh
 identity is exactly "is this still the same negotiation" with no extra
 bookkeeping. A genuinely new offer - or an empty table - starts the meter over
 for free.
+
+
+### Customer cards turn over at a seat now too
+
+Hovering a customer used to flip their card only on the floor. That was
+correct back when sitting down slid their OWN detail card out beside them -
+turning the front card over too would have been redundant. It stopped being
+correct the moment the interest grid moved that content onto the FRONT of the
+card and the seat stopped sliding a customer detail out at all: the back is
+now the ONLY place their archetype's tells (`behaviour_text` - what a Karen or
+a Tire Kicker actually does) still live, and there was no reason left to keep
+it out of reach just because you sat down.
+
+**Fixing this needed two changes, not one.** Removing the suppression alone
+would have flipped the card you just arrived at on the very next render: you
+reach a seat by clicking the pad you were hovering, so the pointer has not
+moved an inch by the time you get there, and the stale hover would read as a
+fresh one. `_apply_framing()` now clears `_hovered`/`_peeked` on every genuine
+framing transition - arriving OR leaving - so every seat still opens
+face-front, and only a hover that happens AFTER you arrive (or a flanker's
+card, checked without disturbing the one you are actually with) turns anything
+over.
+
+The first version of the arrival check did not actually exercise this: it
+pressed the approach key cold, and a synthetic keypress never touches
+`_hovered` at all, so the check passed whether or not the reset code was even
+there. Fixed by genuinely hovering the pad before approaching through it - the
+same shape a real click always arrives in - so the check is proven to fail
+without the reset before it is trusted to pass with it.

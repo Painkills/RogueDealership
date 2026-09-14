@@ -389,17 +389,21 @@ func _on_customer_unhover(chair: int) -> void:
 		_hovered = -1
 	_render_hover_flip()
 
-## On the floor a customer card carries only identity, so what they DO lives on
-## its BACK: hovering turns the pair over. This replaced a HUD tooltip panel,
-## which had to be positioned somewhere it did not collide with anything, and
-## which - being a Control over a 3D table - is one wrong mouse_filter away from
-## swallowing the very hover that summoned it.
+## A customer card carries only identity on its front, so what they DO lives
+## on its BACK: hovering turns the pair over. This replaced a HUD tooltip
+## panel, which had to be positioned somewhere it did not collide with
+## anything, and which - being a Control over a 3D table - is one wrong
+## mouse_filter away from swallowing the very hover that summoned it.
 ##
-## Suppressed once you are seated, because there the detail card is already out
-## beside them and turning it over would take away what you came to read.
+## Works at a SEAT now too, not just on the floor. It used to be suppressed
+## there on the assumption the customer's own detail card was already out
+## beside them - true back when sitting down slid it out, false since the
+## interest grid moved that content onto the FRONT of the card instead and the
+## seat stopped sliding it out at all. The back is the only place their
+## archetype's tells still live, and there was no reason left to keep it out
+## of reach just because you sat down.
 func _render_hover_flip() -> void:
-	var floor_view: bool = _shift != null and _shift.at == null \
-		and not _report_overlay.visible
+	var usable: bool = _shift != null and not _report_overlay.visible
 	# A stale peek left pointing at a chair that emptied out from under it must
 	# not silently haunt whoever sits down there next - cleared here rather than
 	# wherever a chair empties, so every path that could vacate one (walking off,
@@ -409,7 +413,7 @@ func _render_hover_flip() -> void:
 		_peeked = -1
 	for i in range(_customer_flips.size()):
 		_customer_flips[i].show_back(
-			floor_view and (i == _hovered or i == _peeked) and _shift.chairs[i] != null)
+			usable and (i == _hovered or i == _peeked) and _shift.chairs[i] != null)
 
 # --- framing ---------------------------------------------------------------
 
@@ -426,6 +430,18 @@ func _apply_framing() -> void:
 	if _framed_at == _shift.at:
 		return
 	_framed_at = _shift.at
+	# A hover or peek belongs to whichever pad the pointer was actually sitting
+	# on a moment ago - and approaching is a CLICK on that same pad, so the
+	# pointer has not moved an inch by the time you arrive. Carried through
+	# uncleared, it would flip the card you just got to (or just left) on the
+	# very next render, simply because the mouse never left it - hiding the
+	# identity card exactly when arriving is supposed to show it, and breaking
+	# the "arriving turns the pair back to face front" guarantee
+	# DetailCard3D's own slide timing depends on. Cleared here, once, on every
+	# real transition, rather than at each of the several places that can
+	# cause one.
+	_hovered = -1
+	_peeked = -1
 	var seated: bool = _shift.at != null
 	var target: Node3D = _seat_cam if seated else _camera_floor
 	# Staying put on the floor keeps whoever you last dealt with at the front,
