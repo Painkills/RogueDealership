@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Demand" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
+[ext_resource type="Script" path="res://scripts/model/demands/leave_them_alone.gd" id="3_rsv"]
+[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="4_dmd"]
+
+[sub_resource type="Resource" id="Sub_push"]
+script = ExtResource("2_pat")
+amount = -5
+
+[sub_resource type="Resource" id="Sub_room"]
+script = ExtResource("2_pat")
+amount = 5
+
+[sub_resource type="Resource" id="Sub_rsv"]
+script = ExtResource("3_rsv")
+
+[resource]
+script = ExtResource("4_dmd")
+id = &"thinking"
+display_name = "Needs a minute to talk it over"
+telegraph = "THINKING"
+dialogue = "\"Could we have a moment?\""
+ticks = 3
+resolve = SubResource("Sub_rsv")
+effects = Array[ExtResource("1_eff")]([SubResource("Sub_push")])
+relief = Array[ExtResource("1_eff")]([SubResource("Sub_room")])

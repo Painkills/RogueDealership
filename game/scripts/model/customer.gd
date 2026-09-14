@@ -26,8 +26,20 @@ var known_top_category = null
 
 ## The Karen: they will not sign until they have bought from the category they
 ## came in for. Announced on arrival - a free read, and then they charge the
-## whole floor rent until you act on it.
-var demands = null
+## whole floor rent until you act on it. A standing gate on close(), NOT a
+## timed ask - which is why it keeps a name one letter away from `demand`
+## below rather than being folded into it.
+var demands_category = null
+
+## What they are asking you for RIGHT NOW, or null. At most one at a time: a
+## customer with two live fuses is a customer you cannot triage, only lose.
+var demand: Demand = null
+## Absolute tick the fuse comes due, not a countdown. A countdown decremented
+## inside _burn() would be wrong for a multi-tick burn and would let a demand
+## raised during that same burn expire before anyone could answer it.
+var demand_due_tick: int = 0
+## When the last one finished, either way. -1 means they have never asked.
+var demand_settled_tick: int = -1
 
 var state: String = "floor"        ## floor | signed | walked
 var sales: int = 0

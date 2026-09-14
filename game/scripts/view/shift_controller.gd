@@ -551,6 +551,13 @@ func _drain_log() -> void:
 		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
 			% [color, entry["customer"], entry["key"], entry["name"],
 				", ".join(entry["descriptions"])])
+		# Authored on every action since G1, carried through the model since G1,
+		# and silently dropped here every single time. It matters now: a demand
+		# the customer SAYS OUT LOUD reads as a person interrupting you, where the
+		# same event as a bare stat change reads as a rules engine ticking over.
+		var said: String = str(entry.get("dialogue", ""))
+		if said != "":
+			_event_log.append_text("[color=%s]   %s[/color]\n" % [color, said])
 	_actions_seen = _shift.action_log.size()
 
 func _show_report() -> void:

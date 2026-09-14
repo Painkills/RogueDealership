@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Demand" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/walk_out.gd" id="2_out"]
+[ext_resource type="Script" path="res://scripts/model/demands/make_an_offer.gd" id="3_rsv"]
+[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="4_dmd"]
+
+[sub_resource type="Resource" id="Sub_out"]
+script = ExtResource("2_out")
+
+[sub_resource type="Resource" id="Sub_rsv"]
+script = ExtResource("3_rsv")
+
+[resource]
+script = ExtResource("4_dmd")
+id = &"restless"
+display_name = "Half out of the chair"
+telegraph = "RESTLESS"
+dialogue = "\"How long is this going to take?\""
+ticks = 3
+resolve = SubResource("Sub_rsv")
+effects = Array[ExtResource("1_eff")]([SubResource("Sub_out")])

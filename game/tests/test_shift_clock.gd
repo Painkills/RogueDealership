@@ -212,10 +212,10 @@ func test_customers_do_not_all_walk_in_fresh() -> void:
 func test_the_karen_announces_the_category_she_came_for() -> void:
 	var s := _shift([&"karen"])
 	var c: Customer = s.chairs[0]
-	h.check("she demands something", c.demands != null)
-	h.eq("and it is the category of her own number one", c.demands,
+	h.check("she demands something", c.demands_category != null)
+	h.eq("and it is the category of her own number one", c.demands_category,
 		s.interests.by_id(c.top_interest_id()).category.id)
-	h.eq("which she says out loud", c.known_top_category, c.demands)
+	h.eq("which she says out loud", c.known_top_category, c.demands_category)
 
 func test_the_shift_config_states_its_design_rule() -> void:
 	var cfg: ShiftConfig = load("res://data/shift_config.tres")

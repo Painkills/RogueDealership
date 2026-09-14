@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="Demand" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience_floor.gd" id="2_pfl"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_standing.gd" id="3_std"]
+[ext_resource type="Script" path="res://scripts/model/demands/play_concession.gd" id="4_rsv"]
+[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="5_dmd"]
+
+[sub_resource type="Resource" id="Sub_floor"]
+script = ExtResource("2_pfl")
+amount = -2
+
+[sub_resource type="Resource" id="Sub_stand"]
+script = ExtResource("3_std")
+amount = -5
+
+[sub_resource type="Resource" id="Sub_rsv"]
+script = ExtResource("4_rsv")
+
+[resource]
+script = ExtResource("5_dmd")
+id = &"manager"
+display_name = "Asks for the manager"
+telegraph = "MANAGER?"
+dialogue = "\"Is there someone else I can speak to?\""
+ticks = 3
+resolve = SubResource("Sub_rsv")
+effects = Array[ExtResource("1_eff")]([SubResource("Sub_floor"), SubResource("Sub_stand")])

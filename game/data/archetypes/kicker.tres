@@ -2,14 +2,15 @@
 
 [ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_apes3"]
 [ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_4sgf7"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="3_4i3ea"]
+[ext_resource type="Script" path="res://scripts/model/effects/raise_demand.gd" id="3_4i3ea"]
+[ext_resource type="Resource" path="res://data/demands/restless.tres" id="7_dmd"]
 [ext_resource type="Script" path="res://scripts/model/triggers/every.gd" id="4_gatf8"]
 [ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_bg230"]
 [ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="6_r7mcl"]
 
 [sub_resource type="Resource" id="Resource_i7tpi"]
 script = ExtResource("3_4i3ea")
-amount = -2
+demand = ExtResource("7_dmd")
 
 [sub_resource type="Resource" id="Resource_fxv8q"]
 script = ExtResource("4_gatf8")
@@ -19,7 +20,7 @@ ticks = 4
 script = ExtResource("1_apes3")
 id = &"antsy"
 display_name = "Half out of the chair already"
-tell = "every 4 ticks they are on the floor, they lose 2 more patience"
+tell = "every 4 ticks he wants a price. Ask him for the business within 3 ticks or he WALKS"
 dialogue = "\"How long is this going to take?\""
 trigger = SubResource("Resource_fxv8q")
 effects = Array[ExtResource("2_4sgf7")]([SubResource("Resource_i7tpi")])

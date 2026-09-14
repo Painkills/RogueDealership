@@ -824,3 +824,120 @@ Worth knowing for whoever balances this: "ALMOST" now replaces "3 SHORT" as your
 best read until you spend the tick, which is a real difficulty increase landing
 on top of everything else in G3. It is also the cheapest thing here to walk
 back - restoring `known_line` in `offer()` is one line.
+
+### Customers ask for things now
+
+The floor had no way to interrupt you. `Every`-triggered actions existed, but
+they were **passive taxes** - the Karen drained everybody's patience whether or
+not you dealt with her, the Tire Kicker bled himself on a timer you could not
+stop. Nothing in the game ever said *drop what you are doing and come here*.
+
+A **Demand** is a customer asking for something, and it has to state three
+things or it is not designed yet:
+
+| | |
+|---|---|
+| **a. how long you have** | `Demand.ticks` - a fuse |
+| **b. what answers it** | `Demand.resolve`, a `DemandResolve` |
+| **c. what ignoring it costs** | `Demand.effects`, and optionally `relief` for meeting it |
+
+**A fuse is counted in WORK, not in time.** Because walking is free, the clock
+only moves when you play a card, dig, or wait. "Three ticks" means three things
+done, anywhere on the floor - which is what makes a deadline something you
+spend attention against rather than something you wait out.
+
+**Demands are raised by the machinery that already existed.** A new
+`RaiseDemand` effect hangs off an ordinary `CustomerAction`, so the existing
+trigger vocabulary decides WHEN a customer asks and the Demand says what the
+asking means. No new trigger plumbing; `Shift.fire()` and `_trigger_name()` are
+untouched, and a new demand is a `.tres` like everything else.
+
+`DemandResolve` is the same shape as `Effect` and `Trigger` - one ~12-line file
+per verb in `scripts/model/demands/`, each appearing in every Inspector
+dropdown. Six exist: `PlayAnySupport`, `PlayConcession`, `MakeAnOffer`,
+`OfferSomethingGood`, and `LeaveThemAlone`. **`PlayConcession` is defined by
+what a card DOES** - any support card whose executed effects include a negative
+`ChangeMargin` - rather than by card id, so every card that gives money away
+answers it and a future one will too, without either file changing.
+
+**`LeaveThemAlone` inverts both halves**: the fuse running out is the ANSWER,
+and touching them before it does is the failure. Its `PRESENT` break - a tick
+burning while you stand with them - is what makes it a real decision instead of
+a free pause. You cannot spend their minute standing there, because standing
+there does not move the clock. **The only way to give someone a minute is to go
+and spend it on somebody else**, which is the whole triage loop in one card.
+
+### Three rules inside `_burn()` that will bite whoever changes this next
+
+**The presence notice runs BEFORE the action pass.** A customer can raise a
+demand on the very tick you happen to be standing with them. The first cut ran
+presence afterwards, and "give us a minute" broke on the same burn that created
+it - charging the player 5 patience for ignoring an ask they had not been shown
+yet. Found by a test, not by reasoning. Every demand gets one whole tick to
+exist.
+
+**Fuses come due AFTER the action pass and BEFORE `_settle_patience()`**, so a
+`WalkOut` consequence leaves down the one path a customer has ever left by.
+
+**The deadline is an absolute tick, never a countdown.** A countdown
+decremented inside `_burn()` would be wrong for a multi-tick burn - Hard Close
+costs two - and would let a demand raised during that burn expire before anyone
+could answer it.
+
+### The three new consequences, and what they cost to build
+
+`WalkOut` sets patience to 0 and lets `_settle_patience()` do the leaving, so it
+inherits the standing damage, the log line, the at-risk accounting and
+`_vacate()` **by construction** and can never drift from what running out of
+patience already does. `ChangeStanding` needed no report accounting at all -
+`standing_delta` is already computed from the live number - and no end-of-run
+wiring either, because `is_over()` already reads `standing <= 0`. `DropOffer`
+sweeps the PLACED offer into the discard and deliberately leaves agreed sales
+alone.
+
+### All five action-carrying archetypes converted
+
+| | asks | fuse | answer | ignoring it |
+|---|---|---|---|---|
+| **Karen** | for the manager | 3 | a concession | whole floor -2 patience, **your standing -5** |
+| **Tire Kicker** | for a price | 3 | ask for the business | **he walks** (and a walkout costs 8 standing) |
+| **Budget Hawk** | after any short offer | 2 | a concession | **your product comes off the table** |
+| **Tech** | to see the good stuff | 3 | offer their top three | -2 patience; meeting it is **+6** |
+| **Family First** | for a minute | 3 | leave them alone | -5 patience; meeting it is **+5** |
+
+Easygoing and Lay-Down still do nothing, which is what opens the ladder.
+
+The pre-existing reactive actions were **replaced, not kept alongside**.
+`archetype_pool.tres`'s design rule says every archetype teaches exactly ONE
+play pattern, and keeping both would have taught two. Their identities survive
+in the demand: the Hawk still punishes you for not conceding, Tech still pays
+you for finding the bullseye, the Karen still wants seeing first. Family First
+is the one whose *pattern string* changed, because theirs genuinely did.
+
+**Tech stays a favour.** The design rule requires at least two archetypes in the
+player's favour, so their demand is an *opportunity with a deadline* - the
+relief is the point and the miss is nominal.
+
+**`Customer.demands` is now `demands_category`.** It is the Karen's standing
+gate on `close()`, not a timed ask, and one letter between it and `demand` with
+completely unrelated meanings was a trap waiting to be sprung.
+
+### Throttles, and what is still a guess
+
+One demand per customer at a time; `demand_grace_ticks` (2) before a fresh
+arrival may ask; `demand_cooldown_ticks` (4) between one customer's demands.
+Three customers each free to open a fuse every few ticks against a 24-tick
+budget is not a floor you triage, it is one you lose - these are the first
+numbers to reach for if it feels frantic rather than busy. A floor-wide cap is
+the next lever if per-customer throttling proves not to be enough.
+
+`fire()` skips a demand-raising action **wholesale** when the customer cannot
+take one, rather than firing it to do nothing: the log would otherwise narrate
+an ask that never happened, and burn the action's own cadence doing it.
+
+### The log finally says what they said
+
+`action_log` entries have carried a `dialogue` key since G1 and `_drain_log()`
+never once read it. It matters now - a demand the customer says out loud reads
+as a person interrupting you, where the same event as a bare stat change reads
+as a rules engine ticking over.

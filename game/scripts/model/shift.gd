@@ -67,7 +67,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 			"sales", "places", "digs", "approaches", "actions_fired",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
 			"margin_conceded", "margin_padded", "margin_bonus",
-			"customers_signed", "customers_walked"]:
+			"customers_signed", "customers_walked",
+			"demands_met", "demands_missed"]:
 		stat[key] = 0
 
 	chairs.resize(cfg.floor_size)
@@ -132,12 +133,32 @@ func _burn(n: int, kind: String) -> void:
 		c.patience -= n
 		c.ticks_on_floor += n
 
+	# Standing with someone while the clock moves IS doing something to them -
+	# it is precisely what "give us a minute" is asking you not to do.
+	#
+	# BEFORE the action pass, and that ordering is load-bearing: a customer can
+	# raise a demand on this very tick, and if this ran afterwards their "give us
+	# a minute" would break on the same burn that created it, while you were
+	# still being told about it. Every demand gets at least one whole tick to
+	# exist, for the same reason the fuse is stored as an absolute due-tick.
+	if at != null and chairs[at] != null:
+		_demand_saw(chairs[at], DemandResolve.PRESENT)
+
 	# Cadenced actions fire after the burn, so someone already leaving does not
 	# get a parting shot.
 	for c in seated():
 		if c.patience > 0:
 			fire(&"every", c)
 			fire(&"patience_below", c)
+
+	# Fuses come due AFTER actions and BEFORE patience settles, so a WalkOut
+	# consequence leaves down the one path a customer has ever left by.
+	# seated() hands back a fresh array, and nothing here vacates a chair, so
+	# settling inside the loop is safe.
+	for c in seated():
+		if c.demand != null and tick >= c.demand_due_tick:
+			_settle_demand(c, c.demand.resolve != null \
+				and c.demand.resolve.succeeds_on_expiry())
 
 	_settle_patience()
 
@@ -220,8 +241,8 @@ func _spawn(chair: int) -> void:
 		start, top, cfg.as_dict(), interests)
 
 	if arch.demands_category:
-		c.demands = interests.by_id(c.top_interest_id()).category.id
-		c.known_top_category = c.demands      # they say so, loudly
+		c.demands_category = interests.by_id(c.top_interest_id()).category.id
+		c.known_top_category = c.demands_category      # they say so, loudly
 
 	chairs[chair] = c
 	walk_up[chair] = 0
@@ -487,6 +508,7 @@ func place(index: int) -> Result:
 	hand.remove_at(index)
 	stat["places"] = int(stat["places"]) + 1
 	_draw_up()
+	_demand_saw(c, DemandResolve.PLACE, {"product": product})
 	_burn(cfg.place_ticks, "place")
 	return Result.new(true, "You put the %s in front of %s."
 		% [product.display_name, c.display_name], "place", {"band": band})
@@ -517,6 +539,9 @@ func _support(c: Customer, index: int) -> Result:
 	discard.append(inst)
 	stat["cards_played"] = int(stat["cards_played"]) + 1
 	_draw_up()
+	# Before the burn, so playing the card they asked for answers them rather
+	# than racing the very tick it costs to play it.
+	_demand_saw(c, DemandResolve.SUPPORT, {"card": def, "effects": effects})
 	_settle_patience()
 	_burn(def.ticks, "cards")
 	return Result.new(true, def.display_name + ".", "support")
@@ -556,6 +581,7 @@ func offer() -> Result:
 		c.patience -= cfg.failed_offer_patience
 
 	fire(&"on_offer", c, {"rank": rank, "short": gap, "sale": sale})
+	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": gap})
 	_settle_patience()
 
 	if not sale.is_empty():
@@ -628,12 +654,15 @@ func close() -> Result:
 	if pair[1] != null:
 		return pair[1]
 	var c: Customer = pair[0]
-	if c.demands != null and not c.owns_category(c.demands):
+	if c.demands_category != null and not c.owns_category(c.demands_category):
 		return Result.new(false,
 			"%s came in for %s protection and is not signing until they get it."
-			% [c.display_name, str(c.demands)])
+			% [c.display_name, str(c.demands_category)])
 
 	var chair: int = at
+	# While they are still in the chair: settling a demand mutates the customer,
+	# and after _vacate() nothing can see them to do it.
+	_demand_saw(c, DemandResolve.CLOSE)
 	if c.offer != null:
 		discard.append(c.offer.instance)
 		c.offer = null
@@ -659,6 +688,82 @@ func _context(c: Customer) -> EffectContext:
 	return ctx
 
 
+# --------------------------------------------------------------------- demands
+func can_take_a_demand(c: Customer) -> bool:
+	## One at a time, not the instant they sit down, and not back to back.
+	## Three customers each free to open a fresh fuse every few ticks is not a
+	## floor you triage, it is a floor you lose.
+	if c == null or c.demand != null:
+		return false
+	if c.ticks_on_floor < cfg.demand_grace_ticks:
+		return false
+	if c.demand_settled_tick >= 0 \
+			and tick - c.demand_settled_tick < cfg.demand_cooldown_ticks:
+		return false
+	return true
+
+
+func raise_demand(c: Customer, d: Demand) -> bool:
+	if d == null or not can_take_a_demand(c):
+		return false
+	c.demand = d
+	# Absolute, and at least one tick away, so a demand raised during a burn
+	# cannot come due on that same burn before anyone could answer it.
+	c.demand_due_tick = tick + maxi(1, d.ticks)
+	return true
+
+
+func _asks_for_something(act: CustomerAction) -> bool:
+	for e in act.effects:
+		if e is RaiseDemand:
+			return true
+	return false
+
+
+func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
+	## Every player action that touches a customer reports itself here. The
+	## demand decides what it meant - which is why adding a way to answer a
+	## customer is a new DemandResolve file and not a branch in this function.
+	if c == null or c.demand == null or c.demand.resolve == null:
+		return
+	if c.demand.resolve.satisfied(kind, data):
+		_settle_demand(c, true)
+	elif c.demand.resolve.broken_by(kind, data):
+		_settle_demand(c, false)
+
+
+func _settle_demand(c: Customer, met: bool) -> void:
+	var d: Demand = c.demand
+	c.demand = null
+	c.demand_due_tick = 0
+	c.demand_settled_tick = tick
+
+	var ctx := _context(c)
+	var effects: Array[Effect] = d.relief if met else d.effects
+	var descriptions: Array[String] = []
+	var floor_wide := false
+	for e in effects:
+		e.apply(ctx)
+		descriptions.append(e.describe())
+		if e is ChangePatienceFloor:
+			floor_wide = true
+	if descriptions.is_empty():
+		descriptions.append("nothing comes of it" if met else "they let it go")
+
+	stat["demands_met" if met else "demands_missed"] = \
+		int(stat["demands_met" if met else "demands_missed"]) + 1
+	# Same shape fire() appends, so _drain_log() renders it without knowing a
+	# demand from an ordinary action.
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": "%s - %s" % [d.display_name, "handled" if met else "IGNORED"],
+		"dialogue": "",
+		"descriptions": descriptions,
+		"floor_wide": floor_wide,
+	})
+
+
 func band_for(gap: int) -> String:
 	## The fog. Placing shows only this; offering shows the number.
 	if gap <= 5:
@@ -679,6 +784,13 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 	var fired := []
 	for act in c.archetype.actions:
 		if act.trigger == null or _trigger_name(act.trigger) != trigger_type:
+			continue
+		# An action whose job is to raise a demand is skipped WHOLESALE when the
+		# customer cannot take one, rather than firing and quietly doing nothing:
+		# the log would otherwise announce an ask that never happened. Checked
+		# before the cadence bookkeeping below, so a throttled customer keeps
+		# their place in the rhythm and asks the moment they are allowed to.
+		if not can_take_a_demand(c) and _asks_for_something(act):
 			continue
 
 		if trigger_type == &"every":
@@ -780,6 +892,8 @@ func report() -> Dictionary:
 		"ticks_place": int(stat["ticks_place"]),
 		"ticks_digs": int(stat["ticks_digs"]),
 		"ticks_approach": int(stat["ticks_approach"]),
+		"demands_met": int(stat["demands_met"]),
+		"demands_missed": int(stat["demands_missed"]),
 	}
 
 

@@ -59,6 +59,18 @@ class_name ShiftConfig extends Resource
 @export var arrival_patience_floor: int = 4
 @export var leaving_soon_at: int = 4
 
+# --- demands ---------------------------------------------------------------
+## How long a customer sits before they may ask you for anything. Walking up
+## and immediately making a demand reads as a bug rather than as character,
+## and leaves no room to have chosen to see them first.
+@export var demand_grace_ticks: int = 2
+## And how long after one finishes - met or ignored - before the next. Both of
+## these exist to stop three customers each opening a fresh fuse every few
+## ticks against a 24-tick budget, which is not a floor you triage but one you
+## lose. Guesses, and the first numbers to reach for if the floor feels frantic
+## rather than busy.
+@export var demand_cooldown_ticks: int = 4
+
 @export var prior_slip: float = 0.2
 @export var unique_archetypes_on_floor: bool = true
 

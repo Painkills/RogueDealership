@@ -96,9 +96,9 @@ func setup(c, seated: bool = false) -> void:
 ## reason anywhere on screen.
 static func behaviour_text(c) -> String:
 	var tells: Array[String] = []
-	if c.demands != null:
+	if c.demands_category != null:
 		tells.append("WILL NOT SIGN until they have bought something in %s."
-			% str(c.demands).capitalize())
+			% str(c.demands_category).capitalize())
 	for act in c.archetype.actions:
 		tells.append("%s - %s" % [act.display_name, act.tell])
 	if tells.is_empty():

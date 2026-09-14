@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="Demand" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
+[ext_resource type="Script" path="res://scripts/model/demands/offer_something_good.gd" id="3_rsv"]
+[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="4_dmd"]
+
+[sub_resource type="Resource" id="Sub_miss"]
+script = ExtResource("2_pat")
+amount = -2
+
+[sub_resource type="Resource" id="Sub_glad"]
+script = ExtResource("2_pat")
+amount = 6
+
+[sub_resource type="Resource" id="Sub_rsv"]
+script = ExtResource("3_rsv")
+rank_better_than = 3
+
+[resource]
+script = ExtResource("4_dmd")
+id = &"show_me"
+display_name = "Wants to see the good stuff"
+telegraph = "SHOW ME"
+dialogue = "\"What have you got that is actually worth having?\""
+ticks = 3
+resolve = SubResource("Sub_rsv")
+effects = Array[ExtResource("1_eff")]([SubResource("Sub_miss")])
+relief = Array[ExtResource("1_eff")]([SubResource("Sub_glad")])

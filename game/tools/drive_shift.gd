@@ -93,6 +93,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_table("after approaching chair A")
 
 	_check_the_mode_button_flips()
+	_check_what_a_customer_says_reaches_the_log()
 
 	_put_a_product_on_the_table()
 	_check_the_meter_shows_your_appeal_but_hides_their_line()
@@ -795,18 +796,18 @@ func _check_the_detail_card_shows_what_they_do() -> void:
 	# Imposed rather than waited for: whether this seed deals a Karen into this
 	# chair is chance, and a check that only sometimes runs has only sometimes
 	# been verified.
-	var was_demands = who.demands
-	who.demands = &"vehicle"
+	var was_demands_category = who.demands_category
+	who.demands_category = &"vehicle"
 	_controller._render()
 	_check("a customer who demands a category says so (%s)"
 		% det._does.text.split("\n")[0],
 		det._does.text.contains("WILL NOT SIGN")
 			and det._does.text.to_lower().contains("vehicle"))
-	who.demands = was_demands
+	who.demands_category = was_demands_category
 	_controller._render()
 	_check("and a customer who demands nothing does not (%s)"
 		% det._does.text.split("\n")[0],
-		was_demands != null or not det._does.text.contains("WILL NOT SIGN"))
+		was_demands_category != null or not det._does.text.contains("WILL NOT SIGN"))
 
 	_check_the_detail_card_is_not_overflowing(det)
 	_check_read_the_room_shows_you_something(det, who)
@@ -868,16 +869,16 @@ func _check_the_detail_card_is_not_overflowing(det) -> void:
 	# under a live customer rather than writing a second copy of the format here.
 	var who = _controller._shift.chairs[_at()]
 	var was_arch = who.archetype
-	var was_demands = who.demands
+	var was_demands_category = who.demands_category
 	var worst := ""
 	for arch in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
 		who.archetype = arch
-		who.demands = &"reliability"        # the longest category name there is
+		who.demands_category = &"reliability"        # the longest category name there is
 		var text := CustomerCard3D.behaviour_text(who)
 		if text.length() > worst.length():
 			worst = text
 	who.archetype = was_arch
-	who.demands = was_demands
+	who.demands_category = was_demands_category
 
 	var was_text: String = det._does.text
 	det._does.text = worst
@@ -907,6 +908,26 @@ func _stack_height(box: Control, width: float) -> float:
 	return total
 
 # --- the appeal meter ------------------------------------------------------
+
+## action_log entries have carried a "dialogue" key since G1 and _drain_log()
+## never once read it. Imposed rather than played for: whether a Karen turns up
+## in this seed is not what is being tested, and waiting for one would make
+## this check count for nothing on most runs.
+func _check_what_a_customer_says_reaches_the_log() -> void:
+	_controller._shift.action_log.append({
+		"key": "A",
+		"customer": "Sandra Okonkwo",
+		"name": "Asks for the manager",
+		"dialogue": "\"Is there someone else I can speak to?\"",
+		"descriptions": ["MANAGER? - 3 ticks to answer"],
+		"floor_wide": false,
+	})
+	_controller._drain_log()
+	var text: String = _controller._event_log.get_parsed_text()
+	_check("the action itself is logged", text.contains("Asks for the manager"))
+	_check("and so is what they actually said",
+		text.contains("Is there someone else I can speak to?"))
+
 
 ## Their real Line, parked while the fog checks run against a guaranteed miss.
 var _parked_line: int = -1

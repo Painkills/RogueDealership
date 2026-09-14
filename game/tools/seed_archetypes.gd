@@ -1,4 +1,8 @@
 extends SceneTree
+## STALE, AND EXPENSIVE TO RUN. The .tres files are the source of truth
+## (see README "Bootstrap scripts"), and since G3 they carry Demands this
+## script knows nothing about - re-running it would silently replace every
+## archetype action with its pre-G3 passive and lose the lot.
 ## Bootstrap for the seven archetypes and their actions.
 ##
 ##     godot --headless --path game --script res://tools/seed_archetypes.gd

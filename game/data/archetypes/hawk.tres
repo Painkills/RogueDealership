@@ -2,7 +2,8 @@
 
 [ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_bckoi"]
 [ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_p84xo"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_line.gd" id="3_kyjyw"]
+[ext_resource type="Script" path="res://scripts/model/effects/raise_demand.gd" id="3_kyjyw"]
+[ext_resource type="Resource" path="res://data/demands/better_quote.tres" id="11_dmd"]
 [ext_resource type="Script" path="res://scripts/model/triggers/on_offer.gd" id="4_qdd1g"]
 [ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_jnbft"]
 [ext_resource type="Resource" path="res://data/interests/status.tres" id="6_pq1hs"]
@@ -13,7 +14,7 @@
 
 [sub_resource type="Resource" id="Resource_vwsqn"]
 script = ExtResource("3_kyjyw")
-amount = 5
+demand = ExtResource("11_dmd")
 
 [sub_resource type="Resource" id="Resource_1n0gk"]
 script = ExtResource("4_qdd1g")
@@ -23,7 +24,7 @@ short_at = 1
 script = ExtResource("1_bckoi")
 id = &"shops_you"
 display_name = "Tells you what the other guy quoted"
-tell = "ANY offer that falls short moves their Line +5"
+tell = "ANY offer that falls short and he shops you. Come down on the price within 2 ticks or he sweeps your product off the table"
 dialogue = "\"I had another dealer at less than that.\""
 trigger = SubResource("Resource_1n0gk")
 effects = Array[ExtResource("2_p84xo")]([SubResource("Resource_vwsqn")])

@@ -344,7 +344,7 @@ func test_the_karen_will_not_sign_without_what_she_came_for() -> void:
 	var s := _shift([&"karen", &"easygoing"])
 	var c := _at(s)
 	_rank(c, [&"reliability"])
-	c.demands = &"vehicle"
+	c.demands_category = &"vehicle"
 	c.line = 20
 	h.check("she refuses to sign", not s.close().ok)
 	h.eq("nothing banked", s.margin_banked, 0)
@@ -360,7 +360,7 @@ func test_the_karen_will_not_sign_without_what_she_came_for() -> void:
 func test_the_karen_still_walks_when_her_patience_runs_out() -> void:
 	var s := _shift([&"karen", &"easygoing"])
 	var c := _at(s)
-	c.demands = &"vehicle"
+	c.demands_category = &"vehicle"
 	c.line = 20
 	_rank(c, [&"equity"])
 	_hand(s, [&"gap"])
