@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dxeimya4np6ys"]
 
-[ext_resource type="Script" path="res://scripts/view/interest_grid.gd" id="1_ew5d6"]
+[ext_resource type="Script" uid="uid://brhaqagfhyi0c" path="res://scripts/view/interest_grid.gd" id="1_ew5d6"]
 
 [node name="CustomerFront" type="Control" unique_id=1572897994]
 custom_minimum_size = Vector2(500, 700)
@@ -26,27 +26,27 @@ theme_override_constants/margin_bottom = 26
 
 [node name="Column" type="VBoxContainer" parent="Margin" unique_id=518922049]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 
 [node name="NameLabel" type="Label" parent="Margin/Column" unique_id=1787580523]
 custom_minimum_size = Vector2(0, 116)
 layout_mode = 2
-theme_override_font_sizes/font_size = 50
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 50
 text = "Customer Name"
 horizontal_alignment = 1
 autowrap_mode = 2
 
 [node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=96711689]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 32
 text = "Archetype"
 horizontal_alignment = 1
 
@@ -59,22 +59,22 @@ show_percentage = false
 
 [node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=2024869884]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 32
 text = "patience 12/16"
 horizontal_alignment = 1
 
 [node name="DemandLabel" type="Label" parent="Margin/Column" unique_id=2131507710]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-theme_override_font_sizes/font_size = 38
 theme_override_colors/font_color = Color(0.8784314, 0.3529412, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 38
 text = "MANAGER?  2t"
 horizontal_alignment = 1
 autowrap_mode = 2
@@ -87,11 +87,11 @@ script = ExtResource("1_ew5d6")
 
 [node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=919697256]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 26
 text = "(what is on their table shows here)"
 horizontal_alignment = 1
 autowrap_mode = 2

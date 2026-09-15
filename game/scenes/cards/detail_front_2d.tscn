@@ -1,7 +1,7 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cb7xpo53425ui"]
 
-[ext_resource type="Script" path="res://scripts/view/category_icon_control.gd" id="1_k5ujj"]
-[ext_resource type="Script" path="res://scripts/view/appeal_bar.gd" id="2_xv61y"]
+[ext_resource type="Script" uid="uid://dgyonwp841ds" path="res://scripts/view/category_icon_control.gd" id="1_k5ujj"]
+[ext_resource type="Script" uid="uid://b0qkqeg3vs4g8" path="res://scripts/view/appeal_bar.gd" id="2_xv61y"]
 
 [node name="DetailFront" type="Control" unique_id=689137818]
 custom_minimum_size = Vector2(500, 700)
@@ -31,11 +31,11 @@ theme_override_constants/separation = 8
 
 [node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=891050954]
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 40
 text = "Detail Card"
 autowrap_mode = 2
 
@@ -52,11 +52,11 @@ script = ExtResource("1_k5ujj")
 [node name="SubLabel" type="Label" parent="Margin/Column/SubRow" unique_id=27270897]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 27
 theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 28
 text = "subtitle"
 autowrap_mode = 2
 
@@ -67,62 +67,62 @@ color = Color(0.22745098, 0.22745098, 0.3529412, 1)
 
 [node name="CustomerBody" type="VBoxContainer" parent="Margin/Column" unique_id=1915692838]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 10
 
 [node name="DoesTitle" type="Label" parent="Margin/Column/CustomerBody" unique_id=1788718387]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 31
 text = "WHAT THEY DO"
 
 [node name="DoesLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=286073870]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 31
 text = "(their behaviours show here)"
 autowrap_mode = 2
 
 [node name="TableTitle" type="Label" parent="Margin/Column/CustomerBody" unique_id=1546188315]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 31
 text = "UNSIGNED"
 
 [node name="TableLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=141361158]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 31
 text = "(what they have agreed to shows here)"
 autowrap_mode = 2
 
 [node name="KnownTitle" type="Label" parent="Margin/Column/CustomerBody" unique_id=1931974251]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 31
 text = "WHAT YOU KNOW"
 
 [node name="KnownLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=1825041662]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 31
 text = "(what you have worked out shows here)"
 autowrap_mode = 2
 
@@ -133,29 +133,29 @@ theme_override_constants/separation = 4
 
 [node name="MarginTitle" type="Label" parent="Margin/Column/OfferBody" unique_id=1029211068]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 22
 text = "MARGIN"
 
 [node name="MarginLabel" type="Label" parent="Margin/Column/OfferBody" unique_id=1730972089]
 layout_mode = 2
-theme_override_font_sizes/font_size = 44
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 44
 text = "$1,600"
 
 [node name="AppealTitle" type="Label" parent="Margin/Column/OfferBody" unique_id=2073133220]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 22
 text = "APPEAL"
 
 [node name="AppealBar" type="Control" parent="Margin/Column/OfferBody" unique_id=1333127022]
@@ -166,19 +166,19 @@ script = ExtResource("2_xv61y")
 
 [node name="StatusLabel" type="Label" parent="Margin/Column/OfferBody" unique_id=1902298738]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 32
 text = "12 SHORT"
 
 [node name="HintLabel" type="Label" parent="Margin/Column/OfferBody" unique_id=1585611751]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 22
 text = "offer, or read the room, to learn their Line"
 autowrap_mode = 2
