@@ -63,7 +63,16 @@ func _init() -> void:
 
 	var left := VBoxContainer.new()
 	left.name = "LeftColumn"
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# A hard cap, not EXPAND_FILL: unconstrained, this column claimed every
+	# pixel the preview did not strictly need, stretching a single line of
+	# button text across 1500+ px of a 1920-wide screen and squeezing the
+	# hover preview down to a bare 260px sliver jammed against the right
+	# margin with nothing to spare - "too wide" broke the preview's own
+	# visibility, not just this column's own good looks. Measured worst
+	# case (longest product name, both price buttons) is ~580px; 700 leaves
+	# real headroom without giving up the room the preview needs to read as
+	# a normal part of the screen rather than an afterthought at the edge.
+	left.custom_minimum_size = Vector2(700, 0)
 	left.add_theme_constant_override("separation", 18)
 	body.add_child(left)
 	left.owner = root
@@ -106,14 +115,24 @@ func _init() -> void:
 	var preview_col := VBoxContainer.new()
 	preview_col.name = "PreviewColumn"
 	preview_col.add_theme_constant_override("separation", 12)
+	# Takes whatever LeftColumn's hard cap leaves behind, rather than the bare
+	# 260px its own content needs - the whole point of capping LeftColumn was
+	# to give this room to actually read as part of the screen.
+	preview_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_col.alignment = BoxContainer.ALIGNMENT_CENTER
 	body.add_child(preview_col)
 	preview_col.owner = root
 
-	_label(preview_col, root, "PreviewTitle", "PREVIEW", 24, &"text_dim")
+	var preview_title := _label(preview_col, root, "PreviewTitle", "PREVIEW", 24, &"text_dim")
+	preview_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	var preview: Control = (load(PREVIEW_SCENE) as PackedScene).instantiate()
 	preview.name = "CardPreview"
 	preview.unique_name_in_owner = true
+	# A fixed-size face, not a stretchy one: without this a VBoxContainer
+	# widened to fill the freed-up space would stretch the card's own 260x364
+	# proportions right along with it.
+	preview.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	preview_col.add_child(preview)
 	preview.owner = root
 
@@ -140,7 +159,7 @@ func _init() -> void:
 	quit(0)
 
 func _label(parent: Node, root: Node, node_name: String, text: String,
-		size: int, role: StringName) -> void:
+		size: int, role: StringName) -> Label:
 	var l := Label.new()
 	l.name = node_name
 	l.text = text
@@ -149,3 +168,4 @@ func _label(parent: Node, root: Node, node_name: String, text: String,
 	l.unique_name_in_owner = true
 	parent.add_child(l)
 	l.owner = root
+	return l

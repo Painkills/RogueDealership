@@ -154,12 +154,24 @@ func _set_standing_keys(r: Dictionary, standing_before: int) -> void:
 func _check_shop_layout_fits_on_screen() -> void:
 	var done_btn := _root._shop_view.get_node(^"Margin/Column/DoneButton") as Control
 	var log_label := _root._shop_view.get_node(^"Margin/Column/LogLabel") as Control
+	var preview := _root._shop_view.get_node(^"%CardPreview") as Control
 	_check("the shop has a deck to show (%d cards)" % _run.deck.cards.size(),
 		_run.deck.cards.size() > 0)
 	_on_screen("the shop's Done button",
 		Rect2(done_btn.global_position, done_btn.size))
 	_on_screen("the shop's log label",
 		Rect2(log_label.global_position, log_label.size))
+	_on_screen("the shop's card preview",
+		Rect2(preview.global_position, preview.size))
+	# Technically on screen is not the same bar as actually visible: an
+	# unbounded LeftColumn once stretched a single line of button text across
+	# 1500+ px and left the preview a bare 260px sliver hugging the right
+	# margin with zero pixels of clearance - "on screen" by one pixel is not
+	# a hover preview anyone would notice. 200px of clear space is a real
+	# gutter, not a coincidence of exactly fitting.
+	var clearance: float = VIEWPORT.x - (preview.global_position.x + preview.size.x)
+	_check("and has real clearance from the edge, not just barely fitting (%d px clear)"
+		% int(clearance), clearance >= 200.0)
 
 func _on_screen(label: String, r: Rect2) -> void:
 	_check("%s is on screen (%s)" % [label, r],
