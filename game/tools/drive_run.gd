@@ -299,7 +299,57 @@ func _finish_the_shift() -> void:
 	else:
 		_check("and its button still says Continue mid-run (%s)"
 			% report._restart.text, button_text.contains("continue"))
+	_check_report_card_fits_the_worst_case(report)
 	report.continue_pressed.emit()
+
+## Font-metric arithmetic, not pixel geometry read off a frame that might not
+## have resorted yet - CenterContainer/PanelContainer layout is deferred the
+## same way build_shop_scene.gd's own comment on DoneButton documents, and this
+## runs synchronously inside the same frame that just made the report visible.
+## Measured against the WORST case the report can actually show - long dollar
+## figures, every branch that adds a line active at once - through panel's own
+## setup(), not a second copy of its formatting written here.
+func _check_report_card_fits_the_worst_case(report) -> void:
+	var worst: Dictionary = {
+		"margin_banked": 12345678, "quota": 9876543, "made_quota": false,
+		"customers_seen": 999, "customers_signed": 999, "customers_walked": 999,
+		"offers": 9999, "sales": 9999, "close_rate": 0.999, "failed_offers": 9999,
+		"margin_conceded": 1234567, "margin_padded": 1234567,
+		"margin_bonus": 1234567, "margin_lost_to_walks": 1234567,
+		"margin_lost_to_closing": 1234567, "standing_delta": -100,
+		"standing_lost_to_walkouts": 100,
+	}
+	_set_standing_keys(worst, 100)
+	var was := {}
+	for key in ["title", "banked", "bonus", "standing", "walkouts", "customers",
+			"offers", "margin", "lost"]:
+		was[key] = report.get("_" + key).text
+	report.setup(worst)
+
+	var card := report.get_node(^"CenterWrap/Card") as Control
+	var vbox := card.get_node(^"CardMargin/VBoxContainer") as VBoxContainer
+	var width: float = 900.0 - 56.0 - 56.0   # Card's own width minus CardMargin
+	var total := 0.0
+	var shown := 0
+	for child in vbox.get_children():
+		shown += 1
+		if child is Label:
+			var l := child as Label
+			total += l.get_theme_font("font").get_multiline_string_size(
+				l.text, HORIZONTAL_ALIGNMENT_LEFT, width,
+				l.get_theme_font_size("font_size")).y
+		else:
+			total += maxf((child as Control).custom_minimum_size.y, 0.0)
+	if shown > 1:
+		total += float(vbox.get_theme_constant("separation") * (shown - 1))
+	total += 56.0 + 56.0   # CardMargin top + bottom
+	_check("the report card fits a 1080-tall viewport even at its wordiest (%d px)"
+		% int(total), total <= 1080.0)
+
+	# Leave the panel showing what the real shift actually produced, not the
+	# synthetic worst case - nothing downstream expects to see 12345678 again.
+	for key in was:
+		report.get("_" + key).text = was[key]
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

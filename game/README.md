@@ -1256,3 +1256,88 @@ competing for the same vertical space that already needed a scroll container
 to fit. `LogLabel` and `DoneButton` stay direct children of `Column`, exactly
 where `drive_run.gd` pins them by path - the restructuring happens entirely
 between `MoneyLabel` and `LogLabel`, and nothing outside that span moved.
+
+
+---
+
+## The report screen: from nine flat lines to an actual card
+
+`report.tscn` had never had a single style override anywhere in it: no panel
+background, no font-size override on any of its nine labels, and four of
+those nine labels never even called `add_theme_color_override` - plain
+default `Label` white sitting on Godot's own default gray `PanelContainer`
+style, legible only by the coincidence that white-on-gray happens to work.
+The one screen a player stops to actually read every single shift was, by a
+wide margin, the least designed thing in the game.
+
+### A themed, centered card instead of nine lines stretched across 1920px
+
+The root `PanelContainer` now carries a `StyleBoxFlat` in `Palette.color(&"bg")`
+- the same dark ground the floor's felt and the shop's own new background
+both use - rather than Godot's literal default gray. Inside it, a
+`CenterContainer` holds a single fixed-width `Card` (900px, height left at 0
+so it is always exactly as tall as its content) styled with `panel_hi` and a
+thin `neutral_3` border. Nine labels stretched edge to edge across a
+1920-wide screen read as sparse and are slower to scan than the same lines
+held to a column you can take in without moving your eyes sideways.
+
+### Visual hierarchy: one number matters most, and looks like it
+
+The title is now 60pt (was the project default, 26). Directly below it, the
+single most important line on the whole screen - banked margin against quota,
+with the verdict - is 40pt and centered, the second-largest text on the card,
+because it is the one number every other line is context for. Everything
+below it steps down in emphasis: standing and the walkout line at 28/24pt,
+then four supporting-detail lines at 22pt. Three hairline dividers (a styled
+`PanelContainer`, not a `ColorRect` - see below) separate the headline from
+the standing block and the standing block from the detail lines, so the card
+reads as sections rather than nine facts of identical weight.
+
+### Every label finally has a real color
+
+The four that never had one - customers seen/signed/walked, offers and close
+rate, margin conceded/padded/bonused - are `text_dim` throughout, since none
+of them carries a good-or-bad reading of its own. The exception is the
+"lost" line: `alert` when anything was actually lost, `text_dim` when nothing
+was. The restart button now recolors to `alert` on a fatal shift too - the
+same fact `set_button_text()`'s "YOU'RE FIRED" already announces in words,
+now also in the button's own color.
+
+### The ColorRect trap
+
+The first draft of the dividers used a plain `ColorRect`. `report.tscn` is
+loaded as a **permanent, hidden child of the shift scene's own HUD** -
+`build_shift_scene.gd` instances it once and toggles `visible` rather than
+creating it fresh - and `test_the_background_is_the_environment_not_a_control()`
+bans any `ColorRect` anywhere under `HUD`, recursively, regardless of
+visibility: the G1 bug it guards against was a full-rect `ColorRect` eating
+clicks meant for the table. Confirmed by deliberately reverting to
+`ColorRect` and watching that exact test fail. The dividers are a styled
+`PanelContainer` instead - the identical solid-strip look through the same
+`StyleBoxFlat` mechanism `Card`'s own background already uses, without being
+the class that guard is actually watching for.
+
+### `report_panel.gd` needed the same `_bind()` fix CardFace3D already has
+
+Every one of its nine label fields was a plain `@onready var`, which only
+resolves once `_ready()` has fired - true for the real report (a permanent
+HUD child from the moment the floor scene is built) but not for a bare
+`.instantiate()` in a test, the exact gap `CardFace3D`/`DetailCard3D`/
+`CardPreview2D` already hit and fixed the same way. `setup()` and
+`set_button_text()` now call an idempotent `_bind()` first, so the panel can
+be constructed and driven directly in a headless test without ever entering
+a live tree - which is what the new `test_report_panel.gd` does.
+
+### Proving the card actually fits, not just today's numbers
+
+A new driver check in `drive_run.gd` measures the card's real content height
+through font metrics - the same technique `drive_shift.gd`'s `_stack_height`
+already uses, and for the same reason: `CenterContainer`/`PanelContainer`
+layout is deferred, not synchronous, so reading `global_position`/`size`
+inside the same frame that just made the report visible would read stale
+geometry. It measures against a deliberately worst-case dict (seven-digit
+dollar figures, every branch that adds a line active at once) fed straight
+through the panel's own `setup()`, not a second copy of the formatting
+written in the driver - **784px against a 1080px viewport**, with real
+headroom to spare. Confirmed to actually catch an overflow by deliberately
+blowing the title up to 400pt and watching the same check fail at 1793px.
