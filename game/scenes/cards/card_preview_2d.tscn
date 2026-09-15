@@ -6,6 +6,7 @@
 [node name="CardPreview2D" type="Control"]
 custom_minimum_size = Vector2(260, 364)
 size = Vector2(260, 364)
+clip_contents = true
 script = ExtResource("1_script")
 
 [node name="TextureRect" type="TextureRect" parent="."]

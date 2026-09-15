@@ -172,6 +172,15 @@ func _check_shop_layout_fits_on_screen() -> void:
 	var clearance: float = VIEWPORT.x - (preview.global_position.x + preview.size.x)
 	_check("and has real clearance from the edge, not just barely fitting (%d px clear)"
 		% int(clearance), clearance >= 200.0)
+	# The reported bug: on the Web (gl_compatibility) renderer specifically,
+	# CardPreview2D's SubViewport-fed TextureRect painted past its own 260x364
+	# box and over the Done button below it, even though every Control rect
+	# involved measures correctly right here - a rendering-backend quirk this
+	# geometry can never see, since it only exists once GLES actually draws
+	# the frame. clip_contents is the one property that forecloses it
+	# regardless of cause, so it is the one thing left to assert.
+	_check("and clips its own content, so a render quirk can never paint past its box",
+		preview.clip_contents)
 
 func _on_screen(label: String, r: Rect2) -> void:
 	_check("%s is on screen (%s)" % [label, r],
