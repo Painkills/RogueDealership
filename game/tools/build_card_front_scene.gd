@@ -96,9 +96,16 @@ func _init() -> void:
 	# category - a support card's body is its effects' own describe() text, and
 	# has no category to show. So the icon is a sibling the running script
 	# shows or hides per card, not something baked into every card alike.
-	var body_row := HBoxContainer.new()
+	#
+	# Stacked - badge above caption - not side by side: a VBoxContainer
+	# stretches a child's WIDTH to fill it by default, and CategoryIcon.draw()
+	# scales its glyph to whatever rect.size it is handed with no aspect
+	# correction, so a non-square icon draws visibly distorted.
+	# SIZE_SHRINK_CENTER holds it to its own square custom_minimum_size.
+	var body_row := VBoxContainer.new()
 	body_row.name = "BodyRow"
-	body_row.add_theme_constant_override("separation", 14)
+	body_row.add_theme_constant_override("separation", 10)
+	body_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	body_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(body_row)
 	body_row.owner = root
@@ -106,7 +113,8 @@ func _init() -> void:
 	var body_icon := Control.new()
 	body_icon.name = "BodyIcon"
 	body_icon.set_script(load("res://scripts/view/category_icon_control.gd"))
-	body_icon.custom_minimum_size = Vector2(44, 44)
+	body_icon.custom_minimum_size = Vector2(80, 80)
+	body_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	body_icon.visible = false
 	body_row.add_child(body_icon)
 	body_icon.owner = root
@@ -114,9 +122,8 @@ func _init() -> void:
 	var body := _label("BodyLabel", 38, Palette.color(&"text"))
 	body.text = "reveals their Line and the category of their number one"   # longest CardText.body()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	body_row.add_child(body)
 	body.owner = root
 
