@@ -1185,3 +1185,74 @@ pressed the approach key cold, and a synthetic keypress never touches
 there. Fixed by genuinely hovering the pad before approaching through it - the
 same shape a real click always arrives in - so the check is proven to fail
 without the reset before it is trusted to pass with it.
+
+
+---
+
+## The shop: fewer upgrade rows, and you can actually see what they are
+
+### Upgrade offers are a random selection now
+
+Every un-upgraded card with a real upgrade to sell got an "upgrade" button,
+unconditionally, all at once. By the back half of a run that is eight or more
+rows deep - a wall of buttons rather than a decision. `Shop._roll_upgrade_offers()`
+now caps and randomizes it, in the exact shape `_roll_offers()` already uses
+for new cards on the shelf: drawn from the run's own seeded rng (so two runs
+from the same seed offer the same upgrades), capped at
+`shift_config.gd`'s new `shop_upgrade_slots` (3, a guess like `shop_offers`
+beside it), rolled **once** per visit and never re-rolled by a purchase.
+
+By **uid**, not by card identity: the starter deck carries three copies of
+Explain, each a separate `CardInstance` that can be upgraded independently, so
+the offer has to name a specific copy rather than a card that would
+ambiguously match all three.
+
+**The random subset is a real rule of the shop now, not a suggestion the view
+happens to follow.** `Shop.upgrade()` refuses a uid that isn't in
+`upgrade_offers`, the same way `Shop.buy()` already refuses a `CardDef` not in
+`offers` - so a stale button reference, or a driver calling `upgrade()`
+directly, cannot upgrade a card that was never actually offered.
+
+### Hovering a row shows you the actual card
+
+Every row in the shop - an offer on the shelf, a card in your deck - was plain
+button text. Asking "what does upgrading this actually change" or "what is
+this offer" meant reading a price and a name and imagining the rest.
+
+`CardPreview2D` is a new, plain 2D widget: the same `card_front_2d.tscn` face
+every card in the game already uses, minus the 3D mesh `CardFace3D` wraps it
+in - the shop is a flat 2D screen, so a `SubViewport` rendered straight into a
+`TextureRect` does the "author big, minify" trick `CardFace3D` uses, one step
+shorter with no albedo material in the way. Hovering any row - a `Button` for
+an offer, an `HBoxContainer` for a deck row, explicitly given
+`MOUSE_FILTER_PASS` so it fires `mouse_entered`/`mouse_exited` on its own
+rather than only on the buttons nested inside it - shows that exact card,
+upgraded state and all, in a preview pane beside the two lists.
+
+An offer has no `CardInstance` yet - only a `CardDef` on the shelf - so it gets
+a throwaway one (`uid -1`, never persisted, never touching the model) built
+just to look at. Nothing about the model changes for this; the preview reads
+the same `CardText` functions every other card face already reads.
+
+### Both screens are themed now, not left at the engine's default panel style
+
+The shop and the report screen shared one thing before either got a design
+pass: neither had ever set a single style override on its own root
+`PanelContainer`, so both rendered in Godot's literal default gray panel style
+- sitting over a floor scene built entirely from this project's own dark
+palette, or over nothing at all. The shop's root now carries a `StyleBoxFlat`
+in `Palette.color(&"bg")`, the same dark ground the floor's felt uses, so
+"between shifts" finally reads as part of the same game as the shift it
+interrupts.
+
+### Layout: a side-by-side split costs width, not height
+
+`DeckScroll`'s 260px cap exists because height was always the tight budget in
+this screen - `build_shop_scene.gd`'s own comment on it documents a prior
+overflow bug in exactly those terms. The preview pane sits BESIDE the existing
+row lists in a new `ShopBody` `HBoxContainer`, not below them, so it costs
+width - the one thing this 1920-wide screen was never short of - rather than
+competing for the same vertical space that already needed a scroll container
+to fit. `LogLabel` and `DoneButton` stay direct children of `Column`, exactly
+where `drive_run.gd` pins them by path - the restructuring happens entirely
+between `MoneyLabel` and `LogLabel`, and nothing outside that span moved.

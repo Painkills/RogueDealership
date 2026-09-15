@@ -5,8 +5,15 @@ extends SceneTree
 ## and says nothing about presentation, so this follows the panel style G1 used
 ## before the 3D pivot rather than staging a second 3D scene.
 ##
-## The two lists are EMPTY here and filled at runtime: what is on the shelf and
-## what is in the deck both change every visit.
+## The three lists are EMPTY here and filled at runtime: what is on the shelf,
+## what is in the deck, and which of the deck's cards may be upgraded all
+## change every visit.
+##
+## PreviewColumn/CardPreview shows whatever row you are currently hovering, on
+## the exact same card face the floor renders - a plain 2D face this time
+## (card_preview_2d.tscn), since there is no 3D table here to render it onto.
+
+const PREVIEW_SCENE := "res://scenes/cards/card_preview_2d.tscn"
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -16,6 +23,13 @@ func _init() -> void:
 	# existing just because the table is hidden.
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.set_script(load("res://scripts/view/shop_screen.gd"))
+	# Themed rather than left at the engine's default gray PanelContainer style
+	# - the one thing this screen shared with the report screen before either
+	# got a design pass, and the most direct fix for "make the menus look like
+	# they belong to this game" that touches only one property.
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Palette.color(&"bg")
+	root.add_theme_stylebox_override("panel", panel_style)
 
 	var margin := MarginContainer.new()
 	margin.name = "Margin"
@@ -33,16 +47,37 @@ func _init() -> void:
 	_label(col, root, "TitleLabel", "BETWEEN SHIFTS", 44, &"text")
 	_label(col, root, "ShiftLabel", "shift 1 of 5", 28, &"text_dim")
 	_label(col, root, "MoneyLabel", "$0 to spend", 34, &"margin")
-	_label(col, root, "OnShelfTitle", "ON THE SHELF", 24, &"text_dim")
+
+	# --- the row-lists on the left, the preview on the right ----------------
+	# A side-by-side split rather than a taller stack: DeckScroll's 260px cap
+	# exists because HEIGHT is the tight budget in this layout (see its own
+	# comment below), and a preview pane costs WIDTH instead, which this
+	# screen has never been short of. LogLabel and DoneButton stay direct
+	# children of Column, unmoved - drive_run.gd pins Margin/Column/DoneButton
+	# and Margin/Column/LogLabel by exact path.
+	var body := HBoxContainer.new()
+	body.name = "ShopBody"
+	body.add_theme_constant_override("separation", 32)
+	col.add_child(body)
+	body.owner = root
+
+	var left := VBoxContainer.new()
+	left.name = "LeftColumn"
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_theme_constant_override("separation", 18)
+	body.add_child(left)
+	left.owner = root
+
+	_label(left, root, "OnShelfTitle", "ON THE SHELF", 24, &"text_dim")
 
 	var offers := VBoxContainer.new()
 	offers.name = "OfferRows"
 	offers.unique_name_in_owner = true
 	offers.add_theme_constant_override("separation", 8)
-	col.add_child(offers)
+	left.add_child(offers)
 	offers.owner = root
 
-	_label(col, root, "DeckTitle", "YOUR DECK", 24, &"text_dim")
+	_label(left, root, "DeckTitle", "YOUR DECK", 24, &"text_dim")
 
 	var deck_scroll := ScrollContainer.new()
 	deck_scroll.name = "DeckScroll"
@@ -57,7 +92,7 @@ func _init() -> void:
 	# A ScrollContainer's minimum size is exactly this constant, never its
 	# content's, so this number is independent of how large the deck grows.
 	deck_scroll.custom_minimum_size = Vector2(0, 260)
-	col.add_child(deck_scroll)
+	left.add_child(deck_scroll)
 	deck_scroll.owner = root
 
 	var deck_rows := VBoxContainer.new()
@@ -67,6 +102,20 @@ func _init() -> void:
 	deck_rows.add_theme_constant_override("separation", 6)
 	deck_scroll.add_child(deck_rows)
 	deck_rows.owner = root
+
+	var preview_col := VBoxContainer.new()
+	preview_col.name = "PreviewColumn"
+	preview_col.add_theme_constant_override("separation", 12)
+	body.add_child(preview_col)
+	preview_col.owner = root
+
+	_label(preview_col, root, "PreviewTitle", "PREVIEW", 24, &"text_dim")
+
+	var preview: Control = (load(PREVIEW_SCENE) as PackedScene).instantiate()
+	preview.name = "CardPreview"
+	preview.unique_name_in_owner = true
+	preview_col.add_child(preview)
+	preview.owner = root
 
 	_label(col, root, "LogLabel", "", 26, &"alert")
 

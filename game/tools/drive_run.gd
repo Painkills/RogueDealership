@@ -39,6 +39,8 @@ func _process(_delta: float) -> bool:
 		if _settle_frames < 5:
 			return false
 		_check_shop_layout_fits_on_screen()
+		_check_hovering_a_shop_row_previews_its_card()
+		_check_only_the_random_offer_gets_an_upgrade_button()
 		_phase = 2
 		return false
 
@@ -163,6 +165,67 @@ func _on_screen(label: String, r: Rect2) -> void:
 	_check("%s is on screen (%s)" % [label, r],
 		r.position.x >= 0.0 and r.position.y >= 0.0
 			and r.end.x <= VIEWPORT.x and r.end.y <= VIEWPORT.y)
+
+## "Ensure that on hover, you can see each card show up in the shop" - the
+## literal ask. Emitting the signal directly rather than moving a real mouse,
+## the same way drive_shift.gd drives hover on the floor: it invokes the exact
+## callback a real hover fires, without needing real pointer motion to do it.
+func _check_hovering_a_shop_row_previews_its_card() -> void:
+	var shop_view = _root._shop_view
+	var preview: CardPreview2D = shop_view._preview
+	_check("nothing hovered yet, so the preview invites rather than guesses",
+		preview._name.text == "hover a card")
+
+	var offer_rows: Array = shop_view._offer_rows.get_children()
+	_check("there is an offer row to hover", offer_rows.size() > 0)
+	if offer_rows.size() > 0:
+		var first_offer: Button = offer_rows[0]
+		first_offer.mouse_entered.emit()
+		_check("hovering the offer shows its own card (%s)" % preview._name.text,
+			preview._name.text == shop_view._shop.offers[0].display_name)
+		first_offer.mouse_exited.emit()
+		_check("and looking away clears it", preview._name.text == "hover a card")
+
+	var deck_rows: Array = shop_view._deck_rows.get_children()
+	_check("there is a deck row to hover", deck_rows.size() > 0)
+	if deck_rows.size() > 0:
+		var first_row: HBoxContainer = deck_rows[0]
+		var first_card: CardInstance = _run.deck.cards[0]
+		_check("the row really does take hover (mouse_filter=%d, not IGNORE)"
+			% first_row.mouse_filter, first_row.mouse_filter != Control.MOUSE_FILTER_IGNORE)
+		first_row.mouse_entered.emit()
+		_check("hovering a deck row shows THAT card (%s vs %s)"
+			% [preview._name.text, first_card.card.display_name],
+			preview._name.text == first_card.card.display_name)
+		first_row.mouse_exited.emit()
+		_check("and it clears again", preview._name.text == "hover a card")
+
+## "Reduce the number of upgrade options in the shop to a random selection" -
+## before this, every un-upgraded card with a real upgrade to sell got a
+## button, unconditionally. Counts the actual Button nodes the screen built,
+## not the model's own upgrade_offers array, so this fails if shop_screen.gd's
+## gate and Shop's random draw ever disagree about which cards are offered.
+func _check_only_the_random_offer_gets_an_upgrade_button() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var eligible_uncapped := 0
+	for inst in _run.deck.cards:
+		if not inst.upgraded and shop.upgrade_gain(inst) > 0:
+			eligible_uncapped += 1
+	_check("the starter deck has more upgradeable cards than the slot count,"
+		+ " or this proves nothing (%d eligible, %d slots)"
+			% [eligible_uncapped, _run.cfg.shop_upgrade_slots],
+		eligible_uncapped > _run.cfg.shop_upgrade_slots)
+
+	var upgrade_buttons := 0
+	for row in shop_view._deck_rows.get_children():
+		for child in (row as HBoxContainer).get_children():
+			if child is Button and (child as Button).text.begins_with("upgrade "):
+				upgrade_buttons += 1
+	_check("rendered exactly as many upgrade buttons as were actually offered (%d)"
+		% upgrade_buttons, upgrade_buttons == shop.upgrade_offers.size())
+	_check("which is capped at the configured slot count, not the whole deck",
+		upgrade_buttons <= _run.cfg.shop_upgrade_slots)
 
 func _phase_2_buy_and_leave() -> void:
 	# Buy the cheapest thing on the shelf, with the money to afford it.

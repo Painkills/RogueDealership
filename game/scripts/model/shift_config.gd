@@ -76,6 +76,11 @@ class_name ShiftConfig extends Resource
 
 # --- the shop --------------------------------------------------------------
 @export var shop_offers: int = 3
+## Every un-upgraded card with a real upgrade to sell used to get an "upgrade"
+## button, all at once - eight or more rows deep by the back half of a run.
+## Capped and rolled at random per visit instead, the same shape shop_offers
+## already uses for new cards: a real choice among a few, not a checklist.
+@export var shop_upgrade_slots: int = 3
 ## An upgrade costs this many times what it gains, so it pays back in that many
 ## sales. Both scale with the card, which is what keeps upgrading a cheap card
 ## and an expensive one the same decision.

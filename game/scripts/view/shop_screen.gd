@@ -11,6 +11,7 @@ signal done
 @onready var _shift_label: Label = %ShiftLabel
 @onready var _offer_rows: VBoxContainer = %OfferRows
 @onready var _deck_rows: VBoxContainer = %DeckRows
+@onready var _preview: CardPreview2D = %CardPreview
 @onready var _log: Label = %LogLabel
 @onready var _done: Button = %DoneButton
 
@@ -22,9 +23,16 @@ func _ready() -> void:
 func setup(shop: Shop) -> void:
 	_shop = shop
 	_log.text = ""
+	_preview.clear()
 	_render()
 
 func _render() -> void:
+	# Every row is about to be freed and rebuilt below. Godot does not re-fire
+	# mouse_entered for a stationary cursor sitting over a node that just got
+	# replaced, so without this a purchase (which calls _render() on its own)
+	# could leave the preview showing a card you just dropped from the deck
+	# until the mouse actually moves again.
+	_preview.clear()
 	var run := _shop.run
 	# Name what this pot IS and what just went into it. The budget stacks across
 	# the run, so a total on its own cannot tell you whether the shift you just
@@ -41,9 +49,15 @@ func _render() -> void:
 	for child in _offer_rows.get_children():
 		child.queue_free()
 	for def in _shop.offers:
+		# Not on the deck yet - a real CardInstance can only exist once
+		# something owns it. A throwaway one (uid -1, never persisted, never
+		# touching the model) is enough to feed the SAME preview and the SAME
+		# CardText the deck rows use, so an offer looks exactly like what it
+		# will look like the moment you actually buy it.
+		var preview_inst := CardInstance.new(def, -1)
 		_add_row(_offer_rows, "%s - %s" % [def.display_name,
 			Format.money(_shop.buy_price(def))],
-			func(): _apply(_shop.buy(def)))
+			func(): _apply(_shop.buy(def)), preview_inst)
 
 	for child in _deck_rows.get_children():
 		child.queue_free()
@@ -54,6 +68,14 @@ func _render() -> void:
 			label += "  (upgraded)"
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12)
+		# Containers are not guaranteed to pick up hover on their own - PASS
+		# still lets input fall through to the buttons inside, but makes the
+		# ROW ITSELF a legitimate target for mouse_entered/mouse_exited, which
+		# is what "hover this row" actually means when the row is more than
+		# just one button.
+		row.mouse_filter = Control.MOUSE_FILTER_PASS
+		row.mouse_entered.connect(func(): _preview.show_card(inst))
+		row.mouse_exited.connect(func(): _preview.clear())
 		_deck_rows.add_child(row)
 
 		var name_label := Label.new()
@@ -62,18 +84,25 @@ func _render() -> void:
 		name_label.add_theme_font_size_override("font_size", 24)
 		row.add_child(name_label)
 
-		if not inst.upgraded:
+		# Only a card THIS VISIT'S random draw actually offers gets a button -
+		# see Shop._roll_upgrade_offers(). Every un-upgraded card used to get
+		# one unconditionally, which is exactly what made this list a wall of
+		# buttons by the back half of a run.
+		if not inst.upgraded and _shop.upgrade_offers.has(uid):
 			_add_button(row, "upgrade %s" % Format.money(_shop.upgrade_price(inst)),
 				func(): _apply(_shop.upgrade(uid)))
 		_add_button(row, "drop %s" % Format.money(_shop.remove_price()),
 			func(): _apply(_shop.remove(uid)))
 
-func _add_row(parent: Node, text: String, action: Callable) -> void:
+func _add_row(parent: Node, text: String, action: Callable,
+		preview_inst: CardInstance) -> void:
 	var b := Button.new()
 	b.text = text
 	b.add_theme_font_size_override("font_size", 26)
 	b.custom_minimum_size = Vector2(0, 56)
 	b.pressed.connect(action)
+	b.mouse_entered.connect(func(): _preview.show_card(preview_inst))
+	b.mouse_exited.connect(func(): _preview.clear())
 	parent.add_child(b)
 
 func _add_button(parent: Node, text: String, action: Callable) -> void:

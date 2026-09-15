@@ -89,6 +89,10 @@ func test_upgrading_costs_a_multiple_of_what_it_gains() -> void:
 			product = c
 			break
 	h.check("there is a product in the starter deck", product != null)
+	# Upgrade offers are a random subset now - imposed here rather than hoped
+	# for, since this test is about the PRICE formula, not about whether this
+	# particular seed happened to roll a product into the offer.
+	shop.upgrade_offers = [product.uid]
 	var p := product.card as ProductCardDef
 	var gain: int = p.upgraded_margin - p.margin
 	h.eq("priced at the multiple of the gain", shop.upgrade_price(product),
@@ -103,10 +107,17 @@ func test_a_card_cannot_be_upgraded_twice() -> void:
 	var r := _run()
 	var shop := Shop.new(r)
 	var uid: int = r.deck.cards[0].uid
-	shop.upgrade(uid)
+	# Imposed onto the offer list: the point of this test is "twice", and that
+	# needs the FIRST upgrade to actually succeed regardless of what this seed
+	# happened to roll.
+	shop.upgrade_offers = [uid]
+	var first := shop.upgrade(uid)
+	h.check("the first one goes through (%s)" % first.msg, first.ok)
 	var money_after_first: int = r.money
 	var res := shop.upgrade(uid)
 	h.check("refused", not res.ok)
+	h.check("because it is already upgraded, not because it fell off the offer (%s)"
+		% res.msg, res.msg.to_lower().contains("already upgraded"))
 	h.eq("and charged nothing", r.money, money_after_first)
 
 func test_a_product_with_no_authored_upgrade_cannot_be_bought() -> void:
@@ -211,3 +222,92 @@ func test_the_deck_can_never_be_stripped_of_products() -> void:
 		% remaining, remaining >= r.cfg.min_products)
 	h.check("and the refusal says something useful (%s)" % last_refusal,
 		last_refusal.to_lower().contains("product"))
+
+# --------------------------------------------------------- random upgrade offers
+func test_upgrade_offers_are_capped_at_the_configured_slot_count() -> void:
+	var r := _run()
+	var shop := Shop.new(r)
+	h.eq("three slots, like shop_offers", shop.upgrade_offers.size(),
+		r.cfg.shop_upgrade_slots)
+
+func test_upgrade_offers_shrink_gracefully_when_fewer_cards_are_eligible() -> void:
+	## mini(), not a hard slot count - fewer eligible cards than slots must not
+	## crash trying to pop more than exist from the pool.
+	var r := _run(10000000)
+	var shop := Shop.new(r)
+	# Upgrade everything eligible except ONE, so the next shop's pool of
+	# eligible cards is down to exactly one - well under the configured 3.
+	var left_eligible: CardInstance = null
+	for inst in r.deck.cards:
+		if shop.upgrade_gain(inst) <= 0:
+			continue
+		if left_eligible == null:
+			left_eligible = inst
+			continue
+		shop.upgrade_offers = [inst.uid]   # imposed, so every upgrade lands
+		shop.upgrade(inst.uid)
+	h.check("left exactly one eligible card behind", left_eligible != null)
+
+	var fresh := Shop.new(r)
+	h.eq("offers exactly the one that is left, not the full slot count",
+		fresh.upgrade_offers.size(), 1)
+	h.eq("and it is that one", fresh.upgrade_offers, [left_eligible.uid])
+
+func test_every_upgrade_offer_is_a_real_eligible_uid() -> void:
+	var r := _run()
+	var shop := Shop.new(r)
+	for uid in shop.upgrade_offers:
+		var inst := shop.find(uid)
+		h.check("uid %d is a real card in the deck" % uid, inst != null)
+		if inst == null:
+			continue
+		h.check("%s is not already upgraded" % inst.card.display_name,
+			not inst.upgraded)
+		h.check("%s actually has an upgrade to sell" % inst.card.display_name,
+			shop.upgrade_gain(inst) > 0)
+
+func test_upgrade_offers_never_repeat_the_same_card_twice() -> void:
+	var r := _run()
+	var shop := Shop.new(r)
+	var seen := {}
+	for uid in shop.upgrade_offers:
+		h.check("uid %d offered only once" % uid, not seen.has(uid))
+		seen[uid] = true
+
+func test_two_shops_from_one_seed_offer_the_same_upgrades() -> void:
+	var a := Shop.new(_run())
+	var b := Shop.new(_run())
+	h.eq("identical upgrade offers", a.upgrade_offers, b.upgrade_offers)
+
+func test_upgrade_offers_do_not_reroll_across_a_visit() -> void:
+	## The same stability `offers` already has: a visit is a handful of clicks,
+	## and the shelf must not shuffle itself out from under a decision the
+	## player is still making.
+	var r := _run()
+	var shop := Shop.new(r)
+	var before := shop.upgrade_offers.duplicate()
+	shop.buy(shop.offers[0])
+	h.eq("buying a new card does not reroll it", shop.upgrade_offers, before)
+	if not shop.upgrade_offers.is_empty():
+		var uid: int = shop.upgrade_offers[0]
+		shop.upgrade(uid)
+		h.eq("neither does upgrading one of the offered cards",
+			shop.upgrade_offers, before)
+
+func test_a_card_not_on_this_visits_upgrade_offer_refuses_the_upgrade() -> void:
+	## Same rule buy() already enforces against `offers` - the random subset is
+	## a real constraint of the shop, not a suggestion only the view follows.
+	var r := _run()
+	var shop := Shop.new(r)
+	var not_offered: CardInstance = null
+	for inst in r.deck.cards:
+		if not shop.upgrade_offers.has(inst.uid) and shop.upgrade_gain(inst) > 0:
+			not_offered = inst
+			break
+	h.check("the starter deck has more upgradeable cards than slots, so one exists",
+		not_offered != null)
+	var res := shop.upgrade(not_offered.uid)
+	h.check("refused (%s)" % res.msg, not res.ok)
+	h.check("and says it is not on offer, not that it has no upgrade",
+		res.msg.to_lower().contains("not on offer"))
+	h.eq("and nothing was spent", r.money, 10000)

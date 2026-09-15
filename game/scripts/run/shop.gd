@@ -8,10 +8,18 @@ class_name Shop extends RefCounted
 
 var run: RunState
 var offers: Array[CardDef] = []      ## what you may buy this visit
+## Which cards in the DECK may be upgraded this visit, by uid. Rolled once,
+## here, and never again for the life of this Shop - the same stability
+## `offers` already has. Buying, upgrading or dropping a card never re-rolls
+## this list; a card that becomes upgraded (or leaves the deck entirely)
+## simply stops matching anything the render loop iterates, without needing
+## its uid actively removed.
+var upgrade_offers: Array[int] = []
 
 func _init(p_run: RunState) -> void:
 	run = p_run
 	_roll_offers()
+	_roll_upgrade_offers()
 
 func _roll_offers() -> void:
 	## Drawn from the RUN's seeded rng, never the global one: two runs from the
@@ -25,6 +33,27 @@ func _roll_offers() -> void:
 	var wanted: int = mini(run.cfg.shop_offers, pool.size())
 	for _i in range(wanted):
 		offers.append(pool.pop_at(run.rng.randi_range(0, pool.size() - 1)))
+
+func _roll_upgrade_offers() -> void:
+	## Every un-upgraded card with a real upgrade to sell used to get a button,
+	## unconditionally, all at once - eight or more rows deep by the back half
+	## of a run, since the render loop never pre-checked upgrade_gain() at all
+	## (only the click did). Capped and rolled at random instead, from the RUN's
+	## seeded rng so two runs from the same seed offer the same upgrades, in the
+	## same shape _roll_offers() already uses for new cards.
+	##
+	## By UID, not by CardDef: two copies of the same card (three Explains in
+	## the starter deck) are different CardInstances that can be upgraded
+	## independently, and the offer has to pick a specific COPY, not a card
+	## identity that would ambiguously match all three.
+	var pool: Array[int] = []
+	for inst in run.deck.cards:
+		if not inst.upgraded and upgrade_gain(inst) > 0:
+			pool.append(inst.uid)
+	upgrade_offers.clear()
+	var wanted: int = mini(run.cfg.shop_upgrade_slots, pool.size())
+	for _i in range(wanted):
+		upgrade_offers.append(pool.pop_at(run.rng.randi_range(0, pool.size() - 1)))
 
 # --- prices ----------------------------------------------------------------
 
@@ -78,6 +107,13 @@ func upgrade(uid: int) -> Result:
 		return Result.new(false, "%s is already upgraded." % inst.card.display_name)
 	if upgrade_gain(inst) <= 0:
 		return Result.new(false, "%s has no upgrade to buy." % inst.card.display_name)
+	# Same rule buy() already enforces against offers: the random subset is a
+	# real constraint of the shop, not a suggestion the view happens to follow.
+	# Without this, a stale button reference or a driver calling upgrade()
+	# directly could upgrade a card that was never actually on offer.
+	if not upgrade_offers.has(uid):
+		return Result.new(false, "%s is not on offer this visit."
+			% inst.card.display_name)
 	var price := upgrade_price(inst)
 	if run.money < price:
 		return Result.new(false, "You cannot afford to upgrade the %s."
