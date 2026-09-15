@@ -61,7 +61,12 @@ func _init() -> void:
 	col.add_child(header)
 	header.owner = root
 
+	# Placeholder text throughout is the longest string CardText can actually
+	# produce for the real card pool (data/card_pool.tres), not a generic
+	# filler word - so opening this scene in the editor already shows whether
+	# a layout change survives the worst real card, not just a short one.
 	var name_label := _label("NameLabel", 46, Palette.color(&"text"))
+	name_label.text = "Anti-Theft & Key Protection"   # longest CardText.title()
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_label.custom_minimum_size = Vector2(0, 130)
@@ -70,11 +75,13 @@ func _init() -> void:
 	name_label.owner = root
 
 	var cost := _label("CostLabel", 40, Palette.color(&"text_dim"))
+	cost.text = "3t"
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	header.add_child(cost)
 	cost.owner = root
 
 	var kind := _label("KindLabel", 30, Palette.color(&"accent"))
+	kind.text = "PRODUCT"
 	col.add_child(kind)
 	kind.owner = root
 
@@ -105,6 +112,7 @@ func _init() -> void:
 	body_icon.owner = root
 
 	var body := _label("BodyLabel", 38, Palette.color(&"text"))
+	body.text = "reveals their Line and the category of their number one"   # longest CardText.body()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -113,6 +121,7 @@ func _init() -> void:
 	body.owner = root
 
 	var money := _label("MarginLabel", 68, Palette.color(&"margin"))
+	money.text = "$1,600"   # longest CardText.margin()
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(money)
 	money.owner = root

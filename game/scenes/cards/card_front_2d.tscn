@@ -1,21 +1,21 @@
-[gd_scene format=3 uid="uid://dnj2gtgq5iarh"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://dgyonwp841ds" path="res://scripts/view/category_icon_control.gd" id="1_wrnfa"]
+[ext_resource type="Script" path="res://scripts/view/category_icon_control.gd" id="1_wrnfa"]
 
-[node name="CardFront" type="Control" unique_id=1708664950]
+[node name="CardFront" type="Control" unique_id=1089712672]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 500.0
 offset_bottom = 700.0
 
-[node name="Background" type="ColorRect" parent="." unique_id=565859066]
+[node name="Background" type="ColorRect" parent="." unique_id=1841657582]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.13333334, 0.13333334, 0.23137255, 1)
 
-[node name="Inset" type="ColorRect" parent="." unique_id=429234107]
+[node name="Inset" type="ColorRect" parent="." unique_id=1185650994]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -25,7 +25,7 @@ offset_right = -10.0
 offset_bottom = -10.0
 color = Color(0.18039216, 0.18039216, 0.2901961, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1049619654]
+[node name="Margin" type="MarginContainer" parent="." unique_id=1429100188]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -34,76 +34,80 @@ theme_override_constants/margin_top = 34
 theme_override_constants/margin_right = 34
 theme_override_constants/margin_bottom = 34
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=160554684]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=395940046]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=1910939936]
+[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=389997509]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=1828507608]
+[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=1313523203]
 custom_minimum_size = Vector2(0, 130)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 46
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
-theme_override_font_sizes/font_size = 46
+text = "Anti-Theft & Key Protection"
 autowrap_mode = 2
 
-[node name="CostLabel" type="Label" parent="Margin/Column/Header" unique_id=2012585156]
+[node name="CostLabel" type="Label" parent="Margin/Column/Header" unique_id=46221156]
 layout_mode = 2
+theme_override_font_sizes/font_size = 40
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
-theme_override_font_sizes/font_size = 40
+text = "3t"
 horizontal_alignment = 2
 
-[node name="KindLabel" type="Label" parent="Margin/Column" unique_id=1348211275]
+[node name="KindLabel" type="Label" parent="Margin/Column" unique_id=1563504145]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
-theme_override_font_sizes/font_size = 30
+text = "PRODUCT"
 
-[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=626710180]
+[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=1348619059]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 color = Color(0.22745098, 0.22745098, 0.3529412, 1)
 
-[node name="BodyRow" type="HBoxContainer" parent="Margin/Column" unique_id=1808162940]
+[node name="BodyRow" type="HBoxContainer" parent="Margin/Column" unique_id=1542680863]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 14
 
-[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=719992667]
-custom_minimum_size = Vector2(80, 80)
+[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=1895660890]
+visible = false
+custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
 script = ExtResource("1_wrnfa")
 
-[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=401293970]
+[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=1136560368]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 38
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
-theme_override_font_sizes/font_size = 38
+text = "reveals their Line and the category of their number one"
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=1065761549]
+[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=671049559]
 layout_mode = 2
+theme_override_font_sizes/font_size = 68
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 3
-theme_override_font_sizes/font_size = 68
+text = "$1,600"
 horizontal_alignment = 1
