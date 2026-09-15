@@ -46,8 +46,12 @@ func _init() -> void:
 	margin.add_child(col)
 	col.owner = root
 
+	# Placeholder text below is the longest string the real data can actually
+	# produce (data/archetype_pool.tres names/archetypes, data/demands/*.tres
+	# telegraphs, data/card_pool.tres product names) rather than a generic
+	# filler word, so this scene shows its own worst case in the editor.
 	var name_label := _label("NameLabel", 50, Palette.color(&"text"))
-	name_label.text = "Customer Name"
+	name_label.text = "Sandra Okonkwo"   # longest name in archetype_pool.tres
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.custom_minimum_size = Vector2(0, 116)
@@ -55,7 +59,7 @@ func _init() -> void:
 	name_label.owner = root
 
 	var arch_label := _label("ArchetypeLabel", 32, Palette.color(&"accent"))
-	arch_label.text = "Archetype"
+	arch_label.text = "Tech Enthusiast  [C]"   # longest archetype display_name + chair key
 	arch_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(arch_label)
 	arch_label.owner = root
@@ -71,7 +75,7 @@ func _init() -> void:
 	patience_bar.owner = root
 
 	var patience_label := _label("PatienceLabel", 30, Palette.color(&"text"))
-	patience_label.text = "patience 12/16"
+	patience_label.text = "patience 16/16"
 	patience_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(patience_label)
 	patience_label.owner = root
@@ -81,7 +85,7 @@ func _init() -> void:
 	# a reserved height, because a row that appears and disappears would shove
 	# everything below it up and down the card every few ticks.
 	var demand_label := _label("DemandLabel", 38, Palette.color(&"alert"))
-	demand_label.text = "MANAGER?  2t"
+	demand_label.text = "BETTER QUOTE  3t"   # longest telegraph in data/demands/*.tres
 	demand_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	demand_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	demand_label.custom_minimum_size = Vector2(0, 52)
@@ -107,7 +111,10 @@ func _init() -> void:
 	grid.owner = root
 
 	var status_label := _label("StatusLabel", 26, Palette.color(&"margin"))
-	status_label.text = "(what is on their table shows here)"
+	# The longest product on the table plus a realistic two-product unsigned
+	# total, not a generic hint string - status_text() joins both lines when
+	# both are true at once, which is the actual worst case to check against.
+	status_label.text = "on the table: Anti-Theft & Key Protection\n$1,700 unsigned"
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(status_label)
