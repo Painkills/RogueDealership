@@ -51,6 +51,14 @@ const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
 const DETAIL_CARD := "res://scenes/cards/detail_card_3d.tscn"
 const REPORT := "res://scenes/report.tscn"
 
+## Overrides card_3d's own 14 x 4 default (VENDORED.md: "Do not edit these
+## files") through the sanctioned extension point - CardCollection3D's own
+## @export var dropzone_collision_shape - rather than editing the vendored
+## .tres in place. 8 wide x 5 tall, asymmetric (top +3, bottom -2): a bigger,
+## easier target than the old symmetric slab, biased toward where a dragged
+## card's cursor typically sits.
+const DROPZONE_SHAPE := "res://scenes/dropzone_shape_3d.tres"
+
 # --- table geometry, world units -------------------------------------------
 ## Seats sit on this circle at 0, 120 and 240 degrees. Seat i is at carousel
 ## angle 120*i, so fronting it means turning the carousel to -120*i - which
@@ -307,6 +315,7 @@ func _collection(scene: PackedScene, node_name: String, pos: Vector3,
 	c.name = node_name
 	c.position = pos
 	c.unique_name_in_owner = true
+	c.dropzone_collision_shape = load(DROPZONE_SHAPE)
 	parent.add_child(c)
 	c.owner = owner_root
 	return c

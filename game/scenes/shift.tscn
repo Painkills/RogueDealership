@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/cards/detail_card_3d.tscn" id="10_bex05"]
 [ext_resource type="Script" uid="uid://bgkontnk0cnl" path="res://addons/card_3d/scripts/drag_controller.gd" id="12_nnevp"]
 [ext_resource type="PackedScene" path="res://scenes/report.tscn" id="13_g8ksb"]
+[ext_resource type="Shape3D" path="res://scenes/dropzone_shape_3d.tres" id="14_dropz"]
 
 [sub_resource type="Resource" id="Resource_gogk5"]
 script = ExtResource("4_v4wb7")
@@ -132,6 +133,7 @@ fov = 31.0
 
 [node name="Hand" parent="Camera3D" unique_id=471048496 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
+dropzone_collision_shape = ExtResource("14_dropz")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -12.6, -19.91)
 card_layout_strategy = SubResource("Resource_gogk5")
 drag_strategy = SubResource("Resource_rf0hl")
@@ -152,6 +154,7 @@ outline_size = 10
 
 [node name="Discard" parent="Camera3D" unique_id=481743711 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
+dropzone_collision_shape = ExtResource("14_dropz")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, -12.6, -19.91)
 card_layout_strategy = SubResource("Resource_b21lq")
 drag_strategy = SubResource("Resource_f1jej")
@@ -173,6 +176,7 @@ outline_size = 10
 
 [node name="Draw" parent="Camera3D" unique_id=616744055 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
+dropzone_collision_shape = ExtResource("14_dropz")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.27, -12.6, -19.91)
 card_layout_strategy = SubResource("Resource_40fsy")
 drag_strategy = SubResource("Resource_6h2fn")
@@ -242,6 +246,7 @@ shape = SubResource("BoxShape3D_lu07t")
 
 [node name="Chair0" parent="Table/Carousel/Seat0" unique_id=561181709 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
+dropzone_collision_shape = ExtResource("14_dropz")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 card_layout_strategy = SubResource("Resource_p4w1v")
 drag_strategy = SubResource("Resource_melxm")
@@ -291,6 +296,7 @@ shape = SubResource("BoxShape3D_3d7pu")
 
 [node name="Chair1" parent="Table/Carousel/Seat1" unique_id=1223058652 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
+dropzone_collision_shape = ExtResource("14_dropz")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 card_layout_strategy = SubResource("Resource_p6lgp")
 drag_strategy = SubResource("Resource_lfq30")
@@ -340,6 +346,7 @@ shape = SubResource("BoxShape3D_8o8kk")
 
 [node name="Chair2" parent="Table/Carousel/Seat2" unique_id=817457003 instance=ExtResource("2_v32a1")]
 unique_name_in_owner = true
+dropzone_collision_shape = ExtResource("14_dropz")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
 card_layout_strategy = SubResource("Resource_xioc8")
 drag_strategy = SubResource("Resource_n2mdw")
