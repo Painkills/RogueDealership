@@ -42,6 +42,7 @@ func _process(_delta: float) -> bool:
 		_check_hovering_a_shop_row_previews_its_card()
 		_check_only_the_random_offer_gets_an_upgrade_button()
 		_check_debug_add_money_key_works()
+		_check_build_badge_is_always_on_screen("in the shop")
 		_phase = 2
 		return false
 
@@ -72,6 +73,7 @@ func _phase_0_open_and_finish_shift() -> void:
 	_check("a run started", _run != null)
 	_check("on shift 1", _run.shift_number == 1)
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
+	_check_build_badge_is_always_on_screen("on the floor")
 	# The debug money key is guarded on the shop's own visibility, not a
 	# lifecycle flag - pressing it here (shop hidden, _shop not even set up
 	# yet) must be a complete no-op, or the guard is decorative.
@@ -193,6 +195,17 @@ func _check_shop_layout_fits_on_screen() -> void:
 	# regardless of cause, so it is the one thing left to assert.
 	_check("and clips its own content, so a render quirk can never paint past its box",
 		preview.clip_contents)
+
+## "Ensure each build shows the build number in the bottom right so I can
+## know if it's the right one" - checked once per screen, since the whole
+## point of living in run.tscn rather than either screen is surviving the
+## switch between them.
+func _check_build_badge_is_always_on_screen(where: String) -> void:
+	var badge := _root.get_node(^"BuildBadge/BuildLabel") as Label
+	_check("the build badge names a real build, %s (%s)" % [where, badge.text],
+		not badge.text.is_empty())
+	_on_screen("the build badge %s" % where,
+		Rect2(badge.global_position, badge.size))
 
 func _on_screen(label: String, r: Rect2) -> void:
 	_check("%s is on screen (%s)" % [label, r],

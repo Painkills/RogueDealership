@@ -18,6 +18,42 @@ func _init() -> void:
 	root.add_child(shop_view)
 	shop_view.owner = root
 
+	# A permanent corner badge, not something either screen owns - so it
+	# survives switching between them for free and can never be the thing a
+	# screen's own layout work accidentally covers up. Its own CanvasLayer,
+	# stacked above the shift's HUD layer, so it is never buried under a
+	# customer card at the table's own draw order.
+	var badge_layer := CanvasLayer.new()
+	badge_layer.name = "BuildBadge"
+	badge_layer.layer = 100
+	root.add_child(badge_layer)
+	badge_layer.owner = root
+
+	var badge := Label.new()
+	badge.name = "BuildLabel"
+	badge.text = BuildInfo.LABEL
+	badge.add_theme_font_size_override("font_size", 18)
+	badge.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	badge.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	badge.add_theme_constant_override("shadow_offset_x", 2)
+	badge.add_theme_constant_override("shadow_offset_y", 2)
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.autowrap_mode = TextServer.AUTOWRAP_OFF
+	# Label already defaults to IGNORE, so this changes nothing today - stated
+	# explicitly anyway, since the exact bug it heads off (a full-rect
+	# ColorRect eating clicks meant for the table, already caught once in
+	# this project's own HUD) is one a LATER edit could reintroduce the
+	# moment this badge stops being a plain Label.
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	badge.offset_left = -260
+	badge.offset_top = -26
+	badge.offset_right = -8
+	badge.offset_bottom = -6
+	badge_layer.add_child(badge)
+	badge.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/run.tscn")

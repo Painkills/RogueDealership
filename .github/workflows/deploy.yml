@@ -72,6 +72,18 @@ jobs:
       - name: Run the live run driver
         run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_run.gd
 
+      # After the gates above, not before: the suite and both drivers run
+      # against the same "dev build" placeholder every local run does, so a
+      # failure never depends on this step having run first. Only the
+      # actually-exported artifact gets the real stamp.
+      - name: Stamp the build badge with this run's identity
+        working-directory: ${{ env.PROJECT_PATH }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          sed -i "s/const LABEL := \".*\"/const LABEL := \"#${GITHUB_RUN_NUMBER} - ${SHORT_SHA}\"/" \
+            scripts/view/build_info.gd
+          grep LABEL scripts/view/build_info.gd
+
       - name: Export the Web build
         run: |
           mkdir -v -p ${{ env.PROJECT_PATH }}/build/web
