@@ -18,6 +18,16 @@ func _init() -> void:
 	root.add_child(shop_view)
 	shop_view.owner = root
 
+	# Added after both, so it draws on top of whichever of them is visible
+	# when the run ends - same layering trick as the shift's own ReportOverlay
+	# covering the floor underneath it.
+	var summary_view: Control = \
+		(load("res://scenes/run_summary.tscn") as PackedScene).instantiate()
+	summary_view.name = "RunSummaryView"
+	summary_view.visible = false
+	root.add_child(summary_view)
+	summary_view.owner = root
+
 	# A permanent corner badge, not something either screen owns - so it
 	# survives switching between them for free and can never be the thing a
 	# screen's own layout work accidentally covers up. Its own CanvasLayer,

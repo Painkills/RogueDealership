@@ -41,7 +41,7 @@ func test_the_report_carries_every_key_the_ui_will_need() -> void:
 			"failed_offers", "close_rate", "margin_conceded", "margin_padded",
 			"margin_bonus", "margin_lost_to_walks", "margin_lost_to_closing",
 			"actions_fired", "digs", "approaches", "ticks_cards", "ticks_place",
-			"ticks_digs", "ticks_approach"]:
+			"ticks_digs", "ticks_approach", "combo_streak_end", "combo_events"]:
 		h.check("report has %s" % key, r.has(key))
 
 func test_standing_delta_matches_the_scale_configured() -> void:

@@ -49,6 +49,8 @@ func _process(_delta: float) -> bool:
 
 	if _phase == 2:
 		_phase_2_buy_and_leave()
+		_check_run_summary_screen_appears_at_the_end_of_a_run()
+		_check_the_fired_title_is_distinct_from_a_completed_run()
 
 		print("")
 		const EXPECTED_MIN := 20
@@ -498,6 +500,64 @@ func _check_report_card_fits_the_worst_case(report) -> void:
 	# synthetic worst case - nothing downstream expects to see 12345678 again.
 	for key in was:
 		report.get("_" + key).text = was[key]
+
+## "At end of run it would show you all these categories and the points
+## given and a high score" - the literal ask, end to end: force the run onto
+## its last shift, finish it through the real report button the way a player
+## would, and check the summary that comes up actually is RunSummaryPanel
+## rendering Score.tally() of the very _run this driver has been playing.
+func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
+	_run.shift_number = _run.cfg.shifts_in_run
+	_root._shift_view.setup(_run.start_shift(), _run.standing)
+	_check("the summary starts out hidden", not _root._summary_view.visible)
+
+	_finish_the_shift()
+
+	_check("the run is over after its last shift", _run.is_over())
+	_check("the summary screen shows once the run ends",
+		_root._summary_view.visible)
+	_check("the shop stays hidden behind it, not shown underneath",
+		not _root._shop_view.visible)
+
+	var score := Score.tally(_run)
+	var summary = _root._summary_view
+	_check("the total line names the same high score Score.tally computes (%s)"
+		% summary._total.text,
+		summary._total.text == "HIGH SCORE: %d" % int(score["total"]))
+	_check("margin banked, lifetime, is on its own line (%s)" % summary._margin.text,
+		summary._margin.text.contains(Format.money(score["margin_banked"])))
+	_check("standing at the bell is on its own line (%s)" % summary._standing.text,
+		summary._standing.text.contains(str(score["standing"])))
+	_check("walkout count is on its own line (%s)" % summary._walkouts.text,
+		summary._walkouts.text.contains(str(score["walkouts"])))
+
+	var stale_run := _run
+	summary.continue_pressed.emit()
+	_check("pressing the button hides the summary", not summary.visible)
+	_check("and rolls a genuinely fresh RunState, not the finished one relabeled",
+		_root._run != stale_run and _root._run.shift_number == 1)
+	_check("with a full standing meter again",
+		_root._run.standing == _root._run.cfg.standing_start)
+	_run = _root._run   # the driver keeps playing the fresh run past this point
+
+## "YOU'RE FIRED" has to read as a different outcome than finishing the run on
+## schedule - the same rule report_panel.gd already follows for the per-shift
+## version of this screen. Driven directly through setup(), the same way
+## _check_report_card_fits_the_worst_case() reaches a branch this driver's own
+## play never lands on live.
+func _check_the_fired_title_is_distinct_from_a_completed_run() -> void:
+	var summary = _root._summary_view
+	var score := Score.tally(_run)
+	summary.setup(score, true)
+	_check("a standing wipeout titles the summary YOU'RE FIRED (%s)"
+		% summary._title.text, summary._title.text == "YOU'RE FIRED")
+	_check("in the same alert colour the per-shift report already uses for it",
+		summary._title.get_theme_color("font_color") == Palette.color(&"alert"))
+	summary.setup(score, false)
+	_check("a completed run titles it RUN COMPLETE instead (%s)"
+		% summary._title.text, summary._title.text == "RUN COMPLETE")
+	_check("in the same neutral colour the per-shift report uses for a normal close",
+		summary._title.get_theme_color("font_color") == Palette.color(&"text"))
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

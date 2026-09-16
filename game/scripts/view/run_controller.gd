@@ -8,6 +8,7 @@ extends Node
 
 @onready var _shift_view = $ShiftView
 @onready var _shop_view = $ShopView
+@onready var _summary_view = $RunSummaryView
 @onready var _build_label: Label = $BuildBadge/BuildLabel
 
 var _run: RunState
@@ -15,6 +16,7 @@ var _run: RunState
 func _ready() -> void:
 	_shift_view.shift_finished.connect(_on_shift_finished)
 	_shop_view.done.connect(_on_shop_done)
+	_summary_view.continue_pressed.connect(_on_summary_continue)
 	# NOT left to whatever build_run_scene.gd happened to bake into run.tscn
 	# at author time: that text is a static property of a committed scene
 	# file, frozen the moment the builder ran locally, and CI stamps
@@ -39,18 +41,20 @@ func _open_the_floor() -> void:
 func _on_shift_finished(report: Dictionary) -> void:
 	_run.finish_shift(report)
 	if _run.is_over():
-		# The run is done. Until there is an end-of-run screen, roll a new one -
-		# the alternative is a dead button on a finished report. Rolling it
-		# silently would be indistinguishable from the deck-persistence bug this
-		# milestone exists to prevent, so the end of the run is made legible here
-		# through the same channel every other tool in this project reports
-		# through, even though there is no screen for it yet.
-		print("run finished: banked %d across %d shifts"
-			% [_run.banked_total, _run.cfg.shifts_in_run])
-		_start_run()
+		# Neither the floor nor the shop - the run stops here, on top of
+		# whichever of them the last shift ended on, the same way that
+		# shift's own ReportOverlay already sits on top of the floor.
+		_shift_view.set_active(false)
+		_shop_view.visible = false
+		_summary_view.setup(Score.tally(_run), _run.standing <= 0)
+		_summary_view.visible = true
 		return
 	_show_shop(true)
 	_shop_view.setup(Shop.new(_run))
+
+func _on_summary_continue() -> void:
+	_summary_view.visible = false
+	_start_run()
 
 func _on_shop_done() -> void:
 	_open_the_floor()
