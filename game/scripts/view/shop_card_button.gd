@@ -41,9 +41,13 @@ func _bind() -> void:
 	_viewport.disable_3d = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_texture.texture = _viewport.get_texture()
-	# SCALE, not KEEP_ASPECT_CENTERED - see card_preview_2d.gd's own comment
-	# on the identical line for why.
 	_texture.stretch_mode = TextureRect.STRETCH_SCALE
+	# The real fix, not stretch_mode - see card_preview_2d.gd's own comment
+	# on the identical line: expand_mode defaults to EXPAND_KEEP_SIZE, which
+	# floors this control's minimum size at its texture's native 500x700
+	# regardless of stretch_mode, so it never actually shrinks to this
+	# button's real box until this is set.
+	_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 
 func show_card(inst: CardInstance) -> void:
 	_bind()

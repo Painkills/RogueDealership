@@ -192,19 +192,32 @@ func _check_shop_layout_fits_on_screen() -> void:
 		+ " not just barely fitting (%d px clear)" % int(bottom_clearance),
 		bottom_clearance >= 20.0)
 
-	# The reported bug: on the Web (gl_compatibility) renderer specifically, a
-	# SubViewport-fed TextureRect can paint past its own logical rect and over
-	# whatever sits below it, even though every Control rect involved measures
-	# correctly right here - a rendering-backend quirk this geometry can never
-	# see, since it only exists once GLES actually draws the frame.
-	# clip_contents is the one property that forecloses it regardless of
-	# cause, and every card on screen (shelf and deck alike) uses the same
-	# SubViewport trick, so every one of them needs it.
+	# The reported bug, and its real cause: TextureRect.expand_mode defaults
+	# to EXPAND_KEEP_SIZE, which floors a TextureRect's own minimum size at
+	# its texture's native resolution (500x700) no matter what its parent's
+	# actual box is - so the inner TextureRect never actually shrank to this
+	# card's real size, and rendered at ~2x scale, anchored top-left, right
+	# and bottom cropped off (title text truncated mid-word) once
+	# clip_contents (needed for a DIFFERENT bug - the same oversized render
+	# painting over the Done button below it) started cropping the overflow
+	# instead of letting it spill. Both symptoms trace to one missed
+	# property; clip_contents alone only hid the first one.
+	#
+	# This was never a "can only be seen once a real renderer draws the
+	# frame" problem - every prior check here measured Control rects, never
+	# the child TextureRect's own .size, which is exactly where this was
+	# visible the whole time.
 	for row in [shelf_row, deck_row]:
 		for slot in row.get_children():
 			var card := slot.get_child(0) as Control
 			_check("%s's card clips its own content, so a render quirk can never"
 				% slot.name + " paint past its box (%s)" % card.name, card.clip_contents)
+			var texture := card.get_node(^"TextureRect") as TextureRect
+			_check("%s's card texture actually shrank to its box, not stuck at"
+				% slot.name + " its native 500x700 (expand_mode=%d, size=%s)"
+					% [texture.expand_mode, texture.size],
+				texture.expand_mode == TextureRect.EXPAND_IGNORE_SIZE
+					and texture.size.x < 300.0)
 
 ## "Ensure each build shows the build number in the bottom right so I can
 ## know if it's the right one" - checked once per screen, since the whole
@@ -273,6 +286,11 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 	_check("and its upgraded face, in the appeal colour (%s)"
 		% detail._upgraded._name.get_theme_color("font_color"),
 		detail._upgraded._name.get_theme_color("font_color") == Palette.color(&"appeal"))
+	for side in [["current", detail._current], ["upgraded", detail._upgraded]]:
+		var texture := (side[1] as CardPreview2D).get_node(^"TextureRect") as TextureRect
+		_check("the detail's %s card texture actually shrank to its box (expand_mode=%d, size=%s)"
+			% [side[0], texture.expand_mode, texture.size],
+			texture.expand_mode == TextureRect.EXPAND_IGNORE_SIZE and texture.size.x < 300.0)
 	_check("with a real upgrade price on the button (%s)" % detail._upgrade_btn.text,
 		detail._upgrade_btn.text == "upgrade %s" % Format.money(shop.upgrade_price(inst)))
 	_check("and a real drop price on the other one (%s)" % detail._remove_btn.text,
