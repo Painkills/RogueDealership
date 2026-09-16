@@ -95,11 +95,44 @@ jobs:
             --script res://tools/stamp_build_info.gd -- \
             "${{ github.run_number }}" "${{ github.sha }}"
 
+      # Diagnostic, not defense in depth: the deployed build shipped "dev
+      # build" through two sed attempts AND stamp_build_info.gd's own
+      # first version despite every one of those reporting success, and
+      # log downloads need admin rights this repo does not have. This is a
+      # plain shell grep - no Godot, no res:// resolution, nothing that
+      # could share a bug with the step above - so a failure HERE points
+      # at "the write did not land on disk", and a pass here with the
+      # deployed build STILL wrong would point at the export step instead.
+      - name: Verify the stamp actually landed on disk
+        working-directory: ${{ env.PROJECT_PATH }}
+        run: |
+          echo "current contents:"
+          cat scripts/view/build_info.gd
+          if grep -q 'LABEL := "dev build"' scripts/view/build_info.gd; then
+            echo "::error::still the dev-build placeholder after the stamp step ran"
+            exit 1
+          fi
+
       - name: Export the Web build
         run: |
           mkdir -v -p ${{ env.PROJECT_PATH }}/build/web
           godot --headless --path ${{ env.PROJECT_PATH }} \
             --export-debug "Web" "build/web/index.html"
+
+      # Same diagnostic idea, one stage later: does the EXPORTED artifact
+      # actually carry the stamp the source file was just confirmed to
+      # have, or does Godot's export step build from something else -
+      # a compiled-script cache from the earlier --import, say - that a
+      # later raw-filesystem write does not invalidate.
+      - name: Verify the stamp made it into the exported build
+        working-directory: ${{ env.PROJECT_PATH }}
+        run: |
+          if grep -a -q 'dev build' build/web/index.pck; then
+            echo "::error::the exported .pck still contains the dev-build placeholder,"
+            echo "::error::even though the source file was confirmed stamped before export ran"
+            exit 1
+          fi
+          echo "exported .pck does not contain the placeholder - stamp carried through"
 
       # The exact throwaway-repo push this project has been doing by hand all
       # session: a fresh git history scoped to just the exported folder,
