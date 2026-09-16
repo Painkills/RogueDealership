@@ -8,7 +8,14 @@ class_name BuildInfo extends RefCounted
 ## untouched - shows "dev build" instead, which is itself informative: it
 ## means whatever is on screen is NOT what got deployed.
 ##
-## The string below must read exactly `const LABEL := "dev build"` -
-## stamp_build_info.gd matches it verbatim and refuses to run twice.
+## Read at actual startup by run_controller.gd, not baked into run.tscn by
+## the builder: a scene file's own property values are frozen the moment
+## the builder ran locally and got committed, long before CI ever stamps
+## this constant - a static bake here would always show whatever build was
+## current when someone last ran the builder, never the real one.
+##
+## stamp_build_info.gd matches the line below by its EXACT current text and
+## refuses to run twice - so this file's own comments must never repeat
+## that literal line, or a plain string replace corrupts them too.
 
 const LABEL := "dev build"

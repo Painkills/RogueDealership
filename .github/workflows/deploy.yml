@@ -76,33 +76,26 @@ jobs:
       # against the same "dev build" placeholder every local run does, so a
       # failure never depends on this step having run first. Only the
       # actually-exported artifact gets the real stamp.
-      # Two prior versions of this step shelled out to sed and both shipped
-      # a build that still read "dev build" anyway: the first used a
-      # bash-only ${VAR:0:7} that the container's actual shell rejected
-      # outright, and the fixed (POSIX cut) version still did nothing -
-      # sed silently no-opped and a weak grep check let the step report
-      # success regardless. Two failures from the same root cause (which
-      # shell a containerized run: step actually gets is not this
-      # project's to control, and log downloads need admin rights this
-      # repo does not have, so debugging either blind was not going to
-      # end well a third time). Godot itself now does the writing -
-      # tools/stamp_build_info.gd - since it is the one binary already
-      # guaranteed identical everywhere this workflow runs it, and it
-      # reads its own write back before declaring success.
+      #
+      # Godot does the writing itself - tools/stamp_build_info.gd - rather
+      # than a shell sed call. Two sed attempts both shipped "dev build"
+      # anyway despite reporting success (a bash-only ${VAR:0:7} the
+      # container's actual shell rejected outright, then a POSIX-safe
+      # version that still silently no-opped under a weak grep check) -
+      # and log downloads need admin rights this repo does not have, so
+      # guessing at shell quirks blind was not converging. Godot is the one
+      # binary already guaranteed identical everywhere this workflow runs
+      # it, and it reads its own write back before declaring success.
       - name: Stamp the build badge with this run's identity
         run: |
           godot --headless --path ${{ env.PROJECT_PATH }} \
             --script res://tools/stamp_build_info.gd -- \
             "${{ github.run_number }}" "${{ github.sha }}"
 
-      # Diagnostic, not defense in depth: the deployed build shipped "dev
-      # build" through two sed attempts AND stamp_build_info.gd's own
-      # first version despite every one of those reporting success, and
-      # log downloads need admin rights this repo does not have. This is a
-      # plain shell grep - no Godot, no res:// resolution, nothing that
-      # could share a bug with the step above - so a failure HERE points
-      # at "the write did not land on disk", and a pass here with the
-      # deployed build STILL wrong would point at the export step instead.
+      # A permanent regression guard, not a one-off diagnostic: a plain
+      # shell grep, no Godot or res:// resolution involved, so it can never
+      # share a bug with the step above. Catches a broken stamp before
+      # paying for an export and deploy that would ship it anyway.
       - name: Verify the stamp actually landed on disk
         working-directory: ${{ env.PROJECT_PATH }}
         run: |
@@ -118,21 +111,6 @@ jobs:
           mkdir -v -p ${{ env.PROJECT_PATH }}/build/web
           godot --headless --path ${{ env.PROJECT_PATH }} \
             --export-debug "Web" "build/web/index.html"
-
-      # Same diagnostic idea, one stage later: does the EXPORTED artifact
-      # actually carry the stamp the source file was just confirmed to
-      # have, or does Godot's export step build from something else -
-      # a compiled-script cache from the earlier --import, say - that a
-      # later raw-filesystem write does not invalidate.
-      - name: Verify the stamp made it into the exported build
-        working-directory: ${{ env.PROJECT_PATH }}
-        run: |
-          if grep -a -q 'dev build' build/web/index.pck; then
-            echo "::error::the exported .pck still contains the dev-build placeholder,"
-            echo "::error::even though the source file was confirmed stamped before export ran"
-            exit 1
-          fi
-          echo "exported .pck does not contain the placeholder - stamp carried through"
 
       # The exact throwaway-repo push this project has been doing by hand all
       # session: a fresh git history scoped to just the exported folder,

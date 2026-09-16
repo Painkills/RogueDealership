@@ -8,12 +8,21 @@ extends Node
 
 @onready var _shift_view = $ShiftView
 @onready var _shop_view = $ShopView
+@onready var _build_label: Label = $BuildBadge/BuildLabel
 
 var _run: RunState
 
 func _ready() -> void:
 	_shift_view.shift_finished.connect(_on_shift_finished)
 	_shop_view.done.connect(_on_shop_done)
+	# NOT left to whatever build_run_scene.gd happened to bake into run.tscn
+	# at author time: that text is a static property of a committed scene
+	# file, frozen the moment the builder ran locally, and CI stamps
+	# BuildInfo.LABEL's SOURCE long after that scene was already generated
+	# and checked in. Reading it here, at actual startup, is what makes the
+	# badge answer "what build is this" rather than "what build was it when
+	# someone last ran the builder."
+	_build_label.text = BuildInfo.LABEL
 	_start_run()
 
 func _start_run() -> void:
