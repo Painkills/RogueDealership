@@ -19,6 +19,28 @@ var _shop: Shop
 
 func _ready() -> void:
 	_done.pressed.connect(func(): done.emit())
+	_bind_key(&"debug_add_money", KEY_M, true)   # Ctrl+M: +$10,000, for testing
+
+func _bind_key(action: StringName, keycode: Key, ctrl: bool = false) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	if not InputMap.action_get_events(action).is_empty():
+		return
+	var ev := InputEventKey.new()
+	ev.keycode = keycode
+	ev.ctrl_pressed = ctrl
+	InputMap.action_add_event(action, ev)
+
+## Ctrl+M, shop only: a manual testing convenience, not a mechanic. Guarded
+## on visible rather than a lifecycle flag - unlike ShiftController, this
+## screen is never told when it stops being the active one, only toggled by
+## RunController's own .visible assignment.
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed("debug_add_money"):
+		_shop.run.money += 10000
+		_render()
 
 func setup(shop: Shop) -> void:
 	_shop = shop

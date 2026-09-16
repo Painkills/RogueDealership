@@ -127,6 +127,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_refused_drop_comes_home()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
+	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
 
 	print("")
 	# Guards against the failure mode that has now bitten three times: a runtime
@@ -148,10 +149,11 @@ func _physics_process(_delta: float) -> bool:
 		quit(1)
 	return true
 
-func _press(keycode: Key, shift: bool = false) -> void:
+func _press(keycode: Key, shift: bool = false, ctrl: bool = false) -> void:
 	var ev := InputEventKey.new()
 	ev.keycode = keycode
 	ev.shift_pressed = shift
+	ev.ctrl_pressed = ctrl
 	ev.pressed = true
 	_controller._unhandled_input(ev)
 
@@ -1582,6 +1584,21 @@ func _check_a_fatal_shift_shows_its_own_report() -> void:
 		_controller._report_overlay._restart.text.to_upper().contains("FIRED"))
 	_check("and its title says so (%s)" % _controller._report_overlay._title.text,
 		_controller._report_overlay._title.text.to_upper().contains("FIRED"))
+
+## Ctrl+E: a fresh shift, seated with nobody approached and a full hand -
+## the state most likely to get the skip stuck, since dig() only progresses
+## while there is something to dig. Proves the cheat actually reaches
+## is_over(), not just that it runs without erroring.
+func _check_debug_skip_shift_key_ends_it() -> void:
+	var fresh := Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), randi())
+	_controller.setup(fresh, 100)
+	_check("a fresh shift is not already over", not fresh.is_over())
+	_press(KEY_E, false, true)
+	_check("Ctrl+E burns the whole shift at once (%d of %d ticks)"
+		% [fresh.tick, fresh.tick_budget], fresh.is_over())
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

@@ -41,6 +41,7 @@ func _process(_delta: float) -> bool:
 		_check_shop_layout_fits_on_screen()
 		_check_hovering_a_shop_row_previews_its_card()
 		_check_only_the_random_offer_gets_an_upgrade_button()
+		_check_debug_add_money_key_works()
 		_phase = 2
 		return false
 
@@ -71,6 +72,17 @@ func _phase_0_open_and_finish_shift() -> void:
 	_check("a run started", _run != null)
 	_check("on shift 1", _run.shift_number == 1)
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
+	# The debug money key is guarded on the shop's own visibility, not a
+	# lifecycle flag - pressing it here (shop hidden, _shop not even set up
+	# yet) must be a complete no-op, or the guard is decorative.
+	var money_before_debug_press: int = _run.money
+	var debug_ev := InputEventKey.new()
+	debug_ev.keycode = KEY_M
+	debug_ev.ctrl_pressed = true
+	debug_ev.pressed = true
+	_root._shop_view._unhandled_input(debug_ev)
+	_check("and Ctrl+M does nothing while the shop is hidden",
+		_run.money == money_before_debug_press)
 	_check("and the shift's HUD with it",
 		(_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
 
@@ -247,6 +259,21 @@ func _check_only_the_random_offer_gets_an_upgrade_button() -> void:
 		% upgrade_buttons, upgrade_buttons == shop.upgrade_offers.size())
 	_check("which is capped at the configured slot count, not the whole deck",
 		upgrade_buttons <= _run.cfg.shop_upgrade_slots)
+
+## Ctrl+M, shop only: +$10,000 for testing purchases without grinding a run
+## out first. Guarded on the shop actually being the visible screen, since
+## ShopScreen has no active/inactive lifecycle hook telling it to stop
+## listening the way ShiftController's set_active() does.
+func _check_debug_add_money_key_works() -> void:
+	var shop_view = _root._shop_view
+	var before: int = shop_view._shop.run.money
+	var ev := InputEventKey.new()
+	ev.keycode = KEY_M
+	ev.ctrl_pressed = true
+	ev.pressed = true
+	shop_view._unhandled_input(ev)
+	_check("Ctrl+M adds $10,000 while the shop is open (%d -> %d)"
+		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
 
 func _phase_2_buy_and_leave() -> void:
 	# Buy the cheapest thing on the shelf, with the money to afford it.

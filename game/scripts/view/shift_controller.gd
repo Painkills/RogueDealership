@@ -173,8 +173,10 @@ func _register_keyboard_actions() -> void:
 	_bind_key(&"drop_key", KEY_D)
 	_bind_key(&"close_key", KEY_C, true)    # Shift+C, distinct from chair_c's bare C
 	_bind_key(&"floor_key", KEY_F)          # step back to the floor (Shift.leave())
+	_bind_key(&"debug_skip_shift", KEY_E, false, true)   # Ctrl+E: burn the clock
 
-func _bind_key(action: StringName, keycode: Key, shift: bool = false) -> void:
+func _bind_key(action: StringName, keycode: Key, shift: bool = false,
+		ctrl: bool = false) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action)
 	if not InputMap.action_get_events(action).is_empty():
@@ -182,6 +184,7 @@ func _bind_key(action: StringName, keycode: Key, shift: bool = false) -> void:
 	var ev := InputEventKey.new()
 	ev.keycode = keycode
 	ev.shift_pressed = shift
+	ev.ctrl_pressed = ctrl
 	InputMap.action_add_event(action, ev)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -206,6 +209,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("offer_key"): _on_offer()
 	elif event.is_action_pressed("drop_key"): _on_drop()
 	elif event.is_action_pressed("floor_key"): _apply(_shift.leave())
+	elif event.is_action_pressed("debug_skip_shift"): _debug_skip_shift()
 
 func _try_card(index: int) -> void:
 	if index < _shift.hand.size():
@@ -214,6 +218,25 @@ func _try_card(index: int) -> void:
 func _try_dig(index: int) -> void:
 	if index < _shift.hand.size():
 		_apply(_shift.dig(index))
+
+## Ctrl+E: burn the whole shift instantly - the same technique
+## drive_run.gd's own _finish_the_shift() uses to reach the shop without
+## playing it out. A manual testing convenience, not a mechanic: dig
+## whatever is in hand (the cheapest always-legal command), and leave
+## whoever you are with so an empty floor's own free wait() can carry the
+## clock the rest of the way.
+func _debug_skip_shift() -> void:
+	var guard := 0
+	while not _shift.is_over() and guard < 1000:
+		guard += 1
+		if not _shift.hand.is_empty():
+			_apply(_shift.dig(0))
+		elif _shift.at != null:
+			_apply(_shift.leave())
+		elif _shift.seated().is_empty():
+			_apply(_shift.wait())
+		else:
+			break
 
 # --- lifecycle -------------------------------------------------------------
 
