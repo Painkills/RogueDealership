@@ -43,7 +43,16 @@ func _bind() -> void:
 	# Set here rather than trusted to the .tscn's own stored value - the same
 	# habit CardFace3D and friends already have of re-asserting the one
 	# property that actually matters in code, not in a hand-authored resource.
-	_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# SCALE, not KEEP_ASPECT_CENTERED: the destination size is chosen to
+	# preserve the source's exact 500x700 aspect (see FRONT_SIZE and every
+	# caller's own box), so the aspect math KEEP_ASPECT_CENTERED exists for
+	# is never actually needed here - and on the Web (gl_compatibility)
+	# renderer specifically, it was not filling the box at all, instead
+	# drawing the texture near its native 500x700 size anchored top-left,
+	# with clip_contents (needed for an unrelated overflow bug) cropping
+	# the bottom-right rather than the scale ever taking effect. A plain
+	# SCALE has no aspect computation to get wrong.
+	_texture.stretch_mode = TextureRect.STRETCH_SCALE
 
 ## What is actually in front of you right now, on the exact same card face the
 ## floor uses - so "what does this offer look like" or "what does upgrading

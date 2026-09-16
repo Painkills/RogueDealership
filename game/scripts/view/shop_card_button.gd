@@ -41,7 +41,9 @@ func _bind() -> void:
 	_viewport.disable_3d = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_texture.texture = _viewport.get_texture()
-	_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# SCALE, not KEEP_ASPECT_CENTERED - see card_preview_2d.gd's own comment
+	# on the identical line for why.
+	_texture.stretch_mode = TextureRect.STRETCH_SCALE
 
 func show_card(inst: CardInstance) -> void:
 	_bind()
