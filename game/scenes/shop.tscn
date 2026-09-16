@@ -1,118 +1,102 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/view/shop_screen.gd" id="1_1l46r"]
-[ext_resource type="PackedScene" path="res://scenes/cards/card_preview_2d.tscn" id="2_032fp"]
-[ext_resource type="Script" path="res://scripts/view/card_preview_2d.gd" id="3_2fc2m"]
+[ext_resource type="PackedScene" path="res://scenes/cards/shop_card_detail.tscn" id="2_032fp"]
+[ext_resource type="Script" path="res://scripts/view/shop_card_detail.gd" id="3_2fc2m"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8r1wq"]
 bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 
-[node name="ShopScreen" type="PanelContainer" unique_id=1185556331]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8yt8d"]
+bg_color = Color(0.101960786, 0.101960786, 0.18039216, 0.88)
+
+[node name="ShopScreen" type="PanelContainer" unique_id=256260110]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8r1wq")
 script = ExtResource("1_1l46r")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1624120898]
+[node name="Margin" type="MarginContainer" parent="." unique_id=407462973]
 layout_mode = 2
 theme_override_constants/margin_left = 48
 theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 48
 theme_override_constants/margin_bottom = 48
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1889509236]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=755886632]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 16
 
-[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=598984636]
+[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=1754381460]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 44
+theme_override_font_sizes/font_size = 40
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 text = "BETWEEN SHIFTS"
 
-[node name="ShiftLabel" type="Label" parent="Margin/Column" unique_id=1009318796]
+[node name="ShiftLabel" type="Label" parent="Margin/Column" unique_id=1686813238]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "shift 1 of 5"
 
-[node name="MoneyLabel" type="Label" parent="Margin/Column" unique_id=163705741]
+[node name="MoneyLabel" type="Label" parent="Margin/Column" unique_id=1019895512]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 text = "$0 to spend"
 
-[node name="ShopBody" type="HBoxContainer" parent="Margin/Column" unique_id=713694310]
+[node name="ShelfSection" type="VBoxContainer" parent="Margin/Column" unique_id=2071817091]
 layout_mode = 2
-theme_override_constants/separation = 32
+theme_override_constants/separation = 10
 
-[node name="LeftColumn" type="VBoxContainer" parent="Margin/Column/ShopBody" unique_id=1588763263]
-custom_minimum_size = Vector2(700, 0)
-layout_mode = 2
-theme_override_constants/separation = 18
-
-[node name="OnShelfTitle" type="Label" parent="Margin/Column/ShopBody/LeftColumn" unique_id=1370663129]
+[node name="OnShelfTitle" type="Label" parent="Margin/Column/ShelfSection" unique_id=276297380]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "ON THE SHELF"
 
-[node name="OfferRows" type="VBoxContainer" parent="Margin/Column/ShopBody/LeftColumn" unique_id=1303589627]
+[node name="ShelfRow" type="HBoxContainer" parent="Margin/Column/ShelfSection" unique_id=158385329]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="DeckTitle" type="Label" parent="Margin/Column/ShopBody/LeftColumn" unique_id=1856881192]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
-text = "YOUR DECK"
-
-[node name="DeckScroll" type="ScrollContainer" parent="Margin/Column/ShopBody/LeftColumn" unique_id=772627404]
-custom_minimum_size = Vector2(0, 260)
-layout_mode = 2
-
-[node name="DeckRows" type="VBoxContainer" parent="Margin/Column/ShopBody/LeftColumn/DeckScroll" unique_id=317979348]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="PreviewColumn" type="VBoxContainer" parent="Margin/Column/ShopBody" unique_id=457619288]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 28
 alignment = 1
 
-[node name="PreviewTitle" type="Label" parent="Margin/Column/ShopBody/PreviewColumn" unique_id=803444035]
+[node name="DeckSection" type="VBoxContainer" parent="Margin/Column" unique_id=1385037231]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DeckTitle" type="Label" parent="Margin/Column/DeckSection" unique_id=299943719]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
-text = "PREVIEW"
-horizontal_alignment = 1
+text = "CARDS YOU CAN EDIT - upgrade or drop"
 
-[node name="CardPreview" type="Control" parent="Margin/Column/ShopBody/PreviewColumn" unique_id=719430254 instance=ExtResource("2_032fp")]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 364)
-layout_mode = 2
-size_flags_horizontal = 4
-script = ExtResource("3_2fc2m")
-
-[node name="LogLabel" type="Label" parent="Margin/Column" unique_id=1281638665]
+[node name="DeckRow" type="HBoxContainer" parent="Margin/Column/DeckSection" unique_id=981639281]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="LogLabel" type="Label" parent="Margin/Column" unique_id=955714225]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.8784314, 0.3529412, 0.3529412, 1)
 
-[node name="DoneButton" type="Button" parent="Margin/Column" unique_id=971548461]
+[node name="DoneButton" type="Button" parent="Margin/Column" unique_id=818412893]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(420, 96)
+custom_minimum_size = Vector2(360, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 28
 text = "OPEN THE FLOOR"
+
+[node name="Detail" type="PanelContainer" parent="." unique_id=1126931282 instance=ExtResource("2_032fp")]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_8yt8d")
+script = ExtResource("3_2fc2m")

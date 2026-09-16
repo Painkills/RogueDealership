@@ -16,7 +16,6 @@ var _failures: Array[String] = []
 var _checks := 0
 
 var _run: RunState
-var _deck_before: int
 
 func _init() -> void:
 	seed(20260905)
@@ -39,8 +38,9 @@ func _process(_delta: float) -> bool:
 		if _settle_frames < 5:
 			return false
 		_check_shop_layout_fits_on_screen()
-		_check_hovering_a_shop_row_previews_its_card()
-		_check_only_the_random_offer_gets_an_upgrade_button()
+		_check_clicking_a_shelf_card_buys_it()
+		_check_the_deck_row_shows_exactly_the_random_upgrade_offers()
+		_check_clicking_a_deck_card_opens_its_detail()
 		_check_debug_add_money_key_works()
 		_check_build_badge_is_always_on_screen("in the shop")
 		_phase = 2
@@ -88,7 +88,6 @@ func _phase_0_open_and_finish_shift() -> void:
 	_check("and the shift's HUD with it",
 		(_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
 
-	_deck_before = _run.deck.cards.size()
 	_finish_the_shift()
 
 	_check("finishing a shift opens the shop", _root._shop_view.visible)
@@ -168,33 +167,44 @@ func _set_standing_keys(r: Dictionary, standing_before: int) -> void:
 func _check_shop_layout_fits_on_screen() -> void:
 	var done_btn := _root._shop_view.get_node(^"Margin/Column/DoneButton") as Control
 	var log_label := _root._shop_view.get_node(^"Margin/Column/LogLabel") as Control
-	var preview := _root._shop_view.get_node(^"%CardPreview") as Control
+	var shelf_row := _root._shop_view.get_node(^"%ShelfRow") as Control
+	var deck_row := _root._shop_view.get_node(^"%DeckRow") as Control
 	_check("the shop has a deck to show (%d cards)" % _run.deck.cards.size(),
 		_run.deck.cards.size() > 0)
 	_on_screen("the shop's Done button",
 		Rect2(done_btn.global_position, done_btn.size))
 	_on_screen("the shop's log label",
 		Rect2(log_label.global_position, log_label.size))
-	_on_screen("the shop's card preview",
-		Rect2(preview.global_position, preview.size))
-	# Technically on screen is not the same bar as actually visible: an
-	# unbounded LeftColumn once stretched a single line of button text across
-	# 1500+ px and left the preview a bare 260px sliver hugging the right
-	# margin with zero pixels of clearance - "on screen" by one pixel is not
-	# a hover preview anyone would notice. 200px of clear space is a real
-	# gutter, not a coincidence of exactly fitting.
-	var clearance: float = VIEWPORT.x - (preview.global_position.x + preview.size.x)
-	_check("and has real clearance from the edge, not just barely fitting (%d px clear)"
-		% int(clearance), clearance >= 200.0)
-	# The reported bug: on the Web (gl_compatibility) renderer specifically,
-	# CardPreview2D's SubViewport-fed TextureRect painted past its own 260x364
-	# box and over the Done button below it, even though every Control rect
-	# involved measures correctly right here - a rendering-backend quirk this
-	# geometry can never see, since it only exists once GLES actually draws
-	# the frame. clip_contents is the one property that forecloses it
-	# regardless of cause, so it is the one thing left to assert.
-	_check("and clips its own content, so a render quirk can never paint past its box",
-		preview.clip_contents)
+	_on_screen("the shelf row", Rect2(shelf_row.global_position, shelf_row.size))
+	_on_screen("the deck row", Rect2(deck_row.global_position, deck_row.size))
+	var shelf_rect := Rect2(shelf_row.global_position, shelf_row.size)
+	var deck_rect := Rect2(deck_row.global_position, deck_row.size)
+	var done_rect := Rect2(done_btn.global_position, done_btn.size)
+	_check("the shelf row does not overlap the deck row (%s vs %s)"
+		% [shelf_rect, deck_rect], not shelf_rect.intersects(deck_rect))
+	_check("and the deck row does not overlap the Done button (%s vs %s)"
+		% [deck_rect, done_rect], not deck_rect.intersects(done_rect))
+	# Exactly touching the bottom margin is "on screen" by one pixel, the same
+	# gap that let the shop preview hug the right margin with nothing to
+	# spare - real slack, not a coincidence of exactly fitting.
+	var bottom_clearance: float = VIEWPORT.y - done_rect.end.y
+	_check("and the Done button has real clearance from the bottom margin,"
+		+ " not just barely fitting (%d px clear)" % int(bottom_clearance),
+		bottom_clearance >= 20.0)
+
+	# The reported bug: on the Web (gl_compatibility) renderer specifically, a
+	# SubViewport-fed TextureRect can paint past its own logical rect and over
+	# whatever sits below it, even though every Control rect involved measures
+	# correctly right here - a rendering-backend quirk this geometry can never
+	# see, since it only exists once GLES actually draws the frame.
+	# clip_contents is the one property that forecloses it regardless of
+	# cause, and every card on screen (shelf and deck alike) uses the same
+	# SubViewport trick, so every one of them needs it.
+	for row in [shelf_row, deck_row]:
+		for slot in row.get_children():
+			var card := slot.get_child(0) as Control
+			_check("%s's card clips its own content, so a render quirk can never"
+				% slot.name + " paint past its box (%s)" % card.name, card.clip_contents)
 
 ## "Ensure each build shows the build number in the bottom right so I can
 ## know if it's the right one" - checked once per screen, since the whole
@@ -212,46 +222,12 @@ func _on_screen(label: String, r: Rect2) -> void:
 		r.position.x >= 0.0 and r.position.y >= 0.0
 			and r.end.x <= VIEWPORT.x and r.end.y <= VIEWPORT.y)
 
-## "Ensure that on hover, you can see each card show up in the shop" - the
-## literal ask. Emitting the signal directly rather than moving a real mouse,
-## the same way drive_shift.gd drives hover on the floor: it invokes the exact
-## callback a real hover fires, without needing real pointer motion to do it.
-func _check_hovering_a_shop_row_previews_its_card() -> void:
-	var shop_view = _root._shop_view
-	var preview: CardPreview2D = shop_view._preview
-	_check("nothing hovered yet, so the preview invites rather than guesses",
-		preview._name.text == "hover a card")
-
-	var offer_rows: Array = shop_view._offer_rows.get_children()
-	_check("there is an offer row to hover", offer_rows.size() > 0)
-	if offer_rows.size() > 0:
-		var first_offer: Button = offer_rows[0]
-		first_offer.mouse_entered.emit()
-		_check("hovering the offer shows its own card (%s)" % preview._name.text,
-			preview._name.text == shop_view._shop.offers[0].display_name)
-		first_offer.mouse_exited.emit()
-		_check("and looking away clears it", preview._name.text == "hover a card")
-
-	var deck_rows: Array = shop_view._deck_rows.get_children()
-	_check("there is a deck row to hover", deck_rows.size() > 0)
-	if deck_rows.size() > 0:
-		var first_row: HBoxContainer = deck_rows[0]
-		var first_card: CardInstance = _run.deck.cards[0]
-		_check("the row really does take hover (mouse_filter=%d, not IGNORE)"
-			% first_row.mouse_filter, first_row.mouse_filter != Control.MOUSE_FILTER_IGNORE)
-		first_row.mouse_entered.emit()
-		_check("hovering a deck row shows THAT card (%s vs %s)"
-			% [preview._name.text, first_card.card.display_name],
-			preview._name.text == first_card.card.display_name)
-		first_row.mouse_exited.emit()
-		_check("and it clears again", preview._name.text == "hover a card")
-
 ## "Reduce the number of upgrade options in the shop to a random selection" -
-## before this, every un-upgraded card with a real upgrade to sell got a
-## button, unconditionally. Counts the actual Button nodes the screen built,
-## not the model's own upgrade_offers array, so this fails if shop_screen.gd's
-## gate and Shop's random draw ever disagree about which cards are offered.
-func _check_only_the_random_offer_gets_an_upgrade_button() -> void:
+## before this, every un-upgraded card with a real upgrade to sell got a row,
+## unconditionally. Counts the actual card slots the screen built, not the
+## model's own upgrade_offers array, so this fails if shop_screen.gd's render
+## loop and Shop's random draw ever disagree about which cards are shown.
+func _check_the_deck_row_shows_exactly_the_random_upgrade_offers() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
 	var eligible_uncapped := 0
@@ -263,15 +239,75 @@ func _check_only_the_random_offer_gets_an_upgrade_button() -> void:
 			% [eligible_uncapped, _run.cfg.shop_upgrade_slots],
 		eligible_uncapped > _run.cfg.shop_upgrade_slots)
 
-	var upgrade_buttons := 0
-	for row in shop_view._deck_rows.get_children():
-		for child in (row as HBoxContainer).get_children():
-			if child is Button and (child as Button).text.begins_with("upgrade "):
-				upgrade_buttons += 1
-	_check("rendered exactly as many upgrade buttons as were actually offered (%d)"
-		% upgrade_buttons, upgrade_buttons == shop.upgrade_offers.size())
+	var deck_row := shop_view.get_node(^"%DeckRow") as HBoxContainer
+	_check("rendered exactly as many deck slots as were actually offered (%d)"
+		% deck_row.get_child_count(), deck_row.get_child_count() == shop.upgrade_offers.size())
 	_check("which is capped at the configured slot count, not the whole deck",
-		upgrade_buttons <= _run.cfg.shop_upgrade_slots)
+		deck_row.get_child_count() <= _run.cfg.shop_upgrade_slots)
+
+## "Show the card itself. When you click, it opens up the card, shows the
+## upgraded card and also has a button for removing from deck" - the literal
+## ask, end to end: click a deck slot, the detail overlay opens showing both
+## faces and the right prices, upgrading applies and closes it, and the row
+## behind it reflects the change once it does.
+func _check_clicking_a_deck_card_opens_its_detail() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
+	_check("the detail overlay starts hidden", not detail.visible)
+
+	var deck_row := shop_view.get_node(^"%DeckRow") as HBoxContainer
+	_check("there is a deck slot to click", deck_row.get_child_count() > 0)
+	if deck_row.get_child_count() == 0:
+		return
+
+	var uid: int = shop.upgrade_offers[0]
+	var inst := shop.find(uid)
+	var card := deck_row.get_child(0).get_child(0) as ShopCardButton
+	card.pressed.emit()
+	_check("clicking the deck card opens the detail overlay", detail.visible)
+	_check("titled after the card that was clicked (%s)" % detail._title.text,
+		detail._title.text == inst.card.display_name)
+	_check("showing the card's current face (%s)" % detail._current._name.text,
+		detail._current._name.text == inst.card.display_name)
+	_check("and its upgraded face, in the appeal colour (%s)"
+		% detail._upgraded._name.get_theme_color("font_color"),
+		detail._upgraded._name.get_theme_color("font_color") == Palette.color(&"appeal"))
+	_check("with a real upgrade price on the button (%s)" % detail._upgrade_btn.text,
+		detail._upgrade_btn.text == "upgrade %s" % Format.money(shop.upgrade_price(inst)))
+	_check("and a real drop price on the other one (%s)" % detail._remove_btn.text,
+		detail._remove_btn.text == "remove %s" % Format.money(shop.remove_price()))
+
+	# money is plentiful from here on - phase 2 resets it before its own
+	# purchase, so spending some proving upgrade/remove work costs nothing
+	# later.
+	_run.money = 999999
+	var was_upgraded := inst.upgraded
+	detail._upgrade_btn.pressed.emit()
+	_check("pressing upgrade actually upgrades the card", inst.upgraded and not was_upgraded)
+	_check("and closes the overlay", not detail.visible)
+
+	# A second card, so removing one does not undo the upgrade this same
+	# check just proved - upgrade_offers is capped at shop_upgrade_slots
+	# (>= 2 per shift_config.tres), and the eligibility check above already
+	# proved there are more eligible cards than slots this seed.
+	if shop.upgrade_offers.size() > 1:
+		var deck_size_before_drop := _run.deck.cards.size()
+		var drop_uid: int = shop.upgrade_offers[1]
+		# The row rebuilds after the upgrade above, but in the SAME order -
+		# it walks shop.upgrade_offers itself, which is rolled once and never
+		# reshuffled - so index 1 is still this uid's slot.
+		deck_row = shop_view.get_node(^"%DeckRow") as HBoxContainer
+		var drop_card := deck_row.get_child(1).get_child(0) as ShopCardButton
+		drop_card.pressed.emit()
+		_check("clicking a second deck card opens its own detail", detail.visible)
+		var drop_price := shop.remove_price()
+		detail._remove_btn.pressed.emit()
+		_check("pressing remove actually drops the card (%d -> %d, price %s)"
+			% [deck_size_before_drop, _run.deck.cards.size(), Format.money(drop_price)],
+			_run.deck.cards.size() == deck_size_before_drop - 1
+				and shop.find(drop_uid) == null)
+		_check("and closes the overlay too", not detail.visible)
 
 ## Ctrl+M, shop only: +$10,000 for testing purchases without grinding a run
 ## out first. Guarded on the shop actually being the visible screen, since
@@ -288,12 +324,34 @@ func _check_debug_add_money_key_works() -> void:
 	_check("Ctrl+M adds $10,000 while the shop is open (%d -> %d)"
 		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
 
+## "Show the card itself... click the card itself" - the shelf's own answer,
+## distinct from the deck browser's click-to-open: buying is a single click,
+## no detail overlay involved.
+func _check_clicking_a_shelf_card_buys_it() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var shelf_row := shop_view.get_node(^"%ShelfRow") as HBoxContainer
+	_check("there is a shelf card to click", shelf_row.get_child_count() > 0)
+	if shelf_row.get_child_count() == 0:
+		return
+	var offered := shop.offers[0]
+	var was_affordable := shop.run.money
+	shop.run.money = 999999
+	var before := _run.deck.cards.size()
+	var card := shelf_row.get_child(0).get_child(0) as ShopCardButton
+	card.pressed.emit()
+	_check("clicking the shelf card buys %s (deck %d -> %d)"
+		% [offered.display_name, before, _run.deck.cards.size()],
+		_run.deck.cards.size() == before + 1)
+	shop.run.money = was_affordable   # leave phase 2 its own accounting
+
 func _phase_2_buy_and_leave() -> void:
 	# Buy the cheapest thing on the shelf, with the money to afford it.
 	var shop: Shop = _root._shop_view._shop
 	_run.money = 100000
 	_root._shop_view._render()
 	var bought: CardDef = shop.offers[0]
+	var deck_before_this_purchase := _run.deck.cards.size()
 	var uids_before := {}
 	var same_def_uids_before := {}
 	for c in _run.deck.cards:
@@ -302,7 +360,7 @@ func _phase_2_buy_and_leave() -> void:
 			same_def_uids_before[c.uid] = true
 	var res := shop.buy(bought)
 	_check("bought %s (%s)" % [bought.display_name, res.msg], res.ok)
-	_check("the deck grew", _run.deck.cards.size() == _deck_before + 1)
+	_check("the deck grew", _run.deck.cards.size() == deck_before_this_purchase + 1)
 
 	# Pin down exactly which instance the purchase created, by uid - not by
 	# assuming Deck.add() appends, and not by matching CardDef alone, which an
