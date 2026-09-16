@@ -230,7 +230,7 @@ func _walk(chair: int) -> void:
 
 func _vacate(chair: int) -> void:
 	chairs[chair] = null
-	walk_up[chair] = cfg.walk_up_ticks
+	walk_up[chair] = rng.randi_range(cfg.walk_up_ticks_min, cfg.walk_up_ticks_max)
 	if at == chair:
 		at = null
 

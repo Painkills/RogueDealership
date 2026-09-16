@@ -66,7 +66,7 @@ func test_the_hawk_shops_you_the_moment_an_offer_falls_short() -> void:
 	s.offer()
 	h.check("a short offer and he is shopping you", c.demand != null)
 	h.eq("by name", c.demand.id, &"better_quote")
-	h.eq("and he does not wait long", c.demand.ticks, 2)
+	h.eq("and he does not wait long", c.demand.ticks, 4)
 
 func test_the_hawk_sweeps_the_table_if_you_will_not_come_down() -> void:
 	var s := _shift([&"hawk"])
@@ -78,7 +78,9 @@ func test_the_hawk_sweeps_the_table_if_you_will_not_come_down() -> void:
 	h.check("he is shopping you", c.demand != null)
 	var discarded: int = s.discard.size()
 	s.dig(0)
-	s.dig(0)                                          # two ticks, no concession
+	s.dig(0)
+	s.dig(0)
+	s.dig(0)                                          # four ticks, no concession
 	h.check("the fuse ran out", c.demand == null)
 	h.check("and your product came off the table", c.offer == null)
 	h.check("into the discard, not out of the deck",
@@ -128,7 +130,7 @@ func test_the_tire_kicker_walks_if_you_never_ask_for_the_business() -> void:
 	var walked: int = int(s.stat["customers_walked"])
 	h.check("with patience to spare - this is the demand, not the clock",
 		c.patience > 3)
-	s.dig(0); s.dig(0); s.dig(0)                      # three ticks, no offer
+	s.dig(0); s.dig(0); s.dig(0); s.dig(0); s.dig(0)  # five ticks, no offer
 	h.check("the chair is empty", s.chairs[0] == null)
 	h.eq("counted as a walkout", int(s.stat["customers_walked"]), walked + 1)
 	h.eq("so it cost standing like any other",
@@ -182,10 +184,10 @@ func test_ignoring_the_tech_enthusiast_only_costs_a_little() -> void:
 		s.dig(0)
 	h.check("they asked", c.demand != null)
 	var p: int = c.patience
-	for _i in range(3):
+	for _i in range(5):
 		s.dig(0)
 	h.check("the fuse ran out", c.demand == null)
-	h.eq("and it cost 2 patience on top of the clock", c.patience, p - 3 - 2)
+	h.eq("and it cost 2 patience on top of the clock", c.patience, p - 5 - 2)
 	h.check("they are still in the chair", s.chairs[0] != null)
 
 func test_junk_does_not_satisfy_the_tech_enthusiast() -> void:
@@ -234,10 +236,10 @@ func test_giving_family_first_the_minute_brings_them_back_easier() -> void:
 	s.approach(1)
 	h.eq("walking over cost nothing", int(s.stat["ticks_approach"]), 0)
 	var p: int = c.patience
-	for _i in range(3):
+	for _i in range(5):
 		s.dig(0)                                      # working somebody else
 	h.check("the minute is up, and they are content", c.demand == null)
-	h.eq("5 patience back, net of the clock", c.patience, p - 3 + 5)
+	h.eq("5 patience back, net of the clock", c.patience, p - 5 + 5)
 
 # ----------------------------------------------------------------- The Karen
 func test_the_karen_asks_for_the_manager_and_means_it() -> void:
@@ -259,14 +261,14 @@ func test_ignoring_the_karen_costs_the_whole_floor_and_your_standing() -> void:
 	var standing: int = s.standing
 	var hers: int = c.patience
 	var theirs: int = s.chairs[1].patience
-	for _i in range(3):
+	for _i in range(5):
 		s.dig(0)
 	h.check("the fuse ran out", c.demand == null)
 	h.eq("your standing took the complaint", s.standing, standing - 5)
-	h.eq("she pays only the clock", c.patience, hers - 3)
+	h.eq("she pays only the clock", c.patience, hers - 5)
 	h.eq("everyone else pays the clock and her",
-		s.chairs[1].patience, theirs - 3 - 2)
-	h.eq("and so does C", s.chairs[2].patience, theirs - 3 - 2)
+		s.chairs[1].patience, theirs - 5 - 2)
+	h.eq("and so does C", s.chairs[2].patience, theirs - 5 - 2)
 
 func test_coming_down_on_the_price_gets_the_karen_off_your_back() -> void:
 	var s := _shift([&"karen", &"easygoing", &"easygoing"])
@@ -322,7 +324,7 @@ func test_raising_a_demand_is_announced_with_its_fuse_and_its_price() -> void:
 	h.check("it carries dialogue", str(entry["dialogue"]) != "")
 	var said: String = str(entry["descriptions"])
 	h.check("it telegraphs the ask (%s)" % said, said.contains("MANAGER"))
-	h.check("it states the fuse", said.contains("3 ticks"))
+	h.check("it states the fuse", said.contains("5 ticks"))
 	h.check("and how to answer it", said.to_lower().contains("price"))
 
 func test_a_floor_wide_consequence_is_flagged_when_it_lands() -> void:
@@ -335,7 +337,7 @@ func test_a_floor_wide_consequence_is_flagged_when_it_lands() -> void:
 		s.dig(0)
 	h.check("the ask is not itself floor-wide",
 		not bool(s.action_log[0]["floor_wide"]))
-	for _i in range(3):
+	for _i in range(5):
 		s.dig(0)
 	var bill: Dictionary = s.action_log[-1]
 	h.check("but ignoring it is (%s)" % bill["name"], bool(bill["floor_wide"]))

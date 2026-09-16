@@ -17,6 +17,6 @@ id = &"better_quote"
 display_name = "Got a better quote across town"
 telegraph = "BETTER QUOTE"
 dialogue = "\"The place on Dundas does this for less.\""
-ticks = 2
+ticks = 4
 resolve = SubResource("Sub_rsv")
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_drop")])

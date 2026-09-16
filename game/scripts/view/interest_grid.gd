@@ -118,9 +118,11 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 
 	if sold:
 		# Taken. The strongest state on the card, because it is the only one
-		# that is finished - and it reads at any size, numeral or not.
-		draw_rect(cell, Palette.color(&"margin"), true)
-		_draw_tick(cell)
+		# that is finished. A solid colour reads at any size and at a glance;
+		# a checkmark drawn small enough to fit a cell was the least visible
+		# mark on the whole card, which defeated the point of it being the
+		# strongest state.
+		draw_rect(cell, Palette.color(&"patience_ok"), true)
 	elif rank > 0:
 		draw_rect(cell, Palette.color(&"appeal"), true)
 
@@ -142,10 +144,3 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 		var at := cell.get_center() + Vector2(-w * 0.5, NUMERAL * 0.34)
 		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, NUMERAL,
 			Palette.color(&"neutral_1"))
-
-func _draw_tick(cell: Rect2) -> void:
-	var c := cell.get_center()
-	var s: float = minf(cell.size.x, cell.size.y) * 0.22
-	var ink := Palette.color(&"neutral_1")
-	draw_line(c + Vector2(-s, 0.0), c + Vector2(-s * 0.2, s), ink, 7.0)
-	draw_line(c + Vector2(-s * 0.2, s), c + Vector2(s, -s), ink, 7.0)

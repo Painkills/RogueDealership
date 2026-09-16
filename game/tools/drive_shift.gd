@@ -1150,7 +1150,14 @@ func _row_height(box: Control, width: float) -> float:
 ## never once read it. Imposed rather than played for: whether a Karen turns up
 ## in this seed is not what is being tested, and waiting for one would make
 ## this check count for nothing on most runs.
+##
+## "All customer actions need to show on the screen, not just in the log...
+## a little speech bubble coming out of the card" - so the same injected line
+## has to reach chair A's own CustomerCard3D too, not only the log beside it.
 func _check_what_a_customer_says_reaches_the_log() -> void:
+	var card = _controller._customer_cards[0]
+	var bubble: Control = card.get_node(^"FrontViewport/CustomerFront/SpeechBubble")
+	_check("the bubble starts out hidden", not bubble.visible)
 	_controller._shift.action_log.append({
 		"key": "A",
 		"customer": "Sandra Okonkwo",
@@ -1164,6 +1171,21 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 	_check("the action itself is logged", text.contains("Asks for the manager"))
 	_check("and so is what they actually said",
 		text.contains("Is there someone else I can speak to?"))
+	_check("and a speech bubble pops on the card that said it", bubble.visible)
+	var label := bubble.get_node(^"Panel/Label") as Label
+	_check("carrying the same words as the log (%s)" % label.text,
+		label.text == "\"Is there someone else I can speak to?\"")
+	var timer := bubble.get_node(^"HideTimer") as Timer
+	_check("and it is on a timer to get out of the way again",
+		not timer.is_stopped())
+
+	# setup() itself has to clear a stale bubble the instant the customer
+	# under it changes - whoever signs or walks must not leave their last
+	# words floating over whoever sits down next.
+	card.setup(null)
+	_check("and a customer change clears whatever they were just saying too",
+		not bubble.visible)
+	_controller._render()   # put chair A's real customer back on the card
 
 
 ## Their real Line, parked while the fog checks run against a guaranteed miss.

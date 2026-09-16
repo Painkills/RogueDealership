@@ -629,7 +629,19 @@ func _drain_log() -> void:
 		var said: String = str(entry.get("dialogue", ""))
 		if said != "":
 			_event_log.append_text("[color=%s]   %s[/color]\n" % [color, said])
+			_say_on_the_card(str(entry["key"]), said)
 	_actions_seen = _shift.action_log.size()
+
+## "All customer actions need to show on the screen, not just in the log" - a
+## speech bubble on the card that said it, not only a line scrolled into the
+## log beside it. Keyed on the chair LETTER the entry itself carries: dialogue
+## is only ever logged the instant it is spoken, before anything could have
+## vacated that chair since, so the letter still names the right card.
+func _say_on_the_card(key: String, text: String) -> void:
+	var chair: int = Shift.CHAIR_KEYS.find(key)
+	if chair < 0 or chair >= _customer_cards.size():
+		return
+	_customer_cards[chair].say(text)
 
 func _show_report() -> void:
 	_report_overlay.visible = true

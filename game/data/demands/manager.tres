@@ -23,6 +23,6 @@ id = &"manager"
 display_name = "Asks for the manager"
 telegraph = "MANAGER?"
 dialogue = "\"Is there someone else I can speak to?\""
-ticks = 3
+ticks = 5
 resolve = SubResource("Sub_rsv")
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_floor"), SubResource("Sub_stand")])

@@ -17,6 +17,6 @@ id = &"restless"
 display_name = "Half out of the chair"
 telegraph = "RESTLESS"
 dialogue = "\"How long is this going to take?\""
-ticks = 3
+ticks = 5
 resolve = SubResource("Sub_rsv")
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_out")])

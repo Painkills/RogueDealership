@@ -32,14 +32,16 @@ func test_a_two_tick_action_burns_two() -> void:
 	h.eq("and so did the burn", s.chairs[1].patience, before - 2)
 
 func test_patience_gone_means_gone() -> void:
-	var s := _shift([&"easygoing", &"easygoing"])
+	var s := _shift([&"easygoing", &"easygoing"],
+		{"walk_up_ticks_min": 5, "walk_up_ticks_max": 5})
 	s.chairs[0].patience = 1
 	s._burn(1, "cards")
 	h.eq("they walked", s.chairs[0], null)
-	h.eq("the chair is empty and waiting", s.walk_up[0], s.cfg.walk_up_ticks)
+	h.eq("the chair is empty and waiting", s.walk_up[0], 5)
 
 func test_a_freed_chair_refills_after_the_walk_up_delay() -> void:
-	var s := _shift([&"easygoing", &"easygoing"], {"walk_up_ticks": 3})
+	var s := _shift([&"easygoing", &"easygoing"],
+		{"walk_up_ticks_min": 3, "walk_up_ticks_max": 3})
 	s.chairs[0].patience = 1
 	s._burn(1, "cards")                 # they walk; the timer starts now
 	h.eq("still empty", s.chairs[0], null)
@@ -48,8 +50,28 @@ func test_a_freed_chair_refills_after_the_walk_up_delay() -> void:
 	s._burn(1, "cards")
 	h.check("someone walks up on the third", s.chairs[0] != null)
 
+func test_the_walk_up_delay_is_drawn_from_a_range_not_fixed() -> void:
+	## "increase the amount of time before a new customer fills an empty seat,
+	## but make it variable (between 6 and 8 ticks)" - the literal ask. Bounds
+	## checked on every draw; variety checked across a seed sweep, the same
+	## style test_no_opening_hand_is_ever_dealt_without_a_product() already
+	## uses for its own RNG-dependent claim.
+	var seen := {}
+	for seed_value in range(1, 61):
+		var s := _seeded(seed_value)
+		s.chairs[0].patience = 1
+		s._burn(1, "cards")
+		var drawn: int = s.walk_up[0]
+		h.check("seed %d draws a delay inside the configured range (%d)"
+			% [seed_value, drawn],
+			drawn >= s.cfg.walk_up_ticks_min and drawn <= s.cfg.walk_up_ticks_max)
+		seen[drawn] = true
+	h.check("and the sweep actually saw more than one value, not a fixed delay",
+		seen.size() > 1)
+
 func test_an_empty_chair_burns_nobody() -> void:
-	var s := _shift([&"easygoing", &"easygoing"], {"walk_up_ticks": 99})
+	var s := _shift([&"easygoing", &"easygoing"],
+		{"walk_up_ticks_min": 99, "walk_up_ticks_max": 99})
 	s.chairs[0].patience = 1
 	s._burn(1, "cards")
 	var b: int = s.chairs[1].patience

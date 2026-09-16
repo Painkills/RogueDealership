@@ -7,7 +7,11 @@ class_name ShiftConfig extends Resource
 @export var shift_ticks: int = 24
 @export var quota: int = 3600
 @export var floor_size: int = 3
-@export var walk_up_ticks: int = 4
+## Rolled fresh per vacated chair, not a fixed wait - a seat that always
+## refilled on the same tick told you exactly when to be looking at it, which
+## is the opposite of the triage pressure the floor is supposed to apply.
+@export var walk_up_ticks_min: int = 6
+@export var walk_up_ticks_max: int = 8
 
 # --- the run ---------------------------------------------------------------
 @export var shifts_in_run: int = 5

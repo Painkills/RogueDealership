@@ -27,6 +27,7 @@ var _patience: Label
 var _demand: Label
 var _grid: InterestGrid
 var _status: Label
+var _bubble: SpeechBubble
 ## Numerals in the interest grid stop being readable before the cells do, so a
 ## card that is going to be drawn small says so once rather than guessing from
 ## its own size - the face is authored at 500x700 no matter where it lands.
@@ -54,6 +55,7 @@ func _bind() -> void:
 	_demand = col.get_node(^"DemandLabel")
 	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
+	_bubble = $FrontViewport/CustomerFront/SpeechBubble
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
@@ -72,6 +74,12 @@ func _bind() -> void:
 ## what a card already says is just something else to keep in sync.
 func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_bind()
+	# A bubble is keyed to whoever said it, not to the chair - the moment the
+	# customer in it changes (walked, signed, or a fresh arrival), whatever is
+	# still floating over their face belongs to somebody who is not there any
+	# more.
+	if c != customer and _bubble != null:
+		_bubble.visible = false
 	customer = c
 	_status.visible = not seated
 
@@ -101,6 +109,14 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		sold_interests(c), not compact)
 	_status.text = status_text(c)
 	_redraw()
+
+## "All customer actions need to show on the screen, not just in the log" -
+## pops a speech bubble with their own words over the card. A no-op before
+## _bind() has run, which only a bare .instantiate() in a test can hit.
+func say(text: String) -> void:
+	_bind()
+	if _bubble != null:
+		_bubble.say(text)
 
 ## What this customer does to you, and what they will not do for you.
 ##
