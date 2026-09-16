@@ -128,6 +128,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
+	_check_tick_tap_target_ends_the_shift_too()      # replaces _shift entirely
 
 	print("")
 	# Guards against the failure mode that has now bitten three times: a runtime
@@ -1598,6 +1599,21 @@ func _check_debug_skip_shift_key_ends_it() -> void:
 	_check("a fresh shift is not already over", not fresh.is_over())
 	_press(KEY_E, false, true)
 	_check("Ctrl+E burns the whole shift at once (%d of %d ticks)"
+		% [fresh.tick, fresh.tick_budget], fresh.is_over())
+
+## Mobile has no Ctrl+E - the tick counter itself is an invisible tap
+## target wired to the identical method. Same fresh-shift shape as the
+## keyboard check above, so it is stressed the same way.
+func _check_tick_tap_target_ends_the_shift_too() -> void:
+	var fresh := Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), randi())
+	_controller.setup(fresh, 100)
+	_check("a fresh shift is not already over", not fresh.is_over())
+	var tap := _controller.get_node(^"%TickTapTarget") as Button
+	tap.pressed.emit()
+	_check("tapping the tick counter burns the whole shift at once (%d of %d ticks)"
 		% [fresh.tick, fresh.tick_budget], fresh.is_over())
 
 func _check(label: String, ok: bool) -> void:

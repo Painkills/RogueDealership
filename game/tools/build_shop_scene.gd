@@ -50,7 +50,39 @@ func _init() -> void:
 	col.owner = root
 
 	_label(col, root, "TitleLabel", "BETWEEN SHIFTS", 40, &"text")
-	_label(col, root, "ShiftLabel", "shift 1 of 5", 24, &"text_dim")
+
+	# The quota line doubles as a mobile stand-in for Ctrl+M (+$10,000) - the
+	# same "no keyboard on touch" gap the shift's tick counter has, and the
+	# same fix: PanelContainer stacks every child at the SAME rect instead of
+	# laying them out, so the label sizes the wrapper and the invisible
+	# button (added after, on top for input) exactly covers it for free.
+	var shift_wrap := PanelContainer.new()
+	shift_wrap.name = "ShiftWrap"
+	shift_wrap.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	# IGNORE: the wrapper itself must never be what a click actually hits -
+	# only the Button inside it should. shift.tscn's own equivalent
+	# (TickWrap) has a dedicated test for exactly this; this screen has no
+	# 3D table underneath to protect, but the same rule still applies.
+	shift_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(shift_wrap)
+	shift_wrap.owner = root
+
+	var shift_label := Label.new()
+	shift_label.name = "ShiftLabel"
+	shift_label.text = "shift 1 of 5"
+	shift_label.add_theme_font_size_override("font_size", 24)
+	shift_label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	shift_label.unique_name_in_owner = true
+	shift_wrap.add_child(shift_label)
+	shift_label.owner = root
+
+	var shift_tap := Button.new()
+	shift_tap.name = "ShiftTapTarget"
+	shift_tap.flat = true   # no visible chrome at all - the ask was invisible
+	shift_tap.unique_name_in_owner = true
+	shift_wrap.add_child(shift_tap)
+	shift_tap.owner = root
+
 	_label(col, root, "MoneyLabel", "$0 to spend", 30, &"margin")
 
 	_card_section(col, root, "ShelfSection", "OnShelfTitle", "ON THE SHELF",

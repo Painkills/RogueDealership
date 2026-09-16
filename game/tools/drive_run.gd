@@ -42,6 +42,7 @@ func _process(_delta: float) -> bool:
 		_check_the_deck_row_shows_exactly_the_random_upgrade_offers()
 		_check_clicking_a_deck_card_opens_its_detail()
 		_check_debug_add_money_key_works()
+		_check_shift_label_tap_target_adds_money_too()
 		_check_build_badge_is_always_on_screen("in the shop")
 		_phase = 2
 		return false
@@ -340,6 +341,16 @@ func _check_debug_add_money_key_works() -> void:
 	ev.pressed = true
 	shop_view._unhandled_input(ev)
 	_check("Ctrl+M adds $10,000 while the shop is open (%d -> %d)"
+		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
+
+## Mobile has no Ctrl+M - the quota line itself is an invisible tap target
+## wired to the identical effect.
+func _check_shift_label_tap_target_adds_money_too() -> void:
+	var shop_view = _root._shop_view
+	var before: int = shop_view._shop.run.money
+	var tap := shop_view.get_node(^"%ShiftTapTarget") as Button
+	tap.pressed.emit()
+	_check("tapping the quota line adds $10,000 too (%d -> %d)"
 		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
 
 ## "Show the card itself... click the card itself" - the shelf's own answer,

@@ -408,8 +408,44 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(top)
 	top.owner = root
 
+	# The tick counter doubles as a mobile stand-in for Ctrl+E (skip to the
+	# end of the shift) - it is the one thing on this HUD you look at every
+	# single tick, always in the same place, which is exactly what a tap
+	# target needs and a keyboard-only shortcut cannot give a touch player
+	# at all. PanelContainer stacks every child at the SAME rect rather than
+	# laying them out side by side - the label sizes the wrapper, and the
+	# invisible button (added after, so it is on top for input) inherits
+	# that identical rect for free, with no coordinates to keep in sync by
+	# hand.
+	var tick_wrap := PanelContainer.new()
+	tick_wrap.name = "TickWrap"
+	tick_wrap.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	# IGNORE, same as every plain label already on this HUD - the wrapper
+	# itself must never be the thing that blocks a click meant for the
+	# table; only the Button inside it (exempt from that same guard) should
+	# ever consume one. test_no_hud_control_can_swallow_a_click_meant_for_
+	# the_table() caught this the first time it was missed.
+	tick_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(tick_wrap)
+	tick_wrap.owner = root
+
+	var tick_label := Label.new()
+	tick_label.name = "TickLabel"
+	tick_label.text = "tick 0/24"
+	tick_label.add_theme_font_size_override("font_size", 30)
+	tick_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tick_label.unique_name_in_owner = true
+	tick_wrap.add_child(tick_label)
+	tick_label.owner = root
+
+	var tick_tap := Button.new()
+	tick_tap.name = "TickTapTarget"
+	tick_tap.flat = true   # no visible chrome at all - the ask was invisible
+	tick_tap.unique_name_in_owner = true
+	tick_wrap.add_child(tick_tap)
+	tick_tap.owner = root
+
 	var placeholders := {
-		"TickLabel": "tick 0/24",
 		"BankedLabel": "banked $0 / $3,600",
 		"StandingLabel": "standing 100/100",
 		"AtRiskLabel": "nothing unsigned",

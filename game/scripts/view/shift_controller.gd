@@ -150,6 +150,9 @@ func _ready() -> void:
 		pad.input_event.connect(_on_pad_input.bind(i))
 
 	_register_keyboard_actions()
+	# Mobile has no Ctrl+E: an invisible button laid over the tick counter
+	# itself is the touch equivalent, wired to the exact same method.
+	(%TickTapTarget as Button).pressed.connect(_debug_skip_shift)
 	_report_overlay.continue_pressed.connect(
 		func(): shift_finished.emit(_shift.report()))
 

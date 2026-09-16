@@ -19,6 +19,7 @@ signal done
 
 @onready var _money: Label = %MoneyLabel
 @onready var _shift_label: Label = %ShiftLabel
+@onready var _shift_tap: Button = %ShiftTapTarget
 @onready var _shelf_row: HBoxContainer = %ShelfRow
 @onready var _deck_row: HBoxContainer = %DeckRow
 @onready var _log: Label = %LogLabel
@@ -31,6 +32,9 @@ func _ready() -> void:
 	_done.pressed.connect(func(): done.emit())
 	_detail.action_taken.connect(_apply)
 	_bind_key(&"debug_add_money", KEY_M, true)   # Ctrl+M: +$10,000, for testing
+	# Mobile has no Ctrl+M: an invisible button laid over the quota line
+	# itself is the touch equivalent, wired to the exact same effect.
+	_shift_tap.pressed.connect(_debug_add_money)
 
 func _bind_key(action: StringName, keycode: Key, ctrl: bool = false) -> void:
 	if not InputMap.has_action(action):
@@ -50,8 +54,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 	if event.is_action_pressed("debug_add_money"):
-		_shop.run.money += 10000
-		_render()
+		_debug_add_money()
+
+func _debug_add_money() -> void:
+	_shop.run.money += 10000
+	_render()
 
 func setup(shop: Shop) -> void:
 	_shop = shop

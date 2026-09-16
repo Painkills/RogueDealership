@@ -123,6 +123,8 @@ size = Vector2(2.5, 3.5)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_smm52"]
 bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ticktap"]
+
 [node name="ShiftRoot" type="Node3D" unique_id=1565167599]
 script = ExtResource("1_y0hlp")
 
@@ -399,11 +401,21 @@ offset_bottom = 18.0
 mouse_filter = 2
 theme_override_constants/separation = 48
 
-[node name="TickLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=493898306]
+[node name="TickWrap" type="PanelContainer" parent="HUD/HudRoot/TopBar" unique_id=1234567801]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_ticktap")
+
+[node name="TickLabel" type="Label" parent="HUD/HudRoot/TopBar/TickWrap" unique_id=493898306]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "tick 0/24"
+
+[node name="TickTapTarget" type="Button" parent="HUD/HudRoot/TopBar/TickWrap" unique_id=1234567802]
+unique_name_in_owner = true
+layout_mode = 2
+flat = true
 
 [node name="BankedLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1396139415]
 unique_name_in_owner = true
