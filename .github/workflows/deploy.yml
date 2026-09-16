@@ -78,8 +78,13 @@ jobs:
       # actually-exported artifact gets the real stamp.
       - name: Stamp the build badge with this run's identity
         working-directory: ${{ env.PROJECT_PATH }}
+        # POSIX sh, not bash-only syntax: the godot-ci container's default
+        # shell for a containerized run step is whatever /bin/sh is inside
+        # the image, not necessarily bash - ${VAR:0:7} substring expansion
+        # is a bash extension and fails there with a syntax error. cut is
+        # POSIX and works in either.
         run: |
-          SHORT_SHA="${GITHUB_SHA:0:7}"
+          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
           sed -i "s/const LABEL := \".*\"/const LABEL := \"#${GITHUB_RUN_NUMBER} - ${SHORT_SHA}\"/" \
             scripts/view/build_info.gd
           grep LABEL scripts/view/build_info.gd
