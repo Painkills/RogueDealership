@@ -36,7 +36,9 @@ func test_the_offer_sub_line_carries_the_products_own_category_badge() -> void:
 	c.offer = _offer(&"vsc", 30, 1600)     # reliability -> vehicle
 	d.show_offer(c, "COOL")
 	h.check("the badge is showing", d._sub_icon.visible)
-	h.eq("naming the product's own category", d._sub_icon._category_id, &"vehicle")
+	var vsc := _pool().by_id(&"vsc") as ProductCardDef
+	h.eq("naming the product's own category", d._sub_icon._category_id,
+		vsc.interest.category.id)
 	d.free()
 
 func test_an_archetype_name_carries_no_badge() -> void:

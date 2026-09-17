@@ -20,17 +20,18 @@ func test_closing_time_forfeits_whatever_is_unsigned() -> void:
 	var c: Customer = s.chairs[0]
 	c.line = 20
 	c.ranks[&"reliability"] = 1
+	var vsc_margin: int = s.card_pool.by_id(&"vsc").margin
 	s.hand.clear()
 	s.hand.append(CardInstance.new(s.card_pool.by_id(&"vsc"), 901))
 	s.place(0)                       # tick 1
 	s.offer()
-	h.eq("agreed but unsigned", c.unsigned_margin(), 1600)
+	h.eq("agreed but unsigned", c.unsigned_margin(), vsc_margin)
 	s.hand.append(CardInstance.new(s.card_pool.by_id(&"explain"), 902))
 	s.dig(0)                         # tick 2 - the bell
 	h.check("the day ended", s.is_over())
 	h.eq("nothing banked", s.margin_banked, 0)
 	h.eq("reported lost at the bell",
-		int(s.report()["margin_lost_to_closing"]), 1600)
+		int(s.report()["margin_lost_to_closing"]), vsc_margin)
 
 func test_the_report_carries_every_key_the_ui_will_need() -> void:
 	var s := _shift([&"easygoing"])
@@ -83,13 +84,14 @@ func test_a_banked_shift_reports_it_made_quota() -> void:
 	var c: Customer = s.chairs[0]
 	c.line = 20
 	c.ranks[&"reliability"] = 1
+	var vsc_margin: int = s.card_pool.by_id(&"vsc").margin
 	s.hand.clear()
 	s.hand.append(CardInstance.new(s.card_pool.by_id(&"vsc"), 901))
 	s.place(0)
 	s.offer()
 	s.close()
 	var r: Dictionary = s.report()
-	h.eq("banked", int(r["margin_banked"]), 1600)
+	h.eq("banked", int(r["margin_banked"]), vsc_margin)
 	h.check("made quota", bool(r["made_quota"]))
 	h.eq("one signed", int(r["customers_signed"]), 1)
 	h.eq("one sale in one offer", int(r["sales"]), 1)

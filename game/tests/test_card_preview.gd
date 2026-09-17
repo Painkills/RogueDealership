@@ -9,9 +9,11 @@ const SCENE := "res://scenes/cards/card_preview_2d.tscn"
 func _instance() -> CardPreview2D:
 	return (load(SCENE) as PackedScene).instantiate() as CardPreview2D
 
+func _pool() -> CardPool:
+	return load("res://data/card_pool.tres")
+
 func _card(id: StringName, uid: int = 1) -> CardInstance:
-	var pool: CardPool = load("res://data/card_pool.tres")
-	return CardInstance.new(pool.by_id(id), uid)
+	return CardInstance.new(_pool().by_id(id), uid)
 
 func _front(c: CardPreview2D) -> Node:
 	return c.get_node(^"SubViewport/CardFront/Margin/Column")
@@ -45,18 +47,19 @@ func test_it_starts_blank_with_an_invitation_rather_than_editor_placeholder_text
 
 func test_show_card_writes_a_products_words_onto_the_face() -> void:
 	var c := _instance()
+	var vsc := _pool().by_id(&"vsc") as ProductCardDef
 	c.show_card(_card(&"vsc"))
 	var col := _front(c)
-	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text,
-		"Vehicle Service Contract")
+	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, vsc.display_name)
 	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "PRODUCT")
 	h.eq("what need it answers", (col.get_node(^"BodyRow/BodyLabel") as Label).text,
-		"Vehicle . Reliability")
+		vsc.interest.category.display_name + " . " + vsc.interest.display_name)
 	h.eq("margin, formatted like every other surface formats money",
-		(col.get_node(^"MarginLabel") as Label).text, "$1,600")
+		(col.get_node(^"MarginLabel") as Label).text, Format.money(vsc.margin))
 	var icon := col.get_node(^"BodyRow/BodyIcon") as CategoryIconControl
 	h.check("carries the same category badge every other card uses", icon.visible)
-	h.eq("naming the product's own category", icon._category_id, &"vehicle")
+	h.eq("naming the product's own category", icon._category_id,
+		vsc.interest.category.id)
 	c.free()
 
 func test_show_card_works_on_a_card_that_was_never_added_to_any_deck() -> void:
@@ -64,20 +67,27 @@ func test_show_card_works_on_a_card_that_was_never_added_to_any_deck() -> void:
 	## the preview has to accept a throwaway instance built just to look at,
 	## uid -1 and all, without that uid ever meaning anything to the model.
 	var c := _instance()
-	var pool: CardPool = load("res://data/card_pool.tres")
-	var throwaway := CardInstance.new(pool.by_id(&"gap"), -1)
+	var gap := _pool().by_id(&"gap")
+	var throwaway := CardInstance.new(gap, -1)
 	c.show_card(throwaway)
 	h.eq("shows the card anyway",
-		(_front(c).get_node(^"Header/NameLabel") as Label).text, "GAP Insurance")
+		(_front(c).get_node(^"Header/NameLabel") as Label).text, gap.display_name)
 	c.free()
 
 func test_an_upgraded_instance_shows_the_upgraded_numbers() -> void:
 	var c := _instance()
+	var base := _card(&"vsc")
+	c.show_card(base)
+	var unupgraded: String = (_front(c).get_node(^"MarginLabel") as Label).text
+
 	var inst := _card(&"vsc")
 	inst.upgraded = true
 	c.show_card(inst)
-	h.eq("upgraded margin, not the base one",
-		(_front(c).get_node(^"MarginLabel") as Label).text, "$2,000")
+	var upgraded: String = (_front(c).get_node(^"MarginLabel") as Label).text
+	h.check("upgraded margin actually differs from the base one",
+		upgraded != unupgraded)
+	h.eq("and matches the card's own upgraded margin, correctly formatted",
+		upgraded, Format.money(inst.margin()))
 	c.free()
 
 func test_clear_erases_whatever_was_shown_before() -> void:

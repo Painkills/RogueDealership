@@ -128,11 +128,11 @@ func test_the_grid_lights_what_they_have_actually_bought() -> void:
 	var c: Customer = s.chairs[0]
 	h.check("nothing lit to begin with",
 		CustomerCard3D.sold_interests(c).is_empty())
-	c.unsigned.append({"product": s.card_pool.by_id(&"vsc"),
-		"margin": 1600, "bonus": 0})
+	var vsc := s.card_pool.by_id(&"vsc") as ProductCardDef
+	c.unsigned.append({"product": vsc, "margin": vsc.margin, "bonus": 0})
 	var lit := CustomerCard3D.sold_interests(c)
 	h.check("the interest the product answers is lit, not the product",
-		lit.has(&"reliability"))
+		lit.has(vsc.interest.id))
 	h.eq("and only that one", lit.size(), 1)
 
 func test_a_customer_carries_the_board_they_were_dealt_against() -> void:
