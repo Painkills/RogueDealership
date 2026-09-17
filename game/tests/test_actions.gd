@@ -161,7 +161,9 @@ func test_the_tech_enthusiast_asks_to_see_something_from_their_own_top_three() -
 func test_showing_the_tech_enthusiast_the_good_stuff_is_worth_it() -> void:
 	## Tech is one of the two archetypes the design rule keeps in the player's
 	## favour, so their demand is an OPPORTUNITY with a deadline: the relief is
-	## the point and the miss is nominal.
+	## the point and the miss is nominal. The relief pads the offer still on the
+	## table with $300 margin - offering fails on purpose here (line 99), so
+	## the only thing that could move the margin is the relief itself.
 	var s := _shift([&"tech"])
 	var c := _sat_a_while(s)
 	c.line = 99                                       # the offer misses on purpose
@@ -171,11 +173,11 @@ func test_showing_the_tech_enthusiast_the_good_stuff_is_worth_it() -> void:
 	h.check("they asked", c.demand != null)
 	_hand(s, [&"vsc"])
 	s.place(0)
-	var p: int = c.patience
+	var before_margin: int = c.offer.margin
 	s.offer()
 	h.check("their own number one answers them", c.demand == null)
-	h.check("and they are glad enough to wait longer, not shorter (%d -> %d)"
-		% [p, c.patience], c.patience >= p)
+	h.check("and it pads the still-open offer by $300 (%d -> %d)"
+		% [before_margin, c.offer.margin], c.offer.margin == before_margin + 300)
 
 func test_ignoring_the_tech_enthusiast_only_costs_a_little() -> void:
 	var s := _shift([&"tech"])
