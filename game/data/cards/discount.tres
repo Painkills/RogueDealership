@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+[gd_resource type="Resource" script_class="SupportCardDef" format=3 uid="uid://k2k741u8565d"]
 
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_x4q03"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_appeal.gd" id="2_d8w72"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_margin.gd" id="3_3kw8p"]
-[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_srclt"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_x4q03"]
+[ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_d8w72"]
+[ext_resource type="Script" uid="uid://ulx4li35o01c" path="res://scripts/model/effects/change_margin.gd" id="3_3kw8p"]
+[ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="4_srclt"]
 
 [sub_resource type="Resource" id="Resource_y1lle"]
 script = ExtResource("2_d8w72")
-amount = 8
+amount = 7
 
 [sub_resource type="Resource" id="Resource_5ct8g"]
 script = ExtResource("3_3kw8p")
@@ -15,7 +15,7 @@ amount = -300
 
 [sub_resource type="Resource" id="Resource_2tkkk"]
 script = ExtResource("2_d8w72")
-amount = 8
+amount = 7
 
 [sub_resource type="Resource" id="Resource_ij5n2"]
 script = ExtResource("3_3kw8p")

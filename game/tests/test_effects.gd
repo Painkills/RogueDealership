@@ -45,9 +45,11 @@ func test_scale_by_sales_multiplies_the_wrapped_effect() -> void:
 	var ctx := _offer_ctx()
 	ctx.sales_so_far = 3
 	e.apply(ctx)
-	h.eq("+4 per product already taken", ctx.offer.appeal, 30 + 12)
+	# One application always, plus one more per product already taken -
+	# four applications total at 3 sales, not three.
+	h.eq("+4 once, then +4 per product already taken", ctx.offer.appeal, 30 + 16)
 
-func test_scale_by_sales_is_worth_nothing_on_a_first_offer() -> void:
+func test_scale_by_sales_still_applies_once_on_a_first_offer() -> void:
 	var inner := ChangeAppeal.new()
 	inner.amount = 4
 	var e := ScaleBySales.new()
@@ -55,7 +57,8 @@ func test_scale_by_sales_is_worth_nothing_on_a_first_offer() -> void:
 	var ctx := _offer_ctx()
 	ctx.sales_so_far = 0
 	e.apply(ctx)
-	h.eq("nothing yet", ctx.offer.appeal, 30)
+	h.eq("the base application still lands with no sales yet",
+		ctx.offer.appeal, 30 + 4)
 
 func test_margin_bonus_lands_on_the_sale_not_the_offer() -> void:
 	var e := MarginBonus.new()
@@ -83,16 +86,16 @@ func test_describe_agrees_with_apply_for_every_effect() -> void:
 		h.check("%s says something" % e.get_script().resource_path.get_file(),
 			d.strip_edges() != "")
 
-func test_the_starter_deck_is_fifteen_cards() -> void:
+func test_the_starter_deck_is_sixteen_cards() -> void:
 	var total := 0
 	var products := 0
 	for c in _pool().starter_cards():
 		total += c.copies
 		if c is ProductCardDef:
 			products += c.copies
-	h.eq("fifteen cards", total, 15)
+	h.eq("sixteen cards", total, 16)
 	h.eq("six of them products", products, 6)
-	h.eq("nine support", total - products, 9)
+	h.eq("ten support", total - products, 10)
 
 func test_no_starter_card_moves_a_full_place_on_their_list_for_free() -> void:
 	## m2's rule: a card worth a whole rank step becomes a substitute for
@@ -111,6 +114,8 @@ func test_no_starter_card_moves_a_full_place_on_their_list_for_free() -> void:
 			elif e is ChangeMargin and e.amount < 0:
 				free = false
 			elif e is ChangePatience and e.amount < 0:
+				free = false
+			elif e is ChangeStanding and e.amount < 0:
 				free = false
 		if free and c.ticks <= 1:
 			h.check("%s moves less than one place (%d < %d)"
