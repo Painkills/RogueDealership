@@ -144,7 +144,9 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 		# strongest state.
 		draw_rect(cell, Palette.color(&"patience_ok"), true)
 	elif rank > 0:
-		draw_rect(cell, Palette.color(&"appeal"), true)
+		# Known but not yet taken - the same "still open" yellow the patience
+		# bar itself uses, so green only ever means "done."
+		draw_rect(cell, Palette.color(&"patience_warn"), true)
 
 	var edge: Color = Palette.color(&"neutral_3")
 	var thickness := 2.0

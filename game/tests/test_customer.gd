@@ -74,6 +74,28 @@ func test_reveal_room_gives_the_line_and_a_category() -> void:
 	h.eq("and the category of their number one", c.known_top_category,
 		_interests().by_id(c.top_interest_id()).category.id)
 
+## The bug this guards: reading the room after you have already sold their
+## number one used to keep pointing at that same, already-closed interest -
+## a read that told you nothing new. It should point at whatever is now
+## their highest-priority interest that is still open.
+func test_reveal_room_skips_what_is_already_sold() -> void:
+	var c := _cust(&"easygoing", 1)
+	var first := c.top_interest_id()
+	var product := ProductCardDef.new()
+	product.interest = _interests().by_id(first)
+	product.margin = 100
+	c.unsigned.append({"product": product, "margin": 100, "bonus": 0})
+
+	c.reveal_room(true)
+	var second := c.top_unsold_interest_id()
+	h.check("the already-sold interest is not what gets named", second != first)
+	h.eq("it names whatever ranks next instead", c.known_top_category,
+		_interests().by_id(second).category.id)
+	h.eq("and records ITS real rank, not 1", c.known_ranks[second],
+		c.ranks[second])
+	h.check("the rank recorded is not the hardcoded 1 the sold interest had",
+		int(c.ranks[second]) != 1)
+
 func test_family_first_never_gets_harder() -> void:
 	h.eq("their Line does not move on a sale", _arch(&"family").line_per_sale, 0)
 

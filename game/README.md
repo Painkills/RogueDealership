@@ -66,7 +66,7 @@ An `Effect` is a Resource with `apply(ctx)` and `describe()`. A card holds an
 | `ChangeLine` | moves how high Appeal must climb |
 | `ChangePatience` | the customer you are with |
 | `ChangePatienceFloor` | everyone *else* on the floor |
-| `RevealRoom` | their Line and the category of their number one |
+| `RevealRoom` | their Line and the category of their top unsold interest |
 | `DiscardHand` | takes cards out of your hand |
 | `MarginBonus` | lands on the sale being settled, not the offer |
 | `ScaleBySales` | combinator: applies the wrapped effect once per product taken |

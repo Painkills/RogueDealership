@@ -11,5 +11,5 @@ func apply(ctx: EffectContext) -> void:
 
 func describe() -> String:
 	if exact:
-		return "reveals their Line and names their number one"
-	return "reveals their Line and the category of their number one"
+		return "reveals their Line and names their top unsold interest"
+	return "reveals their Line and the category of their top unsold interest"
