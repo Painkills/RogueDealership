@@ -70,6 +70,13 @@ func _bind() -> void:
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
 
+	# Explicit, not left to whatever the .tscn's own serialized size resolves
+	# to: FrontViewport hits exactly this gap on the Web export (see the
+	# UPDATE_ALWAYS comment above) and only setting size in code, not just in
+	# the scene file, reliably avoids it - confirmed live as a zero-size
+	# framebuffer (GL_INVALID_FRAMEBUFFER_OPERATION) the one time this was
+	# skipped here.
+	_bubble_viewport.size = SpeechBubble.CANVAS_SIZE
 	_bubble_viewport.disable_3d = true
 	_bubble_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	# Everywhere the bubble's own 2D scene draws nothing (outside the rounded

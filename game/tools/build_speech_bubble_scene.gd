@@ -11,21 +11,19 @@ extends SceneTree
 ## "appear ABOVE the customer cards" needs geometry the card's own texture
 ## cannot provide.
 
-const W := 480
-const H := 190
-
 func _init() -> void:
+	var canvas: Vector2 = Vector2(SpeechBubble.CANVAS_SIZE)
 	var root := Control.new()
 	root.name = "SpeechBubble"
 	root.set_script(load("res://scripts/view/speech_bubble.gd"))
-	root.custom_minimum_size = Vector2(W, H)
-	root.size = Vector2(W, H)
+	root.custom_minimum_size = canvas
+	root.size = canvas
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var panel := PanelContainer.new()
 	panel.name = "Panel"
 	panel.position = Vector2.ZERO
-	panel.size = Vector2(W, H - SpeechBubble.TAIL_HEIGHT)
+	panel.size = Vector2(canvas.x, canvas.y - SpeechBubble.TAIL_HEIGHT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
 	style.bg_color = Palette.color(&"panel_hi")

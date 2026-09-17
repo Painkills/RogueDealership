@@ -11,6 +11,13 @@ class_name SpeechBubble extends Control
 ## so floating clear of the card at all needed a second, smaller mesh of its
 ## own rather than a row on the card's face.
 const SHOW_SECONDS := 6.0
+## The single source of truth for the bubble's own SubViewport size -
+## build_speech_bubble_scene.gd bakes it into the .tscn it authors, and
+## customer_card_3d.gd sets it again explicitly in code, the same belt and
+## suspenders FrontViewport already uses (see its own UPDATE_ALWAYS comment):
+## a SubViewport whose size is only ever set from a serialized scene file has
+## come up zero-sized on the Web export before.
+const CANVAS_SIZE := Vector2i(480, 190)
 ## The tail: a small triangle under the panel, pointing down at whoever said
 ## it - one draw call, not a shape worth a whole extra node.
 const TAIL_WIDTH := 32.0
