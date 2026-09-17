@@ -31,3 +31,7 @@ theme/default_font_size=26
 [rendering]
 
 anti_aliasing/quality/msaa_3d=2
+; Web export only supports the Compatibility renderer - Forward+ (this
+; project's default, from config/features above) isn't available there at
+; all. Scoped to the "web" feature tag so desktop keeps Forward+ untouched.
+renderer/rendering_method.web="gl_compatibility"

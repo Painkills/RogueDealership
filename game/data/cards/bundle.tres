@@ -7,21 +7,19 @@
 
 [sub_resource type="Resource" id="Resource_6ilyx"]
 script = ExtResource("2_rd8rl")
-amount = 4
+amount = 3
 
 [sub_resource type="Resource" id="Resource_dq0bg"]
 script = ExtResource("3_xf33c")
 inner = SubResource("Resource_6ilyx")
-amount = 3
 
 [sub_resource type="Resource" id="Resource_o4eqb"]
 script = ExtResource("2_rd8rl")
-amount = 6
+amount = 5
 
 [sub_resource type="Resource" id="Resource_21l6v"]
 script = ExtResource("3_xf33c")
 inner = SubResource("Resource_o4eqb")
-amount = 5
 
 [resource]
 script = ExtResource("4_p12a6")

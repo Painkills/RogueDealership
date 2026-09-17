@@ -12,4 +12,4 @@ func apply(ctx: EffectContext) -> void:
 		inner.apply(ctx)
 
 func describe() -> String:
-	return "%s plus an additional %s per product taken" % (inner.describe() if inner else "?")
+	return "%s plus an additional %s per product taken" % [inner.describe() if inner else "?", inner.describe() if inner else "?"]

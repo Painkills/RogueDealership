@@ -16,17 +16,18 @@
 script = ExtResource("3_kyjyw")
 demand = ExtResource("11_dmd")
 
-[sub_resource type="Resource" id="Resource_p84xo"]
+[sub_resource type="Resource" id="Resource_2de4h"]
 script = ExtResource("4_qdd1g")
+rank_worse_than = 3
 metadata/_custom_type_script = "uid://cmdm111esqe20"
 
 [sub_resource type="Resource" id="Resource_xslj5"]
 script = ExtResource("1_bckoi")
 id = &"shops_you"
 display_name = "Tells you what the other guy quoted"
-tell = "Concede within 2 ticks or he sweeps the product"
+tell = "Products below his top 3 will require a concession."
 dialogue = "\"I had another dealer at less than that.\""
-trigger = SubResource("Resource_p84xo")
+trigger = SubResource("Resource_2de4h")
 effects = Array[ExtResource("2_p84xo")]([SubResource("Resource_vwsqn")])
 
 [resource]
