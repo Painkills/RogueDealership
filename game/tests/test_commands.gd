@@ -38,6 +38,12 @@ func _at(s: Shift, chair: int = 0) -> Customer:
 	s.last_customer = s.chairs[chair]
 	return s.chairs[chair]
 
+## The same formula Customer.appeal_for() uses, restated independently
+## (rather than called into) so a test using it is still real coverage -
+## appeal_step is a live balance knob (shift_config.tres).
+func _appeal_for_rank(s: Shift, rank: int) -> int:
+	return s.cfg.appeal_step * (9 - rank)
+
 # ----------------------------------------------------------- place and offer
 func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	var s := _shift([&"easygoing"])
@@ -47,7 +53,7 @@ func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	var r := s.place(0)
 	h.check("placing is legal at any rank", r.ok)
 	h.eq("it costs a tick", s.tick, 1)
-	h.eq("appeal opens at the rank value", c.offer.appeal, 30)
+	h.eq("appeal opens at the rank value", c.offer.appeal, _appeal_for_rank(s, 3))
 	h.check("a band came back", r.data.has("band"))
 	h.check("but not the rank", not c.known_ranks.has(&"reliability"))
 	h.check("and not the Line", not c.known_line)
@@ -67,7 +73,7 @@ func test_offering_is_free_and_teaches_the_rank_but_never_the_line() -> void:
 	h.check("and marks the offer as asked", c.offer.revealed)
 	h.check("but never the Line", not c.known_line)
 	h.eq("though the model still knows the true shortfall",
-		int(r.data["short"]), 69)
+		int(r.data["short"]), 99 - _appeal_for_rank(s, 3))
 
 func test_no_amount_of_offering_ever_teaches_the_line() -> void:
 	## The fog has to survive repetition or it is a speed bump, not a rule:
@@ -123,7 +129,8 @@ func test_a_short_offer_costs_one_patience_and_nothing_else() -> void:
 func test_accept_fires_exactly_at_the_line_not_above() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
-	c.line = 30
+	var appeal := _appeal_for_rank(s, 3)
+	c.line = appeal
 	_rank(c, [&"status", &"power", &"reliability"])
 	_hand(s, [&"vsc"])
 	s.place(0)
@@ -132,7 +139,7 @@ func test_accept_fires_exactly_at_the_line_not_above() -> void:
 
 	var s2 := _shift([&"easygoing"])
 	var c2 := _at(s2)
-	c2.line = 31
+	c2.line = appeal + 1
 	_rank(c2, [&"status", &"power", &"reliability"])
 	_hand(s2, [&"vsc"])
 	s2.place(0)
@@ -157,29 +164,43 @@ func test_support_cards_alone_never_close_a_sale() -> void:
 	h.eq("until you ask", c.unsigned.size(), 1)
 
 func test_pad_works_on_a_product_that_would_have_closed_cold() -> void:
-	## The whole reason placing and offering are separate moves.
+	## The whole reason placing and offering are separate moves. Pad's own
+	## effect amounts (appeal down, margin up) are a live balance knob - read
+	## them off the card def instead of assuming today's -5/+400.
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
-	c.line = 35
-	_rank(c, [&"reliability"])              # appeal 40, clears by 5
+	var pad := s.card_pool.by_id(&"pad") as SupportCardDef
+	var pad_appeal := 0
+	var pad_margin := 0
+	for e in pad.effects:
+		if e is ChangeAppeal:
+			pad_appeal = e.amount
+		elif e is ChangeMargin:
+			pad_margin = e.amount
+	var rank1_appeal := _appeal_for_rank(s, 1)
+	c.line = rank1_appeal + pad_appeal   # clears only once padded down to it
+	_rank(c, [&"reliability"])
 	_hand(s, [&"vsc", &"pad"])
 	s.place(0)
 	s.play_card(0)
-	h.eq("padded back to the bar", c.offer.appeal, 35)
+	h.eq("padded back to the bar", c.offer.appeal, c.line)
 	s.offer()
-	h.eq("sold at a padded price", c.unsigned_margin(), 2000)
+	var vsc := s.card_pool.by_id(&"vsc")
+	h.eq("sold at a padded price", c.unsigned_margin(), vsc.margin + pad_margin)
 
 # ------------------------------------------------------------------- economy
-func test_the_line_ramps_three_per_sale() -> void:
+func test_the_line_ramps_by_line_per_sale_on_every_sale() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
-	c.line = 20
+	var step: int = c.archetype.line_per_sale
+	c.line = 20                             # low enough both sales clear regardless of step
+	var line0: int = c.line
 	_rank(c, [&"reliability", &"equity"])
 	_hand(s, [&"vsc", &"gap"])
 	s.place(0); s.offer()
-	h.eq("Line ramps +3", c.line, 23)
+	h.eq("Line ramps by line_per_sale", c.line, line0 + step)
 	s.place(0); s.offer()
-	h.eq("and again", c.line, 26)
+	h.eq("and again", c.line, line0 + step * 2)
 
 func test_a_sale_refunds_patience_capped_at_max() -> void:
 	var s := _shift([&"easygoing"])
@@ -189,22 +210,24 @@ func test_a_sale_refunds_patience_capped_at_max() -> void:
 	_rank(c, [&"reliability"])
 	_hand(s, [&"vsc"])
 	s.place(0)          # -1 tick
-	s.offer()           # +3 refund
-	h.eq("place burned, sale refunded", c.patience, 5 - 1 + 3)
+	s.offer()           # +cfg.patience_per_sale refund
+	h.eq("place burned, sale refunded", c.patience, 5 - 1 + s.cfg.patience_per_sale)
 
 func test_margin_can_be_conceded_below_zero_and_banks_as_is() -> void:
-	## The arithmetic is the deterrent, never a rule.
+	## The arithmetic is the deterrent, never a rule - three concessions on a
+	## cheap product should be more than enough to push it underwater whatever
+	## today's exact discount/price tuning is.
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
 	c.line = 99
-	_rank(c, [&"status", &"power", &"convenience"])   # concierge $600
+	_rank(c, [&"status", &"power", &"convenience"])   # concierge, the cheapest product
 	_hand(s, [&"concierge", &"discount", &"discount", &"discount"])
 	s.place(0)
 	s.play_card(0); s.play_card(0); s.play_card(0)
-	h.eq("margin went underwater", c.offer.margin, 600 - 900)
+	h.check("margin went underwater", c.offer.margin < 0)
 	c.line = 0
 	s.offer()
-	h.eq("and a loss banks as a loss", c.unsigned_margin(), -300)
+	h.check("and a loss banks as a loss", c.unsigned_margin() < 0)
 
 # -------------------------------------------------------------------- moving
 func test_walking_the_floor_is_free() -> void:
@@ -251,12 +274,13 @@ func test_close_is_the_only_thing_that_banks() -> void:
 	c.line = 20
 	_rank(c, [&"reliability"])
 	_hand(s, [&"vsc"])
+	var vsc_margin: int = s.card_pool.by_id(&"vsc").margin
 	s.place(0); s.offer()
 	h.eq("agreeing banks nothing", s.margin_banked, 0)
-	h.eq("it sits unsigned", c.unsigned_margin(), 1600)
+	h.eq("it sits unsigned", c.unsigned_margin(), vsc_margin)
 	var t := s.tick
 	h.check("close is allowed", s.close().ok)
-	h.eq("close banks it", s.margin_banked, 1600)
+	h.eq("close banks it", s.margin_banked, vsc_margin)
 	h.eq("closing is free", s.tick, t)
 	h.eq("they are gone", c.state, "signed")
 	h.eq("the chair is empty", s.chairs[0], null)
@@ -277,13 +301,14 @@ func test_walking_forfeits_the_entire_unsigned_deal() -> void:
 	_hand(s, [&"vsc", &"gap"])
 	s.place(0); s.offer()
 	s.place(0); s.offer()
-	h.eq("$3,000 agreed", c.unsigned_margin(), 3000)
+	var agreed: int = c.unsigned_margin()
+	h.check("both sales agreed", agreed > 0)
 	c.patience = 1
 	_hand(s, [&"explain"])
 	s.dig(0)
 	h.eq("gone", c.state, "walked")
 	h.eq("nothing banked", s.margin_banked, 0)
-	h.eq("counted as lost", s.lost_to_walks, 3000)
+	h.eq("counted as lost", s.lost_to_walks, agreed)
 
 # ----------------------------------------------------------------- refusals
 func test_only_one_offer_on_the_table() -> void:
@@ -355,7 +380,8 @@ func test_the_karen_will_not_sign_without_what_she_came_for() -> void:
 	_hand(s, [&"vsc"])
 	s.place(0); s.offer()               # Vehicle
 	h.check("now she signs", s.close().ok)
-	h.eq("banking both", s.margin_banked, 1400 + 1600)
+	var expected: int = s.card_pool.by_id(&"gap").margin + s.card_pool.by_id(&"vsc").margin
+	h.eq("banking both", s.margin_banked, expected)
 
 func test_the_karen_wont_settle_for_her_own_least_favorite_in_the_category() -> void:
 	## "give them what they actually came in for" - her own pattern text. The
@@ -376,7 +402,8 @@ func test_the_karen_wont_settle_for_her_own_least_favorite_in_the_category() -> 
 	_hand(s, [&"vsc"])                 # reliability - her actual number one
 	s.place(0); s.offer()
 	h.check("her real number one finally does", s.close().ok)
-	h.eq("banking both sales", s.margin_banked, 1100 + 1600)
+	var expected: int = s.card_pool.by_id(&"perf").margin + s.card_pool.by_id(&"vsc").margin
+	h.eq("banking both sales", s.margin_banked, expected)
 
 func test_the_karen_still_walks_when_her_patience_runs_out() -> void:
 	var s := _shift([&"karen", &"easygoing"])
@@ -386,9 +413,10 @@ func test_the_karen_still_walks_when_her_patience_runs_out() -> void:
 	_rank(c, [&"equity"])
 	_hand(s, [&"gap"])
 	s.place(0); s.offer()
-	h.eq("she agreed to something", c.unsigned_margin(), 1400)
+	var gap_margin: int = s.card_pool.by_id(&"gap").margin
+	h.eq("she agreed to something", c.unsigned_margin(), gap_margin)
 	c.patience = 1
 	_hand(s, [&"explain"])
 	s.dig(0)
 	h.eq("the lock does not make her immortal", c.state, "walked")
-	h.eq("and it went with her", s.lost_to_walks, 1400)
+	h.eq("and it went with her", s.lost_to_walks, gap_margin)
