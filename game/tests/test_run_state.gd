@@ -29,13 +29,16 @@ func test_a_run_starts_on_shift_one_with_a_starter_deck_and_no_money() -> void:
 		Deck.build_starting(load("res://data/card_pool.tres")).cards.size())
 	h.check("which is not over", not r.is_over())
 
-func test_the_quota_climbs_a_fixed_percentage() -> void:
+func test_the_quota_climbs_by_the_configured_growth_rate() -> void:
+	## Restates run_state.gd's own quota_for() formula independently (the
+	## same discipline _delta() above follows) instead of pinning today's
+	## five dollar amounts, which move on every quota/quota_growth retune.
 	var r := _run()
-	h.eq("shift 1 is the config quota", r.quota_for(1), 3600)
-	h.eq("shift 2", r.quota_for(2), 4140)
-	h.eq("shift 3", r.quota_for(3), 4761)
-	h.eq("shift 4", r.quota_for(4), 5475)
-	h.eq("shift 5", r.quota_for(5), 6296)
+	h.eq("shift 1 is the config quota", r.quota_for(1), r.cfg.quota)
+	for n in range(2, 6):
+		var expected := roundi(float(r.cfg.quota) * pow(1.0 + r.cfg.quota_growth, n - 1))
+		h.eq("shift %d compounds from cfg.quota by cfg.quota_growth" % n,
+			r.quota_for(n), expected)
 
 func test_only_what_you_bank_over_quota_becomes_a_bonus() -> void:
 	## The quota is the house's cut and comes out first. What survives it is the
@@ -107,7 +110,10 @@ func test_repeated_total_failure_ends_the_run_before_it_would_naturally_end() ->
 		"standing_delta": _delta(0, r.quota_for(1), r.cfg)}
 	r.finish_shift(wiped_out)
 	h.check("one wipeout survives", not r.is_over())
-	h.eq("but costs half of standing", r.standing, 50)
+	## A total miss (0 of quota) costs the FULL standing_damage_scale - the
+	## short fraction is 1.0, so _delta() above reduces to exactly that.
+	h.eq("costs the full standing_damage_scale, missing by 100%",
+		r.standing, r.cfg.standing_start - roundi(r.cfg.standing_damage_scale))
 	r.finish_shift(wiped_out)
 	h.check("a second wipeout ends the run", r.is_over())
 	h.check("strictly before shift 5", r.shift_number <= r.cfg.shifts_in_run)
@@ -134,7 +140,7 @@ func test_standing_clamps_at_both_ends() -> void:
 	var r := _run()
 	r.finish_shift({"margin_banked": 0, "quota": 1000, "made_quota": false,
 		"standing_delta": -30})
-	h.eq("a partial wipeout", r.standing, 70)
+	h.eq("a partial wipeout", r.standing, r.cfg.standing_start - 30)
 	r.finish_shift({"margin_banked": 0, "quota": 1000, "made_quota": false,
 		"standing_delta": -9999})
 	h.eq("a huge hit clamps at 0, not negative", r.standing, 0)
