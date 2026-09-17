@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="Demand" format=3]
+[gd_resource type="Resource" script_class="Demand" format=3 uid="uid://cr11fsu766jmk"]
 
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_patience_floor.gd" id="2_pfl"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_standing.gd" id="3_std"]
-[ext_resource type="Script" path="res://scripts/model/demands/play_concession.gd" id="4_rsv"]
-[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="5_dmd"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" uid="uid://c56u8ssbjh6yb" path="res://scripts/model/effects/change_patience_floor.gd" id="2_pfl"]
+[ext_resource type="Script" uid="uid://b41b5fbmrgc8c" path="res://scripts/model/effects/change_standing.gd" id="3_std"]
+[ext_resource type="Script" uid="uid://doyh4opoqkcrw" path="res://scripts/model/demands/play_concession.gd" id="4_rsv"]
+[ext_resource type="Script" uid="uid://cohmuwwcvcdsa" path="res://scripts/model/data/demand.gd" id="5_dmd"]
 
 [sub_resource type="Resource" id="Sub_floor"]
 script = ExtResource("2_pfl")

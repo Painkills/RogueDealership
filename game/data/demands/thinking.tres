@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="Demand" format=3]
+[gd_resource type="Resource" script_class="Demand" format=3 uid="uid://de03rn2bd0d14"]
 
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
-[ext_resource type="Script" path="res://scripts/model/demands/leave_them_alone.gd" id="3_rsv"]
-[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="4_dmd"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
+[ext_resource type="Script" uid="uid://vkeiiie4jtbm" path="res://scripts/model/demands/leave_them_alone.gd" id="3_rsv"]
+[ext_resource type="Script" uid="uid://cohmuwwcvcdsa" path="res://scripts/model/data/demand.gd" id="4_dmd"]
 
 [sub_resource type="Resource" id="Sub_push"]
 script = ExtResource("2_pat")

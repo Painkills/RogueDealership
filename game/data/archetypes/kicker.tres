@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3 uid="uid://dm5nvbm30td1p"]
 
-[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_apes3"]
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_4sgf7"]
-[ext_resource type="Script" path="res://scripts/model/effects/raise_demand.gd" id="3_4i3ea"]
-[ext_resource type="Resource" path="res://data/demands/restless.tres" id="7_dmd"]
-[ext_resource type="Script" path="res://scripts/model/triggers/every.gd" id="4_gatf8"]
-[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_bg230"]
-[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="6_r7mcl"]
+[ext_resource type="Script" uid="uid://cp8pd650f65g2" path="res://scripts/model/data/customer_action.gd" id="1_apes3"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="2_4sgf7"]
+[ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="3_4i3ea"]
+[ext_resource type="Script" uid="uid://b766306iy15gl" path="res://scripts/model/triggers/every.gd" id="4_gatf8"]
+[ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="5_bg230"]
+[ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="6_r7mcl"]
+[ext_resource type="Resource" uid="uid://c717xwvmbkbj7" path="res://data/demands/restless.tres" id="7_dmd"]
 
 [sub_resource type="Resource" id="Resource_i7tpi"]
 script = ExtResource("3_4i3ea")

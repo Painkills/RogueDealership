@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="Demand" format=3]
+[gd_resource type="Resource" script_class="Demand" format=3 uid="uid://c717xwvmbkbj7"]
 
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
-[ext_resource type="Script" path="res://scripts/model/effects/walk_out.gd" id="2_out"]
-[ext_resource type="Script" path="res://scripts/model/demands/make_an_offer.gd" id="3_rsv"]
-[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="4_dmd"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" uid="uid://cb46cooytdrvs" path="res://scripts/model/effects/walk_out.gd" id="2_out"]
+[ext_resource type="Script" uid="uid://cncofm27n06mo" path="res://scripts/model/demands/make_an_offer.gd" id="3_rsv"]
+[ext_resource type="Script" uid="uid://cohmuwwcvcdsa" path="res://scripts/model/data/demand.gd" id="4_dmd"]
 
 [sub_resource type="Resource" id="Sub_out"]
 script = ExtResource("2_out")
