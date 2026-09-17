@@ -104,6 +104,15 @@ func _bind() -> void:
 	# which geometric orientation lands the correct face toward the camera.
 	_bubble_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_bubble_material.uv1_scale = Vector3(-1.0, 1.0, 1.0)
+	# Confirmed live: text on, mirroring fixed, positioned in frame - but the
+	# whole panel rendered muddy and dark, barely legible, because a default
+	# StandardMaterial3D is LIT - scene lighting was multiplying down colours
+	# that were only ever meant to be read exactly as this texture authored
+	# them, the same as every other UI-on-a-mesh surface in this project.
+	# CardFrontMesh gets away without this because its fixed orientation
+	# happens to catch the key light; a billboard's normal always points
+	# straight at the camera, wherever that puts it relative to the light.
+	_bubble_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var bubble_mesh: MeshInstance3D = $BubbleMesh
 	bubble_mesh.set_surface_override_material(0, _bubble_material)
 	# Frustum culling runs against the mesh's PRE-billboard bounding box - the
