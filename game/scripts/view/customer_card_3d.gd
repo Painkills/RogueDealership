@@ -93,7 +93,15 @@ func _bind() -> void:
 	# the table, and a spherical billboard would tip the bubble back toward
 	# the camera instead of just turning it to face forward.
 	_bubble_material.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
-	$BubbleMesh.set_surface_override_material(0, _bubble_material)
+	var bubble_mesh: MeshInstance3D = $BubbleMesh
+	bubble_mesh.set_surface_override_material(0, _bubble_material)
+	# Frustum culling runs against the mesh's PRE-billboard bounding box - the
+	# vertex shader only reorients to face the camera after that test already
+	# ran. A thin, pre-rotated plane's own box is an easy false negative there
+	# (confirmed live: fully wired, zero render errors, still never visible),
+	# so this trades a precise box for one generous enough to never be the
+	# reason the bubble fails to draw.
+	bubble_mesh.custom_aabb = AABB(Vector3(-2.5, -2.5, -2.5), Vector3(5.0, 5.0, 5.0))
 
 ## `c == null` is an empty chair. The card stays - a seat should not blink out of
 ## existence mid-shift - it just says nobody is there.
