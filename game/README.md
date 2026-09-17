@@ -114,6 +114,35 @@ that only matter in Godot:
 
 ---
 
+## Writing tests that survive a balance pass
+
+The suite used to break on nearly every retune of a card price, an
+archetype's `line`, or a demand's fuse length - not because the balance
+change was wrong, but because a test had pinned the *old* tuned number as
+if it were a correctness invariant. A test-suite-triage pass cut those
+down to what's actually game-breaking (see git history around that work
+for the full before/after). The rules it left behind, for anything new:
+
+1. **Read a tunable value from the same config/resource the production
+   code reads** (`cfg.appeal_step`, `pool.by_id(id).margin`) — never
+   duplicate it as a literal.
+2. **When the sign/direction is the real invariant and the magnitude is
+   the balance knob, assert direction only** (`patience > before`, not
+   `patience == before + 5`).
+3. **When a cadence or threshold is tunable, drive the test in a bounded
+   loop keyed on the resulting state**, not a fixed action count (`while
+   c.demand == null and guard < 30: s.dig(0)`, not `for _i in range(3)`).
+4. **When a rare case needs a specific RNG seed, search for one at test
+   time in a bounded loop** — never hardcode a magic seed number. This
+   project chased one by hand across three balance passes (seed 8 → 15 →
+   17) before it was worth fixing properly.
+5. **Don't assert "exactly N archetypes/cards do X" for a design opinion
+   about the whole roster** — that's a constraint on how the game is
+   allowed to be balanced, not a bug guard. Assert the mechanic works for
+   whichever ones currently do, or drop the check entirely.
+
+---
+
 ## Notes for whoever picks this up next
 
 - **`--import` after adding any `class_name` script.** Without it the headless

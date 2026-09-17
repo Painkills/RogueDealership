@@ -1110,10 +1110,19 @@ func _check_the_detail_card_is_not_overflowing(det) -> void:
 	var who = _controller._shift.chairs[_at()]
 	var was_arch = who.archetype
 	var was_demands_category = who.demands_category
+	# demands_category only ever holds a real CATEGORY id in play (vehicle/
+	# deal/person) - find whichever one capitalizes to the longest string
+	# instead of hardcoding a guess, so a renamed or added category can't
+	# silently stop being the worst case this checks against.
+	var longest_category_id: StringName = &""
+	for cat in (load("res://data/interests/interest_pool.tres") as InterestPool).categories:
+		if str(cat.id).length() > str(longest_category_id).length():
+			longest_category_id = cat.id
+
 	var worst := ""
 	for arch in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
 		who.archetype = arch
-		who.demands_category = &"reliability"        # the longest category name there is
+		who.demands_category = longest_category_id
 		var text := CustomerCard3D.behaviour_text(who)
 		if text.length() > worst.length():
 			worst = text
@@ -1678,13 +1687,13 @@ func _check_a_fatal_shift_shows_its_own_report() -> void:
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), randi())
-	# A deliberately low standing_before, chosen so this fresh shift's own total
-	# wipeout (margin_banked stays 0, the default damage scale costs half a full
-	# meter) crosses zero. tick == tick_budget is the cheap, direct way to reach
-	# is_over() without playing the shift out - Shift.is_over() is exactly that
-	# comparison and nothing else.
-	const LOW_STANDING := 10
-	_controller.setup(fatal_shift, LOW_STANDING)
+	# standing_before = 0 guarantees standing_after clamps to <= 0 regardless
+	# of standing_damage_scale's own tuning: a fresh shift banks nothing, so
+	# its quota-delta can never be positive, and 0 plus a non-positive number
+	# is never above 0. tick == tick_budget is the cheap, direct way to reach
+	# is_over() without playing the shift out - Shift.is_over() is exactly
+	# that comparison and nothing else.
+	_controller.setup(fatal_shift, 0)
 	fatal_shift.tick = fatal_shift.tick_budget
 	_controller._apply(Result.new(true, "", "test"))
 	_check("a fatal shift's report overlay comes up", _controller._report_overlay.visible)
