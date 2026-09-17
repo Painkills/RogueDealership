@@ -120,6 +120,55 @@ func _init() -> void:
 	col.add_child(status_label)
 	status_label.owner = root
 
+	# What they just SAID, not just what they are asking for - "all customer
+	# actions need to show on the screen, not just in the log". Covers the
+	# name row and stops right where the archetype row starts: PAD (26) down
+	# to NameLabel's own 116 px plus the column's 12 px separation, all in
+	# ROOT coordinates since this sits outside Margin. Added last, so it
+	# draws over Name/Archetype rather than beside them - a customer saying
+	# something is the most urgent thing on their own card, more than their
+	# name is once you already know who they are.
+	var bubble := Control.new()
+	bubble.name = "SpeechBubble"
+	bubble.set_script(load("res://scripts/view/speech_bubble.gd"))
+	bubble.position = Vector2.ZERO
+	bubble.size = Vector2(W, PAD + 116 + 12)
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bubble.visible = false
+	root.add_child(bubble)
+	bubble.owner = root
+
+	var bubble_panel := PanelContainer.new()
+	bubble_panel.name = "Panel"
+	bubble_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bubble_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bubble_style := StyleBoxFlat.new()
+	bubble_style.bg_color = Palette.color(&"panel_hi")
+	bubble_style.border_width_bottom = 3
+	bubble_style.border_color = Palette.color(&"action")
+	bubble_style.content_margin_left = PAD
+	bubble_style.content_margin_right = PAD
+	bubble_style.content_margin_top = 18
+	bubble_style.content_margin_bottom = 18
+	bubble_panel.add_theme_stylebox_override("panel", bubble_style)
+	bubble.add_child(bubble_panel)
+	bubble_panel.owner = root
+
+	var bubble_label := Label.new()
+	bubble_label.name = "Label"
+	bubble_label.add_theme_font_size_override("font_size", 32)
+	bubble_label.add_theme_color_override("font_color", Palette.color(&"text"))
+	bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	bubble_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bubble_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bubble_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The longest dialogue line in data/demands/*.tres, so this scene shows
+	# its own worst case in the editor - the same discipline every other
+	# label on this card already follows.
+	bubble_label.text = "\"The place on Dundas does this for less.\""
+	bubble_panel.add_child(bubble_label)
+	bubble_label.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/cards/customer_front_2d.tscn")

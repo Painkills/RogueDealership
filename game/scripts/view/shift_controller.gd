@@ -641,7 +641,7 @@ func _say_on_the_card(key: String, text: String) -> void:
 	var chair: int = Shift.CHAIR_KEYS.find(key)
 	if chair < 0 or chair >= _customer_cards.size():
 		return
-	_customer_cards[chair].say(text)
+	_customer_cards[chair].say(text, _shift.tick)
 
 func _show_report() -> void:
 	_report_overlay.visible = true

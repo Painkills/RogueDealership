@@ -1198,11 +1198,13 @@ func _row_height(box: Control, width: float) -> float:
 ## this check count for nothing on most runs.
 ##
 ## "All customer actions need to show on the screen, not just in the log...
-## a little speech bubble coming out of the card" - so the same injected line
-## has to reach chair A's own CustomerCard3D too, not only the log beside it.
+## have it cover up the person's name and right up to where the archetype
+## name starts" - so the same injected line has to reach chair A's own
+## CustomerCard3D too, not only the log beside it, positioned against the
+## card's own Name/Archetype rows rather than an assumed pixel number.
 func _check_what_a_customer_says_reaches_the_log() -> void:
 	var card = _controller._customer_cards[0]
-	var bubble: Control = card.get_node(^"BubbleViewport/SpeechBubble")
+	var bubble: Control = card.get_node(^"FrontViewport/CustomerFront/SpeechBubble")
 	_check("the bubble starts out hidden", not bubble.visible)
 	_controller._shift.action_log.append({
 		"key": "A",
@@ -1212,6 +1214,7 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 		"descriptions": ["MANAGER? - 3 ticks to answer"],
 		"floor_wide": false,
 	})
+	var tick_shown: int = _controller._shift.tick
 	_controller._drain_log()
 	var text: String = _controller._event_log.get_parsed_text()
 	_check("the action itself is logged", text.contains("Asks for the manager"))
@@ -1221,30 +1224,48 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 	var label := bubble.get_node(^"Panel/Label") as Label
 	_check("carrying the same words as the log (%s)" % label.text,
 		label.text == "\"Is there someone else I can speak to?\"")
-	var timer := bubble.get_node(^"HideTimer") as Timer
-	_check("and it is on a timer to get out of the way again",
-		not timer.is_stopped())
-	_check("shown for a real stretch, not a blink (%.1fs)" % SpeechBubble.SHOW_SECONDS,
-		SpeechBubble.SHOW_SECONDS >= 5.0)
 
-	# "make the speech bubbles appear ABOVE the customer cards" - checked by
-	# actually projecting both anchor points through the live seat camera,
-	# not by comparing local Y values that billboard rendering can silently
-	# reinterpret.
-	var cam: Camera3D = card.get_viewport().get_camera_3d()
-	_check("a camera is active to project the bubble against", cam != null)
-	if cam != null:
-		var card_top_world: Vector3 = card.global_transform * Vector3(0.0, 1.75, 0.0)
-		var bubble_mesh := card.get_node(^"BubbleMesh") as MeshInstance3D
-		var bubble_world: Vector3 = bubble_mesh.global_transform.origin
-		var card_top_screen: Vector2 = cam.unproject_position(card_top_world)
-		var bubble_screen: Vector2 = cam.unproject_position(bubble_world)
-		_check("the bubble sits above the card's own top edge on screen (bubble y=%.1f, card top y=%.1f)"
-			% [bubble_screen.y, card_top_screen.y], bubble_screen.y < card_top_screen.y)
+	# "have it cover up the person's name and right up to where the archetype
+	# name starts". Name checked against its OWN live rect - a VBoxContainer's
+	# first child sits at the container's own origin regardless of whether a
+	# deferred resort has flushed yet, so this is safe to read synchronously
+	# here, unlike a later sibling's (ArchetypeLabel's Y depends on NameLabel's
+	# resolved height, which a resort that has not run yet would still report
+	# as 0 - a real gap this project has hit before, see build_shop_scene.gd's
+	# own DoneButton comment). The archetype boundary is checked the same way
+	# test_run_state.gd's _delta() checks standing_delta: an independent
+	# restatement of build_customer_front_scene.gd's own PAD+116+12 math, not
+	# a call into it, so the two can only agree by actually matching.
+	var col: Node = card.get_node(^"FrontViewport/CustomerFront/Margin/Column")
+	var name_label := col.get_node(^"NameLabel") as Control
+	var bubble_rect := bubble.get_global_rect()
+	var name_rect := name_label.get_global_rect()
+	_check("the bubble covers the name row (bubble %s, name %s)"
+		% [bubble_rect, name_rect], bubble_rect.encloses(name_rect))
+	const PAD := 26
+	const NAME_HEIGHT := 116
+	const COLUMN_SEPARATION := 12
+	var expected_height := float(PAD + NAME_HEIGHT + COLUMN_SEPARATION)
+	_check("and stops right where the archetype row is meant to start (%.1f of %.1f px)"
+		% [bubble.size.y, expected_height], is_equal_approx(bubble.size.y, expected_height))
+
+	# "have it be active for 2 ticks instead" - timed against the model's own
+	# clock, not a wall-clock Timer. The literal 2 here, not
+	# SpeechBubble.HIDE_AFTER_TICKS - testing the constant against itself
+	# would pass no matter what value it held.
+	_check("HIDE_AFTER_TICKS is the 2 that was actually asked for",
+		SpeechBubble.HIDE_AFTER_TICKS == 2)
+	bubble.update_visibility(tick_shown)
+	_check("still showing on the tick it was said", bubble.visible)
+	bubble.update_visibility(tick_shown + 1)
+	_check("and the tick right after", bubble.visible)
+	bubble.update_visibility(tick_shown + 2)
+	_check("but gone 2 ticks later", not bubble.visible)
 
 	# setup() itself has to clear a stale bubble the instant the customer
 	# under it changes - whoever signs or walks must not leave their last
 	# words floating over whoever sits down next.
+	bubble.say("re-armed to test the other clear path", tick_shown)
 	card.setup(null)
 	_check("and a customer change clears whatever they were just saying too",
 		not bubble.visible)

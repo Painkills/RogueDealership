@@ -1,12 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="PackedScene" uid="uid://dxpc2iac0hjpw" path="res://addons/card_3d/scenes/card_3d.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/view/customer_card_3d.gd" id="2_cust"]
 [ext_resource type="PackedScene" path="res://scenes/cards/customer_front_2d.tscn" id="3_front"]
-[ext_resource type="PackedScene" path="res://scenes/cards/speech_bubble_2d.tscn" id="4_bubble"]
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_bubble"]
-size = Vector2(1.95, 0.77)
 
 [node name="CustomerCard3D" instance=ExtResource("1_base")]
 script = ExtResource("2_cust")
@@ -17,15 +13,3 @@ size = Vector2i(500, 700)
 render_target_update_mode = 4
 
 [node name="CustomerFront" parent="FrontViewport" instance=ExtResource("3_front")]
-
-[node name="BubbleViewport" type="SubViewport" parent="."]
-disable_3d = true
-transparent_bg = true
-size = Vector2i(480, 190)
-render_target_update_mode = 4
-
-[node name="SpeechBubble" parent="BubbleViewport" instance=ExtResource("4_bubble")]
-
-[node name="BubbleMesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 2.15, 0.05)
-mesh = SubResource("PlaneMesh_bubble")

@@ -17,13 +17,8 @@ var customer
 var chair: int = -1
 
 var _material := StandardMaterial3D.new()
-## Its own material, separate from _material above: the card face is opaque
-## and never needs transparency or billboarding, and giving the bubble its
-## own StandardMaterial3D is what lets it be both - see _bind() below.
-var _bubble_material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
-var _bubble_viewport: SubViewport
 var _name: Label
 var _archetype: Label
 var _patience_bar: ProgressBar
@@ -59,8 +54,7 @@ func _bind() -> void:
 	_demand = col.get_node(^"DemandLabel")
 	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
-	_bubble_viewport = $BubbleViewport
-	_bubble = $BubbleViewport/SpeechBubble
+	_bubble = $FrontViewport/CustomerFront/SpeechBubble
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
@@ -69,59 +63,6 @@ func _bind() -> void:
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
-
-	# Explicit, not left to whatever the .tscn's own serialized size resolves
-	# to: FrontViewport hits exactly this gap on the Web export (see the
-	# UPDATE_ALWAYS comment above) and only setting size in code, not just in
-	# the scene file, reliably avoids it - confirmed live as a zero-size
-	# framebuffer (GL_INVALID_FRAMEBUFFER_OPERATION) the one time this was
-	# skipped here.
-	_bubble_viewport.size = SpeechBubble.CANVAS_SIZE
-	_bubble_viewport.disable_3d = true
-	_bubble_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	# Everywhere the bubble's own 2D scene draws nothing (outside the rounded
-	# panel and its tail) has to stay see-through, or the bubble would show
-	# up as a solid rectangle - the one thing that would defeat "coming out
-	# of the card" the hardest.
-	_bubble_viewport.transparent_bg = true
-	_bubble_material.albedo_texture = _bubble_viewport.get_texture()
-	_bubble_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	# Faces the camera regardless of the seat's own rotation (the carousel, or
-	# a hover-flip on the floor) - a speech bubble that turned edge-on with
-	# its card would vanish exactly when the flip animation made it hardest
-	# to notice. FIXED_Y, not full spherical: the seat cameras look down at
-	# the table, and a spherical billboard would tip the bubble back toward
-	# the camera instead of just turning it to face forward.
-	_bubble_material.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
-	# CONFIRMED live: CULL_DISABLED alone made the bubble render for the first
-	# time - proving billboard mode really does recompute orientation from its
-	# own convention rather than composing with BubbleMesh's pre-rotation, and
-	# that the face left facing the camera was the one CULL_BACK had been
-	# discarding the whole time. But two-sided rendering shows the texture as
-	# authored on THAT face - mirror-image, confirmed live (readable text,
-	# backwards). uv1_scale.x = -1 flips the U axis in material space, which a
-	# billboard-recomputed basis cannot re-break, instead of trying to predict
-	# which geometric orientation lands the correct face toward the camera.
-	_bubble_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_bubble_material.uv1_scale = Vector3(-1.0, 1.0, 1.0)
-	# Confirmed live: text on, mirroring fixed, positioned in frame - but the
-	# whole panel rendered muddy and dark, barely legible, because a default
-	# StandardMaterial3D is LIT - scene lighting was multiplying down colours
-	# that were only ever meant to be read exactly as this texture authored
-	# them, the same as every other UI-on-a-mesh surface in this project.
-	# CardFrontMesh gets away without this because its fixed orientation
-	# happens to catch the key light; a billboard's normal always points
-	# straight at the camera, wherever that puts it relative to the light.
-	_bubble_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	var bubble_mesh: MeshInstance3D = $BubbleMesh
-	bubble_mesh.set_surface_override_material(0, _bubble_material)
-	# Frustum culling runs against the mesh's PRE-billboard bounding box - the
-	# vertex shader only reorients to face the camera after that test already
-	# ran. A thin, pre-rotated plane's own box is an easy false negative there
-	# (confirmed live: fully wired, zero render errors, still never visible),
-	# so this trades a precise box for one generous enough to never be the
-	# reason the bubble fails to draw.
-	bubble_mesh.custom_aabb = AABB(Vector3(-2.5, -2.5, -2.5), Vector3(5.0, 5.0, 5.0))
 
 ## `c == null` is an empty chair. The card stays - a seat should not blink out of
 ## existence mid-shift - it just says nobody is there.
@@ -139,6 +80,8 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	if c != customer and _bubble != null:
 		_bubble.visible = false
 	customer = c
+	if _bubble != null:
+		_bubble.update_visibility(tick)
 	_status.visible = not seated
 
 	if c == null:
@@ -169,12 +112,13 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_redraw()
 
 ## "All customer actions need to show on the screen, not just in the log" -
-## pops a speech bubble with their own words over the card. A no-op before
+## pops a speech bubble with their own words over the card, timed against the
+## model's own clock (tick) rather than a wall-clock timer. A no-op before
 ## _bind() has run, which only a bare .instantiate() in a test can hit.
-func say(text: String) -> void:
+func say(text: String, tick: int) -> void:
 	_bind()
 	if _bubble != null:
-		_bubble.say(text)
+		_bubble.say(text, tick)
 
 ## What this customer does to you, and what they will not do for you.
 ##

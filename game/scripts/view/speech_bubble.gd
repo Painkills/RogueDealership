@@ -1,51 +1,46 @@
 class_name SpeechBubble extends Control
-## A customer's own words, popping up ABOVE their card for a few seconds
-## instead of living only in the shift log - the log is scrollback you have
-## to go read; the table is what you glance at to decide who needs you next,
-## and until now nothing there told you a customer had just said something.
+## A customer's own words, overlaid on the top of their own card face -
+## covering the name/archetype row for a couple of ticks - instead of living
+## only in the shift log. The log is scrollback you have to go read; the
+## table is what you glance at to decide who needs you next, and until now
+## nothing there told you a customer had just said something.
 ##
-## Rendered by build_speech_bubble_scene.gd into its own small SubViewport,
-## used as the texture for a billboard plane customer_card_3d.tscn positions
-## above CardMesh (see customer_card_3d.gd's _bubble_material) - a texture
-## baked onto the card's OWN mesh can never draw outside that mesh's edges,
-## so floating clear of the card at all needed a second, smaller mesh of its
-## own rather than a row on the card's face.
-const SHOW_SECONDS := 6.0
-## The single source of truth for the bubble's own SubViewport size -
-## build_speech_bubble_scene.gd bakes it into the .tscn it authors, and
-## customer_card_3d.gd sets it again explicitly in code, the same belt and
-## suspenders FrontViewport already uses (see its own UPDATE_ALWAYS comment):
-## a SubViewport whose size is only ever set from a serialized scene file has
-## come up zero-sized on the Web export before.
-const CANVAS_SIZE := Vector2i(480, 190)
-## The tail: a small triangle under the panel, pointing down at whoever said
-## it - one draw call, not a shape worth a whole extra node.
-const TAIL_WIDTH := 32.0
-const TAIL_HEIGHT := 22.0
+## Part of customer_front_2d.tscn's own 500x700 canvas (see
+## build_customer_front_scene.gd), not a separate mesh - the card's own face
+## already reliably faces the camera through whatever the seat/carousel is
+## doing, and a texture baked onto it inherits that for free. An earlier
+## version tried a separate floating billboard above the card instead; it
+## never reliably faced the camera the way the card itself already does.
+##
+## Timed in TICKS, not seconds - every other clock in this game (demand
+## fuses, walk-up delays) is ticks, and "how long you have to notice this"
+## should mean the same thing here rather than a wall-clock timer running
+## alongside a clock that can itself be frozen (the report overlay, the shop).
+const HIDE_AFTER_TICKS := 2
 
 @onready var _panel: PanelContainer = $Panel
 @onready var _label: Label = $Panel/Label
-@onready var _timer: Timer = $HideTimer
+
+## The tick say() was called on. -9999 so a fresh card (never spoken to)
+## reads as "long expired" rather than "just started," if update_visibility()
+## is ever called before the first say().
+var _shown_tick: int = -9999
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_timer.one_shot = true
-	_timer.timeout.connect(func(): visible = false)
 	visible = false
-	queue_redraw()
 
-func say(text: String) -> void:
+func say(text: String, tick: int) -> void:
 	if text == "":
 		return
 	_label.text = text
+	_shown_tick = tick
 	visible = true
-	_timer.start(SHOW_SECONDS)
 
-func _draw() -> void:
-	var tail_top: float = _panel.position.y + _panel.size.y
-	var cx: float = size.x / 2.0
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(cx - TAIL_WIDTH / 2.0, tail_top),
-		Vector2(cx + TAIL_WIDTH / 2.0, tail_top),
-		Vector2(cx, tail_top + TAIL_HEIGHT),
-	]), Palette.color(&"panel_hi"))
+## Called every render pass (customer_card_3d.gd's setup()) so the bubble
+## can time itself out against the tick it was actually shown on, the same
+## way a demand's own countdown is `tick >= due_tick` rather than a Timer
+## racing the game's own pace.
+func update_visibility(tick: int) -> void:
+	if visible and tick - _shown_tick >= HIDE_AFTER_TICKS:
+		visible = false
