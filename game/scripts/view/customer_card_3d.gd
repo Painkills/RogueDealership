@@ -93,6 +93,17 @@ func _bind() -> void:
 	# the table, and a spherical billboard would tip the bubble back toward
 	# the camera instead of just turning it to face forward.
 	_bubble_material.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	# Billboard mode REPLACES the mesh's orientation with a camera-facing one
+	# computed straight from its own convention - it does not compose with
+	# BubbleMesh's own pre-rotation (the same -90 deg-around-X CardFrontMesh
+	# uses to stand a flat PlaneMesh up). Confirmed live, twice: fully wired,
+	# zero render errors, a generous custom_aabb ruling out culling, and still
+	# nothing ever drew - which face ends up toward the camera once billboard
+	# recomputes the basis is exactly the kind of thing that convention could
+	# get backwards for a mesh that was pre-rotated for a DIFFERENT (static)
+	# orientation. CULL_DISABLED costs nothing on a mesh this small and
+	# removes that question entirely.
+	_bubble_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var bubble_mesh: MeshInstance3D = $BubbleMesh
 	bubble_mesh.set_surface_override_material(0, _bubble_material)
 	# Frustum culling runs against the mesh's PRE-billboard bounding box - the
