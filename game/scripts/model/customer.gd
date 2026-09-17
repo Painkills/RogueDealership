@@ -123,9 +123,17 @@ func owns(product_id: StringName) -> bool:
 	return false
 
 
-func owns_category(cat_id: StringName) -> bool:
+## worst_rank filters which sale counts: unbounded by default, so every other
+## caller keeps today's meaning of "owns anything in this category." Karen's
+## own gate passes a real ceiling - her pattern is "give them what they
+## actually came in for," and a sale from her own bottom tier just because it
+## shares a category with her real number one is not that, no matter how much
+## appeal it took to close.
+func owns_category(cat_id: StringName, worst_rank: int = 9999) -> bool:
 	for u in unsigned:
-		if u["product"].interest.category.id == cat_id:
+		var iid: StringName = u["product"].interest.id
+		if u["product"].interest.category.id == cat_id \
+				and int(ranks.get(iid, 9999)) <= worst_rank:
 			return true
 	return false
 

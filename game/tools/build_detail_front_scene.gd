@@ -113,9 +113,7 @@ func _init() -> void:
 		"TableLabel", "Anti-Theft & Key Protection $800\nAppearance & Wheel Package $900\n($1,700 at risk)",
 		&"margin")
 	_section(who, root, "KnownTitle", "WHAT YOU KNOW",
-		"KnownLabel", "Their number one is a Vehicle need.\n" +
-			"Affordability 1st . Convenience 2nd . Equity 3rd . Power 4th . Reliability 5th . " +
-			"Security 6th . Stability 7th . Status 8th . Value Retention 9th",
+		"KnownLabel", "Their number one is a Vehicle need.",
 		&"text_dim")
 
 	# --- the product in front of them ------------------------------------

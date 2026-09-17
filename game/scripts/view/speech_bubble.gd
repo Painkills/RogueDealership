@@ -1,15 +1,16 @@
 class_name SpeechBubble extends Control
-## A customer's own words, popping up over their card for a few seconds
+## A customer's own words, popping up ABOVE their card for a few seconds
 ## instead of living only in the shift log - the log is scrollback you have
 ## to go read; the table is what you glance at to decide who needs you next,
 ## and until now nothing there told you a customer had just said something.
 ##
-## Drawn over the top of the name/archetype row rather than given a row of
-## its own: the face is already full at 500x700 (see
-## build_customer_front_scene.gd), and a bubble that shows for a few seconds
-## and then gets out of the way costs nothing permanent to make room for.
-
-const SHOW_SECONDS := 4.0
+## Rendered by build_speech_bubble_scene.gd into its own small SubViewport,
+## used as the texture for a billboard plane customer_card_3d.tscn positions
+## above CardMesh (see customer_card_3d.gd's _bubble_material) - a texture
+## baked onto the card's OWN mesh can never draw outside that mesh's edges,
+## so floating clear of the card at all needed a second, smaller mesh of its
+## own rather than a row on the card's face.
+const SHOW_SECONDS := 6.0
 ## The tail: a small triangle under the panel, pointing down at whoever said
 ## it - one draw call, not a shape worth a whole extra node.
 const TAIL_WIDTH := 32.0

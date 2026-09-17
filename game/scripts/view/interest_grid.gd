@@ -18,11 +18,19 @@ class_name InterestGrid extends Control
 ## There are no image assets in this project and nine cells is not a reason to
 ## start a texture pipeline.
 
-## Big enough to survive the SubViewport's downscale, small enough to sit
-## inside a 65 px cell with margin left. Numerals are only ever drawn on the
-## FRONTED card - see `compact` on customer_card_3d.gd - which renders at worst
-## at 0.512 of the authored face, so this lands near 27 px on screen.
-const NUMERAL := 52
+## Big enough to survive the SubViewport's downscale, small enough to leave
+## the bottom of a 65 px cell free for the interest's own name below it.
+## Numerals (and names) are only ever drawn on the FRONTED card - see
+## `compact` on customer_card_3d.gd - which renders at worst at 0.512 of the
+## authored face.
+const NUMERAL := 40
+## The name that used to only ever appear in "what you know"'s growing
+## sentence - see customer_card_3d.gd's known_text() - now lives on the cell
+## itself, so a rank means something without reading a second label to match
+## it back to an interest. Shrinks toward MIN before it would overflow the
+## cell ("Value Retention" is the longest name in the pool).
+const NAME_FONT_MAX := 18
+const NAME_FONT_MIN := 11
 const GAP := 14.0
 const RADIUS := 6.0
 ## A lit row used to say nothing about WHICH category lit - the reader had to
@@ -104,6 +112,18 @@ func _draw_row_icon(row: Rect2, cat: Category, in_top_category: bool) -> void:
 		else Palette.color(&"text_dim")
 	CategoryIcon.draw(self, inset, cat.id, tint)
 
+## Steps down by 1 from max until the string fits max_width, floored at min -
+## "Value Retention" and "Affordability" are wider than the cell at
+## NAME_FONT_MAX, and a name that overflows into its neighbour is worse than
+## a name that is merely small.
+static func _fit_font_size(font: Font, text: String, max_width: float,
+		max_size: int, min_size: int) -> int:
+	var size := max_size
+	while size > min_size \
+			and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > max_width:
+		size -= 1
+	return size
+
 func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 		font: Font) -> void:
 	var rank: int = int(_known.get(interest.id, 0))
@@ -138,9 +158,26 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 	draw_rect(cell, edge, false, thickness)
 
 	if rank > 0 and _numerals and font != null:
+		var ink := Palette.color(&"neutral_1")
 		var text := str(rank)
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1,
 			NUMERAL).x
-		var at := cell.get_center() + Vector2(-w * 0.5, NUMERAL * 0.34)
-		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, NUMERAL,
-			Palette.color(&"neutral_1"))
+		# Upper portion of the cell, not dead centre - the name below needs
+		# the bottom, and both were tuned together against this cell's own
+		# 65 px authored height rather than derived from first principles.
+		var numeral_mid: float = cell.position.y + cell.size.y * 0.38
+		var at := Vector2(cell.position.x + cell.size.x * 0.5 - w * 0.5,
+			numeral_mid + NUMERAL * 0.34)
+		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, NUMERAL, ink)
+
+		var name_text := interest.display_name
+		var pad := 6.0
+		var max_w: float = maxf(1.0, cell.size.x - pad * 2.0)
+		var name_size := _fit_font_size(font, name_text, max_w,
+			NAME_FONT_MAX, NAME_FONT_MIN)
+		var name_w := font.get_string_size(name_text, HORIZONTAL_ALIGNMENT_LEFT,
+			-1, name_size).x
+		var name_at := Vector2(cell.position.x + cell.size.x * 0.5 - name_w * 0.5,
+			cell.position.y + cell.size.y - 6.0)
+		draw_string(font, name_at, name_text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			name_size, ink)

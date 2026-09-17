@@ -665,7 +665,14 @@ func close() -> Result:
 	if pair[1] != null:
 		return pair[1]
 	var c: Customer = pair[0]
-	if c.demands_category != null and not c.owns_category(c.demands_category):
+	# Not just any sale in the category - her own bottom third (the same
+	# three-wide tail make_ranks() reserves for bottom_interests) is excluded,
+	# so satisfying her always costs something she would actually call "what I
+	# came in for," not merely whatever in the category happened to be on
+	# the table.
+	var worst_rank: int = c.interests().count() - 3
+	if c.demands_category != null \
+			and not c.owns_category(c.demands_category, worst_rank):
 		return Result.new(false,
 			"%s came in for %s protection and is not signing until they get it."
 			% [c.display_name, str(c.demands_category)])

@@ -1,38 +1,21 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/view/interest_grid.gd" id="1_hwd5c"]
-[ext_resource type="Script" path="res://scripts/view/speech_bubble.gd" id="2_i35ot"]
+[ext_resource type="Script" path="res://scripts/view/interest_grid.gd" id="1_ew5d6"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v51p4"]
-content_margin_left = 18.0
-content_margin_top = 12.0
-content_margin_right = 18.0
-content_margin_bottom = 12.0
-bg_color = Color(0.18039216, 0.18039216, 0.2901961, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.78431374, 0.43529412, 0.8784314, 1)
-corner_radius_top_left = 18
-corner_radius_top_right = 18
-corner_radius_bottom_right = 18
-corner_radius_bottom_left = 18
-
-[node name="CustomerFront" type="Control" unique_id=924817766]
+[node name="CustomerFront" type="Control" unique_id=1099099741]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 500.0
 offset_bottom = 700.0
 
-[node name="Background" type="ColorRect" parent="." unique_id=1593002110]
+[node name="Background" type="ColorRect" parent="." unique_id=890257173]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.13333334, 0.13333334, 0.23137255, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1666676329]
+[node name="Margin" type="MarginContainer" parent="." unique_id=1876813879]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -41,11 +24,11 @@ theme_override_constants/margin_top = 26
 theme_override_constants/margin_right = 26
 theme_override_constants/margin_bottom = 26
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=347043555]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=2083545060]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="NameLabel" type="Label" parent="Margin/Column" unique_id=1287435914]
+[node name="NameLabel" type="Label" parent="Margin/Column" unique_id=814217334]
 custom_minimum_size = Vector2(0, 116)
 layout_mode = 2
 theme_override_font_sizes/font_size = 50
@@ -57,7 +40,7 @@ text = "Sandra Okonkwo"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=275809444]
+[node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=875297073]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
@@ -67,14 +50,14 @@ theme_override_constants/shadow_offset_y = 3
 text = "Tech Enthusiast  [C]"
 horizontal_alignment = 1
 
-[node name="PatienceBar" type="ProgressBar" parent="Margin/Column" unique_id=1541034587]
+[node name="PatienceBar" type="ProgressBar" parent="Margin/Column" unique_id=1034230340]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 max_value = 16.0
 value = 12.0
 show_percentage = false
 
-[node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=2069131469]
+[node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=453999912]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
@@ -84,7 +67,7 @@ theme_override_constants/shadow_offset_y = 3
 text = "patience 16/16"
 horizontal_alignment = 1
 
-[node name="DemandLabel" type="Label" parent="Margin/Column" unique_id=1273884443]
+[node name="DemandLabel" type="Label" parent="Margin/Column" unique_id=849460406]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 38
@@ -96,13 +79,13 @@ text = "BETTER QUOTE  3t"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="InterestGrid" type="Control" parent="Margin/Column" unique_id=1955634846]
+[node name="InterestGrid" type="Control" parent="Margin/Column" unique_id=968584273]
 custom_minimum_size = Vector2(420, 224)
 layout_mode = 2
 size_flags_vertical = 3
-script = ExtResource("1_hwd5c")
+script = ExtResource("1_ew5d6")
 
-[node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=710312170]
+[node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=1897033950]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
@@ -113,31 +96,3 @@ text = "on the table: Anti-Theft & Key Protection
 $1,700 unsigned"
 horizontal_alignment = 1
 autowrap_mode = 2
-
-[node name="SpeechBubble" type="Control" parent="." unique_id=1079303807]
-anchors_preset = 0
-offset_left = 26.0
-offset_top = 26.0
-offset_right = 474.0
-offset_bottom = 198.0
-mouse_filter = 2
-script = ExtResource("2_i35ot")
-
-[node name="Panel" type="PanelContainer" parent="SpeechBubble" unique_id=1722374180]
-layout_mode = 0
-offset_right = 448.0
-offset_bottom = 150.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_v51p4")
-
-[node name="Label" type="Label" parent="SpeechBubble/Panel" unique_id=1936652692]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
-text = "\"The place on Dundas does this for less.\""
-horizontal_alignment = 1
-vertical_alignment = 1
-autowrap_mode = 2
-
-[node name="HideTimer" type="Timer" parent="SpeechBubble" unique_id=736026930]
-one_shot = true

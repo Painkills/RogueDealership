@@ -99,6 +99,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_seat_layout_does_not_overlap_itself()
 	_check_the_customer_card_shows_who_they_are()
 	_check_the_customer_card_carries_its_triage_row()
+	_check_interest_grid_cell_names_fit_their_cells()
 	_check_the_detail_card_shows_what_they_do()
 	_check_the_action_buttons_stay_on_screen()
 	_check_hud_does_not_overlap_itself()
@@ -956,6 +957,51 @@ func _check_the_customer_card_carries_its_triage_row() -> void:
 	who.demand_due_tick = parked_due
 	_controller._render()
 
+## "Add the interest name to the bottom of the little blocks that have the
+## numerator" - checked against the actual cell width the real 500x700 face
+## and its live InterestGrid.size lay out, not an assumed number, and against
+## the WIDEST name in the pool (Value Retention) so a font-metric change that
+## only barely fits today cannot regress unnoticed.
+func _check_interest_grid_cell_names_fit_their_cells() -> void:
+	var shift = _controller._shift
+	var who = shift.chairs[_at()]
+	var card = _controller._customer_cards[_at()]
+	var grid := card.get_node(
+		^"FrontViewport/CustomerFront/Margin/Column/InterestGrid") as InterestGrid
+	_check("the interest grid is reachable on the fronted card", grid != null)
+	if grid == null:
+		return
+
+	# Every rank known, so every cell actually draws a name this pass - the
+	# worst case for "does the name fit", not whatever this seed revealed.
+	var was_known: Dictionary = who.known_ranks.duplicate()
+	who.known_ranks.clear()
+	for iid in who.ranks:
+		who.known_ranks[iid] = who.ranks[iid]
+	_controller._render()
+
+	var pool: InterestPool = who.interests()
+	var cols := 0
+	for c in pool.categories:
+		cols = maxi(cols, pool.in_category(c).size())
+	var grid_x: float = InterestGrid.ICON_COL + InterestGrid.ICON_GAP
+	var cw: float = (grid.size.x - grid_x - InterestGrid.GAP * float(cols - 1)) \
+		/ float(cols)
+	_check("the grid actually has room to lay cells out (%.1f px wide)" % cw,
+		cw > 20.0)
+
+	var font := ThemeDB.fallback_font
+	for i in pool.interests:
+		var size: int = InterestGrid._fit_font_size(font, i.display_name,
+			maxf(1.0, cw - 12.0), InterestGrid.NAME_FONT_MAX, InterestGrid.NAME_FONT_MIN)
+		var w := font.get_string_size(i.display_name, HORIZONTAL_ALIGNMENT_LEFT,
+			-1, size).x
+		_check("%s's name fits its own cell width at size %d (%.1f of %.1f px)"
+			% [i.display_name, size, w, cw], w <= cw)
+
+	who.known_ranks = was_known
+	_controller._render()
+
 ## The reported bug from two rounds ago: none of the customer's own data showed
 ## up. It lives on the detail card now, so that is where this looks.
 func _check_the_detail_card_shows_what_they_do() -> void:
@@ -1156,7 +1202,7 @@ func _row_height(box: Control, width: float) -> float:
 ## has to reach chair A's own CustomerCard3D too, not only the log beside it.
 func _check_what_a_customer_says_reaches_the_log() -> void:
 	var card = _controller._customer_cards[0]
-	var bubble: Control = card.get_node(^"FrontViewport/CustomerFront/SpeechBubble")
+	var bubble: Control = card.get_node(^"BubbleViewport/SpeechBubble")
 	_check("the bubble starts out hidden", not bubble.visible)
 	_controller._shift.action_log.append({
 		"key": "A",
@@ -1178,6 +1224,23 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 	var timer := bubble.get_node(^"HideTimer") as Timer
 	_check("and it is on a timer to get out of the way again",
 		not timer.is_stopped())
+	_check("shown for a real stretch, not a blink (%.1fs)" % SpeechBubble.SHOW_SECONDS,
+		SpeechBubble.SHOW_SECONDS >= 5.0)
+
+	# "make the speech bubbles appear ABOVE the customer cards" - checked by
+	# actually projecting both anchor points through the live seat camera,
+	# not by comparing local Y values that billboard rendering can silently
+	# reinterpret.
+	var cam: Camera3D = card.get_viewport().get_camera_3d()
+	_check("a camera is active to project the bubble against", cam != null)
+	if cam != null:
+		var card_top_world: Vector3 = card.global_transform * Vector3(0.0, 1.75, 0.0)
+		var bubble_mesh := card.get_node(^"BubbleMesh") as MeshInstance3D
+		var bubble_world: Vector3 = bubble_mesh.global_transform.origin
+		var card_top_screen: Vector2 = cam.unproject_position(card_top_world)
+		var bubble_screen: Vector2 = cam.unproject_position(bubble_world)
+		_check("the bubble sits above the card's own top edge on screen (bubble y=%.1f, card top y=%.1f)"
+			% [bubble_screen.y, card_top_screen.y], bubble_screen.y < card_top_screen.y)
 
 	# setup() itself has to clear a stale bubble the instant the customer
 	# under it changes - whoever signs or walks must not leave their last

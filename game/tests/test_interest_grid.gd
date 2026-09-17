@@ -91,6 +91,37 @@ func test_the_countdown_never_reads_negative() -> void:
 	c.demand_due_tick = 0
 	h.eq("clamped at zero", CustomerCard3D.demand_text(c, 5), "WELL?  0t")
 
+# ---------------------------------------------------------- the cell's name
+func test_the_cell_names_shrink_only_as_far_as_they_have_to() -> void:
+	## "Add the interest name to the bottom of the little blocks" - and the
+	## widest of those names ("Value Retention") does not fit the cell at
+	## NAME_FONT_MAX, so _fit_font_size() has to actually shrink it rather
+	## than overflow into the neighbouring cell.
+	var font := ThemeDB.fallback_font
+	var wide := font.get_string_size("Value Retention",
+		HORIZONTAL_ALIGNMENT_LEFT, -1, InterestGrid.NAME_FONT_MAX).x
+	var got: int = InterestGrid._fit_font_size(font, "Value Retention", wide - 1.0,
+		InterestGrid.NAME_FONT_MAX, InterestGrid.NAME_FONT_MIN)
+	h.check("shrinks when the max size does not fit (%d)" % got,
+		got < InterestGrid.NAME_FONT_MAX)
+	h.check("but never below the floor", got >= InterestGrid.NAME_FONT_MIN)
+
+	var roomy: int = InterestGrid._fit_font_size(font, "Power", 9999.0,
+		InterestGrid.NAME_FONT_MAX, InterestGrid.NAME_FONT_MIN)
+	h.eq("and does not shrink a name that already fits",
+		roomy, InterestGrid.NAME_FONT_MAX)
+
+func test_every_real_interest_has_a_name_short_enough_to_ever_fit() -> void:
+	## The floor itself has to be reachable - a name that is STILL too wide at
+	## NAME_FONT_MIN would silently overflow forever, and nothing else in the
+	## pipeline would ever catch that.
+	var font := ThemeDB.fallback_font
+	for i in _pool().interests:
+		var w := font.get_string_size(i.display_name, HORIZONTAL_ALIGNMENT_LEFT,
+			-1, InterestGrid.NAME_FONT_MIN).x
+		h.check("%s fits some cell width at the floor size (%.1f px)"
+			% [i.display_name, w], w > 0.0 and w < 500.0)
+
 # ----------------------------------------------------------------- what is taken
 func test_the_grid_lights_what_they_have_actually_bought() -> void:
 	var s := _shift([&"easygoing"])

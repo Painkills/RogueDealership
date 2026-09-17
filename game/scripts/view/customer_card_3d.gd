@@ -12,14 +12,18 @@ class_name CustomerCard3D extends Card3D
 ## that rearranges itself the moment you look at it.
 
 const FRONT_SIZE := Vector2i(500, 700)
-const ORDINALS := ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"]
 
 var customer
 var chair: int = -1
 
 var _material := StandardMaterial3D.new()
+## Its own material, separate from _material above: the card face is opaque
+## and never needs transparency or billboarding, and giving the bubble its
+## own StandardMaterial3D is what lets it be both - see _bind() below.
+var _bubble_material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
+var _bubble_viewport: SubViewport
 var _name: Label
 var _archetype: Label
 var _patience_bar: ProgressBar
@@ -55,7 +59,8 @@ func _bind() -> void:
 	_demand = col.get_node(^"DemandLabel")
 	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
-	_bubble = $FrontViewport/CustomerFront/SpeechBubble
+	_bubble_viewport = $BubbleViewport
+	_bubble = $BubbleViewport/SpeechBubble
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
@@ -64,6 +69,24 @@ func _bind() -> void:
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
+
+	_bubble_viewport.disable_3d = true
+	_bubble_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	# Everywhere the bubble's own 2D scene draws nothing (outside the rounded
+	# panel and its tail) has to stay see-through, or the bubble would show
+	# up as a solid rectangle - the one thing that would defeat "coming out
+	# of the card" the hardest.
+	_bubble_viewport.transparent_bg = true
+	_bubble_material.albedo_texture = _bubble_viewport.get_texture()
+	_bubble_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	# Faces the camera regardless of the seat's own rotation (the carousel, or
+	# a hover-flip on the floor) - a speech bubble that turned edge-on with
+	# its card would vanish exactly when the flip animation made it hardest
+	# to notice. FIXED_Y, not full spherical: the seat cameras look down at
+	# the table, and a spherical billboard would tip the bubble back toward
+	# the camera instead of just turning it to face forward.
+	_bubble_material.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	$BubbleMesh.set_surface_override_material(0, _bubble_material)
 
 ## `c == null` is an empty chair. The card stays - a seat should not blink out of
 ## existence mid-shift - it just says nobody is there.
@@ -143,24 +166,19 @@ static func unsigned_text(c) -> String:
 		return "nothing agreed yet"
 	return "%s\n(%s at risk)" % ["\n".join(parts), Format.money(c.unsigned_margin())]
 
-## Everything you have worked out about their priority list.
+## The one thing about their priority list that is not already sitting on the
+## interest grid itself: which CATEGORY narrowed to. Individual ranks used to
+## be repeated here too, as a growing ". "-joined line - the grid now carries
+## that (each known cell names its own interest, see InterestGrid._draw_cell),
+## so saying it twice is a caption for a picture that already has one.
 ##
 ## `known_top_category` is the whole point of Read the Room - it narrows nine
 ## interests to three - and it used to be set by the model and then dropped
 ## here, so playing the card looked like it did nothing at all.
 static func known_text(c) -> String:
-	var lines: Array[String] = []
 	if c.known_top_category != null:
-		lines.append("Their number one is a %s need."
-			% str(c.known_top_category).capitalize())
-	var ranks: Array[String] = []
-	for iid in c.known_ranks:
-		ranks.append("%s %s" % [str(iid).capitalize(), ORDINALS[int(c.known_ranks[iid])]])
-	if not ranks.is_empty():
-		lines.append(" . ".join(ranks))
-	if lines.is_empty():
-		return "you know nothing about their priorities yet"
-	return "\n".join(lines)
+		return "Their number one is a %s need." % str(c.known_top_category).capitalize()
+	return "you know nothing about their priorities yet"
 
 ## What they are asking for and how long you have, or nothing. The telegraph is
 ## authored SHORT for exactly this - it has to fit one line on a card that may
