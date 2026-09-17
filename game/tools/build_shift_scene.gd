@@ -445,20 +445,52 @@ func _build_hud(root: Node) -> void:
 	tick_wrap.add_child(tick_tap)
 	tick_tap.owner = root
 
-	var placeholders := {
-		"BankedLabel": "banked $0 / $3,600",
-		"StandingLabel": "standing 100/100",
-		"AtRiskLabel": "nothing unsigned",
-	}
-	for label_name in placeholders:
-		var l := Label.new()
-		l.name = label_name
-		l.text = placeholders[label_name]
-		l.add_theme_font_size_override("font_size", 30)
-		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		l.unique_name_in_owner = true
-		top.add_child(l)
-		l.owner = root
+	var banked := Label.new()
+	banked.name = "BankedLabel"
+	banked.text = "banked $0 / $3,600"
+	banked.add_theme_font_size_override("font_size", 30)
+	banked.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	banked.unique_name_in_owner = true
+	top.add_child(banked)
+	banked.owner = root
+
+	# Standing gets the same invisible-tap-target treatment as the tick counter
+	# above, for the same reason: a manual playtesting convenience, not a
+	# mechanic, so it can add standing to survive long enough to actually reach
+	# later shifts instead of dying to one bad walkout. PanelContainer, not the
+	# label directly, so the Button on top inherits the label's own rect rather
+	# than needing hand-kept coordinates - see TickWrap just above.
+	var standing_wrap := PanelContainer.new()
+	standing_wrap.name = "StandingWrap"
+	standing_wrap.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	standing_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(standing_wrap)
+	standing_wrap.owner = root
+
+	var standing_label := Label.new()
+	standing_label.name = "StandingLabel"
+	standing_label.text = "standing 100/100"
+	standing_label.add_theme_font_size_override("font_size", 30)
+	standing_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	standing_label.unique_name_in_owner = true
+	standing_wrap.add_child(standing_label)
+	standing_label.owner = root
+
+	var standing_tap := Button.new()
+	standing_tap.name = "StandingTapTarget"
+	standing_tap.flat = true   # no visible chrome at all - the ask was invisible
+	standing_tap.unique_name_in_owner = true
+	standing_wrap.add_child(standing_tap)
+	standing_tap.owner = root
+
+	var at_risk := Label.new()
+	at_risk.name = "AtRiskLabel"
+	at_risk.text = "nothing unsigned"
+	at_risk.add_theme_font_size_override("font_size", 30)
+	at_risk.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	at_risk.unique_name_in_owner = true
+	top.add_child(at_risk)
+	at_risk.owner = root
 
 	# --- the one button that changes where you are ------------------------
 	# Big and obvious on purpose: with the other two seats hidden while you

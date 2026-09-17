@@ -130,6 +130,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
 	_check_tick_tap_target_ends_the_shift_too()      # replaces _shift entirely
+	_check_standing_tap_target_adds_standing()       # replaces _shift entirely
 
 	print("")
 	# Guards against the failure mode that has now bitten three times: a runtime
@@ -1721,6 +1722,30 @@ func _check_tick_tap_target_ends_the_shift_too() -> void:
 	tap.pressed.emit()
 	_check("tapping the tick counter burns the whole shift at once (%d of %d ticks)"
 		% [fresh.tick, fresh.tick_budget], fresh.is_over())
+
+## Same invisible-tap-target trick as the tick counter, over the standing
+## counter instead - a manual playtesting convenience so a run that just took
+## a bad walkout can be topped back up rather than ending the session. Checks
+## both the add and its clamp: a shift fresh off cfg.standing_start must not
+## climb past it, so the clamp is exercised on the very first tap, not just
+## asserted never to matter.
+func _check_standing_tap_target_adds_standing() -> void:
+	var fresh := Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), randi())
+	_controller.setup(fresh, fresh.cfg.standing_start)
+	fresh.standing = maxi(0, fresh.cfg.standing_start - 30)
+	var before: int = fresh.standing
+	var tap := _controller.get_node(^"%StandingTapTarget") as Button
+	tap.pressed.emit()
+	_check("tapping standing adds 50, clamped to the run's own ceiling (%d -> %d)"
+		% [before, fresh.standing],
+		fresh.standing == mini(before + 50, fresh.cfg.standing_start))
+	tap.pressed.emit()
+	tap.pressed.emit()
+	_check("and never climbs past cfg.standing_start (%d)" % fresh.standing,
+		fresh.standing == fresh.cfg.standing_start)
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

@@ -153,6 +153,10 @@ func _ready() -> void:
 	# Mobile has no Ctrl+E: an invisible button laid over the tick counter
 	# itself is the touch equivalent, wired to the exact same method.
 	(%TickTapTarget as Button).pressed.connect(_debug_skip_shift)
+	# Same trick over the standing counter - a manual playtesting convenience
+	# so a run can survive long enough to fast-forward through several shifts
+	# instead of ending the moment one bad walkout zeroes it out.
+	(%StandingTapTarget as Button).pressed.connect(_debug_add_standing)
 	_report_overlay.continue_pressed.connect(
 		func(): shift_finished.emit(_shift.report()))
 
@@ -240,6 +244,16 @@ func _debug_skip_shift() -> void:
 			_apply(_shift.wait())
 		else:
 			break
+
+## Mobile/manual tap target over the standing counter, wired the same way as
+## the tick counter's own cheat above. A run over from one bad walkout can't
+## be fast-forwarded through - this is what lets a playtest keep skipping
+## shifts (Ctrl+E / TickTapTarget) instead of ending the run outright. Same
+## clamp ChangeStanding uses, so this can never push standing above its own
+## starting value or read negative.
+func _debug_add_standing() -> void:
+	_shift.standing = clampi(_shift.standing + 50, 0, _shift.cfg.standing_start)
+	_render()
 
 # --- lifecycle -------------------------------------------------------------
 
