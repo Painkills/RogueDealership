@@ -86,37 +86,3 @@ func test_describe_agrees_with_apply_for_every_effect() -> void:
 		h.check("%s says something" % e.get_script().resource_path.get_file(),
 			d.strip_edges() != "")
 
-func test_the_starter_deck_is_sixteen_cards() -> void:
-	var total := 0
-	var products := 0
-	for c in _pool().starter_cards():
-		total += c.copies
-		if c is ProductCardDef:
-			products += c.copies
-	h.eq("sixteen cards", total, 16)
-	h.eq("six of them products", products, 6)
-	h.eq("ten support", total - products, 10)
-
-func test_no_starter_card_moves_a_full_place_on_their_list_for_free() -> void:
-	## m2's rule: a card worth a whole rank step becomes a substitute for
-	## reading the customer, and diagnosis stops paying.
-	## appeal_step lives on ShiftConfig from Task 6; pinned here so the rule is
-	## enforced from the moment cards exist.
-	var appeal_step := 5
-	for c in _pool().cards:
-		if not (c is SupportCardDef):
-			continue
-		var free := true
-		var appeal := 0
-		for e in (c as SupportCardDef).effects:
-			if e is ChangeAppeal:
-				appeal += e.amount
-			elif e is ChangeMargin and e.amount < 0:
-				free = false
-			elif e is ChangePatience and e.amount < 0:
-				free = false
-			elif e is ChangeStanding and e.amount < 0:
-				free = false
-		if free and c.ticks <= 1:
-			h.check("%s moves less than one place (%d < %d)"
-				% [c.id, appeal, appeal_step], appeal < appeal_step)

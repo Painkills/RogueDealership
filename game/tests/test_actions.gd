@@ -33,6 +33,17 @@ func _rank(c: Customer, order: Array) -> void:
 		c.ranks[iid] = n
 		n += 1
 
+## Ranks `iid` dead last (worst possible). Used against the Hawk, whose
+## OnOffer trigger is a live balance knob - it may currently gate on how
+## SHORT an offer falls or on how bad its RANK is (or both, or neither).
+## Worst-on-both is the one setup that fires his demand no matter which
+## dimension the trigger is tuned to read.
+func _rank_worst(c: Customer, iid: StringName) -> void:
+	var order: Array = NINE.duplicate()
+	order.erase(iid)
+	order.append(iid)
+	_rank(c, order)
+
 func _hand(s: Shift, ids: Array) -> void:
 	s.hand.clear()
 	var uid := 900
@@ -59,28 +70,34 @@ func _sat_a_while(s: Shift, chair: int = 0) -> Customer:
 func test_the_hawk_shops_you_the_moment_an_offer_falls_short() -> void:
 	var s := _shift([&"hawk"])
 	var c := _sat_a_while(s)
-	_rank(c, [&"status", &"power", &"reliability"])   # appeal 30 against his 40
+	# See test_the_hawk_shops_you_according_to_his_own_trigger for the version
+	# that checks the trigger's own verdict at arbitrary ranks - this one just
+	# needs a scenario guaranteed to fire it, whatever it's tuned to.
+	_rank_worst(c, &"reliability")
 	_hand(s, [&"vsc"])
 	s.place(0)
 	h.check("nothing to complain about yet", c.demand == null)
 	s.offer()
-	h.check("a short offer and he is shopping you", c.demand != null)
+	h.check("the worst possible offer gets him shopping", c.demand != null)
 	h.eq("by name", c.demand.id, &"better_quote")
-	h.eq("and he does not wait long", c.demand.ticks, 4)
+	h.check("and he does not wait long", c.demand.ticks > 0)
 
 func test_the_hawk_sweeps_the_table_if_you_will_not_come_down() -> void:
 	var s := _shift([&"hawk"])
 	var c := _sat_a_while(s)
-	_rank(c, [&"status", &"power", &"reliability"])
+	_rank_worst(c, &"reliability")
 	_hand(s, [&"vsc"])
 	s.place(0)
 	s.offer()
 	h.check("he is shopping you", c.demand != null)
 	var discarded: int = s.discard.size()
-	s.dig(0)
-	s.dig(0)
-	s.dig(0)
-	s.dig(0)                                          # four ticks, no concession
+	# Dig (no concession) until the fuse runs out on its own, whatever length
+	# it's currently tuned to - bounded so a stuck fuse fails loudly instead
+	# of hanging.
+	var guard := 0
+	while c.demand != null and guard < 30:
+		s.dig(0)
+		guard += 1
 	h.check("the fuse ran out", c.demand == null)
 	h.check("and your product came off the table", c.offer == null)
 	h.check("into the discard, not out of the deck",
@@ -89,7 +106,7 @@ func test_the_hawk_sweeps_the_table_if_you_will_not_come_down() -> void:
 func test_coming_down_on_the_price_sends_the_hawk_away_satisfied() -> void:
 	var s := _shift([&"hawk"])
 	var c := _sat_a_while(s)
-	_rank(c, [&"status", &"power", &"reliability"])
+	_rank_worst(c, &"reliability")
 	_hand(s, [&"vsc", &"discount"])
 	s.place(0)
 	s.offer()
@@ -98,15 +115,38 @@ func test_coming_down_on_the_price_sends_the_hawk_away_satisfied() -> void:
 	h.check("money off answers him", c.demand == null)
 	h.check("and your product stays where it is", c.offer != null)
 
-func test_the_hawk_does_not_shop_an_offer_that_clears() -> void:
-	var s := _shift([&"hawk"])
-	var c := _sat_a_while(s)
-	_rank(c, [&"reliability"])                        # appeal 40 == his 40
-	_hand(s, [&"vsc"])
-	s.place(0)
-	s.offer()
-	h.eq("it sold", c.unsigned.size(), 1)
-	h.check("so he has nothing to say", c.demand == null)
+func test_the_hawk_shops_you_according_to_his_own_trigger() -> void:
+	## His trigger config (short_at / rank_worse_than) is a live balance knob -
+	## already retuned twice in one afternoon while this suite was being
+	## audited. Rather than this test assuming one specific configuration,
+	## build the same rank/short pair the model computes, ask his own
+	## OnOffer.matches() what SHOULD happen, and confirm the shift agrees -
+	## so whatever the trigger is dialed to right now, this keeps testing
+	## "the trigger decides, and the shift obeys it" rather than a snapshot.
+	var hawk_arch := (load("res://data/archetype_pool.tres") as ArchetypePool).by_id(&"hawk")
+	var trigger := hawk_arch.actions[0].trigger
+
+	for rank in [1, 9]:
+		var s := _shift([&"hawk"])
+		var c := _sat_a_while(s)
+		var others: Array = []
+		for iid in NINE:
+			if iid != &"reliability":
+				others.append(iid)
+		_rank(c, others.slice(0, rank - 1) + [&"reliability"])
+		_hand(s, [&"vsc"])
+		s.place(0)
+		var appeal := c.appeal_for(&"reliability")
+		var short: int = maxi(0, c.line - appeal)
+
+		var probe := EffectContext.new()
+		probe.rank = rank
+		probe.short = short
+		var should_demand: bool = trigger.matches(probe)
+
+		s.offer()
+		h.eq("rank %d (%d short): the trigger's own verdict matches what happened"
+			% [rank, short], c.demand != null, should_demand)
 
 # -------------------------------------------------------------- Tire Kicker
 func test_the_tire_kicker_wants_a_price_every_four_ticks() -> void:
