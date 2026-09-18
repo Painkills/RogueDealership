@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eff"]
 [ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
-[ext_resource type="Script" uid="uid://ulx4li35o01c" path="res://scripts/model/effects/change_margin.gd" id="3_a2b7p"]
+[ext_resource type="Script" path="res://scripts/model/effects/grant_margin.gd" id="3_a2b7p"]
 [ext_resource type="Script" uid="uid://dqhnvp6ekfhfb" path="res://scripts/model/demands/offer_something_good.gd" id="3_rsv"]
 [ext_resource type="Script" uid="uid://cohmuwwcvcdsa" path="res://scripts/model/data/demand.gd" id="4_dmd"]
 
@@ -14,7 +14,6 @@ metadata/_custom_type_script = "uid://bswvlmlj77d75"
 [sub_resource type="Resource" id="Resource_g7owm"]
 script = ExtResource("3_a2b7p")
 amount = 300
-metadata/_custom_type_script = "uid://ulx4li35o01c"
 
 [sub_resource type="Resource" id="Sub_rsv"]
 script = ExtResource("3_rsv")

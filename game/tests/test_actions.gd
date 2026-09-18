@@ -228,6 +228,29 @@ func test_showing_the_tech_enthusiast_the_good_stuff_is_worth_it() -> void:
 	h.check("and it pads the still-open offer (%d -> %d)"
 		% [before_margin, c.offer.margin], c.offer.margin > before_margin)
 
+## The bug this guards: offer() calls _settle() BEFORE the demand resolves,
+## so when the same offer that satisfies "show me your top 3" also clears
+## his Line, c.offer is already null by the time the relief runs. A relief
+## effect that only knows how to touch ctx.offer (ChangeMargin) would
+## silently no-op there even though the log claimed it landed - this is the
+## far more common case in real play, since a top-3 pick easily clears a
+## Line low enough to have been worth offering at all.
+func test_showing_the_tech_enthusiast_the_good_stuff_is_worth_it_even_when_it_also_sells() -> void:
+	var s := _shift([&"tech"])
+	var c := _sat_a_while(s)
+	c.line = 0                                        # guarantees it also sells
+	_rank(c, [&"reliability"])                        # vsc is their number one
+	_dig_until_demanded(s, c)
+	h.check("they asked", c.demand != null)
+	_hand(s, [&"vsc"])
+	s.place(0)
+	var base_margin: int = s.card_pool.by_id(&"vsc").margin
+	s.offer()
+	h.check("their own number one answers them", c.demand == null)
+	h.eq("it sold in the same offer", c.unsigned.size(), 1)
+	h.check("and the relief landed on the sale, not a dead offer reference (%d > %d)"
+		% [c.unsigned_margin(), base_margin], c.unsigned_margin() > base_margin)
+
 func test_ignoring_the_tech_enthusiast_only_costs_a_little() -> void:
 	var s := _shift([&"tech"])
 	var c := _sat_a_while(s)

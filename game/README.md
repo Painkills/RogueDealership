@@ -69,6 +69,7 @@ An `Effect` is a Resource with `apply(ctx)` and `describe()`. A card holds an
 | `RevealRoom` | their Line and the category of their top unsold interest |
 | `DiscardHand` | takes cards out of your hand |
 | `MarginBonus` | lands on the sale being settled, not the offer |
+| `GrantMargin` | a demand's relief: lands on the sale if the SAME offer just settled one, otherwise the still-open offer - exactly one of those two is ever true at the moment a demand resolves |
 | `ScaleBySales` | combinator: applies the wrapped effect once per product taken |
 
 **A new card is data. A new verb is one ~12-line file** that then appears in

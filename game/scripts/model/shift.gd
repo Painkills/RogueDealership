@@ -592,7 +592,7 @@ func offer() -> Result:
 		c.patience -= cfg.failed_offer_patience
 
 	fire(&"on_offer", c, {"rank": rank, "short": gap, "sale": sale})
-	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": gap})
+	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": gap, "sale": sale})
 	_settle_patience()
 
 	if not sale.is_empty():
@@ -746,19 +746,24 @@ func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
 	## customer is a new DemandResolve file and not a branch in this function.
 	if c == null or c.demand == null or c.demand.resolve == null:
 		return
+	# offer()'s own _settle() runs before this - a sale may already exist and
+	# c.offer may already be null by the time a demand resolves off the SAME
+	# offer. Passed through so a relief effect can tell which one it is.
+	var sale: Dictionary = data.get("sale", {})
 	if c.demand.resolve.satisfied(kind, data):
-		_settle_demand(c, true)
+		_settle_demand(c, true, sale)
 	elif c.demand.resolve.broken_by(kind, data):
-		_settle_demand(c, false)
+		_settle_demand(c, false, sale)
 
 
-func _settle_demand(c: Customer, met: bool) -> void:
+func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 	var d: Demand = c.demand
 	c.demand = null
 	c.demand_due_tick = 0
 	c.demand_settled_tick = tick
 
 	var ctx := _context(c)
+	ctx.sale = sale
 	var effects: Array[Effect] = d.relief if met else d.effects
 	var descriptions: Array[String] = []
 	var floor_wide := false
