@@ -1,5 +1,5 @@
 extends RefCounted
-## DetailCard3D's non-visual behaviour: the appeal meter's own memory, and the
+## DetailCard3D's non-visual behaviour: the appeal meter's fixed scale, and the
 ## category badge wired onto its sub line. What it draws is out of headless
 ## reach - see test_card_face.gd's own header - but everything here is plain
 ## data on the node, readable without ever calling _draw().
@@ -10,6 +10,9 @@ const CFG := {"appeal_step": 5, "line_per_sale": 3, "leaving_soon_at": 4}
 
 func _instance() -> DetailCard3D:
 	return (load(SCENE) as PackedScene).instantiate() as DetailCard3D
+
+func _meter_scale() -> int:
+	return (load("res://data/shift_config.tres") as ShiftConfig).appeal_meter_scale
 
 func _interests() -> InterestPool:
 	return load("res://data/interests/interest_pool.tres")
@@ -34,7 +37,7 @@ func test_the_offer_sub_line_carries_the_products_own_category_badge() -> void:
 	var c := _cust(&"easygoing", 1)
 	c.line = 40
 	c.offer = _offer(&"vsc", 30, 1600)     # reliability -> vehicle
-	d.show_offer(c, "COOL")
+	d.show_offer(c, "COOL", _meter_scale())
 	h.check("the badge is showing", d._sub_icon.visible)
 	var vsc := _pool().by_id(&"vsc") as ProductCardDef
 	h.eq("naming the product's own category", d._sub_icon._category_id,
@@ -53,61 +56,43 @@ func test_an_archetype_name_carries_no_badge() -> void:
 func test_an_empty_table_carries_no_badge_either() -> void:
 	var d := _instance()
 	var c := _cust(&"easygoing", 1)
-	d.show_offer(c, "COOL")           # c.offer is still null
+	d.show_offer(c, "COOL", _meter_scale())           # c.offer is still null
 	h.check("nothing to put a badge on", not d._sub_icon.visible)
 	d.free()
 
-# ----------------------------------------------------- the meter's own memory
-func test_the_meter_scale_never_shrinks_within_the_same_offer() -> void:
-	## The bug: meter_scale() used to be recomputed fresh from whatever appeal
-	## and Line happened to be THIS render, so the bar's own endpoint could
-	## grow AND shrink from one card play to the next - "resizing its highest
-	## point" is exactly what that looked like.
+# --------------------------------------------------------- the meter's scale
+func test_the_meter_scale_is_the_same_fixed_number_regardless_of_appeal_or_line() -> void:
+	## It used to grow (and only ever grow) to fit whatever the current
+	## negotiation needed, which meant the bar's own endpoint was a different
+	## number on every card and every customer. Now it is one number, always -
+	## ShiftConfig.appeal_meter_scale - and neither a low nor a sky-high
+	## appeal/Line changes it.
 	var d := _instance()
+	var scale := _meter_scale()
 	var c := _cust(&"easygoing", 1)
 	c.line = 20
-	c.offer = _offer(&"vsc", 33, 1600)
-	d.show_offer(c, "WARM")
-	var after_33 := d._bar._scale
-	h.eq("40 comfortably covers 33 and a Line of 20", after_33, 40)
+	c.offer = _offer(&"vsc", 5, 1600)
+	d.show_offer(c, "COLD", scale)
+	h.eq("low appeal, low Line: still the configured scale", d._bar._scale, scale)
 
-	c.offer.appeal = 41                # crosses the ten boundary Discount would
-	d.show_offer(c, "WARM")
-	var after_41 := d._bar._scale
-	h.check("it grew, because 41 genuinely needs more room",
-		after_41 > after_33)
+	c.offer.appeal = scale * 3          # deliberately far past the ceiling
+	c.line = scale * 2
+	d.show_offer(c, "WARM", scale)
+	h.eq("appeal and Line both past the ceiling: still the same scale",
+		d._bar._scale, scale)
 
-	c.offer.appeal = 35                # a later card brings it back down
-	d.show_offer(c, "WARM")
-	h.eq("but it does NOT shrink back just because appeal dropped",
-		d._bar._scale, after_41)
-
-func test_a_genuinely_new_offer_starts_the_meter_over() -> void:
-	## place() always builds a fresh Offer, even for the same product placed
-	## twice - so "a new negotiation" is exactly "a different Offer object",
-	## and that is the only thing allowed to reset the memory.
+func test_a_new_offer_does_not_change_the_scale_either() -> void:
+	## The scale has nothing to do with Offer identity any more - there is no
+	## per-negotiation memory left to reset.
 	var d := _instance()
+	var scale := _meter_scale()
 	var c := _cust(&"easygoing", 1)
 	c.line = 20
 	c.offer = _offer(&"vsc", 41, 1600)
-	d.show_offer(c, "WARM")
-	h.check("grown past the default for the first offer", d._bar._scale > 40)
+	d.show_offer(c, "WARM", scale)
+	h.eq("first offer", d._bar._scale, scale)
 
 	c.offer = _offer(&"gap", 15, 1400, 2)   # a different Offer, same customer
-	d.show_offer(c, "COLD")
-	h.eq("a fresh product starts the meter fresh", d._bar._scale, 40)
-
-func test_dropping_the_offer_forgets_the_scale_too() -> void:
-	var d := _instance()
-	var c := _cust(&"easygoing", 1)
-	c.line = 20
-	c.offer = _offer(&"vsc", 41, 1600)
-	d.show_offer(c, "WARM")
-	h.check("grown", d._bar._scale > 40)
-
-	c.offer = null
-	d.show_offer(c, "")
-	c.offer = _offer(&"vsc", 33, 1600, 3)
-	d.show_offer(c, "WARM")
-	h.eq("the empty table in between cleared the memory too", d._bar._scale, 40)
+	d.show_offer(c, "COLD", scale)
+	h.eq("a different offer, same fixed scale", d._bar._scale, scale)
 	d.free()

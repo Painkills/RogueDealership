@@ -1177,14 +1177,25 @@ visibly yank the bar's own endpoint out from under the fill that had just
 grown - exactly the bug report: *"it shouldn't resize or re-render its highest
 point, particularly when using discount cards."*
 
-Fixed by giving the scale somewhere to **live**: `DetailCard3D` now remembers
-which `Offer` its current scale belongs to, and the scale only ever grows, and
-only when the fill or the Line would otherwise overflow it - never shrinks,
-and never resets just because a number moved. `place()` always builds a fresh
-`Offer` object, even for the same product placed twice, so comparing by
-identity is exactly "is this still the same negotiation" with no extra
-bookkeeping. A genuinely new offer - or an empty table - starts the meter over
-for free.
+First fix: give the scale somewhere to **live**, keyed to the `Offer`'s own
+identity, growing only when the fill or the Line would otherwise overflow it
+and never shrinking. That stopped the bar moving under you mid-negotiation,
+but it did not stop the bar showing a DIFFERENT endpoint for every customer
+and every offer - which is its own version of the same problem: a meter you
+have to re-read from scratch every time you sit down is not a meter, it is a
+recalculation. "It should stay at that value at all times for everyone" was
+the next bug report.
+
+Fixed properly by dropping the memory entirely: `ShiftConfig.appeal_meter_scale`
+is one fixed number (80 by default - comfortably above the highest archetype
+Line today, the Budget Hawk's 40, plus real headroom for appeal cards to
+stack), the same for every bar on every card, always. `DetailCard3D` no longer
+tracks which `Offer` it last drew or grows anything - `show_offer()` just
+takes the scale as a parameter, read straight from the model. Appeal or Line
+past the ceiling reads as a full bar rather than breaking anything - the fill
+fraction was already clamped to 1.0 - which is the correct tradeoff: a
+predictable bar that saturates beats a precise one that never means the same
+thing twice.
 
 
 ### Customer cards turn over at a seat now too

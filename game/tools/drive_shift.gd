@@ -1344,8 +1344,8 @@ func _check_the_meter_shows_your_appeal_but_hides_their_line() -> void:
 	_check("and its customer half is not", not det._customer_body.visible)
 	_check("the meter fills with YOUR appeal (%d of %d)" % [bar._appeal, bar._scale],
 		bar._appeal == c.offer.appeal)
-	_check("on a scale that fits both it and the Line",
-		bar._scale >= c.offer.appeal and bar._scale >= c.line)
+	_check("on the model's own fixed scale, not one fitted to this negotiation",
+		bar._scale == _controller._shift.cfg.appeal_meter_scale)
 	_check("the Line marker is hidden until you know it (known=%s)" % c.known_line,
 		bar._line_known == c.known_line)
 	_check("nothing on this card says COOL or WARM any more",

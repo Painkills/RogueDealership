@@ -58,6 +58,16 @@ class_name ShiftConfig extends Resource
 @export var line_per_sale: int = 3
 @export var patience_per_sale: int = 3
 @export var patience_jitter: int = 2
+## The appeal meter's own ceiling - fixed, not fitted to whatever the current
+## negotiation happens to need. It used to grow (and only ever grow) to
+## whatever the live appeal or Line required, which meant the bar's own scale
+## was a different number on every card and every customer - "read this bar"
+## was a skill you had to relearn per negotiation. A flat number instead: pick
+## one comfortably above the highest Line anyone opens at (today's ceiling is
+## the Budget Hawk's 40) plus real headroom for appeal cards to stack on top
+## of it. Appeal or Line past this just reads as a full bar rather than
+## breaking anything - draw() already clamps the fill fraction to 1.0.
+@export var appeal_meter_scale: int = 80
 
 @export var arrival_patience_min_fraction: float = 0.6
 @export var arrival_patience_floor: int = 4

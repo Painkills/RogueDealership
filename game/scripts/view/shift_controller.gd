@@ -625,7 +625,7 @@ func _render_details() -> void:
 		var band := ""
 		if c != null and c.offer != null:
 			band = _shift.band_for(c.line - c.offer.appeal)
-		_offer_details[i].show_offer(c, band)
+		_offer_details[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
