@@ -134,6 +134,18 @@ func _init() -> void:
 	what.add_child(margin_label)
 	margin_label.owner = root
 
+	# Double duty: before any sale this visit it shows the archetype's own
+	# static knobs (line_per_sale / combo_step - the Karen carries the
+	# longest of both in the roster, the actual worst case below, not
+	# generic filler); once c.sales > 0 it switches to the live multiplier
+	# THIS offer would carry, e.g. "x2.35 combo" - a realistic illustrative
+	# figure, not a hard worst case, since a chain has no fixed ceiling, the
+	# same way TableLabel's unsigned list above does not.
+	var combo_now := _label("ComboNowLabel", 26, Palette.color(&"margin"))
+	combo_now.text = "Line +5/sale  ·  Combo +45%/sale"
+	what.add_child(combo_now)
+	combo_now.owner = root
+
 	var appeal_title := _label("AppealTitle", 22, Palette.color(&"text_dim"))
 	appeal_title.text = "APPEAL"
 	what.add_child(appeal_title)

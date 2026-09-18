@@ -36,6 +36,7 @@ var _does: Label
 var _table: Label
 var _known: Label
 var _margin: Label
+var _combo_now: Label
 var _bar: AppealBar
 var _status: Label
 var _hint: Label
@@ -70,6 +71,7 @@ func _bind() -> void:
 	_table = _customer_body.get_node(^"TableLabel")
 	_known = _customer_body.get_node(^"KnownLabel")
 	_margin = _offer_body.get_node(^"MarginLabel")
+	_combo_now = _offer_body.get_node(^"ComboNowLabel")
 	_bar = _offer_body.get_node(^"AppealBar") as AppealBar
 	_status = _offer_body.get_node(^"StatusLabel")
 	_hint = _offer_body.get_node(^"HintLabel")
@@ -118,6 +120,7 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 		_title.text = "nothing on the table"
 		_sub.text = "drag a product onto them" if c != null else ""
 		_sub_icon.set_category(&"", Color.WHITE)
+		_combo_now.visible = false
 		_redraw()
 		return
 
@@ -126,6 +129,16 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 		o.product.interest.display_name]
 	_sub_icon.set_category(o.product.interest.category.id, Palette.color(&"accent"))
 	_margin.text = Format.money(o.margin)
+	_combo_now.visible = true
+	# c.sales is how many products they have ALREADY taken this visit - the
+	# same prior-sales count _settle() itself multiplies by, so the second
+	# branch is a preview of the real number, not a separate guess. Before
+	# any sale there is nothing to preview yet, so this shows the archetype's
+	# own static knobs instead - never hidden, always something to read.
+	if c.sales > 0:
+		_combo_now.text = "×%.2f combo" % (1.0 + c.combo_step * c.sales)
+	else:
+		_combo_now.text = CustomerCard3D.combo_knobs_text(c)
 	_bar.set_state(o.appeal, c.line, meter_scale, band, c.known_line)
 
 	# The FILL is always honest about your own appeal; only the LINE is fogged,

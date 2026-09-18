@@ -60,6 +60,51 @@ func test_an_empty_table_carries_no_badge_either() -> void:
 	h.check("nothing to put a badge on", not d._sub_icon.visible)
 	d.free()
 
+# --------------------------------------------------------------- the combo
+func test_before_any_sale_the_combo_line_shows_the_archetypes_static_knobs() -> void:
+	var d := _instance()
+	var c := _cust(&"karen", 1)
+	c.line = 40
+	c.offer = _offer(&"vsc", 30, 1600)
+	d.show_offer(c, "COOL", _meter_scale())
+	h.check("shown - a first sale still has something worth reading",
+		d._combo_now.visible)
+	h.eq("nothing sold yet, so it reads the archetype's own knobs",
+		d._combo_now.text, CustomerCard3D.combo_knobs_text(c))
+	d.free()
+
+func test_after_a_sale_the_combo_line_shows_the_live_multiplier() -> void:
+	var d := _instance()
+	var c := _cust(&"karen", 1)
+	c.line = 40
+	c.combo_step = 0.5
+	c.sales = 2   # two products already taken this visit
+	c.offer = _offer(&"vsc", 30, 1600)
+	d.show_offer(c, "COOL", _meter_scale())
+	h.eq("previews the multiplier THIS offer would land at if it sells",
+		d._combo_now.text, "×%.2f combo" % (1.0 + c.combo_step * c.sales))
+	d.free()
+
+func test_the_combo_line_hides_with_no_offer_on_the_table() -> void:
+	var d := _instance()
+	var c := _cust(&"karen", 1)
+	d.show_offer(c, "COOL", _meter_scale())           # c.offer is still null
+	h.check("nothing on the table, nothing to combo", not d._combo_now.visible)
+	d.free()
+
+func test_the_combo_line_reappears_once_a_second_offer_lands() -> void:
+	## _combo_now.visible only ever gets set to false in the o == null branch -
+	## a real toggle, not a fresh node each time, has to prove it comes back.
+	var d := _instance()
+	var c := _cust(&"karen", 1)
+	d.show_offer(c, "COOL", _meter_scale())
+	h.check("hidden with nothing on the table", not d._combo_now.visible)
+	c.offer = _offer(&"vsc", 30, 1600)
+	d.show_offer(c, "COOL", _meter_scale())
+	h.check("visible again the moment there is something to show",
+		d._combo_now.visible)
+	d.free()
+
 # --------------------------------------------------------- the meter's scale
 func test_the_meter_scale_is_the_same_fixed_number_regardless_of_appeal_or_line() -> void:
 	## It used to grow (and only ever grow) to fit whatever the current
