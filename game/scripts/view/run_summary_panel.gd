@@ -1,5 +1,5 @@
 extends PanelContainer
-## The end-of-run screen: the five Score categories and the high score they
+## The end-of-run screen: the six Score categories and the high score they
 ## add up to. Shown once the run is over - either all five shifts played, or
 ## standing hit 0 first - covering the last shift's own CLOSING TIME report
 ## the same way that report already covers the floor.
@@ -11,7 +11,8 @@ var _margin: Label
 var _standing: Label
 var _standing_lost: Label
 var _walkouts: Label
-var _combo: Label
+var _streak: Label
+var _combo_multiplier: Label
 var _total: Label
 var _restart: Button
 var _bound := false
@@ -31,7 +32,8 @@ func _bind() -> void:
 	_standing = %StandingLabel
 	_standing_lost = %StandingLostLabel
 	_walkouts = %WalkoutsLabel
-	_combo = %ComboLabel
+	_streak = %StreakLabel
+	_combo_multiplier = %ComboMultiplierLabel
 	_total = %TotalLabel
 	_restart = %RestartButton
 	_restart.pressed.connect(func(): continue_pressed.emit())
@@ -51,8 +53,10 @@ func setup(score: Dictionary, fired: bool) -> void:
 		int(score["standing_lost_points"]))
 	_set_line(_walkouts, "Customers walked", str(score["walkouts"]),
 		int(score["walkout_points"]))
-	_set_line(_combo, "Best streak closed with no walkout",
-		"%d in a row" % score["best_combo"], int(score["combo_points"]))
+	_set_line(_streak, "Best streak closed with no walkout",
+		"%d in a row" % score["best_streak"], int(score["streak_points"]))
+	_set_line(_combo_multiplier, "Best combo multiplier this run",
+		"×%.2f" % score["best_combo_multiplier"], int(score["combo_multiplier_points"]))
 
 	_total.text = "HIGH SCORE: %d" % int(score["total"])
 

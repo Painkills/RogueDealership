@@ -22,7 +22,7 @@ var last_bonus: int = 0              ## what the shift just played added to it
 var banked_total: int = 0
 var standing: int                    ## the run's HP - no inline default, _init sets it from cfg
 var reports: Array[Dictionary] = []
-var combo_streak: int = 0            ## carried shift to shift - see Shift.combo_streak
+var sale_streak: int = 0             ## carried shift to shift - see Shift.sale_streak
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int) -> void:
@@ -47,7 +47,7 @@ func quota_for(n: int) -> int:
 func start_shift() -> Shift:
 	return Shift.new(cfg, interests, card_pool, archetypes,
 		rng.randi(), [], deck, quota_for(shift_number), shift_number, standing,
-		combo_streak)
+		sale_streak)
 
 func finish_shift(report: Dictionary) -> void:
 	## The quota is the house's cut and it comes out first. What you bank OVER it
@@ -73,7 +73,7 @@ func finish_shift(report: Dictionary) -> void:
 	# report by hand with only the keys their own assertion needs, exactly as
 	# this project's tests already do for every other key - a fabricated dict
 	# missing this one should carry the streak forward unchanged, not crash.
-	combo_streak = int(report.get("combo_streak_end", combo_streak))
+	sale_streak = int(report.get("sale_streak_end", sale_streak))
 
 static func bonus_from(report: Dictionary) -> int:
 	## Static because the report panel needs this number BEFORE finish_shift runs

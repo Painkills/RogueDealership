@@ -44,11 +44,13 @@ var served: int = 0
 ## The run-long "closed without a walkout" streak, carried in from RunState at
 ## construction exactly like standing - one customer signing bumps it, one
 ## customer walking (anywhere on the floor, not just theirs) zeroes it.
-## combo_events is the ordered sequence of streak values THIS shift's own
-## closes landed on - Score reads it to turn "how long was each streak" into
-## points without Shift itself knowing anything about scoring.
-var combo_streak: int = 0
-var combo_events: Array[int] = []
+## sale_streak_events is the ordered sequence of streak values THIS shift's
+## own closes landed on - Score reads it to turn "how long was each streak"
+## into points without Shift itself knowing anything about scoring.
+## Unrelated to Customer.combo_step / Shift.peak_combo_multiplier below - this
+## is a floor-wide, cross-shift streak, not the per-customer margin combo.
+var sale_streak: int = 0
+var sale_streak_events: Array[int] = []
 
 var _forced: Array = []
 var _forced_next: int = 0
@@ -58,7 +60,7 @@ var _name_pool: Array = []
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int, p_forced: Array = [],
 		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1,
-		p_standing: int = 0, p_combo_streak: int = 0) -> void:
+		p_standing: int = 0, p_sale_streak: int = 0) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
@@ -72,7 +74,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	quota = p_quota if p_quota > 0 else cfg.quota
 	standing = p_standing if p_standing > 0 else cfg.standing_start
 	_initial_standing = standing
-	combo_streak = p_combo_streak
+	sale_streak = p_sale_streak
 	for key in ["cards_played", "offers", "failed_offers", "offers_dropped",
 			"sales", "places", "digs", "approaches", "actions_fired",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
@@ -204,7 +206,7 @@ func _walk(chair: int) -> void:
 	var lost: int = c.unsigned_margin()
 	lost_to_walks += lost
 	stat["customers_walked"] = int(stat["customers_walked"]) + 1
-	combo_streak = 0   # one walkout, anywhere on the floor, breaks the streak
+	sale_streak = 0   # one walkout, anywhere on the floor, breaks the streak
 	if c.offer != null:
 		discard.append(c.offer.instance)
 		c.offer = null
@@ -688,8 +690,8 @@ func close() -> Result:
 	margin_banked += banked
 	c.state = "signed"
 	stat["customers_signed"] = int(stat["customers_signed"]) + 1
-	combo_streak += 1
-	combo_events.append(combo_streak)
+	sale_streak += 1
+	sale_streak_events.append(sale_streak)
 	events.append("[%s] %s signs for $%d." % [c.key, c.display_name, banked])
 	if last_customer == c:
 		last_customer = null
@@ -919,8 +921,8 @@ func report() -> Dictionary:
 		"ticks_approach": int(stat["ticks_approach"]),
 		"demands_met": int(stat["demands_met"]),
 		"demands_missed": int(stat["demands_missed"]),
-		"combo_streak_end": combo_streak,
-		"combo_events": combo_events.duplicate(),
+		"sale_streak_end": sale_streak,
+		"sale_streak_events": sale_streak_events.duplicate(),
 	}
 
 

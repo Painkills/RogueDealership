@@ -53,7 +53,7 @@ func _init() -> void:
 
 	_divider(vbox, root, "TitleRule")
 
-	# --- the five scoring categories, one line each, in the order the player
+	# --- the six scoring categories, one line each, in the order the player
 	# earned them across the run: what you made, what you kept, what it cost.
 	var margin := _label(vbox, root, "MarginLabel", "", 24)
 	margin.unique_name_in_owner = true
@@ -67,8 +67,11 @@ func _init() -> void:
 	var walkouts := _label(vbox, root, "WalkoutsLabel", "", 24)
 	walkouts.unique_name_in_owner = true
 
-	var combo := _label(vbox, root, "ComboLabel", "", 24)
-	combo.unique_name_in_owner = true
+	var streak := _label(vbox, root, "StreakLabel", "", 24)
+	streak.unique_name_in_owner = true
+
+	var combo_multiplier := _label(vbox, root, "ComboMultiplierLabel", "", 24)
+	combo_multiplier.unique_name_in_owner = true
 
 	_divider(vbox, root, "TotalRule")
 
