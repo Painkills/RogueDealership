@@ -286,12 +286,16 @@ func test_close_is_the_only_thing_that_banks() -> void:
 	h.eq("the chair is empty", s.chairs[0], null)
 	h.eq("and you are back on the floor", s.at, null)
 
-func test_close_with_nothing_sold_is_legal_and_banks_zero() -> void:
+func test_close_with_nothing_sold_is_refused() -> void:
+	## Closing empty used to be a free "give up on this one" button - the only
+	## way to shed a customer you will not sell to is now to let their patience
+	## run out (which costs standing when they walk). A future effect/card can
+	## grant a one-time bypass ("strike") without this refusal itself changing.
 	var s := _shift([&"easygoing", &"easygoing"])
-	_at(s)
-	h.check("dismissing an unsold customer is allowed", s.close().ok)
+	var c := _at(s)
+	h.check("nothing to sign, so closing is refused", not s.close().ok)
 	h.eq("banks nothing", s.margin_banked, 0)
-	h.eq("chair freed", s.chairs[0], null)
+	h.eq("they are still sitting there", s.chairs[0], c)
 
 func test_walking_forfeits_the_entire_unsigned_deal() -> void:
 	var s := _shift([&"easygoing", &"easygoing"])

@@ -570,6 +570,17 @@ func _render() -> void:
 	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
 		if risk > 0 else "nothing unsigned"
 
+	# The clock's own counterpart to a customer's patience going red: few
+	# ticks left costs every unsigned deal on the floor, not just one chair,
+	# so this fires off the whole shift's clock rather than anyone's patience.
+	var low_on_time: bool = _shift.ticks_running_low()
+	_tick_label.add_theme_color_override("font_color",
+		Palette.color(&"alert") if low_on_time else Palette.color(&"text"))
+	if low_on_time and risk > 0:
+		_at_risk_label.add_theme_color_override("font_color", Palette.color(&"alert"))
+	else:
+		_at_risk_label.remove_theme_color_override("font_color")
+
 	_apply_framing()
 
 	var seated: bool = _shift.at != null
@@ -586,6 +597,13 @@ func _render() -> void:
 	_render_details()
 	_render_hover_flip()
 	_action_bar.visible = seated and not _report_overlay.visible
+	# Nudges you to close out before the bell, but only when there is
+	# something on THIS table actually worth closing - close() refuses an
+	# empty hand now, so highlighting it with nothing unsigned would be a lie.
+	var current: Customer = _shift.chairs[int(_shift.at)] if seated else null
+	_close_btn.modulate = Palette.color(&"alert") \
+		if (low_on_time and current != null and not current.unsigned.is_empty()) \
+		else Color.WHITE
 	_reconcile()
 	_drain_log()
 

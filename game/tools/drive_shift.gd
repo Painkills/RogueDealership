@@ -103,6 +103,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_detail_card_shows_what_they_do()
 	_check_the_action_buttons_stay_on_screen()
 	_check_hud_does_not_overlap_itself()
+	_check_the_clock_warns_when_time_is_short()
 	_check_table("after approaching chair A")
 
 	_check_the_mode_button_flips()
@@ -119,6 +120,12 @@ func _physics_process(_delta: float) -> bool:
 	_press(KEY_O);            _settle(); _check_table("after offering")
 	_check_the_meter_keeps_the_line_fogged_after_you_have_asked()
 	_put_the_line_back()
+	# The product that missed above is still sitting on the table (a miss never
+	# clears an offer) - offer it again now the Line is back to something
+	# reachable, so there is actually something unsigned to close below. close()
+	# refuses an empty hand now (see shift.gd) - closing on nothing was never
+	# the point of this sequence, only a convenient way to vacate the chair.
+	_press(KEY_O);             _settle(); _check_table("after offering again")
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
 	_press(KEY_B);            _settle(); _check_table("after approaching chair B")
@@ -1520,6 +1527,51 @@ func _check_hud_does_not_overlap_itself() -> void:
 
 	for pair in [["action column", bar], ["return button", mode]]:
 		_on_screen(pair[0], pair[1])
+
+## The clock's own counterpart to _check_the_meter_climbs_and_changes_colour -
+## few ticks left has to be as loud as a customer's patience going red, and
+## the close button should only join in when there is actually something on
+## THIS table worth signing (close() refuses an empty hand now).
+func _check_the_clock_warns_when_time_is_short() -> void:
+	if _controller._shift.at == null:
+		_check("still seated to check the clock warning", false)
+		return
+	var s = _controller._shift
+	var c = s.chairs[_at()]
+	if c == null:
+		_check("someone seated to check the clock warning", false)
+		return
+	var was_tick: int = s.tick
+	var was_unsigned: Array[Dictionary] = c.unsigned.duplicate()
+
+	s.tick = 0
+	c.unsigned.clear()
+	_controller._render()
+	_check("plenty of time: the tick counter reads normally",
+		_controller._tick_label.get_theme_color("font_color") == Palette.color(&"text"))
+	_check("plenty of time: the close button is not highlighted",
+		_controller._close_btn.modulate == Color.WHITE)
+
+	s.tick = s.tick_budget - s.cfg.low_tick_warning
+	_controller._render()
+	_check("few ticks left: the tick counter turns to alert",
+		_controller._tick_label.get_theme_color("font_color") == Palette.color(&"alert"))
+	_check("few ticks left but nothing unsigned: the close button stays put "
+		+ "(closing it would just be refused)",
+		_controller._close_btn.modulate == Color.WHITE)
+	_check("and the unsigned total is not flagged with nothing unsigned",
+		_controller._at_risk_label.get_theme_color("font_color") != Palette.color(&"alert"))
+
+	c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
+	_controller._render()
+	_check("few ticks left with something to sign: the close button lights up",
+		_controller._close_btn.modulate == Palette.color(&"alert"))
+	_check("and the unsigned total is flagged too",
+		_controller._at_risk_label.get_theme_color("font_color") == Palette.color(&"alert"))
+
+	s.tick = was_tick
+	c.unsigned = was_unsigned
+	_controller._render()
 
 # --- the table matches the model -------------------------------------------
 

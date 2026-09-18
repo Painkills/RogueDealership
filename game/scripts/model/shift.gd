@@ -130,6 +130,15 @@ func margin_at_risk() -> int:
 	return total
 
 
+## The shift-wide counterpart to Customer.leaving_soon() - that one warns you
+## a PERSON is about to walk; this one warns the whole FLOOR is about to close,
+## taking every unsigned deal on it with it (see report()'s
+## margin_lost_to_closing). False once the shift is already over - there is
+## nothing left to warn about by then.
+func ticks_running_low() -> bool:
+	return not is_over() and (tick_budget - tick) <= cfg.low_tick_warning
+
+
 # ------------------------------------------------------------------ the tick
 func _burn(n: int, kind: String) -> void:
 	## The single choke point for time. Effects have ALREADY resolved by the
@@ -681,6 +690,14 @@ func close() -> Result:
 	if pair[1] != null:
 		return pair[1]
 	var c: Customer = pair[0]
+	# Closing empty used to be a free "give up on this one" button - now the
+	# only way to shed a customer you will not sell to is to let their patience
+	# run out (which costs standing when they walk). A future effect/card can
+	# grant a one-time bypass here ("strike") without this check itself moving.
+	if c.unsigned.is_empty():
+		return Result.new(false,
+			"%s hasn't agreed to anything yet - sell them something first."
+			% c.display_name)
 	# Not just any sale in the category - her own bottom third (the same
 	# three-wide tail make_ranks() reserves for bottom_interests) is excluded,
 	# so satisfying her always costs something she would actually call "what I

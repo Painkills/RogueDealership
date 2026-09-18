@@ -72,6 +72,10 @@ class_name ShiftConfig extends Resource
 @export var arrival_patience_min_fraction: float = 0.6
 @export var arrival_patience_floor: int = 4
 @export var leaving_soon_at: int = 4
+## Ticks remaining in the WHOLE SHIFT, not one customer's patience, at which
+## the clock starts warning you to close out what is unsigned before the bell
+## takes it for free. See Shift.ticks_running_low().
+@export var low_tick_warning: int = 4
 
 # --- demands ---------------------------------------------------------------
 ## How long a customer sits before they may ask you for anything. Walking up
