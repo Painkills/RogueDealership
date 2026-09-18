@@ -10,3 +10,5 @@ id = &"easygoing"
 display_name = "Easygoing"
 pattern = "Basic increase of line as sales increase."
 tell = "Pleasant, unhurried, no strong opinions about anything."
+line_per_sale = 2
+combo_step = 0.15

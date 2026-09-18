@@ -380,8 +380,12 @@ func test_the_karen_will_not_sign_without_what_she_came_for() -> void:
 	_hand(s, [&"vsc"])
 	s.place(0); s.offer()               # Vehicle
 	h.check("now she signs", s.close().ok)
-	var expected: int = s.card_pool.by_id(&"gap").margin + s.card_pool.by_id(&"vsc").margin
-	h.eq("banking both", s.margin_banked, expected)
+	# gap sold first (no prior sales, unmultiplied); vsc second, carrying
+	# Karen's own combo multiplier for one prior sale.
+	var expected: int = s.card_pool.by_id(&"gap").margin \
+		+ roundi(s.card_pool.by_id(&"vsc").margin * (1.0 + c.combo_step))
+	h.eq("banking both, the second sale carrying its combo multiplier",
+		s.margin_banked, expected)
 
 func test_the_karen_wont_settle_for_her_own_least_favorite_in_the_category() -> void:
 	## "give them what they actually came in for" - her own pattern text. The
@@ -402,8 +406,12 @@ func test_the_karen_wont_settle_for_her_own_least_favorite_in_the_category() -> 
 	_hand(s, [&"vsc"])                 # reliability - her actual number one
 	s.place(0); s.offer()
 	h.check("her real number one finally does", s.close().ok)
-	var expected: int = s.card_pool.by_id(&"perf").margin + s.card_pool.by_id(&"vsc").margin
-	h.eq("banking both sales", s.margin_banked, expected)
+	# perf sold first (no prior sales, unmultiplied); vsc second, carrying
+	# Karen's own combo multiplier for one prior sale.
+	var expected: int = s.card_pool.by_id(&"perf").margin \
+		+ roundi(s.card_pool.by_id(&"vsc").margin * (1.0 + c.combo_step))
+	h.eq("banking both sales, the second carrying its combo multiplier",
+		s.margin_banked, expected)
 
 func test_the_karen_still_walks_when_her_patience_runs_out() -> void:
 	var s := _shift([&"karen", &"easygoing"])

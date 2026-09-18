@@ -8,7 +8,13 @@ class_name CustomerArchetype extends Resource
 @export_multiline var tell: String       ## what you see on arrival
 @export var line: int = 35
 @export var patience: int = 16
-@export var line_per_sale: int = 3       ## Family First runs at 0
+@export var line_per_sale: int = 3       ## Lay-Down Larry runs at 0
+## Extra margin multiplier per product ALREADY sold to this customer this
+## visit - see Shift._settle(). Low for an easy moneybag (cheap to chain,
+## not very lucrative to), high for someone worth the trouble of keeping
+## seated. Every archetype sets this explicitly; nothing should rely on this
+## default. Unrelated to Shift.sale_streak, a separate floor-wide streak.
+@export var combo_step: float = 0.15
 @export var top_interests: Array[Interest]
 @export var bottom_interests: Array[Interest]
 @export var demands_category: bool = false

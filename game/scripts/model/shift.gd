@@ -52,6 +52,13 @@ var served: int = 0
 var sale_streak: int = 0
 var sale_streak_events: Array[int] = []
 
+## The highest per-sale combo multiplier (Customer.combo_step x prior sales
+## this visit) reached anywhere in this shift - Score reads it, the same way
+## it reads sale_streak_events, to turn "what happened" into points without
+## Shift knowing anything about scoring. 1.0 (no bonus) is the floor, not 0 -
+## nobody ever scores WORSE than the no-combo baseline for this category.
+var peak_combo_multiplier: float = 1.0
+
 var _forced: Array = []
 var _forced_next: int = 0
 var _name_pool: Array = []
@@ -616,7 +623,13 @@ func _settle(c: Customer) -> Dictionary:
 	var o = c.offer
 	if o == null or o.appeal < c.line:
 		return {}
-	var sale := {"product": o.product, "margin": o.margin, "bonus": 0}
+	# c.sales is PRIOR sales this visit only - it has not been incremented
+	# for this one yet, so the first sale always multiplies by exactly 1.0.
+	var multiplier: float = 1.0 + c.combo_step * c.sales
+	peak_combo_multiplier = maxf(peak_combo_multiplier, multiplier)
+	var margin := roundi(o.margin * multiplier)
+	var sale := {"product": o.product, "margin": margin, "bonus": 0,
+		"combo_margin": margin - o.margin}
 	c.unsigned.append(sale)
 	c.sales += 1
 	c.line += c.line_per_sale
@@ -624,8 +637,9 @@ func _settle(c: Customer) -> Dictionary:
 	discard.append(o.instance)
 	c.offer = null
 	stat["sales"] = int(stat["sales"]) + 1
-	events.append("[%s] agrees to %s - unsigned."
-		% [c.key, sale["product"].display_name])
+	events.append("[%s] agrees to %s - unsigned%s."
+		% [c.key, sale["product"].display_name,
+			" (×%.1f combo)" % multiplier if multiplier > 1.0 else ""])
 	return sale
 
 
@@ -923,6 +937,7 @@ func report() -> Dictionary:
 		"demands_missed": int(stat["demands_missed"]),
 		"sale_streak_end": sale_streak,
 		"sale_streak_events": sale_streak_events.duplicate(),
+		"peak_combo_multiplier": peak_combo_multiplier,
 	}
 
 

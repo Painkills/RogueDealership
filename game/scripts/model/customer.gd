@@ -12,6 +12,7 @@ var ranks: Dictionary              ## interest id -> 1..9. Hidden from the playe
 var line: int                      ## how high Appeal must climb before yes
 var start_line: int
 var line_per_sale: int
+var combo_step: float              ## see CustomerArchetype.combo_step
 var patience: int
 var max_patience: int
 
@@ -64,6 +65,7 @@ func _init(p_key: String, p_name: String, p_arch: CustomerArchetype,
 	line = p_arch.line
 	start_line = p_arch.line
 	line_per_sale = p_arch.line_per_sale
+	combo_step = p_arch.combo_step
 	patience = p_patience
 	max_patience = p_max
 	_interests = p_interests

@@ -32,5 +32,7 @@ display_name = "Tire Kicker"
 pattern = "Do not diagnose. Sell them SOMETHING, now."
 tell = "keeps glancing at the lot, half out of the chair already"
 patience = 9
+line_per_sale = 4
+combo_step = 0.15
 min_shift = 3
 actions = Array[ExtResource("1_apes3")]([SubResource("Resource_fjiux")])
