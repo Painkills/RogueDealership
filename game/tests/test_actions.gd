@@ -21,7 +21,8 @@ func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 	return Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), 1, floor_ids)
+		load("res://data/archetype_pool.tres"), 1, floor_ids,
+		null, 0, 1, 0, 0, load("res://data/dialogue/dialogue_pool.tres"))
 
 func _rank(c: Customer, order: Array) -> void:
 	var rest := []

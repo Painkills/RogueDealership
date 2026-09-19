@@ -21,7 +21,13 @@ class_name Demand extends Resource
 ## SHORT. This goes above their head on a card that may be 180px wide, so it
 ## is a shout and not a sentence: "MANAGER?", "BETTER QUOTE", "THINKING".
 @export var telegraph: String
-@export var dialogue: String              ## spoken when they raise it
+## Which DialoguePool tag(s) a settled demand draws its spoken line from -
+## separate pools for met vs missed, since they are different emotional
+## registers, not one blended tag. The RAISE itself speaks through the
+## CustomerAction.dialogue_tags of whatever action's RaiseDemand effect
+## opened this demand, not through here.
+@export var dialogue_tags_met: Array[StringName] = []
+@export var dialogue_tags_missed: Array[StringName] = []
 @export var ticks: int = 3                ## a. the fuse
 @export var resolve: DemandResolve        ## b. what answers it
 @export var effects: Array[Effect]        ## c. what ignoring it costs

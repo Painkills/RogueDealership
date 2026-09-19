@@ -112,6 +112,37 @@ func test_every_card_asks_only_for_tags_that_exist() -> void:
 			h.check("%s asks only for a declared tag (%s)" % [c.id, t],
 				pool.known_tags.has(t))
 
+func test_every_archetype_actions_tags_are_declared() -> void:
+	var pool := _pool()
+	var archetypes: ArchetypePool = load("res://data/archetype_pool.tres")
+	for arch in archetypes.archetypes:
+		for act in arch.actions:
+			for t in act.dialogue_tags:
+				h.check("%s's %s asks only for a declared tag (%s)"
+						% [arch.id, act.id, t], pool.known_tags.has(t))
+
+func test_every_demand_reachable_from_an_archetype_has_declared_tags() -> void:
+	## Demands are not pooled - reached only through whichever archetype
+	## action's RaiseDemand effect opens them - so this walks the same path
+	## the real game does to find every one that exists.
+	var pool := _pool()
+	var archetypes: ArchetypePool = load("res://data/archetype_pool.tres")
+	var seen := {}
+	for arch in archetypes.archetypes:
+		for act in arch.actions:
+			for e in act.effects:
+				if e is RaiseDemand and e.demand != null and not seen.has(e.demand.id):
+					seen[e.demand.id] = true
+					var d: Demand = e.demand
+					for t in d.dialogue_tags_met:
+						h.check("%s's met tag is declared (%s)" % [d.id, t],
+							pool.known_tags.has(t))
+					for t in d.dialogue_tags_missed:
+						h.check("%s's missed tag is declared (%s)" % [d.id, t],
+							pool.known_tags.has(t))
+	h.check("found at least the five shipped demands (%d)" % seen.size(),
+		seen.size() >= 5)
+
 # ------------------------------------------------------------- the filters
 func test_a_line_is_only_offered_to_the_pools_it_is_tagged_for() -> void:
 	var patience_line := "\"Ha. The 401 was a parking lot this morning too.\""
@@ -317,3 +348,40 @@ func test_a_card_played_on_an_empty_table_never_mentions_a_product() -> void:
 	if chosen != null:
 		h.check("it names no specific product - none was on the table",
 			chosen.product_ids.is_empty())
+
+# ------------------------------------------ the migrated action/demand dialogue
+func test_a_demand_raise_still_speaks_after_the_migration() -> void:
+	var s := _shift([&"karen"])
+	var c := _at(s)
+	c.ticks_on_floor = s.cfg.demand_grace_ticks
+	var guard := 0
+	while c.demand == null and guard < 100:
+		s.dig(0)
+		guard += 1
+	h.check("she actually raised it", c.demand != null)
+	h.check("something reached the log", not s.action_log.is_empty())
+	h.check("and it carries a spoken line - CustomerAction.dialogue_tags "
+			+ "still works after replacing the old fixed dialogue string",
+		s.action_log[-1]["dialogue"] != "")
+
+func test_a_met_demand_finally_says_something() -> void:
+	## Previously hardcoded to "" unconditionally - a demand being satisfied
+	## has never spoken until this migration.
+	var s := _shift([&"karen"])
+	var c := _at(s)
+	var d: Demand = load("res://data/demands/manager.tres")
+	c.demand = d
+	c.demand_due_tick = s.tick + d.ticks
+	s._settle_demand(c, true)
+	var entry: Dictionary = s.action_log[0]
+	h.check("says something on relief", entry["dialogue"] != "")
+	h.check("in the house voice", str(entry["dialogue"]).begins_with("\""))
+
+func test_a_missed_demand_also_says_something() -> void:
+	var s := _shift([&"karen"])
+	var c := _at(s)
+	var d: Demand = load("res://data/demands/manager.tres")
+	c.demand = d
+	c.demand_due_tick = s.tick + d.ticks
+	s._settle_demand(c, false)
+	h.check("says something when ignored too", s.action_log[0]["dialogue"] != "")

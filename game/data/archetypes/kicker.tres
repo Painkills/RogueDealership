@@ -21,7 +21,7 @@ script = ExtResource("1_apes3")
 id = &"antsy"
 display_name = "Half out of the chair already"
 tell = "every 4 ticks he wants a price. Ask him for the business within 3 ticks or he WALKS"
-dialogue = "\"How long is this going to take?\""
+dialogue_tags = Array[StringName]([&"demand_restless"])
 trigger = SubResource("Resource_fxv8q")
 effects = Array[ExtResource("2_4sgf7")]([SubResource("Resource_i7tpi")])
 

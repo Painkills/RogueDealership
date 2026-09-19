@@ -861,13 +861,27 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 
 	stat["demands_met" if met else "demands_missed"] = \
 		int(stat["demands_met" if met else "demands_missed"]) + 1
+
+	# What they say once it's settled - previously always silent (this key
+	# was hardcoded ""), since the RAISE was the only moment that ever spoke.
+	# Met and missed draw from separate tags: relief and a shrug are
+	# different registers, not one blended pool.
+	var said := ""
+	if dialogue != null:
+		var tags: Array[StringName] = d.dialogue_tags_met if met else d.dialogue_tags_missed
+		if not tags.is_empty():
+			var product_id: StringName = c.offer.product.id if c.offer else &""
+			var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
+				if c.offer else &""
+			said = dialogue.pick(rng, tags, c.archetype.id, product_id, band)
+
 	# Same shape fire() appends, so _drain_log() renders it without knowing a
 	# demand from an ordinary action.
 	action_log.append({
 		"key": c.key,
 		"customer": c.display_name,
 		"name": "%s - %s" % [d.display_name, "handled" if met else "IGNORED"],
-		"dialogue": "",
+		"dialogue": said,
 		"descriptions": descriptions,
 		"floor_wide": floor_wide,
 	})
@@ -943,12 +957,22 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 			stat["margin_bonus"] = int(stat["margin_bonus"]) \
 				+ int(ctx.sale.get("bonus", 0)) - bonus_before
 
+		# What they say when this fires - same post-effect product/band read
+		# _support() uses, for the same reason: react to where things ARE.
+		var said := ""
+		if dialogue != null and not act.dialogue_tags.is_empty():
+			var product_id: StringName = c.offer.product.id if c.offer else &""
+			var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
+				if c.offer else &""
+			said = dialogue.pick(rng, act.dialogue_tags, c.archetype.id,
+				product_id, band)
+
 		stat["actions_fired"] = int(stat["actions_fired"]) + 1
 		action_log.append({
 			"key": c.key,
 			"customer": c.display_name,
 			"name": act.display_name,
-			"dialogue": act.dialogue,
+			"dialogue": said,
 			"descriptions": descriptions,
 			"floor_wide": floor_wide,
 		})

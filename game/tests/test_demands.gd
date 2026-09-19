@@ -33,7 +33,8 @@ func _made_up(ticks: int, resolve: DemandResolve, effects: Array[Effect],
 	d.id = &"test_demand"
 	d.display_name = "Wants a thing"
 	d.telegraph = "THING?"
-	d.dialogue = "\"Well?\""
+	d.dialogue_tags_met = [&"relief"]
+	d.dialogue_tags_missed = [&"ignored"]
 	d.ticks = ticks
 	d.resolve = resolve
 	d.effects = effects

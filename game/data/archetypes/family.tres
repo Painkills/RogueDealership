@@ -24,7 +24,7 @@ script = ExtResource("1_syiqa")
 id = &"thinking"
 display_name = "Needs a minute to talk it over"
 tell = "every 6 ticks. Work someone else for 3 and they come back easier, or lose 5 patience"
-dialogue = "\"Could we have a moment?\""
+dialogue_tags = Array[StringName]([&"demand_thinking"])
 trigger = SubResource("Resource_5stk6")
 effects = Array[ExtResource("2_q8rar")]([SubResource("Resource_r4edv")])
 
