@@ -124,7 +124,6 @@ func _init() -> void:
 	body_row.name = "BodyRow"
 	body_row.add_theme_constant_override("separation", 10)
 	body_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	body_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(body_row)
 	body_row.owner = root
 
@@ -144,6 +143,26 @@ func _init() -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body_row.add_child(body)
 	body.owner = root
+
+	var flavor_rule := ColorRect.new()
+	flavor_rule.name = "FlavorRule"
+	flavor_rule.custom_minimum_size = Vector2(0, 3)
+	flavor_rule.color = Palette.color(&"neutral_2")
+	col.add_child(flavor_rule)
+	flavor_rule.owner = root
+
+	# The authored CardDef.text, unused anywhere until now - dimmer and smaller
+	# than BodyLabel so it reads as color commentary, not a second rules line,
+	# and EXPAND_FILL so it (not BodyRow, now its natural size) is what absorbs
+	# whatever vertical slack a short card leaves, keeping MarginLabel pinned
+	# near the bottom on every card rather than drifting with flavor length.
+	var flavor := _label("FlavorLabel", 30, Palette.color(&"text_dim"))
+	flavor.text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."   # longest CardText.flavor()
+	flavor.autowrap_mode = TextServer.AUTOWRAP_WORD
+	flavor.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	flavor.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(flavor)
+	flavor.owner = root
 
 	var money := _label("MarginLabel", 68, Palette.color(&"margin"))
 	money.text = "$1,600"   # longest CardText.margin()

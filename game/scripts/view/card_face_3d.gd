@@ -32,6 +32,7 @@ var _kind: Label
 var _kind_icon: CardTypeIconControl
 var _body: Label
 var _body_icon: CategoryIconControl
+var _flavor: Label
 var _margin: Label
 
 func _ready() -> void:
@@ -56,6 +57,7 @@ func _bind() -> void:
 	_kind_icon = front.get_node(^"Margin/Column/KindRow/KindIcon")
 	_body = front.get_node(^"Margin/Column/BodyRow/BodyLabel")
 	_body_icon = front.get_node(^"Margin/Column/BodyRow/BodyIcon")
+	_flavor = front.get_node(^"Margin/Column/FlavorLabel")
 	_margin = front.get_node(^"Margin/Column/MarginLabel")
 
 	_viewport.size = FRONT_SIZE
@@ -88,6 +90,7 @@ func setup(inst: CardInstance) -> void:
 		_body_icon.set_category(p.interest.category.id, Palette.color(&"accent"))
 	else:
 		_body_icon.set_category(&"", Color.WHITE)
+	_flavor.text = CardText.flavor(inst)
 	_margin.text = CardText.margin(inst)
 
 	# The badge and label share one color per type - accent for a product,

@@ -60,6 +60,8 @@ func test_setup_writes_a_products_words_onto_the_face() -> void:
 		(col.get_node(^"MarginLabel") as Label).text, Format.money(vsc.margin))
 	h.eq("tick cost", (col.get_node(^"Header/CostLabel") as Label).text,
 		"%dt" % vsc.ticks)
+	h.eq("the authored flavor text, verbatim",
+		(col.get_node(^"FlavorLabel") as Label).text, vsc.text)
 	c.free()
 
 func test_a_products_body_carries_the_same_badge_the_interest_grid_uses() -> void:
@@ -147,6 +149,8 @@ func test_setup_writes_a_support_cards_effects_onto_the_face() -> void:
 			(discount as SupportCardDef).effects[0].describe()))
 	h.eq("support cards carry no margin of their own",
 		(col.get_node(^"MarginLabel") as Label).text, "")
+	h.eq("the authored flavor text, verbatim",
+		(col.get_node(^"FlavorLabel") as Label).text, discount.text)
 	c.free()
 
 func test_setup_works_before_the_card_is_in_the_tree() -> void:
@@ -202,7 +206,24 @@ func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
 func test_the_long_fields_wrap() -> void:
 	var c := _instance()
 	var col := _front(c)
-	for name in ["Header/NameLabel", "BodyRow/BodyLabel"]:
+	for name in ["Header/NameLabel", "BodyRow/BodyLabel", "FlavorLabel"]:
 		h.check("%s wraps by word" % name,
 			(col.get_node(NodePath(name)) as Label).autowrap_mode == TextServer.AUTOWRAP_WORD)
+	c.free()
+
+func test_flavor_text_reads_as_secondary_not_a_second_rules_line() -> void:
+	## Deliberately excluded from the "big enough" size floor above - the
+	## whole point is that it reads smaller and dimmer than BodyLabel, so a
+	## quick glance lands on the mechanics first. It still needs a shadow to
+	## survive minification, same as every other field on the face.
+	var c := _instance()
+	var col := _front(c)
+	var flavor := col.get_node(^"FlavorLabel") as Label
+	var body := col.get_node(^"BodyRow/BodyLabel") as Label
+	h.eq("dimmer than the main text", flavor.get_theme_color("font_color"),
+		Palette.color(&"text_dim"))
+	h.check("smaller than the mechanical body text",
+		flavor.get_theme_font_size("font_size") < body.get_theme_font_size("font_size"))
+	h.check("still has a shadow to hold an edge when minified",
+		flavor.has_theme_color_override("font_shadow_color"))
 	c.free()

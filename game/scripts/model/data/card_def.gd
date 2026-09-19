@@ -5,8 +5,9 @@ class_name CardDef extends Resource
 
 @export var id: StringName
 @export var display_name: String
-## Flavour only. The MECHANICAL text is generated from Effect.describe(), so
-## what is printed can never drift from what executes.
+## Flavour only, printed on the card face below the mechanics (CardText.flavor,
+## FlavorLabel). The MECHANICAL text is instead generated from
+## Effect.describe(), so what is printed can never drift from what executes.
 @export_multiline var text: String
 @export var ticks: int = 1
 @export var copies: int = 1

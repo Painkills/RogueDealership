@@ -16,6 +16,7 @@ var _kind: Label
 var _kind_icon: CardTypeIconControl
 var _body: Label
 var _body_icon: CategoryIconControl
+var _flavor: Label
 var _margin: Label
 var _bound := false
 
@@ -36,6 +37,7 @@ func _bind() -> void:
 	_kind_icon = front.get_node(^"Margin/Column/KindRow/KindIcon")
 	_body = front.get_node(^"Margin/Column/BodyRow/BodyLabel")
 	_body_icon = front.get_node(^"Margin/Column/BodyRow/BodyIcon")
+	_flavor = front.get_node(^"Margin/Column/FlavorLabel")
 	_margin = front.get_node(^"Margin/Column/MarginLabel")
 
 	_viewport.size = FRONT_SIZE
@@ -76,6 +78,7 @@ func show_card(inst: CardInstance) -> void:
 		_body_icon.set_category(p.interest.category.id, Palette.color(&"accent"))
 	else:
 		_body_icon.set_category(&"", Color.WHITE)
+	_flavor.text = CardText.flavor(inst)
 	_margin.text = CardText.margin(inst)
 	var kind_color := Palette.color(&"accent") if inst.is_product() else Palette.color(&"action")
 	_kind.add_theme_color_override("font_color", kind_color)
@@ -94,4 +97,5 @@ func clear() -> void:
 	_kind_icon.visible = false
 	_body.text = "to see it here"
 	_body_icon.set_category(&"", Color.WHITE)
+	_flavor.text = ""
 	_margin.text = ""

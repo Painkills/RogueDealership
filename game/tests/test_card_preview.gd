@@ -43,6 +43,7 @@ func test_it_starts_blank_with_an_invitation_rather_than_editor_placeholder_text
 		"hover a card")
 	h.eq("no invented cost", (col.get_node(^"Header/CostLabel") as Label).text, "")
 	h.eq("no invented margin", (col.get_node(^"MarginLabel") as Label).text, "")
+	h.eq("no invented flavor text", (col.get_node(^"FlavorLabel") as Label).text, "")
 	c.free()
 
 func test_show_card_writes_a_products_words_onto_the_face() -> void:
@@ -60,6 +61,8 @@ func test_show_card_writes_a_products_words_onto_the_face() -> void:
 	h.check("carries the same category badge every other card uses", icon.visible)
 	h.eq("naming the product's own category", icon._category_id,
 		vsc.interest.category.id)
+	h.eq("the authored flavor text, verbatim",
+		(col.get_node(^"FlavorLabel") as Label).text, vsc.text)
 	c.free()
 
 func test_a_products_badge_shares_the_products_own_color() -> void:
@@ -124,4 +127,5 @@ func test_clear_erases_whatever_was_shown_before() -> void:
 		"hover a card")
 	h.eq("and nothing left over from the last card",
 		(col.get_node(^"MarginLabel") as Label).text, "")
+	h.eq("flavor text cleared too", (col.get_node(^"FlavorLabel") as Label).text, "")
 	c.free()

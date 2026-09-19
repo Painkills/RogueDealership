@@ -32,3 +32,8 @@ static func body(inst: CardInstance) -> String:
 ## Empty for support cards - they have no margin of their own.
 static func margin(inst: CardInstance) -> String:
 	return Format.money(inst.margin()) if inst.is_product() else ""
+
+## The authored CardDef.text - flavour only, same for every copy and every
+## upgrade of a card, unlike body() which reads differently once upgraded.
+static func flavor(inst: CardInstance) -> String:
+	return inst.card.text
