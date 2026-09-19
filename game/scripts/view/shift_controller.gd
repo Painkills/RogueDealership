@@ -820,6 +820,15 @@ func _reconcile() -> void:
 			node.setup(desired[uid]["instance"])
 			_nodes[uid] = node
 			var home := _zone_for(desired[uid]["zone"])
+			# A freshly drawn card has no prior on-screen position to preserve
+			# the way _move_card() preserves one for a card changing zones -
+			# it never existed anywhere before. Fabricating one at the draw
+			# pile's own spot, converted into home's local space, makes the
+			# layout tween insert_card() is about to trigger read as the card
+			# actually traveling from the pile rather than popping in at
+			# hand's own local origin.
+			if desired[uid]["zone"] == CardHomes.ZONE_HAND:
+				node.position = home.to_local(_draw_zone.global_position)
 			home.insert_card(node, clampi(desired[uid]["ordinal"], 0, home.cards.size()))
 
 	for uid in desired:

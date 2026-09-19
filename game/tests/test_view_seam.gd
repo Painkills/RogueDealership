@@ -25,11 +25,16 @@ func test_a_uid_resolves_to_its_current_hand_index() -> void:
 		h.eq("hand[%d] resolves to %d" % [i, i], CardIndex.of(s, s.hand[i].uid), i)
 
 func test_a_uid_still_resolves_after_the_indices_shift_under_it() -> void:
-	## This is the whole reason the view holds uids and never indices.
+	## This is the whole reason the view holds uids and never indices. Digging
+	## something AFTER the tracked card, not before it: a freshly drawn card
+	## lands at index 0 (Shift._draw_up()), which shifts everything already in
+	## hand up by one regardless of where the dig itself happened - removing
+	## something before the tracked card would net out to no shift at all
+	## (one slot lost to the dig, one gained back at the front).
 	var s := _shift()
 	var moved_uid: int = s.hand[2].uid
-	s.dig(0)                       # hand[0] leaves; everything after it shifts down
-	h.eq("the card that was at 2 is now at 1", CardIndex.of(s, moved_uid), 1)
+	s.dig(3)                       # hand[3] leaves; the refill at 0 shifts the rest up
+	h.eq("the card that was at 2 is now at 3", CardIndex.of(s, moved_uid), 3)
 
 func test_a_uid_that_is_not_in_hand_resolves_to_minus_one() -> void:
 	var s := _shift()

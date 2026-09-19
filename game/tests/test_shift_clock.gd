@@ -97,6 +97,17 @@ func test_every_card_instance_has_its_own_uid() -> void:
 			h.check("uid %d is unique" % c.uid, not seen.has(c.uid))
 			seen[c.uid] = true
 
+func test_a_freshly_drawn_card_lands_at_the_front_of_the_hand() -> void:
+	## FanCardLayout renders hand[0] leftmost with no reordering of its own -
+	## so this is the whole rule for "a new card appears on the left of your
+	## hand." _next_draw_index() (the SAME rule production uses for which
+	## card comes next) says which uid to expect; this test is about WHERE it
+	## lands, not which one.
+	var s := _shift([&"easygoing"])
+	var next_uid: int = s.draw[s._next_draw_index()].uid
+	s.dig(0)
+	h.eq("the just-drawn card is at index 0", s.hand[0].uid, next_uid)
+
 func test_the_deck_reshuffles_when_it_runs_out() -> void:
 	var s := _shift([&"easygoing"], {"shift_ticks": 999})
 	for _i in range(40):

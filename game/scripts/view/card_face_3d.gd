@@ -21,11 +21,16 @@ var uid: int = -1
 var instance: CardInstance
 
 var _material := StandardMaterial3D.new()
+var _back_material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
+var _back_viewport: SubViewport
+var _back: CardBack2D
+var _background: ColorRect
 var _name: Label
 var _cost: Label
 var _kind: Label
+var _kind_icon: CardTypeIconControl
 var _body: Label
 var _body_icon: CategoryIconControl
 var _margin: Label
@@ -46,9 +51,11 @@ func _bind() -> void:
 	_bound = true
 	_viewport = $FrontViewport
 	var front: Control = $FrontViewport/CardFront
+	_background = front.get_node(^"Background")
 	_name = front.get_node(^"Margin/Column/Header/NameLabel")
 	_cost = front.get_node(^"Margin/Column/Header/CostLabel")
-	_kind = front.get_node(^"Margin/Column/KindLabel")
+	_kind = front.get_node(^"Margin/Column/KindRow/KindLabel")
+	_kind_icon = front.get_node(^"Margin/Column/KindRow/KindIcon")
 	_body = front.get_node(^"Margin/Column/BodyRow/BodyLabel")
 	_body_icon = front.get_node(^"Margin/Column/BodyRow/BodyIcon")
 	_margin = front.get_node(^"Margin/Column/MarginLabel")
@@ -58,6 +65,14 @@ func _bind() -> void:
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
+
+	_back_viewport = $BackViewport
+	_back = $BackViewport/CardBack
+	_back_viewport.size = FRONT_SIZE
+	_back_viewport.disable_3d = true
+	_back_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_back_material.albedo_texture = _back_viewport.get_texture()
+	$CardMesh/CardBackMesh.set_surface_override_material(0, _back_material)
 
 func setup(inst: CardInstance) -> void:
 	_bind()
@@ -77,10 +92,14 @@ func setup(inst: CardInstance) -> void:
 		_body_icon.set_category(&"", Color.WHITE)
 	_margin.text = CardText.margin(inst)
 
-	if inst.is_product():
-		_kind.add_theme_color_override("font_color", Palette.color(&"accent"))
-	else:
-		_kind.add_theme_color_override("font_color", Palette.color(&"action"))
+	# Border and badge share one color per type - accent for a product, action
+	# for a support card - so "what kind of card is this" reads from across
+	# the table, not just from the word underneath it.
+	var kind_color := Palette.color(&"accent") if inst.is_product() else Palette.color(&"action")
+	_background.color = kind_color
+	_kind.add_theme_color_override("font_color", kind_color)
+	_kind_icon.set_type(inst.is_product(), kind_color)
+	_back.set_type(inst.is_product())
 	# An upgraded card should be obvious without reading it.
 	_name.add_theme_color_override("font_color",
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
@@ -90,3 +109,5 @@ func setup(inst: CardInstance) -> void:
 func _redraw() -> void:
 	if _viewport != null:
 		_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	if _back_viewport != null:
+		_back_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS

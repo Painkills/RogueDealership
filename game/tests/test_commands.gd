@@ -44,6 +44,16 @@ func _at(s: Shift, chair: int = 0) -> Customer:
 func _appeal_for_rank(s: Shift, rank: int) -> int:
 	return s.cfg.appeal_step * (9 - rank)
 
+## Hand position is not stable once _draw_up() refills behind you - a freshly
+## drawn card lands at index 0 (see Shift._draw_up()), pushing whatever a test
+## explicitly set up further back by exactly one slot per refill. Scan for the
+## card by id instead of assuming it stays wherever _hand() first put it.
+func _index_of(s: Shift, id: StringName) -> int:
+	for i in range(s.hand.size()):
+		if s.hand[i].card.id == id:
+			return i
+	return -1
+
 # ----------------------------------------------------------- place and offer
 func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	var s := _shift([&"easygoing"])
@@ -156,8 +166,8 @@ func test_support_cards_alone_never_close_a_sale() -> void:
 	_rank(c, [&"status", &"power", &"reliability"])
 	_hand(s, [&"vsc", &"explain", &"explain"])
 	s.place(0)
-	s.play_card(0)
-	s.play_card(0)
+	s.play_card(_index_of(s, &"explain"))
+	s.play_card(_index_of(s, &"explain"))
 	h.check("appeal is over the bar", c.offer.appeal >= c.line)
 	h.eq("and nothing is agreed", c.unsigned.size(), 0)
 	h.eq("each support card play reached the shift log",
@@ -186,7 +196,7 @@ func test_pad_works_on_a_product_that_would_have_closed_cold() -> void:
 	_rank(c, [&"reliability"])
 	_hand(s, [&"vsc", &"pad"])
 	s.place(0)
-	s.play_card(0)
+	s.play_card(_index_of(s, &"pad"))
 	h.eq("padded back to the bar", c.offer.appeal, c.line)
 	s.offer()
 	var vsc := s.card_pool.by_id(&"vsc")
@@ -203,7 +213,7 @@ func test_the_line_ramps_by_line_per_sale_on_every_sale() -> void:
 	_hand(s, [&"vsc", &"gap"])
 	s.place(0); s.offer()
 	h.eq("Line ramps by line_per_sale", c.line, line0 + step)
-	s.place(0); s.offer()
+	s.place(_index_of(s, &"gap")); s.offer()
 	h.eq("and again", c.line, line0 + step * 2)
 
 func test_a_sale_refunds_patience_capped_at_max() -> void:
@@ -227,7 +237,9 @@ func test_margin_can_be_conceded_below_zero_and_banks_as_is() -> void:
 	_rank(c, [&"status", &"power", &"convenience"])   # concierge, the cheapest product
 	_hand(s, [&"concierge", &"discount", &"discount", &"discount"])
 	s.place(0)
-	s.play_card(0); s.play_card(0); s.play_card(0)
+	s.play_card(_index_of(s, &"discount"))
+	s.play_card(_index_of(s, &"discount"))
+	s.play_card(_index_of(s, &"discount"))
 	h.check("margin went underwater", c.offer.margin < 0)
 	c.line = 0
 	s.offer()

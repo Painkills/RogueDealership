@@ -35,6 +35,16 @@ func _at(s: Shift, chair: int = 0) -> Customer:
 	s.last_customer = s.chairs[chair]
 	return s.chairs[chair]
 
+## Hand position is not stable once _draw_up() refills behind you - a freshly
+## drawn card lands at index 0 (Shift._draw_up()), pushing whatever _hand()
+## set up further back by exactly one slot per refill. Scan by id instead of
+## assuming a card stays wherever it started.
+func _index_of(s: Shift, id: StringName) -> int:
+	for i in range(s.hand.size()):
+		if s.hand[i].card.id == id:
+			return i
+	return -1
+
 func _valid_bands(s: Shift) -> Array[StringName]:
 	var seen: Dictionary = {}
 	for gap in range(-10, 41):
@@ -252,7 +262,7 @@ func test_playing_a_support_card_finally_reaches_the_shift_log() -> void:
 	c.line = 0
 	_hand(s, [&"vsc", &"explain"])
 	s.place(0)
-	s.play_card(0)
+	s.play_card(_index_of(s, &"explain"))
 	h.eq("one new entry", s.action_log.size(), 1)
 	var entry: Dictionary = s.action_log[0]
 	for key in ["key", "customer", "name", "dialogue", "descriptions", "floor_wide"]:
@@ -265,7 +275,7 @@ func test_the_customer_says_something_back() -> void:
 	c.line = 0
 	_hand(s, [&"vsc", &"explain"])
 	s.place(0)
-	s.play_card(0)
+	s.play_card(_index_of(s, &"explain"))
 	var said: String = s.action_log[0]["dialogue"]
 	h.check("something was said", said != "")
 	h.check("in the house voice - a quoted sentence", said.begins_with("\""))
@@ -276,7 +286,7 @@ func test_a_karen_gets_a_karen_line() -> void:
 	c.line = 0
 	_hand(s, [&"vsc", &"explain"])
 	s.place(0)
-	s.play_card(0)
+	s.play_card(_index_of(s, &"explain"))
 	var said: String = s.action_log[0]["dialogue"]
 	var band := StringName(s.band_for(c.line - c.offer.appeal))
 	var eligible: Array[String] = []
@@ -307,7 +317,7 @@ func test_a_shift_with_no_dialogue_pool_still_logs_every_card() -> void:
 	c.line = 0
 	_hand(s, [&"vsc", &"explain"])
 	s.place(0)
-	s.play_card(0)
+	s.play_card(_index_of(s, &"explain"))
 	h.eq("still logged", s.action_log.size(), 1)
 	h.eq("but silent - no pool to draw from", s.action_log[0]["dialogue"], "")
 
@@ -327,7 +337,7 @@ func test_the_band_a_line_is_matched_against_is_the_one_after_the_card_lands() -
 		s.place(0)
 		c.offer.appeal = 75   # gap 25 - COLD, before the card
 		s.rng.seed = seed
-		s.play_card(0)        # +4 appeal -> gap 21 - COOL, after
+		s.play_card(_index_of(s, &"explain"))   # +4 appeal -> gap 21 - COOL, after
 		var said: String = s.action_log[0]["dialogue"]
 		h.check(("seed %d never drew a COLD-only line once the gap left COLD "
 				+ "(got: %s)") % [seed, said], not cold_texts.has(said))

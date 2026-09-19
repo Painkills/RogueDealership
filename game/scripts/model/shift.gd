@@ -339,7 +339,10 @@ func _draw_up() -> void:
 		# pile to empty on its own would make the floor lapse at the worst time.
 		if _needs_a_product() and _top_product_index() < 0 and _discard_has_product():
 			_recycle_discard()
-		hand.append(draw.pop_at(_next_draw_index()))
+		# Index 0, not appended: FanCardLayout renders hand[0] leftmost with no
+		# reordering of its own, so this is the whole rule for "a freshly drawn
+		# card appears on the left."
+		hand.insert(0, draw.pop_at(_next_draw_index()))
 
 
 func _recycle_discard() -> void:

@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" uid="uid://dxpc2iac0hjpw" path="res://addons/card_3d/scenes/card_3d.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/view/card_face_3d.gd" id="2_face"]
 [ext_resource type="PackedScene" path="res://scenes/cards/card_front_2d.tscn" id="3_front"]
+[ext_resource type="PackedScene" path="res://scenes/cards/card_back_2d.tscn" id="4_back"]
 
 [node name="CardFace3D" instance=ExtResource("1_base")]
 script = ExtResource("2_face")
@@ -13,3 +14,10 @@ size = Vector2i(500, 700)
 render_target_update_mode = 4
 
 [node name="CardFront" parent="FrontViewport" instance=ExtResource("3_front")]
+
+[node name="BackViewport" type="SubViewport" parent="."]
+disable_3d = true
+size = Vector2i(500, 700)
+render_target_update_mode = 4
+
+[node name="CardBack" parent="BackViewport" instance=ExtResource("4_back")]

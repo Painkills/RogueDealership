@@ -53,7 +53,7 @@ func test_setup_writes_a_products_words_onto_the_face() -> void:
 	c.setup(_card(&"vsc"))
 	var col := _front(c)
 	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, vsc.display_name)
-	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "PRODUCT")
+	h.eq("kind", (col.get_node(^"KindRow/KindLabel") as Label).text, "PRODUCT")
 	h.eq("what need it answers", (col.get_node(^"BodyRow/BodyLabel") as Label).text,
 		vsc.interest.category.display_name + " . " + vsc.interest.display_name)
 	h.eq("margin, formatted the way every other surface formats money",
@@ -75,6 +75,49 @@ func test_a_products_body_carries_the_same_badge_the_interest_grid_uses() -> voi
 		vsc.interest.category.id)
 	c.free()
 
+func test_a_products_border_and_badge_share_the_products_own_color() -> void:
+	var c := _instance()
+	c.setup(_card(&"vsc"))
+	var col := _front(c)
+	var accent := Palette.color(&"accent")
+	h.eq("the border reads product",
+		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color, accent)
+	h.eq("the kind label matches it",
+		(col.get_node(^"KindRow/KindLabel") as Label).get_theme_color("font_color"), accent)
+	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
+	h.check("the type badge says product too", icon._is_product)
+	c.free()
+
+func test_a_support_cards_border_and_badge_share_the_support_color() -> void:
+	var c := _instance()
+	c.setup(_card(&"discount"))
+	var col := _front(c)
+	var action := Palette.color(&"action")
+	h.eq("the border reads support",
+		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color, action)
+	h.eq("the kind label matches it",
+		(col.get_node(^"KindRow/KindLabel") as Label).get_theme_color("font_color"), action)
+	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
+	h.check("the type badge says support too", not icon._is_product)
+	c.free()
+
+func test_the_back_shows_the_same_type_the_front_does() -> void:
+	var product := _instance()
+	product.setup(_card(&"vsc"))
+	var product_back := product.get_node(^"BackViewport/CardBack") as CardBack2D
+	h.check("the back agrees it is a product", product_back._icon._is_product)
+	h.eq("tinted to match the front's own border",
+		product_back._background.color, Palette.color(&"accent"))
+	product.free()
+
+	var support := _instance()
+	support.setup(_card(&"discount"))
+	var support_back := support.get_node(^"BackViewport/CardBack") as CardBack2D
+	h.check("the back agrees it is support", not support_back._icon._is_product)
+	h.eq("tinted to match the front's own border",
+		support_back._background.color, Palette.color(&"action"))
+	support.free()
+
 func test_a_support_cards_body_carries_no_badge() -> void:
 	## Its body is the effects' own describe() text, not a category - a badge
 	## next to it would be a category that does not exist.
@@ -90,7 +133,7 @@ func test_setup_writes_a_support_cards_effects_onto_the_face() -> void:
 	c.setup(_card(&"discount"))
 	var col := _front(c)
 	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, discount.display_name)
-	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "SUPPORT")
+	h.eq("kind", (col.get_node(^"KindRow/KindLabel") as Label).text, "SUPPORT")
 	h.check("body is built from the effects' own describe()",
 		(col.get_node(^"BodyRow/BodyLabel") as Label).text.contains(
 			(discount as SupportCardDef).effects[0].describe()))
@@ -139,7 +182,7 @@ func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
 	## attempt at this unreadable.
 	var c := _instance()
 	var col := _front(c)
-	for name in ["Header/NameLabel", "KindLabel", "BodyRow/BodyLabel", "MarginLabel"]:
+	for name in ["Header/NameLabel", "KindRow/KindLabel", "BodyRow/BodyLabel", "MarginLabel"]:
 		var l := col.get_node(NodePath(name)) as Label
 		h.check("%s is set well above default size (%d)"
 			% [name, l.get_theme_font_size("font_size")],

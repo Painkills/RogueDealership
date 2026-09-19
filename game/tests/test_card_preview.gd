@@ -51,7 +51,7 @@ func test_show_card_writes_a_products_words_onto_the_face() -> void:
 	c.show_card(_card(&"vsc"))
 	var col := _front(c)
 	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, vsc.display_name)
-	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "PRODUCT")
+	h.eq("kind", (col.get_node(^"KindRow/KindLabel") as Label).text, "PRODUCT")
 	h.eq("what need it answers", (col.get_node(^"BodyRow/BodyLabel") as Label).text,
 		vsc.interest.category.display_name + " . " + vsc.interest.display_name)
 	h.eq("margin, formatted like every other surface formats money",
@@ -60,6 +60,28 @@ func test_show_card_writes_a_products_words_onto_the_face() -> void:
 	h.check("carries the same category badge every other card uses", icon.visible)
 	h.eq("naming the product's own category", icon._category_id,
 		vsc.interest.category.id)
+	c.free()
+
+func test_a_products_border_and_badge_share_the_products_own_color() -> void:
+	var c := _instance()
+	c.show_card(_card(&"vsc"))
+	var col := _front(c)
+	var accent := Palette.color(&"accent")
+	h.eq("the border reads product",
+		(c.get_node(^"SubViewport/CardFront/Background") as ColorRect).color, accent)
+	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
+	h.check("the type badge says product too", icon._is_product)
+	c.free()
+
+func test_a_support_cards_border_and_badge_share_the_support_color() -> void:
+	var c := _instance()
+	c.show_card(_card(&"discount"))
+	var col := _front(c)
+	var action := Palette.color(&"action")
+	h.eq("the border reads support",
+		(c.get_node(^"SubViewport/CardFront/Background") as ColorRect).color, action)
+	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
+	h.check("the type badge says support too", not icon._is_product)
 	c.free()
 
 func test_show_card_works_on_a_card_that_was_never_added_to_any_deck() -> void:

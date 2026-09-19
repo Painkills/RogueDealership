@@ -12,9 +12,11 @@ const FRONT_SIZE := Vector2i(500, 700)
 
 var _viewport: SubViewport
 var _texture: TextureRect
+var _background: ColorRect
 var _name: Label
 var _cost: Label
 var _kind: Label
+var _kind_icon: CardTypeIconControl
 var _body: Label
 var _body_icon: CategoryIconControl
 var _margin: Label
@@ -30,9 +32,11 @@ func _bind() -> void:
 	_viewport = $SubViewport
 	_texture = $TextureRect
 	var front: Control = $SubViewport/CardFront
+	_background = front.get_node(^"Background")
 	_name = front.get_node(^"Margin/Column/Header/NameLabel")
 	_cost = front.get_node(^"Margin/Column/Header/CostLabel")
-	_kind = front.get_node(^"Margin/Column/KindLabel")
+	_kind = front.get_node(^"Margin/Column/KindRow/KindLabel")
+	_kind_icon = front.get_node(^"Margin/Column/KindRow/KindIcon")
 	_body = front.get_node(^"Margin/Column/BodyRow/BodyLabel")
 	_body_icon = front.get_node(^"Margin/Column/BodyRow/BodyIcon")
 	_margin = front.get_node(^"Margin/Column/MarginLabel")
@@ -64,10 +68,10 @@ func show_card(inst: CardInstance) -> void:
 	else:
 		_body_icon.set_category(&"", Color.WHITE)
 	_margin.text = CardText.margin(inst)
-	if inst.is_product():
-		_kind.add_theme_color_override("font_color", Palette.color(&"accent"))
-	else:
-		_kind.add_theme_color_override("font_color", Palette.color(&"action"))
+	var kind_color := Palette.color(&"accent") if inst.is_product() else Palette.color(&"action")
+	_background.color = kind_color
+	_kind.add_theme_color_override("font_color", kind_color)
+	_kind_icon.set_type(inst.is_product(), kind_color)
 	# An upgraded card (or a preview of one) reads the same appeal colour the
 	# hand and table already use for it.
 	_name.add_theme_color_override("font_color",
