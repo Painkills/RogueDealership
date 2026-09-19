@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/view/card_back_2d.gd" id="1_vf82n"]
 [ext_resource type="Script" path="res://scripts/view/card_type_icon_control.gd" id="2_onw68"]
 
-[node name="CardBack" type="Control" unique_id=514573533]
+[node name="CardBack" type="Control" unique_id=892168992]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
@@ -11,18 +11,18 @@ offset_right = 500.0
 offset_bottom = 700.0
 script = ExtResource("1_vf82n")
 
-[node name="Background" type="ColorRect" parent="." unique_id=566102480]
+[node name="Background" type="ColorRect" parent="." unique_id=672165084]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.9490196, 0.57254905, 0.3529412, 1)
+color = Color(0.22745098, 0.22745098, 0.3529412, 1)
 
-[node name="IconWrap" type="CenterContainer" parent="." unique_id=990063766]
+[node name="IconWrap" type="CenterContainer" parent="." unique_id=1342711772]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="TypeIcon" type="Control" parent="IconWrap" unique_id=99281972]
+[node name="TypeIcon" type="Control" parent="IconWrap" unique_id=1142272765]
 custom_minimum_size = Vector2(320, 320)
 layout_mode = 2
 script = ExtResource("2_onw68")

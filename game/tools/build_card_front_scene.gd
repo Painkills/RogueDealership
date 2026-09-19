@@ -21,14 +21,10 @@ func _init() -> void:
 	root.custom_minimum_size = Vector2(W, H)
 	root.size = Vector2(W, H)
 
-	# Recolored per card at setup() time - accent for a product, action for a
-	# support card, the same pairing the kind label/icon already use. Inset
-	# sits 10px in on every side, so the gap this leaves IS the border; no
-	# separate frame node to keep in sync with it.
 	var bg := ColorRect.new()
 	bg.name = "Background"
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.color = Palette.color(&"accent")
+	bg.color = Palette.color(&"panel")
 	root.add_child(bg)
 	bg.owner = root
 
@@ -59,6 +55,28 @@ func _init() -> void:
 	margin.add_child(col)
 	col.owner = root
 
+	# A small type badge beside the word itself, above the name - the SAME
+	# car/wrench glyph the card back uses (though the back no longer varies
+	# by type - see CardBack2D), so what kind of card this is is the very
+	# first thing read, before the name competes for attention.
+	var kind_row := HBoxContainer.new()
+	kind_row.name = "KindRow"
+	kind_row.add_theme_constant_override("separation", 10)
+	col.add_child(kind_row)
+	kind_row.owner = root
+
+	var kind_icon := Control.new()
+	kind_icon.name = "KindIcon"
+	kind_icon.set_script(load("res://scripts/view/card_type_icon_control.gd"))
+	kind_icon.custom_minimum_size = Vector2(34, 34)
+	kind_row.add_child(kind_icon)
+	kind_icon.owner = root
+
+	var kind := _label("KindLabel", 30, Palette.color(&"accent"))
+	kind.text = "PRODUCT"
+	kind_row.add_child(kind)
+	kind.owner = root
+
 	var header := HBoxContainer.new()
 	header.name = "Header"
 	header.add_theme_constant_override("separation", 12)
@@ -83,27 +101,6 @@ func _init() -> void:
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	header.add_child(cost)
 	cost.owner = root
-
-	# A small type badge beside the word itself - the SAME car/wrench glyph
-	# that fills the whole card back, so the two live in one visual language
-	# rather than two different ways of saying "this is a product."
-	var kind_row := HBoxContainer.new()
-	kind_row.name = "KindRow"
-	kind_row.add_theme_constant_override("separation", 10)
-	col.add_child(kind_row)
-	kind_row.owner = root
-
-	var kind_icon := Control.new()
-	kind_icon.name = "KindIcon"
-	kind_icon.set_script(load("res://scripts/view/card_type_icon_control.gd"))
-	kind_icon.custom_minimum_size = Vector2(34, 34)
-	kind_row.add_child(kind_icon)
-	kind_icon.owner = root
-
-	var kind := _label("KindLabel", 30, Palette.color(&"accent"))
-	kind.text = "PRODUCT"
-	kind_row.add_child(kind)
-	kind.owner = root
 
 	var rule := ColorRect.new()
 	rule.name = "Rule"

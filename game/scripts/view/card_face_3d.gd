@@ -26,7 +26,6 @@ var _bound := false
 var _viewport: SubViewport
 var _back_viewport: SubViewport
 var _back: CardBack2D
-var _background: ColorRect
 var _name: Label
 var _cost: Label
 var _kind: Label
@@ -51,7 +50,6 @@ func _bind() -> void:
 	_bound = true
 	_viewport = $FrontViewport
 	var front: Control = $FrontViewport/CardFront
-	_background = front.get_node(^"Background")
 	_name = front.get_node(^"Margin/Column/Header/NameLabel")
 	_cost = front.get_node(^"Margin/Column/Header/CostLabel")
 	_kind = front.get_node(^"Margin/Column/KindRow/KindLabel")
@@ -92,14 +90,13 @@ func setup(inst: CardInstance) -> void:
 		_body_icon.set_category(&"", Color.WHITE)
 	_margin.text = CardText.margin(inst)
 
-	# Border and badge share one color per type - accent for a product, action
-	# for a support card - so "what kind of card is this" reads from across
-	# the table, not just from the word underneath it.
+	# The badge and label share one color per type - accent for a product,
+	# action for a support card - so "what kind of card is this" reads at a
+	# glance, not just from the word itself.
 	var kind_color := Palette.color(&"accent") if inst.is_product() else Palette.color(&"action")
-	_background.color = kind_color
 	_kind.add_theme_color_override("font_color", kind_color)
 	_kind_icon.set_type(inst.is_product(), kind_color)
-	_back.set_type(inst.is_product())
+	_back.setup()
 	# An upgraded card should be obvious without reading it.
 	_name.add_theme_color_override("font_color",
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))

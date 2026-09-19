@@ -75,47 +75,55 @@ func test_a_products_body_carries_the_same_badge_the_interest_grid_uses() -> voi
 		vsc.interest.category.id)
 	c.free()
 
-func test_a_products_border_and_badge_share_the_products_own_color() -> void:
+func test_a_products_badge_and_label_share_the_products_own_color() -> void:
+	## No colored border - the Background stays the same neutral panel color
+	## every card uses, and it is the KindRow badge/label above the name that
+	## carries the type's color instead.
 	var c := _instance()
 	c.setup(_card(&"vsc"))
 	var col := _front(c)
 	var accent := Palette.color(&"accent")
-	h.eq("the border reads product",
-		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color, accent)
-	h.eq("the kind label matches it",
+	h.eq("the background stays neutral, not tinted",
+		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color,
+		Palette.color(&"panel"))
+	h.eq("the kind label reads product",
 		(col.get_node(^"KindRow/KindLabel") as Label).get_theme_color("font_color"), accent)
 	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
 	h.check("the type badge says product too", icon._is_product)
 	c.free()
 
-func test_a_support_cards_border_and_badge_share_the_support_color() -> void:
+func test_a_support_cards_badge_and_label_share_the_support_color() -> void:
 	var c := _instance()
 	c.setup(_card(&"discount"))
 	var col := _front(c)
 	var action := Palette.color(&"action")
-	h.eq("the border reads support",
-		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color, action)
-	h.eq("the kind label matches it",
+	h.eq("the background stays neutral, not tinted",
+		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color,
+		Palette.color(&"panel"))
+	h.eq("the kind label reads support",
 		(col.get_node(^"KindRow/KindLabel") as Label).get_theme_color("font_color"), action)
 	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
 	h.check("the type badge says support too", not icon._is_product)
 	c.free()
 
-func test_the_back_shows_the_same_type_the_front_does() -> void:
+func test_the_back_looks_the_same_whether_the_card_is_product_or_support() -> void:
+	## Changed from telling front and back apart per-type to a universal back -
+	## a face-down card is not a decision you are looking at, so unlike the
+	## front it has nothing left to tell apart.
 	var product := _instance()
 	product.setup(_card(&"vsc"))
 	var product_back := product.get_node(^"BackViewport/CardBack") as CardBack2D
-	h.check("the back agrees it is a product", product_back._icon._is_product)
-	h.eq("tinted to match the front's own border",
-		product_back._background.color, Palette.color(&"accent"))
+	h.check("the back shows the wrench, not the car", not product_back._icon._is_product)
+	h.eq("in the muted, universal back color",
+		product_back._background.color, Palette.color(&"neutral_2"))
 	product.free()
 
 	var support := _instance()
 	support.setup(_card(&"discount"))
 	var support_back := support.get_node(^"BackViewport/CardBack") as CardBack2D
-	h.check("the back agrees it is support", not support_back._icon._is_product)
-	h.eq("tinted to match the front's own border",
-		support_back._background.color, Palette.color(&"action"))
+	h.check("a support card's back looks identical", not support_back._icon._is_product)
+	h.eq("the identical muted color",
+		support_back._background.color, Palette.color(&"neutral_2"))
 	support.free()
 
 func test_a_support_cards_body_carries_no_badge() -> void:

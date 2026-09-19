@@ -62,24 +62,27 @@ func test_show_card_writes_a_products_words_onto_the_face() -> void:
 		vsc.interest.category.id)
 	c.free()
 
-func test_a_products_border_and_badge_share_the_products_own_color() -> void:
+func test_a_products_badge_shares_the_products_own_color() -> void:
+	## No colored border - the Background stays the same neutral panel color
+	## every card uses, and it is the KindRow badge above the name that
+	## carries the type's color instead.
 	var c := _instance()
 	c.show_card(_card(&"vsc"))
 	var col := _front(c)
-	var accent := Palette.color(&"accent")
-	h.eq("the border reads product",
-		(c.get_node(^"SubViewport/CardFront/Background") as ColorRect).color, accent)
+	h.eq("the background stays neutral, not tinted",
+		(c.get_node(^"SubViewport/CardFront/Background") as ColorRect).color,
+		Palette.color(&"panel"))
 	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
 	h.check("the type badge says product too", icon._is_product)
 	c.free()
 
-func test_a_support_cards_border_and_badge_share_the_support_color() -> void:
+func test_a_support_cards_badge_shares_the_support_color() -> void:
 	var c := _instance()
 	c.show_card(_card(&"discount"))
 	var col := _front(c)
-	var action := Palette.color(&"action")
-	h.eq("the border reads support",
-		(c.get_node(^"SubViewport/CardFront/Background") as ColorRect).color, action)
+	h.eq("the background stays neutral, not tinted",
+		(c.get_node(^"SubViewport/CardFront/Background") as ColorRect).color,
+		Palette.color(&"panel"))
 	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
 	h.check("the type badge says support too", not icon._is_product)
 	c.free()

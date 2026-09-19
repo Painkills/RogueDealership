@@ -1,11 +1,10 @@
 extends SceneTree
 ## Builds res://scenes/cards/card_back_2d.tscn - the face-down side of a card:
-## a solid color plus one big car or wrench, drawn the same 500x700-then-
+## a solid muted color plus one big wrench, drawn the same 500x700-then-
 ## minified way card_front_2d.tscn is (see that builder's own comment on why).
 ##
-## One shared scene for both types, exactly like the front - CardBack2D.
-## set_type(is_product) repaints it, rather than two separate scenes that
-## could drift from each other's layout.
+## One shared scene and one shared look for both types - CardBack2D.setup()
+## takes no argument, since a face-down card has nothing to tell apart.
 
 const W := 500
 const H := 700
@@ -20,7 +19,7 @@ func _init() -> void:
 	var bg := ColorRect.new()
 	bg.name = "Background"
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.color = Palette.color(&"accent")
+	bg.color = Palette.color(&"neutral_2")
 	root.add_child(bg)
 	bg.owner = root
 
