@@ -1,6 +1,6 @@
 extends SceneTree
 ## Builds res://scenes/cards/card_back_2d.tscn - the face-down side of a card:
-## a solid muted color plus one big wrench, drawn the same 500x700-then-
+## a solid muted color plus one big car, drawn the same 500x700-then-
 ## minified way card_front_2d.tscn is (see that builder's own comment on why).
 ##
 ## One shared scene and one shared look for both types - CardBack2D.setup()

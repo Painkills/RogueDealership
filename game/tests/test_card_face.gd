@@ -113,7 +113,7 @@ func test_the_back_looks_the_same_whether_the_card_is_product_or_support() -> vo
 	var product := _instance()
 	product.setup(_card(&"vsc"))
 	var product_back := product.get_node(^"BackViewport/CardBack") as CardBack2D
-	h.check("the back shows the wrench, not the car", not product_back._icon._is_product)
+	h.check("the back shows the car, even though this is a product", product_back._icon._is_product)
 	h.eq("in the muted, universal back color",
 		product_back._background.color, Palette.color(&"neutral_2"))
 	product.free()
@@ -121,7 +121,7 @@ func test_the_back_looks_the_same_whether_the_card_is_product_or_support() -> vo
 	var support := _instance()
 	support.setup(_card(&"discount"))
 	var support_back := support.get_node(^"BackViewport/CardBack") as CardBack2D
-	h.check("a support card's back looks identical", not support_back._icon._is_product)
+	h.check("a support card's back looks identical", support_back._icon._is_product)
 	h.eq("the identical muted color",
 		support_back._background.color, Palette.color(&"neutral_2"))
 	support.free()

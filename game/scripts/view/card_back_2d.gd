@@ -1,5 +1,5 @@
 class_name CardBack2D extends Control
-## The face-down side of a card: one fixed, muted color plus one wrench,
+## The face-down side of a card: one fixed, muted color plus one car,
 ## the same for every card regardless of type - a face-down card in the
 ## draw or discard pile is not a decision you are looking at, so unlike the
 ## front it has nothing to tell apart. setup() takes no argument for exactly
@@ -27,4 +27,4 @@ func setup() -> void:
 	# every card in the deck. text_dim on top of it for a soft, low-contrast
 	# glyph rather than a loud one.
 	_background.color = Palette.color(&"neutral_2")
-	_icon.set_type(false, Palette.color(&"text_dim"))
+	_icon.set_type(true, Palette.color(&"text_dim"))

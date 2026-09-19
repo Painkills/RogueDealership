@@ -55,10 +55,11 @@ func _init() -> void:
 	margin.add_child(col)
 	col.owner = root
 
-	# A small type badge beside the word itself, above the name - the SAME
-	# car/wrench glyph the card back uses (though the back no longer varies
-	# by type - see CardBack2D), so what kind of card this is is the very
-	# first thing read, before the name competes for attention.
+	# A small type badge beside the word itself, above the name - the same
+	# CardTypeIcon glyphs the card back draws from too (though the back always
+	# shows the car, regardless of type - see CardBack2D), so what kind of
+	# card this is is the very first thing read, before the name competes
+	# for attention.
 	var kind_row := HBoxContainer.new()
 	kind_row.name = "KindRow"
 	kind_row.add_theme_constant_override("separation", 10)
