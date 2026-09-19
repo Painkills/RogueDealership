@@ -106,6 +106,19 @@ and anything typed there directly is gone on the next run.
 godot --headless --path game --script res://tools/build_dialogue.gd
 ```
 
+`tools/describe_archetypes.gd` is a third kind again — read-only, writes
+nothing, ever. An archetype's full chain (action, trigger, effects, and for a
+`RaiseDemand` effect the demand it raises: fuse, resolve, cost, relief,
+dialogue tags) is spread across 2-3 `.tres` files in the Inspector; this
+flattens one archetype's whole picture into one printed block so "what does
+Karen do" is a command, not a file hunt. Run with no argument for every
+archetype, or name one:
+
+```bash
+godot --headless --path game --script res://tools/describe_archetypes.gd
+godot --headless --path game --script res://tools/describe_archetypes.gd -- karen
+```
+
 ---
 
 ## What the suite pins
