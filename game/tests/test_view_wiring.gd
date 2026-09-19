@@ -4,6 +4,7 @@ var h: Harness
 func _shift() -> Shift:
 	var cfg: ShiftConfig = load("res://data/shift_config.tres").duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	return Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
@@ -49,6 +50,7 @@ func test_action_log_entries_carry_every_field_the_event_log_reads() -> void:
 func _shift2_karen() -> Shift:
 	var cfg: ShiftConfig = load("res://data/shift_config.tres").duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	return Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),

@@ -276,6 +276,16 @@ func _spawn(chair: int) -> void:
 		Customer.make_ranks(arch, interests, rng, cfg.prior_slip),
 		start, top, cfg.as_dict(), interests)
 
+	# Every-triggered actions start their cadence counter jittered, not at a
+	# clean 0, so this customer's first demand does not land on the exact same
+	# tick every other one of their archetype's ever has - see fire()'s "every"
+	# branch, which reads this as "when it last fired" and never touches it
+	# again until the action actually does.
+	for act in arch.actions:
+		if act.trigger is Every:
+			c.action_state[act.id] = rng.randi_range(
+				-cfg.action_cadence_jitter_ticks, cfg.action_cadence_jitter_ticks)
+
 	if arch.demands_category:
 		c.demands_category = interests.by_id(c.top_interest_id()).category.id
 		c.known_top_category = c.demands_category      # they say so, loudly
@@ -542,11 +552,17 @@ func place(index: int) -> Result:
 			% [c.display_name, inst.card.display_name])
 
 	var product := inst.card as ProductCardDef
-	c.offer = Offer.new(inst, c.appeal_for(product.interest.id), inst.margin())
+	var iid: StringName = product.interest.id
+	var rank: int = int(c.ranks[iid])
+	c.offer = Offer.new(inst, c.appeal_for(iid), inst.margin())
 	var band := band_for(c.line - c.offer.appeal)
 	hand.remove_at(index)
 	stat["places"] = int(stat["places"]) + 1
 	_draw_up()
+	# Placing teaches nothing the player can see - rank stays hidden, unlike
+	# offer()'s known_ranks reveal - but an archetype can still react to it
+	# internally, the same way OnOffer already reacts to a rank you never see.
+	fire(&"on_place", c, {"rank": rank})
 	_demand_saw(c, DemandResolve.PLACE, {"product": product})
 	_burn(cfg.place_ticks, "place")
 	return Result.new(true, "You put the %s in front of %s."
@@ -986,6 +1002,8 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 func _trigger_name(t: Trigger) -> StringName:
 	if t is OnOffer:
 		return &"on_offer"
+	if t is OnPlace:
+		return &"on_place"
 	if t is OnSale:
 		return &"on_sale"
 	if t is Every:

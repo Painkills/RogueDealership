@@ -10,6 +10,7 @@ var h: Harness
 func _shift(forced: Array = [&"easygoing"]) -> Shift:
 	var cfg: ShiftConfig = load("res://data/shift_config.tres").duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	return Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),

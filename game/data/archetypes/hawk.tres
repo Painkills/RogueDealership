@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cp8pd650f65g2" path="res://scripts/model/data/customer_action.gd" id="1_bckoi"]
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="2_p84xo"]
 [ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="3_kyjyw"]
-[ext_resource type="Script" uid="uid://cmdm111esqe20" path="res://scripts/model/triggers/on_offer.gd" id="4_qdd1g"]
+[ext_resource type="Script" path="res://scripts/model/triggers/on_place.gd" id="4_qdd1g"]
 [ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="5_jnbft"]
 [ext_resource type="Resource" path="res://data/interests/status.tres" id="6_pq1hs"]
 [ext_resource type="Resource" path="res://data/interests/power.tres" id="7_bj5p4"]
@@ -19,13 +19,12 @@ demand = ExtResource("11_dmd")
 [sub_resource type="Resource" id="Resource_2de4h"]
 script = ExtResource("4_qdd1g")
 rank_worse_than = 3
-metadata/_custom_type_script = "uid://cmdm111esqe20"
 
 [sub_resource type="Resource" id="Resource_xslj5"]
 script = ExtResource("1_bckoi")
 id = &"shops_you"
 display_name = "Tells you what the other guy quoted"
-tell = "Products below his top 3 will require a concession."
+tell = "Any product outside his top 3 draws a concession demand, or he sweeps it."
 dialogue_tags = Array[StringName]([&"demand_better_quote"])
 trigger = SubResource("Resource_2de4h")
 effects = Array[ExtResource("2_p84xo")]([SubResource("Resource_vwsqn")])

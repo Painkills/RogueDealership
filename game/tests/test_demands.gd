@@ -7,6 +7,7 @@ var h: Harness
 func _cfg(overrides: Dictionary = {}) -> ShiftConfig:
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:

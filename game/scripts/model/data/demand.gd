@@ -7,7 +7,7 @@ class_name Demand extends Resource
 ##   c. what it costs to ignore  -> effects
 ##
 ## Raised by the RaiseDemand effect hung on an ordinary CustomerAction, so the
-## existing trigger vocabulary (Every, PatienceBelow, OnOffer, OnSale) decides
+## existing trigger vocabulary (Every, PatienceBelow, OnOffer, OnPlace, OnSale) decides
 ## WHEN a customer asks and this decides what the asking means. No new trigger
 ## plumbing, and a new demand is a .tres like everything else.
 ##

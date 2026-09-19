@@ -4,6 +4,7 @@ var h: Harness
 func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:
@@ -119,6 +120,7 @@ func test_the_deck_reshuffles_when_it_runs_out() -> void:
 func _seeded(seed_value: int, overrides: Dictionary = {}) -> Shift:
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:
@@ -195,6 +197,7 @@ func test_a_deck_with_no_products_fills_the_hand_instead_of_hanging() -> void:
 			support_only.add(c)
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	var s := Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"), pool,
@@ -230,6 +233,7 @@ func test_customers_do_not_all_walk_in_fresh() -> void:
 	for s in range(40):
 		var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 		cfg.patience_jitter = 0
+		cfg.action_cadence_jitter_ticks = 0
 		cfg.prior_slip = 0.0
 		cfg.arrival_patience_min_fraction = 0.6
 		var sh := Shift.new(cfg,
@@ -244,6 +248,41 @@ func test_customers_do_not_all_walk_in_fresh() -> void:
 		if c.patience < c.max_patience:
 			partial += 1
 	h.check("some arrive partway to the door (%d/40)" % partial, partial > 0)
+
+func test_every_triggered_actions_start_their_cadence_jittered() -> void:
+	## Karen's "manager" action carries an Every trigger - the one action_state
+	## entry _spawn() seeds up front, before anything has ever fired. Without
+	## jitter this always starts at exactly 0, so every Karen on every seed
+	## opens her demand on the identical tick after sitting down.
+	var saw_nonzero := false
+	for s in range(40):
+		var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
+		cfg.patience_jitter = 0
+		cfg.action_cadence_jitter_ticks = 3
+		cfg.prior_slip = 0.0
+		cfg.arrival_patience_min_fraction = 1.0
+		var sh := Shift.new(cfg,
+			load("res://data/interests/interest_pool.tres"),
+			load("res://data/card_pool.tres"),
+			load("res://data/archetype_pool.tres"),
+			s, [&"karen"])
+		var c = sh.chairs[0]
+		h.check("seed %d: seeded before anything fired" % s,
+			c.action_state.has(&"manager"))
+		var v: int = int(c.action_state[&"manager"])
+		h.check("seed %d: within the configured jitter (%d)" % [s, v],
+			v >= -3 and v <= 3)
+		if v != 0:
+			saw_nonzero = true
+	h.check("and it is not always exactly 0", saw_nonzero)
+
+func test_zero_jitter_still_starts_the_cadence_at_exactly_0() -> void:
+	## The knob's off position - existing exact-tick assertions elsewhere in
+	## the suite depend on this staying true.
+	var s := _shift([&"karen"], {"action_cadence_jitter_ticks": 0})
+	var c = s.chairs[0]
+	h.eq("no jitter means the old deterministic 0",
+		int(c.action_state[&"manager"]), 0)
 
 func test_the_karen_announces_the_category_she_came_for() -> void:
 	var s := _shift([&"karen"])

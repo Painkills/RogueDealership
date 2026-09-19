@@ -13,6 +13,7 @@ func _pool() -> DialoguePool:
 func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:
@@ -307,6 +308,7 @@ func test_an_untagged_card_is_logged_but_silent() -> void:
 func test_a_shift_with_no_dialogue_pool_still_logs_every_card() -> void:
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.patience_jitter = 0
+	cfg.action_cadence_jitter_ticks = 0
 	cfg.prior_slip = 0.0
 	cfg.arrival_patience_min_fraction = 1.0
 	var s := Shift.new(cfg,

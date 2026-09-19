@@ -88,6 +88,13 @@ class_name ShiftConfig extends Resource
 ## lose. Guesses, and the first numbers to reach for if the floor feels frantic
 ## rather than busy.
 @export var demand_cooldown_ticks: int = 4
+## An Every-triggered action's cadence counter starts jittered by up to this
+## many ticks either way instead of always at 0, so two customers of the same
+## archetype do not both open their first demand on the exact same tick after
+## sitting down - only the FIRST firing shifts; every one after it keeps the
+## action's own exact cadence, the same self-correcting jitter patience_jitter
+## already uses below.
+@export var action_cadence_jitter_ticks: int = 2
 
 @export var prior_slip: float = 0.2
 @export var unique_archetypes_on_floor: bool = true
