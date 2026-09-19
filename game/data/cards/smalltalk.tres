@@ -23,3 +23,4 @@ text = "Kids, weather, the drive over. Buys one person time; the tick still cost
 copies = 2
 starter = true
 price = 700
+dialogue_tags = Array[StringName]([&"patience"])

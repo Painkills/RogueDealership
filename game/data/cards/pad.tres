@@ -31,3 +31,4 @@ text = "They won't even notice the difference."
 copies = 2
 starter = true
 price = 900
+dialogue_tags = Array[StringName]([&"padding"])

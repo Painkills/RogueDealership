@@ -31,3 +31,4 @@ id = &"fearmonger"
 display_name = "Fearmonger"
 text = "You describe, vividly, what happens to people who skip it. It works. It also makes you scary."
 price = 1000
+dialogue_tags = Array[StringName]([&"appeal"])

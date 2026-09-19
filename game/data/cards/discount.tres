@@ -31,3 +31,4 @@ text = "You come down on it. The biggest move you can make in a single tick, and
 copies = 2
 starter = true
 price = 900
+dialogue_tags = Array[StringName]([&"concession"])

@@ -95,6 +95,17 @@ godot --headless --path game --script res://tools/seed_archetypes.gd
 godot --headless --path game --script res://tools/seed_config.gd
 ```
 
+`tools/build_dialogue.gd` is different on purpose — it lives with the
+`build_*_scene.gd` tools below, not here. Dialogue is prose, not structured
+cross-referenced data: there is nothing to drag in the Inspector, the payload
+is a sentence, and the library runs to dozens of lines. Edit the `LINES` table
+in the script and re-run it; the Inspector is not where dialogue is authored,
+and anything typed there directly is gone on the next run.
+
+```bash
+godot --headless --path game --script res://tools/build_dialogue.gd
+```
+
 ---
 
 ## What the suite pins

@@ -16,3 +16,10 @@ class_name CardDef extends Resource
 ## 0, not some plausible-looking number, so an unpriced card fails
 ## test_every_card_carries_a_price() instead of silently passing it.
 @export var price: int = 0
+## Which DialoguePool tag(s) a customer's reaction draws from when this card
+## is played on them. Empty means they say nothing - the right answer for a
+## card where you are the one doing the talking (e.g. Read the Room). Lives
+## here rather than on Effect: a card's own effects and upgraded_effects are
+## separate sub-resource instances, and tagging both in sync is a drift bug
+## waiting to happen - one place per card avoids it entirely.
+@export var dialogue_tags: Array[StringName] = []

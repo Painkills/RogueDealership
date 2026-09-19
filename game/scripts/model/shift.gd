@@ -9,6 +9,7 @@ var cfg: ShiftConfig
 var interests: InterestPool
 var card_pool: CardPool
 var archetypes: ArchetypePool
+var dialogue: DialoguePool          ## may be null - a shift with no lines is silent
 var rng := RandomNumberGenerator.new()
 
 var tick: int = 0
@@ -67,11 +68,17 @@ var _name_pool: Array = []
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int, p_forced: Array = [],
 		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1,
-		p_standing: int = 0, p_sale_streak: int = 0) -> void:
+		p_standing: int = 0, p_sale_streak: int = 0,
+		p_dialogue: DialoguePool = null) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
+	# Injected, never load()ed: scripts/model and scripts/run touch nothing on
+	# disk, which is what lets the suite swap any pool for a double. A shift
+	# built without one still LOGS every support card - it just says nothing
+	# while doing it.
+	dialogue = p_dialogue
 	rng.seed = p_seed
 	_forced = p_forced
 	shift_number = p_shift_number
@@ -554,8 +561,20 @@ func _support(c: Customer, index: int) -> Result:
 	var effects: Array[Effect] = def.upgraded_effects \
 		if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
 	var before_margin: int = c.offer.margin if c.offer else 0
+	# One pass, the same one fire() and _settle_demand() make: apply, collect
+	# what to say it did, and notice a floor-wide hit while we are here.
+	var descriptions: Array[String] = []
+	var floor_wide := false
 	for e in effects:
 		e.apply(ctx)
+		var d := e.describe()
+		if d != "":
+			descriptions.append(d)
+		if e is ChangePatienceFloor:
+			floor_wide = true
+	if descriptions.is_empty():
+		descriptions.append("nothing you could point at")
+
 	if c.offer:
 		var delta: int = c.offer.margin - before_margin
 		if delta < 0:
@@ -563,6 +582,38 @@ func _support(c: Customer, index: int) -> Result:
 		elif delta > 0:
 			stat["margin_padded"] = int(stat["margin_padded"]) + delta
 		c.offer.applied.append(def.display_name)
+
+	# What they say back. The band is read AFTER the effects land, not before:
+	# a card that lifts them COOL to WARM should draw a WARM line, because
+	# they are reacting to where they are now, not where they were. With
+	# nothing on the table both the product and the band read as &"", and
+	# DialogueLine.fits() excludes every line that names either - so a card
+	# played on an empty table falls back to the unfiltered lines instead of
+	# talking about a car that is not there.
+	var said := ""
+	if dialogue != null and not def.dialogue_tags.is_empty():
+		var product_id: StringName = c.offer.product.id if c.offer else &""
+		var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
+			if c.offer else &""
+		said = dialogue.pick(rng, def.dialogue_tags, c.archetype.id,
+			product_id, band)
+	# Appended even when nothing was said, and even when the card is untagged:
+	# until now playing a support card produced NO log line at all, while
+	# every archetype action did. Same shape fire() appends, so _drain_log()
+	# renders it and pops the speech bubble without knowing a card from an
+	# objection.
+	#
+	# MUST stay above _demand_saw(): settling a demand appends its own entry,
+	# and test_demands.gd's test_both_halves_of_a_demand_reach_the_log reads
+	# action_log[-1] expecting to find THAT one, not this one.
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": def.display_name,
+		"dialogue": said,
+		"descriptions": descriptions,
+		"floor_wide": floor_wide,
+	})
 
 	hand.remove_at(index)
 	discard.append(inst)

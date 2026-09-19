@@ -160,6 +160,10 @@ func test_support_cards_alone_never_close_a_sale() -> void:
 	s.play_card(0)
 	h.check("appeal is over the bar", c.offer.appeal >= c.line)
 	h.eq("and nothing is agreed", c.unsigned.size(), 0)
+	h.eq("each support card play reached the shift log",
+		s.action_log.size(), 2)
+	h.eq("named for the card, not a demand or an objection",
+		s.action_log[0]["name"], "Explain the Product")
 	s.offer()
 	h.eq("until you ask", c.unsigned.size(), 1)
 
@@ -357,7 +361,9 @@ func test_support_cards_need_something_on_the_table() -> void:
 	_at(s)
 	_hand(s, [&"discount", &"smalltalk"])
 	h.check("a discount on nothing is refused", not s.play_card(0).ok)
+	h.eq("a refused card never reaches the log", s.action_log.size(), 0)
 	h.check("small talk needs no offer", s.play_card(1).ok)
+	h.eq("a played one does", s.action_log.size(), 1)
 
 func test_nothing_can_be_played_from_the_floor() -> void:
 	var s := _shift([&"easygoing"])

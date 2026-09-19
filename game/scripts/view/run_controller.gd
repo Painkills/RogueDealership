@@ -31,7 +31,8 @@ func _start_run() -> void:
 	_run = RunState.new(load("res://data/shift_config.tres"),
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), randi())
+		load("res://data/archetype_pool.tres"), randi(),
+		load("res://data/dialogue/dialogue_pool.tres"))
 	_open_the_floor()
 
 func _open_the_floor() -> void:

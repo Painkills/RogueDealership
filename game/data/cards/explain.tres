@@ -22,3 +22,4 @@ text = "You walk them through it properly. The workhorse: costs nothing but the 
 copies = 3
 starter = true
 price = 600
+dialogue_tags = Array[StringName]([&"appeal"])

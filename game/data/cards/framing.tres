@@ -26,3 +26,4 @@ display_name = "Coffe Framing"
 text = "'That's just 3 cups of coffe a day!' Paying in coffees seems to make things easier. "
 ticks = 0
 price = 1000
+dialogue_tags = Array[StringName]([&"appeal"])
