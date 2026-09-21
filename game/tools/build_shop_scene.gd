@@ -19,7 +19,6 @@ extends SceneTree
 ## why that is a deliberate scope cut, not an oversight.
 
 const DETAIL_SCENE := "res://scenes/cards/shop_card_detail.tscn"
-const DECK_VIEWER_SCENE := "res://scenes/deck_viewer.tscn"
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -126,12 +125,6 @@ func _init() -> void:
 	detail.unique_name_in_owner = true
 	root.add_child(detail)
 	detail.owner = root
-
-	var deck_viewer: Control = (load(DECK_VIEWER_SCENE) as PackedScene).instantiate()
-	deck_viewer.name = "DeckViewer"
-	deck_viewer.unique_name_in_owner = true
-	root.add_child(deck_viewer)
-	deck_viewer.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)

@@ -2,6 +2,8 @@ extends SceneTree
 ## Builds res://scenes/run.tscn - the main scene, which hosts the shift and the
 ## shop and switches between them.
 
+const DECK_VIEWER_SCENE := "res://scenes/deck_viewer.tscn"
+
 func _init() -> void:
 	var root := Node.new()
 	root.name = "Run"
@@ -37,6 +39,14 @@ func _init() -> void:
 	summary_view.visible = false
 	root.add_child(summary_view)
 	summary_view.owner = root
+
+	# Added last of the four+one, so it draws on top of literally anything
+	# beneath it - reachable from both the shop and the floor, so it cannot
+	# belong to either of them (see run_controller.gd's own comment).
+	var deck_viewer: Control = (load(DECK_VIEWER_SCENE) as PackedScene).instantiate()
+	deck_viewer.name = "DeckViewer"
+	root.add_child(deck_viewer)
+	deck_viewer.owner = root
 
 	# A permanent corner badge, not something either screen owns - so it
 	# survives switching between them for free and can never be the thing a

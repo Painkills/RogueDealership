@@ -93,6 +93,7 @@ func _phase_0_open_and_finish_shift() -> void:
 	_pick_tier(&"midday")
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
 	_check_build_badge_is_always_on_screen("on the floor")
+	_check_clicking_the_draw_pile_opens_the_deck_viewer()
 	# The debug money key is guarded on the shop's own visibility, not a
 	# lifecycle flag - pressing it here (shop hidden, _shop not even set up
 	# yet) must be a complete no-op, or the guard is decorative.
@@ -376,21 +377,52 @@ func _check_shift_label_tap_target_adds_money_too() -> void:
 	_check("tapping the quota line adds $10,000 too (%d -> %d)"
 		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
 
-## "I want to be able to see the cards in my deck when I'm in the shop" - the
-## literal ask: a button that opens a read-only browser of the WHOLE deck,
-## not just ShelfRow/DeckRow's own random daily subset.
+## Every row's card-strip is child index 1 of a [Label, HBoxContainer] row -
+## category headers are plain Labels, not rows, and are skipped.
+func _count_deck_viewer_chips(column: VBoxContainer) -> int:
+	var total := 0
+	for row in column.get_children():
+		if not (row is VBoxContainer):
+			continue
+		var strip := row.get_child(1) as HBoxContainer
+		for chip in strip.get_children():
+			if chip is ShopCardButton:
+				total += 1
+	return total
+
+## "I want to be able to see the cards in my deck" - reachable from two
+## places (this checks the shop's own button; _check_the_draw_pile_also_opens_it
+## covers the floor), a read-only browser of the WHOLE deck, not just
+## ShelfRow/DeckRow's own random daily subset - and organized so all 9
+## interests and all 9 support cards are always visible, not just whichever
+## happen to be owned.
 func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
-	var deck_viewer = shop_view.get_node(^"%DeckViewer")
+	var deck_viewer = _root._deck_viewer
 	_check("the deck viewer starts hidden", not deck_viewer.visible)
 	var view_btn := shop_view.get_node(^"%ViewDeckButton") as Button
 	view_btn.pressed.emit()
 	_check("clicking it opens the deck viewer", deck_viewer.visible)
-	var grid := deck_viewer.get_node(^"%DeckGrid") as GridContainer
-	_check("it shows every card in the deck, not a random subset (%d slots, %d in deck)"
-		% [grid.get_child_count(), shop.run.deck.cards.size()],
-		grid.get_child_count() == shop.run.deck.cards.size())
+
+	var products_col := deck_viewer.get_node(^"%ProductsColumn") as VBoxContainer
+	var support_col := deck_viewer.get_node(^"%SupportColumn") as VBoxContainer
+	var interest_count: int = shop.run.interests.count()
+	var support_def_count := 0
+	for def in shop.run.card_pool.cards:
+		if not (def is ProductCardDef):
+			support_def_count += 1
+	_check("every interest gets a row, even ones with nothing in the deck (%d headers+rows for %d interests)"
+		% [products_col.get_child_count(), interest_count],
+		products_col.get_child_count() == shop.run.interests.categories.size() + interest_count)
+	_check("every support card gets a row the same way (%d rows for %d defs)"
+		% [support_col.get_child_count(), support_def_count],
+		support_col.get_child_count() == support_def_count)
+
+	var shown := _count_deck_viewer_chips(products_col) + _count_deck_viewer_chips(support_col)
+	_check("it shows every card in the deck, not a random subset (%d shown, %d in deck)"
+		% [shown, shop.run.deck.cards.size()], shown == shop.run.deck.cards.size())
+
 	var close_btn := deck_viewer.get_node(^"%DeckCloseButton") as Button
 	close_btn.pressed.emit()
 	_check("closing it hides it again", not deck_viewer.visible)
@@ -481,6 +513,20 @@ func _phase_2_buy_and_leave() -> void:
 		uids[c.uid] = true
 	_check("and the card you bought is in the shift's deck",
 		new_uid != null and uids.has(new_uid))
+
+## "Click on your deck during the main game" - the floor's own trigger for
+## the exact same overlay the shop's VIEW DECK button opens (RunController
+## owns one shared instance - see its own comment on why). Driven through
+## the real card_clicked signal on the draw pile's CardCollection3D, not a
+## direct controller call, the same rule every other transition here follows.
+func _check_clicking_the_draw_pile_opens_the_deck_viewer() -> void:
+	var deck_viewer = _root._deck_viewer
+	_check("the deck viewer starts hidden on the floor too", not deck_viewer.visible)
+	_root._shift_view._draw_zone.card_clicked.emit(null)
+	_check("clicking the draw pile opens it", deck_viewer.visible)
+	(deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
+	_check("closing it returns to the floor, not the shop",
+		not deck_viewer.visible and not _root._shop_view.visible)
 
 func _finish_the_shift() -> void:
 	## Burn the clock the way test_deck_persistence does, then press the report's

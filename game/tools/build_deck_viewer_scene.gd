@@ -1,11 +1,12 @@
 extends SceneTree
-## Builds res://scenes/deck_viewer.tscn - the shop's "see your whole deck"
-## overlay. DeckGrid is EMPTY here and filled at runtime by deck_viewer.gd,
-## the same shape ShelfRow/DeckRow already use for content that changes
-## every visit - here it is the same content in an ordinary visit, but a
-## deck bought into or dropped from mid-run still needs a fresh build.
-
-const COLUMNS := 6
+## Builds res://scenes/deck_viewer.tscn - the "see your whole deck" overlay,
+## reachable from both the shop and the floor. ProductsColumn and
+## SupportColumn are EMPTY here and built entirely at runtime by
+## deck_viewer.gd, the same "structure varies, build it in the script"
+## approach shift_picker_screen.gd already uses for its own per-profile
+## cards - simpler than pre-baking a skeleton for a layout whose row COUNT
+## and GROUPING (categories, interests) are themselves data, not a fixed
+## shape this builder should have to know.
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -21,7 +22,7 @@ func _init() -> void:
 	var margin := MarginContainer.new()
 	margin.name = "Margin"
 	for side in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 48)
+		margin.add_theme_constant_override("margin_" + side, 40)
 	root.add_child(margin)
 	margin.owner = root
 
@@ -47,14 +48,14 @@ func _init() -> void:
 	col.add_child(scroll)
 	scroll.owner = root
 
-	var grid := GridContainer.new()
-	grid.name = "DeckGrid"
-	grid.unique_name_in_owner = true
-	grid.columns = COLUMNS
-	grid.add_theme_constant_override("h_separation", 20)
-	grid.add_theme_constant_override("v_separation", 20)
-	scroll.add_child(grid)
-	grid.owner = root
+	var halves := HBoxContainer.new()
+	halves.name = "Halves"
+	halves.add_theme_constant_override("separation", 48)
+	scroll.add_child(halves)
+	halves.owner = root
+
+	_side(halves, root, "ProductsSide", "PRODUCTS", "ProductsColumn")
+	_side(halves, root, "SupportSide", "SUPPORT", "SupportColumn")
 
 	var close := Button.new()
 	close.name = "DeckCloseButton"
@@ -75,3 +76,29 @@ func _init() -> void:
 	print("saved deck_viewer.tscn")
 	root.free()
 	quit(0)
+
+## One half of the split: a heading ("PRODUCTS"/"SUPPORT") over an empty,
+## uniquely-named column deck_viewer.gd fills with category headers and rows.
+func _side(parent: Node, root: Node, side_name: String, heading_text: String,
+		column_name: String) -> void:
+	var side := VBoxContainer.new()
+	side.name = side_name
+	side.add_theme_constant_override("separation", 16)
+	side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(side)
+	side.owner = root
+
+	var heading := Label.new()
+	heading.name = side_name + "Heading"
+	heading.text = heading_text
+	heading.add_theme_font_size_override("font_size", 26)
+	heading.add_theme_color_override("font_color", Palette.color(&"margin"))
+	side.add_child(heading)
+	heading.owner = root
+
+	var column := VBoxContainer.new()
+	column.name = column_name
+	column.unique_name_in_owner = true
+	column.add_theme_constant_override("separation", 14)
+	side.add_child(column)
+	column.owner = root

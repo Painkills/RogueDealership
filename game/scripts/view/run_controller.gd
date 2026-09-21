@@ -12,6 +12,12 @@ extends Node
 @onready var _shift_view = $ShiftView
 @onready var _shop_view = $ShopView
 @onready var _summary_view = $RunSummaryView
+## Reachable from the shop's own button AND clicking the draw pile on the
+## floor, so it lives here rather than inside either screen - one overlay,
+## shown on top of whichever of the four is active, never toggled by
+## _show_only() itself (it is dismissed by its own Close button, the same
+## independence ShopCardDetail already has within the shop alone).
+@onready var _deck_viewer = $DeckViewer
 @onready var _build_label: Label = $BuildBadge/BuildLabel
 
 var _run: RunState
@@ -21,7 +27,9 @@ var _chosen_profile: ShiftProfile
 func _ready() -> void:
 	_picker_view.chosen.connect(_on_profile_chosen)
 	_shift_view.shift_finished.connect(_on_shift_finished)
+	_shift_view.deck_viewed.connect(_on_view_deck_requested)
 	_shop_view.done.connect(_on_shop_done)
+	_shop_view.view_deck_requested.connect(_on_view_deck_requested)
 	_summary_view.continue_pressed.connect(_on_summary_continue)
 	# NOT left to whatever build_run_scene.gd happened to bake into run.tscn
 	# at author time: that text is a static property of a committed scene
@@ -80,6 +88,9 @@ func _on_summary_continue() -> void:
 
 func _on_shop_done() -> void:
 	_open_the_picker()
+
+func _on_view_deck_requested() -> void:
+	_deck_viewer.show_deck(_run)
 
 ## Exactly one of the four screens visible at a time. ShiftView is a Node3D,
 ## not a Control (the table), which is why this takes a plain Node - and it

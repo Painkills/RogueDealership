@@ -16,6 +16,11 @@ extends PanelContainer
 ## disagree with the deck the way an incremental patch can.
 
 signal done
+## RunController owns the actual DeckViewer - reachable from the floor too
+## (clicking the draw pile), so it is a RunController-level overlay rather
+## than something this screen instances itself. See deck_viewer.gd's own
+## header comment on why one shared node beats a second instance.
+signal view_deck_requested
 
 @onready var _money: Label = %MoneyLabel
 @onready var _shift_label: Label = %ShiftLabel
@@ -26,13 +31,12 @@ signal done
 @onready var _done: Button = %DoneButton
 @onready var _view_deck: Button = %ViewDeckButton
 @onready var _detail: ShopCardDetail = %Detail
-@onready var _deck_viewer = %DeckViewer
 
 var _shop: Shop
 
 func _ready() -> void:
 	_done.pressed.connect(func(): done.emit())
-	_view_deck.pressed.connect(func(): _deck_viewer.show_deck(_shop.run))
+	_view_deck.pressed.connect(func(): view_deck_requested.emit())
 	_detail.action_taken.connect(_apply)
 	_bind_key(&"debug_add_money", KEY_M, true)   # Ctrl+M: +$10,000, for testing
 	# Mobile has no Ctrl+M: an invisible button laid over the quota line

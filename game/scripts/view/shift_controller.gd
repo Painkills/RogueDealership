@@ -46,6 +46,10 @@ const PILE_DELAY := 0.18
 ## The run layer listens for this. The controller plays ONE shift; deciding
 ## what comes next is not its job.
 signal shift_finished(report: Dictionary)
+## Clicking the draw pile - "your deck" - the run layer owns the actual
+## overlay (see run_controller.gd), reachable from here and from the shop's
+## own button.
+signal deck_viewed
 
 @onready var _camera: Camera3D = $Camera3D
 @onready var _camera_floor: Marker3D = %CameraFloor
@@ -113,6 +117,11 @@ func _ready() -> void:
 	_drag.add_card_collection(_hand_zone)
 	_drag.add_card_collection(_draw_zone)
 	_drag.add_card_collection(_discard_zone)
+
+	# "Your deck" - clicking the pile itself, not dragging FROM it (the pile
+	# is only ever a DROP target, for the hand card a dig discards) - opens
+	# the same whole-deck overlay the shop's own button does.
+	_draw_zone.card_clicked.connect(func(_card): deck_viewed.emit())
 
 	# Only DragController's card_moved. CardCollection3D has a same-named signal
 	# of lower arity for reorders which move_card() re-emits - and reconciling
