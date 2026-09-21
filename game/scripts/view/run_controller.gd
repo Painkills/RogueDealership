@@ -19,6 +19,11 @@ extends Node
 ## independence ShopCardDetail already has within the shop alone).
 @onready var _deck_viewer = $DeckViewer
 @onready var _build_label: Label = $BuildBadge/BuildLabel
+## Top-right, always on screen (same CanvasLayer as the build badge) - a
+## third way into the deck viewer, alongside the shop's own button and the
+## floor's draw pile, and the one least dependent on hitting a specific
+## click target.
+@onready var _view_deck_btn: Button = $BuildBadge/ViewDeckCornerButton
 
 var _run: RunState
 var _profiles: ShiftProfilePool
@@ -30,6 +35,7 @@ func _ready() -> void:
 	_shift_view.deck_viewed.connect(_on_view_deck_requested)
 	_shop_view.done.connect(_on_shop_done)
 	_shop_view.view_deck_requested.connect(_on_view_deck_requested)
+	_view_deck_btn.pressed.connect(_on_view_deck_requested)
 	_summary_view.continue_pressed.connect(_on_summary_continue)
 	# NOT left to whatever build_run_scene.gd happened to bake into run.tscn
 	# at author time: that text is a static property of a committed scene

@@ -337,7 +337,7 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	# Addressed by unique name, not by path: the panel layout is expected to keep
 	# moving, and the controller looks these up the same way.
 	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
-			"%ReportOverlay", "%SidePanel", "%ModeButton", "%ActionBar",
+			"%ReportOverlay", "%SidePanel", "%ActionBar",
 			"%Seat0", "%CustomerFlip0", "%CustomerDetail0", "%OfferDetail0"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",

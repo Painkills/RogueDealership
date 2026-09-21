@@ -64,7 +64,6 @@ signal deck_viewed
 @onready var _standing_label: Label = %StandingLabel
 @onready var _at_risk_label: Label = %AtRiskLabel
 @onready var _event_log: RichTextLabel = %EventLog
-@onready var _mode_btn: Button = %ModeButton
 @onready var _action_bar: Control = %ActionBar
 @onready var _offer_btn: Button = %OfferButton
 @onready var _drop_btn: Button = %DropButton
@@ -145,7 +144,6 @@ func _ready() -> void:
 	_offer_btn.pressed.connect(_on_offer)
 	_drop_btn.pressed.connect(_on_drop)
 	_close_btn.pressed.connect(_on_close)
-	_mode_btn.pressed.connect(_on_mode_pressed)
 
 	# Hover and click belong to the PAD, not to the card. The card turns over,
 	# and a flat collider edge-on has no area at all - so hovering the card made
@@ -224,7 +222,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("chair_c"): _apply(_shift.approach(2))
 	elif event.is_action_pressed("offer_key"): _on_offer()
 	elif event.is_action_pressed("drop_key"): _on_drop()
-	elif event.is_action_pressed("floor_key"): _apply(_shift.leave())
+	# The on-screen mode button is gone, but the F key still does both of its
+	# jobs - step back to the floor, or return to whoever you were last with,
+	# for free - through the exact same handler it used to be wired to.
+	elif event.is_action_pressed("floor_key"): _on_mode_pressed()
 	elif event.is_action_pressed("debug_skip_shift"): _debug_skip_shift()
 
 func _try_card(index: int) -> void:
@@ -333,9 +334,10 @@ func _on_close() -> void:
 func _on_drop() -> void:
 	_apply(_shift.drop_offer())
 
-## One button, two jobs. With someone: step back to the floor. On the floor with
-## someone to go back to: return to them. The model makes returning to your LAST
-## customer free, so the label can promise that honestly.
+## The F key's two jobs, now that the on-screen mode button is gone. With
+## someone: step back to the floor. On the floor with someone to go back to:
+## return to them, free - Shift.leave()/approach() already make that free on
+## the model side, this just decides which of the two the key means right now.
 func _on_mode_pressed() -> void:
 	if _shift.at != null:
 		_apply(_shift.leave())
@@ -612,7 +614,6 @@ func _render() -> void:
 		_customer_cards[i].setup(chair,
 			seated and i == int(_shift.at), _shift.tick)
 
-	_render_mode_button(seated)
 	_render_details()
 	_render_hover_flip()
 	_action_bar.visible = seated and not _report_overlay.visible
@@ -625,24 +626,6 @@ func _render() -> void:
 		else Color.WHITE
 	_reconcile()
 	_drain_log()
-
-func _render_mode_button(seated: bool) -> void:
-	if _report_overlay.visible:
-		_mode_btn.visible = false
-		return
-	if seated:
-		_mode_btn.visible = true
-		_mode_btn.text = "< RETURN TO FLOOR"
-		return
-	var back := _last_customer_chair()
-	if back == -1:
-		_mode_btn.visible = false
-		return
-	# Going back to whoever you were last with costs nothing (m2/README.md's
-	# free-return rule), and the label says so because otherwise checking the
-	# floor feels like it must be costing you time.
-	_mode_btn.visible = true
-	_mode_btn.text = "BACK TO %s  (free)" % _shift.chairs[back].display_name
 
 ## The detail cards. There is no positioning to do and no panel to keep clear of
 ## anything: each one is a card parked behind the thing it describes, so "beside
@@ -710,7 +693,6 @@ func _show_report() -> void:
 		_report_overlay.set_button_text("YOU'RE FIRED")
 	_report_overlay.setup(r)
 	_action_bar.visible = false
-	_mode_btn.visible = false
 	_hovered = -1
 	_peeked = -1
 	_render_hover_flip()

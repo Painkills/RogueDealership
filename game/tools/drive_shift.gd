@@ -106,7 +106,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_clock_warns_when_time_is_short()
 	_check_table("after approaching chair A")
 
-	_check_the_mode_button_flips()
+	_check_the_floor_key_flips()
 	_check_what_a_customer_says_reaches_the_log()
 
 	_put_a_product_on_the_table()
@@ -1459,33 +1459,29 @@ func _check_the_meter_keeps_the_line_fogged_after_you_have_asked() -> void:
 	_controller._render()
 	_check("at the Line the model actually holds (%d)" % bar._line, bar._line == c.line)
 
-# --- the mode button -------------------------------------------------------
+# --- the floor key ----------------------------------------------------------
 
-## The button is the only way back to the floor once the other seats are hidden,
-## so both of its jobs are pinned.
-func _check_the_mode_button_flips() -> void:
-	var btn = _controller._mode_btn
-	_check("with someone, it offers the way out (%s)" % btn.text,
-		btn.visible and btn.text.to_lower().contains("floor"))
+## No on-screen button for this any more - the F key is the only way back to
+## the floor once the other seats are hidden, so both of its jobs (leave, and
+## return to whoever you were last with, free) are pinned, driven through the
+## real key event rather than calling the handler directly.
+func _check_the_floor_key_flips() -> void:
+	_check("someone is seated to start with", _controller._shift.at != null)
 
 	var who = _controller._shift.chairs[_at()]
-	_controller._on_mode_pressed()          # step back to the floor
+	_press(KEY_F)                           # step back to the floor
 	_settle()
 	_check("pressing it puts you back on the floor", _controller._shift.at == null)
 	_check("and the seats you could not see are back",
 		_controller._seats[0].visible and _controller._seats[1].visible
 			and _controller._seats[2].visible)
-	_check("on the floor it offers the way back (%s)" % btn.text,
-		btn.visible and btn.text.contains(who.display_name))
-	# m2/README.md: returning to whoever you were last with is free. The label
-	# promises that, so it had better be true.
-	_check("and says so, because the model makes it free", btn.text.contains("free"))
 	var before: int = _controller._shift.tick
-	_controller._on_mode_pressed()          # and back to them
+	_press(KEY_F)                           # and back to them, free
 	_settle()
-	_check("going back costs no tick (%d -> %d)" % [before, _controller._shift.tick],
-		_controller._shift.tick == before)
-	_check("and you are with them again", _controller._shift.at != null)
+	_check("going back to whoever you were last with costs no tick (%d -> %d)"
+		% [before, _controller._shift.tick], _controller._shift.tick == before)
+	_check("and you are with them again (%s)" % who.display_name,
+		_controller._shift.at != null and _controller._shift.chairs[_at()] == who)
 
 # --- the HUD ---------------------------------------------------------------
 
@@ -1504,11 +1500,8 @@ func _check_hud_does_not_overlap_itself() -> void:
 	var log_panel := _controller.get_node("%SidePanel") as Control
 	var log_rect := Rect2(log_panel.position, log_panel.size)
 	var bar := Rect2(_controller._action_bar.global_position, _controller._action_bar.size)
-	var mode := Rect2(_controller._mode_btn.global_position, _controller._mode_btn.size)
 
 	_check("the action column clears the log", not bar.intersects(log_rect))
-	_check("the return button clears the action column", not mode.intersects(bar))
-	_check("and clears the log", not mode.intersects(log_rect))
 
 	# Buttons are the only STOP controls over a 3D table, so any button sitting
 	# on a card is a click the card will never see.
@@ -1522,11 +1515,9 @@ func _check_hud_does_not_overlap_itself() -> void:
 		var card: Rect2 = pair[1]
 		_check("the action column does not sit on the %s" % pair[0],
 			not bar.intersects(card))
-		_check("nor does the return button sit on the %s" % pair[0], not mode.intersects(card))
 		_check("nor does the log sit on the %s" % pair[0], not log_rect.intersects(card))
 
-	for pair in [["action column", bar], ["return button", mode]]:
-		_on_screen(pair[0], pair[1])
+	_on_screen("action column", bar)
 
 ## The clock's own counterpart to _check_the_meter_climbs_and_changes_colour -
 ## few ticks left has to be as loud as a customer's patience going red, and

@@ -19,7 +19,12 @@ extends PanelContainer
 ## overlay rather than owned by either screen: one node, shown on top of
 ## whichever of them is active, never a second instance to keep in sync.
 
-const CHIP_SIZE := Vector2(110, 154)   ## a card face, minified - the aspect every card uses
+## A card face, minified - the aspect every card uses. Sized to fill roughly
+## half the screen's width across 3 columns (see build_deck_viewer_scene.gd's
+## own comment on the 50/50 split), not the shelf-chip scale ShopScreen's own
+## rows use - this overlay has the whole screen to itself and nothing else
+## competing for it.
+const CHIP_SIZE := Vector2(260, 364)
 
 @onready var _title: Label = %DeckViewerTitle
 @onready var _products_col: GridContainer = %ProductsColumn
@@ -65,26 +70,31 @@ func _clear(container: Control) -> void:
 
 ## label_text: the interest name. insts: however many copies of it are in
 ## the deck right now - zero is a real, expected answer, shown as a dash
-## rather than an empty gap that could pass for a rendering glitch.
+## rather than an empty gap that could pass for a rendering glitch. A second
+## (or third) copy of the same product stacks BELOW the first, never beside
+## it: the cell's width is pinned to one chip regardless of what it holds, so
+## a duplicate makes its own cell taller, never its column wider - every
+## column in the 3x3 grid stays the same width whether its cells are empty,
+## single, or stacked.
 func _cell(label_text: String, insts: Array) -> Control:
 	var cell := VBoxContainer.new()
-	cell.add_theme_constant_override("separation", 4)
+	cell.add_theme_constant_override("separation", 8)
+	cell.custom_minimum_size.x = CHIP_SIZE.x
 
 	var label := Label.new()
 	label.text = label_text
-	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_font_size_override("font_size", 22)
 	label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	cell.add_child(label)
 
-	var strip := HBoxContainer.new()
-	strip.add_theme_constant_override("separation", 8)
-	strip.custom_minimum_size = Vector2(0, CHIP_SIZE.y)
 	if insts.is_empty():
-		strip.add_child(_dash())
+		var placeholder := CenterContainer.new()
+		placeholder.custom_minimum_size = CHIP_SIZE
+		placeholder.add_child(_dash())
+		cell.add_child(placeholder)
 	else:
 		for inst in insts:
-			strip.add_child(_chip(inst))
-	cell.add_child(strip)
+			cell.add_child(_chip(inst))
 	return cell
 
 func _chip(inst: CardInstance) -> ShopCardButton:
@@ -98,6 +108,6 @@ func _chip(inst: CardInstance) -> ShopCardButton:
 func _dash() -> Label:
 	var none := Label.new()
 	none.text = "-"
-	none.add_theme_font_size_override("font_size", 18)
+	none.add_theme_font_size_override("font_size", 22)
 	none.add_theme_color_override("font_color", Palette.color(&"neutral_3"))
 	return none

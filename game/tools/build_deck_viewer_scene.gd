@@ -52,12 +52,18 @@ func _init() -> void:
 
 	var halves := HBoxContainer.new()
 	halves.name = "Halves"
-	halves.add_theme_constant_override("separation", 48)
+	halves.add_theme_constant_override("separation", 96)
 	scroll.add_child(halves)
 	halves.owner = root
 
-	_side(halves, root, "ProductsSide", "PRODUCTS", "ProductsColumn", 3)
-	_side(halves, root, "SupportSide", "SUPPORT", "SupportColumn", 3)
+	# Each frame's border echoes the kind-icon colour that side's own cards
+	# already carry (card_face_3d.gd's _kind_icon: accent for a product,
+	# action-purple for support) - the same colour language the cards
+	# themselves use, not a new one invented for this overlay.
+	_side(halves, root, "ProductsSide", "PRODUCTS", "ProductsColumn", 3,
+		Palette.color(&"accent"))
+	_side(halves, root, "SupportSide", "SUPPORT", "SupportColumn", 3,
+		Palette.color(&"action"))
 
 	var close := Button.new()
 	close.name = "DeckCloseButton"
@@ -79,10 +85,12 @@ func _init() -> void:
 	root.free()
 	quit(0)
 
-## One half of the split: a heading ("PRODUCTS"/"SUPPORT") over an empty,
-## uniquely-named GridContainer deck_viewer.gd fills with cells or chips.
+## One half of the split: a heading ("PRODUCTS"/"SUPPORT") over a bordered
+## frame holding an empty, uniquely-named GridContainer deck_viewer.gd fills
+## with cells or chips. The frame is what makes the grid itself read as a
+## grid rather than just loose cards floating on the overlay's own background.
 func _side(parent: Node, root: Node, side_name: String, heading_text: String,
-		column_name: String, columns: int) -> void:
+		column_name: String, columns: int, border_color: Color) -> void:
 	var side := VBoxContainer.new()
 	side.name = side_name
 	side.add_theme_constant_override("separation", 16)
@@ -98,11 +106,23 @@ func _side(parent: Node, root: Node, side_name: String, heading_text: String,
 	side.add_child(heading)
 	heading.owner = root
 
+	var frame := PanelContainer.new()
+	frame.name = side_name + "Frame"
+	var frame_style := StyleBoxFlat.new()
+	frame_style.bg_color = Palette.color(&"panel")
+	frame_style.border_color = border_color
+	frame_style.set_border_width_all(3)
+	frame_style.set_corner_radius_all(10)
+	frame_style.set_content_margin_all(16)
+	frame.add_theme_stylebox_override("panel", frame_style)
+	side.add_child(frame)
+	frame.owner = root
+
 	var column := GridContainer.new()
 	column.name = column_name
 	column.unique_name_in_owner = true
 	column.columns = columns
-	column.add_theme_constant_override("h_separation", 14)
-	column.add_theme_constant_override("v_separation", 14)
-	side.add_child(column)
+	column.add_theme_constant_override("h_separation", 20)
+	column.add_theme_constant_override("v_separation", 20)
+	frame.add_child(column)
 	column.owner = root

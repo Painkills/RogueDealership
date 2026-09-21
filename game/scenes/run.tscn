@@ -24,7 +24,7 @@ bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 
-[node name="Run" type="Node" unique_id=1058808382]
+[node name="Run" type="Node" unique_id=885290140]
 script = ExtResource("1_qsc0m")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1475883899 instance=ExtResource("2_s3ewl")]
@@ -35,7 +35,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("3_o3bs3")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=2067028285 instance=ExtResource("4_21lnt")]
+[node name="ShiftView" type="Node3D" parent="." unique_id=764039898 instance=ExtResource("4_21lnt")]
 script = ExtResource("5_pgpyo")
 
 [node name="ShopView" type="PanelContainer" parent="." unique_id=70490178 instance=ExtResource("6_2s4kx")]
@@ -54,7 +54,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
 script = ExtResource("9_53ha4")
 
-[node name="DeckViewer" type="PanelContainer" parent="." unique_id=806440587 instance=ExtResource("10_iuvi8")]
+[node name="DeckViewer" type="PanelContainer" parent="." unique_id=753814634 instance=ExtResource("10_iuvi8")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -62,10 +62,10 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("11_w0t45")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=556911648]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1566025388]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=274485975]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1459893429]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -83,3 +83,16 @@ theme_override_constants/shadow_offset_y = 2
 text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
+
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=648252033]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 56)
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -216.0
+offset_top = 20.0
+offset_right = -16.0
+offset_bottom = 76.0
+theme_override_font_sizes/font_size = 22
+text = "VIEW DECK"

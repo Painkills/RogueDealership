@@ -121,7 +121,6 @@ const FAN_ANGLE := 24.0
 const FAN_RADIUS := 24.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
-const MODE_RECT := Rect2(28, 40, 360, 84)
 ## Stops well above the bottom strip, which is where the discard rises into.
 const LOG_RECT := Rect2(1480, 40, 416, 690)
 ## A column, not a row. The bottom of the screen belongs to the hand and the two
@@ -491,20 +490,6 @@ func _build_hud(root: Node) -> void:
 	at_risk.unique_name_in_owner = true
 	top.add_child(at_risk)
 	at_risk.owner = root
-
-	# --- the one button that changes where you are ------------------------
-	# Big and obvious on purpose: with the other two seats hidden while you
-	# negotiate, this is how you check on them, so it must never be a hunt.
-	var mode := Button.new()
-	mode.name = "ModeButton"
-	mode.text = "RETURN TO FLOOR"
-	mode.position = MODE_RECT.position
-	mode.size = MODE_RECT.size
-	mode.custom_minimum_size = MODE_RECT.size
-	mode.add_theme_font_size_override("font_size", 28)
-	mode.unique_name_in_owner = true
-	hud.add_child(mode)
-	mode.owner = root
 
 	# --- yours: the action column, right of the table and left of the log --
 	var actions := VBoxContainer.new()

@@ -84,6 +84,25 @@ func _init() -> void:
 	badge_layer.add_child(badge)
 	badge.owner = root
 
+	# Top-right, same layer as the badge (always on screen, over any of the
+	# four screens or the deck viewer itself) - a reliable click target for
+	# "your deck" that does not depend on hitting the 3D draw pile's own
+	# pick shape, which is a real click target too (see shift_controller.gd's
+	# _draw_zone wiring) but a much smaller and less forgiving one.
+	var view_deck_btn := Button.new()
+	view_deck_btn.name = "ViewDeckCornerButton"
+	view_deck_btn.text = "VIEW DECK"
+	view_deck_btn.unique_name_in_owner = true
+	view_deck_btn.custom_minimum_size = Vector2(200, 56)
+	view_deck_btn.add_theme_font_size_override("font_size", 22)
+	view_deck_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	view_deck_btn.offset_left = -216
+	view_deck_btn.offset_top = 20
+	view_deck_btn.offset_right = -16
+	view_deck_btn.offset_bottom = 76
+	badge_layer.add_child(view_deck_btn)
+	view_deck_btn.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/run.tscn")

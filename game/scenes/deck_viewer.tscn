@@ -5,77 +5,117 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 
-[node name="DeckViewer" type="PanelContainer" unique_id=806440587]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lfqni"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0.13333334, 0.13333334, 0.23137255, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_opog0"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0.13333334, 0.13333334, 0.23137255, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.78431374, 0.43529412, 0.8784314, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="DeckViewer" type="PanelContainer" unique_id=753814634]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("1_e8xft")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1729810046]
+[node name="Margin" type="MarginContainer" parent="." unique_id=560241310]
 layout_mode = 2
 theme_override_constants/margin_left = 40
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 40
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=171621668]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=431920690]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="DeckViewerTitle" type="Label" parent="Margin/Column" unique_id=1460362305]
+[node name="DeckViewerTitle" type="Label" parent="Margin/Column" unique_id=2005657673]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 text = "YOUR DECK"
 
-[node name="Scroll" type="ScrollContainer" parent="Margin/Column" unique_id=2106352091]
+[node name="Scroll" type="ScrollContainer" parent="Margin/Column" unique_id=1473931522]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Halves" type="HBoxContainer" parent="Margin/Column/Scroll" unique_id=1869647724]
+[node name="Halves" type="HBoxContainer" parent="Margin/Column/Scroll" unique_id=1926259207]
 layout_mode = 2
-theme_override_constants/separation = 48
+theme_override_constants/separation = 96
 
-[node name="ProductsSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=576816032]
+[node name="ProductsSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=807966465]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 16
 
-[node name="ProductsSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=1035858103]
+[node name="ProductsSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=950669226]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 text = "PRODUCTS"
 
-[node name="ProductsColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=905860623]
+[node name="ProductsSideFrame" type="PanelContainer" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=1907744225]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_lfqni")
+
+[node name="ProductsColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/ProductsSide/ProductsSideFrame" unique_id=803920555]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 14
-theme_override_constants/v_separation = 14
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
 columns = 3
 
-[node name="SupportSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=485810160]
+[node name="SupportSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=912817365]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 16
 
-[node name="SupportSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=1423366331]
+[node name="SupportSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=1659621579]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 text = "SUPPORT"
 
-[node name="SupportColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=535161313]
+[node name="SupportSideFrame" type="PanelContainer" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=2015401865]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_opog0")
+
+[node name="SupportColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/SupportSide/SupportSideFrame" unique_id=1870096614]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 14
-theme_override_constants/v_separation = 14
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
 columns = 3
 
-[node name="DeckCloseButton" type="Button" parent="Margin/Column" unique_id=816682868]
+[node name="DeckCloseButton" type="Button" parent="Margin/Column" unique_id=1844075753]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 64)
 layout_mode = 2

@@ -94,6 +94,7 @@ func _phase_0_open_and_finish_shift() -> void:
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
 	_check_build_badge_is_always_on_screen("on the floor")
 	_check_clicking_the_draw_pile_opens_the_deck_viewer()
+	_check_the_corner_button_opens_the_deck_viewer()
 	# The debug money key is guarded on the shop's own visibility, not a
 	# lifecycle flag - pressing it here (shop hidden, _shop not even set up
 	# yet) must be a complete no-op, or the guard is decorative.
@@ -377,19 +378,20 @@ func _check_shift_label_tap_target_adds_money_too() -> void:
 	_check("tapping the quota line adds $10,000 too (%d -> %d)"
 		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
 
-## Products cells are a [Label, HBoxContainer] VBoxContainer - count the
-## chips in the strip. Support chips sit directly in the column - count them
-## as-is. A dash placeholder (either shape, empty deck) is neither and is
-## skipped for free.
+## Product cells are a VBoxContainer of [Label, chip, chip, ...] (or
+## [Label, CenterContainer(dash)] when empty) - extra copies stack below the
+## first rather than beside it, so every ShopCardButton child past index 0 is
+## a real chip. Support chips sit directly in the column - count them as-is.
+## A dash placeholder (either shape, empty deck) is neither and is skipped
+## for free.
 func _count_deck_viewer_chips(column: GridContainer) -> int:
 	var total := 0
 	for child in column.get_children():
 		if child is ShopCardButton:
 			total += 1
 		elif child is VBoxContainer:
-			var strip := child.get_child(1) as HBoxContainer
-			for chip in strip.get_children():
-				if chip is ShopCardButton:
+			for sub in child.get_children():
+				if sub is ShopCardButton:
 					total += 1
 	return total
 
@@ -410,12 +412,39 @@ func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 
 	var products_col := deck_viewer.get_node(^"%ProductsColumn") as GridContainer
 	var support_col := deck_viewer.get_node(^"%SupportColumn") as GridContainer
+	# Each side's frame border echoes the kind-icon colour its own cards
+	# already carry (card_face_3d.gd's _kind_icon), not a colour invented
+	# just for this overlay.
+	var products_frame := deck_viewer.get_node(^"Margin/Column/Scroll/Halves/ProductsSide/ProductsSideFrame") as PanelContainer
+	var support_frame := deck_viewer.get_node(^"Margin/Column/Scroll/Halves/SupportSide/SupportSideFrame") as PanelContainer
+	var products_border: Color = (products_frame.get_theme_stylebox("panel") as StyleBoxFlat).border_color
+	var support_border: Color = (support_frame.get_theme_stylebox("panel") as StyleBoxFlat).border_color
+	_check("the products frame border matches the product kind-icon colour (%s)" % products_border,
+		products_border == Palette.color(&"accent"))
+	_check("the support frame border matches the support kind-icon colour, purple (%s)" % support_border,
+		support_border == Palette.color(&"action"))
+
 	var interest_count: int = shop.run.interests.count()
 	_check("the product grid is square - 3 columns (%d)" % products_col.columns,
 		products_col.columns == 3)
 	_check("every interest gets a cell, even ones with nothing in the deck (%d cells for %d interests)"
 		% [products_col.get_child_count(), interest_count],
 		products_col.get_child_count() == interest_count)
+
+	# A duplicate copy stacks DOWN inside its own cell rather than widening it
+	# sideways - so every cell's reserved width (one chip, regardless of an
+	# empty dash or several stacked copies) must agree, or a column would grow
+	# for whichever interest happens to own a duplicate this run.
+	var cell_widths: Array = []
+	for child in products_col.get_children():
+		cell_widths.append((child as Control).custom_minimum_size.x)
+	var first_width: float = cell_widths[0]
+	var all_same_width := true
+	for w in cell_widths:
+		if w != first_width:
+			all_same_width = false
+	_check("every product cell reserves the same width, empty or stacked (%s)"
+		% str(cell_widths), all_same_width and first_width > 0.0)
 
 	var support_inst_count := 0
 	for inst in shop.run.deck.cards:
@@ -548,6 +577,19 @@ func _check_clicking_the_draw_pile_opens_the_deck_viewer() -> void:
 	(deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
 	_check("closing it returns to the floor, not the shop",
 		not deck_viewer.visible and not _root._shop_view.visible)
+
+## The third way in - a plain 2D button, always on screen top-right,
+## reachable no matter which of the four screens is showing, for whenever
+## the 3D draw pile's own pick shape is not a reliable target.
+func _check_the_corner_button_opens_the_deck_viewer() -> void:
+	var deck_viewer = _root._deck_viewer
+	_check("the deck viewer starts hidden before the corner button is used",
+		not deck_viewer.visible)
+	_root._view_deck_btn.pressed.emit()
+	_check("pressing the corner button opens it", deck_viewer.visible)
+	(deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
+	_check("closing it again leaves the corner button available",
+		not deck_viewer.visible and _root._view_deck_btn.visible)
 
 func _finish_the_shift() -> void:
 	## Burn the clock the way test_deck_persistence does, then press the report's
