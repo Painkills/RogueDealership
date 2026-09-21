@@ -1,32 +1,34 @@
-[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+[gd_resource type="Resource" script_class="SupportCardDef" format=3 uid="uid://b34nnflt1ydxb"]
 
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_dtsc6"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_appeal.gd" id="2_cem2g"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="3_53j4u"]
-[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_g14ik"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_dtsc6"]
+[ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_cem2g"]
+[ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="3_dtsc6"]
+[ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="4_g14ik"]
 
 [sub_resource type="Resource" id="Resource_jydys"]
 script = ExtResource("2_cem2g")
-amount = 12
+amount = 11
 
-[sub_resource type="Resource" id="Resource_uqqoy"]
-script = ExtResource("3_53j4u")
-amount = -6
+[sub_resource type="Resource" id="Resource_dtsc6"]
+script = ExtResource("3_dtsc6")
+amount = -2
+metadata/_custom_type_script = "uid://bswvlmlj77d75"
 
 [sub_resource type="Resource" id="Resource_ik07u"]
 script = ExtResource("2_cem2g")
-amount = 16
+amount = 15
 
-[sub_resource type="Resource" id="Resource_fs3w2"]
-script = ExtResource("3_53j4u")
-amount = -6
+[sub_resource type="Resource" id="Resource_u6fyt"]
+script = ExtResource("3_dtsc6")
+amount = -2
+metadata/_custom_type_script = "uid://bswvlmlj77d75"
 
 [resource]
 script = ExtResource("4_g14ik")
-effects = Array[ExtResource("1_dtsc6")]([SubResource("Resource_jydys"), SubResource("Resource_uqqoy")])
-upgraded_effects = Array[ExtResource("1_dtsc6")]([SubResource("Resource_ik07u"), SubResource("Resource_fs3w2")])
+effects = Array[ExtResource("1_dtsc6")]([SubResource("Resource_jydys"), SubResource("Resource_dtsc6")])
+upgraded_effects = Array[ExtResource("1_dtsc6")]([SubResource("Resource_ik07u"), SubResource("Resource_u6fyt")])
 id = &"hardclose"
 display_name = "Hard Close"
-text = "You stop being pleasant about it. Two ticks off the whole floor, six off theirs, and it moves them further than anything else you own."
-ticks = 2
+text = "You stop being pleasant about it. You push them until they take it."
 price = 1300
+dialogue_tags = Array[StringName]([&"pressure"])

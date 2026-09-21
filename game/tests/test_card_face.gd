@@ -11,9 +11,11 @@ const SCENE := "res://scenes/cards/card_face_3d.tscn"
 func _instance() -> CardFace3D:
 	return (load(SCENE) as PackedScene).instantiate() as CardFace3D
 
+func _pool() -> CardPool:
+	return load("res://data/card_pool.tres")
+
 func _card(id: StringName) -> CardInstance:
-	var pool: CardPool = load("res://data/card_pool.tres")
-	return CardInstance.new(pool.by_id(id), 1)
+	return CardInstance.new(_pool().by_id(id), 1)
 
 func _front(c: CardFace3D) -> Node:
 	return c.get_node(^"FrontViewport/CardFront/Margin/Column")
@@ -47,39 +49,120 @@ func test_the_face_is_a_subviewport_at_the_meshs_own_aspect() -> void:
 
 func test_setup_writes_a_products_words_onto_the_face() -> void:
 	var c := _instance()
+	var vsc := _pool().by_id(&"vsc") as ProductCardDef
 	c.setup(_card(&"vsc"))
 	var col := _front(c)
-	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text,
-		"Vehicle Service Contract")
-	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "PRODUCT")
-	h.eq("what need it answers", (col.get_node(^"BodyLabel") as Label).text,
-		"Vehicle . Reliability")
+	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, vsc.display_name)
+	h.eq("kind", (col.get_node(^"KindRow/KindLabel") as Label).text, "PRODUCT")
+	h.eq("what need it answers", (col.get_node(^"BodyRow/BodyLabel") as Label).text,
+		vsc.interest.category.display_name + " . " + vsc.interest.display_name)
 	h.eq("margin, formatted the way every other surface formats money",
-		(col.get_node(^"MarginLabel") as Label).text, "$1,600")
-	h.eq("tick cost", (col.get_node(^"Header/CostLabel") as Label).text, "1t")
+		(col.get_node(^"MarginLabel") as Label).text, Format.money(vsc.margin))
+	h.eq("tick cost", (col.get_node(^"Header/CostLabel") as Label).text,
+		"%dt" % vsc.ticks)
+	h.eq("the authored flavor text, verbatim",
+		(col.get_node(^"FlavorLabel") as Label).text, vsc.text)
+	c.free()
+
+func test_a_products_body_carries_the_same_badge_the_interest_grid_uses() -> void:
+	## "The cards should have that same icon next to their category name" - the
+	## SAME glyph, not a lookalike: both read through CategoryIcon.draw().
+	var c := _instance()
+	var vsc := _pool().by_id(&"vsc") as ProductCardDef
+	c.setup(_card(&"vsc"))
+	var icon := _front(c).get_node(^"BodyRow/BodyIcon") as CategoryIconControl
+	h.check("the badge is on the card", icon != null)
+	h.check("and it is showing", icon.visible)
+	h.eq("naming the product's own category", icon._category_id,
+		vsc.interest.category.id)
+	c.free()
+
+func test_a_products_badge_and_label_share_the_products_own_color() -> void:
+	## No colored border - the Background stays the same neutral panel color
+	## every card uses, and it is the KindRow badge/label above the name that
+	## carries the type's color instead.
+	var c := _instance()
+	c.setup(_card(&"vsc"))
+	var col := _front(c)
+	var accent := Palette.color(&"accent")
+	h.eq("the background stays neutral, not tinted",
+		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color,
+		Palette.color(&"panel"))
+	h.eq("the kind label reads product",
+		(col.get_node(^"KindRow/KindLabel") as Label).get_theme_color("font_color"), accent)
+	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
+	h.check("the type badge says product too", icon._is_product)
+	c.free()
+
+func test_a_support_cards_badge_and_label_share_the_support_color() -> void:
+	var c := _instance()
+	c.setup(_card(&"discount"))
+	var col := _front(c)
+	var action := Palette.color(&"action")
+	h.eq("the background stays neutral, not tinted",
+		(c.get_node(^"FrontViewport/CardFront/Background") as ColorRect).color,
+		Palette.color(&"panel"))
+	h.eq("the kind label reads support",
+		(col.get_node(^"KindRow/KindLabel") as Label).get_theme_color("font_color"), action)
+	var icon := col.get_node(^"KindRow/KindIcon") as CardTypeIconControl
+	h.check("the type badge says support too", not icon._is_product)
+	c.free()
+
+func test_the_back_looks_the_same_whether_the_card_is_product_or_support() -> void:
+	## Changed from telling front and back apart per-type to a universal back -
+	## a face-down card is not a decision you are looking at, so unlike the
+	## front it has nothing left to tell apart.
+	var product := _instance()
+	product.setup(_card(&"vsc"))
+	var product_back := product.get_node(^"BackViewport/CardBack") as CardBack2D
+	h.check("the back shows the car, even though this is a product", product_back._icon._is_product)
+	h.eq("in the muted, universal back color",
+		product_back._background.color, Palette.color(&"neutral_2"))
+	product.free()
+
+	var support := _instance()
+	support.setup(_card(&"discount"))
+	var support_back := support.get_node(^"BackViewport/CardBack") as CardBack2D
+	h.check("a support card's back looks identical", support_back._icon._is_product)
+	h.eq("the identical muted color",
+		support_back._background.color, Palette.color(&"neutral_2"))
+	support.free()
+
+func test_a_support_cards_body_carries_no_badge() -> void:
+	## Its body is the effects' own describe() text, not a category - a badge
+	## next to it would be a category that does not exist.
+	var c := _instance()
+	c.setup(_card(&"discount"))
+	var icon := _front(c).get_node(^"BodyRow/BodyIcon") as CategoryIconControl
+	h.check("no badge on a support card", not icon.visible)
 	c.free()
 
 func test_setup_writes_a_support_cards_effects_onto_the_face() -> void:
 	var c := _instance()
+	var discount := _pool().by_id(&"discount")
 	c.setup(_card(&"discount"))
 	var col := _front(c)
-	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, "Offer a Discount")
-	h.eq("kind", (col.get_node(^"KindLabel") as Label).text, "SUPPORT")
+	h.eq("name", (col.get_node(^"Header/NameLabel") as Label).text, discount.display_name)
+	h.eq("kind", (col.get_node(^"KindRow/KindLabel") as Label).text, "SUPPORT")
 	h.check("body is built from the effects' own describe()",
-		(col.get_node(^"BodyLabel") as Label).text.contains("Appeal"))
+		(col.get_node(^"BodyRow/BodyLabel") as Label).text.contains(
+			(discount as SupportCardDef).effects[0].describe()))
 	h.eq("support cards carry no margin of their own",
 		(col.get_node(^"MarginLabel") as Label).text, "")
+	h.eq("the authored flavor text, verbatim",
+		(col.get_node(^"FlavorLabel") as Label).text, discount.text)
 	c.free()
 
 func test_setup_works_before_the_card_is_in_the_tree() -> void:
 	## Reconciliation instantiates a card and calls setup() on it before adding
 	## it to a collection, so nothing here may depend on _ready() having run.
 	var c := _instance()
+	var vsc := _pool().by_id(&"vsc")
 	h.check("not in the tree yet", not c.is_inside_tree())
 	c.setup(_card(&"vsc"))
 	h.eq("still rendered its text",
 		(_front(c).get_node(^"Header/NameLabel") as Label).text,
-		"Vehicle Service Contract")
+		vsc.display_name)
 	c.free()
 
 func test_setup_records_the_uid_the_whole_seam_runs_on() -> void:
@@ -99,10 +182,10 @@ func test_re_running_setup_updates_a_live_margin() -> void:
 	var before: String = (_front(c).get_node(^"MarginLabel") as Label).text
 	inst.upgraded = true
 	c.setup(inst)
-	h.eq("upgraded margin is what the card now shows",
-		(_front(c).get_node(^"MarginLabel") as Label).text, "$2,000")
 	var after: String = (_front(c).get_node(^"MarginLabel") as Label).text
 	h.check("and it genuinely changed", before != after)
+	h.eq("to the card's own upgraded margin, correctly formatted", after,
+		Format.money(inst.margin()))
 	c.free()
 
 func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
@@ -111,7 +194,7 @@ func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
 	## attempt at this unreadable.
 	var c := _instance()
 	var col := _front(c)
-	for name in ["Header/NameLabel", "KindLabel", "BodyLabel", "MarginLabel"]:
+	for name in ["Header/NameLabel", "KindRow/KindLabel", "BodyRow/BodyLabel", "MarginLabel"]:
 		var l := col.get_node(NodePath(name)) as Label
 		h.check("%s is set well above default size (%d)"
 			% [name, l.get_theme_font_size("font_size")],
@@ -123,7 +206,24 @@ func test_the_face_is_authored_big_enough_to_survive_minification() -> void:
 func test_the_long_fields_wrap() -> void:
 	var c := _instance()
 	var col := _front(c)
-	for name in ["Header/NameLabel", "BodyLabel"]:
+	for name in ["Header/NameLabel", "BodyRow/BodyLabel", "FlavorLabel"]:
 		h.check("%s wraps by word" % name,
 			(col.get_node(NodePath(name)) as Label).autowrap_mode == TextServer.AUTOWRAP_WORD)
+	c.free()
+
+func test_flavor_text_reads_as_secondary_not_a_second_rules_line() -> void:
+	## Deliberately excluded from the "big enough" size floor above - the
+	## whole point is that it reads smaller and dimmer than BodyLabel, so a
+	## quick glance lands on the mechanics first. It still needs a shadow to
+	## survive minification, same as every other field on the face.
+	var c := _instance()
+	var col := _front(c)
+	var flavor := col.get_node(^"FlavorLabel") as Label
+	var body := col.get_node(^"BodyRow/BodyLabel") as Label
+	h.eq("dimmer than the main text", flavor.get_theme_color("font_color"),
+		Palette.color(&"text_dim"))
+	h.check("smaller than the mechanical body text",
+		flavor.get_theme_font_size("font_size") < body.get_theme_font_size("font_size"))
+	h.check("still has a shadow to hold an edge when minified",
+		flavor.has_theme_color_override("font_shadow_color"))
 	c.free()

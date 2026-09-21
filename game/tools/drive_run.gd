@@ -16,7 +16,6 @@ var _failures: Array[String] = []
 var _checks := 0
 
 var _run: RunState
-var _deck_before: int
 
 func _init() -> void:
 	seed(20260905)
@@ -39,11 +38,20 @@ func _process(_delta: float) -> bool:
 		if _settle_frames < 5:
 			return false
 		_check_shop_layout_fits_on_screen()
+		_check_the_view_deck_button_shows_the_whole_deck()
+		_check_clicking_a_shelf_card_buys_it()
+		_check_the_deck_row_shows_exactly_the_random_upgrade_offers()
+		_check_clicking_a_deck_card_opens_its_detail()
+		_check_debug_add_money_key_works()
+		_check_shift_label_tap_target_adds_money_too()
+		_check_build_badge_is_always_on_screen("in the shop")
 		_phase = 2
 		return false
 
 	if _phase == 2:
 		_phase_2_buy_and_leave()
+		_check_run_summary_screen_appears_at_the_end_of_a_run()
+		_check_the_fired_title_is_distinct_from_a_completed_run()
 
 		print("")
 		const EXPECTED_MIN := 20
@@ -64,15 +72,41 @@ func _process(_delta: float) -> bool:
 
 	return true
 
+## Drives the real ShiftPickerView.chosen signal, the same "through the
+## actual wiring, not a direct controller call" rule every other transition
+## in this driver already follows (.done, .continue_pressed). Picks midday
+## for the shop-testing phases - unlike morning it leaves upgrades on, which
+## _check_the_deck_row_shows_exactly_the_random_upgrade_offers() and
+## _check_clicking_a_deck_card_opens_its_detail() both need populated.
+func _pick_tier(id: StringName) -> void:
+	_check("the picker is showing before a tier is chosen",
+		_root._picker_view.visible)
+	var profile: ShiftProfile = _root._profiles.by_id(id)
+	_check("%s is a real profile in the pool" % id, profile != null)
+	_root._picker_view.chosen.emit(profile)
+	_check("choosing %s closes the picker" % id, not _root._picker_view.visible)
+
 func _phase_0_open_and_finish_shift() -> void:
 	_run = _root._run
 	_check("a run started", _run != null)
 	_check("on shift 1", _run.shift_number == 1)
+	_pick_tier(&"midday")
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
+	_check_build_badge_is_always_on_screen("on the floor")
+	# The debug money key is guarded on the shop's own visibility, not a
+	# lifecycle flag - pressing it here (shop hidden, _shop not even set up
+	# yet) must be a complete no-op, or the guard is decorative.
+	var money_before_debug_press: int = _run.money
+	var debug_ev := InputEventKey.new()
+	debug_ev.keycode = KEY_M
+	debug_ev.ctrl_pressed = true
+	debug_ev.pressed = true
+	_root._shop_view._unhandled_input(debug_ev)
+	_check("and Ctrl+M does nothing while the shop is hidden",
+		_run.money == money_before_debug_press)
 	_check("and the shift's HUD with it",
 		(_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
 
-	_deck_before = _run.deck.cards.size()
 	_finish_the_shift()
 
 	_check("finishing a shift opens the shop", _root._shop_view.visible)
@@ -88,15 +122,27 @@ func _phase_0_open_and_finish_shift() -> void:
 	# 0 == max(0, 0 - 3600) and proves nothing about the subtraction.
 	_check("which after a shift that banked nothing is nothing",
 		not bool(r0["made_quota"]) and _run.money == 0 and _run.last_bonus == 0)
-	# The total wipeout costs standing too - but at half a fresh run's meter, not
-	# all of it, so the run must have SURVIVED to reach shift 2 at all. This is
-	# also where a stale _run reference (the exact bug class this project has
-	# already caught once - a controller quietly rolling a fresh RunState out
-	# from under a held reference) would surface: if this landed on 0 instead of
-	# start - 50, either the formula drifted or is_over() ended the run early and
-	# everything past this point is checking a dead object.
-	_check("the wipeout cost standing (%d) but did not end the run" % _run.standing,
-		_run.standing == _run.cfg.standing_start - 50 and not _run.is_over())
+	# The total wipeout costs standing too - but not all of it, so the run must
+	# have SURVIVED to reach shift 2 at all. This is also where a stale _run
+	# reference (the exact bug class this project has already caught once - a
+	# controller quietly rolling a fresh RunState out from under a held
+	# reference) would surface: if this landed on 0, either the formula drifted
+	# or is_over() ended the run early and everything past this point is
+	# checking a dead object.
+	#
+	# The exact number is not hardcoded here: this driver digs the clock away
+	# and helps nobody, so every seated customer's patience runs out well
+	# before the 24-tick bell regardless of exactly how the archetype pool or
+	# patience numbers get retuned later - asserting against report()'s own
+	# standing_delta proves finish_shift() applied EXACTLY what the shift
+	# computed, which is the actual integration point worth checking, rather
+	# than a magic number this specific play pattern happens to produce today.
+	_check("at least one customer walked out along the way (%d)"
+		% int(r0["customers_walked"]), int(r0["customers_walked"]) > 0)
+	var expected_standing: int = clampi(
+		_run.cfg.standing_start + int(r0["standing_delta"]), 0, _run.cfg.standing_start)
+	_check("the wipeout (and walkouts) cost standing (%d) but did not end the run"
+		% _run.standing, _run.standing == expected_standing and not _run.is_over())
 	# The panel you were just looking at had to show that number before
 	# finish_shift() ran at all, so the two must agree.
 	var panel = _root._shift_view._report_overlay
@@ -138,19 +184,249 @@ func _set_standing_keys(r: Dictionary, standing_before: int) -> void:
 ## past the viewport rather than clipping - which is exactly why this has to be
 ## measured in pixels rather than inferred from the tree.
 func _check_shop_layout_fits_on_screen() -> void:
-	var done_btn := _root._shop_view.get_node(^"Margin/Column/DoneButton") as Control
+	var done_btn := _root._shop_view.get_node(^"Margin/Column/ButtonRow/DoneButton") as Control
 	var log_label := _root._shop_view.get_node(^"Margin/Column/LogLabel") as Control
+	var shelf_row := _root._shop_view.get_node(^"%ShelfRow") as Control
+	var deck_row := _root._shop_view.get_node(^"%DeckRow") as Control
 	_check("the shop has a deck to show (%d cards)" % _run.deck.cards.size(),
 		_run.deck.cards.size() > 0)
 	_on_screen("the shop's Done button",
 		Rect2(done_btn.global_position, done_btn.size))
 	_on_screen("the shop's log label",
 		Rect2(log_label.global_position, log_label.size))
+	_on_screen("the shelf row", Rect2(shelf_row.global_position, shelf_row.size))
+	_on_screen("the deck row", Rect2(deck_row.global_position, deck_row.size))
+	var shelf_rect := Rect2(shelf_row.global_position, shelf_row.size)
+	var deck_rect := Rect2(deck_row.global_position, deck_row.size)
+	var done_rect := Rect2(done_btn.global_position, done_btn.size)
+	_check("the shelf row does not overlap the deck row (%s vs %s)"
+		% [shelf_rect, deck_rect], not shelf_rect.intersects(deck_rect))
+	_check("and the deck row does not overlap the Done button (%s vs %s)"
+		% [deck_rect, done_rect], not deck_rect.intersects(done_rect))
+	# Exactly touching the bottom margin is "on screen" by one pixel, the same
+	# gap that let the shop preview hug the right margin with nothing to
+	# spare - real slack, not a coincidence of exactly fitting.
+	var bottom_clearance: float = VIEWPORT.y - done_rect.end.y
+	_check("and the Done button has real clearance from the bottom margin,"
+		+ " not just barely fitting (%d px clear)" % int(bottom_clearance),
+		bottom_clearance >= 20.0)
+
+	# The reported bug, and its real cause: TextureRect.expand_mode defaults
+	# to EXPAND_KEEP_SIZE, which floors a TextureRect's own minimum size at
+	# its texture's native resolution (500x700) no matter what its parent's
+	# actual box is - so the inner TextureRect never actually shrank to this
+	# card's real size, and rendered at ~2x scale, anchored top-left, right
+	# and bottom cropped off (title text truncated mid-word) once
+	# clip_contents (needed for a DIFFERENT bug - the same oversized render
+	# painting over the Done button below it) started cropping the overflow
+	# instead of letting it spill. Both symptoms trace to one missed
+	# property; clip_contents alone only hid the first one.
+	#
+	# This was never a "can only be seen once a real renderer draws the
+	# frame" problem - every prior check here measured Control rects, never
+	# the child TextureRect's own .size, which is exactly where this was
+	# visible the whole time.
+	for row in [shelf_row, deck_row]:
+		for slot in row.get_children():
+			var card := slot.get_child(0) as Control
+			_check("%s's card clips its own content, so a render quirk can never"
+				% slot.name + " paint past its box (%s)" % card.name, card.clip_contents)
+			var texture := card.get_node(^"TextureRect") as TextureRect
+			_check("%s's card texture actually shrank to its box, not stuck at"
+				% slot.name + " its native 500x700 (expand_mode=%d, size=%s)"
+					% [texture.expand_mode, texture.size],
+				texture.expand_mode == TextureRect.EXPAND_IGNORE_SIZE
+					and texture.size.x < 300.0)
+
+## "Ensure each build shows the build number in the bottom right so I can
+## know if it's the right one" - checked once per screen, since the whole
+## point of living in run.tscn rather than either screen is surviving the
+## switch between them.
+func _check_build_badge_is_always_on_screen(where: String) -> void:
+	var badge := _root.get_node(^"BuildBadge/BuildLabel") as Label
+	_check("the build badge names a real build, %s (%s)" % [where, badge.text],
+		not badge.text.is_empty())
+	_on_screen("the build badge %s" % where,
+		Rect2(badge.global_position, badge.size))
 
 func _on_screen(label: String, r: Rect2) -> void:
 	_check("%s is on screen (%s)" % [label, r],
 		r.position.x >= 0.0 and r.position.y >= 0.0
 			and r.end.x <= VIEWPORT.x and r.end.y <= VIEWPORT.y)
+
+## "Reduce the number of upgrade options in the shop to a random selection" -
+## before this, every un-upgraded card with a real upgrade to sell got a row,
+## unconditionally. Counts the actual card slots the screen built, not the
+## model's own upgrade_offers array, so this fails if shop_screen.gd's render
+## loop and Shop's random draw ever disagree about which cards are shown.
+func _check_the_deck_row_shows_exactly_the_random_upgrade_offers() -> void:
+	## The capping behaviour this checks only means anything when the deck
+	## actually has more upgrade-eligible cards than there are slots - a
+	## precondition, not the thing under test. A deck/slot-count retune that
+	## makes it untrue should skip this quietly rather than fail for a reason
+	## unrelated to whether capping itself still works.
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var eligible_uncapped := 0
+	for inst in _run.deck.cards:
+		if not inst.upgraded and shop.upgrade_gain(inst) > 0:
+			eligible_uncapped += 1
+	if eligible_uncapped <= _run.cfg.shop_upgrade_slots:
+		print("SKIP  deck-row capping check: only %d eligible cards against %d slots, proves nothing"
+			% [eligible_uncapped, _run.cfg.shop_upgrade_slots])
+		return
+
+	var deck_row := shop_view.get_node(^"%DeckRow") as HBoxContainer
+	_check("rendered exactly as many deck slots as were actually offered (%d)"
+		% deck_row.get_child_count(), deck_row.get_child_count() == shop.upgrade_offers.size())
+	_check("which is capped at the configured slot count, not the whole deck",
+		deck_row.get_child_count() <= _run.cfg.shop_upgrade_slots)
+
+## "Show the card itself. When you click, it opens up the card, shows the
+## upgraded card and also has a button for removing from deck" - the literal
+## ask, end to end: click a deck slot, the detail overlay opens showing both
+## faces and the right prices, upgrading applies and closes it, and the row
+## behind it reflects the change once it does.
+func _check_clicking_a_deck_card_opens_its_detail() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
+	_check("the detail overlay starts hidden", not detail.visible)
+
+	var deck_row := shop_view.get_node(^"%DeckRow") as HBoxContainer
+	_check("there is a deck slot to click", deck_row.get_child_count() > 0)
+	if deck_row.get_child_count() == 0:
+		return
+
+	var uid: int = shop.upgrade_offers[0]
+	var inst := shop.find(uid)
+	var card := deck_row.get_child(0).get_child(0) as ShopCardButton
+	card.pressed.emit()
+	_check("clicking the deck card opens the detail overlay", detail.visible)
+	_check("titled after the card that was clicked (%s)" % detail._title.text,
+		detail._title.text == inst.card.display_name)
+	_check("showing the card's current face (%s)" % detail._current._name.text,
+		detail._current._name.text == inst.card.display_name)
+	_check("and its upgraded face, in the appeal colour (%s)"
+		% detail._upgraded._name.get_theme_color("font_color"),
+		detail._upgraded._name.get_theme_color("font_color") == Palette.color(&"appeal"))
+	for side in [["current", detail._current], ["upgraded", detail._upgraded]]:
+		var texture := (side[1] as CardPreview2D).get_node(^"TextureRect") as TextureRect
+		_check("the detail's %s card texture actually shrank to its box (expand_mode=%d, size=%s)"
+			% [side[0], texture.expand_mode, texture.size],
+			texture.expand_mode == TextureRect.EXPAND_IGNORE_SIZE and texture.size.x < 300.0)
+	_check("with a real upgrade price on the button (%s)" % detail._upgrade_btn.text,
+		detail._upgrade_btn.text == "upgrade %s" % Format.money(shop.upgrade_price(inst)))
+	_check("and a real drop price on the other one (%s)" % detail._remove_btn.text,
+		detail._remove_btn.text == "remove %s" % Format.money(shop.remove_price()))
+
+	# money is plentiful from here on - phase 2 resets it before its own
+	# purchase, so spending some proving upgrade/remove work costs nothing
+	# later.
+	_run.money = 999999
+	var was_upgraded := inst.upgraded
+	detail._upgrade_btn.pressed.emit()
+	_check("pressing upgrade actually upgrades the card", inst.upgraded and not was_upgraded)
+	_check("and closes the overlay", not detail.visible)
+
+	# A second card, so removing one does not undo the upgrade this same
+	# check just proved - upgrade_offers is capped at shop_upgrade_slots
+	# (>= 2 per shift_config.tres), and the eligibility check above already
+	# proved there are more eligible cards than slots this seed.
+	if shop.upgrade_offers.size() > 1:
+		var deck_size_before_drop := _run.deck.cards.size()
+		var drop_uid: int = shop.upgrade_offers[1]
+		# The row rebuilds after the upgrade above, but in the SAME order -
+		# it walks shop.upgrade_offers itself, which is rolled once and never
+		# reshuffled - so index 1 is still this uid's slot.
+		deck_row = shop_view.get_node(^"%DeckRow") as HBoxContainer
+		var drop_card := deck_row.get_child(1).get_child(0) as ShopCardButton
+		drop_card.pressed.emit()
+		_check("clicking a second deck card opens its own detail", detail.visible)
+		var drop_price := shop.remove_price()
+		detail._remove_btn.pressed.emit()
+		_check("pressing remove actually drops the card (%d -> %d, price %s)"
+			% [deck_size_before_drop, _run.deck.cards.size(), Format.money(drop_price)],
+			_run.deck.cards.size() == deck_size_before_drop - 1
+				and shop.find(drop_uid) == null)
+		_check("and closes the overlay too", not detail.visible)
+
+## Ctrl+M, shop only: +$10,000 for testing purchases without grinding a run
+## out first. Guarded on the shop actually being the visible screen, since
+## ShopScreen has no active/inactive lifecycle hook telling it to stop
+## listening the way ShiftController's set_active() does.
+func _check_debug_add_money_key_works() -> void:
+	var shop_view = _root._shop_view
+	var before: int = shop_view._shop.run.money
+	var ev := InputEventKey.new()
+	ev.keycode = KEY_M
+	ev.ctrl_pressed = true
+	ev.pressed = true
+	shop_view._unhandled_input(ev)
+	_check("Ctrl+M adds $10,000 while the shop is open (%d -> %d)"
+		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
+
+## Mobile has no Ctrl+M - the quota line itself is an invisible tap target
+## wired to the identical effect.
+func _check_shift_label_tap_target_adds_money_too() -> void:
+	var shop_view = _root._shop_view
+	var before: int = shop_view._shop.run.money
+	var tap := shop_view.get_node(^"%ShiftTapTarget") as Button
+	tap.pressed.emit()
+	_check("tapping the quota line adds $10,000 too (%d -> %d)"
+		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
+
+## "I want to be able to see the cards in my deck when I'm in the shop" - the
+## literal ask: a button that opens a read-only browser of the WHOLE deck,
+## not just ShelfRow/DeckRow's own random daily subset.
+func _check_the_view_deck_button_shows_the_whole_deck() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var deck_viewer = shop_view.get_node(^"%DeckViewer")
+	_check("the deck viewer starts hidden", not deck_viewer.visible)
+	var view_btn := shop_view.get_node(^"%ViewDeckButton") as Button
+	view_btn.pressed.emit()
+	_check("clicking it opens the deck viewer", deck_viewer.visible)
+	var grid := deck_viewer.get_node(^"%DeckGrid") as GridContainer
+	_check("it shows every card in the deck, not a random subset (%d slots, %d in deck)"
+		% [grid.get_child_count(), shop.run.deck.cards.size()],
+		grid.get_child_count() == shop.run.deck.cards.size())
+	var close_btn := deck_viewer.get_node(^"%DeckCloseButton") as Button
+	close_btn.pressed.emit()
+	_check("closing it hides it again", not deck_viewer.visible)
+
+## "Show the card itself... click the card itself" - the shelf's own answer,
+## now routed through the SAME confirm-before-you-spend overlay the deck
+## browser's upgrade/remove already uses: clicking a shelf card opens it
+## showing a "buy" button, not an instant purchase.
+func _check_clicking_a_shelf_card_buys_it() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var shelf_row := shop_view.get_node(^"%ShelfRow") as HBoxContainer
+	_check("there is a shelf card to click", shelf_row.get_child_count() > 0)
+	if shelf_row.get_child_count() == 0:
+		return
+	var offered := shop.offers[0]
+	var was_affordable := shop.run.money
+	shop.run.money = 999999
+	var before := _run.deck.cards.size()
+	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
+	var card := shelf_row.get_child(0).get_child(0) as ShopCardButton
+	card.pressed.emit()
+	_check("clicking the shelf card opens the confirm overlay, not an instant buy",
+		detail.visible)
+	_check("titled after the card that was clicked (%s)" % detail._title.text,
+		detail._title.text == offered.display_name)
+	_check("the upgrade/remove buttons stay hidden for an unowned card",
+		not detail._upgrade_btn.visible and not detail._remove_btn.visible)
+	_check("with a real buy price on the button (%s)" % detail._buy_btn.text,
+		detail._buy_btn.text == "buy %s" % Format.price(shop.buy_price(offered)))
+	detail._buy_btn.pressed.emit()
+	_check("pressing buy actually buys %s (deck %d -> %d)"
+		% [offered.display_name, before, _run.deck.cards.size()],
+		_run.deck.cards.size() == before + 1)
+	_check("and closes the overlay", not detail.visible)
+	shop.run.money = was_affordable   # leave phase 2 its own accounting
 
 func _phase_2_buy_and_leave() -> void:
 	# Buy the cheapest thing on the shelf, with the money to afford it.
@@ -158,6 +434,7 @@ func _phase_2_buy_and_leave() -> void:
 	_run.money = 100000
 	_root._shop_view._render()
 	var bought: CardDef = shop.offers[0]
+	var deck_before_this_purchase := _run.deck.cards.size()
 	var uids_before := {}
 	var same_def_uids_before := {}
 	for c in _run.deck.cards:
@@ -166,7 +443,7 @@ func _phase_2_buy_and_leave() -> void:
 			same_def_uids_before[c.uid] = true
 	var res := shop.buy(bought)
 	_check("bought %s (%s)" % [bought.display_name, res.msg], res.ok)
-	_check("the deck grew", _run.deck.cards.size() == _deck_before + 1)
+	_check("the deck grew", _run.deck.cards.size() == deck_before_this_purchase + 1)
 
 	# Pin down exactly which instance the purchase created, by uid - not by
 	# assuming Deck.add() appends, and not by matching CardDef alone, which an
@@ -181,9 +458,15 @@ func _phase_2_buy_and_leave() -> void:
 		new_uid != null and not same_def_uids_before.has(new_uid))
 
 	_root._shop_view.done.emit()
-	_check("leaving the shop opens the floor again", not _root._shop_view.visible)
+	_check("leaving the shop opens the picker, not the floor directly",
+		_root._picker_view.visible and not _root._shop_view.visible)
+	# Night this time - real coverage of the archetype-pool unlock and the
+	# smaller floor, not just re-picking the same tier phase 0 already did.
+	_pick_tier(&"night")
 	_check("on a shift that knows which one it is",
 		_root._shift_view._shift.shift_number == 2)
+	_check("night's shift actually carries its archetype-pool unlock",
+		_root._shift_view._shift.unlock_full_archetype_pool)
 	_check("running to the climbing quota",
 		_root._shift_view._shift.quota == _run.quota_for(2))
 
@@ -224,7 +507,115 @@ func _finish_the_shift() -> void:
 	else:
 		_check("and its button still says Continue mid-run (%s)"
 			% report._restart.text, button_text.contains("continue"))
+	_check_report_card_fits_the_worst_case(report)
 	report.continue_pressed.emit()
+
+## Font-metric arithmetic, not pixel geometry read off a frame that might not
+## have resorted yet - CenterContainer/PanelContainer layout is deferred the
+## same way build_shop_scene.gd's own comment on DoneButton documents, and this
+## runs synchronously inside the same frame that just made the report visible.
+## Measured against the WORST case the report can actually show - long dollar
+## figures, every branch that adds a line active at once - through panel's own
+## setup(), not a second copy of its formatting written here.
+func _check_report_card_fits_the_worst_case(report) -> void:
+	var worst: Dictionary = {
+		"margin_banked": 12345678, "quota": 9876543, "made_quota": false,
+		"customers_seen": 999, "customers_signed": 999, "customers_walked": 999,
+		"offers": 9999, "sales": 9999, "close_rate": 0.999, "failed_offers": 9999,
+		"margin_conceded": 1234567, "margin_padded": 1234567,
+		"margin_bonus": 1234567, "margin_lost_to_walks": 1234567,
+		"margin_lost_to_closing": 1234567, "standing_delta": -100,
+		"standing_lost_to_walkouts": 100,
+	}
+	_set_standing_keys(worst, 100)
+	var was := {}
+	for key in ["title", "banked", "bonus", "standing", "walkouts", "customers",
+			"offers", "margin", "lost"]:
+		was[key] = report.get("_" + key).text
+	report.setup(worst)
+
+	var card := report.get_node(^"CenterWrap/Card") as Control
+	var vbox := card.get_node(^"CardMargin/VBoxContainer") as VBoxContainer
+	var width: float = 900.0 - 56.0 - 56.0   # Card's own width minus CardMargin
+	var total := 0.0
+	var shown := 0
+	for child in vbox.get_children():
+		shown += 1
+		if child is Label:
+			var l := child as Label
+			total += l.get_theme_font("font").get_multiline_string_size(
+				l.text, HORIZONTAL_ALIGNMENT_LEFT, width,
+				l.get_theme_font_size("font_size")).y
+		else:
+			total += maxf((child as Control).custom_minimum_size.y, 0.0)
+	if shown > 1:
+		total += float(vbox.get_theme_constant("separation") * (shown - 1))
+	total += 56.0 + 56.0   # CardMargin top + bottom
+	_check("the report card fits a 1080-tall viewport even at its wordiest (%d px)"
+		% int(total), total <= 1080.0)
+
+	# Leave the panel showing what the real shift actually produced, not the
+	# synthetic worst case - nothing downstream expects to see 12345678 again.
+	for key in was:
+		report.get("_" + key).text = was[key]
+
+## "At end of run it would show you all these categories and the points
+## given and a high score" - the literal ask, end to end: force the run onto
+## its last shift, finish it through the real report button the way a player
+## would, and check the summary that comes up actually is RunSummaryPanel
+## rendering Score.tally() of the very _run this driver has been playing.
+func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
+	_run.shift_number = _run.cfg.shifts_in_run
+	_root._shift_view.setup(_run.start_shift(ShiftProfile.new()), _run.standing)
+	_check("the summary starts out hidden", not _root._summary_view.visible)
+
+	_finish_the_shift()
+
+	_check("the run is over after its last shift", _run.is_over())
+	_check("the summary screen shows once the run ends",
+		_root._summary_view.visible)
+	_check("the shop stays hidden behind it, not shown underneath",
+		not _root._shop_view.visible)
+
+	var score := Score.tally(_run)
+	var summary = _root._summary_view
+	_check("the total line names the same high score Score.tally computes (%s)"
+		% summary._total.text,
+		summary._total.text == "HIGH SCORE: %d" % int(score["total"]))
+	_check("margin banked, lifetime, is on its own line (%s)" % summary._margin.text,
+		summary._margin.text.contains(Format.money(score["margin_banked"])))
+	_check("standing at the bell is on its own line (%s)" % summary._standing.text,
+		summary._standing.text.contains(str(score["standing"])))
+	_check("walkout count is on its own line (%s)" % summary._walkouts.text,
+		summary._walkouts.text.contains(str(score["walkouts"])))
+
+	var stale_run := _run
+	summary.continue_pressed.emit()
+	_check("pressing the button hides the summary", not summary.visible)
+	_check("and rolls a genuinely fresh RunState, not the finished one relabeled",
+		_root._run != stale_run and _root._run.shift_number == 1)
+	_check("with a full standing meter again",
+		_root._run.standing == _root._run.cfg.standing_start)
+	_run = _root._run   # the driver keeps playing the fresh run past this point
+
+## "YOU'RE FIRED" has to read as a different outcome than finishing the run on
+## schedule - the same rule report_panel.gd already follows for the per-shift
+## version of this screen. Driven directly through setup(), the same way
+## _check_report_card_fits_the_worst_case() reaches a branch this driver's own
+## play never lands on live.
+func _check_the_fired_title_is_distinct_from_a_completed_run() -> void:
+	var summary = _root._summary_view
+	var score := Score.tally(_run)
+	summary.setup(score, true)
+	_check("a standing wipeout titles the summary YOU'RE FIRED (%s)"
+		% summary._title.text, summary._title.text == "YOU'RE FIRED")
+	_check("in the same alert colour the per-shift report already uses for it",
+		summary._title.get_theme_color("font_color") == Palette.color(&"alert"))
+	summary.setup(score, false)
+	_check("a completed run titles it RUN COMPLETE instead (%s)"
+		% summary._title.text, summary._title.text == "RUN COMPLETE")
+	_check("in the same neutral colour the per-shift report uses for a normal close",
+		summary._title.get_theme_color("font_color") == Palette.color(&"text"))
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

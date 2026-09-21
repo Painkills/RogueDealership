@@ -15,52 +15,76 @@ func _shift(shift_number: int, seed_value: int) -> Shift:
 		load("res://data/card_pool.tres"), _pool(),
 		seed_value, [], null, 0, shift_number)
 
-func test_the_ladder_is_authored_as_designed() -> void:
-	var want := {
-		&"laydown": 1, &"easygoing": 1,
-		&"family": 2, &"tech": 2,
-		&"hawk": 3, &"kicker": 3,
-		&"karen": 4,
-	}
-	h.eq("every archetype is on the ladder", _pool().archetypes.size(), want.size())
-	for a in _pool().archetypes:
-		h.check("%s is on the ladder" % a.id, want.has(a.id))
-		if want.has(a.id):
-			h.eq("%s opens on shift %d" % [a.id, want[a.id]], a.min_shift, want[a.id])
+func test_every_archetype_has_a_sane_min_shift() -> void:
+	## The ladder's own shape (which archetype opens on which shift) is a
+	## balance choice, authored per-archetype in its own .tres - what has to
+	## hold regardless is that every min_shift is a real, positive shift
+	## number, and that a run always has SOMETHING to seat on shift 1.
+	var pool := _pool()
+	h.check("the pool has at least one archetype", pool.archetypes.size() >= 1)
+	var opens_shift_one := false
+	for a in pool.archetypes:
+		h.check("%s's min_shift is at least 1" % a.id, a.min_shift >= 1)
+		if a.min_shift <= 1:
+			opens_shift_one = true
+	h.check("at least one archetype can open a run on shift 1", opens_shift_one)
 
-func test_shift_one_is_only_the_two_gentle_archetypes() -> void:
-	for seed_value in range(40):
-		for c in _shift(1, seed_value).seated():
-			h.check("shift 1 seats only laydown or easygoing, got %s" % c.archetype.id,
-				c.archetype.id == &"laydown" or c.archetype.id == &"easygoing")
+func test_a_shift_never_seats_an_archetype_before_its_own_min_shift() -> void:
+	var pool := _pool()
+	var latest_min_shift := 1
+	for a in pool.archetypes:
+		latest_min_shift = maxi(latest_min_shift, a.min_shift)
+	for shift_number in range(1, latest_min_shift + 1):
+		for seed_value in range(40):
+			for c in _shift(shift_number, seed_value).seated():
+				h.check("shift %d seats only archetypes whose min_shift allows it (got %s, min_shift %d)"
+					% [shift_number, c.archetype.id, c.archetype.min_shift],
+					c.archetype.min_shift <= shift_number)
 
-func test_the_hard_two_cannot_open_a_run() -> void:
-	for seed_value in range(40):
-		for n in [1, 2]:
-			for c in _shift(n, seed_value).seated():
-				h.check("shift %d has no kicker or karen, got %s" % [n, c.archetype.id],
-					c.archetype.id != &"kicker" and c.archetype.id != &"karen")
-
-func test_the_kicker_arrives_on_three_and_the_karen_on_four() -> void:
-	var seen_kicker := false
-	var seen_karen := false
-	for seed_value in range(60):
-		for c in _shift(3, seed_value).seated():
-			if c.archetype.id == &"kicker":
-				seen_kicker = true
-			h.check("shift 3 still has no karen", c.archetype.id != &"karen")
-		for c in _shift(4, seed_value).seated():
-			if c.archetype.id == &"karen":
-				seen_karen = true
-	h.check("the kicker does turn up by shift 3", seen_kicker)
-	h.check("and the karen by shift 4", seen_karen)
+func test_every_archetype_does_turn_up_once_its_own_min_shift_arrives() -> void:
+	var pool := _pool()
+	for a in pool.archetypes:
+		var seen := false
+		for seed_value in range(60):
+			for c in _shift(a.min_shift, seed_value).seated():
+				if c.archetype.id == a.id:
+					seen = true
+					break
+			if seen:
+				break
+		h.check("%s turns up by shift %d (its own min_shift)" % [a.id, a.min_shift], seen)
 
 func test_a_floor_still_fills_when_the_gate_leaves_too_few() -> void:
-	## floor_size is 3 but shift 1 offers only 2 archetypes. The unique-archetype
-	## filter is already guarded by "if not fresh.is_empty()", so the third chair
-	## simply repeats one - and on shift 1 a doubled Lay-Down is a gift.
+	## Shift 1 offers only the archetypes gentle enough to open a run - fewer
+	## than a full floor. The unique-archetype filter is already guarded by
+	## "if not fresh.is_empty()", so the extra chairs simply repeat one rather
+	## than sitting empty.
 	var s := _shift(1, 11)
-	h.eq("all three chairs filled", s.seated().size(), 3)
+	h.eq("every chair is filled", s.seated().size(), s.cfg.floor_size)
+
+func test_unlock_full_archetype_pool_ignores_min_shift() -> void:
+	## The ShiftProfile a night pick threads through - see RunState.start_shift()
+	## and ShiftProfile.unlock_full_archetype_pool - makes the WHOLE pool fair
+	## game on shift 1, not just whoever's own min_shift already allows it.
+	var pool := _pool()
+	var latest: CustomerArchetype = pool.archetypes[0]
+	for a in pool.archetypes:
+		if a.min_shift > latest.min_shift:
+			latest = a
+	var seen := false
+	for seed_value in range(60):
+		var s := Shift.new(load("res://data/shift_config.tres"),
+			load("res://data/interests/interest_pool.tres"),
+			load("res://data/card_pool.tres"), pool,
+			seed_value, [], null, 0, 1, 0, 0, null, 0, 1.0, 1.0, true)
+		for c in s.seated():
+			if c.archetype.id == latest.id:
+				seen = true
+				break
+		if seen:
+			break
+	h.check("%s (min_shift %d) can appear on shift 1 once unlocked"
+		% [latest.id, latest.min_shift], seen)
 
 func test_an_empty_gated_pool_falls_back_rather_than_crashing() -> void:
 	## Misauthored data - every min_shift set past the end of the run - would
@@ -88,5 +112,5 @@ func test_an_empty_gated_pool_falls_back_rather_than_crashing() -> void:
 	var s := Shift.new(load("res://data/shift_config.tres"),
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"), pool, 7, [], null, 0, 1)
-	h.eq("the floor still filled", s.seated().size(), 3)
+	h.eq("the floor still filled", s.seated().size(), s.cfg.floor_size)
 	h.eq("from the fallback pool", s.seated()[0].archetype.id, &"late")

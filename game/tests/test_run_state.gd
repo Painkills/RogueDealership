@@ -29,13 +29,16 @@ func test_a_run_starts_on_shift_one_with_a_starter_deck_and_no_money() -> void:
 		Deck.build_starting(load("res://data/card_pool.tres")).cards.size())
 	h.check("which is not over", not r.is_over())
 
-func test_the_quota_climbs_a_fixed_percentage() -> void:
+func test_the_quota_climbs_by_the_configured_growth_rate() -> void:
+	## Restates run_state.gd's own quota_for() formula independently (the
+	## same discipline _delta() above follows) instead of pinning today's
+	## five dollar amounts, which move on every quota/quota_growth retune.
 	var r := _run()
-	h.eq("shift 1 is the config quota", r.quota_for(1), 3600)
-	h.eq("shift 2", r.quota_for(2), 4140)
-	h.eq("shift 3", r.quota_for(3), 4761)
-	h.eq("shift 4", r.quota_for(4), 5475)
-	h.eq("shift 5", r.quota_for(5), 6296)
+	h.eq("shift 1 is the config quota", r.quota_for(1), r.cfg.quota)
+	for n in range(2, 6):
+		var expected := roundi(float(r.cfg.quota) * pow(1.0 + r.cfg.quota_growth, n - 1))
+		h.eq("shift %d compounds from cfg.quota by cfg.quota_growth" % n,
+			r.quota_for(n), expected)
 
 func test_only_what_you_bank_over_quota_becomes_a_bonus() -> void:
 	## The quota is the house's cut and comes out first. What survives it is the
@@ -107,16 +110,37 @@ func test_repeated_total_failure_ends_the_run_before_it_would_naturally_end() ->
 		"standing_delta": _delta(0, r.quota_for(1), r.cfg)}
 	r.finish_shift(wiped_out)
 	h.check("one wipeout survives", not r.is_over())
-	h.eq("but costs half of standing", r.standing, 50)
+	## A total miss (0 of quota) costs the FULL standing_damage_scale - the
+	## short fraction is 1.0, so _delta() above reduces to exactly that.
+	h.eq("costs the full standing_damage_scale, missing by 100%",
+		r.standing, r.cfg.standing_start - roundi(r.cfg.standing_damage_scale))
 	r.finish_shift(wiped_out)
 	h.check("a second wipeout ends the run", r.is_over())
+	h.check("strictly before shift 5", r.shift_number <= r.cfg.shifts_in_run)
+
+func test_letting_customers_walk_can_end_a_run_on_its_own() -> void:
+	## The literal ask: "if you let too many people leave on you you will get
+	## fired." A shift that MEETS quota (no quota-side damage at all) still has
+	## to be able to end the run if enough customers walk out of it.
+	var r := _run()
+	var quota := r.quota_for(1)
+	var walkout_heavy := {"margin_banked": quota, "quota": quota, "made_quota": true,
+		"customers_walked": 7, "standing_delta": -7 * r.cfg.standing_cost_per_walkout}
+	r.finish_shift(walkout_heavy)
+	h.check("meeting quota with a bled-dry floor still survives one shift",
+		not r.is_over())
+	h.eq("costing exactly the walkout rate, nothing from quota",
+		r.standing, r.cfg.standing_start - 7 * r.cfg.standing_cost_per_walkout)
+	r.finish_shift(walkout_heavy)
+	h.check("a second walkout-heavy shift ends the run on its own",
+		r.is_over())
 	h.check("strictly before shift 5", r.shift_number <= r.cfg.shifts_in_run)
 
 func test_standing_clamps_at_both_ends() -> void:
 	var r := _run()
 	r.finish_shift({"margin_banked": 0, "quota": 1000, "made_quota": false,
 		"standing_delta": -30})
-	h.eq("a partial wipeout", r.standing, 70)
+	h.eq("a partial wipeout", r.standing, r.cfg.standing_start - 30)
 	r.finish_shift({"margin_banked": 0, "quota": 1000, "made_quota": false,
 		"standing_delta": -9999})
 	h.eq("a huge hit clamps at 0, not negative", r.standing, 0)
@@ -128,7 +152,7 @@ func test_standing_clamps_at_both_ends() -> void:
 func test_the_shift_it_builds_carries_the_run_state() -> void:
 	var r := _run()
 	r.shift_number = 3
-	var s := r.start_shift()
+	var s := r.start_shift(ShiftProfile.new())
 	h.eq("the shift knows which one it is", s.shift_number, 3)
 	h.eq("and runs to that shift's quota", s.quota, r.quota_for(3))
 	var uids := {}
@@ -137,12 +161,26 @@ func test_the_shift_it_builds_carries_the_run_state() -> void:
 	for c in s.hand:
 		h.check("it deals from the run's deck", uids.has(c.uid))
 
+func test_start_shift_threads_the_picked_profiles_fields_through() -> void:
+	var r := _run()
+	var profile := ShiftProfile.new()
+	profile.floor_size_override = 2
+	profile.patience_scale = 0.5
+	profile.walk_up_scale = 2.0
+	profile.unlock_full_archetype_pool = true
+	var s := r.start_shift(profile)
+	h.eq("floor_size_override reached the shift", s.chairs.size(), 2)
+	h.eq("patience_scale reached the shift", s.patience_scale, 0.5)
+	h.eq("walk_up_scale reached the shift", s.walk_up_scale, 2.0)
+	h.check("unlock_full_archetype_pool reached the shift",
+		s.unlock_full_archetype_pool)
+
 func test_two_runs_from_one_seed_are_identical() -> void:
 	## The whole reason the run owns a seeded rng instead of calling randi().
 	var a := _run(4242)
 	var b := _run(4242)
-	var sa := a.start_shift()
-	var sb := b.start_shift()
+	var sa := a.start_shift(ShiftProfile.new())
+	var sb := b.start_shift(ShiftProfile.new())
 	var ids_a: Array[String] = []
 	var ids_b: Array[String] = []
 	for c in sa.seated():

@@ -1,13 +1,15 @@
-[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3 uid="uid://bv87ljrw3a71l"]
 
-[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_y4u6n"]
-[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="2_scdga"]
-[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="3_7vb75"]
+[ext_resource type="Script" uid="uid://cp8pd650f65g2" path="res://scripts/model/data/customer_action.gd" id="1_y4u6n"]
+[ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="2_scdga"]
+[ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="3_7vb75"]
 
 [resource]
 script = ExtResource("3_7vb75")
 id = &"laydown"
 display_name = "Lay-Down Larry"
-pattern = "Take the free money and LEAVE - they are worth two fast sales, not six ticks of optimising."
+pattern = "Offer everything you've got!"
 tell = "already nodding, and has not asked a single question"
 line = 20
+line_per_sale = 0
+combo_step = 0.05

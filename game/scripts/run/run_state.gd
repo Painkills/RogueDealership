@@ -13,6 +13,7 @@ var cfg: ShiftConfig
 var interests: InterestPool
 var card_pool: CardPool
 var archetypes: ArchetypePool
+var dialogue: DialoguePool
 var rng := RandomNumberGenerator.new()
 
 var deck: Deck
@@ -22,13 +23,16 @@ var last_bonus: int = 0              ## what the shift just played added to it
 var banked_total: int = 0
 var standing: int                    ## the run's HP - no inline default, _init sets it from cfg
 var reports: Array[Dictionary] = []
+var sale_streak: int = 0             ## carried shift to shift - see Shift.sale_streak
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
-		p_arch: ArchetypePool, p_seed: int) -> void:
+		p_arch: ArchetypePool, p_seed: int,
+		p_dialogue: DialoguePool = null) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
+	dialogue = p_dialogue
 	rng.seed = p_seed
 	deck = Deck.build_starting(card_pool)
 	standing = cfg.standing_start
@@ -43,9 +47,12 @@ func quota_for(n: int) -> int:
 		q *= 1.0 + cfg.quota_growth
 	return roundi(q)
 
-func start_shift() -> Shift:
+func start_shift(profile: ShiftProfile) -> Shift:
 	return Shift.new(cfg, interests, card_pool, archetypes,
-		rng.randi(), [], deck, quota_for(shift_number), shift_number)
+		rng.randi(), [], deck, quota_for(shift_number), shift_number, standing,
+		sale_streak, dialogue, profile.floor_size_override,
+		profile.patience_scale, profile.walk_up_scale,
+		profile.unlock_full_archetype_pool)
 
 func finish_shift(report: Dictionary) -> void:
 	## The quota is the house's cut and it comes out first. What you bank OVER it
@@ -67,6 +74,11 @@ func finish_shift(report: Dictionary) -> void:
 	money += last_bonus
 	standing = clampi(standing + int(report["standing_delta"]), 0, cfg.standing_start)
 	shift_number += 1
+	# .get() rather than a bare index: several test_run_state.gd checks build a
+	# report by hand with only the keys their own assertion needs, exactly as
+	# this project's tests already do for every other key - a fabricated dict
+	# missing this one should carry the streak forward unchanged, not crash.
+	sale_streak = int(report.get("sale_streak_end", sale_streak))
 
 static func bonus_from(report: Dictionary) -> int:
 	## Static because the report panel needs this number BEFORE finish_shift runs

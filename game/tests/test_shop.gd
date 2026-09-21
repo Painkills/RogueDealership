@@ -89,6 +89,10 @@ func test_upgrading_costs_a_multiple_of_what_it_gains() -> void:
 			product = c
 			break
 	h.check("there is a product in the starter deck", product != null)
+	# Upgrade offers are a random subset now - imposed here rather than hoped
+	# for, since this test is about the PRICE formula, not about whether this
+	# particular seed happened to roll a product into the offer.
+	shop.upgrade_offers = [product.uid]
 	var p := product.card as ProductCardDef
 	var gain: int = p.upgraded_margin - p.margin
 	h.eq("priced at the multiple of the gain", shop.upgrade_price(product),
@@ -103,10 +107,17 @@ func test_a_card_cannot_be_upgraded_twice() -> void:
 	var r := _run()
 	var shop := Shop.new(r)
 	var uid: int = r.deck.cards[0].uid
-	shop.upgrade(uid)
+	# Imposed onto the offer list: the point of this test is "twice", and that
+	# needs the FIRST upgrade to actually succeed regardless of what this seed
+	# happened to roll.
+	shop.upgrade_offers = [uid]
+	var first := shop.upgrade(uid)
+	h.check("the first one goes through (%s)" % first.msg, first.ok)
 	var money_after_first: int = r.money
 	var res := shop.upgrade(uid)
 	h.check("refused", not res.ok)
+	h.check("because it is already upgraded, not because it fell off the offer (%s)"
+		% res.msg, res.msg.to_lower().contains("already upgraded"))
 	h.eq("and charged nothing", r.money, money_after_first)
 
 func test_a_product_with_no_authored_upgrade_cannot_be_bought() -> void:
@@ -211,3 +222,215 @@ func test_the_deck_can_never_be_stripped_of_products() -> void:
 		% remaining, remaining >= r.cfg.min_products)
 	h.check("and the refusal says something useful (%s)" % last_refusal,
 		last_refusal.to_lower().contains("product"))
+
+# --------------------------------------------------------- random upgrade offers
+func test_upgrade_offers_are_capped_at_the_configured_slot_count() -> void:
+	var r := _run()
+	var shop := Shop.new(r)
+	h.eq("three slots, like shop_offers", shop.upgrade_offers.size(),
+		r.cfg.shop_upgrade_slots)
+
+func test_upgrade_offers_shrink_gracefully_when_fewer_cards_are_eligible() -> void:
+	## mini(), not a hard slot count - fewer eligible cards than slots must not
+	## crash trying to pop more than exist from the pool.
+	var r := _run(10000000)
+	var shop := Shop.new(r)
+	# Upgrade everything eligible except ONE, so the next shop's pool of
+	# eligible cards is down to exactly one - well under the configured 3.
+	var left_eligible: CardInstance = null
+	for inst in r.deck.cards:
+		if shop.upgrade_gain(inst) <= 0:
+			continue
+		if left_eligible == null:
+			left_eligible = inst
+			continue
+		shop.upgrade_offers = [inst.uid]   # imposed, so every upgrade lands
+		shop.upgrade(inst.uid)
+	h.check("left exactly one eligible card behind", left_eligible != null)
+
+	var fresh := Shop.new(r)
+	h.eq("offers exactly the one that is left, not the full slot count",
+		fresh.upgrade_offers.size(), 1)
+	h.eq("and it is that one", fresh.upgrade_offers, [left_eligible.uid])
+
+func test_every_upgrade_offer_is_a_real_eligible_uid() -> void:
+	var r := _run()
+	var shop := Shop.new(r)
+	for uid in shop.upgrade_offers:
+		var inst := shop.find(uid)
+		h.check("uid %d is a real card in the deck" % uid, inst != null)
+		if inst == null:
+			continue
+		h.check("%s is not already upgraded" % inst.card.display_name,
+			not inst.upgraded)
+		h.check("%s actually has an upgrade to sell" % inst.card.display_name,
+			shop.upgrade_gain(inst) > 0)
+
+func test_upgrade_offers_never_repeat_the_same_card_twice() -> void:
+	var r := _run()
+	var shop := Shop.new(r)
+	var seen := {}
+	for uid in shop.upgrade_offers:
+		h.check("uid %d offered only once" % uid, not seen.has(uid))
+		seen[uid] = true
+
+func test_two_shops_from_one_seed_offer_the_same_upgrades() -> void:
+	var a := Shop.new(_run())
+	var b := Shop.new(_run())
+	h.eq("identical upgrade offers", a.upgrade_offers, b.upgrade_offers)
+
+func test_upgrade_offers_do_not_reroll_across_a_visit() -> void:
+	## The same stability `offers` already has: a visit is a handful of clicks,
+	## and the shelf must not shuffle itself out from under a decision the
+	## player is still making.
+	var r := _run()
+	var shop := Shop.new(r)
+	var before := shop.upgrade_offers.duplicate()
+	shop.buy(shop.offers[0])
+	h.eq("buying a new card does not reroll it", shop.upgrade_offers, before)
+	if not shop.upgrade_offers.is_empty():
+		var uid: int = shop.upgrade_offers[0]
+		shop.upgrade(uid)
+		h.eq("neither does upgrading one of the offered cards",
+			shop.upgrade_offers, before)
+
+func test_a_card_not_on_this_visits_upgrade_offer_refuses_the_upgrade() -> void:
+	## Same rule buy() already enforces against `offers` - the random subset is
+	## a real constraint of the shop, not a suggestion only the view follows.
+	var r := _run()
+	var shop := Shop.new(r)
+	var not_offered: CardInstance = null
+	for inst in r.deck.cards:
+		if not shop.upgrade_offers.has(inst.uid) and shop.upgrade_gain(inst) > 0:
+			not_offered = inst
+			break
+	h.check("the starter deck has more upgradeable cards than slots, so one exists",
+		not_offered != null)
+	var res := shop.upgrade(not_offered.uid)
+	h.check("refused (%s)" % res.msg, not res.ok)
+	h.check("and says it is not on offer, not that it has no upgrade",
+		res.msg.to_lower().contains("not on offer"))
+	h.eq("and nothing was spent", r.money, 10000)
+
+# --------------------------------------------------- ShiftProfile reward gating
+
+func test_a_profile_with_upgrades_disabled_leaves_upgrade_offers_empty() -> void:
+	## Morning's own setting - the rng is never even touched for this roll,
+	## but that is an implementation detail; what a caller can observe is that
+	## nothing ends up on offer.
+	var profile := ShiftProfile.new()
+	profile.allow_upgrades_in_shop = false
+	var shop := Shop.new(_run(), profile)
+	h.check("no upgrades on offer", shop.upgrade_offers.is_empty())
+
+func test_a_null_profile_behaves_exactly_like_todays_default_shop() -> void:
+	var shop := Shop.new(_run())
+	h.check("upgrades still roll with no profile at all",
+		not shop.upgrade_offers.is_empty())
+	h.eq("buy_price is the sticker price", shop.buy_price(shop.offers[0]),
+		shop.offers[0].price)
+
+func test_dedicated_free_pools_pay_for_their_own_verb_independent_of_order() -> void:
+	## Night: a guaranteed free purchase AND a guaranteed free upgrade, no
+	## matter which one you reach for first.
+	var profile := ShiftProfile.new()
+	profile.free_purchases = 1
+	profile.free_upgrades = 1
+	var r := _run()
+	var shop := Shop.new(r, profile)
+	var bought: CardDef = shop.offers[0]
+	var upgraded_uid: int = shop.upgrade_offers[0]
+	h.eq("marked free on the shelf before anything happens",
+		shop.buy_price(bought), 0)
+	h.eq("marked free on the deck row before anything happens",
+		shop.upgrade_price(shop.find(upgraded_uid)), 0)
+
+	var money_before := r.money
+	var buy_res := shop.buy(bought)
+	h.check("the purchase went through (%s)" % buy_res.msg, buy_res.ok)
+	h.eq("and cost nothing", r.money, money_before)
+	h.eq("the dedicated purchase pool is spent", shop.free_purchases, 0)
+
+	var upgrade_res := shop.upgrade(upgraded_uid)
+	h.check("the upgrade went through too (%s)" % upgrade_res.msg, upgrade_res.ok)
+	h.eq("and it ALSO cost nothing - a separate pool, not the same freebie",
+		r.money, money_before)
+	h.eq("the dedicated upgrade pool is spent", shop.free_upgrades, 0)
+
+func test_shared_free_choice_pays_for_whichever_verb_spends_it_first() -> void:
+	## Midday: not pre-marked on any one offer - see Shop.buy_price()'s own
+	## comment on why - only resolved the moment you actually buy or upgrade.
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var r := _run()
+	var shop := Shop.new(r, profile)
+	var bought: CardDef = shop.offers[0]
+	var upgraded_uid: int = shop.upgrade_offers[0]
+	h.check("not marked free on the shelf ahead of time",
+		shop.buy_price(bought) > 0)
+	h.check("not marked free on the deck row ahead of time",
+		shop.upgrade_price(shop.find(upgraded_uid)) > 0)
+
+	var money_before := r.money
+	var buy_res := shop.buy(bought)
+	h.check("the purchase went through (%s)" % buy_res.msg, buy_res.ok)
+	h.eq("the first pick is free", r.money, money_before)
+	h.eq("the shared pool is now spent", shop.free_choices, 0)
+
+	var upgrade_price_after: int = shop.upgrade_price(shop.find(upgraded_uid))
+	var upgrade_res := shop.upgrade(upgraded_uid)
+	h.check("the upgrade also goes through (%s)" % upgrade_res.msg, upgrade_res.ok)
+	h.eq("but the second pick pays full price - the freebie is already spent",
+		r.money, money_before - upgrade_price_after)
+
+func test_shared_free_choice_can_be_spent_on_an_upgrade_first_instead() -> void:
+	## The same scenario as above with the two verbs reversed - proving this is
+	## genuinely "whichever happens first," not buy() quietly winning ties.
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var r := _run()
+	var shop := Shop.new(r, profile)
+	var upgraded_uid: int = shop.upgrade_offers[0]
+	var bought: CardDef = shop.offers[0]
+
+	var money_before := r.money
+	var upgrade_res := shop.upgrade(upgraded_uid)
+	h.check("the upgrade went through (%s)" % upgrade_res.msg, upgrade_res.ok)
+	h.eq("upgrading first is free instead", r.money, money_before)
+
+	var buy_price_after: int = shop.buy_price(bought)
+	var buy_res := shop.buy(bought)
+	h.check("the purchase still goes through (%s)" % buy_res.msg, buy_res.ok)
+	h.eq("and now pays full price", r.money, money_before - buy_price_after)
+
+func test_missing_quota_forfeits_every_free_pool_but_keeps_the_tiers_own_shape() -> void:
+	## The reward is EARNED, not just picked - see run_controller.gd's own
+	## comment on why a free upgrade for failing a harder tier would make
+	## failing it better than succeeding at an easier one.
+	var profile := ShiftProfile.new()
+	profile.allow_upgrades_in_shop = false
+	profile.free_purchases = 1
+	profile.free_upgrades = 1
+	profile.free_choices = 1
+	var shop := Shop.new(_run(), profile, false)
+	h.eq("no dedicated purchase pool", shop.free_purchases, 0)
+	h.eq("no dedicated upgrade pool", shop.free_upgrades, 0)
+	h.eq("no shared pool either", shop.free_choices, 0)
+	h.check("but the tier's own shop shape is untouched - still purchases only",
+		shop.upgrade_offers.is_empty())
+
+func test_missing_quota_still_grants_the_reward_when_told_it_was_earned() -> void:
+	## p_earned_reward defaults true - every OTHER reward-gating test above
+	## constructs Shop.new(run, profile) with no third argument at all, and
+	## this pins down that omitting it still means "the reward applies."
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var shop := Shop.new(_run(), profile)
+	h.eq("the default is earned", shop.free_choices, 1)
+
+func test_perk_text_says_why_the_reward_is_missing_on_a_failed_quota() -> void:
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var shop := Shop.new(_run(), profile, false)
+	h.check("names the reason (%s)" % shop.perk_text(),
+		shop.perk_text().to_lower().contains("missed quota"))

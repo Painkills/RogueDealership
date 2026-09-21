@@ -32,12 +32,30 @@ func _process(_delta: float) -> bool:
 	print("detail card mesh: %s   (must match the card it hides behind, 2.5 x 3.5)"
 		% mesh.size)
 
-	_frame(cam, "FLOOR", _root.get_node(^"%CameraFloor") as Node3D, -1)
+	# The carousel turns; the camera only ever stands in one of two places. So
+	# a station has to be SET before framing it, exactly as _apply_framing does,
+	# or every seat would be probed with seat 0 still at the front.
+	var carousel := _root.get_node(^"%Carousel") as Node3D
+	_station(carousel, 0)
+	_frame(cam, "FLOOR (station 0)", _root.get_node(^"%CameraFloor") as Node3D, -1)
+	var seat_cam := _root.get_node(^"%SeatCam") as Node3D
 	for i in range(3):
-		_frame(cam, "SEAT %d" % i, _root.get_node(NodePath("%%SeatCam%d" % i)) as Node3D, i)
+		_station(carousel, i)
+		_frame(cam, "SEAT %d" % i, seat_cam, i)
 
 	quit(0)
 	return true
+
+## Turn the table, and let each seat cancel the turn so its cards keep facing
+## the camera - the same two moves _apply_framing() tweens.
+func _station(carousel: Node3D, chair: int) -> void:
+	var turn := deg_to_rad(-120.0 * chair)
+	carousel.rotation.y = turn
+	for i in range(3):
+		var seat := _root.get_node(NodePath("%%Seat%d" % i)) as Node3D
+		seat.rotation.y = -turn
+		seat.force_update_transform()
+	carousel.force_update_transform()
 
 func _frame(cam: Camera3D, label: String, mark: Node3D, seat: int) -> void:
 	cam.global_position = mark.global_position
@@ -51,8 +69,6 @@ func _frame(cam: Camera3D, label: String, mark: Node3D, seat: int) -> void:
 
 	if seat >= 0:
 		var out: Vector3 = DetailCard3D.SLIDE_OUT
-		var wd := _root.get_node(NodePath("%%CustomerDetail%d" % seat)) as Node3D
-		_rect(cam, "customer detail", wd.global_position + out, DetailCard3D.CARD_SIZE)
 		var chair := _root.get_node(NodePath("%%Chair%d" % seat)) as Node3D
 		_rect(cam, "product slot", chair.global_position, Vector2(2.5, 3.5))
 		var od := _root.get_node(NodePath("%%OfferDetail%d" % seat)) as Node3D

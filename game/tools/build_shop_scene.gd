@@ -5,8 +5,21 @@ extends SceneTree
 ## and says nothing about presentation, so this follows the panel style G1 used
 ## before the 3D pivot rather than staging a second 3D scene.
 ##
-## The two lists are EMPTY here and filled at runtime: what is on the shelf and
-## what is in the deck both change every visit.
+## Cards, not text rows: the shelf and the deck browser both show the SAME
+## card face the floor renders (shop_card_button.tscn - a real card wrapped
+## in a flat Button), with the shop price underneath each one rather than
+## folded into a line of button text. ShelfRow and DeckRow are EMPTY here
+## and filled at runtime - what is on the shelf and which of the deck's
+## cards may be edited both change every visit.
+##
+## DeckRow shows Shop.upgrade_offers, not the whole deck: a random, capped
+## subset of cards you can actually DO something with this visit, the same
+## shape the shelf's own offers already have. A card with nothing to upgrade
+## does not appear here at all - see shop_screen.gd's own header comment for
+## why that is a deliberate scope cut, not an oversight.
+
+const DETAIL_SCENE := "res://scenes/cards/shop_card_detail.tscn"
+const DECK_VIEWER_SCENE := "res://scenes/deck_viewer.tscn"
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -16,6 +29,13 @@ func _init() -> void:
 	# existing just because the table is hidden.
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.set_script(load("res://scripts/view/shop_screen.gd"))
+	# Themed rather than left at the engine's default gray PanelContainer style
+	# - the one thing this screen shared with the report screen before either
+	# got a design pass, and the most direct fix for "make the menus look like
+	# they belong to this game" that touches only one property.
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Palette.color(&"bg")
+	root.add_theme_stylebox_override("panel", panel_style)
 
 	var margin := MarginContainer.new()
 	margin.name = "Margin"
@@ -26,58 +46,92 @@ func _init() -> void:
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 18)
+	# Trimmed from 16 once the money row grew a second line for Shop.perk_text()
+	# - six gaps between seven rows, so a few px back here is real headroom
+	# without shrinking any row's own content.
+	col.add_theme_constant_override("separation", 10)
 	margin.add_child(col)
 	col.owner = root
 
-	_label(col, root, "TitleLabel", "BETWEEN SHIFTS", 44, &"text")
-	_label(col, root, "ShiftLabel", "shift 1 of 5", 28, &"text_dim")
-	_label(col, root, "MoneyLabel", "$0 to spend", 34, &"margin")
-	_label(col, root, "OnShelfTitle", "ON THE SHELF", 24, &"text_dim")
+	_label(col, root, "TitleLabel", "BETWEEN SHIFTS", 40, &"text")
 
-	var offers := VBoxContainer.new()
-	offers.name = "OfferRows"
-	offers.unique_name_in_owner = true
-	offers.add_theme_constant_override("separation", 8)
-	col.add_child(offers)
-	offers.owner = root
+	# The quota line doubles as a mobile stand-in for Ctrl+M (+$10,000) - the
+	# same "no keyboard on touch" gap the shift's tick counter has, and the
+	# same fix: PanelContainer stacks every child at the SAME rect instead of
+	# laying them out, so the label sizes the wrapper and the invisible
+	# button (added after, on top for input) exactly covers it for free.
+	var shift_wrap := PanelContainer.new()
+	shift_wrap.name = "ShiftWrap"
+	shift_wrap.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	# IGNORE: the wrapper itself must never be what a click actually hits -
+	# only the Button inside it should. shift.tscn's own equivalent
+	# (TickWrap) has a dedicated test for exactly this; this screen has no
+	# 3D table underneath to protect, but the same rule still applies.
+	shift_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(shift_wrap)
+	shift_wrap.owner = root
 
-	_label(col, root, "DeckTitle", "YOUR DECK", 24, &"text_dim")
+	var shift_label := Label.new()
+	shift_label.name = "ShiftLabel"
+	shift_label.text = "shift 1 of 5"
+	shift_label.add_theme_font_size_override("font_size", 24)
+	shift_label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	shift_label.unique_name_in_owner = true
+	shift_wrap.add_child(shift_label)
+	shift_label.owner = root
 
-	var deck_scroll := ScrollContainer.new()
-	deck_scroll.name = "DeckScroll"
-	# A Control is never sized below its own minimum, anchors or not - so at 420
-	# this plus the labels around it summed to 1095 against the 984 the 48px
-	# margins leave inside a 1080-tall viewport, and DoneButton rendered 63px
-	# below the bottom edge with a real 14-card starter deck. 260 leaves 49px of
-	# headroom at the current shop_offers (3) rather than the ~9px a smaller cut
-	# to 300 would, measured with tools/probe_shop_layout.gd against the actual
-	# built scene, and it still shows about four deck rows before the list
-	# itself needs to scroll - which is what the ScrollContainer is there for.
-	# A ScrollContainer's minimum size is exactly this constant, never its
-	# content's, so this number is independent of how large the deck grows.
-	deck_scroll.custom_minimum_size = Vector2(0, 260)
-	col.add_child(deck_scroll)
-	deck_scroll.owner = root
+	var shift_tap := Button.new()
+	shift_tap.name = "ShiftTapTarget"
+	shift_tap.flat = true   # no visible chrome at all - the ask was invisible
+	shift_tap.unique_name_in_owner = true
+	shift_wrap.add_child(shift_tap)
+	shift_tap.owner = root
 
-	var deck_rows := VBoxContainer.new()
-	deck_rows.name = "DeckRows"
-	deck_rows.unique_name_in_owner = true
-	deck_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	deck_rows.add_theme_constant_override("separation", 6)
-	deck_scroll.add_child(deck_rows)
-	deck_rows.owner = root
+	_label(col, root, "MoneyLabel", "$0 to spend", 30, &"margin")
 
-	_label(col, root, "LogLabel", "", 26, &"alert")
+	_card_section(col, root, "ShelfSection", "OnShelfTitle", "ON THE SHELF",
+		"ShelfRow")
+	_card_section(col, root, "DeckSection", "DeckTitle",
+		"CARDS YOU CAN EDIT - upgrade or drop", "DeckRow")
+
+	_label(col, root, "LogLabel", "", 22, &"alert")
+
+	var button_row := HBoxContainer.new()
+	button_row.name = "ButtonRow"
+	button_row.add_theme_constant_override("separation", 20)
+	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(button_row)
+	button_row.owner = root
+
+	var view_deck := Button.new()
+	view_deck.name = "ViewDeckButton"
+	view_deck.text = "VIEW DECK"
+	view_deck.custom_minimum_size = Vector2(240, 72)
+	view_deck.add_theme_font_size_override("font_size", 24)
+	view_deck.unique_name_in_owner = true
+	button_row.add_child(view_deck)
+	view_deck.owner = root
 
 	var done := Button.new()
 	done.name = "DoneButton"
 	done.text = "OPEN THE FLOOR"
-	done.custom_minimum_size = Vector2(420, 96)
-	done.add_theme_font_size_override("font_size", 32)
+	done.custom_minimum_size = Vector2(360, 72)
+	done.add_theme_font_size_override("font_size", 28)
 	done.unique_name_in_owner = true
-	col.add_child(done)
+	button_row.add_child(done)
 	done.owner = root
+
+	var detail: Control = (load(DETAIL_SCENE) as PackedScene).instantiate()
+	detail.name = "Detail"
+	detail.unique_name_in_owner = true
+	root.add_child(detail)
+	detail.owner = root
+
+	var deck_viewer: Control = (load(DECK_VIEWER_SCENE) as PackedScene).instantiate()
+	deck_viewer.name = "DeckViewer"
+	deck_viewer.unique_name_in_owner = true
+	root.add_child(deck_viewer)
+	deck_viewer.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)
@@ -90,8 +144,30 @@ func _init() -> void:
 	root.free()
 	quit(0)
 
+## A titled row of cards: the shelf and the deck browser are built from the
+## exact same shape, since both are "some cards, click one" - only what a
+## click DOES differs, and that is wired at runtime by shop_screen.gd, not
+## here.
+func _card_section(parent: Node, root: Node, section_name: String,
+		title_name: String, title_text: String, row_name: String) -> void:
+	var section := VBoxContainer.new()
+	section.name = section_name
+	section.add_theme_constant_override("separation", 10)
+	parent.add_child(section)
+	section.owner = root
+
+	_label(section, root, title_name, title_text, 22, &"text_dim")
+
+	var row := HBoxContainer.new()
+	row.name = row_name
+	row.unique_name_in_owner = true
+	row.add_theme_constant_override("separation", 28)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	section.add_child(row)
+	row.owner = root
+
 func _label(parent: Node, root: Node, node_name: String, text: String,
-		size: int, role: StringName) -> void:
+		size: int, role: StringName) -> Label:
 	var l := Label.new()
 	l.name = node_name
 	l.text = text
@@ -100,3 +176,4 @@ func _label(parent: Node, root: Node, node_name: String, text: String,
 	l.unique_name_in_owner = true
 	parent.add_child(l)
 	l.owner = root
+	return l

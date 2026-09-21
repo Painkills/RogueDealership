@@ -55,13 +55,41 @@ func _init() -> void:
 	margin.add_child(col)
 	col.owner = root
 
+	# A small type badge beside the word itself, above the name - the same
+	# CardTypeIcon glyphs the card back draws from too (though the back always
+	# shows the car, regardless of type - see CardBack2D), so what kind of
+	# card this is is the very first thing read, before the name competes
+	# for attention.
+	var kind_row := HBoxContainer.new()
+	kind_row.name = "KindRow"
+	kind_row.add_theme_constant_override("separation", 10)
+	col.add_child(kind_row)
+	kind_row.owner = root
+
+	var kind_icon := Control.new()
+	kind_icon.name = "KindIcon"
+	kind_icon.set_script(load("res://scripts/view/card_type_icon_control.gd"))
+	kind_icon.custom_minimum_size = Vector2(34, 34)
+	kind_row.add_child(kind_icon)
+	kind_icon.owner = root
+
+	var kind := _label("KindLabel", 30, Palette.color(&"accent"))
+	kind.text = "PRODUCT"
+	kind_row.add_child(kind)
+	kind.owner = root
+
 	var header := HBoxContainer.new()
 	header.name = "Header"
 	header.add_theme_constant_override("separation", 12)
 	col.add_child(header)
 	header.owner = root
 
+	# Placeholder text throughout is the longest string CardText can actually
+	# produce for the real card pool (data/card_pool.tres), not a generic
+	# filler word - so opening this scene in the editor already shows whether
+	# a layout change survives the worst real card, not just a short one.
 	var name_label := _label("NameLabel", 46, Palette.color(&"text"))
+	name_label.text = "Anti-Theft & Key Protection"   # longest CardText.title()
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_label.custom_minimum_size = Vector2(0, 130)
@@ -70,13 +98,10 @@ func _init() -> void:
 	name_label.owner = root
 
 	var cost := _label("CostLabel", 40, Palette.color(&"text_dim"))
+	cost.text = "3t"
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	header.add_child(cost)
 	cost.owner = root
-
-	var kind := _label("KindLabel", 30, Palette.color(&"accent"))
-	col.add_child(kind)
-	kind.owner = root
 
 	var rule := ColorRect.new()
 	rule.name = "Rule"
@@ -85,14 +110,62 @@ func _init() -> void:
 	col.add_child(rule)
 	rule.owner = root
 
+	# The icon only means something for a PRODUCT, whose body line IS a
+	# category - a support card's body is its effects' own describe() text, and
+	# has no category to show. So the icon is a sibling the running script
+	# shows or hides per card, not something baked into every card alike.
+	#
+	# Stacked - badge above caption - not side by side: a VBoxContainer
+	# stretches a child's WIDTH to fill it by default, and CategoryIcon.draw()
+	# scales its glyph to whatever rect.size it is handed with no aspect
+	# correction, so a non-square icon draws visibly distorted.
+	# SIZE_SHRINK_CENTER holds it to its own square custom_minimum_size.
+	var body_row := VBoxContainer.new()
+	body_row.name = "BodyRow"
+	body_row.add_theme_constant_override("separation", 10)
+	body_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(body_row)
+	body_row.owner = root
+
+	var body_icon := Control.new()
+	body_icon.name = "BodyIcon"
+	body_icon.set_script(load("res://scripts/view/category_icon_control.gd"))
+	body_icon.custom_minimum_size = Vector2(80, 80)
+	body_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	body_icon.visible = false
+	body_row.add_child(body_icon)
+	body_icon.owner = root
+
 	var body := _label("BodyLabel", 38, Palette.color(&"text"))
+	body.text = "reveals their Line and the category of their number one"   # longest CardText.body()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	col.add_child(body)
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_row.add_child(body)
 	body.owner = root
 
+	var flavor_rule := ColorRect.new()
+	flavor_rule.name = "FlavorRule"
+	flavor_rule.custom_minimum_size = Vector2(0, 3)
+	flavor_rule.color = Palette.color(&"neutral_2")
+	col.add_child(flavor_rule)
+	flavor_rule.owner = root
+
+	# The authored CardDef.text, unused anywhere until now - dimmer and smaller
+	# than BodyLabel so it reads as color commentary, not a second rules line,
+	# and EXPAND_FILL so it (not BodyRow, now its natural size) is what absorbs
+	# whatever vertical slack a short card leaves, keeping MarginLabel pinned
+	# near the bottom on every card rather than drifting with flavor length.
+	var flavor := _label("FlavorLabel", 30, Palette.color(&"text_dim"))
+	flavor.text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."   # longest CardText.flavor()
+	flavor.autowrap_mode = TextServer.AUTOWRAP_WORD
+	flavor.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	flavor.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(flavor)
+	flavor.owner = root
+
 	var money := _label("MarginLabel", 68, Palette.color(&"margin"))
+	money.text = "$1,600"   # longest CardText.margin()
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(money)
 	money.owner = root

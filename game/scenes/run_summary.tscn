@@ -1,0 +1,117 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/view/run_summary_panel.gd" id="1_taqa7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cuait"]
+bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qn3qy"]
+bg_color = Color(0.18039216, 0.18039216, 0.2901961, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.33333334, 0.33333334, 0.46666667, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vlbgi"]
+bg_color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5h16k"]
+bg_color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vpftt"]
+bg_color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+
+[node name="RunSummaryPanel" type="PanelContainer" unique_id=404216659]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
+script = ExtResource("1_taqa7")
+
+[node name="CenterWrap" type="CenterContainer" parent="." unique_id=81550071]
+layout_mode = 2
+
+[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=1255152457]
+custom_minimum_size = Vector2(900, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_qn3qy")
+
+[node name="CardMargin" type="MarginContainer" parent="CenterWrap/Card" unique_id=228959533]
+layout_mode = 2
+theme_override_constants/margin_left = 56
+theme_override_constants/margin_top = 56
+theme_override_constants/margin_right = 56
+theme_override_constants/margin_bottom = 56
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterWrap/Card/CardMargin" unique_id=562519931]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TitleLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=954049336]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 60
+text = "RUN COMPLETE"
+horizontal_alignment = 1
+
+[node name="TitleRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=695045937]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_vlbgi")
+
+[node name="MarginLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1050587115]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="StandingLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=195532109]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="StandingLostLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=548335350]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="WalkoutsLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1838047247]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="StreakLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1326784476]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="ComboMultiplierLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1642617169]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+
+[node name="TotalRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=962816628]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_5h16k")
+
+[node name="TotalLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=2138251618]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 44
+theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
+horizontal_alignment = 1
+
+[node name="ButtonRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1971573311]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_vpftt")
+
+[node name="ButtonWrap" type="CenterContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=139120003]
+layout_mode = 2
+
+[node name="RestartButton" type="Button" parent="CenterWrap/Card/CardMargin/VBoxContainer/ButtonWrap" unique_id=608331800]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 84)
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Start New Run"

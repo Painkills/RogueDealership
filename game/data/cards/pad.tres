@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+[gd_resource type="Resource" script_class="SupportCardDef" format=3 uid="uid://db7b6txdy014g"]
 
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_0q0j0"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_appeal.gd" id="2_c58bq"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_margin.gd" id="3_t6btv"]
-[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_jlfgo"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_0q0j0"]
+[ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_c58bq"]
+[ext_resource type="Script" uid="uid://ulx4li35o01c" path="res://scripts/model/effects/change_margin.gd" id="3_t6btv"]
+[ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="4_jlfgo"]
 
 [sub_resource type="Resource" id="Resource_4jeqi"]
 script = ExtResource("2_c58bq")
@@ -15,11 +15,11 @@ amount = 400
 
 [sub_resource type="Resource" id="Resource_qrnja"]
 script = ExtResource("2_c58bq")
-amount = -3
+amount = -5
 
 [sub_resource type="Resource" id="Resource_tgrmt"]
 script = ExtResource("3_t6btv")
-amount = 400
+amount = 600
 
 [resource]
 script = ExtResource("4_jlfgo")
@@ -27,6 +27,8 @@ effects = Array[ExtResource("1_0q0j0")]([SubResource("Resource_4jeqi"), SubResou
 upgraded_effects = Array[ExtResource("1_0q0j0")]([SubResource("Resource_qrnja"), SubResource("Resource_tgrmt")])
 id = &"pad"
 display_name = "Pad the Deal"
-text = "You quietly widen the spread. Play it BEFORE you start conceding - padding a deal you have already dragged to the Line just pushes it back under."
+text = "They won't even notice the difference."
+copies = 2
 starter = true
 price = 900
+dialogue_tags = Array[StringName]([&"padding"])

@@ -20,7 +20,7 @@ extends Node3D
 const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
 
 ## Camera-local resting places. Must match build_shift_scene.gd.
-const PILE_DEPTH := -8.6
+const PILE_DEPTH := -19.91
 const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
 const HAND_STOWED := Vector3(0.0, -12.6, PILE_DEPTH)
 const DISCARD_UP := Vector3(7.2, -3.68, PILE_DEPTH)
@@ -69,9 +69,13 @@ signal shift_finished(report: Dictionary)
 
 var _shift: Shift
 var _standing_before: int = 0        ## the run's standing when THIS shift started
-var _seats: Array = []               ## one Node3D per seat, hidden when elsewhere
+var _seats: Array = []               ## one Node3D per seat, never hidden now
+## Whoever the carousel is pointed at. Survives stepping out to the floor, so
+## the view does not spin back to seat 0 every time you stand up.
+var _last_station: int = 0
 var _chair_zones: Array = []
-var _seat_cams: Array = []
+var _seat_cam: Marker3D = null
+var _carousel: Node3D = null
 var _customer_cards: Array = []
 var _customer_flips: Array = []      ## the pair-turning node, one per seat
 var _hover_pads: Array = []          ## the immovable thing the mouse actually finds
@@ -82,6 +86,10 @@ var _dragging: CardFace3D = null
 var _framing_tween: Tween
 var _framed_at = null
 var _hovered: int = -1
+var _peeked: int = -1                ## touch's stand-in for hover: tap once to peek
+## Injectable so a test can force the touch branch without a real touchscreen -
+## production never overrides this, always the real platform check.
+var _touch_check: Callable = DisplayServer.is_touchscreen_available
 var _events_seen: int = 0
 var _actions_seen: int = 0
 
@@ -92,7 +100,8 @@ func _ready() -> void:
 
 	_seats = [%Seat0, %Seat1, %Seat2]
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
-	_seat_cams = [%SeatCam0, %SeatCam1, %SeatCam2]
+	_seat_cam = %SeatCam
+	_carousel = %Carousel
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
 	_customer_flips = [%CustomerFlip0, %CustomerFlip1, %CustomerFlip2]
 	_hover_pads = [%HoverPad0, %HoverPad1, %HoverPad2]
@@ -111,6 +120,16 @@ func _ready() -> void:
 	_drag.card_moved.connect(_on_drag_card_moved)
 	_drag.drag_started.connect(_on_drag_started)
 	_drag.drag_stopped.connect(_on_drag_stopped)
+
+	# card_selected fires on PRESS, before the addon's own drag-threshold check -
+	# hovering already lifts a card for a mouse, but touch has no hover state at
+	# all, so without this a tap-and-hold shows nothing until you have dragged
+	# far enough to count as a drag. This is hand-only: draw/discard are face
+	# down, and a card already on someone's table isn't re-dragged from there.
+	# Harmless for a mouse - hovering already lifted it, and set_hovered() on an
+	# already-lifted card just re-tweens to the same place.
+	_hand_zone.card_selected.connect(_on_hand_card_pressed)
+	_hand_zone.card_deselected.connect(_on_hand_card_released)
 
 	# These belong to the PLAYER, so they are wired once and outlive any
 	# particular customer.
@@ -131,6 +150,13 @@ func _ready() -> void:
 		pad.input_event.connect(_on_pad_input.bind(i))
 
 	_register_keyboard_actions()
+	# Mobile has no Ctrl+E: an invisible button laid over the tick counter
+	# itself is the touch equivalent, wired to the exact same method.
+	(%TickTapTarget as Button).pressed.connect(_debug_skip_shift)
+	# Same trick over the standing counter - a manual playtesting convenience
+	# so a run can survive long enough to fast-forward through several shifts
+	# instead of ending the moment one bad walkout zeroes it out.
+	(%StandingTapTarget as Button).pressed.connect(_debug_add_standing)
 	_report_overlay.continue_pressed.connect(
 		func(): shift_finished.emit(_shift.report()))
 
@@ -154,8 +180,10 @@ func _register_keyboard_actions() -> void:
 	_bind_key(&"drop_key", KEY_D)
 	_bind_key(&"close_key", KEY_C, true)    # Shift+C, distinct from chair_c's bare C
 	_bind_key(&"floor_key", KEY_F)          # step back to the floor (Shift.leave())
+	_bind_key(&"debug_skip_shift", KEY_E, false, true)   # Ctrl+E: burn the clock
 
-func _bind_key(action: StringName, keycode: Key, shift: bool = false) -> void:
+func _bind_key(action: StringName, keycode: Key, shift: bool = false,
+		ctrl: bool = false) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action)
 	if not InputMap.action_get_events(action).is_empty():
@@ -163,6 +191,7 @@ func _bind_key(action: StringName, keycode: Key, shift: bool = false) -> void:
 	var ev := InputEventKey.new()
 	ev.keycode = keycode
 	ev.shift_pressed = shift
+	ev.ctrl_pressed = ctrl
 	InputMap.action_add_event(action, ev)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -187,6 +216,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("offer_key"): _on_offer()
 	elif event.is_action_pressed("drop_key"): _on_drop()
 	elif event.is_action_pressed("floor_key"): _apply(_shift.leave())
+	elif event.is_action_pressed("debug_skip_shift"): _debug_skip_shift()
 
 func _try_card(index: int) -> void:
 	if index < _shift.hand.size():
@@ -196,6 +226,35 @@ func _try_dig(index: int) -> void:
 	if index < _shift.hand.size():
 		_apply(_shift.dig(index))
 
+## Ctrl+E: burn the whole shift instantly - the same technique
+## drive_run.gd's own _finish_the_shift() uses to reach the shop without
+## playing it out. A manual testing convenience, not a mechanic: dig
+## whatever is in hand (the cheapest always-legal command), and leave
+## whoever you are with so an empty floor's own free wait() can carry the
+## clock the rest of the way.
+func _debug_skip_shift() -> void:
+	var guard := 0
+	while not _shift.is_over() and guard < 1000:
+		guard += 1
+		if not _shift.hand.is_empty():
+			_apply(_shift.dig(0))
+		elif _shift.at != null:
+			_apply(_shift.leave())
+		elif _shift.seated().is_empty():
+			_apply(_shift.wait())
+		else:
+			break
+
+## Mobile/manual tap target over the standing counter, wired the same way as
+## the tick counter's own cheat above. A run over from one bad walkout can't
+## be fast-forwarded through - this is what lets a playtest keep skipping
+## shifts (Ctrl+E / TickTapTarget) instead of ending the run outright. Same
+## clamp ChangeStanding uses, so this can never push standing above its own
+## starting value or read negative.
+func _debug_add_standing() -> void:
+	_shift.standing = clampi(_shift.standing + 50, 0, _shift.cfg.standing_start)
+	_render()
+
 # --- lifecycle -------------------------------------------------------------
 
 func setup(shift: Shift, standing_before: int) -> void:
@@ -203,12 +262,14 @@ func setup(shift: Shift, standing_before: int) -> void:
 	## which made it the run orchestrator as well as the table, the framing, the
 	## HUD and reconciliation.
 	##
-	## standing_before travels in separately from the Shift because it belongs to
-	## the RUN, not the shift - Shift has never held a RunState reference, and this
-	## is the one number the report needs from outside the shift it is reporting on.
+	## standing_before is what the RUN's standing was before this shift seeded
+	## the Shift's own live copy (Shift.standing, which a walkout now docks
+	## immediately - Shift still holds no RunState reference, it is just handed
+	## the one number it needs to start counting from). Kept here too because
+	## _show_report() needs the ORIGINAL value once the shift is over, by which
+	## point Shift.standing has already moved.
 	_shift = shift
 	_standing_before = standing_before
-	_standing_label.text = "standing %d/%d" % [_standing_before, shift.cfg.standing_start]
 	_events_seen = 0
 	_actions_seen = 0
 	_event_log.clear()
@@ -220,6 +281,7 @@ func setup(shift: Shift, standing_before: int) -> void:
 	_report_overlay.set_button_text("FINISH THE RUN"
 		if _shift.shift_number >= _shift.cfg.shifts_in_run else "Continue")
 	_hovered = -1
+	_peeked = -1
 	_framed_at = -999                     # force the framing to re-apply
 
 	# The ONLY place card nodes are freed. _reconcile() never frees: a freed node
@@ -315,6 +377,16 @@ func _let_time_pass_on_an_empty_floor() -> void:
 ## The seat pad's click. Ignored when you are already standing there, because the
 ## model would only answer "you are already standing with X" and clicking the
 ## person you are talking to should not put a refusal in the log.
+##
+## On a mouse, hovering already peeked the seat before the click ever arrives -
+## so _hovered is already true and this approaches on the first click, exactly
+## as it always has. Touch has no REAL hover, but confirmed on an actual
+## device: Godot's touch-emulates-mouse layer fires mouse_entered on the touch
+## itself, essentially simultaneously with the press - so _hovered reads true
+## on the very first tap too, and trusting it there skipped the peek entirely.
+## No per-event way to tell a real hover from an emulated one apart, so this
+## asks the platform once instead: a touchscreen NEVER consults _hovered here,
+## only its own explicit _peeked, which only a PRIOR discrete tap can set.
 func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector3,
 		_shape: int, chair: int) -> void:
 	if not (event is InputEventMouseButton):
@@ -324,7 +396,29 @@ func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector
 		return
 	if _shift == null or _shift.at == chair:
 		return
-	_on_chair_pressed(chair)
+	var already_seen := chair == _peeked if _touch_check.call() \
+		else (chair == _hovered or chair == _peeked)
+	if already_seen:
+		_peeked = -1
+		_on_chair_pressed(chair)
+	else:
+		_peeked = chair
+		_render_hover_flip()
+
+## Touch's stand-in for the hand's hover-lift: DragController's own
+## _drag_card_start() already un-lifts and takes over positioning once a real
+## drag begins, and "it follows you" from there is already exactly what
+## dragging does - this only has to cover the moment BEFORE that, where a bare
+## press should show what hovering already would.
+func _on_hand_card_pressed(card: Card3D) -> void:
+	card.set_hovered()
+
+## Fires on every release, whether it ended a real drag (already un-lifted by
+## DragController the moment it crossed the drag threshold) or was a tap that
+## never moved. Safe either way - remove_hovered() on an already-resting card
+## is a harmless repeat tween to the position it is already at.
+func _on_hand_card_released(card: Card3D) -> void:
+	card.remove_hovered()
 
 func _on_customer_hover(chair: int) -> void:
 	_hovered = chair
@@ -335,48 +429,85 @@ func _on_customer_unhover(chair: int) -> void:
 		_hovered = -1
 	_render_hover_flip()
 
-## On the floor a customer card carries only identity, so what they DO lives on
-## its BACK: hovering turns the pair over. This replaced a HUD tooltip panel,
-## which had to be positioned somewhere it did not collide with anything, and
-## which - being a Control over a 3D table - is one wrong mouse_filter away from
-## swallowing the very hover that summoned it.
+## A customer card carries only identity on its front, so what they DO lives
+## on its BACK: hovering turns the pair over. This replaced a HUD tooltip
+## panel, which had to be positioned somewhere it did not collide with
+## anything, and which - being a Control over a 3D table - is one wrong
+## mouse_filter away from swallowing the very hover that summoned it.
 ##
-## Suppressed once you are seated, because there the detail card is already out
-## beside them and turning it over would take away what you came to read.
+## Works at a SEAT now too, not just on the floor. It used to be suppressed
+## there on the assumption the customer's own detail card was already out
+## beside them - true back when sitting down slid it out, false since the
+## interest grid moved that content onto the FRONT of the card instead and the
+## seat stopped sliding it out at all. The back is the only place their
+## archetype's tells still live, and there was no reason left to keep it out
+## of reach just because you sat down.
 func _render_hover_flip() -> void:
-	var floor_view: bool = _shift != null and _shift.at == null \
-		and not _report_overlay.visible
+	var usable: bool = _shift != null and not _report_overlay.visible
+	# A stale peek left pointing at a chair that emptied out from under it must
+	# not silently haunt whoever sits down there next - cleared here rather than
+	# wherever a chair empties, so every path that could vacate one (walking off,
+	# closing, a walk-up timer) is covered by the one place that already runs
+	# on every render.
+	if _peeked >= 0 and (_shift == null or _peeked >= _shift.chairs.size() \
+			or _shift.chairs[_peeked] == null):
+		_peeked = -1
 	for i in range(_customer_flips.size()):
+		# See _render()'s identical guard: a ShiftProfile may run with fewer
+		# chairs than the carousel was built for.
+		var chair_here: bool = _shift != null and i < _shift.chairs.size() \
+			and _shift.chairs[i] != null
 		_customer_flips[i].show_back(
-			floor_view and i == _hovered and _shift.chairs[i] != null)
+			usable and (i == _hovered or i == _peeked) and chair_here)
 
 # --- framing ---------------------------------------------------------------
 
 ## Move between the wide floor shot and one seat, and raise or stow the things
 ## that belong to you. The two modes have to LOOK different or nothing tells you
 ## which one you are in.
+## Which way the carousel must be turned to put seat `i` at the front. Seat i
+## sits at carousel angle 120*i, so this is simply its negative - and with it
+## applied, seat (i+1)%3 is always on the RIGHT and (i+2)%3 always on the LEFT.
+static func station_for(chair: int) -> float:
+	return deg_to_rad(-120.0 * chair)
+
 func _apply_framing() -> void:
 	if _framed_at == _shift.at:
 		return
 	_framed_at = _shift.at
+	# A hover or peek belongs to whichever pad the pointer was actually sitting
+	# on a moment ago - and approaching is a CLICK on that same pad, so the
+	# pointer has not moved an inch by the time you arrive. Carried through
+	# uncleared, it would flip the card you just got to (or just left) on the
+	# very next render, simply because the mouse never left it - hiding the
+	# identity card exactly when arriving is supposed to show it, and breaking
+	# the "arriving turns the pair back to face front" guarantee
+	# DetailCard3D's own slide timing depends on. Cleared here, once, on every
+	# real transition, rather than at each of the several places that can
+	# cause one.
+	_hovered = -1
+	_peeked = -1
 	var seated: bool = _shift.at != null
-	var target: Node3D = _seat_cams[int(_shift.at)] if seated else _camera_floor
+	var target: Node3D = _seat_cam if seated else _camera_floor
+	# Staying put on the floor keeps whoever you last dealt with at the front,
+	# which is the same person the mode button offers to take you back to.
+	var station := station_for(int(_shift.at) if seated else _last_station)
+	if seated:
+		_last_station = int(_shift.at)
 
-	# The seats sit close enough together for the floor view to be readable,
-	# which means the neighbours are unavoidably inside the seat framing. They
-	# are hidden rather than escaped - the mode button is how you check on them,
-	# and it says so.
+	# NOBODY IS HIDDEN ANY MORE. The carousel turns instead, so the two you are
+	# not with fall away to either side - smaller because they are further off,
+	# not because anything scaled them. What still belongs only to the seat you
+	# are at is the NEGOTIATION: the product slot and what is sitting in it.
 	for i in range(_seats.size()):
 		var here: bool = seated and i == int(_shift.at)
-		_show_seat(i, here or not seated)
-		_customer_details[i].reveal(here)
+		_show_seat(i, true)
+		# The customer detail no longer slides out at the seat - it is the BACK
+		# of the floor card and nothing else. Its content moved onto the front.
+		_customer_details[i].reveal(false)
 		_offer_details[i].reveal(here)
-		# The floor is customer cards and nothing else. The product slot and
-		# whatever is sitting in it belong to the negotiation, and its detail
-		# card would otherwise show its blank back down there. What you have left
-		# on someone's table is on their floor card, in one line.
-		_chair_zones[i].visible = seated
-		_offer_details[i].visible = seated
+		_chair_zones[i].visible = here
+		_offer_details[i].visible = here
 
 	if _framing_tween != null and _framing_tween.is_running():
 		_framing_tween.kill()
@@ -388,6 +519,12 @@ func _apply_framing() -> void:
 		target.global_position, FRAMING_TWEEN)
 	_framing_tween.tween_property(_camera, "global_rotation",
 		target.global_rotation, FRAMING_TWEEN)
+	_framing_tween.tween_property(_carousel, "rotation:y", station, FRAMING_TWEEN)
+	# Each seat cancels the turn so its cards keep facing the camera. It has to
+	# be per-seat: a single counter-rotating node above them would undo their
+	# positions along with their facing.
+	for seat in _seats:
+		_framing_tween.tween_property(seat, "rotation:y", -station, FRAMING_TWEEN)
 
 	# Camera-LOCAL, so this is purely "up into view" or "down out of it" - the
 	# piles are already travelling with the camera for free.
@@ -410,12 +547,15 @@ func _show_seat(index: int, shown: bool) -> void:
 ## previous version of this file - which enabled them to stop hidden seats
 ## taking drops - made every card in the game untouchable.
 ##
-## The hidden seats still must not take drops, so they are re-disabled HERE
-## instead: DragController emits drag_started after enabling them all, so this
-## runs late enough to win, and its own _stop_drag() disables everything again.
-func _refuse_drops_on_hidden_seats() -> void:
+## The slots you are not at still must not take drops, so they are re-disabled
+## HERE instead: DragController emits drag_started after enabling them all, so
+## this runs late enough to win, and its own _stop_drag() disables everything
+## again. Keyed on the SLOT's own visibility rather than the seat's, because
+## since the carousel arrived every seat is visible and only the one you are at
+## has a product slot showing.
+func _refuse_drops_on_slots_you_are_not_at() -> void:
 	for i in range(_chair_zones.size()):
-		if not _seats[i].visible:
+		if not _chair_zones[i].visible:
 			_chair_zones[i].disable_drop_zone()
 
 func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
@@ -427,20 +567,53 @@ func _render() -> void:
 	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget]
 	_banked_label.text = "banked %s / %s" \
 		% [Format.money(_shift.margin_banked), Format.money(_shift.quota)]
+	# LIVE now, not the setup()-time snapshot it used to be enough to be - a
+	# walkout can move this mid-shift, and the whole point of costing standing
+	# immediately is for the player to be able to see it happen.
+	_standing_label.text = "standing %d/%d" % [_shift.standing, _shift.cfg.standing_start]
 	var risk: int = _shift.margin_at_risk()
 	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
 		if risk > 0 else "nothing unsigned"
+
+	# The clock's own counterpart to a customer's patience going red: few
+	# ticks left costs every unsigned deal on the floor, not just one chair,
+	# so this fires off the whole shift's clock rather than anyone's patience.
+	var low_on_time: bool = _shift.ticks_running_low()
+	_tick_label.add_theme_color_override("font_color",
+		Palette.color(&"alert") if low_on_time else Palette.color(&"text"))
+	if low_on_time and risk > 0:
+		_at_risk_label.add_theme_color_override("font_color", Palette.color(&"alert"))
+	else:
+		_at_risk_label.remove_theme_color_override("font_color")
 
 	_apply_framing()
 
 	var seated: bool = _shift.at != null
 	for i in range(_customer_cards.size()):
-		_customer_cards[i].setup(_shift.chairs[i], seated and i == int(_shift.at))
+		# Keyed on being FRONTED rather than on being seated: the carousel
+		# draws the two flankers small on the floor as well, and that is where
+		# rank numerals stop surviving the SubViewport's downscale.
+		var front: int = int(_shift.at) if seated else _last_station
+		_customer_cards[i].compact = i != front
+		# A ShiftProfile (night) may run this shift with fewer chairs than the
+		# scene was built for - the same "no customer here" state
+		# CustomerCard3D.setup(null) already renders for a chair mid-refill,
+		# not a chair this shift never had at all.
+		var chair = _shift.chairs[i] if i < _shift.chairs.size() else null
+		_customer_cards[i].setup(chair,
+			seated and i == int(_shift.at), _shift.tick)
 
 	_render_mode_button(seated)
 	_render_details()
 	_render_hover_flip()
 	_action_bar.visible = seated and not _report_overlay.visible
+	# Nudges you to close out before the bell, but only when there is
+	# something on THIS table actually worth closing - close() refuses an
+	# empty hand now, so highlighting it with nothing unsigned would be a lie.
+	var current: Customer = _shift.chairs[int(_shift.at)] if seated else null
+	_close_btn.modulate = Palette.color(&"alert") \
+		if (low_on_time and current != null and not current.unsigned.is_empty()) \
+		else Color.WHITE
 	_reconcile()
 	_drain_log()
 
@@ -480,7 +653,7 @@ func _render_details() -> void:
 		var band := ""
 		if c != null and c.offer != null:
 			band = _shift.band_for(c.line - c.offer.appeal)
-		_offer_details[i].show_offer(c, band)
+		_offer_details[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
@@ -491,7 +664,26 @@ func _drain_log() -> void:
 		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
 			% [color, entry["customer"], entry["key"], entry["name"],
 				", ".join(entry["descriptions"])])
+		# Authored on every action since G1, carried through the model since G1,
+		# and silently dropped here every single time. It matters now: a demand
+		# the customer SAYS OUT LOUD reads as a person interrupting you, where the
+		# same event as a bare stat change reads as a rules engine ticking over.
+		var said: String = str(entry.get("dialogue", ""))
+		if said != "":
+			_event_log.append_text("[color=%s]   %s[/color]\n" % [color, said])
+			_say_on_the_card(str(entry["key"]), said)
 	_actions_seen = _shift.action_log.size()
+
+## "All customer actions need to show on the screen, not just in the log" - a
+## speech bubble on the card that said it, not only a line scrolled into the
+## log beside it. Keyed on the chair LETTER the entry itself carries: dialogue
+## is only ever logged the instant it is spoken, before anything could have
+## vacated that chair since, so the letter still names the right card.
+func _say_on_the_card(key: String, text: String) -> void:
+	var chair: int = Shift.CHAIR_KEYS.find(key)
+	if chair < 0 or chair >= _customer_cards.size():
+		return
+	_customer_cards[chair].say(text, _shift.tick)
 
 func _show_report() -> void:
 	_report_overlay.visible = true
@@ -511,6 +703,7 @@ func _show_report() -> void:
 	_action_bar.visible = false
 	_mode_btn.visible = false
 	_hovered = -1
+	_peeked = -1
 	_render_hover_flip()
 	# The camera stays where it is - the overlay covers it - but the table itself
 	# must not be left mid-negotiation underneath, with two thirds of the floor
@@ -524,7 +717,29 @@ func _show_report() -> void:
 
 func _on_drag_started(card) -> void:
 	_dragging = card as CardFace3D
-	_refuse_drops_on_hidden_seats()
+	_refuse_drops_on_slots_you_are_not_at()
+	# DragController's own _drag_card_start() just called remove_hovered() on
+	# this card - its ROOT now tracks the pointer directly ("set card position
+	# to under mouse"), on the assumption no local offset is needed once a drag
+	# begins. Correct for a mouse: the cursor never occluded anything, so the
+	# card should shrink back to normal size and track the pointer exactly,
+	# with nothing hiding where it will actually land. Wrong for a fingertip,
+	# which sits on the card's own center for the WHOLE drag unless something
+	# keeps it clear - confirmed on a real device.
+	#
+	# So this reapplies the SAME hover state, but for touch only. Reapplying it
+	# for a mouse too was tried and was wrong the other way: the card grew AND
+	# stayed lifted for the whole drag, visibly detached from the drop-plane
+	# position DragController was actually tracking underneath it - confirmed
+	# on a real desktop. hover_pos_move is a local offset on the mesh relative
+	# to whatever the root is doing, so on touch it composes correctly with the
+	# root tracking the pointer and with the card's own drag rotation; on mouse
+	# it has no business being there at all.
+	# Hand only: nothing else is meant to be read while it is being dragged.
+	# _on_hand_card_released already calls remove_hovered() on every release,
+	# drag or not, so this needs no matching cleanup of its own.
+	if _touch_check.call() and _hand_zone.cards.has(_dragging):
+		_dragging.set_hovered()
 
 func _on_drag_stopped(_card) -> void:
 	_dragging = null
@@ -615,6 +830,15 @@ func _reconcile() -> void:
 			node.setup(desired[uid]["instance"])
 			_nodes[uid] = node
 			var home := _zone_for(desired[uid]["zone"])
+			# A freshly drawn card has no prior on-screen position to preserve
+			# the way _move_card() preserves one for a card changing zones -
+			# it never existed anywhere before. Fabricating one at the draw
+			# pile's own spot, converted into home's local space, makes the
+			# layout tween insert_card() is about to trigger read as the card
+			# actually traveling from the pile rather than popping in at
+			# hand's own local origin.
+			if desired[uid]["zone"] == CardHomes.ZONE_HAND:
+				node.position = home.to_local(_draw_zone.global_position)
 			home.insert_card(node, clampi(desired[uid]["ordinal"], 0, home.cards.size()))
 
 	for uid in desired:

@@ -1,0 +1,229 @@
+[gd_resource type="Resource" script_class="DialoguePool" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/dialogue_line.gd" id="1_rmhas"]
+[ext_resource type="Script" path="res://scripts/model/data/dialogue_pool.gd" id="2_xfm46"]
+
+[sub_resource type="Resource" id="Resource_ekxp0"]
+script = ExtResource("1_rmhas")
+text = "\"Okay. Keep talking.\""
+tags = Array[StringName]([&"appeal"])
+
+[sub_resource type="Resource" id="Resource_pivgf"]
+script = ExtResource("1_rmhas")
+text = "\"Huh. I had not thought about it that way.\""
+tags = Array[StringName]([&"appeal"])
+
+[sub_resource type="Resource" id="Resource_u7et8"]
+script = ExtResource("1_rmhas")
+text = "\"That is not nothing, I will give you that.\""
+tags = Array[StringName]([&"appeal"])
+
+[sub_resource type="Resource" id="Resource_dn6k0"]
+script = ExtResource("1_rmhas")
+text = "\"Alright. I am listening.\""
+tags = Array[StringName]([&"appeal"])
+
+[sub_resource type="Resource" id="Resource_1lucu"]
+script = ExtResource("1_rmhas")
+text = "\"My brother-in-law said the same about these.\""
+tags = Array[StringName]([&"appeal"])
+
+[sub_resource type="Resource" id="Resource_ne3hw"]
+script = ExtResource("1_rmhas")
+text = "\"You are not really selling me here.\""
+tags = Array[StringName]([&"appeal"])
+appeal_bands = Array[StringName]([&"COLD"])
+
+[sub_resource type="Resource" id="Resource_ux88j"]
+script = ExtResource("1_rmhas")
+text = "\"It still feels like a lot for what it is.\""
+tags = Array[StringName]([&"appeal"])
+appeal_bands = Array[StringName]([&"COLD"])
+
+[sub_resource type="Resource" id="Resource_01o8a"]
+script = ExtResource("1_rmhas")
+text = "\"You are very close to a yes, you know.\""
+tags = Array[StringName]([&"appeal"])
+appeal_bands = Array[StringName]([&"ALMOST"])
+
+[sub_resource type="Resource" id="Resource_2y2sn"]
+script = ExtResource("1_rmhas")
+text = "\"Say that last part one more time.\""
+tags = Array[StringName]([&"appeal"])
+appeal_bands = Array[StringName]([&"ALMOST"])
+
+[sub_resource type="Resource" id="Resource_d5jv2"]
+script = ExtResource("1_rmhas")
+text = "\"And is that in writing, or just you saying it?\""
+tags = Array[StringName]([&"appeal"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_dx86f"]
+script = ExtResource("1_rmhas")
+text = "\"Fine. What is the other guy charging for that?\""
+tags = Array[StringName]([&"appeal"])
+archetype_ids = Array[StringName]([&"hawk"])
+
+[sub_resource type="Resource" id="Resource_8xx72"]
+script = ExtResource("1_rmhas")
+text = "\"Do you have the actual spec sheet on that?\""
+tags = Array[StringName]([&"appeal"])
+archetype_ids = Array[StringName]([&"tech"])
+
+[sub_resource type="Resource" id="Resource_4wm27"]
+script = ExtResource("1_rmhas")
+text = "\"Sure, sure. How much longer is this going to be?\""
+tags = Array[StringName]([&"appeal"])
+archetype_ids = Array[StringName]([&"kicker"])
+
+[sub_resource type="Resource" id="Resource_wluge"]
+script = ExtResource("1_rmhas")
+text = "\"Let me run that past her before I say anything.\""
+tags = Array[StringName]([&"appeal"])
+archetype_ids = Array[StringName]([&"family"])
+
+[sub_resource type="Resource" id="Resource_8blg8"]
+script = ExtResource("1_rmhas")
+text = "\"So if I total it, that is the part that covers me?\""
+tags = Array[StringName]([&"appeal"])
+product_ids = Array[StringName]([&"gap"])
+
+[sub_resource type="Resource" id="Resource_ggxr6"]
+script = ExtResource("1_rmhas")
+text = "\"And this is on top of the factory warranty?\""
+tags = Array[StringName]([&"appeal"])
+product_ids = Array[StringName]([&"vsc"])
+
+[sub_resource type="Resource" id="Resource_4m86u"]
+script = ExtResource("1_rmhas")
+text = "\"Ha. The 401 was a parking lot this morning too.\""
+tags = Array[StringName]([&"patience"])
+
+[sub_resource type="Resource" id="Resource_cqojf"]
+script = ExtResource("1_rmhas")
+text = "\"No rush on my end. I took the afternoon.\""
+tags = Array[StringName]([&"patience"])
+
+[sub_resource type="Resource" id="Resource_qxykp"]
+script = ExtResource("1_rmhas")
+text = "\"You are alright, you know that?\""
+tags = Array[StringName]([&"patience"])
+
+[sub_resource type="Resource" id="Resource_svom2"]
+script = ExtResource("1_rmhas")
+text = "\"My daughter has a game at six, but we are fine.\""
+tags = Array[StringName]([&"patience"])
+
+[sub_resource type="Resource" id="Resource_byol2"]
+script = ExtResource("1_rmhas")
+text = "\"That is nice. The meter is still running though.\""
+tags = Array[StringName]([&"patience"])
+archetype_ids = Array[StringName]([&"kicker"])
+
+[sub_resource type="Resource" id="Resource_8gac4"]
+script = ExtResource("1_rmhas")
+text = "\"Now you are speaking my language.\""
+tags = Array[StringName]([&"concession"])
+
+[sub_resource type="Resource" id="Resource_n34fd"]
+script = ExtResource("1_rmhas")
+text = "\"See, that is what I was waiting for.\""
+tags = Array[StringName]([&"concession"])
+
+[sub_resource type="Resource" id="Resource_dupj3"]
+script = ExtResource("1_rmhas")
+text = "\"Better. Still not what the place on Dundas quoted.\""
+tags = Array[StringName]([&"concession"])
+archetype_ids = Array[StringName]([&"hawk"])
+
+[sub_resource type="Resource" id="Resource_232ah"]
+script = ExtResource("1_rmhas")
+text = "\"Alright, alright. You do not have to lean on me.\""
+tags = Array[StringName]([&"pressure"])
+
+[sub_resource type="Resource" id="Resource_yo0mn"]
+script = ExtResource("1_rmhas")
+text = "\"Okay. Fine. Just stop.\""
+tags = Array[StringName]([&"pressure"])
+
+[sub_resource type="Resource" id="Resource_xkles"]
+script = ExtResource("1_rmhas")
+text = "\"Do not take that tone with me.\""
+tags = Array[StringName]([&"pressure"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_k76ca"]
+script = ExtResource("1_rmhas")
+text = "\"Sure. Whatever the paperwork says.\""
+tags = Array[StringName]([&"padding"])
+
+[sub_resource type="Resource" id="Resource_jw7i3"]
+script = ExtResource("1_rmhas")
+text = "\"I will take your word on the numbers.\""
+tags = Array[StringName]([&"padding"])
+
+[sub_resource type="Resource" id="Resource_fb3y0"]
+script = ExtResource("1_rmhas")
+text = "\"Could we have a moment?\""
+tags = Array[StringName]([&"demand_thinking"])
+
+[sub_resource type="Resource" id="Resource_klppi"]
+script = ExtResource("1_rmhas")
+text = "\"How long is this going to take?\""
+tags = Array[StringName]([&"demand_restless"])
+
+[sub_resource type="Resource" id="Resource_74n1b"]
+script = ExtResource("1_rmhas")
+text = "\"Is there someone else I can speak to?\""
+tags = Array[StringName]([&"demand_manager"])
+
+[sub_resource type="Resource" id="Resource_r5ibr"]
+script = ExtResource("1_rmhas")
+text = "\"What have you got that is actually worth having?\""
+tags = Array[StringName]([&"demand_show_me"])
+
+[sub_resource type="Resource" id="Resource_gheq0"]
+script = ExtResource("1_rmhas")
+text = "\"I had another dealer at less than that.\""
+tags = Array[StringName]([&"demand_better_quote"])
+
+[sub_resource type="Resource" id="Resource_x1hxi"]
+script = ExtResource("1_rmhas")
+text = "\"The place on Dundas does this for less.\""
+tags = Array[StringName]([&"demand_better_quote"])
+
+[sub_resource type="Resource" id="Resource_oasr4"]
+script = ExtResource("1_rmhas")
+text = "\"Alright, that works.\""
+tags = Array[StringName]([&"relief"])
+
+[sub_resource type="Resource" id="Resource_d6m7d"]
+script = ExtResource("1_rmhas")
+text = "\"Good. That is all I wanted.\""
+tags = Array[StringName]([&"relief"])
+
+[sub_resource type="Resource" id="Resource_4ncqi"]
+script = ExtResource("1_rmhas")
+text = "\"Now we are getting somewhere.\""
+tags = Array[StringName]([&"relief"])
+
+[sub_resource type="Resource" id="Resource_avjiy"]
+script = ExtResource("1_rmhas")
+text = "\"Fine. Forget it.\""
+tags = Array[StringName]([&"ignored"])
+
+[sub_resource type="Resource" id="Resource_jhku4"]
+script = ExtResource("1_rmhas")
+text = "\"Whatever you say.\""
+tags = Array[StringName]([&"ignored"])
+
+[sub_resource type="Resource" id="Resource_jbu5l"]
+script = ExtResource("1_rmhas")
+text = "\"I will remember that.\""
+tags = Array[StringName]([&"ignored"])
+
+[resource]
+script = ExtResource("2_xfm46")
+design_rule = "One library, divided by TAG, not by file. A line's tags say which pool it belongs to and are the only required match; archetype_ids, product_ids and appeal_bands are optional narrowings, and an empty one means any. Narrowing is additive and exclusive: a line naming karen is unavailable to everybody else, never merely less likely. Every tag must keep at least one line with NO narrowings at all - that is the fallback that stops a pool going silent, and the suite enforces it. Specific lines are WEIGHTED over generic ones, never substituted for them: one karen line must not make ten generic ones unreachable, or every karen says the same sentence for the rest of the run. GENERATED by tools/build_dialogue.gd - edit the rows there, not this file."
+known_tags = Array[StringName]([&"appeal", &"patience", &"concession", &"pressure", &"padding", &"demand_thinking", &"demand_restless", &"demand_manager", &"demand_show_me", &"demand_better_quote", &"relief", &"ignored"])
+lines = Array[ExtResource("1_rmhas")]([SubResource("Resource_ekxp0"), SubResource("Resource_pivgf"), SubResource("Resource_u7et8"), SubResource("Resource_dn6k0"), SubResource("Resource_1lucu"), SubResource("Resource_ne3hw"), SubResource("Resource_ux88j"), SubResource("Resource_01o8a"), SubResource("Resource_2y2sn"), SubResource("Resource_d5jv2"), SubResource("Resource_dx86f"), SubResource("Resource_8xx72"), SubResource("Resource_4wm27"), SubResource("Resource_wluge"), SubResource("Resource_8blg8"), SubResource("Resource_ggxr6"), SubResource("Resource_4m86u"), SubResource("Resource_cqojf"), SubResource("Resource_qxykp"), SubResource("Resource_svom2"), SubResource("Resource_byol2"), SubResource("Resource_8gac4"), SubResource("Resource_n34fd"), SubResource("Resource_dupj3"), SubResource("Resource_232ah"), SubResource("Resource_yo0mn"), SubResource("Resource_xkles"), SubResource("Resource_k76ca"), SubResource("Resource_jw7i3"), SubResource("Resource_fb3y0"), SubResource("Resource_klppi"), SubResource("Resource_74n1b"), SubResource("Resource_r5ibr"), SubResource("Resource_gheq0"), SubResource("Resource_x1hxi"), SubResource("Resource_oasr4"), SubResource("Resource_d6m7d"), SubResource("Resource_4ncqi"), SubResource("Resource_avjiy"), SubResource("Resource_jhku4"), SubResource("Resource_jbu5l")])

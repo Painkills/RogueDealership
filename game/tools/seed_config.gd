@@ -13,7 +13,8 @@ func _init() -> void:
 	cfg.shift_ticks = 24
 	cfg.quota = 3600
 	cfg.floor_size = 3
-	cfg.walk_up_ticks = 4
+	cfg.walk_up_ticks_min = 6
+	cfg.walk_up_ticks_max = 8
 	cfg.hand_size = 4
 	cfg.approach_ticks = 1
 	cfg.place_ticks = 1

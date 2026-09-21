@@ -1,15 +1,16 @@
-[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3 uid="uid://dm5nvbm30td1p"]
 
-[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="1_apes3"]
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="2_4sgf7"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="3_4i3ea"]
-[ext_resource type="Script" path="res://scripts/model/triggers/every.gd" id="4_gatf8"]
-[ext_resource type="Script" path="res://scripts/model/data/interest.gd" id="5_bg230"]
-[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="6_r7mcl"]
+[ext_resource type="Script" uid="uid://cp8pd650f65g2" path="res://scripts/model/data/customer_action.gd" id="1_apes3"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="2_4sgf7"]
+[ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="3_4i3ea"]
+[ext_resource type="Script" uid="uid://b766306iy15gl" path="res://scripts/model/triggers/every.gd" id="4_gatf8"]
+[ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="5_bg230"]
+[ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="6_r7mcl"]
+[ext_resource type="Resource" uid="uid://c717xwvmbkbj7" path="res://data/demands/restless.tres" id="7_dmd"]
 
 [sub_resource type="Resource" id="Resource_i7tpi"]
 script = ExtResource("3_4i3ea")
-amount = -2
+demand = ExtResource("7_dmd")
 
 [sub_resource type="Resource" id="Resource_fxv8q"]
 script = ExtResource("4_gatf8")
@@ -19,8 +20,8 @@ ticks = 4
 script = ExtResource("1_apes3")
 id = &"antsy"
 display_name = "Half out of the chair already"
-tell = "every 4 ticks they are on the floor, they lose 2 more patience"
-dialogue = "\"How long is this going to take?\""
+tell = "every 4 ticks he wants a price. Ask him for the business within 3 ticks or he WALKS"
+dialogue_tags = Array[StringName]([&"demand_restless"])
 trigger = SubResource("Resource_fxv8q")
 effects = Array[ExtResource("2_4sgf7")]([SubResource("Resource_i7tpi")])
 
@@ -31,5 +32,7 @@ display_name = "Tire Kicker"
 pattern = "Do not diagnose. Sell them SOMETHING, now."
 tell = "keeps glancing at the lot, half out of the chair already"
 patience = 9
+line_per_sale = 4
+combo_step = 0.15
 min_shift = 3
 actions = Array[ExtResource("1_apes3")]([SubResource("Resource_fjiux")])

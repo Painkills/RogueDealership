@@ -9,13 +9,29 @@ var cfg: ShiftConfig
 var interests: InterestPool
 var card_pool: CardPool
 var archetypes: ArchetypePool
+var dialogue: DialoguePool          ## may be null - a shift with no lines is silent
 var rng := RandomNumberGenerator.new()
 
 var tick: int = 0
 var tick_budget: int
 var quota: int
 var shift_number: int = 1          ## which shift of the run; gates archetypes
+## All three set from a picked ShiftProfile, see RunState.start_shift() -
+## none of them changes anything about a Shift built without one (1.0, 1.0
+## and false are the no-op values), so every existing call site is
+## unaffected.
+var patience_scale: float = 1.0
+var walk_up_scale: float = 1.0
+var unlock_full_archetype_pool: bool = false
 var margin_banked: int = 0
+## The run's HP, LIVE during this shift - seeded from RunState.standing at
+## construction (0 means "use cfg's own start", the run is never legitimately
+## AT 0 when a new shift begins, since the run would already be over). A
+## walkout docks it immediately, in _walk(), not just at report() time - see
+## is_over() below.
+var standing: int
+var _initial_standing: int
+var _standing_lost_to_walkouts: int = 0
 
 var chairs: Array = []
 var walk_up: Array[int] = []
@@ -33,6 +49,24 @@ var stat: Dictionary = {}
 var lost_to_walks: int = 0
 var served: int = 0
 
+## The run-long "closed without a walkout" streak, carried in from RunState at
+## construction exactly like standing - one customer signing bumps it, one
+## customer walking (anywhere on the floor, not just theirs) zeroes it.
+## sale_streak_events is the ordered sequence of streak values THIS shift's
+## own closes landed on - Score reads it to turn "how long was each streak"
+## into points without Shift itself knowing anything about scoring.
+## Unrelated to Customer.combo_step / Shift.peak_combo_multiplier below - this
+## is a floor-wide, cross-shift streak, not the per-customer margin combo.
+var sale_streak: int = 0
+var sale_streak_events: Array[int] = []
+
+## The highest per-sale combo multiplier (Customer.combo_step x prior sales
+## this visit) reached anywhere in this shift - Score reads it, the same way
+## it reads sale_streak_events, to turn "what happened" into points without
+## Shift knowing anything about scoring. 1.0 (no bonus) is the floor, not 0 -
+## nobody ever scores WORSE than the no-combo baseline for this category.
+var peak_combo_multiplier: float = 1.0
+
 var _forced: Array = []
 var _forced_next: int = 0
 var _name_pool: Array = []
@@ -40,28 +74,50 @@ var _name_pool: Array = []
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int, p_forced: Array = [],
-		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1) -> void:
+		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1,
+		p_standing: int = 0, p_sale_streak: int = 0,
+		p_dialogue: DialoguePool = null, p_floor_size: int = 0,
+		p_patience_scale: float = 1.0, p_walk_up_scale: float = 1.0,
+		p_unlock_full_archetype_pool: bool = false) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
+	# Injected, never load()ed: scripts/model and scripts/run touch nothing on
+	# disk, which is what lets the suite swap any pool for a double. A shift
+	# built without one still LOGS every support card - it just says nothing
+	# while doing it.
+	dialogue = p_dialogue
 	rng.seed = p_seed
 	_forced = p_forced
 	shift_number = p_shift_number
+	patience_scale = p_patience_scale
+	walk_up_scale = p_walk_up_scale
+	unlock_full_archetype_pool = p_unlock_full_archetype_pool
 
 	tick_budget = cfg.shift_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
 	quota = p_quota if p_quota > 0 else cfg.quota
+	standing = p_standing if p_standing > 0 else cfg.standing_start
+	_initial_standing = standing
+	sale_streak = p_sale_streak
 	for key in ["cards_played", "offers", "failed_offers", "offers_dropped",
 			"sales", "places", "digs", "approaches", "actions_fired",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
 			"margin_conceded", "margin_padded", "margin_bonus",
-			"customers_signed", "customers_walked"]:
+			"customers_signed", "customers_walked",
+			"demands_met", "demands_missed"]:
 		stat[key] = 0
 
-	chairs.resize(cfg.floor_size)
-	walk_up.resize(cfg.floor_size)
-	for i in range(cfg.floor_size):
+	# A picked ShiftProfile (see RunState.start_shift()) may eventually want
+	# fewer chairs than the config's own default - not wired into any shipped
+	# profile yet, see ShiftProfile.floor_size_override's own comment on why.
+	# 0 means "no override", the config decides, same sentinel convention
+	# p_quota/p_standing already use above.
+	var floor_size: int = p_floor_size if p_floor_size > 0 else cfg.floor_size
+	chairs.resize(floor_size)
+	walk_up.resize(floor_size)
+	for i in range(floor_size):
 		chairs[i] = null
 		walk_up[i] = 0
 
@@ -72,7 +128,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	_shuffle(draw)
 	_draw_up()
 
-	for i in range(cfg.floor_size):
+	for i in range(floor_size):
 		_spawn(i)
 
 
@@ -85,7 +141,11 @@ func seated() -> Array:
 
 
 func is_over() -> bool:
-	return tick >= tick_budget
+	## Standing hitting 0 mid-shift ends it immediately, the same as running out
+	## of ticks - checked here rather than only at report() time so the very
+	## next _apply() (already checking is_over() after every command) shows the
+	## report the instant the walkout that did it finishes resolving.
+	return tick >= tick_budget or standing <= 0
 
 
 func margin_at_risk() -> int:
@@ -93,6 +153,15 @@ func margin_at_risk() -> int:
 	for c in seated():
 		total += c.unsigned_margin()
 	return total
+
+
+## The shift-wide counterpart to Customer.leaving_soon() - that one warns you
+## a PERSON is about to walk; this one warns the whole FLOOR is about to close,
+## taking every unsigned deal on it with it (see report()'s
+## margin_lost_to_closing). False once the shift is already over - there is
+## nothing left to warn about by then.
+func ticks_running_low() -> bool:
+	return not is_over() and (tick_budget - tick) <= cfg.low_tick_warning
 
 
 # ------------------------------------------------------------------ the tick
@@ -117,12 +186,32 @@ func _burn(n: int, kind: String) -> void:
 		c.patience -= n
 		c.ticks_on_floor += n
 
+	# Standing with someone while the clock moves IS doing something to them -
+	# it is precisely what "give us a minute" is asking you not to do.
+	#
+	# BEFORE the action pass, and that ordering is load-bearing: a customer can
+	# raise a demand on this very tick, and if this ran afterwards their "give us
+	# a minute" would break on the same burn that created it, while you were
+	# still being told about it. Every demand gets at least one whole tick to
+	# exist, for the same reason the fuse is stored as an absolute due-tick.
+	if at != null and chairs[at] != null:
+		_demand_saw(chairs[at], DemandResolve.PRESENT)
+
 	# Cadenced actions fire after the burn, so someone already leaving does not
 	# get a parting shot.
 	for c in seated():
 		if c.patience > 0:
 			fire(&"every", c)
 			fire(&"patience_below", c)
+
+	# Fuses come due AFTER actions and BEFORE patience settles, so a WalkOut
+	# consequence leaves down the one path a customer has ever left by.
+	# seated() hands back a fresh array, and nothing here vacates a chair, so
+	# settling inside the loop is safe.
+	for c in seated():
+		if c.demand != null and tick >= c.demand_due_tick:
+			_settle_demand(c, c.demand.resolve != null \
+				and c.demand.resolve.succeeds_on_expiry())
 
 	_settle_patience()
 
@@ -138,6 +227,17 @@ func _settle_patience() -> void:
 	for i in range(chairs.size()):
 		if chairs[i] != null and chairs[i].patience <= 0:
 			_walk(i)
+	# One log line per ENTRY into the danger zone, not one per tick spent in
+	# it - re-armed the instant patience climbs back out, so a genuine second
+	# scare still warns. A customer this pass just walked out of is already
+	# gone from seated(), so they cannot also log a stale warning here.
+	for c in seated():
+		if c.leaving_soon():
+			if not c.warned_leaving_soon:
+				c.warned_leaving_soon = true
+				events.append("[%s] %s is losing patience." % [c.key, c.display_name])
+		else:
+			c.warned_leaving_soon = false
 
 
 func _walk(chair: int) -> void:
@@ -147,25 +247,48 @@ func _walk(chair: int) -> void:
 	var lost: int = c.unsigned_margin()
 	lost_to_walks += lost
 	stat["customers_walked"] = int(stat["customers_walked"]) + 1
+	sale_streak = 0   # one walkout, anywhere on the floor, breaks the streak
 	if c.offer != null:
 		discard.append(c.offer.instance)
 		c.offer = null
 	events.append("[%s] %s walks out%s." % [c.key, c.display_name,
 		" with $%d unsigned" % lost if lost > 0 else ""])
+	# Immediate, not deferred to report() - the whole point of costing standing
+	# per walkout is that it should sting the moment it happens, not show up as
+	# a surprise on a screen five minutes later. maxi() rather than a bare
+	# subtraction so a walkout can never be the thing that makes standing READ
+	# negative, only the thing that makes is_over() true.
+	# Immediate, not deferred to report() - the whole point of costing standing
+	# per walkout is that it should sting the moment it happens, not show up as
+	# a surprise on a screen five minutes later. maxi() rather than a bare
+	# subtraction so a walkout can never be the thing that makes standing READ
+	# negative, only the thing that makes is_over() true.
+	var before := standing
+	standing = maxi(0, standing - cfg.standing_cost_per_walkout)
+	_standing_lost_to_walkouts += before - standing
+	events.append("Standing -%d (now %d/%d)." \
+		% [before - standing, standing, cfg.standing_start])
 	_vacate(chair)
 
 
 func _vacate(chair: int) -> void:
 	chairs[chair] = null
-	walk_up[chair] = cfg.walk_up_ticks
+	# A night ShiftProfile stretches this instead of shrinking the floor
+	# itself - see ShiftProfile.walk_up_scale's own comment - so fewer
+	# distinct customers get served across the same tick budget.
+	walk_up[chair] = roundi(rng.randi_range(
+		cfg.walk_up_ticks_min, cfg.walk_up_ticks_max) * walk_up_scale)
 	if at == chair:
 		at = null
 
 
 func _spawn(chair: int) -> void:
 	var arch := _pick_archetype()
-	var top: int = max(1, arch.patience
-		+ rng.randi_range(-cfg.patience_jitter, cfg.patience_jitter))
+	# patience_scale is the picked ShiftProfile's, not the archetype's own -
+	# applied AFTER jitter, so a midday customer is still "this archetype,
+	# a little worse," not a different roll entirely.
+	var top: int = max(1, roundi((arch.patience
+		+ rng.randi_range(-cfg.patience_jitter, cfg.patience_jitter)) * patience_scale))
 
 	# Nobody is guaranteed to walk in fresh. Some are already partway to the
 	# door, which is triage pressure from the moment they sit down. Floored so
@@ -178,9 +301,19 @@ func _spawn(chair: int) -> void:
 		Customer.make_ranks(arch, interests, rng, cfg.prior_slip),
 		start, top, cfg.as_dict(), interests)
 
+	# Every-triggered actions start their cadence counter jittered, not at a
+	# clean 0, so this customer's first demand does not land on the exact same
+	# tick every other one of their archetype's ever has - see fire()'s "every"
+	# branch, which reads this as "when it last fired" and never touches it
+	# again until the action actually does.
+	for act in arch.actions:
+		if act.trigger is Every:
+			c.action_state[act.id] = rng.randi_range(
+				-cfg.action_cadence_jitter_ticks, cfg.action_cadence_jitter_ticks)
+
 	if arch.demands_category:
-		c.demands = interests.by_id(c.top_interest_id()).category.id
-		c.known_top_category = c.demands      # they say so, loudly
+		c.demands_category = interests.by_id(c.top_interest_id()).category.id
+		c.known_top_category = c.demands_category      # they say so, loudly
 
 	chairs[chair] = c
 	walk_up[chair] = 0
@@ -212,6 +345,12 @@ func _archetypes_available_this_shift() -> Array[CustomerArchetype]:
 	## The difficulty ladder. Falls back to the whole pool rather than returning
 	## nothing: misauthored min_shift values would otherwise index an empty array
 	## and take the game down, and a floor that is too hard beats no floor at all.
+	##
+	## A night ShiftProfile skips the ladder entirely - the whole pool is fair
+	## game regardless of which real shift number this is, which is the actual
+	## point of picking night rather than a side effect of it.
+	if unlock_full_archetype_pool:
+		return archetypes.archetypes.duplicate()
 	var out: Array[CustomerArchetype] = []
 	for a in archetypes.archetypes:
 		if a.min_shift <= shift_number:
@@ -241,7 +380,10 @@ func _draw_up() -> void:
 		# pile to empty on its own would make the floor lapse at the worst time.
 		if _needs_a_product() and _top_product_index() < 0 and _discard_has_product():
 			_recycle_discard()
-		hand.append(draw.pop_at(_next_draw_index()))
+		# Index 0, not appended: FanCardLayout renders hand[0] leftmost with no
+		# reordering of its own, so this is the whole rule for "a freshly drawn
+		# card appears on the left."
+		hand.insert(0, draw.pop_at(_next_draw_index()))
 
 
 func _recycle_discard() -> void:
@@ -336,8 +478,16 @@ func _here() -> Array:
 
 
 func approach(chair: int) -> Result:
-	## Going back to whoever you were last with is free. Only changing your
-	## mind about who to work costs the floor a tick.
+	## Walking is FREE. The clock measures work - cards, digs, waiting for the
+	## door - not distance. Charging a tick to go and look at someone made the
+	## cheapest play "finish whoever you are with and never look up", which is
+	## the exact opposite of a game about deciding who deserves the next tick.
+	##
+	## cfg.approach_ticks survives at 0 rather than being deleted, so the charge
+	## is one number away if free movement turns out to be too loose. What does
+	## NOT survive is the old discount for returning to last_customer: an
+	## asymmetry that made coming back cheaper than going was the shape of the
+	## tunnel vision, so if the charge ever comes back it comes back uniform.
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if chair < 0 or chair >= chairs.size():
@@ -348,12 +498,11 @@ func approach(chair: int) -> Result:
 		return Result.new(false, "You are already standing with %s."
 			% chairs[chair].display_name)
 	var c = chairs[chair]
-	var cost: int = 0 if c == last_customer else cfg.approach_ticks
 	at = chair
 	last_customer = c
 	stat["approaches"] = int(stat["approaches"]) + 1
-	if cost > 0:
-		_burn(cost, "approach")
+	# _burn() no-ops on 0, so the default costs nothing and spends no branch.
+	_burn(cfg.approach_ticks, "approach")
 	return Result.new(true, "You walk over to %s." % c.display_name, "move")
 
 
@@ -434,11 +583,18 @@ func place(index: int) -> Result:
 			% [c.display_name, inst.card.display_name])
 
 	var product := inst.card as ProductCardDef
-	c.offer = Offer.new(inst, c.appeal_for(product.interest.id), inst.margin())
+	var iid: StringName = product.interest.id
+	var rank: int = int(c.ranks[iid])
+	c.offer = Offer.new(inst, c.appeal_for(iid), inst.margin())
 	var band := band_for(c.line - c.offer.appeal)
 	hand.remove_at(index)
 	stat["places"] = int(stat["places"]) + 1
 	_draw_up()
+	# Placing teaches nothing the player can see - rank stays hidden, unlike
+	# offer()'s known_ranks reveal - but an archetype can still react to it
+	# internally, the same way OnOffer already reacts to a rank you never see.
+	fire(&"on_place", c, {"rank": rank})
+	_demand_saw(c, DemandResolve.PLACE, {"product": product})
 	_burn(cfg.place_ticks, "place")
 	return Result.new(true, "You put the %s in front of %s."
 		% [product.display_name, c.display_name], "place", {"band": band})
@@ -455,8 +611,20 @@ func _support(c: Customer, index: int) -> Result:
 	var effects: Array[Effect] = def.upgraded_effects \
 		if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
 	var before_margin: int = c.offer.margin if c.offer else 0
+	# One pass, the same one fire() and _settle_demand() make: apply, collect
+	# what to say it did, and notice a floor-wide hit while we are here.
+	var descriptions: Array[String] = []
+	var floor_wide := false
 	for e in effects:
 		e.apply(ctx)
+		var d := e.describe()
+		if d != "":
+			descriptions.append(d)
+		if e is ChangePatienceFloor:
+			floor_wide = true
+	if descriptions.is_empty():
+		descriptions.append("nothing you could point at")
+
 	if c.offer:
 		var delta: int = c.offer.margin - before_margin
 		if delta < 0:
@@ -465,10 +633,45 @@ func _support(c: Customer, index: int) -> Result:
 			stat["margin_padded"] = int(stat["margin_padded"]) + delta
 		c.offer.applied.append(def.display_name)
 
+	# What they say back. The band is read AFTER the effects land, not before:
+	# a card that lifts them COOL to WARM should draw a WARM line, because
+	# they are reacting to where they are now, not where they were. With
+	# nothing on the table both the product and the band read as &"", and
+	# DialogueLine.fits() excludes every line that names either - so a card
+	# played on an empty table falls back to the unfiltered lines instead of
+	# talking about a car that is not there.
+	var said := ""
+	if dialogue != null and not def.dialogue_tags.is_empty():
+		var product_id: StringName = c.offer.product.id if c.offer else &""
+		var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
+			if c.offer else &""
+		said = dialogue.pick(rng, def.dialogue_tags, c.archetype.id,
+			product_id, band)
+	# Appended even when nothing was said, and even when the card is untagged:
+	# until now playing a support card produced NO log line at all, while
+	# every archetype action did. Same shape fire() appends, so _drain_log()
+	# renders it and pops the speech bubble without knowing a card from an
+	# objection.
+	#
+	# MUST stay above _demand_saw(): settling a demand appends its own entry,
+	# and test_demands.gd's test_both_halves_of_a_demand_reach_the_log reads
+	# action_log[-1] expecting to find THAT one, not this one.
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": def.display_name,
+		"dialogue": said,
+		"descriptions": descriptions,
+		"floor_wide": floor_wide,
+	})
+
 	hand.remove_at(index)
 	discard.append(inst)
 	stat["cards_played"] = int(stat["cards_played"]) + 1
 	_draw_up()
+	# Before the burn, so playing the card they asked for answers them rather
+	# than racing the very tick it costs to play it.
+	_demand_saw(c, DemandResolve.SUPPORT, {"card": def, "effects": effects})
 	_settle_patience()
 	_burn(def.ticks, "cards")
 	return Result.new(true, def.display_name + ".", "support")
@@ -489,9 +692,13 @@ func offer() -> Result:
 	var rank: int = int(c.ranks[iid])
 	var gap: int = max(0, c.line - o.appeal)
 
+	# Offering teaches you the RANK of what you just put in front of them, and
+	# nothing about their Line. It used to set known_line too, which made Read
+	# the Room a convenience rather than the only way to see the number - ask
+	# once and the fog was gone for the rest of the shift, for free. The gap is
+	# still true in the model; detail_card_3d.gd decides how much of it you see.
 	o.revealed = true
 	c.known_ranks[iid] = rank
-	c.known_line = true
 	stat["offers"] = int(stat["offers"]) + 1
 
 	# They evaluate at the Line they had when you ASKED. A Hawk's reaction to
@@ -504,6 +711,7 @@ func offer() -> Result:
 		c.patience -= cfg.failed_offer_patience
 
 	fire(&"on_offer", c, {"rank": rank, "short": gap, "sale": sale})
+	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": gap, "sale": sale})
 	_settle_patience()
 
 	if not sale.is_empty():
@@ -511,6 +719,10 @@ func offer() -> Result:
 			% [c.display_name, sale["product"].display_name, sale["margin"]],
 			"sale", {"rank": rank, "margin": sale["margin"],
 				"bonus": sale.get("bonus", 0)})
+	# Exact on purpose, and NOT player-facing: _apply() logs a Result's message
+	# only when it is a refusal. The model always knows the true gap; the fog
+	# lives in the view, which is the only place that can decide how much of it
+	# a player has earned the right to see.
 	return Result.new(true, "%d SHORT." % gap, "miss",
 		{"short": gap, "rank": rank})
 
@@ -521,7 +733,13 @@ func _settle(c: Customer) -> Dictionary:
 	var o = c.offer
 	if o == null or o.appeal < c.line:
 		return {}
-	var sale := {"product": o.product, "margin": o.margin, "bonus": 0}
+	# c.sales is PRIOR sales this visit only - it has not been incremented
+	# for this one yet, so the first sale always multiplies by exactly 1.0.
+	var multiplier: float = 1.0 + c.combo_step * c.sales
+	peak_combo_multiplier = maxf(peak_combo_multiplier, multiplier)
+	var margin := roundi(o.margin * multiplier)
+	var sale := {"product": o.product, "margin": margin, "bonus": 0,
+		"combo_margin": margin - o.margin}
 	c.unsigned.append(sale)
 	c.sales += 1
 	c.line += c.line_per_sale
@@ -529,8 +747,9 @@ func _settle(c: Customer) -> Dictionary:
 	discard.append(o.instance)
 	c.offer = null
 	stat["sales"] = int(stat["sales"]) + 1
-	events.append("[%s] agrees to %s - unsigned."
-		% [c.key, sale["product"].display_name])
+	events.append("[%s] agrees to %s - unsigned%s."
+		% [c.key, sale["product"].display_name,
+			" (×%.1f combo)" % multiplier if multiplier > 1.0 else ""])
 	return sale
 
 
@@ -572,12 +791,29 @@ func close() -> Result:
 	if pair[1] != null:
 		return pair[1]
 	var c: Customer = pair[0]
-	if c.demands != null and not c.owns_category(c.demands):
+	# Closing empty used to be a free "give up on this one" button - now the
+	# only way to shed a customer you will not sell to is to let their patience
+	# run out (which costs standing when they walk). A future effect/card can
+	# grant a one-time bypass here ("strike") without this check itself moving.
+	if c.unsigned.is_empty():
+		return Result.new(false,
+			"%s hasn't agreed to anything yet - sell them something first."
+			% c.display_name)
+	# Exactly the promise the demand's own telegraph makes - "bought something
+	# in <category>" - and nothing stricter. See Customer.owns_category()'s
+	# own comment: a hidden priority-within-category threshold used to sit
+	# here, and a player who sold her a real category match still got
+	# refused with no way to have known why.
+	if c.demands_category != null \
+			and not c.owns_category(c.demands_category):
 		return Result.new(false,
 			"%s came in for %s protection and is not signing until they get it."
-			% [c.display_name, str(c.demands)])
+			% [c.display_name, str(c.demands_category)])
 
 	var chair: int = at
+	# While they are still in the chair: settling a demand mutates the customer,
+	# and after _vacate() nothing can see them to do it.
+	_demand_saw(c, DemandResolve.CLOSE)
 	if c.offer != null:
 		discard.append(c.offer.instance)
 		c.offer = null
@@ -585,6 +821,8 @@ func close() -> Result:
 	margin_banked += banked
 	c.state = "signed"
 	stat["customers_signed"] = int(stat["customers_signed"]) + 1
+	sale_streak += 1
+	sale_streak_events.append(sale_streak)
 	events.append("[%s] %s signs for $%d." % [c.key, c.display_name, banked])
 	if last_customer == c:
 		last_customer = null
@@ -601,6 +839,107 @@ func _context(c: Customer) -> EffectContext:
 	ctx.sales_so_far = c.unsigned.size()
 	ctx.patience = c.patience
 	return ctx
+
+
+# --------------------------------------------------------------------- demands
+func can_take_a_demand(c: Customer) -> bool:
+	## One at a time, not the instant they sit down, and not back to back.
+	## Three customers each free to open a fresh fuse every few ticks is not a
+	## floor you triage, it is a floor you lose.
+	if c == null or c.demand != null:
+		return false
+	if c.ticks_on_floor < cfg.demand_grace_ticks:
+		return false
+	if c.demand_settled_tick >= 0 \
+			and tick - c.demand_settled_tick < cfg.demand_cooldown_ticks:
+		return false
+	return true
+
+
+func raise_demand(c: Customer, d: Demand) -> bool:
+	if d == null or not can_take_a_demand(c):
+		return false
+	c.demand = d
+	# Absolute, and at least one tick away, so a demand raised during a burn
+	# cannot come due on that same burn before anyone could answer it.
+	c.demand_due_tick = tick + maxi(1, d.ticks)
+	c.demand_patience_at_raise = c.patience
+	return true
+
+
+func _asks_for_something(act: CustomerAction) -> bool:
+	for e in act.effects:
+		if e is RaiseDemand:
+			return true
+	return false
+
+
+func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
+	## Every player action that touches a customer reports itself here. The
+	## demand decides what it meant - which is why adding a way to answer a
+	## customer is a new DemandResolve file and not a branch in this function.
+	if c == null or c.demand == null or c.demand.resolve == null:
+		return
+	# offer()'s own _settle() runs before this - a sale may already exist and
+	# c.offer may already be null by the time a demand resolves off the SAME
+	# offer. Passed through so a relief effect can tell which one it is.
+	var sale: Dictionary = data.get("sale", {})
+	# Always available, regardless of kind - a resolve like IncreasePatience
+	# answers "did it go up since the demand was raised" no matter which
+	# action asked, rather than being wired to one specific card or effect.
+	data["patience"] = c.patience
+	data["patience_at_raise"] = c.demand_patience_at_raise
+	if c.demand.resolve.satisfied(kind, data):
+		_settle_demand(c, true, sale)
+	elif c.demand.resolve.broken_by(kind, data):
+		_settle_demand(c, false, sale)
+
+
+func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
+	var d: Demand = c.demand
+	c.demand = null
+	c.demand_due_tick = 0
+	c.demand_settled_tick = tick
+
+	var ctx := _context(c)
+	ctx.sale = sale
+	var effects: Array[Effect] = d.relief if met else d.effects
+	var descriptions: Array[String] = []
+	var floor_wide := false
+	for e in effects:
+		e.apply(ctx)
+		descriptions.append(e.describe())
+		if e is ChangePatienceFloor:
+			floor_wide = true
+	if descriptions.is_empty():
+		descriptions.append("nothing comes of it" if met else "they let it go")
+
+	stat["demands_met" if met else "demands_missed"] = \
+		int(stat["demands_met" if met else "demands_missed"]) + 1
+
+	# What they say once it's settled - previously always silent (this key
+	# was hardcoded ""), since the RAISE was the only moment that ever spoke.
+	# Met and missed draw from separate tags: relief and a shrug are
+	# different registers, not one blended pool.
+	var said := ""
+	if dialogue != null:
+		var tags: Array[StringName] = d.dialogue_tags_met if met else d.dialogue_tags_missed
+		if not tags.is_empty():
+			var product_id: StringName = c.offer.product.id if c.offer else &""
+			var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
+				if c.offer else &""
+			said = dialogue.pick(rng, tags, c.archetype.id, product_id, band)
+
+	# Same shape fire() appends, so _drain_log() renders it without knowing a
+	# demand from an ordinary action.
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": "%s - %s" % [d.display_name, "handled" if met else "IGNORED"],
+		"dialogue": said,
+		"descriptions": descriptions,
+		"floor_wide": floor_wide,
+	})
 
 
 func band_for(gap: int) -> String:
@@ -623,6 +962,13 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 	var fired := []
 	for act in c.archetype.actions:
 		if act.trigger == null or _trigger_name(act.trigger) != trigger_type:
+			continue
+		# An action whose job is to raise a demand is skipped WHOLESALE when the
+		# customer cannot take one, rather than firing and quietly doing nothing:
+		# the log would otherwise announce an ask that never happened. Checked
+		# before the cadence bookkeeping below, so a throttled customer keeps
+		# their place in the rhythm and asks the moment they are allowed to.
+		if not can_take_a_demand(c) and _asks_for_something(act):
 			continue
 
 		if trigger_type == &"every":
@@ -666,12 +1012,22 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 			stat["margin_bonus"] = int(stat["margin_bonus"]) \
 				+ int(ctx.sale.get("bonus", 0)) - bonus_before
 
+		# What they say when this fires - same post-effect product/band read
+		# _support() uses, for the same reason: react to where things ARE.
+		var said := ""
+		if dialogue != null and not act.dialogue_tags.is_empty():
+			var product_id: StringName = c.offer.product.id if c.offer else &""
+			var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
+				if c.offer else &""
+			said = dialogue.pick(rng, act.dialogue_tags, c.archetype.id,
+				product_id, band)
+
 		stat["actions_fired"] = int(stat["actions_fired"]) + 1
 		action_log.append({
 			"key": c.key,
 			"customer": c.display_name,
 			"name": act.display_name,
-			"dialogue": act.dialogue,
+			"dialogue": said,
 			"descriptions": descriptions,
 			"floor_wide": floor_wide,
 		})
@@ -682,6 +1038,8 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 func _trigger_name(t: Trigger) -> StringName:
 	if t is OnOffer:
 		return &"on_offer"
+	if t is OnPlace:
+		return &"on_place"
 	if t is OnSale:
 		return &"on_sale"
 	if t is Every:
@@ -702,6 +1060,7 @@ func report() -> Dictionary:
 		"quota": quota,
 		"made_quota": margin_banked >= quota,
 		"standing_delta": _standing_delta(),
+		"standing_lost_to_walkouts": _standing_lost_to_walkouts,
 		"ticks": tick,
 		"tick_budget": tick_budget,
 		"customers_seen": served,
@@ -723,12 +1082,26 @@ func report() -> Dictionary:
 		"ticks_place": int(stat["ticks_place"]),
 		"ticks_digs": int(stat["ticks_digs"]),
 		"ticks_approach": int(stat["ticks_approach"]),
+		"demands_met": int(stat["demands_met"]),
+		"demands_missed": int(stat["demands_missed"]),
+		"sale_streak_end": sale_streak,
+		"sale_streak_events": sale_streak_events.duplicate(),
+		"peak_combo_multiplier": peak_combo_multiplier,
 	}
 
 
 func _standing_delta() -> int:
-	## The run's HP moves on the same over/under-quota number that already funds
-	## the shop bonus - no second resource, nothing new for the player to read.
+	## The NET change RunState folds into its own authoritative total, exactly
+	## as before this shift ever ran live walkout damage. Walkouts already
+	## docked `standing` immediately, in _walk() - (standing - _initial_standing)
+	## is however much of that survived the floor at 0, so a shift this method
+	## never lets the eventual RunState.finish_shift() double-charge. The quota
+	## term is added here because margin_banked is not final until report() is
+	## actually called - it cannot be evaluated any earlier than this.
+	return (standing - _initial_standing) + _standing_delta_from_quota()
+
+
+func _standing_delta_from_quota() -> int:
 	## Asymmetric: missing costs far more than beating heals, so this reads as
 	## "a bad shift makes death more likely," not "one bad shift and you're out."
 	if quota <= 0:

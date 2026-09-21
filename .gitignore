@@ -1,5 +1,6 @@
 game/.godot/
 game/android/
+game/build/
 __pycache__/
 *.pyc
 *.tmp

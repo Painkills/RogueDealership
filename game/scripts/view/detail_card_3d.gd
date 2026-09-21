@@ -36,9 +36,11 @@ var _does: Label
 var _table: Label
 var _known: Label
 var _margin: Label
+var _combo_now: Label
 var _bar: AppealBar
 var _status: Label
 var _hint: Label
+var _sub_icon: CategoryIconControl
 
 var _home: Vector3
 var _home_rotation: Vector3
@@ -61,20 +63,24 @@ func _bind() -> void:
 	_viewport = $FrontViewport
 	var col: Node = $FrontViewport/DetailFront/Margin/Column
 	_title = col.get_node(^"TitleLabel")
-	_sub = col.get_node(^"SubLabel")
+	_sub = col.get_node(^"SubRow/SubLabel")
+	_sub_icon = col.get_node(^"SubRow/SubIcon")
 	_customer_body = col.get_node(^"CustomerBody")
 	_offer_body = col.get_node(^"OfferBody")
 	_does = _customer_body.get_node(^"DoesLabel")
 	_table = _customer_body.get_node(^"TableLabel")
 	_known = _customer_body.get_node(^"KnownLabel")
 	_margin = _offer_body.get_node(^"MarginLabel")
+	_combo_now = _offer_body.get_node(^"ComboNowLabel")
 	_bar = _offer_body.get_node(^"AppealBar") as AppealBar
 	_status = _offer_body.get_node(^"StatusLabel")
 	_hint = _offer_body.get_node(^"HintLabel")
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
-	_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	# UPDATE_ALWAYS, not UPDATE_ONCE: see card_face_3d.gd - the one-shot bake
+	# raced dynamic card creation on the Web export.
+	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
 
@@ -89,10 +95,12 @@ func show_customer(c) -> void:
 	if c == null:
 		_title.text = "- empty -"
 		_sub.text = "nobody in this chair"
+		_sub_icon.set_category(&"", Color.WHITE)
 		_redraw()
 		return
 	_title.text = c.display_name
 	_sub.text = c.archetype.display_name
+	_sub_icon.set_category(&"", Color.WHITE)
 	_does.text = CustomerCard3D.behaviour_text(c)
 	_table.text = CustomerCard3D.unsigned_text(c)
 	_known.text = CustomerCard3D.known_text(c)
@@ -100,7 +108,10 @@ func show_customer(c) -> void:
 
 ## The product's sheet, with the appeal meter. `band` comes from the model's own
 ## Shift.band_for(), so the colour thresholds are never re-derived here.
-func show_offer(c, band: String) -> void:
+## `meter_scale` comes from the model's own ShiftConfig.appeal_meter_scale -
+## a fixed ceiling, the same for every customer and every offer, so the bar
+## never resizes itself out from under the fill.
+func show_offer(c, band: String, meter_scale: int) -> void:
 	_bind()
 	_customer_body.visible = false
 	var o = c.offer if c != null else null
@@ -108,38 +119,63 @@ func show_offer(c, band: String) -> void:
 	if o == null:
 		_title.text = "nothing on the table"
 		_sub.text = "drag a product onto them" if c != null else ""
+		_sub_icon.set_category(&"", Color.WHITE)
+		_combo_now.visible = false
 		_redraw()
 		return
 
 	_title.text = o.product.display_name
 	_sub.text = "%s . %s" % [o.product.interest.category.display_name,
 		o.product.interest.display_name]
+	_sub_icon.set_category(o.product.interest.category.id, Palette.color(&"accent"))
 	_margin.text = Format.money(o.margin)
-	_bar.set_state(o.appeal, c.line, meter_scale(o.appeal, c.line), band, c.known_line)
-
-	# The FILL is always honest about your own appeal; only the LINE is fogged.
-	# Which is why the gap is spelled out as a number only once you have offered
-	# and the model has actually told you the number.
-	if o.revealed:
-		var gap: int = c.line - o.appeal
-		if gap <= 0:
-			_status.text = "READY - they will sign"
-			_status.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
-		else:
-			_status.text = "%d SHORT" % gap
-			_status.add_theme_color_override("font_color", _bar.fill_color())
-		_hint.visible = false
+	_combo_now.visible = true
+	# c.sales is how many products they have ALREADY taken this visit - the
+	# same prior-sales count _settle() itself multiplies by, so the second
+	# branch is a preview of the real number, not a separate guess. Before
+	# any sale there is nothing to preview yet, so this shows the archetype's
+	# own static knobs instead - never hidden, always something to read.
+	if c.sales > 0:
+		_combo_now.text = "×%.2f combo" % (1.0 + c.combo_step * c.sales)
 	else:
+		_combo_now.text = CustomerCard3D.combo_knobs_text(c)
+	_bar.set_state(o.appeal, c.line, meter_scale, band, c.known_line)
+
+	# The FILL is always honest about your own appeal; only the LINE is fogged,
+	# and Read the Room is the ONLY thing that lifts it. Offering used to lift it
+	# too, which quietly made the card optional: ask once, anywhere, and the exact
+	# number was yours for the rest of the shift.
+	#
+	# So the exact gap is gated on known_line rather than on having offered.
+	# Having offered still buys you something real - the band - but a band is a
+	# read and a number is a readout, and only one of those you have paid for.
+	if not o.revealed:
 		_status.text = ""
 		_hint.visible = true
 		_hint.text = "their Line is marked - clear it before you offer" \
-			if c.known_line else "offer, or read the room, to learn their Line"
-	_redraw()
+			if c.known_line else "read the room to learn their Line"
+		_redraw()
+		return
 
-## Never lets the fill or the marker run off the end, and only steps in tens so
-## the bar does not silently rescale under you every time appeal moves.
-static func meter_scale(appeal: int, line: int) -> int:
-	return maxi(40, (maxi(appeal, line) / 10 + 1) * 10)
+	_hint.visible = false
+	if not c.known_line:
+		# You asked and they said no. How far off you were is a feeling.
+		_status.text = band
+		_status.add_theme_color_override("font_color", _bar.fill_color())
+		_redraw()
+		return
+
+	# READY is gated behind known_line for the same reason the number is: appeal
+	# can climb past the Line on cards played AFTER a miss, and being told you
+	# have cleared a line you cannot see is the number by another name.
+	var gap: int = c.line - o.appeal
+	if gap <= 0:
+		_status.text = "READY - they will sign"
+		_status.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
+	else:
+		_status.text = "%d SHORT" % gap
+		_status.add_theme_color_override("font_color", _bar.fill_color())
+	_redraw()
 
 # --- where it sits ---------------------------------------------------------
 
@@ -173,4 +209,6 @@ func home() -> Vector3:
 
 func _redraw() -> void:
 	if _viewport != null:
-		_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+		# UPDATE_ALWAYS, not UPDATE_ONCE: see card_face_3d.gd - the one-shot bake
+		# raced dynamic card creation on the Web export.
+		_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS

@@ -1,0 +1,128 @@
+name: Test and deploy the Web build
+
+# Fires on every push to your working branch, and gives you a manual "Run
+# workflow" button in the Actions tab too, for re-deploying without a new
+# commit. Change the branch name below once this settles onto its long-term
+# home (main, most likely) - it is the only line that needs to move.
+on:
+  push:
+    branches:
+      - worktree-godot-g1
+  workflow_dispatch: {}
+
+# Lets this workflow push to gh-pages using the token GitHub already hands
+# every run for free - no secret to create or paste in anywhere.
+permissions:
+  contents: write
+
+# A second push while one deploy is still running cancels the older one
+# rather than racing it for the gh-pages branch.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2
+  PROJECT_PATH: game
+
+jobs:
+  deploy:
+    name: Suite, drivers, export, deploy
+    runs-on: ubuntu-24.04
+    # barichello/godot-ci bundles this exact Godot version and its export
+    # templates - the same combination this project has been built and
+    # tested against all along, verified against the version this project
+    # actually pins to rather than "whatever latest happens to be".
+    container:
+      image: barichello/godot-ci:4.7.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The image bakes the export templates into root's own home directory,
+      # which is not necessarily where THIS job's $HOME points - so they have
+      # to be moved into place before any --export-* command can find them.
+      - name: Move the bundled export templates into place
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+            ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+
+      # .godot/ is untracked, so every checkout starts with none of it - and
+      # this project's global class_name registry (Harness, Demand, every
+      # Effect and Trigger, ...) only gets built by an EXPLICIT --import, not
+      # by the first ordinary --script invocation. Skipping this step was the
+      # very first version's mistake: run_tests.gd failed at parse time with
+      # "Identifier 'Harness' not declared", before a single test ran, because
+      # nothing had populated global_script_class_cache.cfg yet. Reproduced
+      # and confirmed locally by deleting game/.godot/ and re-running cold.
+      - name: Import the project (builds the global class cache)
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --import
+
+      # Three gates, in the order this project's own README verifies them -
+      # the unit suite, then the two live drivers that reach real physics
+      # picking and screen-space geometry no headless unit test can. Any one
+      # of these failing stops the job here: export and deploy never run.
+      - name: Run the headless suite
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tests/run_tests.gd
+
+      - name: Run the live shift driver
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_shift.gd
+
+      - name: Run the live run driver
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_run.gd
+
+      # After the gates above, not before: the suite and both drivers run
+      # against the same "dev build" placeholder every local run does, so a
+      # failure never depends on this step having run first. Only the
+      # actually-exported artifact gets the real stamp.
+      #
+      # Godot does the writing itself - tools/stamp_build_info.gd - rather
+      # than a shell sed call. Two sed attempts both shipped "dev build"
+      # anyway despite reporting success (a bash-only ${VAR:0:7} the
+      # container's actual shell rejected outright, then a POSIX-safe
+      # version that still silently no-opped under a weak grep check) -
+      # and log downloads need admin rights this repo does not have, so
+      # guessing at shell quirks blind was not converging. Godot is the one
+      # binary already guaranteed identical everywhere this workflow runs
+      # it, and it reads its own write back before declaring success.
+      - name: Stamp the build badge with this run's identity
+        run: |
+          godot --headless --path ${{ env.PROJECT_PATH }} \
+            --script res://tools/stamp_build_info.gd -- \
+            "${{ github.run_number }}" "${{ github.sha }}"
+
+      # A permanent regression guard, not a one-off diagnostic: a plain
+      # shell grep, no Godot or res:// resolution involved, so it can never
+      # share a bug with the step above. Catches a broken stamp before
+      # paying for an export and deploy that would ship it anyway.
+      - name: Verify the stamp actually landed on disk
+        working-directory: ${{ env.PROJECT_PATH }}
+        run: |
+          echo "current contents:"
+          cat scripts/view/build_info.gd
+          if grep -q 'LABEL := "dev build"' scripts/view/build_info.gd; then
+            echo "::error::still the dev-build placeholder after the stamp step ran"
+            exit 1
+          fi
+
+      - name: Export the Web build
+        run: |
+          mkdir -v -p ${{ env.PROJECT_PATH }}/build/web
+          godot --headless --path ${{ env.PROJECT_PATH }} \
+            --export-debug "Web" "build/web/index.html"
+
+      # The exact throwaway-repo push this project has been doing by hand all
+      # session: a fresh git history scoped to just the exported folder,
+      # force-pushed straight to gh-pages. Plain git, no third-party Action,
+      # so there is nothing here you cannot read and understand line by line.
+      - name: Deploy to GitHub Pages
+        working-directory: ${{ env.PROJECT_PATH }}/build/web
+        run: |
+          git init -q
+          git checkout -q -b gh-pages
+          git add -A
+          git -c user.name="github-actions[bot]" \
+            -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Publish Web build (${{ github.sha }})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:gh-pages

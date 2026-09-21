@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+[gd_resource type="Resource" script_class="SupportCardDef" format=3 uid="uid://dfyop0dac1dl2"]
 
-[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eqeo5"]
-[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_vesdw"]
-[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_la8pn"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eqeo5"]
+[ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="2_vesdw"]
+[ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="3_la8pn"]
 
 [sub_resource type="Resource" id="Resource_r5yyh"]
 script = ExtResource("2_vesdw")
@@ -20,5 +20,7 @@ upgraded_effects = Array[ExtResource("1_eqeo5")]([SubResource("Resource_jnmxs")]
 id = &"smalltalk"
 display_name = "Small Talk"
 text = "Kids, weather, the drive over. Buys one person time; the tick still costs everyone else theirs."
+copies = 2
 starter = true
 price = 700
+dialogue_tags = Array[StringName]([&"patience"])

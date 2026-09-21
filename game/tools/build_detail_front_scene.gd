@@ -17,7 +17,7 @@ extends SceneTree
 
 const W := 500
 const H := 700
-const PAD := 24
+const PAD := 12   ## trimmed from 16 alongside CustomerBody's own separation, see below
 
 func _init() -> void:
 	var root := Control.new()
@@ -42,21 +42,48 @@ func _init() -> void:
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 8)
+	col.add_theme_constant_override("separation", 6)
 	margin.add_child(col)
 	col.owner = root
 
 	# --- header, shared by both bodies -----------------------------------
-	var title := _label("TitleLabel", 40, Palette.color(&"text"))
-	title.text = "Detail Card"
+	# Smaller than before: the header's whole job is to say WHOSE card this
+	# is, and it was taking more of the 500x700 face than that job needs -
+	# room CustomerBody's three sections need far more, especially the tells
+	# of an archetype with a lot to say.
+	#
+	# Placeholder text below is always the LONGER of what show_customer() and
+	# show_offer() can put in this shared Label - the product name beats the
+	# longest customer name, so that is what sits here by default, even
+	# though CustomerBody is the body actually visible at rest.
+	var title := _label("TitleLabel", 34, Palette.color(&"text"))
+	title.text = "Anti-Theft & Key Protection"   # longest of product name / customer name
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
 	col.add_child(title)
 	title.owner = root
 
-	var sub := _label("SubLabel", 27, Palette.color(&"accent"))
-	sub.text = "subtitle"
+	# Shared by both bodies (an archetype's name has no category; the offer's
+	# DOES), so the icon is a sibling toggled by whichever show_*() ran last
+	# rather than something always drawn.
+	var sub_row := HBoxContainer.new()
+	sub_row.name = "SubRow"
+	sub_row.add_theme_constant_override("separation", 10)
+	col.add_child(sub_row)
+	sub_row.owner = root
+
+	var sub_icon := Control.new()
+	sub_icon.name = "SubIcon"
+	sub_icon.set_script(load("res://scripts/view/category_icon_control.gd"))
+	sub_icon.custom_minimum_size = Vector2(32, 32)
+	sub_icon.visible = false
+	sub_row.add_child(sub_icon)
+	sub_icon.owner = root
+
+	var sub := _label("SubLabel", 28, Palette.color(&"accent"))
+	sub.text = "Deal . Value Retention"   # longest of "category . interest" / archetype name
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
-	col.add_child(sub)
+	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sub_row.add_child(sub)
 	sub.owner = root
 
 	var rule := ColorRect.new()
@@ -69,16 +96,28 @@ func _init() -> void:
 	# --- theirs ----------------------------------------------------------
 	var who := VBoxContainer.new()
 	who.name = "CustomerBody"
-	who.add_theme_constant_override("separation", 2)
+	# Trimmed from 8 once Karen's own tell grew a real sentence longer - three
+	# sections' worth of gaps, so a few px back here is real headroom without
+	# shrinking any section's own content.
+	who.add_theme_constant_override("separation", 4)
 	col.add_child(who)
 	who.owner = root
 
+	# Placeholder bodies are each the actual worst case behaviour_text() /
+	# unsigned_text() / known_text() can produce against the real data
+	# (data/archetypes/*.tres, data/products/*.tres, data/interests/*.tres) -
+	# see tools/drive_shift.gd's own wordiest-customer overflow check, which
+	# this same worst case has to survive.
 	_section(who, root, "DoesTitle", "WHAT THEY DO",
-		"DoesLabel", "(their behaviours show here)", &"text")
+		"DoesLabel", "WILL NOT SIGN until they have bought something in Reliability.\n" +
+			"Needs a minute to talk it over - every 6 ticks. Work someone else for 3 and they come back easier, or lose 5 patience",
+		&"text")
 	_section(who, root, "TableTitle", "UNSIGNED",
-		"TableLabel", "(what they have agreed to shows here)", &"margin")
+		"TableLabel", "Anti-Theft & Key Protection $800\nAppearance & Wheel Package $900\n($1,700 at risk)",
+		&"margin")
 	_section(who, root, "KnownTitle", "WHAT YOU KNOW",
-		"KnownLabel", "(what you have worked out shows here)", &"text_dim")
+		"KnownLabel", "Their number one is a Vehicle need.",
+		&"text_dim")
 
 	# --- the product in front of them ------------------------------------
 	var what := VBoxContainer.new()
@@ -98,6 +137,18 @@ func _init() -> void:
 	what.add_child(margin_label)
 	margin_label.owner = root
 
+	# Double duty: before any sale this visit it shows the archetype's own
+	# static knobs (line_per_sale / combo_step - the Karen carries the
+	# longest of both in the roster, the actual worst case below, not
+	# generic filler); once c.sales > 0 it switches to the live multiplier
+	# THIS offer would carry, e.g. "x2.35 combo" - a realistic illustrative
+	# figure, not a hard worst case, since a chain has no fixed ceiling, the
+	# same way TableLabel's unsigned list above does not.
+	var combo_now := _label("ComboNowLabel", 26, Palette.color(&"margin"))
+	combo_now.text = "Line +5/sale  ·  Combo +45%/sale"
+	what.add_child(combo_now)
+	combo_now.owner = root
+
 	var appeal_title := _label("AppealTitle", 22, Palette.color(&"text_dim"))
 	appeal_title.text = "APPEAL"
 	what.add_child(appeal_title)
@@ -114,12 +165,12 @@ func _init() -> void:
 	bar.owner = root
 
 	var status := _label("StatusLabel", 32, Palette.color(&"text"))
-	status.text = "12 SHORT"
+	status.text = "READY - they will sign"   # longest of the status branches
 	what.add_child(status)
 	status.owner = root
 
 	var hint := _label("HintLabel", 22, Palette.color(&"text_dim"))
-	hint.text = "offer, or read the room, to learn their Line"
+	hint.text = "their Line is marked - clear it before you offer"   # longer of the two hint branches
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
 	what.add_child(hint)
 	hint.owner = root
@@ -137,12 +188,12 @@ func _init() -> void:
 
 func _section(parent: Node, root: Node, title_name: String, title_text: String,
 		body_name: String, body_text: String, body_role: StringName) -> void:
-	var t := _label(title_name, 22, Palette.color(&"text_dim"))
+	var t := _label(title_name, 30, Palette.color(&"text_dim"))
 	t.text = title_text
 	parent.add_child(t)
 	t.owner = root
 
-	var b := _label(body_name, 28, Palette.color(body_role))
+	var b := _label(body_name, 30, Palette.color(body_role))
 	b.text = body_text
 	b.autowrap_mode = TextServer.AUTOWRAP_WORD
 	parent.add_child(b)
