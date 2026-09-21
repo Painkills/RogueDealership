@@ -154,17 +154,16 @@ func owns(product_id: StringName) -> bool:
 	return false
 
 
-## worst_rank filters which sale counts: unbounded by default, so every other
-## caller keeps today's meaning of "owns anything in this category." Karen's
-## own gate passes a real ceiling - her pattern is "give them what they
-## actually came in for," and a sale from her own bottom tier just because it
-## shares a category with her real number one is not that, no matter how much
-## appeal it took to close.
-func owns_category(cat_id: StringName, worst_rank: int = 9999) -> bool:
+## Any unsigned product in the category counts - Karen's own gate (close(),
+## in shift.gd) tells the player only "bought something in <category>", never
+## a priority threshold within it, so the check has to mean exactly that
+## promise and nothing stricter. A rank-based version of this used to require
+## one of her own better-ranked interests, which the player has no way to
+## know without already having placed the product - a trap the demand's own
+## telegraph never mentioned.
+func owns_category(cat_id: StringName) -> bool:
 	for u in unsigned:
-		var iid: StringName = u["product"].interest.id
-		if u["product"].interest.category.id == cat_id \
-				and int(ranks.get(iid, 9999)) <= worst_rank:
+		if u["product"].interest.category.id == cat_id:
 			return true
 	return false
 

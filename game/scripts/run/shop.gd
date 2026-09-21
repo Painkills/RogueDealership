@@ -26,13 +26,27 @@ var free_purchases: int = 0
 var free_upgrades: int = 0
 var free_choices: int = 0
 
-func _init(p_run: RunState, p_profile: ShiftProfile = null) -> void:
+## p_earned_reward: the shift that just ended actually made quota. A tier's
+## SHOP SHAPE (whether upgrades are on offer at all) is what that tier always
+## looks like, win or lose - but the FREE pools are what missing quota costs
+## you, on top of the standing hit and the empty bonus pot finish_shift()
+## already applies. True by default so every existing Shop.new(run, profile)
+## call site (including tests that are not about this gate at all) keeps
+## meaning "the reward applies."
+var _reward_forfeited := false
+
+func _init(p_run: RunState, p_profile: ShiftProfile = null,
+		p_earned_reward: bool = true) -> void:
 	run = p_run
 	if p_profile != null:
 		_allow_upgrades = p_profile.allow_upgrades_in_shop
-		free_purchases = p_profile.free_purchases
-		free_upgrades = p_profile.free_upgrades
-		free_choices = p_profile.free_choices
+		if p_earned_reward:
+			free_purchases = p_profile.free_purchases
+			free_upgrades = p_profile.free_upgrades
+			free_choices = p_profile.free_choices
+		elif p_profile.free_purchases > 0 or p_profile.free_upgrades > 0 \
+				or p_profile.free_choices > 0:
+			_reward_forfeited = true
 	_roll_offers()
 	_roll_upgrade_offers()
 
@@ -124,6 +138,8 @@ func perk_text() -> String:
 		return "One free upgrade this visit."
 	if free_choices > 0:
 		return "Your first purchase or upgrade this visit is free."
+	if _reward_forfeited:
+		return "No reward this visit - you missed quota."
 	if not _allow_upgrades:
 		return "Purchases only this visit - no upgrades on offer."
 	return ""

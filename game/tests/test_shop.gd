@@ -402,3 +402,35 @@ func test_shared_free_choice_can_be_spent_on_an_upgrade_first_instead() -> void:
 	var buy_res := shop.buy(bought)
 	h.check("the purchase still goes through (%s)" % buy_res.msg, buy_res.ok)
 	h.eq("and now pays full price", r.money, money_before - buy_price_after)
+
+func test_missing_quota_forfeits_every_free_pool_but_keeps_the_tiers_own_shape() -> void:
+	## The reward is EARNED, not just picked - see run_controller.gd's own
+	## comment on why a free upgrade for failing a harder tier would make
+	## failing it better than succeeding at an easier one.
+	var profile := ShiftProfile.new()
+	profile.allow_upgrades_in_shop = false
+	profile.free_purchases = 1
+	profile.free_upgrades = 1
+	profile.free_choices = 1
+	var shop := Shop.new(_run(), profile, false)
+	h.eq("no dedicated purchase pool", shop.free_purchases, 0)
+	h.eq("no dedicated upgrade pool", shop.free_upgrades, 0)
+	h.eq("no shared pool either", shop.free_choices, 0)
+	h.check("but the tier's own shop shape is untouched - still purchases only",
+		shop.upgrade_offers.is_empty())
+
+func test_missing_quota_still_grants_the_reward_when_told_it_was_earned() -> void:
+	## p_earned_reward defaults true - every OTHER reward-gating test above
+	## constructs Shop.new(run, profile) with no third argument at all, and
+	## this pins down that omitting it still means "the reward applies."
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var shop := Shop.new(_run(), profile)
+	h.eq("the default is earned", shop.free_choices, 1)
+
+func test_perk_text_says_why_the_reward_is_missing_on_a_failed_quota() -> void:
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var shop := Shop.new(_run(), profile, false)
+	h.check("names the reason (%s)" % shop.perk_text(),
+		shop.perk_text().to_lower().contains("missed quota"))

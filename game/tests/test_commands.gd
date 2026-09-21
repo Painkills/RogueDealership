@@ -410,11 +410,13 @@ func test_the_karen_will_not_sign_without_what_she_came_for() -> void:
 	h.eq("banking both, the second sale carrying its combo multiplier",
 		s.margin_banked, expected)
 
-func test_the_karen_wont_settle_for_her_own_least_favorite_in_the_category() -> void:
-	## "give them what they actually came in for" - her own pattern text. The
-	## category lock used to accept ANY sale sharing a category with her real
-	## number one, even her own least favorite thing in it - which is not what
-	## the demand ever claimed to be about.
+func test_the_karen_will_settle_for_her_own_least_favorite_in_the_category() -> void:
+	## Her demand's own telegraph (customer_card_3d.gd's behaviour_text()) only
+	## ever says "bought something in <category>" - nothing about a priority
+	## floor within it. A hidden rank threshold used to sit here anyway, so a
+	## player who sold her a genuine category match could still be refused
+	## with no way to have known why - see Customer.owns_category()'s own
+	## comment. The promise and the enforcement have to agree.
 	var s := _shift([&"karen", &"easygoing"])
 	var c := _at(s)
 	_rank(c, [&"reliability", &"affordability", &"equity", &"value_retention",
@@ -424,17 +426,9 @@ func test_the_karen_wont_settle_for_her_own_least_favorite_in_the_category() -> 
 	_hand(s, [&"perf"])                # power - Vehicle, but her own rank 9
 	s.place(0); s.offer()
 	h.eq("even her least favorite sells at line 0", c.unsigned.size(), 1)
-	h.check("but does not unlock her - it is not what she came for",
-		not s.close().ok)
-	_hand(s, [&"vsc"])                 # reliability - her actual number one
-	s.place(0); s.offer()
-	h.check("her real number one finally does", s.close().ok)
-	# perf sold first (no prior sales, unmultiplied); vsc second, carrying
-	# Karen's own combo multiplier for one prior sale.
-	var expected: int = s.card_pool.by_id(&"perf").margin \
-		+ roundi(s.card_pool.by_id(&"vsc").margin * (1.0 + c.combo_step))
-	h.eq("banking both sales, the second carrying its combo multiplier",
-		s.margin_banked, expected)
+	h.check("and it DOES unlock her - it is still what the demand asked for",
+		s.close().ok)
+	h.eq("banking it", s.margin_banked, s.card_pool.by_id(&"perf").margin)
 
 func test_the_karen_still_walks_when_her_patience_runs_out() -> void:
 	var s := _shift([&"karen", &"easygoing"])

@@ -799,14 +799,13 @@ func close() -> Result:
 		return Result.new(false,
 			"%s hasn't agreed to anything yet - sell them something first."
 			% c.display_name)
-	# Not just any sale in the category - her own bottom third (the same
-	# three-wide tail make_ranks() reserves for bottom_interests) is excluded,
-	# so satisfying her always costs something she would actually call "what I
-	# came in for," not merely whatever in the category happened to be on
-	# the table.
-	var worst_rank: int = c.interests().count() - 3
+	# Exactly the promise the demand's own telegraph makes - "bought something
+	# in <category>" - and nothing stricter. See Customer.owns_category()'s
+	# own comment: a hidden priority-within-category threshold used to sit
+	# here, and a player who sold her a real category match still got
+	# refused with no way to have known why.
 	if c.demands_category != null \
-			and not c.owns_category(c.demands_category, worst_rank):
+			and not c.owns_category(c.demands_category):
 		return Result.new(false,
 			"%s came in for %s protection and is not signing until they get it."
 			% [c.display_name, str(c.demands_category)])
