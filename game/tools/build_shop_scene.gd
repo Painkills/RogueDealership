@@ -45,7 +45,10 @@ func _init() -> void:
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 16)
+	# Trimmed from 16 once the money row grew a second line for Shop.perk_text()
+	# - six gaps between seven rows, so a few px back here is real headroom
+	# without shrinking any row's own content.
+	col.add_theme_constant_override("separation", 10)
 	margin.add_child(col)
 	col.owner = root
 

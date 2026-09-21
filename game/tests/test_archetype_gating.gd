@@ -62,6 +62,30 @@ func test_a_floor_still_fills_when_the_gate_leaves_too_few() -> void:
 	var s := _shift(1, 11)
 	h.eq("every chair is filled", s.seated().size(), s.cfg.floor_size)
 
+func test_unlock_full_archetype_pool_ignores_min_shift() -> void:
+	## The ShiftProfile a night pick threads through - see RunState.start_shift()
+	## and ShiftProfile.unlock_full_archetype_pool - makes the WHOLE pool fair
+	## game on shift 1, not just whoever's own min_shift already allows it.
+	var pool := _pool()
+	var latest: CustomerArchetype = pool.archetypes[0]
+	for a in pool.archetypes:
+		if a.min_shift > latest.min_shift:
+			latest = a
+	var seen := false
+	for seed_value in range(60):
+		var s := Shift.new(load("res://data/shift_config.tres"),
+			load("res://data/interests/interest_pool.tres"),
+			load("res://data/card_pool.tres"), pool,
+			seed_value, [], null, 0, 1, 0, 0, null, 0, 1.0, 1.0, true)
+		for c in s.seated():
+			if c.archetype.id == latest.id:
+				seen = true
+				break
+		if seen:
+			break
+	h.check("%s (min_shift %d) can appear on shift 1 once unlocked"
+		% [latest.id, latest.min_shift], seen)
+
 func test_an_empty_gated_pool_falls_back_rather_than_crashing() -> void:
 	## Misauthored data - every min_shift set past the end of the run - would
 	## otherwise index an empty array and take the game down on spawn. Built from

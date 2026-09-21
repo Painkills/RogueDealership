@@ -1,19 +1,25 @@
 extends Node
-## The run: five shifts with a shop between them.
+## The run: a picked shift, played, a shop after it, then pick again.
 ##
-## Owns the RunState and does nothing else - the shift screen plays a shift, the
-## shop screen sells cards, and this decides which one you are looking at. That
-## split is the whole reason shift_controller.gd stopped building its own shift:
-## it is already the table, the framing, the HUD and reconciliation.
+## Owns the RunState and does nothing else - the picker chooses a
+## ShiftProfile, the shift screen plays a shift under it, the shop screen
+## sells cards (gated by that same profile's reward), and this decides which
+## one you are looking at. That split is the whole reason
+## shift_controller.gd stopped building its own shift: it is already the
+## table, the framing, the HUD and reconciliation.
 
+@onready var _picker_view = $ShiftPickerView
 @onready var _shift_view = $ShiftView
 @onready var _shop_view = $ShopView
 @onready var _summary_view = $RunSummaryView
 @onready var _build_label: Label = $BuildBadge/BuildLabel
 
 var _run: RunState
+var _profiles: ShiftProfilePool
+var _chosen_profile: ShiftProfile
 
 func _ready() -> void:
+	_picker_view.chosen.connect(_on_profile_chosen)
 	_shift_view.shift_finished.connect(_on_shift_finished)
 	_shop_view.done.connect(_on_shop_done)
 	_summary_view.continue_pressed.connect(_on_summary_continue)
@@ -33,11 +39,20 @@ func _start_run() -> void:
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), randi(),
 		load("res://data/dialogue/dialogue_pool.tres"))
+	_profiles = load("res://data/shift_profile_pool.tres")
+	_open_the_picker()
+
+func _open_the_picker() -> void:
+	_show_only(_picker_view)
+	_picker_view.setup(_profiles)
+
+func _on_profile_chosen(profile: ShiftProfile) -> void:
+	_chosen_profile = profile
 	_open_the_floor()
 
 func _open_the_floor() -> void:
-	_show_shop(false)
-	_shift_view.setup(_run.start_shift(), _run.standing)
+	_show_only(_shift_view)
+	_shift_view.setup(_run.start_shift(_chosen_profile), _run.standing)
 
 func _on_shift_finished(report: Dictionary) -> void:
 	_run.finish_shift(report)
@@ -50,16 +65,25 @@ func _on_shift_finished(report: Dictionary) -> void:
 		_summary_view.setup(Score.tally(_run), _run.standing <= 0)
 		_summary_view.visible = true
 		return
-	_show_shop(true)
-	_shop_view.setup(Shop.new(_run))
+	# The shop's reward gating is what the JUST-PLAYED shift's profile earned,
+	# not whatever gets picked next - so it goes in before the picker is
+	# shown again.
+	_show_only(_shop_view)
+	_shop_view.setup(Shop.new(_run, _chosen_profile))
 
 func _on_summary_continue() -> void:
 	_summary_view.visible = false
 	_start_run()
 
 func _on_shop_done() -> void:
-	_open_the_floor()
+	_open_the_picker()
 
-func _show_shop(on: bool) -> void:
-	_shift_view.set_active(not on)
-	_shop_view.visible = on
+## Exactly one of the four screens visible at a time. ShiftView is a Node3D,
+## not a Control (the table), which is why this takes a plain Node - and it
+## alone carries an "active" flag beyond plain visibility (see set_active()
+## below, unchanged from before this screen existed); every other screen is
+## fully described by .visible.
+func _show_only(screen: Node) -> void:
+	_shift_view.set_active(screen == _shift_view)
+	_picker_view.visible = screen == _picker_view
+	_shop_view.visible = screen == _shop_view

@@ -47,10 +47,12 @@ func quota_for(n: int) -> int:
 		q *= 1.0 + cfg.quota_growth
 	return roundi(q)
 
-func start_shift() -> Shift:
+func start_shift(profile: ShiftProfile) -> Shift:
 	return Shift.new(cfg, interests, card_pool, archetypes,
 		rng.randi(), [], deck, quota_for(shift_number), shift_number, standing,
-		sale_streak, dialogue)
+		sale_streak, dialogue, profile.floor_size_override,
+		profile.patience_scale, profile.walk_up_scale,
+		profile.unlock_full_archetype_pool)
 
 func finish_shift(report: Dictionary) -> void:
 	## The quota is the house's cut and it comes out first. What you bank OVER it

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ShiftProfilePool" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
+[ext_resource type="Resource" path="res://data/shift_profiles/morning.tres" id="2_morn"]
+[ext_resource type="Resource" path="res://data/shift_profiles/midday.tres" id="3_mid"]
+[ext_resource type="Resource" path="res://data/shift_profiles/night.tres" id="4_night"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile_pool.gd" id="5_pool"]
+
+[resource]
+script = ExtResource("5_pool")
+design_rule = "Three tiers, always exactly three: morning (today's baseline), midday (a floor-difficulty knob - shorter patience - paid for with the shop's first pick free), and night (a roster-difficulty knob - the whole archetype pool unlocked regardless of the real shift number, fewer chairs to offset it - paid for with a guaranteed free purchase AND a guaranteed free upgrade). A new tier is a fourth .tres and one more line in profiles below; it is never a branch in Shift.gd or Shop.gd keyed on an id string - every difference a tier makes has to be one of ShiftProfile's own fields."
+profiles = Array[ExtResource("1_prf")]([ExtResource("2_morn"), ExtResource("3_mid"), ExtResource("4_night")])

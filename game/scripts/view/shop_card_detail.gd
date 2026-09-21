@@ -63,7 +63,7 @@ func show_card(shop: Shop, inst: CardInstance) -> void:
 	var can_upgrade := shop.upgrade_offers.has(inst.uid) and not inst.upgraded
 	_upgrade_btn.visible = can_upgrade
 	if can_upgrade:
-		_upgrade_btn.text = "upgrade %s" % Format.money(shop.upgrade_price(inst))
+		_upgrade_btn.text = "upgrade %s" % Format.price(shop.upgrade_price(inst))
 	_remove_btn.text = "remove %s" % Format.money(shop.remove_price())
 	visible = true
 

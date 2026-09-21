@@ -449,11 +449,16 @@ func _render_hover_flip() -> void:
 	# wherever a chair empties, so every path that could vacate one (walking off,
 	# closing, a walk-up timer) is covered by the one place that already runs
 	# on every render.
-	if _peeked >= 0 and (_shift == null or _shift.chairs[_peeked] == null):
+	if _peeked >= 0 and (_shift == null or _peeked >= _shift.chairs.size() \
+			or _shift.chairs[_peeked] == null):
 		_peeked = -1
 	for i in range(_customer_flips.size()):
+		# See _render()'s identical guard: a ShiftProfile may run with fewer
+		# chairs than the carousel was built for.
+		var chair_here: bool = _shift != null and i < _shift.chairs.size() \
+			and _shift.chairs[i] != null
 		_customer_flips[i].show_back(
-			usable and (i == _hovered or i == _peeked) and _shift.chairs[i] != null)
+			usable and (i == _hovered or i == _peeked) and chair_here)
 
 # --- framing ---------------------------------------------------------------
 
@@ -590,7 +595,12 @@ func _render() -> void:
 		# rank numerals stop surviving the SubViewport's downscale.
 		var front: int = int(_shift.at) if seated else _last_station
 		_customer_cards[i].compact = i != front
-		_customer_cards[i].setup(_shift.chairs[i],
+		# A ShiftProfile (night) may run this shift with fewer chairs than the
+		# scene was built for - the same "no customer here" state
+		# CustomerCard3D.setup(null) already renders for a chair mid-refill,
+		# not a chair this shift never had at all.
+		var chair = _shift.chairs[i] if i < _shift.chairs.size() else null
+		_customer_cards[i].setup(chair,
 			seated and i == int(_shift.at), _shift.tick)
 
 	_render_mode_button(seated)

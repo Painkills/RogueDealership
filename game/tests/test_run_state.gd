@@ -152,7 +152,7 @@ func test_standing_clamps_at_both_ends() -> void:
 func test_the_shift_it_builds_carries_the_run_state() -> void:
 	var r := _run()
 	r.shift_number = 3
-	var s := r.start_shift()
+	var s := r.start_shift(ShiftProfile.new())
 	h.eq("the shift knows which one it is", s.shift_number, 3)
 	h.eq("and runs to that shift's quota", s.quota, r.quota_for(3))
 	var uids := {}
@@ -161,12 +161,26 @@ func test_the_shift_it_builds_carries_the_run_state() -> void:
 	for c in s.hand:
 		h.check("it deals from the run's deck", uids.has(c.uid))
 
+func test_start_shift_threads_the_picked_profiles_fields_through() -> void:
+	var r := _run()
+	var profile := ShiftProfile.new()
+	profile.floor_size_override = 2
+	profile.patience_scale = 0.5
+	profile.walk_up_scale = 2.0
+	profile.unlock_full_archetype_pool = true
+	var s := r.start_shift(profile)
+	h.eq("floor_size_override reached the shift", s.chairs.size(), 2)
+	h.eq("patience_scale reached the shift", s.patience_scale, 0.5)
+	h.eq("walk_up_scale reached the shift", s.walk_up_scale, 2.0)
+	h.check("unlock_full_archetype_pool reached the shift",
+		s.unlock_full_archetype_pool)
+
 func test_two_runs_from_one_seed_are_identical() -> void:
 	## The whole reason the run owns a seeded rng instead of calling randi().
 	var a := _run(4242)
 	var b := _run(4242)
-	var sa := a.start_shift()
-	var sb := b.start_shift()
+	var sa := a.start_shift(ShiftProfile.new())
+	var sb := b.start_shift(ShiftProfile.new())
 	var ids_a: Array[String] = []
 	var ids_b: Array[String] = []
 	for c in sa.seated():

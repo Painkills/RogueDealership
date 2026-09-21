@@ -7,6 +7,16 @@ func _init() -> void:
 	root.name = "Run"
 	root.set_script(load("res://scripts/view/run_controller.gd"))
 
+	# Added first, so a picker chosen() before the very first shift's own
+	# setup() runs still covers a floor that has never been built yet, the
+	# same "on top of whatever's behind it" layering the summary view uses.
+	var picker_view: Control = \
+		(load("res://scenes/shift_picker.tscn") as PackedScene).instantiate()
+	picker_view.name = "ShiftPickerView"
+	picker_view.visible = false
+	root.add_child(picker_view)
+	picker_view.owner = root
+
 	var shift_view: Node = (load("res://scenes/shift.tscn") as PackedScene).instantiate()
 	shift_view.name = "ShiftView"
 	root.add_child(shift_view)

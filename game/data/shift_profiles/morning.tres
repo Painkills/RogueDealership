@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
+
+[resource]
+script = ExtResource("1_prf")
+id = &"morning"
+display_name = "Morning Shift"
+blurb = "Standard traffic. Nothing you haven't handled before."
+floor_size_override = 0
+patience_scale = 1.0
+unlock_full_archetype_pool = false
+allow_upgrades_in_shop = false
+free_purchases = 0
+free_upgrades = 0
+free_choices = 0

@@ -311,3 +311,94 @@ func test_a_card_not_on_this_visits_upgrade_offer_refuses_the_upgrade() -> void:
 	h.check("and says it is not on offer, not that it has no upgrade",
 		res.msg.to_lower().contains("not on offer"))
 	h.eq("and nothing was spent", r.money, 10000)
+
+# --------------------------------------------------- ShiftProfile reward gating
+
+func test_a_profile_with_upgrades_disabled_leaves_upgrade_offers_empty() -> void:
+	## Morning's own setting - the rng is never even touched for this roll,
+	## but that is an implementation detail; what a caller can observe is that
+	## nothing ends up on offer.
+	var profile := ShiftProfile.new()
+	profile.allow_upgrades_in_shop = false
+	var shop := Shop.new(_run(), profile)
+	h.check("no upgrades on offer", shop.upgrade_offers.is_empty())
+
+func test_a_null_profile_behaves_exactly_like_todays_default_shop() -> void:
+	var shop := Shop.new(_run())
+	h.check("upgrades still roll with no profile at all",
+		not shop.upgrade_offers.is_empty())
+	h.eq("buy_price is the sticker price", shop.buy_price(shop.offers[0]),
+		shop.offers[0].price)
+
+func test_dedicated_free_pools_pay_for_their_own_verb_independent_of_order() -> void:
+	## Night: a guaranteed free purchase AND a guaranteed free upgrade, no
+	## matter which one you reach for first.
+	var profile := ShiftProfile.new()
+	profile.free_purchases = 1
+	profile.free_upgrades = 1
+	var r := _run()
+	var shop := Shop.new(r, profile)
+	var bought: CardDef = shop.offers[0]
+	var upgraded_uid: int = shop.upgrade_offers[0]
+	h.eq("marked free on the shelf before anything happens",
+		shop.buy_price(bought), 0)
+	h.eq("marked free on the deck row before anything happens",
+		shop.upgrade_price(shop.find(upgraded_uid)), 0)
+
+	var money_before := r.money
+	var buy_res := shop.buy(bought)
+	h.check("the purchase went through (%s)" % buy_res.msg, buy_res.ok)
+	h.eq("and cost nothing", r.money, money_before)
+	h.eq("the dedicated purchase pool is spent", shop.free_purchases, 0)
+
+	var upgrade_res := shop.upgrade(upgraded_uid)
+	h.check("the upgrade went through too (%s)" % upgrade_res.msg, upgrade_res.ok)
+	h.eq("and it ALSO cost nothing - a separate pool, not the same freebie",
+		r.money, money_before)
+	h.eq("the dedicated upgrade pool is spent", shop.free_upgrades, 0)
+
+func test_shared_free_choice_pays_for_whichever_verb_spends_it_first() -> void:
+	## Midday: not pre-marked on any one offer - see Shop.buy_price()'s own
+	## comment on why - only resolved the moment you actually buy or upgrade.
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var r := _run()
+	var shop := Shop.new(r, profile)
+	var bought: CardDef = shop.offers[0]
+	var upgraded_uid: int = shop.upgrade_offers[0]
+	h.check("not marked free on the shelf ahead of time",
+		shop.buy_price(bought) > 0)
+	h.check("not marked free on the deck row ahead of time",
+		shop.upgrade_price(shop.find(upgraded_uid)) > 0)
+
+	var money_before := r.money
+	var buy_res := shop.buy(bought)
+	h.check("the purchase went through (%s)" % buy_res.msg, buy_res.ok)
+	h.eq("the first pick is free", r.money, money_before)
+	h.eq("the shared pool is now spent", shop.free_choices, 0)
+
+	var upgrade_price_after: int = shop.upgrade_price(shop.find(upgraded_uid))
+	var upgrade_res := shop.upgrade(upgraded_uid)
+	h.check("the upgrade also goes through (%s)" % upgrade_res.msg, upgrade_res.ok)
+	h.eq("but the second pick pays full price - the freebie is already spent",
+		r.money, money_before - upgrade_price_after)
+
+func test_shared_free_choice_can_be_spent_on_an_upgrade_first_instead() -> void:
+	## The same scenario as above with the two verbs reversed - proving this is
+	## genuinely "whichever happens first," not buy() quietly winning ties.
+	var profile := ShiftProfile.new()
+	profile.free_choices = 1
+	var r := _run()
+	var shop := Shop.new(r, profile)
+	var upgraded_uid: int = shop.upgrade_offers[0]
+	var bought: CardDef = shop.offers[0]
+
+	var money_before := r.money
+	var upgrade_res := shop.upgrade(upgraded_uid)
+	h.check("the upgrade went through (%s)" % upgrade_res.msg, upgrade_res.ok)
+	h.eq("upgrading first is free instead", r.money, money_before)
+
+	var buy_price_after: int = shop.buy_price(bought)
+	var buy_res := shop.buy(bought)
+	h.check("the purchase still goes through (%s)" % buy_res.msg, buy_res.ok)
+	h.eq("and now pays full price", r.money, money_before - buy_price_after)

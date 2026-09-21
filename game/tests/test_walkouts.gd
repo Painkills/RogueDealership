@@ -112,6 +112,6 @@ func test_run_state_hands_its_own_current_standing_into_the_next_shift() -> void
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), 7)
 	r.standing = 63
-	var s := r.start_shift()
+	var s := r.start_shift(ShiftProfile.new())
 	h.eq("the new shift starts counting from exactly where the run left off",
 		s.standing, 63)

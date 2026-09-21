@@ -16,6 +16,13 @@ var tick: int = 0
 var tick_budget: int
 var quota: int
 var shift_number: int = 1          ## which shift of the run; gates archetypes
+## All three set from a picked ShiftProfile, see RunState.start_shift() -
+## none of them changes anything about a Shift built without one (1.0, 1.0
+## and false are the no-op values), so every existing call site is
+## unaffected.
+var patience_scale: float = 1.0
+var walk_up_scale: float = 1.0
+var unlock_full_archetype_pool: bool = false
 var margin_banked: int = 0
 ## The run's HP, LIVE during this shift - seeded from RunState.standing at
 ## construction (0 means "use cfg's own start", the run is never legitimately
@@ -69,7 +76,9 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int, p_forced: Array = [],
 		p_deck: Deck = null, p_quota: int = 0, p_shift_number: int = 1,
 		p_standing: int = 0, p_sale_streak: int = 0,
-		p_dialogue: DialoguePool = null) -> void:
+		p_dialogue: DialoguePool = null, p_floor_size: int = 0,
+		p_patience_scale: float = 1.0, p_walk_up_scale: float = 1.0,
+		p_unlock_full_archetype_pool: bool = false) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
@@ -82,6 +91,9 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	rng.seed = p_seed
 	_forced = p_forced
 	shift_number = p_shift_number
+	patience_scale = p_patience_scale
+	walk_up_scale = p_walk_up_scale
+	unlock_full_archetype_pool = p_unlock_full_archetype_pool
 
 	tick_budget = cfg.shift_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
@@ -97,9 +109,15 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 			"demands_met", "demands_missed"]:
 		stat[key] = 0
 
-	chairs.resize(cfg.floor_size)
-	walk_up.resize(cfg.floor_size)
-	for i in range(cfg.floor_size):
+	# A picked ShiftProfile (see RunState.start_shift()) may eventually want
+	# fewer chairs than the config's own default - not wired into any shipped
+	# profile yet, see ShiftProfile.floor_size_override's own comment on why.
+	# 0 means "no override", the config decides, same sentinel convention
+	# p_quota/p_standing already use above.
+	var floor_size: int = p_floor_size if p_floor_size > 0 else cfg.floor_size
+	chairs.resize(floor_size)
+	walk_up.resize(floor_size)
+	for i in range(floor_size):
 		chairs[i] = null
 		walk_up[i] = 0
 
@@ -110,7 +128,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	_shuffle(draw)
 	_draw_up()
 
-	for i in range(cfg.floor_size):
+	for i in range(floor_size):
 		_spawn(i)
 
 
@@ -255,15 +273,22 @@ func _walk(chair: int) -> void:
 
 func _vacate(chair: int) -> void:
 	chairs[chair] = null
-	walk_up[chair] = rng.randi_range(cfg.walk_up_ticks_min, cfg.walk_up_ticks_max)
+	# A night ShiftProfile stretches this instead of shrinking the floor
+	# itself - see ShiftProfile.walk_up_scale's own comment - so fewer
+	# distinct customers get served across the same tick budget.
+	walk_up[chair] = roundi(rng.randi_range(
+		cfg.walk_up_ticks_min, cfg.walk_up_ticks_max) * walk_up_scale)
 	if at == chair:
 		at = null
 
 
 func _spawn(chair: int) -> void:
 	var arch := _pick_archetype()
-	var top: int = max(1, arch.patience
-		+ rng.randi_range(-cfg.patience_jitter, cfg.patience_jitter))
+	# patience_scale is the picked ShiftProfile's, not the archetype's own -
+	# applied AFTER jitter, so a midday customer is still "this archetype,
+	# a little worse," not a different roll entirely.
+	var top: int = max(1, roundi((arch.patience
+		+ rng.randi_range(-cfg.patience_jitter, cfg.patience_jitter)) * patience_scale))
 
 	# Nobody is guaranteed to walk in fresh. Some are already partway to the
 	# door, which is triage pressure from the moment they sit down. Floored so
@@ -320,6 +345,12 @@ func _archetypes_available_this_shift() -> Array[CustomerArchetype]:
 	## The difficulty ladder. Falls back to the whole pool rather than returning
 	## nothing: misauthored min_shift values would otherwise index an empty array
 	## and take the game down, and a floor that is too hard beats no floor at all.
+	##
+	## A night ShiftProfile skips the ladder entirely - the whole pool is fair
+	## game regardless of which real shift number this is, which is the actual
+	## point of picking night rather than a side effect of it.
+	if unlock_full_archetype_pool:
+		return archetypes.archetypes.duplicate()
 	var out: Array[CustomerArchetype] = []
 	for a in archetypes.archetypes:
 		if a.min_shift <= shift_number:

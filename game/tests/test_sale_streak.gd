@@ -102,6 +102,6 @@ func test_the_run_carries_the_streak_from_one_shift_into_the_next() -> void:
 	run.finish_shift({"margin_banked": 0, "quota": 100, "standing_delta": 0,
 		"sale_streak_end": 3})
 	h.eq("the run remembers the streak the shift ended on", run.sale_streak, 3)
-	var next_shift := run.start_shift()
+	var next_shift := run.start_shift(ShiftProfile.new())
 	h.eq("and hands it to the next shift as its starting streak",
 		next_shift.sale_streak, 3)

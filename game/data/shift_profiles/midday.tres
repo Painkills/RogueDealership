@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
+
+[resource]
+script = ExtResource("1_prf")
+id = &"midday"
+display_name = "Midday Shift"
+blurb = "Busy. Everyone's on a shorter fuse."
+floor_size_override = 0
+patience_scale = 0.75
+unlock_full_archetype_pool = false
+allow_upgrades_in_shop = true
+free_purchases = 0
+free_upgrades = 0
+free_choices = 1

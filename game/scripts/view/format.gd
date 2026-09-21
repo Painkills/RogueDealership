@@ -6,6 +6,11 @@ static func money(n: int) -> String:
 	var minus := "-" if n < 0 else ""
 	return "%s$%s" % [minus, _grouped(abs(n))]
 
+## Shop.buy_price()/upgrade_price() read 0 as "a dedicated free pool covers
+## this" (see shop.gd) - here that needs to read as a word, not $0.
+static func price(n: int) -> String:
+	return "FREE" if n == 0 else money(n)
+
 static func patience_color(cur: int, max_val: int) -> Color:
 	var top: int = max(1, max_val)
 	var frac: float = float(cur) / float(top)

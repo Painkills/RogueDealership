@@ -71,10 +71,25 @@ func _process(_delta: float) -> bool:
 
 	return true
 
+## Drives the real ShiftPickerView.chosen signal, the same "through the
+## actual wiring, not a direct controller call" rule every other transition
+## in this driver already follows (.done, .continue_pressed). Picks midday
+## for the shop-testing phases - unlike morning it leaves upgrades on, which
+## _check_the_deck_row_shows_exactly_the_random_upgrade_offers() and
+## _check_clicking_a_deck_card_opens_its_detail() both need populated.
+func _pick_tier(id: StringName) -> void:
+	_check("the picker is showing before a tier is chosen",
+		_root._picker_view.visible)
+	var profile: ShiftProfile = _root._profiles.by_id(id)
+	_check("%s is a real profile in the pool" % id, profile != null)
+	_root._picker_view.chosen.emit(profile)
+	_check("choosing %s closes the picker" % id, not _root._picker_view.visible)
+
 func _phase_0_open_and_finish_shift() -> void:
 	_run = _root._run
 	_check("a run started", _run != null)
 	_check("on shift 1", _run.shift_number == 1)
+	_pick_tier(&"midday")
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
 	_check_build_badge_is_always_on_screen("on the floor")
 	# The debug money key is guarded on the shop's own visibility, not a
@@ -411,9 +426,15 @@ func _phase_2_buy_and_leave() -> void:
 		new_uid != null and not same_def_uids_before.has(new_uid))
 
 	_root._shop_view.done.emit()
-	_check("leaving the shop opens the floor again", not _root._shop_view.visible)
+	_check("leaving the shop opens the picker, not the floor directly",
+		_root._picker_view.visible and not _root._shop_view.visible)
+	# Night this time - real coverage of the archetype-pool unlock and the
+	# smaller floor, not just re-picking the same tier phase 0 already did.
+	_pick_tier(&"night")
 	_check("on a shift that knows which one it is",
 		_root._shift_view._shift.shift_number == 2)
+	_check("night's shift actually carries its archetype-pool unlock",
+		_root._shift_view._shift.unlock_full_archetype_pool)
 	_check("running to the climbing quota",
 		_root._shift_view._shift.quota == _run.quota_for(2))
 
@@ -513,7 +534,7 @@ func _check_report_card_fits_the_worst_case(report) -> void:
 ## rendering Score.tally() of the very _run this driver has been playing.
 func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
 	_run.shift_number = _run.cfg.shifts_in_run
-	_root._shift_view.setup(_run.start_shift(), _run.standing)
+	_root._shift_view.setup(_run.start_shift(ShiftProfile.new()), _run.standing)
 	_check("the summary starts out hidden", not _root._summary_view.visible)
 
 	_finish_the_shift()

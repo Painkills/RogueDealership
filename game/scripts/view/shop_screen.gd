@@ -79,6 +79,12 @@ func _render() -> void:
 	_money.text += "   |   Standing: %d/%d" % [run.standing, run.cfg.standing_start]
 	_shift_label.text = "shift %d of %d next - quota %s" % [run.shift_number,
 		run.cfg.shifts_in_run, Format.money(run.quota_for(run.shift_number))]
+	# Smaller and dimmer than the money line on purpose - this is context for
+	# what is on offer below, not a number that needs the same weight as the
+	# budget you actually have to spend.
+	var perk := _shop.perk_text()
+	if not perk.is_empty():
+		_shift_label.text += "\n" + perk
 
 	# remove_child() first: queue_free() alone leaves a node in
 	# get_children() until the next idle frame, which is exactly the gap a
@@ -96,7 +102,7 @@ func _render() -> void:
 		var preview_inst := CardInstance.new(def, -1)
 		var slot := _build_slot(_shelf_row)
 		(slot["card"] as ShopCardButton).show_card(preview_inst)
-		(slot["price"] as Label).text = Format.money(_shop.buy_price(def))
+		(slot["price"] as Label).text = Format.price(_shop.buy_price(def))
 		(slot["card"] as ShopCardButton).pressed.connect(func(): _apply(_shop.buy(def)))
 
 	for child in _deck_row.get_children():
@@ -109,7 +115,7 @@ func _render() -> void:
 		var slot := _build_slot(_deck_row)
 		(slot["card"] as ShopCardButton).show_card(inst)
 		(slot["price"] as Label).text = "upgraded" if inst.upgraded \
-			else "upgrade %s" % Format.money(_shop.upgrade_price(inst))
+			else "upgrade %s" % Format.price(_shop.upgrade_price(inst))
 		(slot["card"] as ShopCardButton).pressed.connect(func(): _detail.show_card(_shop, inst))
 
 func _build_slot(row: HBoxContainer) -> Dictionary:
