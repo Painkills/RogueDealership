@@ -40,9 +40,11 @@ const _DEFAULT_DROP_ZONE_Z_OFFSET: float = 1.6
 		drag_strategy = strategy if strategy else DragStrategy.new()
 @export var dropzone_collision_shape: Shape3D = null:
 	set(v):
+		dropzone_collision_shape = v
 		$DropZone/CollisionShape3D.shape = v if v else _DEFAULT_DROP_ZONE_SHAPE_3D
 @export var dropzone_z_offset: float = _DEFAULT_DROP_ZONE_Z_OFFSET:
 	set(offset):
+		dropzone_z_offset = offset
 		$DropZone.position.z = offset
 
 var cards: Array[Card3D] = []

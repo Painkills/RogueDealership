@@ -103,6 +103,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_detail_card_shows_what_they_do()
 	_check_the_action_buttons_stay_on_screen()
 	_check_hud_does_not_overlap_itself()
+	_check_drop_zones_use_the_overridden_shape()
 	_check_the_clock_warns_when_time_is_short()
 	_check_table("after approaching chair A")
 
@@ -1518,6 +1519,27 @@ func _check_hud_does_not_overlap_itself() -> void:
 		_check("nor does the log sit on the %s" % pair[0], not log_rect.intersects(card))
 
 	_on_screen("action column", bar)
+
+## VENDORED.md's own patch: CardCollection3D's dropzone_collision_shape /
+## dropzone_z_offset setters used to silently fail to persist through
+## PackedScene.pack() - no self-assignment meant the packer never saw a diff
+## to save, so every collection quietly fell back to the vendored default
+## regardless of what build_shift_scene.gd asked for. Pins the fix down for
+## every collection the scene actually builds, not just the one this was
+## first noticed on.
+func _check_drop_zones_use_the_overridden_shape() -> void:
+	var expected := load("res://scenes/dropzone_shape_3d.tres") as ConvexPolygonShape3D
+	var zones := {
+		"Hand": _controller._hand_zone, "Discard": _controller._discard_zone,
+		"Draw": _controller._draw_zone, "Chair A": _controller._chair_zones[0],
+		"Chair B": _controller._chair_zones[1], "Chair C": _controller._chair_zones[2],
+	}
+	for zone_name in zones:
+		var zone: CardCollection3D = zones[zone_name]
+		var shape := zone.dropzone_collision.shape as ConvexPolygonShape3D
+		_check("%s's drop zone uses the overridden shape, not the vendored default (%s)"
+			% [zone_name, shape.points if shape else "null"],
+			shape != null and shape.points == expected.points)
 
 ## The clock's own counterpart to _check_the_meter_climbs_and_changes_colour -
 ## few ticks left has to be as loud as a customer's patience going red, and

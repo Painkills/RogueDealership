@@ -51,10 +51,13 @@ const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
 const DETAIL_CARD := "res://scenes/cards/detail_card_3d.tscn"
 const REPORT := "res://scenes/report.tscn"
 
-## Overrides card_3d's own 14 x 4 default (VENDORED.md: "Do not edit these
+## Overrides card_3d's own default shape (VENDORED.md: "Do not edit these
 ## files") through the sanctioned extension point - CardCollection3D's own
 ## @export var dropzone_collision_shape - rather than editing the vendored
-## .tres in place. 8 wide x 5 tall, asymmetric (top +3, bottom -2): a bigger,
+## .tres in place. This override only actually reached the packed scene once
+## VENDORED.md's patch fixed the addon's setter to self-assign; before that,
+## every collection silently fell back to the vendored default regardless of
+## this. 8 wide x 4.2 tall, asymmetric (top +2.2, bottom -2): a bigger,
 ## easier target than the old symmetric slab, biased toward where a dragged
 ## card's cursor typically sits.
 const DROPZONE_SHAPE := "res://scenes/dropzone_shape_3d.tres"
@@ -281,11 +284,11 @@ func _init() -> void:
 
 	var discard := _collection(collection_scene, "Discard", DISCARD_STOWED, cam, root)
 	discard.card_layout_strategy = PileCardLayout.new()
-	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"))
+	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 2.193643)
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
-	_mark(draw, root, "DRAW", Palette.color(&"neutral_3"))
+	_mark(draw, root, "DRAW", Palette.color(&"neutral_3"), 2.0158572)
 
 	var drag := DragController.new()
 	drag.name = "DragController"
@@ -354,7 +357,12 @@ func _detail(scene: PackedScene, node_name: String, pos: Vector3,
 
 ## A labelled translucent slab behind a zone - the only thing that makes a
 ## CardCollection3D visible in the editor, and a useful "drop here" at runtime.
-func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color) -> void:
+## label_y: -2.3 by default (below the zone) - Discard and Draw pass a
+## positive offset instead, moved above the zone by hand in the editor to
+## stay clear of the raised pile height (shift_controller.gd's own
+## DISCARD_UP/DRAW_UP).
+func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
+		label_y: float = -2.3) -> void:
 	var slab := QuadMesh.new()
 	slab.size = SLOT_SIZE
 	var mat := StandardMaterial3D.new()
@@ -380,7 +388,7 @@ func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color) -> void:
 	label.shaded = false
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.position = Vector3(0, -2.3, 0.02)
+	label.position = Vector3(0, label_y, 0.02)
 	zone.add_child(label)
 	label.owner = owner_root
 

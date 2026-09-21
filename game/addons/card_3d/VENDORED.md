@@ -15,6 +15,21 @@ a plain library folder; the `class_name` declarations (`Card3D`, `CardCollection
 `DragController`, `CardLayout` and its three strategies, `DragStrategy`) register themselves the
 same way every other `class_name` in this project does.
 
+## Patches
+
+**`card_collection_3d.gd`: `dropzone_collision_shape` and `dropzone_z_offset` setters now
+self-assign.** Upstream's setters forward the value into a child node
+(`$DropZone/CollisionShape3D.shape`, `$DropZone.position.z`) but never write it back into the
+exported property itself. Godot's scene packer diffs an instanced sub-scene's exported properties
+against their declared defaults to decide what to serialize as a per-instance override - with no
+self-assignment, the property always reads back as its default, so `PackedScene.pack()` never saw
+a change to save. Every collection `build_shift_scene.gd` built (chairs, hand, draw, discard) was
+silently falling back to `_DEFAULT_DROP_ZONE_SHAPE_3D` regardless of what
+`c.dropzone_collision_shape = load(DROPZONE_SHAPE)` set at build time - confirmed by grepping the
+packed `shift.tscn` for a `Shape3D` override on any collection and finding none. Fixed by adding
+the self-assignment line the other exported setters here (`card_layout_strategy`, `drag_strategy`)
+already had.
+
 ## Two things that bite
 
 **Instantiate the scenes, never the classes.** `CardCollection3D`'s `@export` setters reach into

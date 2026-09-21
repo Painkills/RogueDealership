@@ -23,9 +23,9 @@ const CardFaceScene := preload("res://scenes/cards/card_face_3d.tscn")
 const PILE_DEPTH := -19.91
 const HAND_UP := Vector3(0.0, -4.77, PILE_DEPTH)
 const HAND_STOWED := Vector3(0.0, -12.6, PILE_DEPTH)
-const DISCARD_UP := Vector3(7.2, -3.68, PILE_DEPTH)
+const DISCARD_UP := Vector3(7.2, -4.00, PILE_DEPTH)
 const DISCARD_STOWED := Vector3(7.2, -12.6, PILE_DEPTH)
-const DRAW_UP := Vector3(-7.27, -3.68, PILE_DEPTH)
+const DRAW_UP := Vector3(-7.27, -4.00, PILE_DEPTH)
 const DRAW_STOWED := Vector3(-7.27, -12.6, PILE_DEPTH)
 
 ## How high a hovered hand card lifts. The hand deliberately runs off the bottom
