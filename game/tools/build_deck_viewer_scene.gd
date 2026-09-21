@@ -1,12 +1,14 @@
 extends SceneTree
 ## Builds res://scenes/deck_viewer.tscn - the "see your whole deck" overlay,
 ## reachable from both the shop and the floor. ProductsColumn and
-## SupportColumn are EMPTY here and built entirely at runtime by
+## SupportColumn are EMPTY GridContainers here, filled entirely at runtime by
 ## deck_viewer.gd, the same "structure varies, build it in the script"
 ## approach shift_picker_screen.gd already uses for its own per-profile
-## cards - simpler than pre-baking a skeleton for a layout whose row COUNT
+## cards - simpler than pre-baking a skeleton for a layout whose cell COUNT
 ## and GROUPING (categories, interests) are themselves data, not a fixed
-## shape this builder should have to know.
+## shape this builder should have to know. Both are fixed at 3 columns: a
+## square 3x3 for products (3 categories x 3 interests each), and a plain
+## wrapping list for support cards.
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -54,8 +56,8 @@ func _init() -> void:
 	scroll.add_child(halves)
 	halves.owner = root
 
-	_side(halves, root, "ProductsSide", "PRODUCTS", "ProductsColumn")
-	_side(halves, root, "SupportSide", "SUPPORT", "SupportColumn")
+	_side(halves, root, "ProductsSide", "PRODUCTS", "ProductsColumn", 3)
+	_side(halves, root, "SupportSide", "SUPPORT", "SupportColumn", 3)
 
 	var close := Button.new()
 	close.name = "DeckCloseButton"
@@ -78,9 +80,9 @@ func _init() -> void:
 	quit(0)
 
 ## One half of the split: a heading ("PRODUCTS"/"SUPPORT") over an empty,
-## uniquely-named column deck_viewer.gd fills with category headers and rows.
+## uniquely-named GridContainer deck_viewer.gd fills with cells or chips.
 func _side(parent: Node, root: Node, side_name: String, heading_text: String,
-		column_name: String) -> void:
+		column_name: String, columns: int) -> void:
 	var side := VBoxContainer.new()
 	side.name = side_name
 	side.add_theme_constant_override("separation", 16)
@@ -96,9 +98,11 @@ func _side(parent: Node, root: Node, side_name: String, heading_text: String,
 	side.add_child(heading)
 	heading.owner = root
 
-	var column := VBoxContainer.new()
+	var column := GridContainer.new()
 	column.name = column_name
 	column.unique_name_in_owner = true
-	column.add_theme_constant_override("separation", 14)
+	column.columns = columns
+	column.add_theme_constant_override("h_separation", 14)
+	column.add_theme_constant_override("v_separation", 14)
 	side.add_child(column)
 	column.owner = root

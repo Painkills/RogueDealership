@@ -377,25 +377,28 @@ func _check_shift_label_tap_target_adds_money_too() -> void:
 	_check("tapping the quota line adds $10,000 too (%d -> %d)"
 		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
 
-## Every row's card-strip is child index 1 of a [Label, HBoxContainer] row -
-## category headers are plain Labels, not rows, and are skipped.
-func _count_deck_viewer_chips(column: VBoxContainer) -> int:
+## Products cells are a [Label, HBoxContainer] VBoxContainer - count the
+## chips in the strip. Support chips sit directly in the column - count them
+## as-is. A dash placeholder (either shape, empty deck) is neither and is
+## skipped for free.
+func _count_deck_viewer_chips(column: GridContainer) -> int:
 	var total := 0
-	for row in column.get_children():
-		if not (row is VBoxContainer):
-			continue
-		var strip := row.get_child(1) as HBoxContainer
-		for chip in strip.get_children():
-			if chip is ShopCardButton:
-				total += 1
+	for child in column.get_children():
+		if child is ShopCardButton:
+			total += 1
+		elif child is VBoxContainer:
+			var strip := child.get_child(1) as HBoxContainer
+			for chip in strip.get_children():
+				if chip is ShopCardButton:
+					total += 1
 	return total
 
 ## "I want to be able to see the cards in my deck" - reachable from two
 ## places (this checks the shop's own button; _check_the_draw_pile_also_opens_it
 ## covers the floor), a read-only browser of the WHOLE deck, not just
-## ShelfRow/DeckRow's own random daily subset - and organized so all 9
-## interests and all 9 support cards are always visible, not just whichever
-## happen to be owned.
+## ShelfRow/DeckRow's own random daily subset. Products are a square 3x3
+## grid, all 9 interests always visible even at zero copies; support cards
+## are just listed, one chip per copy actually owned, no per-name grouping.
 func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
@@ -405,19 +408,37 @@ func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 	view_btn.pressed.emit()
 	_check("clicking it opens the deck viewer", deck_viewer.visible)
 
-	var products_col := deck_viewer.get_node(^"%ProductsColumn") as VBoxContainer
-	var support_col := deck_viewer.get_node(^"%SupportColumn") as VBoxContainer
+	var products_col := deck_viewer.get_node(^"%ProductsColumn") as GridContainer
+	var support_col := deck_viewer.get_node(^"%SupportColumn") as GridContainer
 	var interest_count: int = shop.run.interests.count()
-	var support_def_count := 0
-	for def in shop.run.card_pool.cards:
-		if not (def is ProductCardDef):
-			support_def_count += 1
-	_check("every interest gets a row, even ones with nothing in the deck (%d headers+rows for %d interests)"
+	_check("the product grid is square - 3 columns (%d)" % products_col.columns,
+		products_col.columns == 3)
+	_check("every interest gets a cell, even ones with nothing in the deck (%d cells for %d interests)"
 		% [products_col.get_child_count(), interest_count],
-		products_col.get_child_count() == shop.run.interests.categories.size() + interest_count)
-	_check("every support card gets a row the same way (%d rows for %d defs)"
-		% [support_col.get_child_count(), support_def_count],
-		support_col.get_child_count() == support_def_count)
+		products_col.get_child_count() == interest_count)
+
+	var support_inst_count := 0
+	for inst in shop.run.deck.cards:
+		if not inst.is_product():
+			support_inst_count += 1
+	if support_inst_count == 0:
+		_check("no support cards in the deck shows a single dash, not a row per def",
+			support_col.get_child_count() == 1)
+	else:
+		_check("support cards are just listed, one chip per copy, no row per def (%d chips for %d copies)"
+			% [support_col.get_child_count(), support_inst_count],
+			support_col.get_child_count() == support_inst_count)
+		# The count alone can't tell a bare chip from a chip wrapped in its own
+		# name label - a def-per-row regression would still add exactly one
+		# child per copy. Check the shape too: every child a chip directly,
+		# never a labeled cell.
+		var all_bare_chips := true
+		for child in support_col.get_children():
+			if not (child is ShopCardButton):
+				all_bare_chips = false
+				break
+		_check("and each one is the card itself, not a name label over it",
+			all_bare_chips)
 
 	var shown := _count_deck_viewer_chips(products_col) + _count_deck_viewer_chips(support_col)
 	_check("it shows every card in the deck, not a random subset (%d shown, %d in deck)"

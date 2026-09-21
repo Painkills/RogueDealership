@@ -24,7 +24,7 @@ bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 
-[node name="Run" type="Node" unique_id=747856700]
+[node name="Run" type="Node" unique_id=1058808382]
 script = ExtResource("1_qsc0m")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1475883899 instance=ExtResource("2_s3ewl")]
@@ -54,7 +54,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
 script = ExtResource("9_53ha4")
 
-[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1555022571 instance=ExtResource("10_iuvi8")]
+[node name="DeckViewer" type="PanelContainer" parent="." unique_id=806440587 instance=ExtResource("10_iuvi8")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -62,10 +62,10 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("11_w0t45")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=681301660]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=556911648]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=30540327]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=274485975]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
