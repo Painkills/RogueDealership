@@ -19,6 +19,7 @@ extends SceneTree
 ## why that is a deliberate scope cut, not an oversight.
 
 const DETAIL_SCENE := "res://scenes/cards/shop_card_detail.tscn"
+const DECK_VIEWER_SCENE := "res://scenes/deck_viewer.tscn"
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -95,13 +96,29 @@ func _init() -> void:
 
 	_label(col, root, "LogLabel", "", 22, &"alert")
 
+	var button_row := HBoxContainer.new()
+	button_row.name = "ButtonRow"
+	button_row.add_theme_constant_override("separation", 20)
+	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(button_row)
+	button_row.owner = root
+
+	var view_deck := Button.new()
+	view_deck.name = "ViewDeckButton"
+	view_deck.text = "VIEW DECK"
+	view_deck.custom_minimum_size = Vector2(240, 72)
+	view_deck.add_theme_font_size_override("font_size", 24)
+	view_deck.unique_name_in_owner = true
+	button_row.add_child(view_deck)
+	view_deck.owner = root
+
 	var done := Button.new()
 	done.name = "DoneButton"
 	done.text = "OPEN THE FLOOR"
 	done.custom_minimum_size = Vector2(360, 72)
 	done.add_theme_font_size_override("font_size", 28)
 	done.unique_name_in_owner = true
-	col.add_child(done)
+	button_row.add_child(done)
 	done.owner = root
 
 	var detail: Control = (load(DETAIL_SCENE) as PackedScene).instantiate()
@@ -109,6 +126,12 @@ func _init() -> void:
 	detail.unique_name_in_owner = true
 	root.add_child(detail)
 	detail.owner = root
+
+	var deck_viewer: Control = (load(DECK_VIEWER_SCENE) as PackedScene).instantiate()
+	deck_viewer.name = "DeckViewer"
+	deck_viewer.unique_name_in_owner = true
+	root.add_child(deck_viewer)
+	deck_viewer.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)

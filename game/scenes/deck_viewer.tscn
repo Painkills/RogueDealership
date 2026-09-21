@@ -1,0 +1,50 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/view/deck_viewer.gd" id="1_e8xft"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
+bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+
+[node name="DeckViewer" type="PanelContainer" unique_id=1801564212]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
+script = ExtResource("1_e8xft")
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=1820486255]
+layout_mode = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 48
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 48
+
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=667349563]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="DeckViewerTitle" type="Label" parent="Margin/Column" unique_id=1984980952]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+text = "YOUR DECK"
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Column" unique_id=1197012950]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DeckGrid" type="GridContainer" parent="Margin/Column/Scroll" unique_id=1604686794]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 6
+
+[node name="DeckCloseButton" type="Button" parent="Margin/Column" unique_id=103924026]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "CLOSE"

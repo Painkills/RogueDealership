@@ -38,6 +38,7 @@ func _process(_delta: float) -> bool:
 		if _settle_frames < 5:
 			return false
 		_check_shop_layout_fits_on_screen()
+		_check_the_view_deck_button_shows_the_whole_deck()
 		_check_clicking_a_shelf_card_buys_it()
 		_check_the_deck_row_shows_exactly_the_random_upgrade_offers()
 		_check_clicking_a_deck_card_opens_its_detail()
@@ -183,7 +184,7 @@ func _set_standing_keys(r: Dictionary, standing_before: int) -> void:
 ## past the viewport rather than clipping - which is exactly why this has to be
 ## measured in pixels rather than inferred from the tree.
 func _check_shop_layout_fits_on_screen() -> void:
-	var done_btn := _root._shop_view.get_node(^"Margin/Column/DoneButton") as Control
+	var done_btn := _root._shop_view.get_node(^"Margin/Column/ButtonRow/DoneButton") as Control
 	var log_label := _root._shop_view.get_node(^"Margin/Column/LogLabel") as Control
 	var shelf_row := _root._shop_view.get_node(^"%ShelfRow") as Control
 	var deck_row := _root._shop_view.get_node(^"%DeckRow") as Control
@@ -375,9 +376,29 @@ func _check_shift_label_tap_target_adds_money_too() -> void:
 	_check("tapping the quota line adds $10,000 too (%d -> %d)"
 		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
 
+## "I want to be able to see the cards in my deck when I'm in the shop" - the
+## literal ask: a button that opens a read-only browser of the WHOLE deck,
+## not just ShelfRow/DeckRow's own random daily subset.
+func _check_the_view_deck_button_shows_the_whole_deck() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var deck_viewer = shop_view.get_node(^"%DeckViewer")
+	_check("the deck viewer starts hidden", not deck_viewer.visible)
+	var view_btn := shop_view.get_node(^"%ViewDeckButton") as Button
+	view_btn.pressed.emit()
+	_check("clicking it opens the deck viewer", deck_viewer.visible)
+	var grid := deck_viewer.get_node(^"%DeckGrid") as GridContainer
+	_check("it shows every card in the deck, not a random subset (%d slots, %d in deck)"
+		% [grid.get_child_count(), shop.run.deck.cards.size()],
+		grid.get_child_count() == shop.run.deck.cards.size())
+	var close_btn := deck_viewer.get_node(^"%DeckCloseButton") as Button
+	close_btn.pressed.emit()
+	_check("closing it hides it again", not deck_viewer.visible)
+
 ## "Show the card itself... click the card itself" - the shelf's own answer,
-## distinct from the deck browser's click-to-open: buying is a single click,
-## no detail overlay involved.
+## now routed through the SAME confirm-before-you-spend overlay the deck
+## browser's upgrade/remove already uses: clicking a shelf card opens it
+## showing a "buy" button, not an instant purchase.
 func _check_clicking_a_shelf_card_buys_it() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
@@ -389,11 +410,22 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	var was_affordable := shop.run.money
 	shop.run.money = 999999
 	var before := _run.deck.cards.size()
+	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
 	var card := shelf_row.get_child(0).get_child(0) as ShopCardButton
 	card.pressed.emit()
-	_check("clicking the shelf card buys %s (deck %d -> %d)"
+	_check("clicking the shelf card opens the confirm overlay, not an instant buy",
+		detail.visible)
+	_check("titled after the card that was clicked (%s)" % detail._title.text,
+		detail._title.text == offered.display_name)
+	_check("the upgrade/remove buttons stay hidden for an unowned card",
+		not detail._upgrade_btn.visible and not detail._remove_btn.visible)
+	_check("with a real buy price on the button (%s)" % detail._buy_btn.text,
+		detail._buy_btn.text == "buy %s" % Format.price(shop.buy_price(offered)))
+	detail._buy_btn.pressed.emit()
+	_check("pressing buy actually buys %s (deck %d -> %d)"
 		% [offered.display_name, before, _run.deck.cards.size()],
 		_run.deck.cards.size() == before + 1)
+	_check("and closes the overlay", not detail.visible)
 	shop.run.money = was_affordable   # leave phase 2 its own accounting
 
 func _phase_2_buy_and_leave() -> void:

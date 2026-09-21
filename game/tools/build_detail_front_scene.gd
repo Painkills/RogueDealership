@@ -17,7 +17,7 @@ extends SceneTree
 
 const W := 500
 const H := 700
-const PAD := 16
+const PAD := 12   ## trimmed from 16 alongside CustomerBody's own separation, see below
 
 func _init() -> void:
 	var root := Control.new()
@@ -96,7 +96,10 @@ func _init() -> void:
 	# --- theirs ----------------------------------------------------------
 	var who := VBoxContainer.new()
 	who.name = "CustomerBody"
-	who.add_theme_constant_override("separation", 8)
+	# Trimmed from 8 once Karen's own tell grew a real sentence longer - three
+	# sections' worth of gaps, so a few px back here is real headroom without
+	# shrinking any section's own content.
+	who.add_theme_constant_override("separation", 4)
 	col.add_child(who)
 	who.owner = root
 

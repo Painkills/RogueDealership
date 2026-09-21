@@ -41,6 +41,10 @@ var demand: Demand = null
 var demand_due_tick: int = 0
 ## When the last one finished, either way. -1 means they have never asked.
 var demand_settled_tick: int = -1
+## Their patience the moment the live demand was raised - see Shift.raise_demand()
+## and DemandResolve subclasses like IncreasePatience that answer "did it go
+## up since then" regardless of what caused it.
+var demand_patience_at_raise: int = 0
 
 var state: String = "floor"        ## floor | signed | walked
 var sales: int = 0

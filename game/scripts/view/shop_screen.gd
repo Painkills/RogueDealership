@@ -24,12 +24,15 @@ signal done
 @onready var _deck_row: HBoxContainer = %DeckRow
 @onready var _log: Label = %LogLabel
 @onready var _done: Button = %DoneButton
+@onready var _view_deck: Button = %ViewDeckButton
 @onready var _detail: ShopCardDetail = %Detail
+@onready var _deck_viewer = %DeckViewer
 
 var _shop: Shop
 
 func _ready() -> void:
 	_done.pressed.connect(func(): done.emit())
+	_view_deck.pressed.connect(func(): _deck_viewer.show_deck(_shop.run))
 	_detail.action_taken.connect(_apply)
 	_bind_key(&"debug_add_money", KEY_M, true)   # Ctrl+M: +$10,000, for testing
 	# Mobile has no Ctrl+M: an invisible button laid over the quota line
@@ -103,7 +106,8 @@ func _render() -> void:
 		var slot := _build_slot(_shelf_row)
 		(slot["card"] as ShopCardButton).show_card(preview_inst)
 		(slot["price"] as Label).text = Format.price(_shop.buy_price(def))
-		(slot["card"] as ShopCardButton).pressed.connect(func(): _apply(_shop.buy(def)))
+		(slot["card"] as ShopCardButton).pressed.connect(
+			func(): _detail.show_shelf_card(_shop, def))
 
 	for child in _deck_row.get_children():
 		_deck_row.remove_child(child)

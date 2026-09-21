@@ -863,6 +863,7 @@ func raise_demand(c: Customer, d: Demand) -> bool:
 	# Absolute, and at least one tick away, so a demand raised during a burn
 	# cannot come due on that same burn before anyone could answer it.
 	c.demand_due_tick = tick + maxi(1, d.ticks)
+	c.demand_patience_at_raise = c.patience
 	return true
 
 
@@ -883,6 +884,11 @@ func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
 	# c.offer may already be null by the time a demand resolves off the SAME
 	# offer. Passed through so a relief effect can tell which one it is.
 	var sale: Dictionary = data.get("sale", {})
+	# Always available, regardless of kind - a resolve like IncreasePatience
+	# answers "did it go up since the demand was raised" no matter which
+	# action asked, rather than being wired to one specific card or effect.
+	data["patience"] = c.patience
+	data["patience_at_raise"] = c.demand_patience_at_raise
 	if c.demand.resolve.satisfied(kind, data):
 		_settle_demand(c, true, sale)
 	elif c.demand.resolve.broken_by(kind, data):

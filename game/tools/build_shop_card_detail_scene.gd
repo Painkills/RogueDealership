@@ -64,7 +64,11 @@ func _init() -> void:
 	cards_row.owner = root
 
 	_preview_column(cards_row, root, "CurrentWrap", "NOW", "CurrentPreview")
-	_preview_column(cards_row, root, "UpgradedWrap", "UPGRADED", "UpgradedPreview")
+	var upgraded_wrap := _preview_column(cards_row, root, "UpgradedWrap", "UPGRADED",
+		"UpgradedPreview")
+	# Hidden by show_shelf_card() - an unowned card has nothing "upgraded" to
+	# compare against, unlike show_card()'s deck-browser path.
+	upgraded_wrap.unique_name_in_owner = true
 
 	var button_row := HBoxContainer.new()
 	button_row.name = "ButtonRow"
@@ -73,6 +77,7 @@ func _init() -> void:
 	col.add_child(button_row)
 	button_row.owner = root
 
+	_button(button_row, root, "BuyButton", "buy $0", &"margin")
 	_button(button_row, root, "UpgradeButton", "upgrade $0", &"appeal")
 	_button(button_row, root, "RemoveButton", "remove $0", &"alert")
 	_button(button_row, root, "CloseButton", "close", &"text_dim")

@@ -343,17 +343,33 @@ func test_ignoring_the_karen_costs_the_whole_floor_and_your_standing() -> void:
 		s.chairs[1].patience < theirs - guard)
 	h.eq("and so does C", s.chairs[2].patience, s.chairs[1].patience)
 
-func test_coming_down_on_the_price_gets_the_karen_off_your_back() -> void:
+func test_raising_her_patience_gets_the_karen_off_your_back() -> void:
+	## Not a concession anymore - "calm down," not "calmed down FOR you." Any
+	## real patience gain answers her regardless of what granted it; Small
+	## Talk here is just the card in hand, not the thing the resolve checks
+	## for by name - see IncreasePatience's own comment.
+	var s := _shift([&"karen", &"easygoing", &"easygoing"])
+	var c := _sat_a_while(s)
+	_dig_until_demanded(s, c)
+	h.check("she asked", c.demand != null)
+	_hand(s, [&"smalltalk"])
+	var standing: int = s.standing
+	s.play_card(_index_of(s, &"smalltalk"))
+	h.check("a real patience gain answers her", c.demand == null)
+	h.eq("and your standing is untouched", s.standing, standing)
+
+func test_a_card_that_does_not_actually_raise_her_patience_does_not_answer_her() -> void:
+	## The old rule answered to ANY concession card, whether or not it moved
+	## patience at all. The new one has to be the number itself moving, not a
+	## card that merely could carry a ChangePatience effect if built to.
 	var s := _shift([&"karen", &"easygoing", &"easygoing"])
 	var c := _sat_a_while(s)
 	_dig_until_demanded(s, c)
 	h.check("she asked", c.demand != null)
 	_hand(s, [&"vsc", &"discount"])
 	s.place(0)
-	var standing: int = s.standing
 	s.play_card(_index_of(s, &"discount"))
-	h.check("money off answers her", c.demand == null)
-	h.eq("and your standing is untouched", s.standing, standing)
+	h.check("money off alone does not answer her anymore", c.demand != null)
 
 func test_the_karen_still_will_not_sign_outside_her_category() -> void:
 	## demands_category is a standing gate on close(), not a timed ask. Both are
@@ -382,10 +398,10 @@ func test_the_quiet_archetypes_never_do_anything() -> void:
 		h.check("%s never asks for anything" % id, c.demand == null)
 
 # ----------------------------------------------------------- announcements
-func test_raising_a_demand_is_announced_with_its_fuse_and_its_price() -> void:
+func test_raising_a_demand_is_announced_with_its_fuse_and_how_to_answer_it() -> void:
 	## "Asks for the manager" is an event. "Asks for the manager, 3 ticks to
-	## give them something off the price" is a decision, and the log is the
-	## only place the fuse is stated before stage 5 puts it on the card.
+	## raise their patience" is a decision, and the log is the only place the
+	## fuse is stated before stage 5 puts it on the card.
 	var s := _shift([&"karen", &"easygoing", &"easygoing"])
 	var c := _sat_a_while(s)
 	_dig_until_demanded(s, c)
@@ -398,7 +414,7 @@ func test_raising_a_demand_is_announced_with_its_fuse_and_its_price() -> void:
 	h.check("it telegraphs the ask (%s)" % said, said.contains("MANAGER"))
 	h.check("it states the fuse (%s, expected %d ticks)" % [said, fuse],
 		said.contains("%d ticks" % fuse))
-	h.check("and how to answer it", said.to_lower().contains("price"))
+	h.check("and how to answer it", said.to_lower().contains("patience"))
 
 func test_a_floor_wide_consequence_is_flagged_when_it_lands() -> void:
 	## Raising the demand is not floor-wide; what it costs when ignored is. The

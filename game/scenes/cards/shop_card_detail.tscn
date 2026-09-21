@@ -15,32 +15,32 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.33333334, 0.33333334, 0.46666667, 1)
 
-[node name="ShopCardDetail" type="PanelContainer" unique_id=1126931282]
+[node name="ShopCardDetail" type="PanelContainer" unique_id=148843205]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8yt8d")
 script = ExtResource("1_pd54g")
 
-[node name="CenterWrap" type="CenterContainer" parent="." unique_id=4304247]
+[node name="CenterWrap" type="CenterContainer" parent="." unique_id=1484770628]
 layout_mode = 2
 
-[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=517761146]
+[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=417422246]
 custom_minimum_size = Vector2(700, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_hckes")
 
-[node name="CardMargin" type="MarginContainer" parent="CenterWrap/Card" unique_id=1197593756]
+[node name="CardMargin" type="MarginContainer" parent="CenterWrap/Card" unique_id=1817871392]
 layout_mode = 2
 theme_override_constants/margin_left = 40
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 40
 
-[node name="Column" type="VBoxContainer" parent="CenterWrap/Card/CardMargin" unique_id=1919935439]
+[node name="Column" type="VBoxContainer" parent="CenterWrap/Card/CardMargin" unique_id=1195093021]
 layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="DetailTitle" type="Label" parent="CenterWrap/Card/CardMargin/Column" unique_id=237125623]
+[node name="DetailTitle" type="Label" parent="CenterWrap/Card/CardMargin/Column" unique_id=1395615183]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
@@ -48,24 +48,24 @@ theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 text = "Card Name"
 horizontal_alignment = 1
 
-[node name="CardsRow" type="HBoxContainer" parent="CenterWrap/Card/CardMargin/Column" unique_id=987568779]
+[node name="CardsRow" type="HBoxContainer" parent="CenterWrap/Card/CardMargin/Column" unique_id=946307466]
 layout_mode = 2
 theme_override_constants/separation = 40
 alignment = 1
 
-[node name="CurrentWrap" type="VBoxContainer" parent="CenterWrap/Card/CardMargin/Column/CardsRow" unique_id=2009011366]
+[node name="CurrentWrap" type="VBoxContainer" parent="CenterWrap/Card/CardMargin/Column/CardsRow" unique_id=1917295075]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="CurrentWrapCaption" type="Label" parent="CenterWrap/Card/CardMargin/Column/CardsRow/CurrentWrap" unique_id=1528826623]
+[node name="CurrentWrapCaption" type="Label" parent="CenterWrap/Card/CardMargin/Column/CardsRow/CurrentWrap" unique_id=710345116]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "NOW"
 horizontal_alignment = 1
 
-[node name="CurrentPreview" type="Control" parent="CenterWrap/Card/CardMargin/Column/CardsRow/CurrentWrap" unique_id=972786154 instance=ExtResource("2_yc31i")]
+[node name="CurrentPreview" type="Control" parent="CenterWrap/Card/CardMargin/Column/CardsRow/CurrentWrap" unique_id=1294846494 instance=ExtResource("2_yc31i")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 364)
 clip_contents = true
@@ -73,19 +73,20 @@ layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("3_lkrqj")
 
-[node name="UpgradedWrap" type="VBoxContainer" parent="CenterWrap/Card/CardMargin/Column/CardsRow" unique_id=2032682226]
+[node name="UpgradedWrap" type="VBoxContainer" parent="CenterWrap/Card/CardMargin/Column/CardsRow" unique_id=1580236681]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="UpgradedWrapCaption" type="Label" parent="CenterWrap/Card/CardMargin/Column/CardsRow/UpgradedWrap" unique_id=934069448]
+[node name="UpgradedWrapCaption" type="Label" parent="CenterWrap/Card/CardMargin/Column/CardsRow/UpgradedWrap" unique_id=1583448223]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "UPGRADED"
 horizontal_alignment = 1
 
-[node name="UpgradedPreview" type="Control" parent="CenterWrap/Card/CardMargin/Column/CardsRow/UpgradedWrap" unique_id=878335962 instance=ExtResource("2_yc31i")]
+[node name="UpgradedPreview" type="Control" parent="CenterWrap/Card/CardMargin/Column/CardsRow/UpgradedWrap" unique_id=43643769 instance=ExtResource("2_yc31i")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 364)
 clip_contents = true
@@ -93,12 +94,20 @@ layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("3_lkrqj")
 
-[node name="ButtonRow" type="HBoxContainer" parent="CenterWrap/Card/CardMargin/Column" unique_id=931926244]
+[node name="ButtonRow" type="HBoxContainer" parent="CenterWrap/Card/CardMargin/Column" unique_id=582465879]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="UpgradeButton" type="Button" parent="CenterWrap/Card/CardMargin/Column/ButtonRow" unique_id=1085640668]
+[node name="BuyButton" type="Button" parent="CenterWrap/Card/CardMargin/Column/ButtonRow" unique_id=1399538672]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 64)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
+theme_override_font_sizes/font_size = 24
+text = "buy $0"
+
+[node name="UpgradeButton" type="Button" parent="CenterWrap/Card/CardMargin/Column/ButtonRow" unique_id=2117512121]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 64)
 layout_mode = 2
@@ -106,7 +115,7 @@ theme_override_colors/font_color = Color(0.3647059, 0.65882355, 0.9490196, 1)
 theme_override_font_sizes/font_size = 24
 text = "upgrade $0"
 
-[node name="RemoveButton" type="Button" parent="CenterWrap/Card/CardMargin/Column/ButtonRow" unique_id=1901875581]
+[node name="RemoveButton" type="Button" parent="CenterWrap/Card/CardMargin/Column/ButtonRow" unique_id=1066173865]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 64)
 layout_mode = 2
@@ -114,7 +123,7 @@ theme_override_colors/font_color = Color(0.8784314, 0.3529412, 0.3529412, 1)
 theme_override_font_sizes/font_size = 24
 text = "remove $0"
 
-[node name="CloseButton" type="Button" parent="CenterWrap/Card/CardMargin/Column/ButtonRow" unique_id=1992986312]
+[node name="CloseButton" type="Button" parent="CenterWrap/Card/CardMargin/Column/ButtonRow" unique_id=901809792]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 64)
 layout_mode = 2
