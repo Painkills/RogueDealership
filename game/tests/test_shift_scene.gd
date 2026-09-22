@@ -313,15 +313,20 @@ func test_the_background_is_the_environment_not_a_control() -> void:
 
 func test_no_hud_control_can_swallow_a_click_meant_for_the_table() -> void:
 	## The lint that would have caught G1's floor-card bug. Every Control in the
-	## HUD must be IGNORE, except real Buttons and the report overlay - which is
-	## STOP on purpose, since it SHOULD block the table once the shift is over.
+	## HUD must be IGNORE, except real Buttons and the two overlays that are
+	## STOP on purpose because they SHOULD block the table while showing: the
+	## report, once the shift is over, and the pull picker, while a reveal is
+	## pending (see shift_controller.gd's own drag-lock comment on why nothing
+	## else may reach the table then either).
 	var s := _scene()
 	var hud := s.get_node(^"HUD/HudRoot") as Control
 	h.eq("HudRoot itself ignores the mouse", hud.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	var report := hud.get_node(^"ReportOverlay")
+	var pull_picker := hud.get_node(^"PullPicker")
 	var offenders: Array[String] = []
 	for c in _controls_under(hud):
-		if c == report or report.is_ancestor_of(c) or c is Button:
+		if c == report or report.is_ancestor_of(c) \
+				or c == pull_picker or pull_picker.is_ancestor_of(c) or c is Button:
 			continue
 		if c.mouse_filter != Control.MOUSE_FILTER_IGNORE:
 			offenders.append("%s (%s)" % [c.name, c.get_class()])
@@ -330,6 +335,9 @@ func test_no_hud_control_can_swallow_a_click_meant_for_the_table() -> void:
 	h.eq("the report overlay does block, deliberately",
 		(report as Control).mouse_filter, Control.MOUSE_FILTER_STOP)
 	h.check("and starts hidden", not (report as Control).visible)
+	h.eq("the pull picker does too, deliberately",
+		(pull_picker as Control).mouse_filter, Control.MOUSE_FILTER_STOP)
+	h.check("and it also starts hidden", not (pull_picker as Control).visible)
 	s.free()
 
 func test_the_hud_carries_everything_the_controller_renders_into() -> void:
@@ -337,7 +345,7 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	# Addressed by unique name, not by path: the panel layout is expected to keep
 	# moving, and the controller looks these up the same way.
 	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
-			"%ReportOverlay", "%SidePanel", "%ActionBar",
+			"%ReportOverlay", "%SidePanel", "%ActionBar", "%PullPicker",
 			"%Seat0", "%CustomerFlip0", "%CustomerDetail0", "%OfferDetail0"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",

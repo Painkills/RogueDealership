@@ -34,7 +34,9 @@ func test_effects_that_need_an_offer_are_safe_without_one() -> void:
 	var d := DiscardHand.new(); d.amount = 1
 	var b := MarginBonus.new(); b.amount = 300
 	var g := GrantMargin.new(); g.amount = 300
-	for e in [a, m, p, f, r, d, b, g]:
+	var l := ChangeLineFloorWide.new(); l.amount = -5
+	var pc := PullCards.new(); pc.count = 3
+	for e in [a, m, p, f, r, d, b, g, l, pc]:
 		e.apply(ctx)
 	h.check("no crash with an empty context", true)
 
@@ -96,7 +98,8 @@ func test_describe_agrees_with_apply_for_every_effect() -> void:
 	var specs := [[ChangeAppeal.new(), 7], [ChangeMargin.new(), -250],
 		[ChangeLine.new(), 5], [ChangePatience.new(), -4],
 		[ChangePatienceFloor.new(), -1], [DiscardHand.new(), 2],
-		[MarginBonus.new(), 300], [GrantMargin.new(), 300]]
+		[MarginBonus.new(), 300], [GrantMargin.new(), 300],
+		[ChangeLineFloorWide.new(), -6]]
 	for spec in specs:
 		var e: Effect = spec[0]
 		e.amount = spec[1]
@@ -106,4 +109,14 @@ func test_describe_agrees_with_apply_for_every_effect() -> void:
 			d.contains(str(abs(spec[1]))))
 		h.check("%s says something" % e.get_script().resource_path.get_file(),
 			d.strip_edges() != "")
+
+## PullCards has no plain amount to check against the generic table above -
+## count/kind are its own fields - so it gets its own thin describe() check.
+func test_pull_cards_describes_its_own_count_and_kind() -> void:
+	var e := PullCards.new()
+	e.count = 4
+	e.kind = &"support"
+	var d := e.describe()
+	h.check("names the count (%s)" % d, d.contains("4"))
+	h.check("names the kind (%s)" % d, d.contains("support"))
 

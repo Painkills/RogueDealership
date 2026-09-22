@@ -51,6 +51,7 @@ func test_runtime_state_classes_are_refcounted_not_resource() -> void:
 			["scripts/model", "offer.gd"], ["scripts/model", "card_instance.gd"],
 			["scripts/model", "deck.gd"], ["scripts/model", "result.gd"],
 			["scripts/model", "effect_context.gd"],
+			["scripts/model", "pending_pull.gd"],
 			["scripts/run", "run_state.gd"], ["scripts/run", "shop.gd"]]:
 		var path := "res://%s/%s" % [entry[0], entry[1]]
 		var src := FileAccess.get_file_as_string(path)

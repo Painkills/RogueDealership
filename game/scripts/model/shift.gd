@@ -42,6 +42,12 @@ var draw: Array[CardInstance] = []
 var discard: Array[CardInstance] = []
 var hand: Array[CardInstance] = []
 var reshuffles: int = 0
+## Non-null between PullCards.apply() staging a reveal and choose_pull()/
+## cancel_pull() resolving it - see PendingPull's own comment. _draw_up()
+## refuses to refill while this is set (the pull owns the next hand slot),
+## and the view locks card dragging while it is set (see
+## shift_controller.gd's set_hud_dimmed-adjacent drag lock).
+var pending_pull: PendingPull = null
 
 var events: Array[String] = []
 var action_log: Array[Dictionary] = []
@@ -367,6 +373,12 @@ func _next_name() -> String:
 
 # ----------------------------------------------------------------------- deck
 func _draw_up() -> void:
+	# A pull owns the next hand slot - refilling it blind here first would
+	# leave choose_pull() nowhere to put the card you actually picked.
+	# cancel_pull() calls this again once the pull clears, to fill it the
+	# normal way after all.
+	if pending_pull != null:
+		return
 	while hand.size() < cfg.hand_size:
 		if draw.is_empty():
 			if discard.is_empty():
@@ -783,6 +795,87 @@ func dig(index: int) -> Result:
 	_burn(cfg.dig_ticks, "digs")
 	return Result.new(true,
 		"You set aside the %s." % inst.card.display_name, "dig")
+
+
+## Scans draw from the top, collecting the first `count` cards matching
+## `kind` (&"any" matches everything, so it is the SAME loop as
+## &"support"/&"product" with an always-true predicate - not a separate
+## "top N" special case). Removed from draw immediately, not merely marked:
+## the drag lock the view applies while pending_pull is set is what keeps
+## draw from changing out from under the indices recorded here, not
+## anything in this function itself.
+##
+## Reveals fewer than `count` if that is all there is, and simply leaves
+## nothing pending if there is no match at all - the triggering card still
+## resolves normally either way (see _support()'s own unconditional
+## discard), so a whiffed pull costs nothing extra.
+func _start_pull(count: int, kind: StringName) -> void:
+	var found: Array[CardInstance] = []
+	var indices: Array[int] = []
+	var i := 0
+	while i < draw.size() and found.size() < count:
+		var inst: CardInstance = draw[i]
+		var matches: bool
+		match kind:
+			&"product": matches = inst.is_product()
+			&"support": matches = not inst.is_product()
+			_: matches = true                        # &"any"
+		if matches:
+			found.append(inst)
+			indices.append(i)
+		i += 1
+	# Highest original index first, so removing one never shifts an index
+	# still queued to be removed.
+	for j in range(indices.size() - 1, -1, -1):
+		draw.remove_at(indices[j])
+	if found.is_empty():
+		return
+	var p := PendingPull.new()
+	p.revealed = found
+	p.original_indices = indices
+	pending_pull = p
+
+
+## Reinserts every revealed card the pull did NOT keep, each at the exact
+## slot it left - "in the order they were in" for the whole pile, not just
+## relative to each other. Walks original_indices ascending (the order they
+## were found in), tracking how many earlier entries were permanently kept
+## (chosen_index, or none on a cancel) so each later insert lands at its
+## true position in the SHRUNKEN pile - not the position it would have had
+## if the chosen card were still there to be skipped over.
+func _return_pull(p: PendingPull, chosen_index: int) -> void:
+	var offset := 0
+	for i in range(p.original_indices.size()):
+		if i == chosen_index:
+			offset += 1
+			continue
+		draw.insert(p.original_indices[i] - offset, p.revealed[i])
+
+
+func choose_pull(index: int) -> Result:
+	if pending_pull == null:
+		return Result.new(false, "There is nothing to choose from.")
+	if index < 0 or index >= pending_pull.revealed.size():
+		return Result.new(false, "No such card.")
+	var chosen: CardInstance = pending_pull.revealed[index]
+	_return_pull(pending_pull, index)
+	pending_pull = null
+	# Index 0, matching _draw_up()'s own convention: a freshly acquired card
+	# appears on the left, whether it arrived blind or by your own pick.
+	hand.insert(0, chosen)
+	return Result.new(true, "You take the %s." % chosen.card.display_name,
+		"pull")
+
+
+func cancel_pull() -> Result:
+	if pending_pull == null:
+		return Result.new(false, "There is nothing to cancel.")
+	_return_pull(pending_pull, -1)
+	pending_pull = null
+	# Declining costs nothing beyond what the triggering card already cost -
+	# the vacated slot still gets filled, just the normal blind way.
+	_draw_up()
+	return Result.new(true, "You put them back.", "cancel_pull")
 
 
 func close() -> Result:

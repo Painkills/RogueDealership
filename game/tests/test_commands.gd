@@ -34,6 +34,15 @@ func _hand(s: Shift, ids: Array) -> void:
 		s.hand.append(CardInstance.new(s.card_pool.by_id(id), uid))
 		uid += 1
 
+## _hand()'s counterpart for the draw pile - id order becomes draw[0], [1], ...
+## so a pull test can state "the top N cards" as a plain list.
+func _set_draw(s: Shift, ids: Array) -> void:
+	s.draw.clear()
+	var uid := 800
+	for id in ids:
+		s.draw.append(CardInstance.new(s.card_pool.by_id(id), uid))
+		uid += 1
+
 func _at(s: Shift, chair: int = 0) -> Customer:
 	s.at = chair
 	s.last_customer = s.chairs[chair]
@@ -445,3 +454,163 @@ func test_the_karen_still_walks_when_her_patience_runs_out() -> void:
 	s.dig(0)
 	h.eq("the lock does not make her immortal", c.state, "walked")
 	h.eq("and it went with her", s.lost_to_walks, gap_margin)
+
+# ---------------------------------------------------------------- floor-wide
+
+func test_change_line_floor_wide_moves_every_seated_customer_at_once() -> void:
+	var s := _shift([&"easygoing", &"easygoing", &"easygoing"])
+	var before: Array[int] = []
+	for c in s.seated():
+		before.append(c.line)
+	var e := ChangeLineFloorWide.new()
+	e.amount = -7
+	e.apply(s._context(s.seated()[0]))
+	var after: Array[int] = []
+	for c in s.seated():
+		after.append(c.line)
+	for i in range(before.size()):
+		h.eq("seat %d moved by the same amount" % i, after[i], before[i] - 7)
+
+# --------------------------------------------------------------- pull cards
+
+func test_pulling_any_takes_the_top_count_cards_regardless_of_kind() -> void:
+	var s := _shift([&"easygoing"])
+	_set_draw(s, [&"vsc", &"smalltalk", &"gap", &"pad", &"theft"])
+	s._start_pull(3, &"any")
+	h.eq("revealed the top 3, in order",
+		[s.pending_pull.revealed[0].card.id, s.pending_pull.revealed[1].card.id,
+			s.pending_pull.revealed[2].card.id],
+		[&"vsc", &"smalltalk", &"gap"])
+	h.eq("removed from the pile", s.draw.size(), 2)
+
+func test_pulling_a_kind_scans_past_non_matching_cards() -> void:
+	var s := _shift([&"easygoing"])
+	_set_draw(s, [&"vsc", &"smalltalk", &"gap", &"pad", &"theft"])
+	s._start_pull(2, &"support")
+	h.eq("skipped the products, took the first 2 support cards",
+		[s.pending_pull.revealed[0].card.id, s.pending_pull.revealed[1].card.id],
+		[&"smalltalk", &"pad"])
+	h.eq("only the matched cards left the pile", s.draw.size(), 3)
+	h.check("and the untaken products are still there, in order",
+		s.draw[0].card.id == &"vsc" and s.draw[1].card.id == &"gap"
+			and s.draw[2].card.id == &"theft")
+
+func test_pulling_product_only_takes_product_cards() -> void:
+	var s := _shift([&"easygoing"])
+	_set_draw(s, [&"smalltalk", &"vsc", &"pad", &"gap"])
+	s._start_pull(2, &"product")
+	h.eq("skipped the support cards, took the first 2 products",
+		[s.pending_pull.revealed[0].card.id, s.pending_pull.revealed[1].card.id],
+		[&"vsc", &"gap"])
+
+func test_pulling_fewer_than_count_available_reveals_what_there_is() -> void:
+	var s := _shift([&"easygoing"])
+	_set_draw(s, [&"vsc", &"smalltalk", &"gap"])
+	s._start_pull(5, &"support")
+	h.eq("only the one support card in the pile came up",
+		s.pending_pull.revealed.size(), 1)
+	h.eq("and the pile lost only that one", s.draw.size(), 2)
+
+func test_pulling_with_no_match_leaves_nothing_pending_and_the_pile_untouched() -> void:
+	var s := _shift([&"easygoing"])
+	_set_draw(s, [&"vsc", &"gap", &"theft"])
+	s._start_pull(3, &"support")
+	h.check("nothing pending - there was nothing to show",
+		s.pending_pull == null)
+	h.eq("the pile is exactly as it was", s.draw.size(), 3)
+
+func test_hand_does_not_refill_while_a_pull_is_pending() -> void:
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft"])
+	s._start_pull(2, &"any")
+	var before: int = s.hand.size()
+	s._draw_up()
+	h.eq("hand did not grow - the pull owns the next slot",
+		s.hand.size(), before)
+
+func test_choosing_puts_the_pick_in_hand_and_returns_the_rest_in_place() -> void:
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
+	s._start_pull(3, &"any")                 # reveals gap, smalltalk, pad
+	var r := s.choose_pull(1)                # take smalltalk (the middle one)
+	h.check("choosing is legal", r.ok)
+	var got_it := false
+	for c in s.hand:
+		if c.card.id == &"smalltalk":
+			got_it = true
+	h.check("the chosen card is in hand", got_it)
+	h.check("no pending pull left", s.pending_pull == null)
+	h.eq("the pile is back to original size minus the one kept",
+		s.draw.size(), 4)
+	h.eq("gap and pad returned to their OWN original slots, in order",
+		[s.draw[0].card.id, s.draw[1].card.id, s.draw[2].card.id,
+			s.draw[3].card.id],
+		[&"gap", &"pad", &"theft", &"appearance"])
+
+func test_choosing_the_last_revealed_card_still_restores_the_rest_correctly() -> void:
+	## The index-shift arithmetic (_return_pull's own "offset") is easy to get
+	## backwards for whichever end of the reveal is chosen - covering both
+	## ends catches an off-by-one either direction would miss.
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
+	s._start_pull(3, &"any")                 # reveals gap, smalltalk, pad
+	s.choose_pull(2)                         # take pad (the last one)
+	h.eq("gap and smalltalk returned to their own original slots, in order",
+		[s.draw[0].card.id, s.draw[1].card.id, s.draw[2].card.id,
+			s.draw[3].card.id],
+		[&"gap", &"smalltalk", &"theft", &"appearance"])
+
+func test_canceling_returns_every_revealed_card_to_its_own_slot() -> void:
+	## Hand starts FULL, not short a card: cancel_pull() calls _draw_up() to
+	## refill whatever slot the pull would have filled, and a hand already at
+	## cfg.hand_size means that call is a no-op - keeping this test's own
+	## focus on the restore, not on how many cards _draw_up() happens to pull.
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc", &"vsc", &"vsc", &"vsc", &"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
+	s._start_pull(3, &"any")
+	var r := s.cancel_pull()
+	h.check("canceling is legal", r.ok)
+	h.check("no pending pull left", s.pending_pull == null)
+	h.eq("the pile is exactly as it was",
+		[s.draw[0].card.id, s.draw[1].card.id, s.draw[2].card.id,
+			s.draw[3].card.id, s.draw[4].card.id],
+		[&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
+
+func test_canceling_still_refills_the_hand_normally() -> void:
+	## Hand starts one short of cfg.hand_size, matching the real invariant
+	## while a pull is pending (the triggering card already left) - so this
+	## proves cancel's own _draw_up() call tops it back up by exactly one.
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc", &"vsc", &"vsc", &"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
+	s._start_pull(3, &"any")
+	s.cancel_pull()
+	h.eq("hand refilled to size on cancel", s.hand.size(), s.cfg.hand_size)
+
+func test_choosing_or_canceling_with_nothing_pending_is_refused() -> void:
+	var s := _shift([&"easygoing"])
+	h.check("choosing refused", not s.choose_pull(0).ok)
+	h.check("canceling refused", not s.cancel_pull().ok)
+
+func test_choosing_an_out_of_range_index_is_refused_and_leaves_the_pull_intact() -> void:
+	var s := _shift([&"easygoing"])
+	_set_draw(s, [&"vsc", &"gap", &"theft"])
+	s._start_pull(2, &"any")
+	var r := s.choose_pull(5)
+	h.check("refused", not r.ok)
+	h.check("the pull is still pending", s.pending_pull != null)
+
+func test_pull_cards_effect_stages_the_same_pull_shift_exposes_directly() -> void:
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	_set_draw(s, [&"vsc", &"smalltalk", &"gap"])
+	var e := PullCards.new()
+	e.count = 2
+	e.kind = &"any"
+	e.apply(s._context(c))
+	h.eq("the effect staged exactly what _start_pull would",
+		s.pending_pull.revealed.size(), 2)

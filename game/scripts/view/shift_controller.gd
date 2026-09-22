@@ -43,6 +43,15 @@ const FRAMING_TWEEN := 0.5
 const PILE_TWEEN := 0.4
 const PILE_DELAY := 0.18
 
+## Pushes DragController's own drag-start threshold (addons/card_3d/scripts/
+## drag_controller.gd) far past anything a mouse gesture could cross, while a
+## pull is pending - pressing a card still lifts it for a hover-style read
+## (that gate is can_select_card, a separate code path this never touches),
+## but the mouse can never travel far enough to turn that into a real drag.
+## Restored to whatever the scene actually configured (_normal_drag_threshold,
+## captured once at _ready()) the moment the pull resolves.
+const _LOCKED_DRAG_THRESHOLD := 999999.0
+
 ## The run layer listens for this. The controller plays ONE shift; deciding
 ## what comes next is not its job.
 signal shift_finished(report: Dictionary)
@@ -70,6 +79,7 @@ signal deck_viewed
 @onready var _drop_btn: Button = %DropButton
 @onready var _close_btn: Button = %CloseButton
 @onready var _report_overlay = %ReportOverlay
+@onready var _pull_picker: Control = %PullPicker
 
 var _shift: Shift
 ## True while a RunController-level overlay (the deck viewer) sits on top of
@@ -77,6 +87,9 @@ var _shift: Shift
 ## own CanvasLayer, drawing OVER any plain Control regardless of tree order,
 ## so the overlay being visually "on top" does nothing to them on its own.
 var _hud_dimmed := false
+## Captured once, at _ready() - whatever the scene actually configured
+## DragController's own threshold to, before anything here ever touches it.
+var _normal_drag_threshold: float = 0.0
 var _standing_before: int = 0        ## the run's standing when THIS shift started
 var _seats: Array = []               ## one Node3D per seat, never hidden now
 ## Whoever the carousel is pointed at. Survives stepping out to the floor, so
@@ -122,6 +135,7 @@ func _ready() -> void:
 	_drag.add_card_collection(_hand_zone)
 	_drag.add_card_collection(_draw_zone)
 	_drag.add_card_collection(_discard_zone)
+	_normal_drag_threshold = _drag.card_drag_threshold
 
 	# "Your deck" - clicking the pile itself, not dragging FROM it (the pile
 	# is only ever a DROP target, for the hand card a dig discards) - opens
@@ -172,6 +186,8 @@ func _ready() -> void:
 	(%StandingTapTarget as Button).pressed.connect(_debug_add_standing)
 	_report_overlay.continue_pressed.connect(
 		func(): shift_finished.emit(_shift.report()))
+	_pull_picker.card_chosen.connect(func(i): _apply(_shift.choose_pull(i)))
+	_pull_picker.cancel_pressed.connect(func(): _apply(_shift.cancel_pull()))
 
 # --- input -----------------------------------------------------------------
 
@@ -211,6 +227,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Never handle mouse here: _unhandled_input runs BEFORE physics picking, so
 	# consuming a click here takes it from every card on the table.
 	if _shift == null or _shift.is_over():
+		return
+	# A pending pull locks every OTHER action, not just dragging - the
+	# keyboard shortcuts below are a full parallel input path to the mouse,
+	# and letting them through would let a keyboard player dig or offer
+	# while a mouse player could not.
+	if _shift.pending_pull != null:
 		return
 	if event.is_action_pressed("dig_5"): _try_dig(4)
 	elif event.is_action_pressed("dig_1"): _try_dig(0)
@@ -633,6 +655,7 @@ func _render() -> void:
 
 	_render_details()
 	_render_hover_flip()
+	_render_pull_picker()
 	_action_bar.visible = seated and not _report_overlay.visible and not _hud_dimmed
 	# Nudges you to close out before the bell, but only when there is
 	# something on THIS table actually worth closing - close() refuses an
@@ -643,6 +666,19 @@ func _render() -> void:
 		else Color.WHITE
 	_reconcile()
 	_drain_log()
+
+## The picker and the drag lock rise and fall together - both exist only to
+## enforce "resolve this before anything else," so one flag (pending_pull)
+## drives both rather than two separately-tracked bits of state that could
+## drift out of sync with each other.
+func _render_pull_picker() -> void:
+	var pending: PendingPull = _shift.pending_pull
+	_drag.card_drag_threshold = _LOCKED_DRAG_THRESHOLD if pending != null \
+		else _normal_drag_threshold
+	if pending != null:
+		_pull_picker.show_pull(pending)
+	else:
+		_pull_picker.hide_pull()
 
 ## The detail cards. There is no positioning to do and no panel to keep clear of
 ## anything: each one is a card parked behind the thing it describes, so "beside

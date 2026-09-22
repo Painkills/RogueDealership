@@ -50,6 +50,7 @@ const COLLECTION := "res://addons/card_3d/scenes/card_collection_3d.tscn"
 const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
 const DETAIL_CARD := "res://scenes/cards/detail_card_3d.tscn"
 const REPORT := "res://scenes/report.tscn"
+const PULL_PICKER := "res://scenes/pull_picker.tscn"
 
 ## Overrides card_3d's own default shape (VENDORED.md: "Do not edit these
 ## files") through the sanctioned extension point - CardCollection3D's own
@@ -562,3 +563,15 @@ func _build_hud(root: Node) -> void:
 	report.unique_name_in_owner = true
 	hud.add_child(report)
 	report.owner = root
+
+	# Last of the HUD's children, so it draws on top of everything else here -
+	# the same "added last" rule DeckViewer's own comment states, for the
+	# same reason: reachable while any of this HUD's other panels could be
+	# showing, so it cannot be buried under one of them.
+	var pull_picker: Control = (load(PULL_PICKER) as PackedScene).instantiate()
+	pull_picker.name = "PullPicker"
+	pull_picker.visible = false
+	pull_picker.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pull_picker.unique_name_in_owner = true
+	hud.add_child(pull_picker)
+	pull_picker.owner = root

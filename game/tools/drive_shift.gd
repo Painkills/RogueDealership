@@ -108,6 +108,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_table("after approaching chair A")
 
 	_check_the_floor_key_flips()
+	_check_the_pull_picker_locks_input_until_resolved()
 	_check_what_a_customer_says_reaches_the_log()
 
 	_put_a_product_on_the_table()
@@ -1483,6 +1484,61 @@ func _check_the_floor_key_flips() -> void:
 		% [before, _controller._shift.tick], _controller._shift.tick == before)
 	_check("and you are with them again (%s)" % who.display_name,
 		_controller._shift.at != null and _controller._shift.chairs[_at()] == who)
+
+## The mid-shift reveal-and-choose popup (Shift.pending_pull) - driven
+## through the real chip button's own .pressed signal and the real Cancel
+## button, not a direct controller call, the same rule every other
+## transition here follows. Seeds draw directly rather than routing through
+## a real PullCards-bearing card: no shipped card uses the effect yet, and
+## this checks the VIEW's reaction to pending_pull, not the scan/restore
+## logic itself (that is test_commands.gd's job).
+func _check_the_pull_picker_locks_input_until_resolved() -> void:
+	if _controller._shift.at == null:
+		_check("still seated to drive the pull picker", false)
+		return
+	var s: Shift = _controller._shift
+	_check("the picker starts hidden", not _controller._pull_picker.visible)
+	var normal_threshold: float = _controller._drag.card_drag_threshold
+
+	s.draw.append(CardInstance.new(s.card_pool.by_id(&"smalltalk"), 700))
+	s.draw.append(CardInstance.new(s.card_pool.by_id(&"pad"), 701))
+	s._start_pull(2, &"any")
+	_controller._render()
+	_check("staging a pull opens the picker", _controller._pull_picker.visible)
+	var row := _controller._pull_picker.get_node(^"%PullRow") as HBoxContainer
+	_check("one chip per revealed card (%d)" % row.get_child_count(),
+		row.get_child_count() == 2)
+	_check("dragging is locked while it is open",
+		_controller._drag.card_drag_threshold > normal_threshold)
+	var seated_before: bool = s.at != null
+	_press(KEY_F)   # would normally step back to the floor - must do nothing
+	_settle()
+	_check("keyboard shortcuts are locked too - the floor key did nothing",
+		(s.at != null) == seated_before)
+
+	var hand_before: int = s.hand.size()
+	var chip := row.get_child(0) as ShopCardButton
+	chip.pressed.emit()
+	_check("clicking a chip resolves the pull", s.pending_pull == null)
+	_check("and closes the picker", not _controller._pull_picker.visible)
+	_check("the drag lock releases",
+		_controller._drag.card_drag_threshold == normal_threshold)
+	_check("the chosen card joined the hand (%d -> %d)" % [hand_before, s.hand.size()],
+		s.hand.size() == hand_before + 1)
+
+	# Round two, to prove Cancel too - a fresh pair, so this does not depend
+	# on what the pile happened to look like after the first pick.
+	s.draw.append(CardInstance.new(s.card_pool.by_id(&"theft"), 702))
+	s.draw.append(CardInstance.new(s.card_pool.by_id(&"appearance"), 703))
+	s._start_pull(2, &"any")
+	_controller._render()
+	var draw_before: int = s.draw.size()
+	var cancel_btn := _controller._pull_picker.get_node(^"%PullCancelButton") as Button
+	cancel_btn.pressed.emit()
+	_check("canceling resolves the pull too", s.pending_pull == null)
+	_check("and closes the picker", not _controller._pull_picker.visible)
+	_check("both revealed cards went back to the pile (%d -> %d)"
+		% [draw_before, s.draw.size()], s.draw.size() == draw_before + 2)
 
 # --- the HUD ---------------------------------------------------------------
 
