@@ -14,11 +14,11 @@ amount = 5
 
 [resource]
 script = ExtResource("4_u77cc")
-effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_g0c8w")])
-upgraded_effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_cpvyu")])
 id = &"framing"
 display_name = "Coffee Framing"
 text = "'That's just 3 cups of coffee a day!' Paying in coffees seems to make things easier. "
 ticks = 0
 price = 1000
 dialogue_tags = Array[StringName]([&"appeal"])
+effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_g0c8w")])
+upgraded_effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_cpvyu")])

@@ -64,6 +64,24 @@ func _index_of(s: Shift, id: StringName) -> int:
 			return i
 	return -1
 
+## A ProductCardDef built at test time rather than authored as a .tres -
+## effects/upgraded_effects now live on every card, but no shipped product
+## uses them yet, so this is the only way to cover Shift.place()'s new loop
+## without mutating a real, shared card resource. Interest/margin borrowed
+## (read, never mutated) from a real product, so _rank()/appeal_for() still
+## work exactly as they do for a real card.
+func _synthetic_product(s: Shift, effects: Array[Effect],
+		upgraded_effects: Array[Effect] = []) -> ProductCardDef:
+	var base := s.card_pool.by_id(&"vsc") as ProductCardDef
+	var def := ProductCardDef.new()
+	def.interest = base.interest
+	def.margin = base.margin
+	def.id = &"synthetic_product"
+	def.display_name = "Synthetic Product"
+	def.effects = effects
+	def.upgraded_effects = upgraded_effects
+	return def
+
 # ----------------------------------------------------------- place and offer
 func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	var s := _shift([&"easygoing"])
@@ -78,6 +96,99 @@ func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	h.check("but not the rank", not c.known_ranks.has(&"reliability"))
 	h.check("and not the Line", not c.known_line)
 	h.check("and the offer is not revealed", not c.offer.revealed)
+
+func test_placing_a_product_with_no_effects_behaves_exactly_as_before() -> void:
+	## Every shipped product today - the empty-effects fast path in place()
+	## must change nothing observable for it.
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	_rank(c, [&"reliability"])
+	_hand(s, [&"vsc"])
+	s.place(0)
+	h.check("no log entry for a card with nothing to say", s.action_log.is_empty())
+
+func test_placing_a_product_applies_its_own_effects() -> void:
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	var e := ChangeAppeal.new()
+	e.amount = 6
+	var def := _synthetic_product(s, [e])
+	_rank(c, [def.interest.id])
+	s.hand.clear()
+	s.hand.append(CardInstance.new(def, 999))
+	var appeal_before: int = c.appeal_for(def.interest.id)
+	var r := s.place(0)
+	h.check("placing is still legal", r.ok)
+	h.eq("the product's own effect lifted the offer's appeal",
+		c.offer.appeal, appeal_before + 6)
+
+func test_placing_a_product_records_what_its_effect_did_in_the_log() -> void:
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	var e := ChangeAppeal.new()
+	e.amount = 6
+	var def := _synthetic_product(s, [e])
+	_rank(c, [def.interest.id])
+	s.hand.clear()
+	s.hand.append(CardInstance.new(def, 999))
+	s.place(0)
+	h.eq("exactly one entry, for the product itself", s.action_log.size(), 1)
+	h.eq("named for the product", s.action_log[0]["name"], "Synthetic Product")
+	h.check("describing what the effect did",
+		", ".join(s.action_log[0]["descriptions"]).contains("6"))
+	h.check("not tagged floor-wide - this one only touches the offer",
+		not s.action_log[0]["floor_wide"])
+
+func test_the_returned_band_reflects_the_product_effect_not_just_the_base_appeal() -> void:
+	## _support()'s own comment states the rule this mirrors: the band is read
+	## AFTER effects land. COLD (the pre-effect gap) leaking through instead
+	## of ALMOST (the post-effect one) would be this ordering silently wrong.
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	var e := ChangeAppeal.new()
+	e.amount = 20
+	var def := _synthetic_product(s, [e])
+	_rank(c, [def.interest.id])
+	var base_appeal: int = c.appeal_for(def.interest.id)
+	c.line = base_appeal + 25   # gap 25 (COLD) if the effect never landed
+	s.hand.clear()
+	s.hand.append(CardInstance.new(def, 999))
+	var r := s.place(0)
+	h.eq("the band reflects the LIFTED appeal (gap 5, ALMOST)",
+		r.data["band"], "ALMOST")
+
+func test_an_upgraded_product_uses_its_upgraded_effects() -> void:
+	## Mirrors test_the_upgraded_room_read_names_their_number_one's own point:
+	## an upgrade has to buy something DIFFERENT, not a second identical copy.
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	var base_effect := ChangeAppeal.new()
+	base_effect.amount = 4
+	var upgraded_effect := ChangeAppeal.new()
+	upgraded_effect.amount = 10
+	var def := _synthetic_product(s, [base_effect], [upgraded_effect])
+	_rank(c, [def.interest.id])
+	s.hand.clear()
+	var inst := CardInstance.new(def, 999)
+	inst.upgraded = true
+	s.hand.append(inst)
+	var appeal_before: int = c.appeal_for(def.interest.id)
+	s.place(0)
+	h.eq("the UPGRADED effect landed, not the base one",
+		c.offer.appeal, appeal_before + 10)
+
+func test_a_floor_wide_product_effect_tags_the_log_entry() -> void:
+	var s := _shift([&"easygoing", &"easygoing"])
+	var e := ChangeLineFloorWide.new()
+	e.amount = -5
+	var def := _synthetic_product(s, [e])
+	var c := _at(s)
+	_rank(c, [def.interest.id])
+	s.hand.clear()
+	s.hand.append(CardInstance.new(def, 999))
+	s.place(0)
+	h.check("tagged floor-wide, the same as a support card's own would be",
+		s.action_log[0]["floor_wide"])
 
 func test_offering_is_free_and_teaches_the_rank_but_never_the_line() -> void:
 	var s := _shift([&"easygoing"])

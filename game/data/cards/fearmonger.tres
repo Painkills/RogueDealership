@@ -25,10 +25,10 @@ metadata/_custom_type_script = "uid://b41b5fbmrgc8c"
 
 [resource]
 script = ExtResource("4_67703")
-effects = Array[ExtResource("1_fo6ct")]([SubResource("Resource_1wqcv"), SubResource("Resource_fo6ct")])
-upgraded_effects = Array[ExtResource("1_fo6ct")]([SubResource("Resource_k1i42"), SubResource("Resource_vm77h")])
 id = &"fearmonger"
 display_name = "Fearmonger"
 text = "You describe, vividly, what happens to people who skip it. It works. It also makes you scary."
 price = 1000
 dialogue_tags = Array[StringName]([&"appeal"])
+effects = Array[ExtResource("1_fo6ct")]([SubResource("Resource_1wqcv"), SubResource("Resource_fo6ct")])
+upgraded_effects = Array[ExtResource("1_fo6ct")]([SubResource("Resource_k1i42"), SubResource("Resource_vm77h")])

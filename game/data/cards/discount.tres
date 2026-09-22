@@ -23,12 +23,12 @@ amount = -150
 
 [resource]
 script = ExtResource("4_srclt")
-effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_y1lle"), SubResource("Resource_5ct8g")])
-upgraded_effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_2tkkk"), SubResource("Resource_ij5n2")])
 id = &"discount"
 display_name = "Offer a Discount"
-text = "You come down on it. The biggest move you can make in a single tick, and you pay for it out of your own pocket."
+text = "\"... but that's the best I can do!\""
 copies = 2
 starter = true
 price = 900
 dialogue_tags = Array[StringName]([&"concession"])
+effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_y1lle"), SubResource("Resource_5ct8g")])
+upgraded_effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_2tkkk"), SubResource("Resource_ij5n2")])

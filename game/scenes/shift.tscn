@@ -1,22 +1,17 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dtvbxyjstsouw"]
 
-[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="1_v4wb7"]
-[ext_resource type="PackedScene" path="res://addons/card_3d/scenes/card_collection_3d.tscn" id="2_2ydfi"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/card_collection_3d.gd" id="3_x10gg"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/fan_card_layout.gd" id="4_0ibvx"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/drag_strategy.gd" id="5_2rsky"]
+[ext_resource type="Script" uid="uid://4d7a4ha7mxga" path="res://scripts/view/shift_controller.gd" id="1_v4wb7"]
+[ext_resource type="PackedScene" uid="uid://d1uvcisduvvj" path="res://addons/card_3d/scenes/card_collection_3d.tscn" id="2_2ydfi"]
+[ext_resource type="Script" uid="uid://7sguf1kjbe8s" path="res://addons/card_3d/scripts/card_layouts/fan_card_layout.gd" id="4_0ibvx"]
+[ext_resource type="Script" uid="uid://drpbrbrd8kfxn" path="res://addons/card_3d/scripts/card_collection/drag_strategy.gd" id="5_2rsky"]
 [ext_resource type="Shape3D" path="res://scenes/dropzone_shape_3d.tres" id="6_vd5qx"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/pile_card_layout.gd" id="7_bex05"]
-[ext_resource type="Script" path="res://scripts/view/flip_pair.gd" id="8_4415h"]
+[ext_resource type="Script" uid="uid://dsyors6p1ph7" path="res://addons/card_3d/scripts/card_layouts/pile_card_layout.gd" id="7_bex05"]
+[ext_resource type="Script" uid="uid://cnltcoapqlk5r" path="res://scripts/view/flip_pair.gd" id="8_4415h"]
 [ext_resource type="PackedScene" path="res://scenes/cards/customer_card_3d.tscn" id="9_nnevp"]
-[ext_resource type="Script" path="res://scripts/view/customer_card_3d.gd" id="10_g8ksb"]
 [ext_resource type="PackedScene" path="res://scenes/cards/detail_card_3d.tscn" id="11_wdnfd"]
-[ext_resource type="Script" path="res://scripts/view/detail_card_3d.gd" id="12_gogk5"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/drag_controller.gd" id="13_rf0hl"]
+[ext_resource type="Script" uid="uid://bgkontnk0cnl" path="res://addons/card_3d/scripts/drag_controller.gd" id="13_rf0hl"]
 [ext_resource type="PackedScene" path="res://scenes/report.tscn" id="14_36dmj"]
-[ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="15_jd3xi"]
 [ext_resource type="PackedScene" path="res://scenes/pull_picker.tscn" id="16_b21lq"]
-[ext_resource type="Script" path="res://scripts/view/pull_picker.gd" id="17_f1jej"]
 
 [sub_resource type="Resource" id="Resource_wmubo"]
 script = ExtResource("4_0ibvx")
@@ -144,10 +139,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 24.93)
 current = true
 fov = 28.0
 
-[node name="Hand" type="Node3D" parent="Camera3D" unique_id=402912711 instance=ExtResource("2_2ydfi")]
+[node name="Hand" parent="Camera3D" unique_id=402912711 instance=ExtResource("2_2ydfi")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -12.6, -19.91)
-script = ExtResource("3_x10gg")
 card_layout_strategy = SubResource("Resource_wmubo")
 drag_strategy = SubResource("Resource_oeuem")
 dropzone_collision_shape = ExtResource("6_vd5qx")
@@ -166,10 +160,9 @@ text = "YOUR HAND"
 font_size = 64
 outline_size = 10
 
-[node name="Discard" type="Node3D" parent="Camera3D" unique_id=160594976 instance=ExtResource("2_2ydfi")]
+[node name="Discard" parent="Camera3D" unique_id=160594976 instance=ExtResource("2_2ydfi")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, -12.6, -19.91)
-script = ExtResource("3_x10gg")
 card_layout_strategy = SubResource("Resource_4wc7j")
 drag_strategy = SubResource("Resource_gkmxb")
 dropzone_collision_shape = ExtResource("6_vd5qx")
@@ -189,10 +182,9 @@ drag here to dig"
 font_size = 64
 outline_size = 10
 
-[node name="Draw" type="Node3D" parent="Camera3D" unique_id=1611318677 instance=ExtResource("2_2ydfi")]
+[node name="Draw" parent="Camera3D" unique_id=1611318677 instance=ExtResource("2_2ydfi")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.27, -12.6, -19.91)
-script = ExtResource("3_x10gg")
 card_layout_strategy = SubResource("Resource_2xhf5")
 drag_strategy = SubResource("Resource_lu07t")
 dropzone_collision_shape = ExtResource("6_vd5qx")
@@ -244,15 +236,13 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("8_4415h")
 
-[node name="Customer0" type="Node3D" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=4853234 instance=ExtResource("9_nnevp")]
+[node name="Customer0" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=4853234 instance=ExtResource("9_nnevp")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("10_g8ksb")
 
-[node name="CustomerDetail0" type="Node3D" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=431941544 instance=ExtResource("11_wdnfd")]
+[node name="CustomerDetail0" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=431941544 instance=ExtResource("11_wdnfd")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_gogk5")
 
 [node name="HoverPad0" type="StaticBody3D" parent="Table/Carousel/Seat0" unique_id=1934316017]
 unique_name_in_owner = true
@@ -261,10 +251,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat0/HoverPad0" unique_id=766875563]
 shape = SubResource("BoxShape3D_p6lgp")
 
-[node name="Chair0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=635459045 instance=ExtResource("2_2ydfi")]
+[node name="Chair0" parent="Table/Carousel/Seat0" unique_id=635459045 instance=ExtResource("2_2ydfi")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("3_x10gg")
 card_layout_strategy = SubResource("Resource_lfq30")
 drag_strategy = SubResource("Resource_8nvbc")
 dropzone_collision_shape = ExtResource("6_vd5qx")
@@ -284,10 +273,9 @@ drag a product here"
 font_size = 64
 outline_size = 10
 
-[node name="OfferDetail0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=2068759860 instance=ExtResource("11_wdnfd")]
+[node name="OfferDetail0" parent="Table/Carousel/Seat0" unique_id=2068759860 instance=ExtResource("11_wdnfd")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_gogk5")
 
 [node name="Seat1" type="Node3D" parent="Table/Carousel" unique_id=1860549871]
 unique_name_in_owner = true
@@ -298,15 +286,13 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("8_4415h")
 
-[node name="Customer1" type="Node3D" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=1122469812 instance=ExtResource("9_nnevp")]
+[node name="Customer1" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=1122469812 instance=ExtResource("9_nnevp")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("10_g8ksb")
 
-[node name="CustomerDetail1" type="Node3D" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=237424602 instance=ExtResource("11_wdnfd")]
+[node name="CustomerDetail1" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=237424602 instance=ExtResource("11_wdnfd")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_gogk5")
 
 [node name="HoverPad1" type="StaticBody3D" parent="Table/Carousel/Seat1" unique_id=1959171999]
 unique_name_in_owner = true
@@ -315,10 +301,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat1/HoverPad1" unique_id=1024576610]
 shape = SubResource("BoxShape3D_xioc8")
 
-[node name="Chair1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=1975732742 instance=ExtResource("2_2ydfi")]
+[node name="Chair1" parent="Table/Carousel/Seat1" unique_id=1975732742 instance=ExtResource("2_2ydfi")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("3_x10gg")
 card_layout_strategy = SubResource("Resource_n2mdw")
 drag_strategy = SubResource("Resource_aada7")
 dropzone_collision_shape = ExtResource("6_vd5qx")
@@ -338,10 +323,9 @@ drag a product here"
 font_size = 64
 outline_size = 10
 
-[node name="OfferDetail1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=316237741 instance=ExtResource("11_wdnfd")]
+[node name="OfferDetail1" parent="Table/Carousel/Seat1" unique_id=316237741 instance=ExtResource("11_wdnfd")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_gogk5")
 
 [node name="Seat2" type="Node3D" parent="Table/Carousel" unique_id=1860861872]
 unique_name_in_owner = true
@@ -352,15 +336,13 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("8_4415h")
 
-[node name="Customer2" type="Node3D" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=1567989896 instance=ExtResource("9_nnevp")]
+[node name="Customer2" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=1567989896 instance=ExtResource("9_nnevp")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("10_g8ksb")
 
-[node name="CustomerDetail2" type="Node3D" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=496680041 instance=ExtResource("11_wdnfd")]
+[node name="CustomerDetail2" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=496680041 instance=ExtResource("11_wdnfd")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_gogk5")
 
 [node name="HoverPad2" type="StaticBody3D" parent="Table/Carousel/Seat2" unique_id=164065848]
 unique_name_in_owner = true
@@ -369,10 +351,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat2/HoverPad2" unique_id=1082054816]
 shape = SubResource("BoxShape3D_f2r5k")
 
-[node name="Chair2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=974783162 instance=ExtResource("2_2ydfi")]
+[node name="Chair2" parent="Table/Carousel/Seat2" unique_id=974783162 instance=ExtResource("2_2ydfi")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("3_x10gg")
 card_layout_strategy = SubResource("Resource_oqm2i")
 drag_strategy = SubResource("Resource_s0k1g")
 dropzone_collision_shape = ExtResource("6_vd5qx")
@@ -392,10 +373,9 @@ drag a product here"
 font_size = 64
 outline_size = 10
 
-[node name="OfferDetail2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=764897938 instance=ExtResource("11_wdnfd")]
+[node name="OfferDetail2" parent="Table/Carousel/Seat2" unique_id=764897938 instance=ExtResource("11_wdnfd")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_gogk5")
 
 [node name="SeatCam" type="Marker3D" parent="." unique_id=696083131]
 unique_name_in_owner = true
@@ -413,6 +393,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 
 [node name="TopBar" type="HBoxContainer" parent="HUD/HudRoot" unique_id=1025405369]
@@ -526,20 +508,13 @@ bbcode_enabled = true
 text = "Walk-ups, offers and objections show up here."
 scroll_following = true
 
-[node name="ReportOverlay" type="PanelContainer" parent="HUD/HudRoot" unique_id=1759826998 instance=ExtResource("14_36dmj")]
+[node name="ReportOverlay" parent="HUD/HudRoot" unique_id=1759826998 instance=ExtResource("14_36dmj")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_smm52")
-script = ExtResource("15_jd3xi")
 
-[node name="PullPicker" type="PanelContainer" parent="HUD/HudRoot" unique_id=1401231845 instance=ExtResource("16_b21lq")]
+[node name="PullPicker" parent="HUD/HudRoot" unique_id=1401231845 instance=ExtResource("16_b21lq")]
 unique_name_in_owner = true
-visible = false
 layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_btk04")
-script = ExtResource("17_f1jej")

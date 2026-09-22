@@ -24,3 +24,11 @@ class_name CardDef extends Resource
 ## separate sub-resource instances, and tagging both in sync is a drift bug
 ## waiting to happen - one place per card avoids it entirely.
 @export var dialogue_tags: Array[StringName] = []
+## Assembled in the Inspector, same as a support card's always were - moved
+## up from SupportCardDef so a product can carry them too. Empty (the
+## default, and every shipped product today) means pure appeal-and-margin
+## data with no extra behaviour - Shift.place()'s own effects loop is a
+## no-op for an empty array, so this changes nothing for a card that never
+## sets it.
+@export var effects: Array[Effect]
+@export var upgraded_effects: Array[Effect]

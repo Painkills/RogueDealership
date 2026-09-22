@@ -14,12 +14,12 @@ amount = 6
 
 [resource]
 script = ExtResource("3_m8x0i")
-effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_crdwm")])
-upgraded_effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_s6afa")])
 id = &"explain"
 display_name = "Explain the Product"
-text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."
-copies = 3
+text = "\"So, folks, here's how it works...\""
+copies = 4
 starter = true
 price = 600
 dialogue_tags = Array[StringName]([&"appeal"])
+effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_crdwm")])
+upgraded_effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_s6afa")])

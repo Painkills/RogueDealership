@@ -598,6 +598,36 @@ func place(index: int) -> Result:
 	var iid: StringName = product.interest.id
 	var rank: int = int(c.ranks[iid])
 	c.offer = Offer.new(inst, c.appeal_for(iid), inst.margin())
+
+	# A product's own effects, if it was authored with any - the same loop
+	# _support() runs, so a product is no longer required to be pure
+	# appeal-and-margin data. Empty (every shipped product today) is a no-op.
+	var effects: Array[Effect] = product.upgraded_effects \
+		if inst.upgraded and not product.upgraded_effects.is_empty() else product.effects
+	if not effects.is_empty():
+		var ctx := _context(c)
+		var descriptions: Array[String] = []
+		var floor_wide := false
+		for e in effects:
+			e.apply(ctx)
+			var d := e.describe()
+			if d != "":
+				descriptions.append(d)
+			if _is_floor_wide(e):
+				floor_wide = true
+		action_log.append({
+			"key": c.key,
+			"customer": c.display_name,
+			"name": product.display_name,
+			"dialogue": "",
+			"descriptions": descriptions if not descriptions.is_empty() \
+				else ["nothing you could point at"],
+			"floor_wide": floor_wide,
+		})
+
+	# The band is read AFTER the effects land, not before - a product whose
+	# own effect moves appeal should draw the band that reflects where the
+	# offer actually landed, the same rule _support()'s own comment states.
 	var band := band_for(c.line - c.offer.appeal)
 	hand.remove_at(index)
 	stat["places"] = int(stat["places"]) + 1
@@ -610,6 +640,15 @@ func place(index: int) -> Result:
 	_burn(cfg.place_ticks, "place")
 	return Result.new(true, "You put the %s in front of %s."
 		% [product.display_name, c.display_name], "place", {"band": band})
+
+
+## Shared by place() and _support(): an effect that hits the whole floor
+## rather than just this customer gets the log's red "floor_wide" treatment
+## instead of the ordinary purple one. One place to extend as more
+## floor-wide verbs join ChangePatienceFloor/ChangeLineFloorWide, rather than
+## this list drifting out of sync between the two callers.
+func _is_floor_wide(e: Effect) -> bool:
+	return e is ChangePatienceFloor or e is ChangeLineFloorWide
 
 
 func _support(c: Customer, index: int) -> Result:
@@ -632,7 +671,7 @@ func _support(c: Customer, index: int) -> Result:
 		var d := e.describe()
 		if d != "":
 			descriptions.append(d)
-		if e is ChangePatienceFloor:
+		if _is_floor_wide(e):
 			floor_wide = true
 	if descriptions.is_empty():
 		descriptions.append("nothing you could point at")
