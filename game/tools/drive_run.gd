@@ -95,6 +95,7 @@ func _phase_0_open_and_finish_shift() -> void:
 	_check_build_badge_is_always_on_screen("on the floor")
 	_check_clicking_the_draw_pile_opens_the_deck_viewer()
 	_check_the_corner_button_opens_the_deck_viewer()
+	_check_the_deck_viewer_hides_the_floor_side_panels()
 	# The debug money key is guarded on the shop's own visibility, not a
 	# lifecycle flag - pressing it here (shop hidden, _shop not even set up
 	# yet) must be a complete no-op, or the guard is decorative.
@@ -563,6 +564,34 @@ func _phase_2_buy_and_leave() -> void:
 		uids[c.uid] = true
 	_check("and the card you bought is in the shift's deck",
 		new_uid != null and uids.has(new_uid))
+
+## The action column and the shift log each live in the floor's HUD
+## CanvasLayer, which draws by layer number rather than tree order - so the
+## deck viewer being visually in front of the floor does nothing to them on
+## its own. shift_controller.gd's set_hud_dimmed(), wired through
+## RunController's _deck_viewer.visibility_changed listener, is what
+## actually hides them - checked here through the corner button (any of the
+## three entry points would do; RunController's listener does not
+## distinguish between them).
+func _check_the_deck_viewer_hides_the_floor_side_panels() -> void:
+	var shift_view = _root._shift_view
+	var side_panel := shift_view.get_node(^"%SidePanel") as Control
+	var action_bar: Control = shift_view._action_bar
+	var res: Result = shift_view._shift.approach(0)
+	_check("approaching chair A to seat someone (%s)" % res.msg, res.ok)
+	shift_view._apply(res)
+	_check("seated, so the action column is showing to start with", action_bar.visible)
+	_check("and the log is showing to start with", side_panel.visible)
+
+	_root._view_deck_btn.pressed.emit()
+	_check("opening the deck viewer hides the action column", not action_bar.visible)
+	_check("and the log", not side_panel.visible)
+
+	(_root._deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
+	_check("closing it brings the action column back", action_bar.visible)
+	_check("and the log", side_panel.visible)
+
+	shift_view._apply(shift_view._shift.leave())
 
 ## "Click on your deck during the main game" - the floor's own trigger for
 ## the exact same overlay the shop's VIEW DECK button opens (RunController

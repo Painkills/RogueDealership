@@ -65,12 +65,18 @@ signal deck_viewed
 @onready var _at_risk_label: Label = %AtRiskLabel
 @onready var _event_log: RichTextLabel = %EventLog
 @onready var _action_bar: Control = %ActionBar
+@onready var _side_panel: Control = %SidePanel
 @onready var _offer_btn: Button = %OfferButton
 @onready var _drop_btn: Button = %DropButton
 @onready var _close_btn: Button = %CloseButton
 @onready var _report_overlay = %ReportOverlay
 
 var _shift: Shift
+## True while a RunController-level overlay (the deck viewer) sits on top of
+## the floor - see set_hud_dimmed(). Both HUD panels it hides live in their
+## own CanvasLayer, drawing OVER any plain Control regardless of tree order,
+## so the overlay being visually "on top" does nothing to them on its own.
+var _hud_dimmed := false
 var _standing_before: int = 0        ## the run's standing when THIS shift started
 var _seats: Array = []               ## one Node3D per seat, never hidden now
 ## Whoever the carousel is pointed at. Survives stepping out to the floor, so
@@ -314,6 +320,17 @@ func set_active(on: bool) -> void:
 	visible = on
 	($HUD as CanvasLayer).visible = on
 	set_process_unhandled_input(on)
+
+## The deck viewer is a RunController-level overlay, but the action column
+## and the shift log live in the HUD's own CanvasLayer - drawn according to
+## THEIR layer, not tree order, so the deck viewer being visually "in front"
+## does nothing to them on its own. RunController calls this whenever the
+## deck viewer opens or closes (see its own _deck_viewer.visibility_changed
+## wiring), regardless of which of the three ways it was opened.
+func set_hud_dimmed(dimmed: bool) -> void:
+	_hud_dimmed = dimmed
+	_side_panel.visible = not dimmed
+	_render()
 
 func _all_zones() -> Array:
 	var out := _chair_zones.duplicate()
@@ -616,7 +633,7 @@ func _render() -> void:
 
 	_render_details()
 	_render_hover_flip()
-	_action_bar.visible = seated and not _report_overlay.visible
+	_action_bar.visible = seated and not _report_overlay.visible and not _hud_dimmed
 	# Nudges you to close out before the bell, but only when there is
 	# something on THIS table actually worth closing - close() refuses an
 	# empty hand now, so highlighting it with nothing unsigned would be a lie.

@@ -36,6 +36,13 @@ func _ready() -> void:
 	_shop_view.done.connect(_on_shop_done)
 	_shop_view.view_deck_requested.connect(_on_view_deck_requested)
 	_view_deck_btn.pressed.connect(_on_view_deck_requested)
+	# The deck viewer sits in front of the floor visually, but its own action
+	# column and shift log live in the floor's HUD CanvasLayer - drawn by
+	# layer, not tree order, so they would otherwise keep showing through
+	# regardless of which of the three entry points opened it, or how it
+	# gets closed. Control's own visibility_changed catches every path.
+	_deck_viewer.visibility_changed.connect(
+		func(): _shift_view.set_hud_dimmed(_deck_viewer.visible))
 	_summary_view.continue_pressed.connect(_on_summary_continue)
 	# NOT left to whatever build_run_scene.gd happened to bake into run.tscn
 	# at author time: that text is a static property of a committed scene
