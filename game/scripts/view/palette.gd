@@ -29,3 +29,14 @@ static func color(role: StringName) -> Color:
 		push_error("Palette: unknown role %s" % role)
 		return Color.MAGENTA
 	return Color(ROLES[role])
+
+## Reuses existing roles rather than adding four rarity-specific ones -
+## Preferred borrowing "margin" (the same gold every card's money line
+## already uses) is deliberate: gold already reads as "valuable" here.
+static func rarity_color(rarity: CardDef.Rarity) -> Color:
+	match rarity:
+		CardDef.Rarity.BASIC: return color(&"text_dim")
+		CardDef.Rarity.ECONOMY: return color(&"text")
+		CardDef.Rarity.VALUE: return color(&"appeal")
+		CardDef.Rarity.PREFERRED: return color(&"margin")
+		_: return color(&"text")

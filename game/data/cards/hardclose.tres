@@ -29,6 +29,7 @@ id = &"hardclose"
 display_name = "Hard Close"
 text = "You stop being pleasant about it. You push them until they take it."
 price = 1300
+rarity = 3
 dialogue_tags = Array[StringName]([&"pressure"])
 effects = Array[ExtResource("1_dtsc6")]([SubResource("Resource_jydys"), SubResource("Resource_dtsc6")])
 upgraded_effects = Array[ExtResource("1_dtsc6")]([SubResource("Resource_ik07u"), SubResource("Resource_u6fyt")])

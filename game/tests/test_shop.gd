@@ -223,6 +223,32 @@ func test_the_deck_can_never_be_stripped_of_products() -> void:
 	h.check("and the refusal says something useful (%s)" % last_refusal,
 		last_refusal.to_lower().contains("product"))
 
+# --------------------------------------------------------------- rarity odds
+func test_shop_offers_favor_lower_rarity_tiers_over_many_rolls() -> void:
+	## RARITY_WEIGHTS puts Economy at 3x Preferred's weight, Value in between -
+	## not a promise about any one visit, but over enough visits a lower tier
+	## should turn up more often than a higher one, not just an even split
+	## across whichever tier a card happens to be.
+	var counts := {
+		CardDef.Rarity.ECONOMY: 0,
+		CardDef.Rarity.VALUE: 0,
+		CardDef.Rarity.PREFERRED: 0,
+	}
+	for seed in range(300):
+		var r := RunState.new(load("res://data/shift_config.tres"),
+			load("res://data/interests/interest_pool.tres"),
+			load("res://data/card_pool.tres"),
+			load("res://data/archetype_pool.tres"), seed)
+		var shop := Shop.new(r)
+		for c in shop.offers:
+			counts[c.rarity] = counts.get(c.rarity, 0) + 1
+	h.check("economy turns up more than value (%d vs %d)"
+		% [counts[CardDef.Rarity.ECONOMY], counts[CardDef.Rarity.VALUE]],
+		counts[CardDef.Rarity.ECONOMY] > counts[CardDef.Rarity.VALUE])
+	h.check("value turns up more than preferred (%d vs %d)"
+		% [counts[CardDef.Rarity.VALUE], counts[CardDef.Rarity.PREFERRED]],
+		counts[CardDef.Rarity.VALUE] > counts[CardDef.Rarity.PREFERRED])
+
 # --------------------------------------------------------- random upgrade offers
 func test_upgrade_offers_are_capped_at_the_configured_slot_count() -> void:
 	var r := _run()

@@ -21,6 +21,7 @@ text = "Kids, weather, the drive over. Buy yourself some time."
 copies = 3
 starter = true
 price = 700
+rarity = 0
 dialogue_tags = Array[StringName]([&"patience"])
 effects = Array[ExtResource("1_eqeo5")]([SubResource("Resource_r5yyh")])
 upgraded_effects = Array[ExtResource("1_eqeo5")]([SubResource("Resource_jnmxs")])

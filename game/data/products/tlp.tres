@@ -24,6 +24,7 @@ id = &"tlp"
 display_name = "WALKAWAY GAP"
 text = "Fire, theft or accident, covers the gap between loan and payout."
 price = 1500
+rarity = 3
 effects = Array[ExtResource("1_13paw")]([SubResource("Resource_8qdbu")])
 upgraded_effects = Array[ExtResource("1_13paw")]([SubResource("Resource_j34tw")])
 metadata/_custom_type_script = "uid://cjjt8kflgpayg"

@@ -18,5 +18,6 @@ id = &"readroom"
 display_name = "Read the Room"
 text = "You shut up and watch. Tells you their line and what products they care about. "
 price = 1100
+rarity = 2
 effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])
 upgraded_effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_a4ajm")])

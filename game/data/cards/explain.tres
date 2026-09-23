@@ -20,6 +20,7 @@ text = "\"So, folks, here's how it works...\""
 copies = 4
 starter = true
 price = 600
+rarity = 0
 dialogue_tags = Array[StringName]([&"appeal"])
 effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_crdwm")])
 upgraded_effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_s6afa")])
