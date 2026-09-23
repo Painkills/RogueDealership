@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ProductCardDef" format=3]
+[gd_resource type="Resource" script_class="ProductCardDef" format=3 uid="uid://44t24mw27a1i"]
 
 [ext_resource type="Resource" path="res://data/interests/reliability.tres" id="1_07wyo"]
-[ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_jnf47"]
+[ext_resource type="Script" uid="uid://cjjt8kflgpayg" path="res://scripts/model/data/product_card_def.gd" id="2_jnf47"]
 
 [resource]
 script = ExtResource("2_jnf47")

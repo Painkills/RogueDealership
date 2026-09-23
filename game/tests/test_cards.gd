@@ -13,14 +13,18 @@ func _products() -> Array:
 			out.append(c)
 	return out
 
-func test_every_interest_has_exactly_one_product() -> void:
+func test_every_interest_has_at_least_one_product() -> void:
+	## Not "exactly one" - the catalog is meant to grow past the starter set,
+	## and two products answering the same interest is an intended shape now,
+	## not a duplicate to catch. What still has to hold is that no interest is
+	## left with nothing to sell for it.
 	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
 	var seen := {}
 	for p in _products():
 		h.check("%s answers an interest" % p.id, p.interest != null)
-		h.check("no interest answered twice", not seen.has(p.interest.id))
-		seen[p.interest.id] = true
-	h.eq("nine products for nine interests", seen.size(), interests.count())
+		if p.interest != null:
+			seen[p.interest.id] = true
+	h.eq("every one of the nine interests has coverage", seen.size(), interests.count())
 
 func test_every_category_has_at_least_one_starter_product() -> void:
 	## Not "exactly two per category" - that's a balance choice about how many

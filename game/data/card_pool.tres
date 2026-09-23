@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="CardPool" format=3 uid="uid://cwvxxcyiw3ag6"]
 
 [ext_resource type="Script" uid="uid://duanbribvke2t" path="res://scripts/model/data/card_def.gd" id="1_gunhf"]
-[ext_resource type="Resource" path="res://data/products/vsc.tres" id="2_5hkca"]
+[ext_resource type="Resource" uid="uid://44t24mw27a1i" path="res://data/products/vsc.tres" id="2_5hkca"]
 [ext_resource type="Resource" path="res://data/products/gap.tres" id="3_3ka7l"]
 [ext_resource type="Resource" path="res://data/products/ppp.tres" id="4_rifbx"]
 [ext_resource type="Resource" path="res://data/products/theft.tres" id="5_ajodq"]
@@ -19,9 +19,12 @@
 [ext_resource type="Resource" uid="uid://dn18oytl4nkuc" path="res://data/cards/bundle.tres" id="17_ej5nb"]
 [ext_resource type="Resource" uid="uid://cphvvxq2v5dsv" path="res://data/cards/fearmonger.tres" id="18_ipwxn"]
 [ext_resource type="Resource" uid="uid://b34nnflt1ydxb" path="res://data/cards/hardclose.tres" id="19_y836a"]
+[ext_resource type="Resource" uid="uid://dkjeo1xfy0wy2" path="res://data/cards/checkNotes.tres" id="20_5hkca"]
 [ext_resource type="Script" uid="uid://x78yvnty4dtj" path="res://scripts/model/data/card_pool.gd" id="20_bnf0e"]
+[ext_resource type="Resource" uid="uid://cg76y5mbmgt11" path="res://data/products/wap.tres" id="20_rifbx"]
+[ext_resource type="Resource" uid="uid://dhp6j30be3h7x" path="res://data/products/tlp.tres" id="22_ajodq"]
 
 [resource]
 script = ExtResource("20_bnf0e")
 design_rule = "One product per interest, exactly - nine interests, nine products, no gaps and no doubles. The STARTER six are two per category, which is load-bearing twice over: a category read is always actionable, and the Karen's demanded category is always servable. Margins are a ladder deliberately uncorrelated with how often an interest is ranked highly, so their number one might be the $600 concierge plan while the $1,600 service contract sits seventh. Ticks are the scarce currency, so the big concession is tick-cheap and margin-expensive and the small one is the reverse; a card better than another on both axes is a bug. No support card may move appeal by a full appeal_step for free, or it becomes a substitute for reading the customer and diagnosis stops paying."
-cards = Array[ExtResource("1_gunhf")]([ExtResource("2_5hkca"), ExtResource("3_3ka7l"), ExtResource("4_rifbx"), ExtResource("5_ajodq"), ExtResource("6_v0jhj"), ExtResource("7_x6epx"), ExtResource("8_ba7dx"), ExtResource("9_6jq6c"), ExtResource("10_offko"), ExtResource("11_lu1nf"), ExtResource("12_5us2d"), ExtResource("13_y27ja"), ExtResource("14_t68k7"), ExtResource("15_kaqos"), ExtResource("16_veflx"), ExtResource("17_ej5nb"), ExtResource("18_ipwxn"), ExtResource("19_y836a")])
+cards = Array[ExtResource("1_gunhf")]([ExtResource("2_5hkca"), ExtResource("3_3ka7l"), ExtResource("4_rifbx"), ExtResource("5_ajodq"), ExtResource("6_v0jhj"), ExtResource("7_x6epx"), ExtResource("8_ba7dx"), ExtResource("9_6jq6c"), ExtResource("10_offko"), ExtResource("11_lu1nf"), ExtResource("12_5us2d"), ExtResource("13_y27ja"), ExtResource("14_t68k7"), ExtResource("15_kaqos"), ExtResource("16_veflx"), ExtResource("17_ej5nb"), ExtResource("18_ipwxn"), ExtResource("19_y836a"), ExtResource("20_rifbx"), ExtResource("20_5hkca"), ExtResource("22_ajodq")])

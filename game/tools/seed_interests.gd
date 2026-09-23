@@ -26,7 +26,7 @@ const INTERESTS := [
 	[&"status", "Status", &"person", "how do I look in it"],
 ]
 
-const DESIGN_RULE := "Exactly 3 categories x 3 interests = 9, and every interest has exactly one product answering it. The count is load-bearing: appeal = appeal_step x (interest_count - rank), so a tenth interest silently reflates every appeal number in the game. Categories exist so a read can hand you PARTIAL information - \"they are a Vehicle person\" is worth a tick precisely because it narrows nine to three rather than to one."
+const DESIGN_RULE := "Exactly 3 categories x 3 interests = 9, and every interest has AT LEAST one product answering it - the catalog is meant to grow past the starter set, so a second (or third) product sharing an interest is intended, not a duplicate. The INTEREST count is what's load-bearing, not the product count: appeal = appeal_step x (interest_count - rank), so a tenth interest silently reflates every appeal number in the game - a tenth PRODUCT for an existing interest changes nothing about that formula. Categories exist so a read can hand you PARTIAL information - \"they are a Vehicle person\" is worth a tick precisely because it narrows nine to three rather than to one."
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(DIR)

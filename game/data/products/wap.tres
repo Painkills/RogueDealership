@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ProductCardDef" format=3 uid="uid://cg76y5mbmgt11"]
+
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_kming"]
+[ext_resource type="Script" uid="uid://bu5uqojkpf1vo" path="res://scripts/model/effects/change_line.gd" id="2_d4q6h"]
+[ext_resource type="Resource" path="res://data/interests/stability.tres" id="3_1osr0"]
+[ext_resource type="Script" uid="uid://cjjt8kflgpayg" path="res://scripts/model/data/product_card_def.gd" id="4_7ghae"]
+
+[sub_resource type="Resource" id="Resource_3ka7l"]
+script = ExtResource("2_d4q6h")
+amount = -3
+metadata/_custom_type_script = "uid://bu5uqojkpf1vo"
+
+[sub_resource type="Resource" id="Resource_rifbx"]
+script = ExtResource("2_d4q6h")
+amount = -5
+metadata/_custom_type_script = "uid://bu5uqojkpf1vo"
+
+[resource]
+script = ExtResource("4_7ghae")
+interest = ExtResource("3_1osr0")
+margin = 1000
+upgraded_margin = 1250
+id = &"wap"
+display_name = "WALKAWAY"
+text = "Provides financial protection from life's \"What Ifs\""
+price = 1250
+effects = Array[ExtResource("1_kming")]([SubResource("Resource_3ka7l")])
+upgraded_effects = Array[ExtResource("1_kming")]([SubResource("Resource_rifbx")])
+metadata/_custom_type_script = "uid://cjjt8kflgpayg"

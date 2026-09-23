@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3 uid="uid://dkjeo1xfy0wy2"]
+
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_8h0vr"]
+[ext_resource type="Script" uid="uid://c1sm1kdlc5c5h" path="res://scripts/model/effects/pull_cards.gd" id="2_5u756"]
+[ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="2_sijsq"]
+
+[sub_resource type="Resource" id="Resource_5u756"]
+script = ExtResource("2_5u756")
+metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
+
+[sub_resource type="Resource" id="Resource_ejqt0"]
+script = ExtResource("2_5u756")
+count = 4
+metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
+
+[resource]
+script = ExtResource("2_sijsq")
+needs_offer = false
+id = &"checknotes"
+display_name = "Check Your Notes"
+text = "\"Uh... and what's really nice about this one is that... um...\""
+price = 1200
+effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_5u756")])
+upgraded_effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_ejqt0")])
+metadata/_custom_type_script = "uid://56yr8s6ek5x3"
