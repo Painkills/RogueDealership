@@ -549,6 +549,9 @@ func _build_hud(root: Node) -> void:
 	log_box.name = "EventLog"
 	log_box.bbcode_enabled = true
 	log_box.scroll_following = true
+	# RichTextLabel's own theme item, separate from the project's Label-wide
+	# default_font_size (26) - engine default is 16 unless set explicitly here.
+	log_box.add_theme_font_size_override("normal_font_size", 20)
 	log_box.text = "Walk-ups, offers and objections show up here."
 	log_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	log_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
