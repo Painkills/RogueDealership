@@ -264,6 +264,18 @@ func _init() -> void:
 		_mark(chair, root, "SEAT %s\ndrag a product here" % ["A", "B", "C"][i],
 			Palette.color(&"appeal"))
 
+		# A drop target that never actually holds a card - CardHomes never
+		# assigns anything here, so a dropped offer always snaps back to
+		# Chair%d once reconciliation runs. It exists only so dragging what's
+		# already on the table back onto the customer reads as "offer them
+		# this", distinct from Chair%d's own "place a card from your hand"
+		# meaning - see shift_controller.gd's _on_drag_card_moved.
+		var customer_zone := _collection(collection_scene, "CustomerZone%d" % i,
+			Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), seat, root)
+		customer_zone.card_layout_strategy = PileCardLayout.new()
+		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, "OFFER PRODUCT",
+			Vector3(0.0, 2.6, 0.0), Palette.color(&"appeal"))
+
 		_detail(detail_scene, "OfferDetail%d" % i,
 			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
 
@@ -286,6 +298,8 @@ func _init() -> void:
 	var discard := _collection(collection_scene, "Discard", DISCARD_STOWED, cam, root)
 	discard.card_layout_strategy = PileCardLayout.new()
 	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 2.193643)
+	_drag_hint(discard, root, "DropDragHint", "DROP PRODUCT",
+		Vector3(0.0, 3.6, 0.0), Palette.color(&"action"))
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
@@ -390,6 +404,29 @@ func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 	label.position = Vector3(0, label_y, 0.02)
+	zone.add_child(label)
+	label.owner = owner_root
+
+## Unlike _mark()'s permanent zone labels, this says nothing until a drag
+## actually makes it relevant - hidden by default, toggled visible by
+## shift_controller.gd's _on_drag_started/_on_drag_stopped for exactly the
+## duration of dragging an already-placed offer.
+func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
+		pos: Vector3, tint: Color) -> void:
+	var label := Label3D.new()
+	label.name = node_name
+	label.text = text
+	label.font_size = 64
+	label.pixel_size = 0.005
+	label.modulate = tint
+	label.outline_size = 10
+	label.outline_modulate = Palette.color(&"neutral_1")
+	label.shaded = false
+	label.double_sided = false
+	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	label.position = pos
+	label.visible = false
+	label.unique_name_in_owner = true
 	zone.add_child(label)
 	label.owner = owner_root
 

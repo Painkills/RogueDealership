@@ -78,6 +78,7 @@ signal deck_viewed
 @onready var _offer_btn: Button = %OfferButton
 @onready var _drop_btn: Button = %DropButton
 @onready var _close_btn: Button = %CloseButton
+@onready var _drop_drag_hint: Label3D = %DropDragHint
 @onready var _report_overlay = %ReportOverlay
 @onready var _pull_picker: Control = %PullPicker
 
@@ -96,6 +97,11 @@ var _seats: Array = []               ## one Node3D per seat, never hidden now
 ## the view does not spin back to seat 0 every time you stand up.
 var _last_station: int = 0
 var _chair_zones: Array = []
+## Drop-only targets over each customer's own card - see build_shift_scene.gd's
+## CustomerZone%d. Never holds a card; dragging the table's offer here means
+## "offer it", distinct from Chair%d's own "place a card from your hand".
+var _customer_zones: Array = []
+var _offer_drag_hints: Array = []    ## one Label3D per seat, hidden until dragged
 var _seat_cam: Marker3D = null
 var _carousel: Node3D = null
 var _customer_cards: Array = []
@@ -122,6 +128,8 @@ func _ready() -> void:
 
 	_seats = [%Seat0, %Seat1, %Seat2]
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
+	_customer_zones = [%CustomerZone0, %CustomerZone1, %CustomerZone2]
+	_offer_drag_hints = [%OfferDragHint0, %OfferDragHint1, %OfferDragHint2]
 	_seat_cam = %SeatCam
 	_carousel = %Carousel
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
@@ -131,6 +139,8 @@ func _ready() -> void:
 	_offer_details = [%OfferDetail0, %OfferDetail1, %OfferDetail2]
 
 	for zone in _chair_zones:
+		_drag.add_card_collection(zone)
+	for zone in _customer_zones:
 		_drag.add_card_collection(zone)
 	_drag.add_card_collection(_hand_zone)
 	_drag.add_card_collection(_draw_zone)
@@ -557,6 +567,7 @@ func _apply_framing() -> void:
 		_customer_details[i].reveal(false)
 		_offer_details[i].reveal(here)
 		_chair_zones[i].visible = here
+		_customer_zones[i].visible = here
 		_offer_details[i].visible = here
 
 	if _framing_tween != null and _framing_tween.is_running():
@@ -607,6 +618,9 @@ func _refuse_drops_on_slots_you_are_not_at() -> void:
 	for i in range(_chair_zones.size()):
 		if not _chair_zones[i].visible:
 			_chair_zones[i].disable_drop_zone()
+	for i in range(_customer_zones.size()):
+		if not _customer_zones[i].visible:
+			_customer_zones[i].disable_drop_zone()
 
 func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
 	_framing_tween.tween_property(zone, "position", to, PILE_TWEEN).set_delay(delay)
@@ -759,9 +773,20 @@ func _show_report() -> void:
 
 # --- dragging --------------------------------------------------------------
 
+## The dragged card IS the current customer's own offer, sitting on their
+## table already - as opposed to a hand card being played for the first time.
+func _is_current_offer(card: CardFace3D) -> bool:
+	if _shift == null or _shift.at == null:
+		return false
+	var c = _shift.chairs[int(_shift.at)]
+	return c != null and c.offer != null and c.offer.instance.uid == card.uid
+
 func _on_drag_started(card) -> void:
 	_dragging = card as CardFace3D
 	_refuse_drops_on_slots_you_are_not_at()
+	if _is_current_offer(_dragging):
+		_offer_drag_hints[int(_shift.at)].visible = true
+		_drop_drag_hint.visible = true
 	# DragController's own _drag_card_start() just called remove_hovered() on
 	# this card - its ROOT now tracks the pointer directly ("set card position
 	# to under mouse"), on the assumption no local offset is needed once a drag
@@ -787,6 +812,9 @@ func _on_drag_started(card) -> void:
 
 func _on_drag_stopped(_card) -> void:
 	_dragging = null
+	for hint in _offer_drag_hints:
+		hint.visible = false
+	_drop_drag_hint.visible = false
 	if _shift == null:
 		return
 	# DragController keeps working on the card AFTER emitting card_moved: it
@@ -812,6 +840,21 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 		return
 
 	var face := card as CardFace3D
+
+	# The offer already on the table, not a hand card being played for the
+	# first time - bypass DropRouter entirely (it only knows hand cards) and
+	# call the exact same commands the OFFER/DROP buttons call. Dropped
+	# anywhere else (another customer, another chair) - refused, no model
+	# call, and _reconcile() snaps it straight back since CardHomes still
+	# says it belongs where it started.
+	if _is_current_offer(face):
+		var chair := int(_shift.at)
+		if to_coll == _customer_zones[chair]:
+			_on_offer()
+		elif to_coll == _discard_zone:
+			_on_drop()
+		return
+
 	var plan := DropRouter.plan(_shift, face.uid, _zone_name_of(to_coll))
 	var command: StringName = plan["command"]
 

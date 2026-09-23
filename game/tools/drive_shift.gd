@@ -61,8 +61,8 @@ func _physics_process(_delta: float) -> bool:
 
 	_check("the viewport is picking, or no card can ever be clicked",
 		get_root().physics_object_picking)
-	_check("the drag controller knows about all six zones",
-		_controller._drag._card_collections.size() == 6)
+	_check("the drag controller knows about all nine zones",
+		_controller._drag._card_collections.size() == 9)
 	_check("and found a camera to ray through", _controller._drag._camera != null)
 	_check("a shift is running", _controller._shift != null)
 	_check("the hand fans", _controller._hand_zone.card_layout_strategy is FanCardLayout)
@@ -134,6 +134,8 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_table_really_turns()
 
 	_check_drop_plays_a_card()
+	_check_dragging_the_table_offer()
+	_check_dragging_the_table_offer_onto_discard_drops_it()
 	_check_refused_drop_comes_home()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
@@ -1734,6 +1736,101 @@ func _check_drop_plays_a_card() -> void:
 		% [shift.at, "empty" if shift.chairs[1] == null else "seated"],
 		shift.at == 1 or shift.chairs[1] == null)
 	_check_table("after dropping a card on seat B")
+
+## Dragging what's already on a customer's table - not a hand card - onto the
+## customer themselves, an alternate route to the OFFER button that must call
+## the exact same command. See shift_controller.gd's _on_drag_card_moved.
+func _check_dragging_the_table_offer() -> void:
+	var shift = _controller._shift
+	var hand = _controller._hand_zone
+	var face = null
+	for c in hand.cards:
+		if c.instance != null and c.instance.is_product():
+			face = c
+			break
+	if face == null:
+		_check("there was a product in hand to drag an offer with", false)
+		return
+
+	_drop(face, _controller._chair_zones[1])
+	_settle()
+	if shift.at != 1 or shift.chairs[1] == null or shift.chairs[1].offer == null:
+		_check("there was an offer on chair B's table to drag", false)
+		return
+	var uid: int = shift.chairs[1].offer.instance.uid
+	var offer_face: CardFace3D = _controller._nodes[uid]
+
+	# A hand card drag must never show these - they are offer-drag only.
+	var hand_card = hand.cards[0] if not hand.cards.is_empty() else null
+	if hand_card != null:
+		_controller._on_drag_started(hand_card)
+		_check("dragging a hand card shows neither drag hint",
+			not _controller._offer_drag_hints[1].visible
+				and not _controller._drop_drag_hint.visible)
+		_controller._on_drag_stopped(hand_card)
+
+	_controller._on_drag_started(offer_face)
+	_check("dragging the table's own offer shows OFFER PRODUCT over the customer",
+		_controller._offer_drag_hints[1].visible)
+	_check("and DROP PRODUCT over the discard",
+		_controller._drop_drag_hint.visible)
+	_controller._on_drag_stopped(offer_face)
+	_check("both hints hide again once the drag ends",
+		not _controller._offer_drag_hints[1].visible
+			and not _controller._drop_drag_hint.visible)
+
+	# Misdirecting it onto a different chair must change nothing - you cannot
+	# offer chair B's product to whoever is sitting in chair A.
+	_drop(offer_face, _controller._chair_zones[0])
+	_settle()
+	_check("dropping someone's offer on a different chair changes nothing",
+		shift.chairs[1] != null and shift.chairs[1].offer != null
+			and shift.chairs[1].offer.instance.uid == uid)
+
+	# The real gesture: drop it back on the customer.
+	var offers_before: int = int(shift.stat.get("offers", 0))
+	_drop(offer_face, _controller._customer_zones[1])
+	_settle()
+	_check("dropping it back on the customer called offer() (offers %d -> %d)"
+		% [offers_before, int(shift.stat.get("offers", 0))],
+		int(shift.stat.get("offers", 0)) == offers_before + 1)
+	_check_table("after dragging chair B's offer onto the customer")
+
+## Same gesture, dropped on discard instead - the DROP button's equivalent.
+## Independent setup: the check above may already have sold and cleared
+## chair B's offer, so this cannot assume it survived.
+func _check_dragging_the_table_offer_onto_discard_drops_it() -> void:
+	var shift = _controller._shift
+	var hand = _controller._hand_zone
+	var face = null
+	for c in hand.cards:
+		if c.instance != null and c.instance.is_product():
+			face = c
+			break
+	if face == null:
+		_check("there was a product in hand to drag onto discard", false)
+		return
+
+	_drop(face, _controller._chair_zones[1])
+	_settle()
+	if shift.at != 1 or shift.chairs[1] == null or shift.chairs[1].offer == null:
+		_check("there was an offer on chair B's table to drop", false)
+		return
+	var uid: int = shift.chairs[1].offer.instance.uid
+	var offer_face: CardFace3D = _controller._nodes[uid]
+	var dropped_before: int = int(shift.stat.get("offers_dropped", 0))
+
+	_drop(offer_face, _controller._discard_zone)
+	_settle()
+
+	_check("dragging the offer onto discard called drop_offer() (offers_dropped %d -> %d)"
+		% [dropped_before, int(shift.stat.get("offers_dropped", 0))],
+		int(shift.stat.get("offers_dropped", 0)) == dropped_before + 1)
+	_check("the table is empty again",
+		shift.chairs[1] == null or shift.chairs[1].offer == null)
+	_check("and the card actually landed in the discard pile",
+		CardIndex.of(shift, uid) == -1)
+	_check_table("after dragging chair B's offer onto discard")
 
 func _check_refused_drop_comes_home() -> void:
 	## Dropping onto the draw pile is meaningless, so the model is never called
