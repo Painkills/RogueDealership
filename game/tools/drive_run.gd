@@ -231,7 +231,7 @@ func _check_shop_layout_fits_on_screen() -> void:
 	# visible the whole time.
 	for row in [shelf_row, deck_row]:
 		for slot in row.get_children():
-			var card := slot.get_child(0) as Control
+			var card := _slot_card(slot) as Control
 			_check("%s's card clips its own content, so a render quirk can never"
 				% slot.name + " paint past its box (%s)" % card.name, card.clip_contents)
 			var texture := card.get_node(^"TextureRect") as TextureRect
@@ -303,7 +303,7 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 
 	var uid: int = shop.upgrade_offers[0]
 	var inst := shop.find(uid)
-	var card := deck_row.get_child(0).get_child(0) as ShopCardButton
+	var card := _slot_card(deck_row.get_child(0))
 	card.pressed.emit()
 	_check("clicking the deck card opens the detail overlay", detail.visible)
 	_check("titled after the card that was clicked (%s)" % detail._title.text,
@@ -343,7 +343,7 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 		# it walks shop.upgrade_offers itself, which is rolled once and never
 		# reshuffled - so index 1 is still this uid's slot.
 		deck_row = shop_view.get_node(^"%DeckRow") as HBoxContainer
-		var drop_card := deck_row.get_child(1).get_child(0) as ShopCardButton
+		var drop_card := _slot_card(deck_row.get_child(1))
 		drop_card.pressed.emit()
 		_check("clicking a second deck card opens its own detail", detail.visible)
 		var drop_price := shop.remove_price()
@@ -378,6 +378,15 @@ func _check_shift_label_tap_target_adds_money_too() -> void:
 	tap.pressed.emit()
 	_check("tapping the quota line adds $10,000 too (%d -> %d)"
 		% [before, shop_view._shop.run.money], shop_view._shop.run.money == before + 10000)
+
+## A shelf/deck slot is a VBoxContainer whose children now include a rarity
+## Label alongside the ShopCardButton (shop_screen.gd's _build_slot) - find
+## the button by type instead of assuming it sits at a fixed child index.
+func _slot_card(slot: Node) -> ShopCardButton:
+	for child in slot.get_children():
+		if child is ShopCardButton:
+			return child
+	return null
 
 ## Product cells are a VBoxContainer of [Label, chip, chip, ...] (or
 ## [Label, CenterContainer(dash)] when empty) - extra copies stack below the
@@ -494,7 +503,7 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	shop.run.money = 999999
 	var before := _run.deck.cards.size()
 	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
-	var card := shelf_row.get_child(0).get_child(0) as ShopCardButton
+	var card := _slot_card(shelf_row.get_child(0))
 	card.pressed.emit()
 	_check("clicking the shelf card opens the confirm overlay, not an instant buy",
 		detail.visible)

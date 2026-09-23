@@ -134,15 +134,17 @@ func _show_rarity(label: Label, inst: CardInstance) -> void:
 
 func _build_slot(row: HBoxContainer) -> Dictionary:
 	var slot := VBoxContainer.new()
-	slot.add_theme_constant_override("separation", 6)
+	slot.add_theme_constant_override("separation", 4)
 	slot.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(slot)
 
 	# Store-only, not on the card itself - a corner badge on the card face
 	# made every card busier everywhere it appears (hand, table, deck
 	# viewer), for a fact that only matters here, while you are shopping.
+	# Small: this is a third row stacked into every shelf/deck slot, and the
+	# screen's whole vertical budget was already tuned tight before it existed.
 	var rarity := Label.new()
-	rarity.add_theme_font_size_override("font_size", 16)
+	rarity.add_theme_font_size_override("font_size", 12)
 	rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot.add_child(rarity)
 

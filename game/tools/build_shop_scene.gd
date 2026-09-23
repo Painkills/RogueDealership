@@ -38,17 +38,22 @@ func _init() -> void:
 
 	var margin := MarginContainer.new()
 	margin.name = "Margin"
+	# Trimmed from 48 once each shelf/deck slot grew a third (rarity) row -
+	# the screen's own vertical budget, not the rows inside it, is what had
+	# to give: shrinking a row's content was ruled out below this same reason
+	# already, in the col separation comment.
 	for side in ["left", "top", "right", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 48)
+		margin.add_theme_constant_override("margin_" + side, 40)
 	root.add_child(margin)
 	margin.owner = root
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	# Trimmed from 16 once the money row grew a second line for Shop.perk_text()
-	# - six gaps between seven rows, so a few px back here is real headroom
-	# without shrinking any row's own content.
-	col.add_theme_constant_override("separation", 10)
+	# Trimmed from 16 once the money row grew a second line for Shop.perk_text(),
+	# then from 10 once each shelf/deck slot grew a third (rarity) row - six
+	# gaps between seven rows, so a few px back here is real headroom without
+	# shrinking any row's own content.
+	col.add_theme_constant_override("separation", 8)
 	margin.add_child(col)
 	col.owner = root
 

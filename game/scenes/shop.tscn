@@ -12,107 +12,107 @@ bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8yt8d"]
 bg_color = Color(0.101960786, 0.101960786, 0.18039216, 0.88)
 
-[node name="ShopScreen" type="PanelContainer" unique_id=70490178]
+[node name="ShopScreen" type="PanelContainer" unique_id=2101934228]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8r1wq")
 script = ExtResource("1_1l46r")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1952534207]
+[node name="Margin" type="MarginContainer" parent="." unique_id=1618291230]
 layout_mode = 2
-theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 48
-theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 48
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=765325505]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=2036267863]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
-[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=538357009]
+[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=810271265]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
 text = "BETWEEN SHIFTS"
 
-[node name="ShiftWrap" type="PanelContainer" parent="Margin/Column" unique_id=829883266]
+[node name="ShiftWrap" type="PanelContainer" parent="Margin/Column" unique_id=465793355]
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxEmpty_ajxib")
 
-[node name="ShiftLabel" type="Label" parent="Margin/Column/ShiftWrap" unique_id=1058369130]
+[node name="ShiftLabel" type="Label" parent="Margin/Column/ShiftWrap" unique_id=1801344599]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "shift 1 of 5"
 
-[node name="ShiftTapTarget" type="Button" parent="Margin/Column/ShiftWrap" unique_id=898776285]
+[node name="ShiftTapTarget" type="Button" parent="Margin/Column/ShiftWrap" unique_id=2127390388]
 unique_name_in_owner = true
 layout_mode = 2
 flat = true
 
-[node name="MoneyLabel" type="Label" parent="Margin/Column" unique_id=1012820027]
+[node name="MoneyLabel" type="Label" parent="Margin/Column" unique_id=1624039436]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
 text = "$0 to spend"
 
-[node name="ShelfSection" type="VBoxContainer" parent="Margin/Column" unique_id=1071394249]
+[node name="ShelfSection" type="VBoxContainer" parent="Margin/Column" unique_id=1045800332]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="OnShelfTitle" type="Label" parent="Margin/Column/ShelfSection" unique_id=1095787496]
+[node name="OnShelfTitle" type="Label" parent="Margin/Column/ShelfSection" unique_id=403717844]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "ON THE SHELF"
 
-[node name="ShelfRow" type="HBoxContainer" parent="Margin/Column/ShelfSection" unique_id=802900824]
+[node name="ShelfRow" type="HBoxContainer" parent="Margin/Column/ShelfSection" unique_id=2083192357]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 28
 alignment = 1
 
-[node name="DeckSection" type="VBoxContainer" parent="Margin/Column" unique_id=1778090608]
+[node name="DeckSection" type="VBoxContainer" parent="Margin/Column" unique_id=1436111832]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="DeckTitle" type="Label" parent="Margin/Column/DeckSection" unique_id=472446233]
+[node name="DeckTitle" type="Label" parent="Margin/Column/DeckSection" unique_id=1343893886]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
 text = "CARDS YOU CAN EDIT - upgrade or drop"
 
-[node name="DeckRow" type="HBoxContainer" parent="Margin/Column/DeckSection" unique_id=1818299335]
+[node name="DeckRow" type="HBoxContainer" parent="Margin/Column/DeckSection" unique_id=1482638112]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 28
 alignment = 1
 
-[node name="LogLabel" type="Label" parent="Margin/Column" unique_id=959211854]
+[node name="LogLabel" type="Label" parent="Margin/Column" unique_id=504529621]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.8784314, 0.3529412, 0.3529412, 1)
 
-[node name="ButtonRow" type="HBoxContainer" parent="Margin/Column" unique_id=1449598303]
+[node name="ButtonRow" type="HBoxContainer" parent="Margin/Column" unique_id=695612190]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="ViewDeckButton" type="Button" parent="Margin/Column/ButtonRow" unique_id=2097145597]
+[node name="ViewDeckButton" type="Button" parent="Margin/Column/ButtonRow" unique_id=1669825038]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "VIEW DECK"
 
-[node name="DoneButton" type="Button" parent="Margin/Column/ButtonRow" unique_id=1788282256]
+[node name="DoneButton" type="Button" parent="Margin/Column/ButtonRow" unique_id=1496445385]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 72)
 layout_mode = 2
