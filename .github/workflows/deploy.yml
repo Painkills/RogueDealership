@@ -1,13 +1,14 @@
 name: Test and deploy the Web build
 
-# Fires on every push to your working branch, and gives you a manual "Run
-# workflow" button in the Actions tab too, for re-deploying without a new
-# commit. Change the branch name below once this settles onto its long-term
-# home (main, most likely) - it is the only line that needs to move.
+# Fires on every push to any worktree-godot-* branch (each new worktree
+# session gets its own branch name, e.g. worktree-godot-g2), and gives you a
+# manual "Run workflow" button in the Actions tab too, for re-deploying
+# without a new commit. Change the pattern below once this settles onto its
+# long-term home (main, most likely) - it is the only line that needs to move.
 on:
   push:
     branches:
-      - worktree-godot-g1
+      - 'worktree-godot-*'
   workflow_dispatch: {}
 
 # Lets this workflow push to gh-pages using the token GitHub already hands
