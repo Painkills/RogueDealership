@@ -110,6 +110,7 @@ func _render() -> void:
 		var slot := _build_slot(_shelf_row)
 		(slot["card"] as ShopCardButton).show_card(preview_inst)
 		(slot["price"] as Label).text = Format.price(_shop.buy_price(def))
+		_show_rarity(slot["rarity"], preview_inst)
 		(slot["card"] as ShopCardButton).pressed.connect(
 			func(): _detail.show_shelf_card(_shop, def))
 
@@ -124,13 +125,26 @@ func _render() -> void:
 		(slot["card"] as ShopCardButton).show_card(inst)
 		(slot["price"] as Label).text = "upgraded" if inst.upgraded \
 			else "upgrade %s" % Format.price(_shop.upgrade_price(inst))
+		_show_rarity(slot["rarity"], inst)
 		(slot["card"] as ShopCardButton).pressed.connect(func(): _detail.show_card(_shop, inst))
+
+func _show_rarity(label: Label, inst: CardInstance) -> void:
+	label.text = CardText.rarity_name(inst)
+	label.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
 
 func _build_slot(row: HBoxContainer) -> Dictionary:
 	var slot := VBoxContainer.new()
 	slot.add_theme_constant_override("separation", 6)
 	slot.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(slot)
+
+	# Store-only, not on the card itself - a corner badge on the card face
+	# made every card busier everywhere it appears (hand, table, deck
+	# viewer), for a fact that only matters here, while you are shopping.
+	var rarity := Label.new()
+	rarity.add_theme_font_size_override("font_size", 16)
+	rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	slot.add_child(rarity)
 
 	var card: ShopCardButton = (load("res://scenes/cards/shop_card_button.tscn") \
 		as PackedScene).instantiate()
@@ -142,7 +156,7 @@ func _build_slot(row: HBoxContainer) -> Dictionary:
 	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot.add_child(price)
 
-	return {"card": card, "price": price}
+	return {"card": card, "price": price, "rarity": rarity}
 
 func _apply(res: Result) -> void:
 	## A refusal costs nothing but must still say why - the same rule the shift

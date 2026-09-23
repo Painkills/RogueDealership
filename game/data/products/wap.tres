@@ -23,6 +23,7 @@ upgraded_margin = 1250
 id = &"wap"
 display_name = "WALKAWAY"
 text = "Provides financial protection from life's \"What Ifs\""
+starter = true
 price = 1250
 rarity = 3
 effects = Array[ExtResource("1_kming")]([SubResource("Resource_3ka7l")])

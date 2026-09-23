@@ -47,3 +47,13 @@ static func rarity_letter(inst: CardInstance) -> String:
 		CardDef.Rarity.VALUE: return "V"
 		CardDef.Rarity.PREFERRED: return "P"
 		_: return "?"
+
+## The corner badge's word form - same KindLabel-style all-caps as "PRODUCT"
+## / "SUPPORT" already use.
+static func rarity_name(inst: CardInstance) -> String:
+	match inst.card.rarity:
+		CardDef.Rarity.BASIC: return "BASIC"
+		CardDef.Rarity.ECONOMY: return "ECONOMY"
+		CardDef.Rarity.VALUE: return "VALUE"
+		CardDef.Rarity.PREFERRED: return "PREFERRED"
+		_: return "?"

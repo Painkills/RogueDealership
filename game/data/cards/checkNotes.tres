@@ -19,6 +19,7 @@ needs_offer = false
 id = &"checknotes"
 display_name = "Check Your Notes"
 text = "\"Uh... and what's really nice about this one is that... um...\""
+starter = true
 price = 1200
 rarity = 3
 effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_5u756")])
