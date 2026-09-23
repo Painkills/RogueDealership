@@ -549,7 +549,6 @@ func _build_hud(root: Node) -> void:
 	log_box.name = "EventLog"
 	log_box.bbcode_enabled = true
 	log_box.scroll_following = true
-	log_box.add_theme_font_size_override("normal_font_size", 30)
 	log_box.text = "Walk-ups, offers and objections show up here."
 	log_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	log_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
