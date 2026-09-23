@@ -126,7 +126,7 @@ const FAN_RADIUS := 24.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
 ## Stops well above the bottom strip, which is where the discard rises into.
-const LOG_RECT := Rect2(1480, 40, 416, 690)
+const LOG_RECT := Rect2(1480, 79, 422, 651)
 ## A column, not a row. The bottom of the screen belongs to the hand and the two
 ## piles, and a Button laid over a card steals the click meant for the card.
 ##
@@ -135,7 +135,7 @@ const LOG_RECT := Rect2(1480, 40, 416, 690)
 ## composition are too narrow for a 300 px button. Real cost: OFFER/DROP/CLOSE
 ## sit further from the product they act on. It is the only placement that
 ## satisfies "no button sits on a card" for five card rects instead of four.
-const ACTION_RECT := Rect2(96, 300, 330, 340)
+const ACTION_RECT := Rect2(66, 300, 330, 340)
 const ACTION_BUTTON := Vector2(330, 100)
 
 func _init() -> void:
@@ -549,6 +549,7 @@ func _build_hud(root: Node) -> void:
 	log_box.name = "EventLog"
 	log_box.bbcode_enabled = true
 	log_box.scroll_following = true
+	log_box.add_theme_font_size_override("normal_font_size", 30)
 	log_box.text = "Walk-ups, offers and objections show up here."
 	log_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	log_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
