@@ -97,9 +97,9 @@ func _init() -> void:
 	view_deck_btn.add_theme_font_size_override("font_size", 22)
 	view_deck_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	view_deck_btn.offset_left = -216
-	view_deck_btn.offset_top = 20
+	view_deck_btn.offset_top = 8
 	view_deck_btn.offset_right = -16
-	view_deck_btn.offset_bottom = 76
+	view_deck_btn.offset_bottom = 64
 	badge_layer.add_child(view_deck_btn)
 	view_deck_btn.owner = root
 

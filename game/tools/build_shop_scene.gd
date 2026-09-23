@@ -118,7 +118,7 @@ func _init() -> void:
 
 	var done := Button.new()
 	done.name = "DoneButton"
-	done.text = "OPEN THE FLOOR"
+	done.text = "START THE NEXT SHIFT"
 	done.custom_minimum_size = Vector2(360, 72)
 	done.add_theme_font_size_override("font_size", 28)
 	done.unique_name_in_owner = true
