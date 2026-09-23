@@ -13,3 +13,4 @@ display_name = "Anti-Theft & Key Protection"
 text = "Etching, tracking, and a replacement key that doesn't cost a weekend."
 starter = true
 price = 800
+rarity = 0

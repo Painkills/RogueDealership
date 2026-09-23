@@ -170,6 +170,38 @@ func _init() -> void:
 	col.add_child(money)
 	money.owner = root
 
+	# Corner badge, not a column entry - a sibling of Margin, anchored to the
+	# bottom-right corner directly, so it floats on top of the layout instead
+	# of taking a row that would push MarginLabel's careful bottom-pinning
+	# (see FlavorLabel's own comment) around. A backing chip, not bare text -
+	# MarginLabel's own container reaches into this corner even though its
+	# CENTERED text rarely does, and a chip means that never has to be
+	# eyeballed card by card to stay legible.
+	var rarity_badge := Control.new()
+	rarity_badge.name = "RarityBadge"
+	rarity_badge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	rarity_badge.offset_left = -50
+	rarity_badge.offset_top = -50
+	rarity_badge.offset_right = -14
+	rarity_badge.offset_bottom = -14
+	root.add_child(rarity_badge)
+	rarity_badge.owner = root
+
+	var rarity_bg := ColorRect.new()
+	rarity_bg.name = "RarityBackground"
+	rarity_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rarity_bg.color = Color(Palette.color(&"neutral_1"), 0.82)
+	rarity_badge.add_child(rarity_bg)
+	rarity_bg.owner = root
+
+	var rarity := _label("RarityLabel", 34, Palette.color(&"text_dim"))
+	rarity.text = "P"   # longest CardText.rarity_letter()
+	rarity.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rarity.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	rarity_badge.add_child(rarity)
+	rarity.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/cards/card_front_2d.tscn")

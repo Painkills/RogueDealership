@@ -67,6 +67,15 @@ func test_shoppable_cards_is_exactly_the_pool_minus_starters() -> void:
 			non_starter_count += 1
 	h.eq("every non-starter card is in it", shoppable.size(), non_starter_count)
 
+func test_starter_cards_are_basic_rarity() -> void:
+	## Basic is an authored value, not derived from `starter` - a Basic card
+	## could later be sold outside the starter deck too - so nothing enforces
+	## this at the schema level. This is the guard against a starter card that
+	## forgot to tag itself, same shape as test_every_card_carries_a_price().
+	for c in _pool().cards:
+		if c.starter:
+			h.eq("%s is Basic rarity" % c.id, c.rarity, CardDef.Rarity.BASIC)
+
 func test_the_card_pool_states_its_design_rule() -> void:
 	h.check("card pool states its design rule",
 		_pool().design_rule.strip_edges() != "")

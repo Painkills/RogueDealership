@@ -16,6 +16,18 @@ var offers: Array[CardDef] = []      ## what you may buy this visit
 ## its uid actively removed.
 var upgrade_offers: Array[int] = []
 
+## How often each rarity turns up on the shelf, relative to the others - not
+## a percentage, just a ratio consumed by _weighted_pick(). Flat on purpose:
+## the pool is still small, and a steep drop-off (Slay the Spire's rare
+## odds, say) would make Preferred nearly unobtainable with only a handful
+## of shoppable cards to draw from.
+const RARITY_WEIGHTS := {
+	CardDef.Rarity.BASIC: 4,
+	CardDef.Rarity.ECONOMY: 3,
+	CardDef.Rarity.VALUE: 2,
+	CardDef.Rarity.PREFERRED: 1,
+}
+
 ## Reward gating from the ShiftProfile picked for the shift that just ended -
 ## see ShiftProfile's own fields. A dedicated pool only ever pays for its own
 ## verb; the shared pool pays for whichever of buy()/upgrade() spends it
@@ -61,7 +73,23 @@ func _roll_offers() -> void:
 	offers.clear()
 	var wanted: int = mini(run.cfg.shop_offers, pool.size())
 	for _i in range(wanted):
-		offers.append(pool.pop_at(run.rng.randi_range(0, pool.size() - 1)))
+		offers.append(pool.pop_at(_weighted_pick(pool)))
+
+## Roulette-wheel selection without replacement, weighted by RARITY_WEIGHTS -
+## same shape as the plain randi_range() pick this replaces, so a common card
+## is still more likely to land on the shelf than a rare one, not just an
+## equal draw from whatever is left.
+func _weighted_pick(pool: Array[CardDef]) -> int:
+	var total := 0
+	for c in pool:
+		total += RARITY_WEIGHTS[c.rarity]
+	var roll := run.rng.randi_range(0, total - 1)
+	var running := 0
+	for i in range(pool.size()):
+		running += RARITY_WEIGHTS[pool[i].rarity]
+		if roll < running:
+			return i
+	return pool.size() - 1
 
 func _roll_upgrade_offers() -> void:
 	## Every un-upgraded card with a real upgrade to sell used to get a button,

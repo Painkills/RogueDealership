@@ -20,6 +20,7 @@ id = &"checknotes"
 display_name = "Check Your Notes"
 text = "\"Uh... and what's really nice about this one is that... um...\""
 price = 1200
+rarity = 3
 effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_5u756")])
 upgraded_effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_ejqt0")])
 metadata/_custom_type_script = "uid://56yr8s6ek5x3"

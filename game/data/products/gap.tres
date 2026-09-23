@@ -13,3 +13,4 @@ display_name = "GAP Insurance"
 text = "Pays the difference when the loan outlives the car."
 starter = true
 price = 1400
+rarity = 0

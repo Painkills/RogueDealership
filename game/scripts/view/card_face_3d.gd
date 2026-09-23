@@ -34,6 +34,7 @@ var _body: Label
 var _body_icon: CategoryIconControl
 var _flavor: Label
 var _margin: Label
+var _rarity: Label
 
 func _ready() -> void:
 	_bind()
@@ -59,6 +60,7 @@ func _bind() -> void:
 	_body_icon = front.get_node(^"Margin/Column/BodyRow/BodyIcon")
 	_flavor = front.get_node(^"Margin/Column/FlavorLabel")
 	_margin = front.get_node(^"Margin/Column/MarginLabel")
+	_rarity = front.get_node(^"RarityBadge/RarityLabel")
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
@@ -92,6 +94,8 @@ func setup(inst: CardInstance) -> void:
 		_body_icon.set_category(&"", Color.WHITE)
 	_flavor.text = CardText.flavor(inst)
 	_margin.text = CardText.margin(inst)
+	_rarity.text = CardText.rarity_letter(inst)
+	_rarity.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
 
 	# The badge and label share one color per type - accent for a product,
 	# action for a support card - so "what kind of card is this" reads at a

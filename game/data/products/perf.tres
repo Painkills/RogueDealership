@@ -12,3 +12,4 @@ id = &"perf"
 display_name = "Performance & Tow Package"
 text = "Tow rating, all-weather traction, and a badge that says so."
 price = 1100
+rarity = 2

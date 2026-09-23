@@ -14,3 +14,4 @@ display_name = "Payment Protection Plan"
 text = "Covers a payment when they can't."
 starter = true
 price = 1200
+rarity = 0

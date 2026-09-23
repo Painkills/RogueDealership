@@ -27,6 +27,7 @@ id = &"pad"
 display_name = "Pad the Deal"
 text = "They won't even notice the difference."
 price = 900
+rarity = 1
 dialogue_tags = Array[StringName]([&"padding"])
 effects = Array[ExtResource("1_0q0j0")]([SubResource("Resource_4jeqi"), SubResource("Resource_2bgt0")])
 upgraded_effects = Array[ExtResource("1_0q0j0")]([SubResource("Resource_qrnja"), SubResource("Resource_tgrmt")])

@@ -17,6 +17,12 @@ class_name CardDef extends Resource
 ## 0, not some plausible-looking number, so an unpriced card fails
 ## test_every_card_carries_a_price() instead of silently passing it.
 @export var price: int = 0
+## Basic isn't only "starter" spelled differently - a Basic card could later
+## be sold outside the starter deck too - so every starter card authors this
+## explicitly rather than having it inferred from `starter`.
+## test_starter_cards_are_basic_rarity() catches a starter card that forgot.
+enum Rarity { BASIC, ECONOMY, VALUE, PREFERRED }
+@export var rarity: Rarity = Rarity.ECONOMY
 ## Which DialoguePool tag(s) a customer's reaction draws from when this card
 ## is played on them. Empty means they say nothing - the right answer for a
 ## card where you are the one doing the talking (e.g. Read the Room). Lives

@@ -24,6 +24,7 @@ id = &"wap"
 display_name = "WALKAWAY"
 text = "Provides financial protection from life's \"What Ifs\""
 price = 1250
+rarity = 3
 effects = Array[ExtResource("1_kming")]([SubResource("Resource_3ka7l")])
 upgraded_effects = Array[ExtResource("1_kming")]([SubResource("Resource_rifbx")])
 metadata/_custom_type_script = "uid://cjjt8kflgpayg"

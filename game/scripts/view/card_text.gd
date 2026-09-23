@@ -37,3 +37,13 @@ static func margin(inst: CardInstance) -> String:
 ## upgrade of a card, unlike body() which reads differently once upgraded.
 static func flavor(inst: CardInstance) -> String:
 	return inst.card.text
+
+## B/E/V/P - the corner badge. One letter, not a word, so it reads at the
+## minified size every card face is actually viewed at.
+static func rarity_letter(inst: CardInstance) -> String:
+	match inst.card.rarity:
+		CardDef.Rarity.BASIC: return "B"
+		CardDef.Rarity.ECONOMY: return "E"
+		CardDef.Rarity.VALUE: return "V"
+		CardDef.Rarity.PREFERRED: return "P"
+		_: return "?"

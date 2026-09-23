@@ -29,6 +29,7 @@ text = "\"... but that's the best I can do!\""
 copies = 2
 starter = true
 price = 900
+rarity = 0
 dialogue_tags = Array[StringName]([&"concession"])
 effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_y1lle"), SubResource("Resource_5ct8g")])
 upgraded_effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_2tkkk"), SubResource("Resource_ij5n2")])
