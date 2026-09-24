@@ -775,7 +775,9 @@ func _render_pull_picker() -> void:
 ## side), this one toggles real visibility around the tween: CLOSE SOON can
 ## be true with nothing on the table at all, so there is no product card left
 ## to hide behind while tucked.
-const FLAG_SLIDE_X := 2.9
+## Card half-width is 1.25 (SLOT_SIZE.x/2 in build_shift_scene.gd); 1.6 clears
+## the edge by a third of a unit instead of drifting well past it at 2.9.
+const FLAG_SLIDE_X := 1.6
 const FLAG_SLIDE_DURATION := 0.3
 func _slide_flag(flag: Node3D, want: bool) -> void:
 	if flag.get_meta(&"shown", false) == want:

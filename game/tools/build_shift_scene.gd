@@ -334,13 +334,16 @@ func _init() -> void:
 
 	var discard := _collection(collection_scene, "Discard", DISCARD_STOWED, cam, root)
 	discard.card_layout_strategy = PileCardLayout.new()
-	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 2.193643)
+	# On the card itself now, not above it - same treatment CLOSE's hint
+	# already got. DropDragHint passes the SAME label_y (0.0) so it reads as
+	# replacing this mark in place, not appearing at some other height.
+	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 0.0)
 	_drag_hint(discard, root, "DropDragHint", "DROP PRODUCT",
-		Palette.color(&"action"), Palette.color(&"action"), 3.2)
+		Palette.color(&"action"), Palette.color(&"action"), 0.0)
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
-	_mark(draw, root, "DRAW", Palette.color(&"neutral_3"), 2.0158572)
+	_mark(draw, root, "DRAW", Palette.color(&"neutral_3"), 0.0)
 
 	var drag := DragController.new()
 	drag.name = "DragController"
@@ -431,10 +434,10 @@ func _detail(scene: PackedScene, node_name: String, pos: Vector3,
 
 ## A labelled translucent slab behind a zone - the only thing that makes a
 ## CardCollection3D visible in the editor, and a useful "drop here" at runtime.
-## label_y: -2.3 by default (below the zone) - Discard and Draw pass a
-## positive offset instead, moved above the zone by hand in the editor to
-## stay clear of the raised pile height (shift_controller.gd's own
-## DISCARD_UP/DRAW_UP).
+## label_y: -2.3 by default (below the zone). Chair passes 0.0 (on the empty
+## table itself), and Discard/Draw now do too (on the pile's own card), not
+## above it - label_y is local to the zone's own position, so this stays
+## correct regardless of DISCARD_UP/DRAW_UP moving the pile on screen.
 func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
 		label_y: float = -2.3) -> void:
 	var slab := QuadMesh.new()
@@ -537,10 +540,14 @@ func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String
 	zone.add_child(flag)
 	flag.owner = owner_root
 
+	# Translucent, tinted text over a translucent, tinted slab - the same
+	# language _drag_hint's OFFER/DROP hints already use, rather than a solid
+	# opaque block with heavy dark-on-bright text, which read as too bold.
 	var slab := QuadMesh.new()
-	slab.size = Vector2(2.2, 0.9)
+	slab.size = Vector2(1.8, 0.7)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = tint
+	mat.albedo_color = Color(tint.r, tint.g, tint.b, 0.35)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var mesh := MeshInstance3D.new()
 	mesh.name = "Slab"
@@ -552,9 +559,11 @@ func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String
 	var label := Label3D.new()
 	label.name = "Label"
 	label.text = text
-	label.font_size = 32
+	label.font_size = 24
 	label.pixel_size = 0.005
-	label.modulate = Palette.color(&"neutral_1")
+	label.modulate = tint
+	label.outline_size = 8
+	label.outline_modulate = Palette.color(&"neutral_1")
 	label.shaded = false
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
