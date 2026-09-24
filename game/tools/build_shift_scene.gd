@@ -247,6 +247,13 @@ func _init() -> void:
 		flip.add_child(who)
 		who.owner = root
 
+		# On the CUSTOMER now, not the product slot - a customer you are not
+		# currently seated with can still have something unsigned at risk, and
+		# the old spot (behind the product) was never visible for them at all.
+		# Near the bottom, clear of the name/archetype/patience row up top.
+		_slide_flag(who, root, "CloseSoonFlag%d" % i, "CLOSE SOON!",
+			Palette.color(&"alert"), -1.3)
+
 		_detail(detail_scene, "CustomerDetail%d" % i,
 			Vector3(0.0, 0.0, BACK_Z), flip, root)
 
@@ -273,9 +280,11 @@ func _init() -> void:
 		# The empty-table message used to live here AND on OfferDetail%d
 		# ("nothing on the table"/"drag a product onto them") - now OfferDetail
 		# only appears once a product IS there (see _render_details()), so
-		# this is the one place left that says so.
+		# this is the one place left that says so. Near the TOP of the slot
+		# with a little clearance (1.75 is the true top edge), not centered -
+		# reads as labelling the card rather than sitting in the middle of it.
 		_mark(chair, root, "Nothing on the table\nPlace a product here",
-			Palette.color(&"appeal"))
+			Palette.color(&"appeal"), 1.4)
 
 		# Double-tap-to-close, only when the table is actually empty - see
 		# shift_controller.gd's _on_chair_pad_input(). Starts disabled: a
@@ -290,16 +299,14 @@ func _init() -> void:
 		_drag_hint(chair, root, "CloseHint%d" % i, "DOUBLE CLICK\nTO CLOSE\nTHE DEAL",
 			Palette.color(&"margin"), Palette.color(&"text"), 0.0, 36)
 
-		# Two sticky-note-style tags, tucked invisibly behind the product slot
-		# (same X as the chair itself) until shift_controller.gd's own
-		# _slide_flag() tweens them clear to the right - the same slide
-		# DetailCard3D's own reveal() does, mirrored in direction. Stacked, not
-		# swapped: an occupied table and a closing clock are independent facts,
-		# so both can show at once - OFFER above center, CLOSE SOON below.
+		# A sticky-note-style tag, tucked invisibly behind the product slot
+		# until shift_controller.gd's own _slide_flag() tweens it clear to the
+		# right - the same slide DetailCard3D's own reveal() does, mirrored in
+		# direction. CLOSE SOON used to live here too, but it needs to be
+		# readable for a customer you are not currently seated with - see the
+		# Customer%d loop below instead.
 		_slide_flag(chair, root, "OfferFlag%d" % i, "DROP ON CUSTOMER\nTO OFFER",
-			Palette.color(&"appeal"), 0.9)
-		_slide_flag(chair, root, "CloseSoonFlag%d" % i, "CLOSE SOON!",
-			Palette.color(&"alert"), -0.9)
+			Palette.color(&"appeal"), 0.0)
 
 		# A drop target that never actually holds a card - CardHomes never
 		# assigns anything here, so a dropped offer always snaps back to
@@ -334,16 +341,19 @@ func _init() -> void:
 
 	var discard := _collection(collection_scene, "Discard", DISCARD_STOWED, cam, root)
 	discard.card_layout_strategy = PileCardLayout.new()
-	# On the card itself now, not above it - same treatment CLOSE's hint
-	# already got. DropDragHint passes the SAME label_y (0.0) so it reads as
-	# replacing this mark in place, not appearing at some other height.
-	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 0.0)
+	# Near the top of the card, not centered on it or floating above it.
+	# DropDragHint passes the SAME label_y so it reads as replacing this mark
+	# in place, not appearing at some other height. Both labels' own Z is
+	# bumped well clear of PileCardLayout's own stacking (each card sits
+	# .01 further forward per index - a growing discard pile buried this
+	# text once there were more than a couple of cards in it).
+	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 1.4)
 	_drag_hint(discard, root, "DropDragHint", "DROP PRODUCT",
-		Palette.color(&"action"), Palette.color(&"action"), 0.0)
+		Palette.color(&"action"), Palette.color(&"action"), 1.4)
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
-	_mark(draw, root, "DRAW", Palette.color(&"neutral_3"), 0.0)
+	_mark(draw, root, "DRAW", Palette.color(&"neutral_3"), 1.4)
 
 	var drag := DragController.new()
 	drag.name = "DragController"
@@ -434,10 +444,14 @@ func _detail(scene: PackedScene, node_name: String, pos: Vector3,
 
 ## A labelled translucent slab behind a zone - the only thing that makes a
 ## CardCollection3D visible in the editor, and a useful "drop here" at runtime.
-## label_y: -2.3 by default (below the zone). Chair passes 0.0 (on the empty
-## table itself), and Discard/Draw now do too (on the pile's own card), not
-## above it - label_y is local to the zone's own position, so this stays
-## correct regardless of DISCARD_UP/DRAW_UP moving the pile on screen.
+## label_y: -2.3 by default (below the zone). Chair passes 1.4 (near the top
+## of the empty table itself), and Discard/Draw now do too (near the top of
+## the pile's own card), not above it - label_y is local to the zone's own
+## position, so this stays correct regardless of DISCARD_UP/DRAW_UP moving
+## the pile on screen. The label's own Z (0.6) sits well clear of
+## PileCardLayout's own stacking depth (.01 per card) - Discard and Draw both
+## grow past a couple dozen cards in a real shift, which used to bury this
+## text behind the pile at the old Z of 0.02.
 func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
 		label_y: float = -2.3) -> void:
 	var slab := QuadMesh.new()
@@ -465,7 +479,7 @@ func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
 	label.shaded = false
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.position = Vector3(0, label_y, 0.02)
+	label.position = Vector3(0, label_y, 0.6)
 	zone.add_child(label)
 	label.owner = owner_root
 
@@ -517,10 +531,11 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# SLOT_SIZE is 2.5 x 3.5, so the top edge sits 1.75 above center - the
 	# default 1.9 clears it without floating away from the highlight it is
-	# naming. Discard passes a taller label_y instead, to clear ITS OWN
-	# permanent "DISCARD\ndrag here to dig" mark rather than sit on top of it.
-	# CLOSE passes 0 instead - inside the card, not above it.
-	label.position = Vector3(0, label_y, 0.02)
+	# naming. Discard passes the SAME label_y its own permanent mark now
+	# uses (1.4, near the top), so DROP PRODUCT reads as replacing that mark
+	# in place. CLOSE passes 0 instead - inside the card, not above it. Z
+	# matches _mark()'s own 0.6, clear of Discard's own growing pile.
+	label.position = Vector3(0, label_y, 0.6)
 	hint.add_child(label)
 	label.owner = owner_root
 
@@ -540,14 +555,14 @@ func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String
 	zone.add_child(flag)
 	flag.owner = owner_root
 
-	# Translucent, tinted text over a translucent, tinted slab - the same
-	# language _drag_hint's OFFER/DROP hints already use, rather than a solid
-	# opaque block with heavy dark-on-bright text, which read as too bold.
+	# A solid, opaque tag - the translucent slab + tinted text _drag_hint's
+	# OFFER/DROP hints use read as too faint here, on something meant to
+	# read at a glance rather than while your attention is already on a drag.
+	# White text on the solid tint reads far better than the tint on itself.
 	var slab := QuadMesh.new()
 	slab.size = Vector2(1.8, 0.7)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(tint.r, tint.g, tint.b, 0.35)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = tint
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var mesh := MeshInstance3D.new()
 	mesh.name = "Slab"
@@ -561,7 +576,7 @@ func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String
 	label.text = text
 	label.font_size = 24
 	label.pixel_size = 0.005
-	label.modulate = tint
+	label.modulate = Palette.color(&"text")
 	label.outline_size = 8
 	label.outline_modulate = Palette.color(&"neutral_1")
 	label.shaded = false

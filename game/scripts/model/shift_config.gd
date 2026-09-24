@@ -75,7 +75,7 @@ class_name ShiftConfig extends Resource
 ## Ticks remaining in the WHOLE SHIFT, not one customer's patience, at which
 ## the clock starts warning you to close out what is unsigned before the bell
 ## takes it for free. See Shift.ticks_running_low().
-@export var low_tick_warning: int = 4
+@export var low_tick_warning: int = 5
 
 # --- demands ---------------------------------------------------------------
 ## How long a customer sits before they may ask you for anything. Walking up

@@ -137,6 +137,10 @@ var _peeked: int = -1                ## touch's stand-in for hover: tap once to 
 var _touch_check: Callable = DisplayServer.is_touchscreen_available
 var _events_seen: int = 0
 var _actions_seen: int = 0
+## True once the tick counter has already pulsed for THIS stretch of low time -
+## reset the moment time is no longer short, so a shift that somehow recovers
+## (it never does today, but nothing here should assume that) pulses again.
+var _tick_warning_flashed := false
 
 func _ready() -> void:
 	# Card3D takes mouse input through StaticBody3D.input_event, which does
@@ -708,6 +712,14 @@ func _render() -> void:
 	var low_on_time: bool = _shift.ticks_running_low()
 	_tick_label.add_theme_color_override("font_color",
 		Palette.color(&"alert") if low_on_time else Palette.color(&"text"))
+	# A one-shot pulse right on the transition, not a standing effect - the
+	# red text alone already carries the ongoing warning; this is what makes
+	# the MOMENT it happens hard to miss even with your eyes elsewhere.
+	if low_on_time and not _tick_warning_flashed:
+		_tick_warning_flashed = true
+		_flash_tick_label()
+	elif not low_on_time:
+		_tick_warning_flashed = false
 	if low_on_time and risk > 0:
 		_at_risk_label.add_theme_color_override("font_color", Palette.color(&"alert"))
 	else:
@@ -757,6 +769,18 @@ func _render_pull_picker() -> void:
 	else:
 		_pull_picker.hide_pull()
 
+## Grows the tick counter and settles it back over about a second - a Control,
+## so this scales the Label itself rather than tweening a Node3D position the
+## way the sticky-note tags do.
+func _flash_tick_label() -> void:
+	_tick_label.pivot_offset = _tick_label.size / 2.0
+	var tw := create_tween()
+	tw.set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(_tick_label, "scale", Vector2(1.6, 1.6), 0.15) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(_tick_label, "scale", Vector2.ONE, 0.65) \
+		.set_ease(Tween.EASE_IN_OUT).set_delay(0.1)
+
 ## The detail cards. There is no positioning to do and no panel to keep clear of
 ## anything: each one is a card parked behind the thing it describes, so "beside
 ## the product" is geometry the scene already guarantees rather than arithmetic
@@ -775,26 +799,35 @@ func _render_pull_picker() -> void:
 ## side), this one toggles real visibility around the tween: CLOSE SOON can
 ## be true with nothing on the table at all, so there is no product card left
 ## to hide behind while tucked.
-## Card half-width is 1.25 (SLOT_SIZE.x/2 in build_shift_scene.gd); 1.6 clears
-## the edge by a third of a unit instead of drifting well past it at 2.9.
-const FLAG_SLIDE_X := 1.6
+## Card half-width is 1.25 (SLOT_SIZE.x/2 in build_shift_scene.gd); 2.1 clears
+## the edge by most of a unit, rather than the card and the tag still
+## overlapping at 1.6.
+const FLAG_SLIDE_X := 2.1
 const FLAG_SLIDE_DURATION := 0.3
 func _slide_flag(flag: Node3D, want: bool) -> void:
 	if flag.get_meta(&"shown", false) == want:
 		return
 	flag.set_meta(&"shown", want)
+	# Showing tweens in, for the same reveal-reads-as-arriving reason
+	# DetailCard3D's own reveal() does. Hiding is instant, not the mirror of
+	# that: the reason it is hiding (the product got offered, or dropped) has
+	# already happened, so a tag still visibly sliding back under the card a
+	# third of a second later reads as lagging behind what just occurred.
 	if want:
 		flag.visible = true
-	var tw := create_tween()
-	tw.set_ease(Tween.EASE_OUT)
-	tw.set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(flag, "position:x", FLAG_SLIDE_X if want else 0.0, FLAG_SLIDE_DURATION)
-	if not want:
-		tw.tween_callback(func(): flag.visible = false)
-	# Stashed on the node itself, the same place `shown` lives - drive_shift.gd's
-	# own _settle() needs a handle on this to force-step it, the same way it
-	# already does for every DetailCard3D's own _slide_tween.
-	flag.set_meta(&"tween", tw)
+		var tw := create_tween()
+		tw.set_ease(Tween.EASE_OUT)
+		tw.set_trans(Tween.TRANS_CUBIC)
+		tw.tween_property(flag, "position:x", FLAG_SLIDE_X, FLAG_SLIDE_DURATION)
+		# Stashed on the node itself, the same place `shown` lives -
+		# drive_shift.gd's own _settle() needs a handle on this to force-step
+		# it, the same way it already does for every DetailCard3D's own
+		# _slide_tween.
+		flag.set_meta(&"tween", tw)
+	else:
+		flag.position.x = 0.0
+		flag.visible = false
+		flag.set_meta(&"tween", null)
 
 func _render_details() -> void:
 	var low_on_time: bool = _shift.ticks_running_low()
@@ -829,12 +862,16 @@ func _render_details() -> void:
 			= not can_close_empty
 		_close_hints[i].visible = can_close_empty
 
-		# The two sticky-note tags: independent of each other and of the
-		# double-tap-close pad above - an occupied table and a closing clock
-		# are unrelated facts, so both can be true and both show at once.
+		# The OFFER tag stays scoped to the seat you are at - the product slot
+		# it sits on is only ever visible there in the first place. CLOSE SOON
+		# lives on the customer's own card now (see the Customer%d loop in
+		# build_shift_scene.gd) and is NOT scoped to at_this_seat: a customer
+		# you are not currently seated with can still have something unsigned
+		# at risk when the clock runs short, and every seat is visible on the
+		# carousel regardless of which one you are at.
 		_slide_flag(_offer_flags[i], at_this_seat and has_offer)
 		_slide_flag(_close_soon_flags[i],
-			at_this_seat and c != null and not c.unsigned.is_empty() and low_on_time)
+			c != null and not c.unsigned.is_empty() and low_on_time)
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):

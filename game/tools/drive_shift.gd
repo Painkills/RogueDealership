@@ -1700,7 +1700,10 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 		_controller._at_risk_label.get_theme_color("font_color") == Palette.color(&"alert"))
 
 	# The CLOSE SOON sticky-note tag rides the exact same condition as the
-	# close button's own highlight above - independent mechanism, same rule.
+	# close button's own highlight above - but lives on the CUSTOMER card now,
+	# not the product slot, and is NOT scoped to the seat you are at (unlike
+	# the button, which only ever acts on `current`). A customer flanking the
+	# one you are actually with can still have something at risk.
 	_settle()
 	var at := _at()
 	_check("and the CLOSE SOON tag slides out too",
@@ -1709,12 +1712,30 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 			and absf(_controller._close_soon_flags[at].position.x
 				- _controller.FLAG_SLIDE_X) < 0.01)
 
+	# Same setup, on a DIFFERENT seat - proves this is not scoped to at_this_seat.
+	var other := (at + 1) % 3
+	var other_c = s.chairs[other]
+	var other_was_unsigned: Array[Dictionary] = []
+	if other_c != null:
+		other_was_unsigned = other_c.unsigned.duplicate()
+		other_c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 900, "bonus": 0})
+		_controller._render()
+		_settle()
+	_check("a DIFFERENT customer with something unsigned gets the tag too, "
+		+ "though you are not seated with them",
+		other_c != null and _controller._close_soon_flags[other].visible
+			and _controller._close_soon_flags[other].get_meta(&"shown", false))
+	if other_c != null:
+		other_c.unsigned = other_was_unsigned
+
 	s.tick = was_tick
 	c.unsigned = was_unsigned
 	_controller._render()
-	_settle()
-	_check("and slides back in once the reason for it is gone",
-		not _controller._close_soon_flags[at].visible)
+	# No _settle() here on purpose: hiding is instant now, not tweened - if
+	# this still needed a tween step to reach 0, that would itself be the bug.
+	_check("and disappears immediately once the reason for it is gone, at 0.0",
+		not _controller._close_soon_flags[at].visible
+			and _controller._close_soon_flags[at].position.x == 0.0)
 
 # --- the table matches the model -------------------------------------------
 
