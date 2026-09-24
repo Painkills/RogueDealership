@@ -273,6 +273,16 @@ func _init() -> void:
 		_mark(chair, root, "SEAT %s\ndrag a product here" % ["A", "B", "C"][i],
 			Palette.color(&"appeal"))
 
+		# Double-tap-to-close, only when the table is actually empty - see
+		# shift_controller.gd's _on_chair_pad_input(). Starts disabled: a
+		# placed product's own collision already owns this spot the moment
+		# there IS something to pick up, and shift_controller.gd's own
+		# _render_details() is what turns this back on, exactly when there is
+		# nothing on the table AND something unsigned still to close.
+		_chair_pad(i, seat, root)
+		_drag_hint(chair, root, "CloseHint%d" % i, "DOUBLE TAP TO CLOSE THIS DEAL",
+			Palette.color(&"margin"))
+
 		# A drop target that never actually holds a card - CardHomes never
 		# assigns anything here, so a dropped offer always snaps back to
 		# Chair%d once reconciliation runs. It exists only so dragging what's
@@ -363,6 +373,28 @@ func _hover_pad(index: int, pos: Vector3, parent: Node, owner_root: Node) -> voi
 	var shape := CollisionShape3D.new()
 	shape.name = "CollisionShape3D"
 	shape.shape = box
+	body.add_child(shape)
+	shape.owner = owner_root
+
+## Same shape as _hover_pad(), over the PRODUCT slot instead of the customer -
+## disabled by default, since a placed product's own collision already owns
+## this spot the moment there is something to pick up. shift_controller.gd's
+## _render_details() is what enables it, exactly when the table is empty AND
+## there is something unsigned still to close.
+func _chair_pad(index: int, parent: Node, owner_root: Node) -> void:
+	var body := StaticBody3D.new()
+	body.name = "ChairPad%d" % index
+	body.position = Vector3(0.0, CHAIR_Y, FACE_Z + 0.1)
+	body.unique_name_in_owner = true
+	parent.add_child(body)
+	body.owner = owner_root
+
+	var box := BoxShape3D.new()
+	box.size = Vector3(SLOT_SIZE.x, SLOT_SIZE.y, 0.1)
+	var shape := CollisionShape3D.new()
+	shape.name = "CollisionShape3D"
+	shape.shape = box
+	shape.disabled = true
 	body.add_child(shape)
 	shape.owner = owner_root
 

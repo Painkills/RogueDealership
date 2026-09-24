@@ -101,6 +101,11 @@ var _chair_zones: Array = []
 ## CustomerZone%d. Never holds a card; dragging the table's offer here means
 ## "offer it", distinct from Chair%d's own "place a card from your hand".
 var _customer_zones: Array = []
+## Double-tap-to-close targets over each PRODUCT slot - see build_shift_scene.gd's
+## ChairPad%d. Collision starts disabled; _render_details() enables it only when
+## that seat's table is empty and there is something unsigned left to close.
+var _chair_pads: Array = []
+var _close_hints: Array = []         ## one Node3D (slab+label) per seat, same rule
 var _offer_drag_hints: Array = []    ## one Node3D (slab+label) per seat, hidden until dragged
 var _seat_cam: Marker3D = null
 var _carousel: Node3D = null
@@ -130,6 +135,8 @@ func _ready() -> void:
 	_chair_zones = [%Chair0, %Chair1, %Chair2]
 	_customer_zones = [%CustomerZone0, %CustomerZone1, %CustomerZone2]
 	_offer_drag_hints = [%OfferDragHint0, %OfferDragHint1, %OfferDragHint2]
+	_chair_pads = [%ChairPad0, %ChairPad1, %ChairPad2]
+	_close_hints = [%CloseHint0, %CloseHint1, %CloseHint2]
 	_seat_cam = %SeatCam
 	_carousel = %Carousel
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
@@ -185,6 +192,11 @@ func _ready() -> void:
 		pad.mouse_entered.connect(_on_customer_hover.bind(i))
 		pad.mouse_exited.connect(_on_customer_unhover.bind(i))
 		pad.input_event.connect(_on_pad_input.bind(i))
+
+	# Double-tap the empty table to close, when there is something unsigned
+	# left to close - see _render_details() for what turns this pad on.
+	for i in range(_chair_pads.size()):
+		(_chair_pads[i] as StaticBody3D).input_event.connect(_on_chair_pad_input.bind(i))
 
 	_register_keyboard_actions()
 	# Mobile has no Ctrl+E: an invisible button laid over the tick counter
@@ -465,6 +477,27 @@ func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector
 		_peeked = chair
 		_render_hover_flip()
 
+## double_click is the same flag for a real mouse double-click and a touch
+## double-tap (this file already leans on that touch-emulates-mouse
+## equivalence for _on_pad_input above), so no separate timer is needed here.
+## The pad itself is only ever enabled when close() could actually succeed
+## (see _render_details()), but this still re-checks rather than trust that -
+## a stale enabled pad from a race with a command applied elsewhere must
+## never fire close() on a table that no longer qualifies.
+func _on_chair_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector3,
+		_shape: int, chair: int) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var click := event as InputEventMouseButton
+	if click.button_index != MOUSE_BUTTON_LEFT or not click.pressed or not click.double_click:
+		return
+	if _shift == null or _shift.at == null or int(_shift.at) != chair:
+		return
+	var c = _shift.chairs[chair]
+	if c == null or c.offer != null or c.unsigned.is_empty():
+		return
+	_on_close()
+
 ## Touch's stand-in for the hand's hover-lift: DragController's own
 ## _drag_card_start() already un-lifts and takes over positioning once a real
 ## drag begins, and "it follows you" from there is already exactly what
@@ -713,6 +746,17 @@ func _render_details() -> void:
 		if c != null and c.offer != null:
 			band = _shift.band_for(c.line - c.offer.appeal)
 		_offer_details[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
+
+		# Double-tap-to-close: only the seat you are AT, only an empty table,
+		# only when there is something unsigned still to close - exactly
+		# close()'s own refusal condition, so the gesture can never do
+		# anything the button behind it could not already do.
+		var at_this_seat: bool = _shift.at != null and i == int(_shift.at)
+		var can_close_empty: bool = at_this_seat and c != null \
+			and c.offer == null and not c.unsigned.is_empty()
+		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
+			= not can_close_empty
+		_close_hints[i].visible = can_close_empty
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):

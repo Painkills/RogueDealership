@@ -136,6 +136,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_drop_plays_a_card()
 	_check_dragging_the_table_offer()
 	_check_dragging_the_table_offer_onto_discard_drops_it()
+	_check_double_tapping_the_empty_table_closes()
 	_check_refused_drop_comes_home()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
@@ -1833,6 +1834,50 @@ func _check_dragging_the_table_offer_onto_discard_drops_it() -> void:
 	_check("and the card actually landed in the discard pile",
 		CardIndex.of(shift, uid) == -1)
 	_check_table("after dragging chair B's offer onto discard")
+
+## Double-tap the empty table itself, an alternate route to the CLOSE button -
+## see shift_controller.gd's _on_chair_pad_input(). Manipulates c.unsigned
+## directly rather than engineering a real sale, the same shortcut
+## _check_the_clock_warns_when_time_is_short() already uses for this exact
+## scenario.
+func _check_double_tapping_the_empty_table_closes() -> void:
+	var shift = _controller._shift
+	if shift.at == null:
+		_check("was seated to check double-tap-to-close", false)
+		return
+	var chair := _at()
+	var c = shift.chairs[chair]
+	if c == null:
+		_check("someone seated to check double-tap-to-close", false)
+		return
+
+	# Something still on the table: the pad must stay off and the hint
+	# hidden - an active offer is the drag gesture's job, not this one's.
+	c.offer = null
+	c.unsigned.clear()
+	_controller._render()
+	_check("empty table, nothing unsigned: the close pad stays off",
+		(_controller._chair_pads[chair].get_node(^"CollisionShape3D")
+			as CollisionShape3D).disabled)
+	_check("and the hint stays hidden", not _controller._close_hints[chair].visible)
+
+	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
+	_controller._render()
+	_check("empty table WITH something unsigned: the close pad turns on",
+		not (_controller._chair_pads[chair].get_node(^"CollisionShape3D")
+			as CollisionShape3D).disabled)
+	_check("and the hint shows", _controller._close_hints[chair].visible)
+
+	var signed_before: int = int(shift.stat.get("customers_signed", 0))
+	var double_click := InputEventMouseButton.new()
+	double_click.button_index = MOUSE_BUTTON_LEFT
+	double_click.pressed = true
+	double_click.double_click = true
+	_controller._on_chair_pad_input(null, double_click, Vector3.ZERO, Vector3.ZERO, 0, chair)
+
+	_check("double-tapping the empty table actually closed (customers_signed %d -> %d)"
+		% [signed_before, int(shift.stat.get("customers_signed", 0))],
+		int(shift.stat.get("customers_signed", 0)) == signed_before + 1)
 
 func _check_refused_drop_comes_home() -> void:
 	## Dropping onto the draw pile is meaningless, so the model is never called
