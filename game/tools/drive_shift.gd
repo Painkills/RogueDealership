@@ -21,9 +21,16 @@ extends SceneTree
 ## produce a test that lies.
 
 const CARD := Vector2(2.5, 3.5)
-## Nothing of the table may reach into the right-hand column, which belongs to
-## the shift log for the whole shift.
-const LOG_EDGE := 1480.0
+## A CLOSE SOON tag's size and height on its card - build_shift_scene.gd's
+## _slide_flag(). How far it slides is shift_controller.gd's FLAG_SLIDE_X.
+##
+## Nothing of the table may reach into the shift log's column, for the whole
+## shift, or into the action column while you are seated. Those two columns
+## swapped sides once already because a CLOSE SOON tag ran into the log, so
+## both are measured from the real panels (_log_rect(), _action_rect()) rather
+## than from a remembered edge that would go on passing wherever they moved.
+const FLAG := Vector2(1.8, 0.7)
+const FLAG_Y := -1.3
 
 var _controller: Node3D
 var _done := false
@@ -69,6 +76,8 @@ func _physics_process(_delta: float) -> bool:
 
 	_check_the_player_rides_the_camera()
 	_check_floor_view_is_bare()
+	_settle()
+	_check_the_floor_shows_no_table_hints()
 	_check_the_floor_cards_are_big_enough_to_read()
 	_check_you_can_actually_click_the_customers()
 	_check_the_hover_target_survives_its_own_flip()
@@ -94,6 +103,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_arriving_leaves_every_card_face_front()
 	_check_you_can_still_flip_a_customer_card_while_seated()
 	_check_seat_view_brings_your_things_up()
+	_check_the_hints_sit_flat_inside_their_cards()
 	_check_the_other_two_are_still_on_screen_while_you_work_one()
 	_check_the_offer_detail_slid_out_clear()
 	_check_the_seat_layout_does_not_overlap_itself()
@@ -189,7 +199,9 @@ func _settle() -> void:
 	# Sticky-note tags own their tween the same way, just stashed as node meta
 	# instead of an instance var - see shift_controller.gd's _slide_flag().
 	for flag in _controller._offer_flags + _controller._close_soon_flags:
-		var ft = flag.get_meta(&"tween", null)
+		# has_meta() first: get_meta() with a null default still reports an
+		# error for a key that was never set, and a flag never shown has none.
+		var ft = flag.get_meta(&"tween") if flag.has_meta(&"tween") else null
 		if ft != null and ft.is_valid() and ft.is_running():
 			ft.custom_step(2.0)
 
@@ -214,6 +226,9 @@ func _settle() -> void:
 			_flush(card)
 	for card in _controller._customer_cards:
 		_flush(card)
+	# The HUD's tags follow their anchors every frame in _process(), and there
+	# is no next frame inside this one - place them against the settled table.
+	_controller._place_tags()
 
 func _flush(node: Node3D) -> void:
 	# Each card also owns the tween that walks it to its place in the layout.
@@ -236,11 +251,36 @@ func _screen() -> Vector2:
 		ProjectSettings.get_setting("display/window/size/viewport_height"))
 
 ## Where a card-shaped thing lands on screen, in pixels.
+##
+## The corners are measured along the CAMERA's own right and up, not the
+## world's. Every card faces the lens square-on, so the two agree for as long
+## as the camera is level - and only the camera's axes stay correct once it
+## is not.
 func _rect_of(node: Node3D, size: Vector2) -> Rect2:
+	return _rect_around(node.global_position, size)
+
+## The same, for something sitting at `local` in `node`'s own space - a tag
+## slid out from beside a card, rather than the card itself.
+func _rect_of_at(node: Node3D, local: Vector3, size: Vector2) -> Rect2:
+	return _rect_around(node.to_global(local), size)
+
+func _log_rect() -> Rect2:
+	return (_controller.get_node(^"%SidePanel") as Control).get_global_rect()
+
+func _action_rect() -> Rect2:
+	return _controller._action_bar.get_global_rect()
+
+## Where a customer's CLOSE SOON tag lands once it has slid all the way out.
+func _close_soon_rect(chair: int) -> Rect2:
+	return _rect_of_at(_controller._customer_cards[chair],
+		Vector3(_controller.FLAG_SLIDE_X, FLAG_Y, 0.05), FLAG)
+
+func _rect_around(centre: Vector3, size: Vector2) -> Rect2:
 	var cam: Camera3D = _controller._camera
-	var centre := node.global_position
-	var tl := cam.unproject_position(centre + Vector3(-size.x * 0.5, size.y * 0.5, 0.0))
-	var br := cam.unproject_position(centre + Vector3(size.x * 0.5, -size.y * 0.5, 0.0))
+	var right := cam.global_basis.x * size.x * 0.5
+	var up := cam.global_basis.y * size.y * 0.5
+	var tl := cam.unproject_position(centre - right + up)
+	var br := cam.unproject_position(centre + right - up)
 	return Rect2(tl, br - tl)
 
 func _on_screen(label: String, r: Rect2) -> void:
@@ -668,8 +708,10 @@ func _check_the_floor_cards_are_big_enough_to_read() -> void:
 		_check("floor card %d is %d px tall, past the %d it needs"
 			% [i, int(r.size.y), int(floor_px)], r.size.y >= floor_px)
 		_on_screen("floor card %d" % i, r)
-		_check("floor card %d stays out of the log's column (ends %d, log at %d)"
-			% [i, int(r.end.x), int(LOG_EDGE)], r.end.x <= LOG_EDGE)
+		_check("floor card %d stays out of the log (%s vs %s)" % [i, r, _log_rect()],
+			not r.intersects(_log_rect()))
+		_check("and so does its CLOSE SOON tag, slid out (%s)" % _close_soon_rect(i),
+			not _close_soon_rect(i).intersects(_log_rect()))
 
 # --- a seat ----------------------------------------------------------------
 
@@ -715,6 +757,79 @@ func _check_you_can_still_flip_a_customer_card_while_seated() -> void:
 	_controller._on_customer_unhover(flanker)
 	_settle()
 	_check("and the flanker settles back too", not flanker_flip.showing_back())
+
+## The reported problem: "the hint texts are really hard to read." They were
+## Label3D, rendered INTO the scene: shrunk by distance, and buried by the very
+## piles they named. Every hint is a flat tag on the HUD now, sitting just
+## inside the top edge of the card it names.
+func _check_the_hints_sit_flat_inside_their_cards() -> void:
+	# The sticky-note tags are the one thing still written into the scene - they
+	# are meant to look like paper stuck to a card, and never were the problem.
+	var stray: Array[String] = []
+	for n in _all_under(_controller):
+		if n is Label3D and not (n.get_parent().name.begins_with("OfferFlag")
+				or n.get_parent().name.begins_with("CloseSoonFlag")):
+			stray.append(str(_controller.get_path_to(n)))
+	_check("no hint is a Label3D any more (%s)"
+		% (", ".join(stray) if not stray.is_empty() else "none"), stray.is_empty())
+	var hud := _controller.get_node(^"HUD") as CanvasLayer
+	for tag in _controller._tags:
+		_check("%s is drawn on the HUD, over the table" % tag.name, hud.is_ancestor_of(tag))
+		_check("%s found the thing it follows" % tag.name, tag.anchor != null)
+
+	var at := _at()
+	_check_tag_inside("draw pile", _controller._draw_tag,
+		_rect_of(_controller._draw_zone, CARD))
+	_check_tag_inside("discard pile", _controller._discard_tag,
+		_rect_of(_controller._discard_zone, CARD))
+	_check("the draw tag counts what is left to draw (%s)"
+		% _controller._draw_tag.get_node(^"Lines/Label").text,
+		_controller._draw_tag.get_node(^"Lines/Label").text.ends_with(
+			str(_controller._shift.draw.size())))
+	_check("no DROP PRODUCT until an offer is being dragged",
+		not _controller._drop_tag.visible)
+	for i in range(3):
+		_check("no OFFER PRODUCT over seat %d until then either" % i,
+			not _controller._offer_tags[i].visible)
+
+	var c = _controller._shift.chairs[at]
+	if c == null or c.offer != null:
+		_check("the table you arrived at is empty, so its note can be checked", false)
+		return
+	var note: Control = _controller._table_notes[at]
+	_check_tag_inside("empty table", note, _rect_of(_controller._chair_zones[at], CARD))
+	_check("nothing unsigned yet, so the note offers no close",
+		c.unsigned.is_empty() and not note.get_node(^"Lines/CloseRow").visible)
+	for i in range(3):
+		if i != at:
+			_check("seat %d's table is not showing, so neither is its note" % i,
+				not _controller._table_notes[i].visible)
+
+func _check_tag_inside(what: String, tag: Control, card: Rect2) -> void:
+	var r := tag.get_global_rect()
+	_check("the %s tag is showing" % what, tag.visible)
+	_check("the %s tag sits inside the card side to side (%d..%d within %d..%d)"
+		% [what, int(r.position.x), int(r.end.x), int(card.position.x), int(card.end.x)],
+		r.position.x >= card.position.x and r.end.x <= card.end.x)
+	var drop := r.position.y - card.position.y
+	_check("and hangs just inside its top edge (%d px down)" % int(drop),
+		drop >= 4.0 and drop <= 40.0)
+	_check("and ends before the card does (%d, card ends %d)"
+		% [int(r.end.y), int(card.end.y)], r.end.y <= card.end.y)
+	_on_screen("the %s tag" % what, r)
+
+## On the floor your piles are stowed below the frame and no product slot is
+## showing, so nothing is there to be named.
+func _check_the_floor_shows_no_table_hints() -> void:
+	for tag in _controller._tags:
+		_check("on the floor, %s is hidden" % tag.name, not tag.visible)
+
+func _all_under(node: Node) -> Array[Node]:
+	var out: Array[Node] = []
+	for child in node.get_children():
+		out.append(child)
+		out.append_array(_all_under(child))
+	return out
 
 func _check_seat_view_brings_your_things_up() -> void:
 	var bottom := -_frame_half_height()
@@ -788,8 +903,16 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 		var yaw: float = _controller._customer_cards[i].global_rotation.y
 		_check("seat %d's card still faces the camera (%.1f degrees off)"
 			% [i, rad_to_deg(yaw)], absf(yaw) < 0.02)
-	_check("and the right-hand one keeps out of the log (%d of %d)"
-		% [int(right.end.x), int(LOG_EDGE)], right.end.x <= LOG_EDGE)
+	# The collision that swapped the two columns: a CLOSE SOON tag, slid all
+	# the way out, is the furthest right anything on the table reaches.
+	for i in range(3):
+		var who := _rect_of(_controller._customer_cards[i], CARD)
+		var tag := _close_soon_rect(i)
+		for pair in [["the log", _log_rect()], ["the buttons", _action_rect()]]:
+			_check("seat %d's card keeps out of %s (%s vs %s)" % [i, pair[0], who, pair[1]],
+				not who.intersects(pair[1]))
+			_check("and so does its CLOSE SOON tag, slid all the way out (%s)" % tag,
+				not tag.intersects(pair[1]))
 
 	# A slot you are not at must still refuse drops - you should not be able to
 	# drag a product onto somebody you are not standing with, however visible
@@ -864,8 +987,8 @@ func _check_the_offer_detail_slid_out_clear() -> void:
 		% [int(d.size.x), int(d.size.y), int(pr.size.x), int(pr.size.y)],
 		absf(d.size.x - pr.size.x) < 2.0 and absf(d.size.y - pr.size.y) < 2.0)
 	_on_screen("offer detail card", d)
-	_check("offer detail stays out of the log's column (ends %d)" % int(d.end.x),
-		d.end.x <= LOG_EDGE)
+	_check("offer detail stays out of the log (%s vs %s)" % [d, _log_rect()],
+		not d.intersects(_log_rect()))
 
 	# The OFFER sticky-note tag rides along with the same product presence -
 	# same trigger as the detail card above, independent mechanism.
@@ -936,7 +1059,8 @@ func _check_the_seat_layout_does_not_overlap_itself() -> void:
 	# The bug before that: the hand rose and covered the product. It is allowed
 	# to run off the bottom of the screen, but not up over the table.
 	var hand_top: float = _controller._camera.unproject_position(
-		_controller._hand_zone.global_position + Vector3(0, CARD.y * 0.5, 0)).y
+		_controller._hand_zone.global_position
+			+ _controller._camera.global_basis.y * CARD.y * 0.5).y
 	var lowest: float = 0.0
 	for n in names:
 		lowest = maxf(lowest, (rects[n] as Rect2).end.y)
@@ -1855,6 +1979,9 @@ func _check_dragging_the_table_offer() -> void:
 	var uid: int = shift.chairs[1].offer.instance.uid
 	var offer_face: CardFace3D = _controller._nodes[uid]
 
+	_check("with a product on the table, its empty-table note is gone",
+		not _controller._table_notes[1].visible)
+
 	# A hand card drag must never show these - they are offer-drag only.
 	var hand_card = hand.cards[0] if not hand.cards.is_empty() else null
 	if hand_card != null:
@@ -1862,6 +1989,8 @@ func _check_dragging_the_table_offer() -> void:
 		_check("dragging a hand card shows neither drag hint",
 			not _controller._offer_drag_hints[1].visible
 				and not _controller._drop_drag_hint.visible)
+		_check("nor either tag",
+			not _controller._offer_tags[1].visible and not _controller._drop_tag.visible)
 		_controller._on_drag_stopped(hand_card)
 
 	_controller._on_drag_started(offer_face)
@@ -1869,10 +1998,22 @@ func _check_dragging_the_table_offer() -> void:
 		_controller._offer_drag_hints[1].visible)
 	_check("and DROP PRODUCT over the discard",
 		_controller._drop_drag_hint.visible)
+	_check_tag_inside("OFFER PRODUCT", _controller._offer_tags[1],
+		_rect_of(_controller._customer_cards[1], CARD))
+	_check_tag_inside("DROP PRODUCT", _controller._drop_tag,
+		_rect_of(_controller._discard_zone, CARD))
+	_check("which takes the DISCARD tag's place rather than joining it",
+		not _controller._discard_tag.visible)
+	_check("in the same spot (%d vs %d)" % [int(_controller._drop_tag.position.y),
+		int(_controller._discard_tag.position.y)],
+		absf(_controller._drop_tag.position.y - _controller._discard_tag.position.y) < 1.0)
 	_controller._on_drag_stopped(offer_face)
 	_check("both hints hide again once the drag ends",
 		not _controller._offer_drag_hints[1].visible
 			and not _controller._drop_drag_hint.visible)
+	_check("tags and all, with DISCARD back",
+		not _controller._offer_tags[1].visible and not _controller._drop_tag.visible
+			and _controller._discard_tag.visible)
 
 	# Misdirecting it onto a different chair must change nothing - you cannot
 	# offer chair B's product to whoever is sitting in chair A.
@@ -1957,6 +2098,11 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 		(_controller._chair_pads[chair].get_node(^"CollisionShape3D")
 			as CollisionShape3D).disabled)
 	_check("and the hint stays hidden", not _controller._close_hints[chair].visible)
+	var note: Control = _controller._table_notes[chair]
+	_settle()
+	_check("the table's note still says what to do with it", note.visible)
+	_check("but offers no close - there is nothing to close",
+		not note.get_node(^"Lines/CloseRow").visible)
 
 	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
 	_controller._render()
@@ -1964,6 +2110,14 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 		not (_controller._chair_pads[chair].get_node(^"CollisionShape3D")
 			as CollisionShape3D).disabled)
 	_check("and the hint shows", _controller._close_hints[chair].visible)
+	_settle()
+	_check("and the note grows its second option, under an \"or\"",
+		note.visible and note.get_node(^"Lines/CloseRow").visible)
+	_check("which says what it does (%s)" % note.get_node(^"Lines/CloseRow/Close").text,
+		note.get_node(^"Lines/CloseRow/Close").text.to_lower().replace("\n", " ")
+			== "double-click to close the deal")
+	_check_tag_inside("empty table, with a close on offer,", note,
+		_rect_of(_controller._chair_zones[chair], CARD))
 
 	var signed_before: int = int(shift.stat.get("customers_signed", 0))
 	var double_click := InputEventMouseButton.new()

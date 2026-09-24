@@ -22,6 +22,23 @@ const ROLES := {
 	&"neutral_1": "0f0f1a",
 	&"neutral_2": "3a3a5a",
 	&"neutral_3": "555577",
+	# --- the F&I office: paper, ink and rubber stamps on a walnut desk ------
+	# Everything printed on paper uses these, never the screen roles above:
+	# gold "margin" and pale "text" were chosen for dark panels, and on cream
+	# they all but disappear.
+	&"paper": "f4ecd8",
+	&"paper_shade": "e3d5b4",
+	&"ink": "1f2a44",
+	&"ink_dim": "5b6378",
+	&"stamp": "b3261e",
+	&"money": "2f6b3f",
+	&"brass": "b8893a",
+	&"brass_dark": "7a5a12",
+	&"sticky": "f7d64a",
+	&"manila": "d9c49a",
+	&"walnut": "6b4429",
+	&"walnut_dark": "3d2616",
+	&"wall": "262b37",
 }
 
 static func color(role: StringName) -> Color:

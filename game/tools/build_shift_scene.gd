@@ -125,17 +125,20 @@ const FAN_ANGLE := 24.0
 const FAN_RADIUS := 24.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
-## Stops well above the bottom strip, which is where the discard rises into.
-const LOG_RECT := Rect2(1480, 79, 422, 651)
+## LEFT rail. It used to be on the right, until each customer grew a CLOSE SOON
+## tag that slides out to the RIGHT of their card: the right-hand flanker's tag
+## ran straight into the log. A tag only ever slides right, so the left rail is
+## the one side nothing on the table ever reaches toward. Stops well above the
+## bottom strip, which is where the draw pile rises into.
+const LOG_RECT := Rect2(18, 79, 422, 651)
 ## A column, not a row. The bottom of the screen belongs to the hand and the two
 ## piles, and a Button laid over a card steals the click meant for the card.
 ##
-## LEFT rail now, mirroring the log. The right rail is fully spoken for (log
-## 1480..1896, discard 1607..1879) and the 155 px gutters inside the carousel
-## composition are too narrow for a 300 px button. Real cost: OFFER/DROP/CLOSE
-## sit further from the product they act on. It is the only placement that
-## satisfies "no button sits on a card" for five card rects instead of four.
-const ACTION_RECT := Rect2(66, 300, 330, 340)
+## RIGHT rail, mirroring the log. It starts past the furthest the right-hand
+## flanker's CLOSE SOON tag reaches while you are seated. On the floor that tag
+## reaches further, but the buttons are hidden there because there is nobody to
+## act on. drive_shift.gd pins both edges.
+const ACTION_RECT := Rect2(1560, 300, 330, 340)
 const ACTION_BUTTON := Vector2(330, 100)
 
 func _init() -> void:
@@ -277,14 +280,10 @@ func _init() -> void:
 		# does). Selecting and dragging the card are unaffected - only the
 		# lift-on-hover/press cosmetic is off.
 		chair.highlight_on_hover = false
-		# The empty-table message used to live here AND on OfferDetail%d
-		# ("nothing on the table"/"drag a product onto them") - now OfferDetail
-		# only appears once a product IS there (see _render_details()), so
-		# this is the one place left that says so. Near the TOP of the slot
-		# with a little clearance (1.75 is the true top edge), not centered -
-		# reads as labelling the card rather than sitting in the middle of it.
-		_mark(chair, root, "Nothing on the table\nPlace a product here",
-			Palette.color(&"appeal"), 1.4)
+		# The slot's own outline, plus the anchor the HUD's TableNote%d hangs
+		# from. The note says "nothing on the table", and "or double-click to
+		# close the deal" underneath it when there is something to close.
+		_mark(chair, root, Palette.color(&"appeal"))
 
 		# Double-tap-to-close, only when the table is actually empty - see
 		# shift_controller.gd's _on_chair_pad_input(). Starts disabled: a
@@ -293,11 +292,10 @@ func _init() -> void:
 		# _render_details() is what turns this back on, exactly when there is
 		# nothing on the table AND something unsigned still to close.
 		_chair_pad(i, seat, root)
-		# Inside the card, not above it - and text_color is "text" (near-
-		# white), not "margin" (the slab's own gold): gold-on-translucent-gold
-		# read as barely-there.
-		_drag_hint(chair, root, "CloseHint%d" % i, "DOUBLE CLICK\nTO CLOSE\nTHE DEAL",
-			Palette.color(&"margin"), Palette.color(&"text"), 0.0, 36)
+		# Just the highlight now. The words live on the HUD's TableNote%d, as
+		# the second half of the empty-table note, so the two options read as
+		# one card offering both.
+		_drag_hint(chair, root, "CloseHint%d" % i, Palette.color(&"margin"), false)
 
 		# A sticky-note-style tag, tucked invisibly behind the product slot
 		# until shift_controller.gd's own _slide_flag() tweens it clear to the
@@ -317,8 +315,7 @@ func _init() -> void:
 		var customer_zone := _collection(collection_scene, "CustomerZone%d" % i,
 			Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), seat, root)
 		customer_zone.card_layout_strategy = PileCardLayout.new()
-		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, "OFFER PRODUCT",
-			Palette.color(&"appeal"), Palette.color(&"appeal"))
+		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, Palette.color(&"appeal"))
 
 		_detail(detail_scene, "OfferDetail%d" % i,
 			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
@@ -337,23 +334,20 @@ func _init() -> void:
 	fan.arc_angle_deg = FAN_ANGLE
 	fan.arc_radius = FAN_RADIUS
 	hand.card_layout_strategy = fan
-	_mark(hand, root, "YOUR HAND", Palette.color(&"margin"))
+	_mark(hand, root, Palette.color(&"margin"))
 
+	# Both piles are named by HUD tags hanging from their TagAnchor (see
+	# _build_hud). DropDragHint's anchor sits at the same top edge as the
+	# discard's own, so DROP PRODUCT replaces DISCARD in place rather than
+	# appearing at some other height.
 	var discard := _collection(collection_scene, "Discard", DISCARD_STOWED, cam, root)
 	discard.card_layout_strategy = PileCardLayout.new()
-	# Near the top of the card, not centered on it or floating above it.
-	# DropDragHint passes the SAME label_y so it reads as replacing this mark
-	# in place, not appearing at some other height. Both labels' own Z is
-	# bumped well clear of PileCardLayout's own stacking (each card sits
-	# .01 further forward per index - a growing discard pile buried this
-	# text once there were more than a couple of cards in it).
-	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 1.4)
-	_drag_hint(discard, root, "DropDragHint", "DROP PRODUCT",
-		Palette.color(&"action"), Palette.color(&"action"), 1.4)
+	_mark(discard, root, Palette.color(&"action"))
+	_drag_hint(discard, root, "DropDragHint", Palette.color(&"action"))
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
-	_mark(draw, root, "DRAW", Palette.color(&"neutral_3"), 1.4)
+	_mark(draw, root, Palette.color(&"neutral_3"))
 
 	var drag := DragController.new()
 	drag.name = "DragController"
@@ -442,18 +436,15 @@ func _detail(scene: PackedScene, node_name: String, pos: Vector3,
 	d.owner = owner_root
 	return d
 
-## A labelled translucent slab behind a zone - the only thing that makes a
-## CardCollection3D visible in the editor, and a useful "drop here" at runtime.
-## label_y: -2.3 by default (below the zone). Chair passes 1.4 (near the top
-## of the empty table itself), and Discard/Draw now do too (near the top of
-## the pile's own card), not above it - label_y is local to the zone's own
-## position, so this stays correct regardless of DISCARD_UP/DRAW_UP moving
-## the pile on screen. The label's own Z (0.6) sits well clear of
-## PileCardLayout's own stacking depth (.01 per card) - Discard and Draw both
-## grow past a couple dozen cards in a real shift, which used to bury this
-## text behind the pile at the old Z of 0.02.
-func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
-		label_y: float = -2.3) -> void:
+## A translucent slab behind a zone - the only thing that makes a
+## CardCollection3D visible in the editor, and a useful "drop here" at runtime -
+## plus the TagAnchor its HUD label hangs from.
+##
+## The words used to be a Label3D here, and that is exactly what made them hard
+## to read: drawn into the scene, shrunk by distance, and buried by a growing
+## pile. The label is a flat HUD tag now (see _build_hud()), which only needs to
+## know WHERE the card's top edge is.
+func _mark(zone: Node3D, owner_root: Node, tint: Color) -> void:
 	var slab := QuadMesh.new()
 	slab.size = SLOT_SIZE
 	var mat := StandardMaterial3D.new()
@@ -467,35 +458,30 @@ func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
 	mesh.position = Vector3(0, 0, -0.05)
 	zone.add_child(mesh)
 	mesh.owner = owner_root
+	_tag_anchor(zone, owner_root)
 
-	var label := Label3D.new()
-	label.name = "ZoneLabel"
-	label.text = text
-	label.font_size = 64
-	label.pixel_size = 0.005
-	label.modulate = tint
-	label.outline_size = 10
-	label.outline_modulate = Palette.color(&"neutral_1")
-	label.shaded = false
-	label.double_sided = false
-	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.position = Vector3(0, label_y, 0.6)
-	zone.add_child(label)
-	label.owner = owner_root
+## The top-centre of the card a zone holds, in the card's own plane. A HUD tag
+## hangs from this point, so every hint sits the same distance inside the top
+## edge of its card, whatever size perspective draws that card at. It is in the
+## card's plane rather than floating in front of it, because a point nearer the
+## camera unprojects a few pixels away from the edge it is meant to mark.
+func _tag_anchor(zone: Node3D, owner_root: Node) -> void:
+	var anchor := Marker3D.new()
+	anchor.name = "TagAnchor"
+	anchor.position = Vector3(0.0, SLOT_SIZE.y * 0.5, 0.0)
+	zone.add_child(anchor)
+	anchor.owner = owner_root
 
-## Unlike _mark()'s permanent zone labels, this says nothing until a drag
-## actually makes it relevant - a highlighted slab over the zone itself, with
-## a label sitting just clear of its top edge (not floating well above it,
-## which read as unrelated to the zone it was naming). One container node so
-## shift_controller.gd's _on_drag_started/_on_drag_stopped can show or hide
-## both pieces with a single .visible toggle.
+## Unlike _mark()'s permanent outline, this says nothing until a drag actually
+## makes it relevant: a highlighted slab over the zone itself. One container
+## node, so shift_controller.gd's _on_drag_started/_on_drag_stopped can show or
+## hide it with a single .visible toggle. The HUD tag hanging from its
+## TagAnchor follows that toggle for free.
 ##
-## text_color is separate from tint (the slab's own translucent fill): OFFER/
-## DROP pass the same color for both since their label sits clear of the slab,
-## but a label sitting ON TOP of its own slab (CLOSE) needs real contrast
-## against it, not the same color at full opacity over itself at 0.35.
-func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
-		tint: Color, text_color: Color, label_y: float = 1.9, font_size: int = 64) -> void:
+## CLOSE passes anchored = false: its words are the second half of the empty
+## table's own note, which hangs from the chair's anchor rather than this one.
+func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, tint: Color,
+		anchored: bool = true) -> void:
 	var hint := Node3D.new()
 	hint.name = node_name
 	hint.visible = false
@@ -516,28 +502,8 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
 	mesh.position = Vector3(0, 0, -0.04)
 	hint.add_child(mesh)
 	mesh.owner = owner_root
-
-	var label := Label3D.new()
-	label.name = "Label"
-	label.text = text
-	label.font_size = font_size
-	label.pixel_size = 0.005
-	label.modulate = text_color
-	label.outline_size = 10
-	label.outline_modulate = Palette.color(&"neutral_1")
-	label.shaded = false
-	label.double_sided = false
-	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	# SLOT_SIZE is 2.5 x 3.5, so the top edge sits 1.75 above center - the
-	# default 1.9 clears it without floating away from the highlight it is
-	# naming. Discard passes the SAME label_y its own permanent mark now
-	# uses (1.4, near the top), so DROP PRODUCT reads as replacing that mark
-	# in place. CLOSE passes 0 instead - inside the card, not above it. Z
-	# matches _mark()'s own 0.6, clear of Discard's own growing pile.
-	label.position = Vector3(0, label_y, 0.6)
-	hint.add_child(label)
-	label.owner = owner_root
+	if anchored:
+		_tag_anchor(hint, owner_root)
 
 ## A sticky-note tag tucked at the zone's own X (hidden - start invisible,
 ## since CLOSE SOON must be able to appear over an EMPTY table with no card
@@ -600,6 +566,31 @@ func _build_hud(root: Node) -> void:
 	hud.unique_name_in_owner = true
 	layer.add_child(hud)
 	hud.owner = root
+
+	# --- the table's own hints: flat, full size, and over the table -------
+	# FIRST of HudRoot's children, so every panel after it (the log, the
+	# buttons, the report, the pull picker) draws over a hint rather than
+	# under one. Each tag follows a TagAnchor on the table; see screen_tag.gd.
+	var hints := Control.new()
+	hints.name = "HintLayer"
+	hints.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hints.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hints.unique_name_in_owner = true
+	hud.add_child(hints)
+	hints.owner = root
+
+	_tag(hints, root, "DrawTag", ^"Camera3D/Draw/TagAnchor", &"manila", &"ink_dim",
+		[["Label", "DRAW", 22, &"ink"]])
+	_tag(hints, root, "DiscardTag", ^"Camera3D/Discard/TagAnchor", &"manila", &"ink_dim",
+		[["Label", "DISCARD", 22, &"ink"], ["Sub", "drag a card here to dig", 16, &"ink_dim"]])
+	# Same top edge as DiscardTag, and only ever shown in its place.
+	_tag(hints, root, "DropTag", ^"Camera3D/Discard/DropDragHint/TagAnchor", &"paper", &"stamp",
+		[["Label", "DROP PRODUCT", 24, &"stamp"]])
+	for i in range(3):
+		_tag(hints, root, "OfferTag%d" % i,
+			NodePath("Table/Carousel/Seat%d/CustomerZone%d/OfferDragHint%d/TagAnchor" % [i, i, i]),
+			&"paper", &"ink", [["Label", "OFFER PRODUCT", 24, &"ink"]])
+		_table_note(hints, root, i)
 
 	# --- the shift bar, always ------------------------------------------
 	var top := HBoxContainer.new()
@@ -694,7 +685,7 @@ func _build_hud(root: Node) -> void:
 	top.add_child(at_risk)
 	at_risk.owner = root
 
-	# --- yours: the action column, right of the table and left of the log --
+	# --- yours: the action column, on the right rail ------------------------
 	var actions := VBoxContainer.new()
 	actions.name = "ActionBar"
 	actions.position = ACTION_RECT.position
@@ -715,7 +706,7 @@ func _build_hud(root: Node) -> void:
 		actions.add_child(b)
 		b.owner = root
 
-	# --- yours: the log, right, stopping short of the discard -------------
+	# --- yours: the log, left, stopping short of the draw pile ------------
 	var panel := PanelContainer.new()
 	panel.name = "SidePanel"
 	panel.position = LOG_RECT.position
@@ -772,3 +763,111 @@ func _build_hud(root: Node) -> void:
 	pull_picker.unique_name_in_owner = true
 	hud.add_child(pull_picker)
 	pull_picker.owner = root
+
+## A paper tag on the HUD that follows `anchor` on the table. `lines` is one
+## [name, text, font size, palette role] per row, top to bottom. Starts hidden:
+## the controller shows it once it knows where its anchor is.
+func _tag(parent: Node, owner_root: Node, node_name: String, anchor: NodePath,
+		fill: StringName, edge: StringName, lines: Array) -> PanelContainer:
+	var tag := PanelContainer.new()
+	tag.name = node_name
+	tag.set_script(load("res://scripts/view/screen_tag.gd"))
+	tag.set(&"anchor_path", anchor)
+	tag.visible = false
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tag.unique_name_in_owner = true
+	tag.add_theme_stylebox_override("panel", _tag_style(fill, edge))
+	parent.add_child(tag)
+	tag.owner = owner_root
+
+	var col := VBoxContainer.new()
+	col.name = "Lines"
+	col.add_theme_constant_override("separation", 2)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tag.add_child(col)
+	col.owner = owner_root
+	for spec in lines:
+		_line(col, owner_root, spec[0], spec[1], spec[2], spec[3])
+	return tag
+
+## The empty table's note: what to do with it, and - only once there is
+## something unsigned - the other thing you can do with it instead. One card,
+## two options, a rule and an "or" between them, so both read as choices
+## rather than as two unrelated messages that happen to share a card. The two
+## options are the same size and weight, and differ only in ink.
+##
+## Hard line breaks rather than autowrap. A wrapping Label only learns its
+## height after a layout pass has told it its width, so a note sized in the
+## same frame it changed would be measured against last frame's text.
+## drive_shift.gd checks the whole note fits inside the product card.
+func _table_note(parent: Node, owner_root: Node, i: int) -> void:
+	var note := _tag(parent, owner_root, "TableNote%d" % i,
+		NodePath("Table/Carousel/Seat%d/Chair%d/TagAnchor" % [i, i]), &"paper", &"ink_dim",
+		[["Title", "Nothing on the table", 20, &"ink"],
+			["Sub", "Place a product here", 17, &"ink_dim"]])
+	var col := note.get_node(^"Lines")
+
+	var close_row := VBoxContainer.new()
+	close_row.name = "CloseRow"
+	close_row.visible = false
+	close_row.add_theme_constant_override("separation", 2)
+	close_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(close_row)
+	close_row.owner = owner_root
+
+	var or_row := HBoxContainer.new()
+	or_row.name = "OrRow"
+	or_row.add_theme_constant_override("separation", 8)
+	or_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	close_row.add_child(or_row)
+	or_row.owner = owner_root
+	_rule(or_row, owner_root, "RuleLeft")
+	_line(or_row, owner_root, "Or", "or", 16, &"ink_dim")
+	_rule(or_row, owner_root, "RuleRight")
+
+	_line(close_row, owner_root, "Close", "Double-click to\nclose the deal", 20, &"stamp")
+
+func _line(parent: Node, owner_root: Node, node_name: String, text: String,
+		size: int, role: StringName) -> Label:
+	var l := Label.new()
+	l.name = node_name
+	l.text = text
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", Palette.color(role))
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(l)
+	l.owner = owner_root
+	return l
+
+## A hairline that stretches to fill its row. A PanelContainer rather than a
+## ColorRect, because test_shift_scene.gd bans ColorRects anywhere under the HUD.
+func _rule(parent: Node, owner_root: Node, node_name: String) -> void:
+	var rule := PanelContainer.new()
+	rule.name = node_name
+	rule.custom_minimum_size = Vector2(0, 2)
+	rule.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rule.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Palette.color(&"ink_dim")
+	rule.add_theme_stylebox_override("panel", style)
+	parent.add_child(rule)
+	rule.owner = owner_root
+
+## Paper with an inked edge and a soft drop shadow, so a tag reads as a slip of
+## paper lying on the table rather than a box painted over it.
+func _tag_style(fill: StringName, edge: StringName) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = Palette.color(fill)
+	s.border_color = Palette.color(edge)
+	s.set_border_width_all(2)
+	s.set_corner_radius_all(3)
+	s.content_margin_left = 12
+	s.content_margin_right = 12
+	s.content_margin_top = 6
+	s.content_margin_bottom = 8
+	s.shadow_color = Color(0, 0, 0, 0.35)
+	s.shadow_size = 4
+	s.shadow_offset = Vector2(2, 3)
+	return s

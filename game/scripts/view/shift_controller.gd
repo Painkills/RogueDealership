@@ -81,6 +81,12 @@ signal deck_viewed
 @onready var _drop_drag_hint: Node3D = %DropDragHint
 @onready var _report_overlay = %ReportOverlay
 @onready var _pull_picker: Control = %PullPicker
+## The table's hints, drawn flat on the HUD rather than into the scene - see
+## screen_tag.gd for why. Each one follows a TagAnchor on the table.
+@onready var _hint_layer: Control = %HintLayer
+@onready var _draw_tag: ScreenTag = %DrawTag
+@onready var _discard_tag: ScreenTag = %DiscardTag
+@onready var _drop_tag: ScreenTag = %DropTag
 
 var _shift: Shift
 ## True while a RunController-level overlay (the deck viewer) sits on top of
@@ -118,7 +124,12 @@ var _close_soon_flags: Array = []    ## "CLOSE SOON!", shown while time is short
 var _last_chair_tap_chair: int = -1
 var _last_chair_tap_time: float = 0.0
 const CHAIR_DOUBLE_TAP_WINDOW := 0.4
-var _offer_drag_hints: Array = []    ## one Node3D (slab+label) per seat, hidden until dragged
+var _offer_drag_hints: Array = []    ## one Node3D (slab) per seat, hidden until dragged
+var _offer_tags: Array = []          ## "OFFER PRODUCT", following _offer_drag_hints
+## "Nothing on the table", plus "or double-click to close the deal" when there
+## is something to close. One per seat; only the seat you are at ever shows one.
+var _table_notes: Array = []
+var _tags: Array = []                ## every ScreenTag, placed together each frame
 var _seat_cam: Marker3D = null
 var _carousel: Node3D = null
 var _customer_cards: Array = []
@@ -162,6 +173,15 @@ func _ready() -> void:
 	_hover_pads = [%HoverPad0, %HoverPad1, %HoverPad2]
 	_customer_details = [%CustomerDetail0, %CustomerDetail1, %CustomerDetail2]
 	_offer_details = [%OfferDetail0, %OfferDetail1, %OfferDetail2]
+	_offer_tags = [%OfferTag0, %OfferTag1, %OfferTag2]
+	_table_notes = [%TableNote0, %TableNote1, %TableNote2]
+	_tags = [_draw_tag, _discard_tag, _drop_tag]
+	_tags.append_array(_offer_tags)
+	_tags.append_array(_table_notes)
+	# The tag lives in the HUD and its anchor on the table, so the scene root
+	# (this node) is the one place a path between them resolves from.
+	for tag in _tags:
+		tag.anchor = get_node(tag.anchor_path) as Node3D
 
 	for zone in _chair_zones:
 		_drag.add_card_collection(zone)
@@ -753,8 +773,30 @@ func _render() -> void:
 	_close_btn.modulate = Palette.color(&"alert") \
 		if (low_on_time and current != null and not current.unsigned.is_empty()) \
 		else Color.WHITE
+	# Both piles are face down, so a count is the only way to see how much of
+	# the deck is left to draw and how much has already been spent.
+	(_draw_tag.get_node(^"Lines/Label") as Label).text = "DRAW  %d" % _shift.draw.size()
+	(_discard_tag.get_node(^"Lines/Label") as Label).text = \
+		"DISCARD  %d" % _shift.discard.size()
 	_reconcile()
 	_drain_log()
+	_place_tags()
+
+## Every frame as well as on render: the carousel turns and the piles rise on
+## tweens between renders, and a tag has to ride along with its card rather
+## than jump to where the card will end up.
+func _process(_delta: float) -> void:
+	_place_tags()
+
+func _place_tags() -> void:
+	# The report and the deck viewer each cover the table, so its hints go with
+	# it rather than floating over the top of either.
+	_hint_layer.visible = _shift != null and not _hud_dimmed \
+		and not _report_overlay.visible
+	if not _hint_layer.visible:
+		return
+	for tag in _tags:
+		tag.follow(_camera)
 
 ## The picker and the drag lock rise and fall together - both exist only to
 ## enforce "resolve this before anything else," so one flag (pending_pull)
@@ -861,6 +903,10 @@ func _render_details() -> void:
 		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
 			= not can_close_empty
 		_close_hints[i].visible = can_close_empty
+		# The empty table's note, and its "or double-click to close" half on
+		# exactly the same condition as the pad that does the closing.
+		_table_notes[i].wanted = at_this_seat and c != null and c.offer == null
+		_table_notes[i].get_node(^"Lines/CloseRow").visible = can_close_empty
 
 		# The OFFER tag stays scoped to the seat you are at - the product slot
 		# it sits on is only ever visible there in the first place. CLOSE SOON
@@ -946,10 +992,11 @@ func _on_drag_started(card) -> void:
 	if _is_current_offer(_dragging):
 		_offer_drag_hints[int(_shift.at)].visible = true
 		_drop_drag_hint.visible = true
-		# DROP PRODUCT stands in for the permanent "DISCARD\ndrag here to dig"
-		# mark, not alongside it - both naming the same zone at once read as
-		# one message stepping on the other.
-		(_discard_zone.get_node(^"ZoneLabel") as Label3D).visible = false
+		# DROP PRODUCT stands in for the permanent DISCARD tag, not alongside
+		# it - both naming the same zone at once read as one message stepping
+		# on the other. Hiding the anchor is what hides the tag.
+		(_discard_zone.get_node(^"TagAnchor") as Node3D).visible = false
+		_place_tags()
 	# DragController's own _drag_card_start() just called remove_hovered() on
 	# this card - its ROOT now tracks the pointer directly ("set card position
 	# to under mouse"), on the assumption no local offset is needed once a drag
@@ -978,7 +1025,7 @@ func _on_drag_stopped(_card) -> void:
 	for hint in _offer_drag_hints:
 		hint.visible = false
 	_drop_drag_hint.visible = false
-	(_discard_zone.get_node(^"ZoneLabel") as Label3D).visible = true
+	(_discard_zone.get_node(^"TagAnchor") as Node3D).visible = true
 	if _shift == null:
 		return
 	# DragController keeps working on the card AFTER emitting card_moved: it
