@@ -97,6 +97,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_other_two_are_still_on_screen_while_you_work_one()
 	_check_the_offer_detail_slid_out_clear()
 	_check_the_seat_layout_does_not_overlap_itself()
+	_undo_the_offer_detail_setup()
 	_check_the_customer_card_shows_who_they_are()
 	_check_the_customer_card_carries_its_triage_row()
 	_check_interest_grid_cell_names_fit_their_cells()
@@ -185,6 +186,12 @@ func _settle() -> void:
 		var st = card._slide_tween
 		if st != null and st.is_valid() and st.is_running():
 			st.custom_step(2.0)
+	# Sticky-note tags own their tween the same way, just stashed as node meta
+	# instead of an instance var - see shift_controller.gd's _slide_flag().
+	for flag in _controller._offer_flags + _controller._close_soon_flags:
+		var ft = flag.get_meta(&"tween", null)
+		if ft != null and ft.is_valid() and ft.is_running():
+			ft.custom_step(2.0)
 
 	# A tween writes to the NODE; the physics server only learns about it when
 	# the transform is flushed, which normally happens between frames. The pick
@@ -806,6 +813,31 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 ## flanker now sits.
 func _check_the_offer_detail_slid_out_clear() -> void:
 	var at := _at()
+	# OfferDetail only slides out once there is a product to describe now -
+	# "nothing on the table" lives on the chair's own permanent mark instead.
+	# Assigned directly rather than dragged: place() burns a tick, and a tick
+	# can trigger this customer's own demand telegraph mid-sequence, growing
+	# their card past _check_the_customer_card_carries_its_triage_row()'s own
+	# layout budget later on - a real side effect this check has no business
+	# causing just to set up its own scene.
+	var shift = _controller._shift
+	var hand = _controller._hand_zone
+	var face = null
+	for card in hand.cards:
+		if card.instance != null and card.instance.is_product():
+			face = card
+			break
+	if face == null:
+		_check("there was a product in hand to check the offer detail with", false)
+		return
+	var idx: int = shift.hand.find(face.instance)
+	if idx == -1:
+		_check("that product was actually in the model's hand", false)
+		return
+	shift.hand.remove_at(idx)
+	shift.chairs[at].offer = Offer.new(face.instance, 50, face.instance.margin())
+	_controller._render()
+	_settle()
 	# You reach a seat by CLICKING a customer, which means you were hovering them,
 	# which means their pair was turned over. It has to turn back before the
 	# detail card slides, or the slide happens in a mirrored space and the card
@@ -835,6 +867,15 @@ func _check_the_offer_detail_slid_out_clear() -> void:
 	_check("offer detail stays out of the log's column (ends %d)" % int(d.end.x),
 		d.end.x <= LOG_EDGE)
 
+	# The OFFER sticky-note tag rides along with the same product presence -
+	# same trigger as the detail card above, independent mechanism.
+	var offer_flag: Node3D = _controller._offer_flags[at]
+	_check("the OFFER tag slid clear too",
+		offer_flag.visible and offer_flag.get_meta(&"shown", false)
+			and absf(offer_flag.position.x - _controller.FLAG_SLIDE_X) < 0.01)
+	_check("and the CLOSE SOON tag did not - nothing unsigned yet",
+		not _controller._close_soon_flags[at].visible)
+
 	_check("the customer detail stayed home, where it is just a card back",
 		not _controller._customer_details[at].is_out())
 	for i in range(3):
@@ -843,6 +884,22 @@ func _check_the_offer_detail_slid_out_clear() -> void:
 		_check("seat %d's detail cards stayed home" % i,
 			not _controller._customer_details[i].is_out()
 				and not _controller._offer_details[i].is_out())
+
+## Undoes _check_the_offer_detail_slid_out_clear()'s own synthetic offer - a
+## real, lasting model mutation _check_the_seat_layout_does_not_overlap_itself()
+## right after it still needed the product for, but nothing past that point
+## should see it. Left in place, it grew this customer's own triage row past
+## its layout budget further down the sequence - a real bleed between two
+## otherwise-unrelated checks, not a pre-existing flake.
+func _undo_the_offer_detail_setup() -> void:
+	var shift = _controller._shift
+	var c = shift.chairs[_at()]
+	if c == null or c.offer == null:
+		return
+	shift.hand.append(c.offer.instance)
+	c.offer = null
+	_controller._render()
+	_settle()
 
 ## The reported bug: "when zoomed in, the customer card gets overlapped by the
 ## product card". FIVE rectangles now - the negotiation is three of them and
@@ -1642,9 +1699,22 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 	_check("and the unsigned total is flagged too",
 		_controller._at_risk_label.get_theme_color("font_color") == Palette.color(&"alert"))
 
+	# The CLOSE SOON sticky-note tag rides the exact same condition as the
+	# close button's own highlight above - independent mechanism, same rule.
+	_settle()
+	var at := _at()
+	_check("and the CLOSE SOON tag slides out too",
+		_controller._close_soon_flags[at].visible
+			and _controller._close_soon_flags[at].get_meta(&"shown", false)
+			and absf(_controller._close_soon_flags[at].position.x
+				- _controller.FLAG_SLIDE_X) < 0.01)
+
 	s.tick = was_tick
 	c.unsigned = was_unsigned
 	_controller._render()
+	_settle()
+	_check("and slides back in once the reason for it is gone",
+		not _controller._close_soon_flags[at].visible)
 
 # --- the table matches the model -------------------------------------------
 

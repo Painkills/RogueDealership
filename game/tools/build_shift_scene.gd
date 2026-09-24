@@ -270,7 +270,11 @@ func _init() -> void:
 		# does). Selecting and dragging the card are unaffected - only the
 		# lift-on-hover/press cosmetic is off.
 		chair.highlight_on_hover = false
-		_mark(chair, root, "SEAT %s\ndrag a product here" % ["A", "B", "C"][i],
+		# The empty-table message used to live here AND on OfferDetail%d
+		# ("nothing on the table"/"drag a product onto them") - now OfferDetail
+		# only appears once a product IS there (see _render_details()), so
+		# this is the one place left that says so.
+		_mark(chair, root, "Nothing on the table\nPlace a product here",
 			Palette.color(&"appeal"))
 
 		# Double-tap-to-close, only when the table is actually empty - see
@@ -283,8 +287,19 @@ func _init() -> void:
 		# Inside the card, not above it - and text_color is "text" (near-
 		# white), not "margin" (the slab's own gold): gold-on-translucent-gold
 		# read as barely-there.
-		_drag_hint(chair, root, "CloseHint%d" % i, "DOUBLE TAP\nTO CLOSE",
-			Palette.color(&"margin"), Palette.color(&"text"), 0.0, 44)
+		_drag_hint(chair, root, "CloseHint%d" % i, "DOUBLE CLICK\nTO CLOSE\nTHE DEAL",
+			Palette.color(&"margin"), Palette.color(&"text"), 0.0, 36)
+
+		# Two sticky-note-style tags, tucked invisibly behind the product slot
+		# (same X as the chair itself) until shift_controller.gd's own
+		# _slide_flag() tweens them clear to the right - the same slide
+		# DetailCard3D's own reveal() does, mirrored in direction. Stacked, not
+		# swapped: an occupied table and a closing clock are independent facts,
+		# so both can show at once - OFFER above center, CLOSE SOON below.
+		_slide_flag(chair, root, "OfferFlag%d" % i, "DROP ON CUSTOMER\nTO OFFER",
+			Palette.color(&"appeal"), 0.9)
+		_slide_flag(chair, root, "CloseSoonFlag%d" % i, "CLOSE SOON!",
+			Palette.color(&"alert"), -0.9)
 
 		# A drop target that never actually holds a card - CardHomes never
 		# assigns anything here, so a dropped offer always snaps back to
@@ -504,6 +519,48 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
 	# CLOSE passes 0 instead - inside the card, not above it.
 	label.position = Vector3(0, label_y, 0.02)
 	hint.add_child(label)
+	label.owner = owner_root
+
+## A sticky-note tag tucked at the zone's own X (hidden - start invisible,
+## since CLOSE SOON must be able to appear over an EMPTY table with no card
+## there to hide it behind, unlike _drag_hint's slab). shift_controller.gd's
+## _slide_flag() makes it visible and tweens it clear to the right when
+## shown, mirroring DetailCard3D's own reveal() - just the opposite
+## direction, and a plain position tween rather than a card turning over.
+func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String,
+		tint: Color, y: float) -> void:
+	var flag := Node3D.new()
+	flag.name = node_name
+	flag.position = Vector3(0, y, 0.05)
+	flag.visible = false
+	flag.unique_name_in_owner = true
+	zone.add_child(flag)
+	flag.owner = owner_root
+
+	var slab := QuadMesh.new()
+	slab.size = Vector2(2.2, 0.9)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tint
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var mesh := MeshInstance3D.new()
+	mesh.name = "Slab"
+	mesh.mesh = slab
+	mesh.material_override = mat
+	flag.add_child(mesh)
+	mesh.owner = owner_root
+
+	var label := Label3D.new()
+	label.name = "Label"
+	label.text = text
+	label.font_size = 32
+	label.pixel_size = 0.005
+	label.modulate = Palette.color(&"neutral_1")
+	label.shaded = false
+	label.double_sided = false
+	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.position = Vector3(0, 0, 0.01)
+	flag.add_child(label)
 	label.owner = owner_root
 
 func _build_hud(root: Node) -> void:
