@@ -3,113 +3,113 @@
 [ext_resource type="Script" path="res://scripts/view/run_summary_panel.gd" id="1_taqa7"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cuait"]
-bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qn3qy"]
-bg_color = Color(0.18039216, 0.18039216, 0.2901961, 1)
+bg_color = Color(0.9843137, 0.96862745, 0.9254902, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.33333334, 0.33333334, 0.46666667, 1)
+border_color = Color(0.6039216, 0.54509807, 0.41568628, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vlbgi"]
-bg_color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+bg_color = Color(0.8039216, 0.7490196, 0.6117647, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5h16k"]
-bg_color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+bg_color = Color(0.8039216, 0.7490196, 0.6117647, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vpftt"]
-bg_color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+bg_color = Color(0.8039216, 0.7490196, 0.6117647, 1)
 
-[node name="RunSummaryPanel" type="PanelContainer" unique_id=404216659]
+[node name="RunSummaryPanel" type="PanelContainer" unique_id=600801018]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
 script = ExtResource("1_taqa7")
 
-[node name="CenterWrap" type="CenterContainer" parent="." unique_id=81550071]
+[node name="CenterWrap" type="CenterContainer" parent="." unique_id=1068639876]
 layout_mode = 2
 
-[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=1255152457]
+[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=558068487]
 custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_qn3qy")
 
-[node name="CardMargin" type="MarginContainer" parent="CenterWrap/Card" unique_id=228959533]
+[node name="CardMargin" type="MarginContainer" parent="CenterWrap/Card" unique_id=1682386850]
 layout_mode = 2
 theme_override_constants/margin_left = 56
 theme_override_constants/margin_top = 56
 theme_override_constants/margin_right = 56
 theme_override_constants/margin_bottom = 56
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterWrap/Card/CardMargin" unique_id=562519931]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterWrap/Card/CardMargin" unique_id=617682281]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="TitleLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=954049336]
+[node name="TitleLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=137814582]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 60
 text = "RUN COMPLETE"
 horizontal_alignment = 1
 
-[node name="TitleRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=695045937]
+[node name="TitleRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1590705502]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_vlbgi")
 
-[node name="MarginLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1050587115]
+[node name="MarginLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1044458103]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="StandingLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=195532109]
+[node name="StandingLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=2010759274]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="StandingLostLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=548335350]
+[node name="StandingLostLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=643302201]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="WalkoutsLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1838047247]
+[node name="WalkoutsLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1465359820]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="StreakLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1326784476]
+[node name="StreakLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=199932572]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="ComboMultiplierLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1642617169]
+[node name="ComboMultiplierLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1197482613]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 
-[node name="TotalRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=962816628]
+[node name="TotalRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1375585013]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5h16k")
 
-[node name="TotalLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=2138251618]
+[node name="TotalLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1150604525]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
-theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
+theme_override_colors/font_color = Color(0.18431373, 0.41960785, 0.24705882, 1)
 horizontal_alignment = 1
 
-[node name="ButtonRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1971573311]
+[node name="ButtonRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=830431052]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_vpftt")
 
-[node name="ButtonWrap" type="CenterContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=139120003]
+[node name="ButtonWrap" type="CenterContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=603924128]
 layout_mode = 2
 
-[node name="RestartButton" type="Button" parent="CenterWrap/Card/CardMargin/VBoxContainer/ButtonWrap" unique_id=608331800]
+[node name="RestartButton" type="Button" parent="CenterWrap/Card/CardMargin/VBoxContainer/ButtonWrap" unique_id=1238820718]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 84)
 layout_mode = 2

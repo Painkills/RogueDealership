@@ -412,6 +412,11 @@ func set_active(on: bool) -> void:
 func set_hud_dimmed(dimmed: bool) -> void:
 	_hud_dimmed = dimmed
 	_side_panel.visible = not dimmed
+	# The shift's manila strip is opaque now, where its bare numbers used to
+	# float over whatever was beneath them - over the deck viewer it would be a
+	# folder lying across the top of someone else's screen.
+	(%TopStrip as Control).visible = not dimmed
+	(%TopBar as Control).visible = not dimmed
 	_render()
 
 func _all_zones() -> Array:
@@ -457,7 +462,7 @@ func _last_customer_chair() -> int:
 ## still say why - "the rules never say no" only holds if the player hears it.
 func _apply(res: Result) -> void:
 	if not res.ok:
-		_event_log.append_text("[color=red]%s[/color]\n" % res.msg)
+		_event_log.append_text("[color=%s]%s[/color]\n" % [Palette.hex(&"alert"), res.msg])
 	_let_time_pass_on_an_empty_floor()
 	_render()
 	if _shift.is_over():
@@ -924,7 +929,7 @@ func _drain_log() -> void:
 		_event_log.append_text(line + "\n")
 	_events_seen = _shift.events.size()
 	for entry in _shift.action_log.slice(_actions_seen):
-		var color := "red" if entry["floor_wide"] else "purple"
+		var color := Palette.hex(&"alert") if entry["floor_wide"] else Palette.hex(&"action")
 		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
 			% [color, entry["customer"], entry["key"], entry["name"],
 				", ".join(entry["descriptions"])])
@@ -1072,7 +1077,7 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 	if command == DropRouter.IGNORE:
 		return
 	if command == DropRouter.NONE:
-		_event_log.append_text("[color=red]%s[/color]\n" % plan["reason"])
+		_event_log.append_text("[color=%s]%s[/color]\n" % [Palette.hex(&"alert"), plan["reason"]])
 		_render()
 		return
 
@@ -1086,8 +1091,8 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 	# actions, and a Karen's DiscardHand can take the very card being dragged.
 	var idx := CardIndex.of(_shift, face.uid)
 	if idx == -1:
-		_event_log.append_text(
-			"[color=red]That card left your hand before you could play it.[/color]\n")
+		_event_log.append_text("[color=%s]That card left your hand before you could play it.[/color]\n"
+			% Palette.hex(&"alert"))
 		_render()
 		return
 

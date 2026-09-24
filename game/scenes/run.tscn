@@ -13,21 +13,21 @@
 [ext_resource type="Script" path="res://scripts/view/deck_viewer.gd" id="11_w0t45"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_14ick"]
-bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8r1wq"]
-bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cuait"]
-bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
-bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
 
-[node name="Run" type="Node" unique_id=1681762179]
+[node name="Run" type="Node" unique_id=1501588062]
 script = ExtResource("1_qsc0m")
 
-[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1475883899 instance=ExtResource("2_s3ewl")]
+[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1098344221 instance=ExtResource("2_s3ewl")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -35,10 +35,10 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("3_o3bs3")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=741418634 instance=ExtResource("4_21lnt")]
+[node name="ShiftView" type="Node3D" parent="." unique_id=1487713298 instance=ExtResource("4_21lnt")]
 script = ExtResource("5_pgpyo")
 
-[node name="ShopView" type="PanelContainer" parent="." unique_id=1530814660 instance=ExtResource("6_2s4kx")]
+[node name="ShopView" type="PanelContainer" parent="." unique_id=804347559 instance=ExtResource("6_2s4kx")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -46,7 +46,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8r1wq")
 script = ExtResource("7_47ec3")
 
-[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=404216659 instance=ExtResource("8_lc2vt")]
+[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=600801018 instance=ExtResource("8_lc2vt")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -54,7 +54,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
 script = ExtResource("9_53ha4")
 
-[node name="DeckViewer" type="PanelContainer" parent="." unique_id=753814634 instance=ExtResource("10_iuvi8")]
+[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1220761733 instance=ExtResource("10_iuvi8")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -62,10 +62,10 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("11_w0t45")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=897388829]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1151170276]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=132016104]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=673801229]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -76,7 +76,7 @@ offset_top = -26.0
 offset_right = -8.0
 offset_bottom = -6.0
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
+theme_override_colors/font_color = Color(0.72156864, 0.5372549, 0.22745098, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
@@ -84,7 +84,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=739066006]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=2022699250]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 56)
 anchors_preset = 1

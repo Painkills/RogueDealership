@@ -8,24 +8,24 @@ content_margin_left = 26.0
 content_margin_top = 18.0
 content_margin_right = 26.0
 content_margin_bottom = 18.0
-bg_color = Color(0.18039216, 0.18039216, 0.2901961, 1)
+bg_color = Color(0.9843137, 0.96862745, 0.9254902, 1)
 border_width_bottom = 3
-border_color = Color(0.78431374, 0.43529412, 0.8784314, 1)
+border_color = Color(0.41960785, 0.24705882, 0.627451, 1)
 
-[node name="CustomerFront" type="Control" unique_id=1988174592]
+[node name="CustomerFront" type="Control" unique_id=1860477234]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 500.0
 offset_bottom = 700.0
 
-[node name="Background" type="ColorRect" parent="." unique_id=2089223709]
+[node name="Background" type="ColorRect" parent="." unique_id=549348301]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.13333334, 0.13333334, 0.23137255, 1)
+color = Color(0.95686275, 0.9254902, 0.84705883, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1668989535]
+[node name="Margin" type="MarginContainer" parent="." unique_id=546793958]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -34,80 +34,80 @@ theme_override_constants/margin_top = 26
 theme_override_constants/margin_right = 26
 theme_override_constants/margin_bottom = 26
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1988490881]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=2085878062]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="NameLabel" type="Label" parent="Margin/Column" unique_id=539058279]
+[node name="NameLabel" type="Label" parent="Margin/Column" unique_id=394807051]
 custom_minimum_size = Vector2(0, 116)
 layout_mode = 2
 theme_override_font_sizes/font_size = 50
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Sandra Okonkwo"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=708278764]
+[node name="ArchetypeLabel" type="Label" parent="Margin/Column" unique_id=24239381]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.6901961, 0.3372549, 0.10980392, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Tech Enthusiast  [C]"
 horizontal_alignment = 1
 
-[node name="PatienceBar" type="ProgressBar" parent="Margin/Column" unique_id=1614895259]
+[node name="PatienceBar" type="ProgressBar" parent="Margin/Column" unique_id=483129215]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 max_value = 16.0
 value = 12.0
 show_percentage = false
 
-[node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=1184479540]
+[node name="PatienceLabel" type="Label" parent="Margin/Column" unique_id=1194099611]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "patience 16/16"
 horizontal_alignment = 1
 
-[node name="DemandLabel" type="Label" parent="Margin/Column" unique_id=1282326016]
+[node name="DemandLabel" type="Label" parent="Margin/Column" unique_id=854606551]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 38
-theme_override_colors/font_color = Color(0.8784314, 0.3529412, 0.3529412, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.7019608, 0.14901961, 0.11764706, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "BETTER QUOTE  3t"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="InterestGrid" type="Control" parent="Margin/Column" unique_id=1754321077]
+[node name="InterestGrid" type="Control" parent="Margin/Column" unique_id=2059035079]
 custom_minimum_size = Vector2(420, 224)
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("1_hwd5c")
 
-[node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=300126928]
+[node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=527119177]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
-theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.18431373, 0.41960785, 0.24705882, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "on the table: Anti-Theft & Key Protection
 $1,700 unsigned"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="SpeechBubble" type="Control" parent="." unique_id=1318036716]
+[node name="SpeechBubble" type="Control" parent="." unique_id=438280728]
 visible = false
 anchors_preset = 0
 offset_right = 500.0
@@ -115,17 +115,17 @@ offset_bottom = 154.0
 mouse_filter = 2
 script = ExtResource("2_i35ot")
 
-[node name="Panel" type="PanelContainer" parent="SpeechBubble" unique_id=1208320491]
+[node name="Panel" type="PanelContainer" parent="SpeechBubble" unique_id=1612868845]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_v51p4")
 
-[node name="Label" type="Label" parent="SpeechBubble/Panel" unique_id=2006708240]
+[node name="Label" type="Label" parent="SpeechBubble/Panel" unique_id=553008324]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
 text = "\"The place on Dundas does this for less.\""
 horizontal_alignment = 1
 vertical_alignment = 1

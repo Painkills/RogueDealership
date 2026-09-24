@@ -19,9 +19,28 @@ func _init() -> void:
 	var bg := ColorRect.new()
 	bg.name = "Background"
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.color = Palette.color(&"neutral_2")
+	bg.color = Palette.color(&"ink")
 	root.add_child(bg)
 	bg.owner = root
+
+	# A brass rule inset from the edge, the way a printed card back is framed,
+	# with a finer one inside it.
+	for spec in [["Frame", 24, 8], ["FrameInner", 44, 3]]:
+		var frame := Panel.new()
+		frame.name = spec[0]
+		frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+		frame.offset_left = spec[1]
+		frame.offset_top = spec[1]
+		frame.offset_right = -spec[1]
+		frame.offset_bottom = -spec[1]
+		var rule := StyleBoxFlat.new()
+		rule.draw_center = false
+		rule.border_color = Palette.color(&"brass")
+		rule.set_border_width_all(spec[2])
+		rule.set_corner_radius_all(18)
+		frame.add_theme_stylebox_override("panel", rule)
+		root.add_child(frame)
+		frame.owner = root
 
 	# Centered, not stretched - CardTypeIcon.draw() scales to whatever rect it
 	# is handed with no aspect correction, the same reason BodyIcon on the

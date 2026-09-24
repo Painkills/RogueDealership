@@ -44,6 +44,24 @@ func test_the_vendored_card3d_addon_is_present_and_loadable() -> void:
 	h.check("the MIT licence travelled with the vendored code",
 		FileAccess.file_exists("res://addons/card_3d/LICENSE"))
 
+func test_the_whole_game_wears_the_office_theme() -> void:
+	## One theme for every screen, built from Palette by tools/build_theme.gd.
+	## Without it every Button reverts to the engine's dark grey slab - legible
+	## on the old dark panels, and a grey brick on paper.
+	var path: String = ProjectSettings.get_setting("gui/theme/custom", "")
+	h.eq("the project theme is the office one", path, "res://theme/fi_theme.tres")
+	var theme := load(path) as Theme if path != "" else null
+	h.check("and it loads", theme != null)
+	if theme == null:
+		return
+	h.check("buttons are stamps: a bordered sheet of paper",
+		theme.get_stylebox("normal", "Button") is StyleBoxFlat
+			and (theme.get_stylebox("normal", "Button") as StyleBoxFlat).bg_color
+				== Palette.color(&"paper"))
+	h.eq("stamped in ink", theme.get_color("font_color", "Button"), Palette.color(&"ink"))
+	h.eq("and every label is ink unless it says otherwise",
+		theme.get_color("font_color", "Label"), Palette.color(&"text"))
+
 func test_the_game_boots_into_the_run_not_a_bare_shift() -> void:
 	## G2 made the run the entry point. A main scene that silently reverts to
 	## shift.tscn would still play - one shift, forever, with no shop - which is

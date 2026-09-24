@@ -15,10 +15,29 @@ func setup(pool: ShiftProfilePool) -> void:
 	for profile in pool.profiles:
 		_row.add_child(_build_card(profile))
 
+## Each shift is a sheet on the desk - a paper card with an inked edge - so
+## the three read as three things to pick up rather than three columns of text
+## floating on the blotter.
 func _build_card(profile: ShiftProfile) -> Control:
+	var sheet := PanelContainer.new()
+	var paper := StyleBoxFlat.new()
+	paper.bg_color = Palette.color(&"panel_hi")
+	paper.border_color = Palette.color(&"neutral_3")
+	paper.set_border_width_all(2)
+	paper.set_corner_radius_all(4)
+	paper.content_margin_left = 24
+	paper.content_margin_right = 24
+	paper.content_margin_top = 22
+	paper.content_margin_bottom = 22
+	paper.shadow_color = Color(0, 0, 0, 0.25)
+	paper.shadow_size = 6
+	paper.shadow_offset = Vector2(2, 4)
+	sheet.add_theme_stylebox_override("panel", paper)
+
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
 	col.custom_minimum_size = Vector2(320, 0)
+	sheet.add_child(col)
 
 	var name_label := Label.new()
 	name_label.text = profile.display_name
@@ -50,4 +69,4 @@ func _build_card(profile: ShiftProfile) -> Control:
 	btn.pressed.connect(func(): chosen.emit(profile))
 	col.add_child(btn)
 
-	return col
+	return sheet

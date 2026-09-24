@@ -104,13 +104,18 @@ func _draw() -> void:
 ## The badge shares its row's ground and its row's lit/unlit tint, so it reads
 ## as part of the row it labels rather than a caption stuck beside it.
 func _draw_row_icon(row: Rect2, cat: Category, in_top_category: bool) -> void:
-	var ground: Color = Palette.color(&"panel_hi") if in_top_category \
-		else Palette.color(&"neutral_1")
+	var ground: Color = _ground(in_top_category)
 	draw_rect(row, ground, true)
 	var inset := row.grow(-minf(row.size.x, row.size.y) * 0.14)
 	var tint: Color = Palette.color(&"text") if in_top_category \
 		else Palette.color(&"text_dim")
 	CategoryIcon.draw(self, inset, cat.id, tint)
+
+## A lit row is bright paper; every other row is a shade darker, like a form's
+## blank boxes. It used to be near-black, which on a cream card read as a hole
+## punched through it rather than a box waiting to be filled in.
+static func _ground(in_top_category: bool) -> Color:
+	return Palette.color(&"panel_hi") if in_top_category else Palette.color(&"paper_shade")
 
 ## Steps down by 1 from max until the string fits max_width, floored at min -
 ## "Value Retention" and "Affordability" are wider than the cell at
@@ -132,9 +137,7 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 	# Ground first, so every cell reads as the same kind of thing whatever else
 	# is true of it. An unknown cell is not empty space - it is a slot you have
 	# not filled in, and it should look like one.
-	var ground: Color = Palette.color(&"panel_hi") if in_top_category \
-		else Palette.color(&"neutral_1")
-	draw_rect(cell, ground, true)
+	draw_rect(cell, _ground(in_top_category), true)
 
 	if sold:
 		# Taken. The strongest state on the card, because it is the only one

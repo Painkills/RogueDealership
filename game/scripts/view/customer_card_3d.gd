@@ -22,6 +22,8 @@ var _viewport: SubViewport
 var _name: Label
 var _archetype: Label
 var _patience_bar: ProgressBar
+## Owned per card, so recolouring one customer's bar never repaints another's.
+var _patience_fill := StyleBoxFlat.new()
 var _patience: Label
 var _demand: Label
 var _grid: InterestGrid
@@ -55,6 +57,8 @@ func _bind() -> void:
 	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
 	_bubble = $FrontViewport/CustomerFront/SpeechBubble
+	_patience_fill.set_corner_radius_all(3)
+	_patience_bar.add_theme_stylebox_override("fill", _patience_fill)
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
@@ -100,7 +104,10 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_patience_bar.visible = true
 	_patience_bar.max_value = c.max_patience
 	_patience_bar.value = c.patience
-	_patience_bar.modulate = Format.patience_color(c.patience, c.max_patience)
+	# The FILL carries the colour, not the whole bar. Modulating the bar tinted
+	# its empty trough too, which on paper turned the part of the patience you
+	# have already lost the same muddy green as the part you still have.
+	_patience_fill.bg_color = Format.patience_color(c.patience, c.max_patience)
 	_patience.text = "patience %d/%d" % [c.patience, c.max_patience]
 	_patience.add_theme_color_override("font_color",
 		Palette.color(&"alert") if c.leaving_soon() else Palette.color(&"text"))

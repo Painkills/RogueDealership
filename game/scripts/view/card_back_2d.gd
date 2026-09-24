@@ -1,9 +1,10 @@
 class_name CardBack2D extends Control
-## The face-down side of a card: one fixed, muted color plus one car,
-## the same for every card regardless of type - a face-down card in the
-## draw or discard pile is not a decision you are looking at, so unlike the
-## front it has nothing to tell apart. setup() takes no argument for exactly
-## that reason: there is nothing per-CardInstance left to show here.
+## The face-down side of a card: the dealership's own card stock - navy, a
+## brass rule inset from the edge, and one brass car - the same for every card
+## regardless of type. A face-down card in the draw or discard pile is not a
+## decision you are looking at, so unlike the front it has nothing to tell
+## apart. setup() takes no argument for exactly that reason: there is nothing
+## per-CardInstance left to show here.
 
 var _background: ColorRect
 var _icon: CardTypeIconControl
@@ -22,9 +23,8 @@ func _bind() -> void:
 
 func setup() -> void:
 	_bind()
-	# neutral_2, not accent/action - those read fine as a small front badge but
-	# are too saturated to sit behind a large glyph across the WHOLE back of
-	# every card in the deck. text_dim on top of it for a soft, low-contrast
-	# glyph rather than a loud one.
-	_background.color = Palette.color(&"neutral_2")
-	_icon.set_type(true, Palette.color(&"text_dim"))
+	# Navy stock with brass on it, the one pairing in the office that says
+	# "ours" - and dark, so a face-down pile reads at a glance as the opposite
+	# of the cream faces you are actually meant to be reading.
+	_background.color = Palette.color(&"ink")
+	_icon.set_type(true, Palette.color(&"brass"))

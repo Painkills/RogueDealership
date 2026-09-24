@@ -116,16 +116,17 @@ func test_the_back_looks_the_same_whether_the_card_is_product_or_support() -> vo
 	product.setup(_card(&"vsc"))
 	var product_back := product.get_node(^"BackViewport/CardBack") as CardBack2D
 	h.check("the back shows the car, even though this is a product", product_back._icon._is_product)
-	h.eq("in the muted, universal back color",
-		product_back._background.color, Palette.color(&"neutral_2"))
+	h.eq("on the dealership's own navy stock, the one universal back",
+		product_back._background.color, Palette.color(&"ink"))
+	h.eq("with the car in brass", product_back._icon._color, Palette.color(&"brass"))
 	product.free()
 
 	var support := _instance()
 	support.setup(_card(&"discount"))
 	var support_back := support.get_node(^"BackViewport/CardBack") as CardBack2D
 	h.check("a support card's back looks identical", support_back._icon._is_product)
-	h.eq("the identical muted color",
-		support_back._background.color, Palette.color(&"neutral_2"))
+	h.eq("the identical navy stock",
+		support_back._background.color, Palette.color(&"ink"))
 	support.free()
 
 func test_a_support_cards_body_carries_no_badge() -> void:

@@ -3,56 +3,56 @@
 [ext_resource type="Script" path="res://scripts/view/pull_picker.gd" id="1_ml4ai"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btk04"]
-bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1vpl4"]
 content_margin_left = 40.0
 content_margin_top = 40.0
 content_margin_right = 40.0
 content_margin_bottom = 40.0
-bg_color = Color(0.18039216, 0.18039216, 0.2901961, 1)
+bg_color = Color(0.9843137, 0.96862745, 0.9254902, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.33333334, 0.33333334, 0.46666667, 1)
+border_color = Color(0.6039216, 0.54509807, 0.41568628, 1)
 
-[node name="PullPicker" type="PanelContainer" unique_id=1401231845]
+[node name="PullPicker" type="PanelContainer" unique_id=611099024]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_btk04")
 script = ExtResource("1_ml4ai")
 
-[node name="CenterWrap" type="CenterContainer" parent="." unique_id=366091509]
+[node name="CenterWrap" type="CenterContainer" parent="." unique_id=1959193738]
 layout_mode = 2
 
-[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=1342372396]
+[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=583471432]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_1vpl4")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterWrap/Card" unique_id=1364135138]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterWrap/Card" unique_id=104312650]
 layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="PullTitleLabel" type="Label" parent="CenterWrap/Card/VBoxContainer" unique_id=137242453]
+[node name="PullTitleLabel" type="Label" parent="CenterWrap/Card/VBoxContainer" unique_id=1608334856]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
 text = "CHOOSE ONE"
 horizontal_alignment = 1
 
-[node name="PullRow" type="HBoxContainer" parent="CenterWrap/Card/VBoxContainer" unique_id=115047411]
+[node name="PullRow" type="HBoxContainer" parent="CenterWrap/Card/VBoxContainer" unique_id=1064830976]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="CancelWrap" type="CenterContainer" parent="CenterWrap/Card/VBoxContainer" unique_id=404750814]
+[node name="CancelWrap" type="CenterContainer" parent="CenterWrap/Card/VBoxContainer" unique_id=25147784]
 layout_mode = 2
 
-[node name="PullCancelButton" type="Button" parent="CenterWrap/Card/VBoxContainer/CancelWrap" unique_id=1145144770]
+[node name="PullCancelButton" type="Button" parent="CenterWrap/Card/VBoxContainer/CancelWrap" unique_id=1377335679]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 64)
 layout_mode = 2

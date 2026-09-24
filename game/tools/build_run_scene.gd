@@ -63,7 +63,9 @@ func _init() -> void:
 	badge.name = "BuildLabel"
 	badge.text = BuildInfo.LABEL
 	badge.add_theme_font_size_override("font_size", 18)
-	badge.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	# Brass: the one mid-tone in the office, so it reads over the dark carpet
+	# of the floor and the cream of every menu alike.
+	badge.add_theme_color_override("font_color", Palette.color(&"brass"))
 	badge.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
 	badge.add_theme_constant_override("shadow_offset_x", 2)
 	badge.add_theme_constant_override("shadow_offset_y", 2)

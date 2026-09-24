@@ -3,34 +3,34 @@
 [ext_resource type="Script" path="res://scripts/view/shift_picker_screen.gd" id="1_1bub3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_14ick"]
-bg_color = Color(0.101960786, 0.101960786, 0.18039216, 1)
+bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
 
-[node name="ShiftPickerScreen" type="PanelContainer" unique_id=1475883899]
+[node name="ShiftPickerScreen" type="PanelContainer" unique_id=1626384988]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("1_1bub3")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1656532169]
+[node name="Margin" type="MarginContainer" parent="." unique_id=2071019539]
 layout_mode = 2
 theme_override_constants/margin_left = 48
 theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 48
 theme_override_constants/margin_bottom = 48
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1844456710]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=480872117]
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=2010861909]
+[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=1945773773]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
 text = "PICK YOUR SHIFT"
 horizontal_alignment = 1
 
-[node name="ProfileRow" type="HBoxContainer" parent="Margin/Column" unique_id=448129093]
+[node name="ProfileRow" type="HBoxContainer" parent="Margin/Column" unique_id=1744832423]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 40

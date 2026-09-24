@@ -204,7 +204,8 @@ func _label(node_name: String, size: int, color: Color) -> Label:
 	l.name = node_name
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
-	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
-	l.add_theme_constant_override("shadow_offset_x", 3)
-	l.add_theme_constant_override("shadow_offset_y", 3)
+	# A faint ink shadow, not a hard black one - see build_card_front_scene.gd.
+	l.add_theme_color_override("font_shadow_color", Color(Palette.color(&"ink"), 0.25))
+	l.add_theme_constant_override("shadow_offset_x", 2)
+	l.add_theme_constant_override("shadow_offset_y", 2)
 	return l

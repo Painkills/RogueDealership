@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/view/shop_card_button.gd" id="1_0tlat"]
 [ext_resource type="PackedScene" path="res://scenes/cards/card_front_2d.tscn" id="2_2vvp6"]
 
-[node name="ShopCardButton" type="Button" unique_id=1519433816]
+[node name="ShopCardButton" type="Button" unique_id=961289717]
 custom_minimum_size = Vector2(180, 252)
 clip_contents = true
 offset_right = 180.0
@@ -11,18 +11,18 @@ offset_bottom = 252.0
 flat = true
 script = ExtResource("1_0tlat")
 
-[node name="TextureRect" type="TextureRect" parent="." unique_id=485013061]
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1495862879]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="SubViewport" type="SubViewport" parent="." unique_id=754375356]
+[node name="SubViewport" type="SubViewport" parent="." unique_id=2023662816]
 disable_3d = true
 size = Vector2i(500, 700)
 render_target_update_mode = 4
 
-[node name="CardFront" type="Control" parent="SubViewport" unique_id=894307304 instance=ExtResource("2_2vvp6")]
+[node name="CardFront" type="Control" parent="SubViewport" unique_id=1793634678 instance=ExtResource("2_2vvp6")]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0

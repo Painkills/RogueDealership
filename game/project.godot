@@ -26,6 +26,7 @@ window/stretch/mode="canvas_items"
 
 [gui]
 
+theme/custom="res://theme/fi_theme.tres"
 theme/default_font_size=26
 
 [rendering]

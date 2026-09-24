@@ -171,6 +171,11 @@ const LOG_RECT := Rect2(18, 79, 422, 651)
 ## act on. drive_shift.gd pins both edges.
 const ACTION_RECT := Rect2(1560, 300, 330, 340)
 const ACTION_BUTTON := Vector2(330, 100)
+## The manila strip the shift's numbers sit on. The log starts below it.
+const TOP_STRIP_HEIGHT := 66.0
+## Control.layout_mode's ANCHORS value, which Godot does not expose as a
+## constant - see _cover_the_hud().
+const LAYOUT_MODE_ANCHORS := 1
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -202,7 +207,9 @@ func _init() -> void:
 	light.position = Vector3(0, 12, 18)
 	light.rotation_degrees = Vector3(-38, -22, 0)
 	light.light_color = Color("fff1dc")
-	light.light_energy = 1.0
+	# Low enough that cream stock stays cream: key plus fill any brighter
+	# clipped every card face to flat white.
+	light.light_energy = 0.8
 	light.shadow_enabled = true
 	light.shadow_opacity = 0.55
 	light.shadow_blur = 3.0
@@ -214,7 +221,7 @@ func _init() -> void:
 	env.background_color = Palette.color(&"neutral_1")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("b9ad98")
-	env.ambient_light_energy = 0.55
+	env.ambient_light_energy = 0.45
 	var we := WorldEnvironment.new()
 	we.name = "WorldEnvironment"
 	we.environment = env
@@ -307,8 +314,11 @@ func _init() -> void:
 		# currently seated with can still have something unsigned at risk, and
 		# the old spot (behind the product) was never visible for them at all.
 		# Near the bottom, clear of the name/archetype/patience row up top.
+		# Stamp red with the words knocked out in paper: the loudest thing on
+		# the table, as it should be when the bell is about to take what is
+		# unsigned.
 		_slide_flag(who, root, "CloseSoonFlag%d" % i, "CLOSE SOON!",
-			Palette.color(&"alert"), -1.3)
+			Palette.color(&"stamp"), Palette.color(&"paper"), -1.3)
 
 		_detail(detail_scene, "CustomerDetail%d" % i,
 			Vector3(0.0, 0.0, BACK_Z), flip, root)
@@ -349,8 +359,8 @@ func _init() -> void:
 		_chair_pad(i, seat, root)
 		# Just the highlight now. The words live on the HUD's TableNote%d, as
 		# the second half of the empty-table note, so the two options read as
-		# one card offering both.
-		_drag_hint(chair, root, "CloseHint%d" % i, Palette.color(&"margin"), false)
+		# one card offering both. Stamp red, like the words and the CLOSE button.
+		_drag_hint(chair, root, "CloseHint%d" % i, Palette.color(&"stamp"), false)
 
 		# A sticky-note-style tag, tucked invisibly behind the product slot
 		# until shift_controller.gd's own _slide_flag() tweens it clear to the
@@ -358,8 +368,9 @@ func _init() -> void:
 		# direction. CLOSE SOON used to live here too, but it needs to be
 		# readable for a customer you are not currently seated with - see the
 		# Customer%d loop below instead.
+		# A yellow sticky note in ink, the way you would flag a page for them.
 		_slide_flag(chair, root, "OfferFlag%d" % i, "DROP ON CUSTOMER\nTO OFFER",
-			Palette.color(&"appeal"), 0.0)
+			Palette.color(&"sticky"), Palette.color(&"ink"), 0.0)
 
 		# A drop target that never actually holds a card - CardHomes never
 		# assigns anything here, so a dropped offer always snaps back to
@@ -398,8 +409,10 @@ func _init() -> void:
 	# appearing at some other height.
 	var discard := _collection(collection_scene, "Discard", DISCARD_STOWED, cam, root)
 	discard.card_layout_strategy = PileCardLayout.new()
-	_mark(discard, root, Palette.color(&"action"))
-	_drag_hint(discard, root, "DropDragHint", Palette.color(&"action"))
+	# A pale outline like the empty product slot's, so an empty discard reads
+	# as an empty place to put something rather than a murky purple block.
+	_mark(discard, root, Palette.color(&"paper"), 0.2)
+	_drag_hint(discard, root, "DropDragHint", Palette.color(&"stamp"))
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
@@ -636,7 +649,7 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, tint: Color,
 ## shown, mirroring DetailCard3D's own reveal() - just the opposite
 ## direction, and a plain position tween rather than a card turning over.
 func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String,
-		tint: Color, y: float) -> void:
+		tint: Color, text_color: Color, y: float) -> void:
 	var flag := Node3D.new()
 	flag.name = node_name
 	flag.position = Vector3(0, y, 0.05)
@@ -645,10 +658,10 @@ func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String
 	zone.add_child(flag)
 	flag.owner = owner_root
 
-	# A solid, opaque tag - the translucent slab + tinted text _drag_hint's
-	# OFFER/DROP hints use read as too faint here, on something meant to
-	# read at a glance rather than while your attention is already on a drag.
-	# White text on the solid tint reads far better than the tint on itself.
+	# A solid, opaque tag - a translucent slab read as too faint here, on
+	# something meant to read at a glance rather than while your attention is
+	# already on a drag. text_color is chosen against the tint, not the table:
+	# ink on a yellow sticky note, paper knocked out of a red stamp.
 	var slab := QuadMesh.new()
 	slab.size = Vector2(1.8, 0.7)
 	var mat := StandardMaterial3D.new()
@@ -666,9 +679,10 @@ func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String
 	label.text = text
 	label.font_size = 24
 	label.pixel_size = 0.005
-	label.modulate = Palette.color(&"text")
-	label.outline_size = 8
-	label.outline_modulate = Palette.color(&"neutral_1")
+	label.modulate = text_color
+	# No outline: on a solid note there is nothing to separate the words from
+	# but the note itself, and an outline only thickens them into a blur.
+	label.outline_size = 0
 	label.shaded = false
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
@@ -717,9 +731,30 @@ func _build_hud(root: Node) -> void:
 		_table_note(hints, root, i)
 
 	# --- the shift bar, always ------------------------------------------
+	# The deal jacket: a manila strip across the top of the screen that the
+	# shift's numbers are written on, so they read as ink on a folder rather
+	# than as white text floating over the office wall.
+	var strip := PanelContainer.new()
+	strip.name = "TopStrip"
+	strip.position = Vector2.ZERO
+	strip.size = Vector2(1920, TOP_STRIP_HEIGHT)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.unique_name_in_owner = true
+	var strip_style := StyleBoxFlat.new()
+	strip_style.bg_color = Palette.color(&"manila")
+	strip_style.border_color = Palette.color(&"brass_dark")
+	strip_style.border_width_bottom = 3
+	strip_style.shadow_color = Color(0, 0, 0, 0.35)
+	strip_style.shadow_size = 6
+	strip_style.shadow_offset = Vector2(0, 3)
+	strip.add_theme_stylebox_override("panel", strip_style)
+	hud.add_child(strip)
+	strip.owner = root
+
 	var top := HBoxContainer.new()
 	top.name = "TopBar"
-	top.position = Vector2(28, 18)
+	top.position = Vector2(28, 14)
+	top.unique_name_in_owner = true
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_theme_constant_override("separation", 48)
 	hud.add_child(top)
@@ -820,39 +855,101 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(actions)
 	actions.owner = root
 
-	for spec in [["OfferButton", "OFFER"], ["DropButton", "DROP"], ["CloseButton", "CLOSE"]]:
+	# Rubber stamps, each in its own ink: OFFER in the house navy, DROP in a
+	# weaker grey-navy since it throws a product away, and CLOSE in stamp red -
+	# the one that actually signs the deal, and the same red the empty table's
+	# "double-click to close" is written in.
+	for spec in [["OfferButton", "OFFER", &"ink"], ["DropButton", "DROP", &"ink_dim"],
+			["CloseButton", "CLOSE", &"stamp"]]:
 		var b := Button.new()
 		b.name = spec[0]
 		b.text = spec[1]
 		b.custom_minimum_size = ACTION_BUTTON
 		b.add_theme_font_size_override("font_size", 30)
+		StampStyle.ink(b, Palette.color(spec[2]))
 		b.unique_name_in_owner = true
 		actions.add_child(b)
 		b.owner = root
 
 	# --- yours: the log, left, stopping short of the draw pile ------------
+	# A clipboard: a hardboard back with a brass clip at the top, and the log
+	# written on the sheet of paper it holds.
 	var panel := PanelContainer.new()
 	panel.name = "SidePanel"
 	panel.position = LOG_RECT.position
 	panel.size = LOG_RECT.size
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.unique_name_in_owner = true
+	var board := StyleBoxFlat.new()
+	board.bg_color = Palette.color(&"board")
+	board.set_corner_radius_all(12)
+	board.content_margin_left = 12
+	board.content_margin_right = 12
+	board.content_margin_top = 8
+	board.content_margin_bottom = 12
+	board.shadow_color = Color(0, 0, 0, 0.45)
+	board.shadow_size = 8
+	board.shadow_offset = Vector2(2, 4)
+	panel.add_theme_stylebox_override("panel", board)
 	hud.add_child(panel)
 	panel.owner = root
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
+	col.add_theme_constant_override("separation", 6)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(col)
 	col.owner = root
 
+	var clip_wrap := CenterContainer.new()
+	clip_wrap.name = "ClipWrap"
+	clip_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(clip_wrap)
+	clip_wrap.owner = root
+	var clip := PanelContainer.new()
+	clip.name = "Clip"
+	clip.custom_minimum_size = Vector2(150, 26)
+	clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var brass := StyleBoxFlat.new()
+	brass.bg_color = Palette.color(&"brass")
+	brass.border_color = Palette.color(&"brass_dark")
+	brass.set_border_width_all(2)
+	brass.set_corner_radius_all(6)
+	clip.add_theme_stylebox_override("panel", brass)
+	clip_wrap.add_child(clip)
+	clip.owner = root
+
+	var sheet := PanelContainer.new()
+	sheet.name = "Sheet"
+	sheet.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sheet.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var paper := StyleBoxFlat.new()
+	paper.bg_color = Palette.color(&"paper")
+	paper.set_corner_radius_all(2)
+	paper.content_margin_left = 14
+	paper.content_margin_right = 12
+	paper.content_margin_top = 10
+	paper.content_margin_bottom = 10
+	sheet.add_theme_stylebox_override("panel", paper)
+	col.add_child(sheet)
+	sheet.owner = root
+
+	var lines := VBoxContainer.new()
+	lines.name = "SheetColumn"
+	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sheet.add_child(lines)
+	lines.owner = root
+	col = lines
+
 	var log_title := Label.new()
 	log_title.name = "LogTitle"
 	log_title.text = "SHIFT LOG"
+	log_title.add_theme_font_size_override("font_size", 22)
 	log_title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	log_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(log_title)
 	log_title.owner = root
+	_rule(col, root, "TitleRule")
 
 	var log_box := RichTextLabel.new()
 	log_box.name = "EventLog"
@@ -871,7 +968,7 @@ func _build_hud(root: Node) -> void:
 	var report: Control = (load(REPORT) as PackedScene).instantiate()
 	report.name = "ReportOverlay"
 	report.visible = false
-	report.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_cover_the_hud(report)
 	report.unique_name_in_owner = true
 	hud.add_child(report)
 	report.owner = root
@@ -883,10 +980,23 @@ func _build_hud(root: Node) -> void:
 	var pull_picker: Control = (load(PULL_PICKER) as PackedScene).instantiate()
 	pull_picker.name = "PullPicker"
 	pull_picker.visible = false
-	pull_picker.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_cover_the_hud(pull_picker)
 	pull_picker.unique_name_in_owner = true
 	hud.add_child(pull_picker)
 	pull_picker.owner = root
+
+## Stretches an instanced overlay over the whole HUD - and says so in ANCHORS
+## layout mode, explicitly.
+##
+## Left to itself the packer saved these two instances in POSITION mode with
+## their full-rect anchors alongside. The text scene applies both, in order, so
+## every headless run saw a full-screen report. The Web export's binary scene
+## drops the anchor overrides as redundant with the instanced scene's own - and
+## switching a Control INTO position mode resets its anchors to the top-left,
+## so on the Web the report came up at its minimum size in the corner.
+func _cover_the_hud(overlay: Control) -> void:
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.set(&"layout_mode", LAYOUT_MODE_ANCHORS)
 
 ## A paper tag on the HUD that follows `anchor` on the table. `lines` is one
 ## [name, text, font size, palette role] per row, top to bottom. Starts hidden:

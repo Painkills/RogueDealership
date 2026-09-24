@@ -3,20 +3,20 @@
 [ext_resource type="Script" path="res://scripts/view/card_type_icon_control.gd" id="1_20uip"]
 [ext_resource type="Script" path="res://scripts/view/category_icon_control.gd" id="2_ybcwr"]
 
-[node name="CardFront" type="Control" unique_id=456738214]
+[node name="CardFront" type="Control" unique_id=1793634678]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 500.0
 offset_bottom = 700.0
 
-[node name="Background" type="ColorRect" parent="." unique_id=91539997]
+[node name="Background" type="ColorRect" parent="." unique_id=1804527694]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.13333334, 0.13333334, 0.23137255, 1)
+color = Color(0.95686275, 0.9254902, 0.84705883, 1)
 
-[node name="Inset" type="ColorRect" parent="." unique_id=1602987354]
+[node name="Inset" type="ColorRect" parent="." unique_id=2078895081]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -24,9 +24,9 @@ offset_left = 10.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = -10.0
-color = Color(0.18039216, 0.18039216, 0.2901961, 1)
+color = Color(0.9843137, 0.96862745, 0.9254902, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=243762909]
+[node name="Margin" type="MarginContainer" parent="." unique_id=1056551457]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -35,105 +35,105 @@ theme_override_constants/margin_top = 34
 theme_override_constants/margin_right = 34
 theme_override_constants/margin_bottom = 34
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=840818891]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1601202245]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="KindRow" type="HBoxContainer" parent="Margin/Column" unique_id=1758255706]
+[node name="KindRow" type="HBoxContainer" parent="Margin/Column" unique_id=829895383]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="KindIcon" type="Control" parent="Margin/Column/KindRow" unique_id=896140978]
+[node name="KindIcon" type="Control" parent="Margin/Column/KindRow" unique_id=424882211]
 custom_minimum_size = Vector2(34, 34)
 layout_mode = 2
 script = ExtResource("1_20uip")
 
-[node name="KindLabel" type="Label" parent="Margin/Column/KindRow" unique_id=546689431]
+[node name="KindLabel" type="Label" parent="Margin/Column/KindRow" unique_id=1761783505]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0.9490196, 0.57254905, 0.3529412, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.6901961, 0.3372549, 0.10980392, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "PRODUCT"
 
-[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=2088294785]
+[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=1084464921]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=1006176666]
+[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=161496306]
 custom_minimum_size = Vector2(0, 130)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 46
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "Anti-Theft & Key Protection"
 autowrap_mode = 2
 
-[node name="CostLabel" type="Label" parent="Margin/Column/Header" unique_id=1080093282]
+[node name="CostLabel" type="Label" parent="Margin/Column/Header" unique_id=1176584914]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
-theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "3t"
 horizontal_alignment = 2
 
-[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=109364573]
+[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=127940384]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
-color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+color = Color(0.8039216, 0.7490196, 0.6117647, 1)
 
-[node name="BodyRow" type="VBoxContainer" parent="Margin/Column" unique_id=603625581]
+[node name="BodyRow" type="VBoxContainer" parent="Margin/Column" unique_id=325428181]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=1296162154]
+[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=1127157135]
 visible = false
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("2_ybcwr")
 
-[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=1894498410]
+[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=408243441]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 38
-theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "reveals their Line and the category of their number one"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="FlavorRule" type="ColorRect" parent="Margin/Column" unique_id=1996691185]
+[node name="FlavorRule" type="ColorRect" parent="Margin/Column" unique_id=581707656]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
-color = Color(0.22745098, 0.22745098, 0.3529412, 1)
+color = Color(0.8039216, 0.7490196, 0.6117647, 1)
 
-[node name="FlavorLabel" type="Label" parent="Margin/Column" unique_id=1031308146]
+[node name="FlavorLabel" type="Label" parent="Margin/Column" unique_id=1661514532]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0.6039216, 0.6039216, 0.6901961, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."
 autowrap_mode = 2
 
-[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=439810867]
+[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=955758469]
 layout_mode = 2
 theme_override_font_sizes/font_size = 68
-theme_override_colors/font_color = Color(0.9098039, 0.75686276, 0.3529412, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_color = Color(0.18431373, 0.41960785, 0.24705882, 1)
+theme_override_colors/font_shadow_color = Color(0.12156863, 0.16470589, 0.26666668, 0.25)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 text = "$1,600"
 horizontal_alignment = 1

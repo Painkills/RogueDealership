@@ -359,6 +359,13 @@ func test_no_hud_control_can_swallow_a_click_meant_for_the_table() -> void:
 			offenders.append("%s (%s)" % [c.name, c.get_class()])
 	h.check("nothing over the table blocks picking, found: %s" % ", ".join(offenders),
 		offenders.is_empty())
+	# The Web build showed the report as a box in the corner: saved in POSITION
+	# layout mode, the export's binary scene lost its full-rect anchors (see
+	# build_shift_scene.gd's _cover_the_hud()). Headless runs load the text
+	# scene and never saw it, so this checks the mode itself, not the rect.
+	for overlay in [report, pull_picker]:
+		h.check("%s is saved in anchors layout mode, so the Web build keeps it full screen (%s)"
+			% [overlay.name, overlay.get(&"layout_mode")], overlay.get(&"layout_mode") == 1)
 	h.eq("the report overlay does block, deliberately",
 		(report as Control).mouse_filter, Control.MOUSE_FILTER_STOP)
 	h.check("and starts hidden", not (report as Control).visible)
