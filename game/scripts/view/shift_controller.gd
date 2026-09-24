@@ -78,7 +78,7 @@ signal deck_viewed
 @onready var _offer_btn: Button = %OfferButton
 @onready var _drop_btn: Button = %DropButton
 @onready var _close_btn: Button = %CloseButton
-@onready var _drop_drag_hint: Label3D = %DropDragHint
+@onready var _drop_drag_hint: Node3D = %DropDragHint
 @onready var _report_overlay = %ReportOverlay
 @onready var _pull_picker: Control = %PullPicker
 
@@ -101,7 +101,7 @@ var _chair_zones: Array = []
 ## CustomerZone%d. Never holds a card; dragging the table's offer here means
 ## "offer it", distinct from Chair%d's own "place a card from your hand".
 var _customer_zones: Array = []
-var _offer_drag_hints: Array = []    ## one Label3D per seat, hidden until dragged
+var _offer_drag_hints: Array = []    ## one Node3D (slab+label) per seat, hidden until dragged
 var _seat_cam: Marker3D = null
 var _carousel: Node3D = null
 var _customer_cards: Array = []

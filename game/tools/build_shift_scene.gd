@@ -261,6 +261,15 @@ func _init() -> void:
 		var chair := _collection(collection_scene, "Chair%d" % i,
 			Vector3(0.0, CHAIR_Y, FACE_Z), seat, root)
 		chair.card_layout_strategy = PileCardLayout.new()
+		# A placed product's collision was OFF entirely until the offer-drag
+		# feature needed it draggable again (see shift_controller.gd's
+		# _dress()) - turning that back on also turned the addon's own
+		# hover-to-lift cosmetic back on for free, which it never had before
+		# and which reads as stuck/broken on touch (nothing here clears a
+		# touch "hover" the way the hand's own explicit press/release wiring
+		# does). Selecting and dragging the card are unaffected - only the
+		# lift-on-hover/press cosmetic is off.
+		chair.highlight_on_hover = false
 		_mark(chair, root, "SEAT %s\ndrag a product here" % ["A", "B", "C"][i],
 			Palette.color(&"appeal"))
 
@@ -274,7 +283,7 @@ func _init() -> void:
 			Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), seat, root)
 		customer_zone.card_layout_strategy = PileCardLayout.new()
 		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, "OFFER PRODUCT",
-			Vector3(0.0, 2.6, 0.0), Palette.color(&"appeal"))
+			Palette.color(&"appeal"))
 
 		_detail(detail_scene, "OfferDetail%d" % i,
 			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
@@ -299,7 +308,7 @@ func _init() -> void:
 	discard.card_layout_strategy = PileCardLayout.new()
 	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 2.193643)
 	_drag_hint(discard, root, "DropDragHint", "DROP PRODUCT",
-		Vector3(0.0, 3.6, 0.0), Palette.color(&"action"))
+		Palette.color(&"action"), 3.2)
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
@@ -408,13 +417,36 @@ func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
 	label.owner = owner_root
 
 ## Unlike _mark()'s permanent zone labels, this says nothing until a drag
-## actually makes it relevant - hidden by default, toggled visible by
-## shift_controller.gd's _on_drag_started/_on_drag_stopped for exactly the
-## duration of dragging an already-placed offer.
+## actually makes it relevant - a highlighted slab over the zone itself, with
+## a label sitting just clear of its top edge (not floating well above it,
+## which read as unrelated to the zone it was naming). One container node so
+## shift_controller.gd's _on_drag_started/_on_drag_stopped can show or hide
+## both pieces with a single .visible toggle.
 func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
-		pos: Vector3, tint: Color) -> void:
+		tint: Color, label_y: float = 1.9) -> void:
+	var hint := Node3D.new()
+	hint.name = node_name
+	hint.visible = false
+	hint.unique_name_in_owner = true
+	zone.add_child(hint)
+	hint.owner = owner_root
+
+	var slab := QuadMesh.new()
+	slab.size = SLOT_SIZE
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(tint.r, tint.g, tint.b, 0.35)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var mesh := MeshInstance3D.new()
+	mesh.name = "Slab"
+	mesh.mesh = slab
+	mesh.material_override = mat
+	mesh.position = Vector3(0, 0, -0.04)
+	hint.add_child(mesh)
+	mesh.owner = owner_root
+
 	var label := Label3D.new()
-	label.name = node_name
+	label.name = "Label"
 	label.text = text
 	label.font_size = 64
 	label.pixel_size = 0.005
@@ -424,10 +456,12 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
 	label.shaded = false
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.position = pos
-	label.visible = false
-	label.unique_name_in_owner = true
-	zone.add_child(label)
+	# SLOT_SIZE is 2.5 x 3.5, so the top edge sits 1.75 above center - the
+	# default 1.9 clears it without floating away from the highlight it is
+	# naming. Discard passes a taller label_y instead, to clear ITS OWN
+	# permanent "DISCARD\ndrag here to dig" mark rather than sit on top of it.
+	label.position = Vector3(0, label_y, 0.02)
+	hint.add_child(label)
 	label.owner = owner_root
 
 func _build_hud(root: Node) -> void:
