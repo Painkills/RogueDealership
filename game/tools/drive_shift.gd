@@ -137,6 +137,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_dragging_the_table_offer()
 	_check_dragging_the_table_offer_onto_discard_drops_it()
 	_check_double_tapping_the_empty_table_closes()
+	_check_double_tapping_the_empty_table_closes_on_touch_too()
 	_check_refused_drop_comes_home()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
@@ -1853,6 +1854,11 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 
 	# Something still on the table: the pad must stay off and the hint
 	# hidden - an active offer is the drag gesture's job, not this one's.
+	# Discard the instance before dropping the reference, same as
+	# drop_offer() itself does - orphaning it left a node _check_table()
+	# elsewhere in this same run could no longer account for.
+	if c.offer != null:
+		shift.discard.append(c.offer.instance)
 	c.offer = null
 	c.unsigned.clear()
 	_controller._render()
@@ -1878,6 +1884,52 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 	_check("double-tapping the empty table actually closed (customers_signed %d -> %d)"
 		% [signed_before, int(shift.stat.get("customers_signed", 0))],
 		int(shift.stat.get("customers_signed", 0)) == signed_before + 1)
+
+## The touch path specifically: InputEventMouseButton.double_click never
+## actually fires for a touch-emulated click on a real device, so
+## _on_chair_pad_input's own explicit two-taps tracker needs its own coverage,
+## not just the mouse flag the check above exercises. The prior check already
+## vacated chair B, so this finds whichever seat is still occupied instead.
+func _check_double_tapping_the_empty_table_closes_on_touch_too() -> void:
+	var shift = _controller._shift
+	var chair := -1
+	for i in range(shift.chairs.size()):
+		if shift.chairs[i] != null:
+			chair = i
+			break
+	if chair == -1:
+		_check("someone still seated somewhere to check touch double-tap", false)
+		return
+	if shift.at == null or int(shift.at) != chair:
+		_controller._apply(shift.approach(chair))
+		_controller._render()
+	if shift.at == null or int(shift.at) != chair:
+		_check("could actually approach that seat for the touch check", false)
+		return
+	var c = shift.chairs[chair]
+
+	if c.offer != null:
+		shift.discard.append(c.offer.instance)
+	c.offer = null
+	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
+	_controller._render()
+
+	_controller._touch_check = func(): return true
+	var tap := InputEventMouseButton.new()
+	tap.button_index = MOUSE_BUTTON_LEFT
+	tap.pressed = true
+
+	var signed_before: int = int(shift.stat.get("customers_signed", 0))
+	_controller._on_chair_pad_input(null, tap, Vector3.ZERO, Vector3.ZERO, 0, chair)
+	_check("a single tap does not close it on touch",
+		int(shift.stat.get("customers_signed", 0)) == signed_before)
+
+	_controller._on_chair_pad_input(null, tap, Vector3.ZERO, Vector3.ZERO, 0, chair)
+	_check("a second tap right after does, on touch (customers_signed %d -> %d)"
+		% [signed_before, int(shift.stat.get("customers_signed", 0))],
+		int(shift.stat.get("customers_signed", 0)) == signed_before + 1)
+
+	_controller._touch_check = DisplayServer.is_touchscreen_available
 
 func _check_refused_drop_comes_home() -> void:
 	## Dropping onto the draw pile is meaningless, so the model is never called

@@ -280,8 +280,11 @@ func _init() -> void:
 		# _render_details() is what turns this back on, exactly when there is
 		# nothing on the table AND something unsigned still to close.
 		_chair_pad(i, seat, root)
-		_drag_hint(chair, root, "CloseHint%d" % i, "DOUBLE TAP TO CLOSE THIS DEAL",
-			Palette.color(&"margin"))
+		# Inside the card, not above it - and text_color is "text" (near-
+		# white), not "margin" (the slab's own gold): gold-on-translucent-gold
+		# read as barely-there.
+		_drag_hint(chair, root, "CloseHint%d" % i, "DOUBLE TAP\nTO CLOSE",
+			Palette.color(&"margin"), Palette.color(&"text"), 0.0, 44)
 
 		# A drop target that never actually holds a card - CardHomes never
 		# assigns anything here, so a dropped offer always snaps back to
@@ -293,7 +296,7 @@ func _init() -> void:
 			Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), seat, root)
 		customer_zone.card_layout_strategy = PileCardLayout.new()
 		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, "OFFER PRODUCT",
-			Palette.color(&"appeal"))
+			Palette.color(&"appeal"), Palette.color(&"appeal"))
 
 		_detail(detail_scene, "OfferDetail%d" % i,
 			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
@@ -318,7 +321,7 @@ func _init() -> void:
 	discard.card_layout_strategy = PileCardLayout.new()
 	_mark(discard, root, "DISCARD\ndrag here to dig", Palette.color(&"action"), 2.193643)
 	_drag_hint(discard, root, "DropDragHint", "DROP PRODUCT",
-		Palette.color(&"action"), 3.2)
+		Palette.color(&"action"), Palette.color(&"action"), 3.2)
 
 	var draw := _collection(collection_scene, "Draw", DRAW_STOWED, cam, root)
 	draw.card_layout_strategy = PileCardLayout.new()
@@ -454,8 +457,13 @@ func _mark(zone: Node3D, owner_root: Node, text: String, tint: Color,
 ## which read as unrelated to the zone it was naming). One container node so
 ## shift_controller.gd's _on_drag_started/_on_drag_stopped can show or hide
 ## both pieces with a single .visible toggle.
+##
+## text_color is separate from tint (the slab's own translucent fill): OFFER/
+## DROP pass the same color for both since their label sits clear of the slab,
+## but a label sitting ON TOP of its own slab (CLOSE) needs real contrast
+## against it, not the same color at full opacity over itself at 0.35.
 func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
-		tint: Color, label_y: float = 1.9) -> void:
+		tint: Color, text_color: Color, label_y: float = 1.9, font_size: int = 64) -> void:
 	var hint := Node3D.new()
 	hint.name = node_name
 	hint.visible = false
@@ -480,18 +488,20 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, text: String,
 	var label := Label3D.new()
 	label.name = "Label"
 	label.text = text
-	label.font_size = 64
+	label.font_size = font_size
 	label.pixel_size = 0.005
-	label.modulate = tint
+	label.modulate = text_color
 	label.outline_size = 10
 	label.outline_modulate = Palette.color(&"neutral_1")
 	label.shaded = false
 	label.double_sided = false
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# SLOT_SIZE is 2.5 x 3.5, so the top edge sits 1.75 above center - the
 	# default 1.9 clears it without floating away from the highlight it is
 	# naming. Discard passes a taller label_y instead, to clear ITS OWN
 	# permanent "DISCARD\ndrag here to dig" mark rather than sit on top of it.
+	# CLOSE passes 0 instead - inside the card, not above it.
 	label.position = Vector3(0, label_y, 0.02)
 	hint.add_child(label)
 	label.owner = owner_root

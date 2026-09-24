@@ -106,6 +106,13 @@ var _customer_zones: Array = []
 ## that seat's table is empty and there is something unsigned left to close.
 var _chair_pads: Array = []
 var _close_hints: Array = []         ## one Node3D (slab+label) per seat, same rule
+## Touch's own double-tap tracker: InputEventMouseButton.double_click never
+## actually fires for a touch-emulated click on a real device (only real
+## mice), unlike the hover-equivalence _on_pad_input leans on - confirmed
+## broken on an actual phone. -1/0.0 means "no pending first tap".
+var _last_chair_tap_chair: int = -1
+var _last_chair_tap_time: float = 0.0
+const CHAIR_DOUBLE_TAP_WINDOW := 0.4
 var _offer_drag_hints: Array = []    ## one Node3D (slab+label) per seat, hidden until dragged
 var _seat_cam: Marker3D = null
 var _carousel: Node3D = null
@@ -477,20 +484,36 @@ func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector
 		_peeked = chair
 		_render_hover_flip()
 
-## double_click is the same flag for a real mouse double-click and a touch
-## double-tap (this file already leans on that touch-emulates-mouse
-## equivalence for _on_pad_input above), so no separate timer is needed here.
-## The pad itself is only ever enabled when close() could actually succeed
-## (see _render_details()), but this still re-checks rather than trust that -
-## a stale enabled pad from a race with a command applied elsewhere must
-## never fire close() on a table that no longer qualifies.
+## A real mouse's double_click flag is trustworthy, but a touch-emulated click
+## never sets it on an actual device - confirmed broken on a real phone, so
+## touch gets its own explicit two-taps-within-a-window tracker instead. The
+## pad itself is only ever enabled when close() could actually succeed (see
+## _render_details()), but this still re-checks rather than trust that - a
+## stale enabled pad from a race with a command applied elsewhere must never
+## fire close() on a table that no longer qualifies.
 func _on_chair_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector3,
 		_shape: int, chair: int) -> void:
 	if not (event is InputEventMouseButton):
 		return
 	var click := event as InputEventMouseButton
-	if click.button_index != MOUSE_BUTTON_LEFT or not click.pressed or not click.double_click:
+	if click.button_index != MOUSE_BUTTON_LEFT or not click.pressed:
 		return
+
+	var is_double: bool
+	if _touch_check.call():
+		var now := Time.get_ticks_msec() / 1000.0
+		is_double = _last_chair_tap_chair == chair \
+			and (now - _last_chair_tap_time) <= CHAIR_DOUBLE_TAP_WINDOW
+		if is_double:
+			_last_chair_tap_chair = -1
+		else:
+			_last_chair_tap_chair = chair
+			_last_chair_tap_time = now
+	else:
+		is_double = click.double_click
+	if not is_double:
+		return
+
 	if _shift == null or _shift.at == null or int(_shift.at) != chair:
 		return
 	var c = _shift.chairs[chair]
