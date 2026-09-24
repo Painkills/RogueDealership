@@ -170,29 +170,48 @@ func test_your_things_start_stowed_below_the_frame() -> void:
 
 func test_your_hand_is_never_behind_the_table() -> void:
 	## The bug this catches: the hand rides at a fixed depth IN FRONT of the
-	## camera, so its world Z is camera_z + depth. With the felt at z=-1.2 and the
-	## seat camera at z=9 that put the hand at -2 - BEHIND the table. It rose into
-	## view during the camera's approach and then slid behind the felt and
-	## vanished, which read as "the hand pops up for an instant".
+	## camera. With the felt at z=-1.2 and the seat camera at z=9 that put the
+	## hand at -2 - BEHIND the table. It rose into view during the camera's
+	## approach and then slid behind the felt and vanished, which read as "the
+	## hand pops up for an instant". The felt is the office's back wall now.
 	var s := _scene()
-	var felt_z: float = (s.get_node(^"Felt") as Node3D).position.z
-	var depth: float = (s.get_node(^"Camera3D/Hand") as Node3D).position.z   # negative
+	var wall_z: float = (s.get_node(^"Wall") as Node3D).position.z
+	var hand_local: Vector3 = (s.get_node(^"Camera3D/Hand") as Node3D).position
 	for name in ["CameraFloor", "SeatCam"]:
-		var cam_z: float = (s.get_node(NodePath(name)) as Node3D).position.z
-		var hand_world_z: float = cam_z + depth
-		h.check("from %s the hand sits in front of the felt (%.1f > %.1f)"
-			% [name, hand_world_z, felt_z], hand_world_z > felt_z)
+		# Through the framing's whole transform, since the camera looks down.
+		var hand_world: Vector3 = (s.get_node(NodePath(name)) as Node3D).transform \
+			* hand_local
+		h.check("from %s the hand sits in front of the wall (%.1f > %.1f)"
+			% [name, hand_world.z, wall_z], hand_world.z > wall_z)
 	s.free()
 
-func test_the_cameras_are_flat_on() -> void:
-	## These cards are flat quads with 500x700 of text rendered into them. Any
-	## tilt foreshortens the exact thing the whole view exists to make legible,
-	## and legibility is what three rounds of this have been about.
+func test_the_cards_still_face_the_lens_square_on() -> void:
+	## These cards are flat quads with 500x700 of text rendered into them, and a
+	## card tilted against the lens foreshortens the exact thing the whole view
+	## exists to make legible. The cameras used to be dead level for that
+	## reason. They look down now, so the desks read as desks - and every seat
+	## leans back by EXACTLY the same angle, which keeps each card square to the
+	## lens. Either half without the other puts the text at an angle.
 	var s := _scene()
-	for name in ["CameraFloor", "SeatCam", "Camera3D"]:
+	var pitch: Vector3 = (s.get_node(^"Camera3D") as Node3D).rotation
+	h.check("the camera looks down at the desks (%.1f degrees)" % rad_to_deg(pitch.x),
+		pitch.x < -deg_to_rad(2.0))
+	h.check("without turning or rolling (%s)" % pitch,
+		is_zero_approx(pitch.y) and is_zero_approx(pitch.z))
+	for name in ["CameraFloor", "SeatCam"]:
 		var r: Vector3 = (s.get_node(NodePath(name)) as Node3D).rotation
-		h.check("%s looks straight at the cards (%s)" % [name, r],
-			r.is_equal_approx(Vector3.ZERO))
+		h.check("%s looks down at the same angle (%s)" % [name, r], r.is_equal_approx(pitch))
+	for i in range(3):
+		var seat := s.get_node(NodePath("Table/Carousel/Seat%d" % i)) as Node3D
+		h.check("seat %d leans back by exactly the camera's pitch (%s)" % [i, seat.rotation],
+			seat.rotation.is_equal_approx(pitch))
+		# The desk cancels the lean, or its top would slope away from you.
+		var desk := seat.get_node_or_null(NodePath("Desk%d" % i)) as Node3D
+		h.check("seat %d has a desk" % i, desk != null)
+		if desk != null:
+			var level: Basis = seat.transform.basis * desk.transform.basis
+			h.check("and the desk stands level in the world (%s)" % level.get_euler(),
+				level.get_euler().is_zero_approx())
 	s.free()
 
 func test_each_seat_has_a_customer_card_under_the_carousel() -> void:
@@ -281,13 +300,21 @@ func test_the_hand_fans_and_the_piles_stack() -> void:
 
 func test_the_cards_have_something_to_sit_on_and_something_to_light_them() -> void:
 	## Without these the cards float on a flat fill and read as decals. The
-	## reference example stages a lit surface for exactly this reason.
+	## reference example stages a lit surface for exactly this reason. It is an
+	## office now: a back wall, a floor, and a desk at every seat.
 	var s := _scene()
-	var felt := s.get_node_or_null(^"Felt") as MeshInstance3D
-	h.check("there is a table surface", felt != null)
-	h.check("big enough to fill the shot", felt != null and felt.mesh is QuadMesh
-		and (felt.mesh as QuadMesh).size.x >= 30.0)
-	h.check("sitting behind the cards, not through them", felt.position.z < 0.0)
+	var wall := s.get_node_or_null(^"Wall") as MeshInstance3D
+	h.check("there is a back wall", wall != null)
+	h.check("big enough to fill the shot", wall != null and wall.mesh is QuadMesh
+		and (wall.mesh as QuadMesh).size.x >= 30.0)
+	h.check("sitting behind the cards, not through them", wall.position.z < 0.0)
+	var ground := s.get_node_or_null(^"Floor") as MeshInstance3D
+	h.check("and a floor, below every desk", ground != null)
+	for i in range(3):
+		var desk := s.get_node_or_null(NodePath("Table/Carousel/Seat%d/Desk%d" % [i, i]))
+		h.check("seat %d has a desk to sit at" % i, desk != null)
+		h.check("and it collides with nothing, so it can never take a click",
+			desk != null and _find_first(desk, "CollisionObject3D") == null)
 	var light := s.get_node_or_null(^"DirectionalLight3D") as DirectionalLight3D
 	h.check("there is a key light", light != null)
 	h.check("casting shadows, so cards sit ON the table", light != null and light.shadow_enabled)

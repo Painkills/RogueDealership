@@ -36,9 +36,10 @@ const ROLES := {
 	&"brass_dark": "7a5a12",
 	&"sticky": "f7d64a",
 	&"manila": "d9c49a",
-	&"walnut": "6b4429",
-	&"walnut_dark": "3d2616",
-	&"wall": "262b37",
+	&"walnut": "5a3823",
+	&"walnut_dark": "35200f",
+	&"wall": "2c3342",
+	&"carpet": "221d21",
 }
 
 static func color(role: StringName) -> Color:

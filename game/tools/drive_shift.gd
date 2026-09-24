@@ -386,15 +386,22 @@ func _check_you_can_actually_click_your_hand() -> void:
 	if hand.cards.is_empty():
 		_check("there are cards in hand to click", false)
 		return
-	# Aimed at each card's centre, but only required to reach SOME card in the
-	# hand: they are fanned, so every card but the topmost has its middle
-	# covered by its neighbour, and you click the sliver that is showing. What
-	# must never happen is the ray reaching a drop zone, or nothing at all.
+	# Aimed a quarter of a card above each card's centre, and only required to
+	# reach SOME card in the hand: they are fanned, so every card but the
+	# topmost has its middle covered by its neighbour, and you click the sliver
+	# that is showing. Not the centre itself: the hand runs off the bottom of
+	# the screen on purpose, so the fan's ends have their centres a few pixels
+	# BELOW the frame, where no player can click - and a ray through a pixel
+	# nobody can reach proves nothing either way. What must never happen is the
+	# ray reaching a drop zone, or nothing at all.
+	var cam: Camera3D = _controller._camera
 	for card in hand.cards:
-		var hit := _picks(card)
+		var aim := cam.unproject_position(
+			card.global_position + cam.global_basis.y * CARD.y * 0.25)
+		var hit := _pick_at(aim)
 		var reached: Node = hit.get_parent() if hit != null else null
-		_check("a hand card's pixels belong to the hand, not to %s"
-			% ("nothing at all" if hit == null else hit.get_path()),
+		_check("a hand card's pixels belong to the hand, not to %s (at %s)"
+			% ["nothing at all" if hit == null else hit.get_path(), aim],
 			reached != null and hand.cards.has(reached))
 	# The topmost card of the fan has nothing over it, so it must resolve to
 	# exactly itself - which is the strict form of the same question.

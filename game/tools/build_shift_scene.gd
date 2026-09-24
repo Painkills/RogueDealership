@@ -41,10 +41,21 @@ extends SceneTree
 ## negotiation, and no radius fixes it. A longer lens compresses depth so they
 ## stay big while still subtending a wide angle. Hence 28.
 ##
-## The cameras are UNPITCHED. These cards are flat quads with text rendered into
-## them, and any tilt at all foreshortens the one thing the whole view exists to
-## make legible. The table reads as a table because of the felt and the staging,
-## not because the camera is leaning over it.
+## THE CAMERAS LOOK DOWN, AND EVERY SEAT LEANS BACK TO MEET THEM. These cards are
+## flat quads with text rendered into them, and a card tilted against the lens
+## foreshortens the one thing the whole view exists to make legible - which is
+## why the cameras used to be dead level. They are pitched CAM_PITCH_DEG now, so
+## the desks read as desks and the two customers you are not with sit back in
+## the room rather than beside you. Every seat leans back by exactly the same
+## angle, so each card is still square to the lens. Both framings are placed
+## relative to the FRONT seat in its own leaned frame, which makes the view of
+## the negotiation a rigid rotation of what it was when the camera was level:
+## the same pixels, the same sizes, and every readability floor still holds.
+## What the pitch changes is everything ELSE - the flankers rise and recede,
+## and the desks, floor and wall come into view.
+##
+## The desks do NOT lean. Each one cancels its seat's lean, so the desk top is
+## level in the world and the camera, above it, looks down onto it.
 
 const COLLECTION := "res://addons/card_3d/scenes/card_collection_3d.tscn"
 const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
@@ -79,26 +90,46 @@ const BACK_Z := -0.03
 ## margins would no longer match.
 const SLOT_SIZE := Vector2(2.5, 3.5)
 
-## Well behind everything, and now behind the BACK of the circle (z -3) as well.
-## Your hand rides at PILE_DEPTH in FRONT of the camera, which puts it at world
-## z = cam_z + PILE_DEPTH; if the felt sat closer than that the hand would slide
-## behind the table as the camera pushed in and simply vanish. It did.
+## The back wall of the office. Well behind everything, and behind the BACK of
+## the circle (z -3) as well. Your hand rides at PILE_DEPTH in FRONT of the
+## camera; if the wall sat closer than that the hand would slide behind it as
+## the camera pushed in and simply vanish. It did, back when this was a felt.
 ## test_shift_scene.gd pins the clearance now.
-const FELT_Z := -14.0
+const WALL_Z := -14.0
+## The office floor. Low enough that nothing of yours that is ever on screen
+## reaches it: the lowest visible point of your hand is about y -3.3, and the
+## piles only dip below this off the bottom of the frame.
+const FLOOR_Y := -4.0
+
+## One per seat, and level in the world (see the header). Its front face sits
+## just behind the product card, and its top just under the customer's card,
+## so a customer reads as sitting at their desk and a product as being laid in
+## front of them. Seat-local, in the desk's own un-leaned frame.
+const DESK_SIZE := Vector3(4.4, 0.22, 2.6)  ## the top: width, thickness, depth
+const DESK_TOP_Y := 2.05
+const DESK_FRONT_Z := -0.45
 
 ## See the header. K = 540 / tan(14deg) = 2165.85.
 const CAM_FOV := 28.0
+## How far both cameras look down, and how far every seat leans back to match.
+const CAM_PITCH_DEG := 10.0
 ## ONE seat camera, not three: the carousel does the moving, so the camera only
-## ever travels between these two points, both on the axis and both unpitched.
+## ever travels between these two framings. Each is where the camera sits
+## relative to the FRONT seat's origin, in that seat's own leaned frame - see
+## framed() for the world position.
 ##
-## Near card plane 6.03, so N = 18.90 and a card is 2.5x3.5 x (K/N) = 286x402 px
+## Near card plane 0.03, so N = 18.90 and a card is 2.5x3.5 x (K/N) = 286x402 px
 ## - pixel-identical to the pre-carousel floor card, which is why the >= 360 px
 ## readability floor survives untouched for whoever is at the front.
-const FLOOR_CAM := Vector3(0.0, 4.00, 24.93)
+const FLOOR_VIEW := Vector3(0.0, 4.00, 18.93)
 ## N = 21.17 here, and K/N = 102.31 against the old framing's 102.33: the
 ## negotiation lands on the pixels it already landed on, and the flankers are
 ## pure addition on either side of it.
-const SEAT_CAM := Vector3(0.0, 1.40, 27.20)
+const SEAT_VIEW := Vector3(0.0, 1.40, 21.20)
+## A dragged card rides this far in front of the seat camera, on a plane
+## square to the lens, so it stays the same size wherever the pointer takes it.
+const DRAG_DEPTH := 16.60
+const FRONT_SEAT := Vector3(0.0, 0.0, CAROUSEL_R)
 
 # --- yours, in CAMERA-LOCAL space ------------------------------------------
 # -Z is forward. Stowed positions sit below the bottom of frame at that depth.
@@ -150,22 +181,28 @@ func _init() -> void:
 	cam.name = "Camera3D"
 	cam.fov = CAM_FOV
 	cam.current = true
-	cam.position = FLOOR_CAM
+	cam.position = framed(FLOOR_VIEW)
+	cam.rotation = lean().get_euler()
 	root.add_child(cam)
 	cam.owner = root
 
 	var floor_mark := Marker3D.new()
 	floor_mark.name = "CameraFloor"
-	floor_mark.position = FLOOR_CAM
+	floor_mark.position = framed(FLOOR_VIEW)
+	floor_mark.rotation = lean().get_euler()
 	floor_mark.unique_name_in_owner = true
 	root.add_child(floor_mark)
 	floor_mark.owner = root
 
+	# A warm overhead key, and a warm fill rather than the old navy one: the
+	# cards are cream paper now, and a blue ambient turned their shadowed side
+	# the colour of a bruise.
 	var light := DirectionalLight3D.new()
 	light.name = "DirectionalLight3D"
 	light.position = Vector3(0, 12, 18)
 	light.rotation_degrees = Vector3(-38, -22, 0)
-	light.light_energy = 1.2
+	light.light_color = Color("fff1dc")
+	light.light_energy = 1.0
 	light.shadow_enabled = true
 	light.shadow_opacity = 0.55
 	light.shadow_blur = 3.0
@@ -176,26 +213,34 @@ func _init() -> void:
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Palette.color(&"neutral_1")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Palette.color(&"panel_hi")
-	env.ambient_light_energy = 1.0
+	env.ambient_light_color = Color("b9ad98")
+	env.ambient_light_energy = 0.55
 	var we := WorldEnvironment.new()
 	we.name = "WorldEnvironment"
 	we.environment = env
 	root.add_child(we)
 	we.owner = root
 
-	var felt := QuadMesh.new()
-	felt.size = Vector2(220, 130)
-	var felt_mat := StandardMaterial3D.new()
-	felt_mat.albedo_color = Palette.color(&"bg")
-	felt_mat.roughness = 0.95
-	var table_mesh := MeshInstance3D.new()
-	table_mesh.name = "Felt"
-	table_mesh.mesh = felt
-	table_mesh.material_override = felt_mat
-	table_mesh.position = Vector3(0, 0, FELT_Z)
-	root.add_child(table_mesh)
-	table_mesh.owner = root
+	# The office itself: a back wall, and a floor for the desks to stand on.
+	var wall := QuadMesh.new()
+	wall.size = Vector2(220, 130)
+	var wall_mesh := MeshInstance3D.new()
+	wall_mesh.name = "Wall"
+	wall_mesh.mesh = wall
+	wall_mesh.material_override = _matte(Palette.color(&"wall"))
+	wall_mesh.position = Vector3(0, 0, WALL_Z)
+	root.add_child(wall_mesh)
+	wall_mesh.owner = root
+
+	var ground := PlaneMesh.new()
+	ground.size = Vector2(220, 64)
+	var floor_mesh := MeshInstance3D.new()
+	floor_mesh.name = "Floor"
+	floor_mesh.mesh = ground
+	floor_mesh.material_override = _matte(Palette.color(&"carpet"))
+	floor_mesh.position = Vector3(0, FLOOR_Y, WALL_Z + 32.0)
+	root.add_child(floor_mesh)
+	floor_mesh.owner = root
 
 	# --- theirs: on a turntable ------------------------------------------
 	var table := Node3D.new()
@@ -224,13 +269,21 @@ func _init() -> void:
 		# there foreshortens by cos(9.8) = 0.985. A 1.5% squeeze, and no
 		# billboard material, no per-frame look_at, and FlipPair - which turns a
 		# node BELOW this one - carries on working untouched.
+		#
+		# It also LEANS BACK by the cameras' pitch (see the header). Leaning
+		# is about X and the counter-rotation about Y, and Node3D composes
+		# them Y-then-X, so the carousel's turn and the seat's cancel of it
+		# meet first and the lean survives the whole spin untouched.
 		var theta := deg_to_rad(120.0 * i)
 		var seat := Node3D.new()
 		seat.name = "Seat%d" % i
 		seat.position = Vector3(CAROUSEL_R * sin(theta), 0.0, CAROUSEL_R * cos(theta))
+		seat.rotation = lean().get_euler()
 		seat.unique_name_in_owner = true
 		carousel.add_child(seat)
 		seat.owner = root
+
+		_desk(seat, root, i)
 
 		# The customer and their sheet turn over TOGETHER, so they hang off one
 		# node that does the turning. Flipping them individually would leave the
@@ -280,10 +333,12 @@ func _init() -> void:
 		# does). Selecting and dragging the card are unaffected - only the
 		# lift-on-hover/press cosmetic is off.
 		chair.highlight_on_hover = false
-		# The slot's own outline, plus the anchor the HUD's TableNote%d hangs
-		# from. The note says "nothing on the table", and "or double-click to
-		# close the deal" underneath it when there is something to close.
-		_mark(chair, root, Palette.color(&"appeal"))
+		# The slot's own outline - a pale sheet on the desk front, where the
+		# old faint blue vanished into the walnut - plus the anchor the HUD's
+		# TableNote%d hangs from. The note says "nothing on the table", and "or
+		# double-click to close the deal" underneath it when there is
+		# something to close.
+		_mark(chair, root, Palette.color(&"paper"), 0.28)
 
 		# Double-tap-to-close, only when the table is actually empty - see
 		# shift_controller.gd's _on_chair_pad_input(). Starts disabled: a
@@ -323,7 +378,8 @@ func _init() -> void:
 
 	var seat_cam := Marker3D.new()
 	seat_cam.name = "SeatCam"
-	seat_cam.position = SEAT_CAM
+	seat_cam.position = framed(SEAT_VIEW)
+	seat_cam.rotation = lean().get_euler()
 	seat_cam.unique_name_in_owner = true
 	root.add_child(seat_cam)
 	seat_cam.owner = root
@@ -351,9 +407,13 @@ func _init() -> void:
 
 	var drag := DragController.new()
 	drag.name = "DragController"
-	# Camera-local 16.60 from SEAT_CAM, the same fraction of the way to the
-	# table that 7.17 was before the lens changed.
-	drag.card_drag_plane = Plane(Vector3(0, 0, 1), 10.60)
+	# DRAG_DEPTH in front of the seat camera, the same fraction of the way to
+	# the table that 7.17 was before the lens changed - and square to the lens
+	# rather than to the world, so a card dragged to the bottom of the screen is
+	# as big as one dragged across the middle.
+	var toward_you := lean() * Vector3.BACK
+	drag.card_drag_plane = Plane(toward_you,
+		toward_you.dot(framed(SEAT_VIEW)) - DRAG_DEPTH)
 	root.add_child(drag)
 	drag.owner = root
 
@@ -369,6 +429,70 @@ func _init() -> void:
 	print("saved shift.tscn")
 	root.free()
 	quit(0)
+
+## The lean every seat and camera shares: a turn about X that tips a seat's
+## top away from you and points a camera down at it by the same angle.
+static func lean() -> Basis:
+	return Basis(Vector3.RIGHT, -deg_to_rad(CAM_PITCH_DEG))
+
+## Where a framing puts the camera in the world. `view` is measured from the
+## front seat's origin in that seat's own leaned frame, which is what keeps the
+## negotiation on the same pixels however steep the pitch.
+static func framed(view: Vector3) -> Vector3:
+	return FRONT_SEAT + lean() * view
+
+## A desk for the seat to sit at: a walnut top with a brass edge, and a
+## panelled front down to the floor. It cancels the seat's lean, so it stands
+## level in the world while the cards above it lean back to face the lens.
+## Never collides with anything - it is scenery, and the table's picking is
+## already delicate enough (see shift_controller.gd's drop-zone notes).
+func _desk(seat: Node3D, owner_root: Node, index: int) -> void:
+	var desk := Node3D.new()
+	desk.name = "Desk%d" % index
+	desk.rotation = lean().inverse().get_euler()
+	seat.add_child(desk)
+	desk.owner = owner_root
+
+	var walnut := _matte(Palette.color(&"walnut"), 0.55)
+	var panel := _matte(Palette.color(&"walnut_dark"), 0.7)
+	var brass := StandardMaterial3D.new()
+	brass.albedo_color = Palette.color(&"brass")
+	brass.metallic = 0.6
+	brass.roughness = 0.35
+
+	var top_z := DESK_FRONT_Z - DESK_SIZE.z * 0.5
+	_box(desk, owner_root, "Top", DESK_SIZE,
+		Vector3(0.0, DESK_TOP_Y - DESK_SIZE.y * 0.5, top_z), walnut)
+	# A thin brass strip along the top's front edge, where the light catches it.
+	_box(desk, owner_root, "Trim", Vector3(DESK_SIZE.x, 0.06, 0.06),
+		Vector3(0.0, DESK_TOP_Y - 0.03, DESK_FRONT_Z + 0.03), brass)
+
+	var front_h := DESK_TOP_Y - DESK_SIZE.y - FLOOR_Y
+	var front_y := FLOOR_Y + front_h * 0.5
+	_box(desk, owner_root, "Front", Vector3(DESK_SIZE.x - 0.2, front_h, 0.12),
+		Vector3(0.0, front_y, DESK_FRONT_Z - 0.1), walnut)
+	# A raised panel on the front, darker, so it reads as joinery rather
+	# than a slab of brown.
+	_box(desk, owner_root, "Panel", Vector3(DESK_SIZE.x - 1.2, front_h - 1.2, 0.02),
+		Vector3(0.0, front_y, DESK_FRONT_Z - 0.03), panel)
+
+func _box(parent: Node3D, owner_root: Node, node_name: String, size: Vector3,
+		pos: Vector3, mat: Material) -> void:
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var inst := MeshInstance3D.new()
+	inst.name = node_name
+	inst.mesh = mesh
+	inst.material_override = mat
+	inst.position = pos
+	parent.add_child(inst)
+	inst.owner = owner_root
+
+func _matte(color: Color, roughness: float = 0.95) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = color
+	m.roughness = roughness
+	return m
 
 func _collection(scene: PackedScene, node_name: String, pos: Vector3,
 		parent: Node, owner_root: Node) -> Node3D:
@@ -444,11 +568,11 @@ func _detail(scene: PackedScene, node_name: String, pos: Vector3,
 ## to read: drawn into the scene, shrunk by distance, and buried by a growing
 ## pile. The label is a flat HUD tag now (see _build_hud()), which only needs to
 ## know WHERE the card's top edge is.
-func _mark(zone: Node3D, owner_root: Node, tint: Color) -> void:
+func _mark(zone: Node3D, owner_root: Node, tint: Color, alpha: float = 0.16) -> void:
 	var slab := QuadMesh.new()
 	slab.size = SLOT_SIZE
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(tint.r, tint.g, tint.b, 0.16)
+	mat.albedo_color = Color(tint.r, tint.g, tint.b, alpha)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var mesh := MeshInstance3D.new()
