@@ -962,10 +962,16 @@ func _dress(node: CardFace3D, zone: StringName) -> void:
 	# card faces competing for the same glance as the hand right next to it, and
 	# what has already been spent is not a decision you are still making.
 	node.face_down = zone == CardHomes.ZONE_DRAW or zone == CardHomes.ZONE_DISCARD
-	# Only cards in hand are draggable. A placed product must not intercept the
-	# pointer aimed at the zone it sits in.
+	# Hand cards, and the offer sitting on whichever table you are CURRENTLY
+	# standing at - see _on_drag_card_moved's offer-drag branch. Every other
+	# placed product must not intercept the pointer aimed at the zone it sits
+	# in (a seat you are not at, or one with nothing on it, offers no drag).
+	var is_current_offer: bool = _shift != null and _shift.at != null \
+		and zone == CardHomes.chair_zone(int(_shift.at))
 	if zone == CardHomes.ZONE_HAND:
 		node.enable_collision()
 		node.hover_pos_move = HAND_HOVER_LIFT
+	elif is_current_offer:
+		node.enable_collision()
 	else:
 		node.disable_collision()

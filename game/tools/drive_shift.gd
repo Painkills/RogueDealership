@@ -1676,10 +1676,12 @@ func _check_table(when: String) -> void:
 		if node == null:
 			continue
 		var shape := node.get_node(^"StaticBody3D/CollisionShape3D") as CollisionShape3D
-		var draggable: bool = desired[uid]["zone"] == CardHomes.ZONE_HAND
+		var zone: StringName = desired[uid]["zone"]
+		var draggable: bool = zone == CardHomes.ZONE_HAND \
+			or (shift.at != null and zone == CardHomes.chair_zone(int(shift.at)))
 		if shape.disabled == draggable:
-			wrong_collision.append("uid %d in %s" % [uid, desired[uid]["zone"]])
-	_check("%s: only hand cards are draggable (%s)"
+			wrong_collision.append("uid %d in %s" % [uid, zone])
+	_check("%s: only hand cards and the seat you're at are draggable (%s)"
 		% [when, ", ".join(wrong_collision) if not wrong_collision.is_empty() else "ok"],
 		wrong_collision.is_empty())
 
