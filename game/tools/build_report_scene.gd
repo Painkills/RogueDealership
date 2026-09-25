@@ -63,6 +63,7 @@ func _init() -> void:
 
 	# --- the headline: what happened, and by how much --------------------
 	var title := _label(vbox, root, "TitleLabel", "CLOSING TIME", 60)
+	title.theme_type_variation = &"Heading"
 	title.unique_name_in_owner = true   # overridden to "YOU'RE FIRED" on a fatal shift
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 

@@ -3,130 +3,173 @@
 [ext_resource type="Script" path="res://scripts/view/shift_picker_screen.gd" id="1_1bub3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_14ick"]
-bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rh1pw"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.3)
-shadow_size = 3
-shadow_offset = Vector2(1, 2)
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_unu0u"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.3)
-shadow_size = 3
-shadow_offset = Vector2(1, 2)
+bg_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4hu4a"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.9843137, 0.96862745, 0.9254902, 1)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.3)
-shadow_size = 3
-shadow_offset = Vector2(1, 2)
+bg_color = Color(0.93160784, 0.9510588, 0.9937255, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3rq1d"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-shadow_color = Color(0, 0, 0, 0.3)
-shadow_size = 3
-shadow_offset = Vector2(1, 2)
+bg_color = Color(0.2134902, 0.43717647, 0.92784315, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
-[node name="ShiftPickerScreen" type="PanelContainer" unique_id=2145680051]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kq7su"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0, 0, 0, 0.1)
+shadow_size = 10
+shadow_offset = Vector2(0, 4)
+
+[node name="ShiftPickerScreen" type="PanelContainer" unique_id=1618276429]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("1_1bub3")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=782244366]
+[node name="Margin" type="MarginContainer" parent="." unique_id=156470915]
 layout_mode = 2
 theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 48
+theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 48
+theme_override_constants/margin_bottom = 28
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1257586897]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1523291654]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=376012534]
 layout_mode = 2
 theme_override_constants/separation = 24
-alignment = 1
 
-[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=675018824]
+[node name="Titles" type="VBoxContainer" parent="Margin/Column/Header" unique_id=260196852]
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
-theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
-text = "PICK YOUR SHIFT"
-horizontal_alignment = 1
+theme_override_constants/separation = 0
 
-[node name="ProfileRow" type="HBoxContainer" parent="Margin/Column" unique_id=152076393]
+[node name="TitleLabel" type="Label" parent="Margin/Column/Header/Titles" unique_id=317430092]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 44
+theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+text = "THIS WEEK"
+
+[node name="SubLabel" type="Label" parent="Margin/Column/Header/Titles" unique_id=583155268]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 40
-alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "Shift 1 of 5 - pick today's  |  quota $3,600"
 
-[node name="TutorialWrap" type="CenterContainer" parent="Margin/Column" unique_id=1999419059]
+[node name="Spacer" type="Control" parent="Margin/Column/Header" unique_id=1014760187]
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="TutorialButton" type="Button" parent="Margin/Column/TutorialWrap" unique_id=1501946600]
+[node name="TutorialButton" type="Button" parent="Margin/Column/Header" unique_id=1485155157]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(240, 56)
+custom_minimum_size = Vector2(200, 52)
 layout_mode = 2
+size_flags_vertical = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_rh1pw")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_unu0u")
 theme_override_styles/hover = SubResource("StyleBoxFlat_4hu4a")
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_3rq1d")
-theme_override_colors/font_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-theme_override_colors/font_focus_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-theme_override_colors/font_pressed_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
-theme_override_colors/font_hover_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
+theme_override_colors/font_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+theme_override_colors/font_focus_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
 text = "HOW TO PLAY"
+
+[node name="CornerReserve" type="Control" parent="Margin/Column/Header" unique_id=1835555817]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="Calendar" type="PanelContainer" parent="Margin/Column" unique_id=2109252529]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_kq7su")
+
+[node name="Week" type="HBoxContainer" parent="Margin/Column/Calendar" unique_id=1724344141]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 0

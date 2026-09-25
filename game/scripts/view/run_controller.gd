@@ -40,6 +40,9 @@ var _chosen_profile: ShiftProfile
 ## True while the floor is playing the practice shift rather than one of the
 ## run's: its end goes back to the picker, and never to a report or the shop.
 var _in_tutorial := false
+## One {"profile", "report"} per shift worked this run, in order - the picker's
+## calendar shows each past day as the shift you took and how it went.
+var _history: Array = []
 
 func _ready() -> void:
 	_picker_view.chosen.connect(_on_profile_chosen)
@@ -77,11 +80,13 @@ func _start_run() -> void:
 		load("res://data/archetype_pool.tres"), randi(),
 		load("res://data/dialogue/dialogue_pool.tres"))
 	_profiles = load("res://data/shift_profile_pool.tres")
+	_history = []
 	_open_the_picker()
 
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
-	_picker_view.setup(_profiles)
+	_picker_view.setup(_profiles, _run.shift_number, _run.cfg.shifts_in_run,
+		_run.quota_for(_run.shift_number), _history)
 
 func _on_profile_chosen(profile: ShiftProfile) -> void:
 	_chosen_profile = profile
@@ -114,6 +119,7 @@ func _on_shift_finished(report: Dictionary) -> void:
 	if _in_tutorial:
 		_on_tutorial_finished(false)
 		return
+	_history.append({"profile": _chosen_profile, "report": report})
 	_run.finish_shift(report)
 	if _run.is_over():
 		# Neither the floor nor the shop - the run stops here, on top of

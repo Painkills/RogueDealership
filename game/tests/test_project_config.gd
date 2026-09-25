@@ -54,13 +54,23 @@ func test_the_whole_game_wears_the_office_theme() -> void:
 	h.check("and it loads", theme != null)
 	if theme == null:
 		return
-	h.check("buttons are stamps: a bordered sheet of paper",
-		theme.get_stylebox("normal", "Button") is StyleBoxFlat
-			and (theme.get_stylebox("normal", "Button") as StyleBoxFlat).bg_color
-				== Palette.color(&"paper"))
-	h.eq("stamped in ink", theme.get_color("font_color", "Button"), Palette.color(&"ink"))
+	var normal := theme.get_stylebox("normal", "Button") as StyleBoxFlat
+	h.check("buttons are white, outlined, and rounded",
+		normal != null and normal.bg_color == Palette.color(&"paper")
+			and normal.border_width_left > 0 and normal.corner_radius_top_left > 0)
+	h.eq("lettered in ink", theme.get_color("font_color", "Button"), Palette.color(&"ink"))
 	h.eq("and every label is ink unless it says otherwise",
 		theme.get_color("font_color", "Label"), Palette.color(&"text"))
+	# Oswald, the one downloaded face, reaches the game through the theme - a
+	# missing or mis-imported font file would fall back silently, not crash.
+	var heading := theme.get_font("font", "Heading") as FontVariation
+	h.check("headings have their own face",
+		heading != null and heading.base_font is FontFile)
+	h.check("and it is Oswald, not the fallback (%s)"
+		% (heading.base_font.get_font_name() if heading != null and heading.base_font else "none"),
+		heading != null and heading.base_font != null
+			and heading.base_font.get_font_name().begins_with("Oswald"))
+	h.eq("buttons are set in it too", theme.get_font("font", "Button"), heading)
 
 func test_the_game_boots_into_the_run_not_a_bare_shift() -> void:
 	## G2 made the run the entry point. A main scene that silently reverts to

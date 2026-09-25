@@ -21,8 +21,10 @@ extends SceneTree
 ## produce a test that lies.
 
 const CARD := Vector2(2.5, 3.5)
+## A customer's folder is wider than every other card - see CustomerCard3D.
+const CUSTOMER := CustomerCard3D.CARD_SIZE
 ## A CLOSE SOON tag's size and height on its card - build_shift_scene.gd's
-## _slide_flag(). How far it slides is shift_controller.gd's FLAG_SLIDE_X.
+## _slide_flag(). How far it slides is shift_controller.gd's CLOSE_SOON_SLIDE_X.
 ##
 ## Nothing of the table may reach into the shift log's column, for the whole
 ## shift, or into the action column while you are seated. Those two columns
@@ -30,7 +32,7 @@ const CARD := Vector2(2.5, 3.5)
 ## both are measured from the real panels (_log_rect(), _action_rect()) rather
 ## than from a remembered edge that would go on passing wherever they moved.
 const FLAG := Vector2(1.8, 0.7)
-const FLAG_Y := -1.3
+const FLAG_Y := -1.45
 
 var _controller: Node3D
 var _done := false
@@ -273,7 +275,7 @@ func _action_rect() -> Rect2:
 ## Where a customer's CLOSE SOON tag lands once it has slid all the way out.
 func _close_soon_rect(chair: int) -> Rect2:
 	return _rect_of_at(_controller._customer_cards[chair],
-		Vector3(_controller.FLAG_SLIDE_X, FLAG_Y, 0.05), FLAG)
+		Vector3(_controller.CLOSE_SOON_SLIDE_X, FLAG_Y, 0.05), FLAG)
 
 func _rect_around(centre: Vector3, size: Vector2) -> Rect2:
 	var cam: Camera3D = _controller._camera
@@ -710,7 +712,7 @@ func _check_the_floor_cards_are_big_enough_to_read() -> void:
 	# budgeted for them, and it is the number the icon work has to survive.
 	var front: int = _controller._last_station
 	for i in range(3):
-		var r := _rect_of(_controller._customer_cards[i], CARD)
+		var r := _rect_of(_controller._customer_cards[i], CUSTOMER)
 		var floor_px: float = 360.0 if i == front else 240.0
 		_check("floor card %d is %d px tall, past the %d it needs"
 			% [i, int(r.size.y), int(floor_px)], r.size.y >= floor_px)
@@ -863,7 +865,7 @@ func _check_the_table_really_turns() -> void:
 		var yaw: float = _controller._customer_cards[i].global_rotation.y
 		_check("seat %d's card faces the camera THROUGH the turn (%.1f off)"
 			% [i, rad_to_deg(yaw)], absf(yaw) < 0.02)
-	var here := _rect_of(_controller._customer_cards[at], CARD)
+	var here := _rect_of(_controller._customer_cards[at], CUSTOMER)
 	_check("and whoever you moved to is centred (%d)" % int(here.get_center().x),
 		absf(here.get_center().x - 960.0) < 4.0)
 
@@ -879,9 +881,9 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 
 	# Symmetric, and on OPPOSITE sides - the arrangement's whole claim. Right is
 	# (at+1)%3 and left is (at+2)%3, at every station, by construction.
-	var here := _rect_of(_controller._customer_cards[at], CARD)
-	var right := _rect_of(_controller._customer_cards[(at + 1) % 3], CARD)
-	var left := _rect_of(_controller._customer_cards[(at + 2) % 3], CARD)
+	var here := _rect_of(_controller._customer_cards[at], CUSTOMER)
+	var right := _rect_of(_controller._customer_cards[(at + 1) % 3], CUSTOMER)
+	var left := _rect_of(_controller._customer_cards[(at + 2) % 3], CUSTOMER)
 	_check("the one you are with is centred (%d)" % int(here.get_center().x),
 		absf(here.get_center().x - 960.0) < 4.0)
 	_check("one of the others fell to the right (%d)" % int(right.position.x),
@@ -913,7 +915,7 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 	# The collision that swapped the two columns: a CLOSE SOON tag, slid all
 	# the way out, is the furthest right anything on the table reaches.
 	for i in range(3):
-		var who := _rect_of(_controller._customer_cards[i], CARD)
+		var who := _rect_of(_controller._customer_cards[i], CUSTOMER)
 		var tag := _close_soon_rect(i)
 		for pair in [["the log", _log_rect()], ["the buttons", _action_rect()]]:
 			_check("seat %d's card keeps out of %s (%s vs %s)" % [i, pair[0], who, pair[1]],
@@ -1002,7 +1004,7 @@ func _check_the_offer_detail_slid_out_clear() -> void:
 	var offer_flag: Node3D = _controller._offer_flags[at]
 	_check("the OFFER tag slid clear too",
 		offer_flag.visible and offer_flag.get_meta(&"shown", false)
-			and absf(offer_flag.position.x - _controller.FLAG_SLIDE_X) < 0.01)
+			and absf(offer_flag.position.x - _controller.OFFER_FLAG_SLIDE_X) < 0.01)
 	_check("and the CLOSE SOON tag did not - nothing unsigned yet",
 		not _controller._close_soon_flags[at].visible)
 
@@ -1039,12 +1041,12 @@ func _undo_the_offer_detail_setup() -> void:
 func _check_the_seat_layout_does_not_overlap_itself() -> void:
 	var at := _at()
 	var rects := {
-		"customer card": _rect_of(_controller._customer_cards[at], CARD),
+		"customer card": _rect_of(_controller._customer_cards[at], CUSTOMER),
 		"product slot": _rect_of(_controller._chair_zones[at], CARD),
 		"offer detail": _rect_of(_controller._offer_details[at],
 			DetailCard3D.CARD_SIZE),
-		"right flanker": _rect_of(_controller._customer_cards[(at + 1) % 3], CARD),
-		"left flanker": _rect_of(_controller._customer_cards[(at + 2) % 3], CARD),
+		"right flanker": _rect_of(_controller._customer_cards[(at + 1) % 3], CUSTOMER),
+		"left flanker": _rect_of(_controller._customer_cards[(at + 2) % 3], CUSTOMER),
 	}
 	var names := rects.keys()
 	for a in range(names.size()):
@@ -1113,7 +1115,7 @@ func _check_the_customer_card_carries_its_triage_row() -> void:
 		photo != null and photo.get_parent() == col.get_node(^"Header"))
 	_check("and it is small, not a second portrait box (%s)"
 		% (photo.custom_minimum_size if photo != null else Vector2.ZERO),
-		photo != null and photo.custom_minimum_size.y <= 130.0
+		photo != null and photo.custom_minimum_size.y <= 160.0
 			and is_equal_approx(photo.custom_minimum_size.x, photo.custom_minimum_size.y))
 
 	var grid := col.get_node_or_null(^"InterestGrid") as Control
@@ -1457,28 +1459,28 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 	# out in a DEFERRED resort, and this all runs inside one frame - read
 	# straight away, the name reads as a 1 px sliver at (0, 0), a real gap this
 	# project has hit before (see build_shop_scene.gd's own DoneButton
-	# comment). So the three containers between the card and the name are told
+	# comment). So the four containers between the card and the name are told
 	# to lay out NOW, outermost first, and the rects read are the real ones.
 	# The boundaries are checked the same way test_run_state.gd's _delta()
 	# checks standing_delta: an independent restatement of
 	# build_customer_front_scene.gd's own tab and margin math, not a call into
 	# it, so the two can only agree by actually matching.
 	var col: Node = card.get_node(^"FrontViewport/CustomerFront/Margin/Column")
-	for box in [col.get_parent(), col, col.get_node(^"Header")]:
+	for box in [col.get_parent(), col, col.get_node(^"Header"), col.get_node(^"Header/Info")]:
 		(box as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
-	var name_label := col.get_node(^"Header/NameLabel") as Control
+	var name_label := col.get_node(^"Header/Info/NameLabel") as Control
 	var bubble_rect := bubble.get_global_rect()
 	var name_rect := name_label.get_global_rect()
 	_check("the bubble covers their name (bubble %s, name %s)"
 		% [bubble_rect, name_rect], name_rect.size.x > 100.0 and bubble_rect.encloses(name_rect))
-	const TAB_HEIGHT := 50
-	const MARGIN_TOP := TAB_HEIGHT + 24
-	const HEADER_HEIGHT := 126
+	const TAB_HEIGHT := 52
+	const MARGIN_TOP := TAB_HEIGHT + 28
+	const HEADER_HEIGHT := 160
 	const COLUMN_SEPARATION := 10
 	_check("it starts below the folder's tab, so you can still see who said it (%.1f)"
 		% bubble.position.y, is_equal_approx(bubble.position.y, TAB_HEIGHT))
 	var expected_bottom := float(MARGIN_TOP + HEADER_HEIGHT + COLUMN_SEPARATION)
-	_check("and stops right where the patience bar starts (%.1f of %.1f px)"
+	_check("and stops right where the next row starts (%.1f of %.1f px)"
 		% [bubble.position.y + bubble.size.y, expected_bottom],
 		is_equal_approx(bubble.position.y + bubble.size.y, expected_bottom))
 
@@ -1777,9 +1779,8 @@ func _check_hud_does_not_overlap_itself() -> void:
 	# Buttons are the only STOP controls over a 3D table, so any button sitting
 	# on a card is a click the card will never see.
 	var at := _at()
-	for pair in [["customer card", _rect_of(_controller._customer_cards[at], CARD)],
-			["customer detail", _rect_of(_controller._customer_details[at],
-				DetailCard3D.CARD_SIZE)],
+	for pair in [["customer card", _rect_of(_controller._customer_cards[at], CUSTOMER)],
+			["customer detail", _rect_of(_controller._customer_details[at], CUSTOMER)],
 			["product slot", _rect_of(_controller._chair_zones[at], CARD)],
 			["offer detail", _rect_of(_controller._offer_details[at],
 				DetailCard3D.CARD_SIZE)]]:
@@ -1863,7 +1864,7 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 		_controller._close_soon_flags[at].visible
 			and _controller._close_soon_flags[at].get_meta(&"shown", false)
 			and absf(_controller._close_soon_flags[at].position.x
-				- _controller.FLAG_SLIDE_X) < 0.01)
+				- _controller.CLOSE_SOON_SLIDE_X) < 0.01)
 
 	# Same setup, on a DIFFERENT seat - proves this is not scoped to at_this_seat.
 	var other := (at + 1) % 3
@@ -2028,7 +2029,7 @@ func _check_dragging_the_table_offer() -> void:
 	_check("and DROP PRODUCT over the discard",
 		_controller._drop_drag_hint.visible)
 	_check_tag_inside("OFFER PRODUCT", _controller._offer_tags[1],
-		_rect_of(_controller._customer_cards[1], CARD))
+		_rect_of(_controller._customer_cards[1], CUSTOMER))
 	_check_tag_inside("DROP PRODUCT", _controller._drop_tag,
 		_rect_of(_controller._discard_zone, CARD))
 	_check("which takes the DISCARD tag's place rather than joining it",

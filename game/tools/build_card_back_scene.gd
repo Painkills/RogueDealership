@@ -23,7 +23,7 @@ func _init() -> void:
 	root.add_child(bg)
 	bg.owner = root
 
-	# A brass rule inset from the edge, the way a printed card back is framed,
+	# A pale rule inset from the edge, the way a printed card back is framed,
 	# with a finer one inside it.
 	for spec in [["Frame", 24, 8], ["FrameInner", 44, 3]]:
 		var frame := Panel.new()
@@ -35,7 +35,7 @@ func _init() -> void:
 		frame.offset_bottom = -spec[1]
 		var rule := StyleBoxFlat.new()
 		rule.draw_center = false
-		rule.border_color = Palette.color(&"brass")
+		rule.border_color = Palette.color(&"card_back_mark")
 		rule.set_border_width_all(spec[2])
 		rule.set_corner_radius_all(18)
 		frame.add_theme_stylebox_override("panel", rule)

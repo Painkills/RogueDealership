@@ -3,122 +3,123 @@
 [ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="1_66ide"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_smm52"]
-bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q5px1"]
-bg_color = Color(0.9843137, 0.96862745, 0.9254902, 1)
+bg_color = Color(0.9647059, 0.972549, 0.9843137, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.6039216, 0.54509807, 0.41568628, 1)
+border_color = Color(0.72156864, 0.7529412, 0.8, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4lv02"]
-bg_color = Color(0.8039216, 0.7490196, 0.6117647, 1)
+bg_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bsvqr"]
-bg_color = Color(0.8039216, 0.7490196, 0.6117647, 1)
+bg_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_txauj"]
-bg_color = Color(0.8039216, 0.7490196, 0.6117647, 1)
+bg_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
 
-[node name="ReportPanel" type="PanelContainer" unique_id=575900957]
+[node name="ReportPanel" type="PanelContainer" unique_id=733389188]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_smm52")
 script = ExtResource("1_66ide")
 
-[node name="CenterWrap" type="CenterContainer" parent="." unique_id=1244016475]
+[node name="CenterWrap" type="CenterContainer" parent="." unique_id=54554995]
 layout_mode = 2
 
-[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=982553116]
+[node name="Card" type="PanelContainer" parent="CenterWrap" unique_id=105557999]
 custom_minimum_size = Vector2(900, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_q5px1")
 
-[node name="CardMargin" type="MarginContainer" parent="CenterWrap/Card" unique_id=446228899]
+[node name="CardMargin" type="MarginContainer" parent="CenterWrap/Card" unique_id=557560550]
 layout_mode = 2
 theme_override_constants/margin_left = 56
 theme_override_constants/margin_top = 56
 theme_override_constants/margin_right = 56
 theme_override_constants/margin_bottom = 56
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterWrap/Card/CardMargin" unique_id=1385253808]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterWrap/Card/CardMargin" unique_id=771543319]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="TitleLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=188271202]
+[node name="TitleLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1890344607]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 60
 text = "CLOSING TIME"
 horizontal_alignment = 1
 
-[node name="TitleRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1773954898]
+[node name="TitleRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1238644792]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_4lv02")
 
-[node name="BankedLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1829245703]
+[node name="BankedLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=783156583]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 
-[node name="BonusLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=502511124]
+[node name="BonusLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=239653366]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="StatsRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1250598320]
+[node name="StatsRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1290485260]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_bsvqr")
 
-[node name="StandingLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=712380782]
+[node name="StandingLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=159709312]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 
-[node name="WalkoutsLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1058008514]
+[node name="WalkoutsLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=79494085]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 autowrap_mode = 2
 
-[node name="CustomersLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1617151951]
+[node name="CustomersLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=360888330]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 
-[node name="OffersLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1586065441]
+[node name="OffersLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1882028347]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 
-[node name="MarginMovedLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1291573383]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-autowrap_mode = 2
-
-[node name="LostLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=760112778]
+[node name="MarginMovedLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1041186614]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 autowrap_mode = 2
 
-[node name="ButtonRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=2082811876]
+[node name="LostLabel" type="Label" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1096088195]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+autowrap_mode = 2
+
+[node name="ButtonRule" type="PanelContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=1689572710]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_txauj")
 
-[node name="ButtonWrap" type="CenterContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=284749925]
+[node name="ButtonWrap" type="CenterContainer" parent="CenterWrap/Card/CardMargin/VBoxContainer" unique_id=114178979]
 layout_mode = 2
 
-[node name="RestartButton" type="Button" parent="CenterWrap/Card/CardMargin/VBoxContainer/ButtonWrap" unique_id=1794368389]
+[node name="RestartButton" type="Button" parent="CenterWrap/Card/CardMargin/VBoxContainer/ButtonWrap" unique_id=24873504]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 84)
 layout_mode = 2

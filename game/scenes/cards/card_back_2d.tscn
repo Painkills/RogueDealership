@@ -9,7 +9,7 @@ border_width_left = 8
 border_width_top = 8
 border_width_right = 8
 border_width_bottom = 8
-border_color = Color(0.72156864, 0.5372549, 0.22745098, 1)
+border_color = Color(0.6156863, 0.72156864, 0.9607843, 1)
 corner_radius_top_left = 18
 corner_radius_top_right = 18
 corner_radius_bottom_right = 18
@@ -21,13 +21,13 @@ border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(0.72156864, 0.5372549, 0.22745098, 1)
+border_color = Color(0.6156863, 0.72156864, 0.9607843, 1)
 corner_radius_top_left = 18
 corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
-[node name="CardBack" type="Control" unique_id=730028602]
+[node name="CardBack" type="Control" unique_id=1973301973]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
@@ -35,13 +35,13 @@ offset_right = 500.0
 offset_bottom = 700.0
 script = ExtResource("1_vf82n")
 
-[node name="Background" type="ColorRect" parent="." unique_id=628217483]
+[node name="Background" type="ColorRect" parent="." unique_id=2143935776]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 
-[node name="Frame" type="Panel" parent="." unique_id=804298416]
+[node name="Frame" type="Panel" parent="." unique_id=1721295213]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -51,7 +51,7 @@ offset_right = -24.0
 offset_bottom = -24.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_jdeq3")
 
-[node name="FrameInner" type="Panel" parent="." unique_id=1903576104]
+[node name="FrameInner" type="Panel" parent="." unique_id=171092739]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -61,12 +61,12 @@ offset_right = -44.0
 offset_bottom = -44.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_netl4")
 
-[node name="IconWrap" type="CenterContainer" parent="." unique_id=696274331]
+[node name="IconWrap" type="CenterContainer" parent="." unique_id=1009090248]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="TypeIcon" type="Control" parent="IconWrap" unique_id=1447830615]
+[node name="TypeIcon" type="Control" parent="IconWrap" unique_id=690305728]
 custom_minimum_size = Vector2(320, 320)
 layout_mode = 2
 script = ExtResource("2_onw68")

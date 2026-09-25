@@ -107,11 +107,36 @@ func test_a_detail_card_slides_completely_clear_of_what_it_describes() -> void:
 	h.check("slid out, the detail card clears its partner by %.2f" % gap, gap > 0.0)
 	h.check("and it goes LEFT, which is the side the seat framing leaves room on",
 		DetailCard3D.SLIDE_OUT.x < 0.0)
-	var mesh := (s.get_node(^"%CustomerDetail0/CardMesh/CardFrontMesh")
+	var mesh := (s.get_node(^"%OfferDetail0/CardMesh/CardFrontMesh")
 		as MeshInstance3D).mesh as PlaneMesh
 	h.eq("and the quad really is the size the slide assumes",
 		mesh.size, DetailCard3D.CARD_SIZE)
 	h.eq("which is the size of the card it hides behind", DetailCard3D.CARD_SIZE, CARD)
+	s.free()
+
+func test_a_customer_is_a_folder_and_its_back_is_the_same_folder() -> void:
+	## A customer's card is a landscape file folder, wider than a product card
+	## so its interest grid has room to be read. Its back has to be the same
+	## shape - a back that is not the same shape as its front is not a back -
+	## and so does the pad that answers the pointer over it.
+	var s := _scene()
+	h.check("a customer's folder is wider than tall",
+		CustomerCard3D.CARD_SIZE.x > CustomerCard3D.CARD_SIZE.y)
+	h.eq("and the same height as every other card, so the rows still line up",
+		CustomerCard3D.CARD_SIZE.y, CARD.y)
+	for i in range(3):
+		var back := s.get_node(NodePath("%%CustomerDetail%d" % i))
+		h.eq("seat %d's back is folder-sized" % i, back.get(&"card_size"),
+			CustomerCard3D.CARD_SIZE)
+		h.eq("with a face as wide as the folder's", back.get(&"face_size"),
+			CustomerCard3D.FRONT_SIZE)
+		var pad := s.get_node(NodePath("%%HoverPad%d/CollisionShape3D" % i)) as CollisionShape3D
+		var box := pad.shape as BoxShape3D
+		h.eq("and the pad over it covers the whole folder",
+			Vector2(box.size.x, box.size.y), CustomerCard3D.CARD_SIZE)
+	h.check("the face is laid out at the folder's own aspect",
+		is_equal_approx(float(CustomerCard3D.FRONT_SIZE.x) / CustomerCard3D.FRONT_SIZE.y,
+			CustomerCard3D.CARD_SIZE.x / CustomerCard3D.CARD_SIZE.y))
 	s.free()
 
 func test_the_customer_row_cannot_overlap_the_product_row() -> void:

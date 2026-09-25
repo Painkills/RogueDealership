@@ -48,6 +48,7 @@ func _init() -> void:
 	vbox.owner = root
 
 	var title := _label(vbox, root, "TitleLabel", "RUN COMPLETE", 60)
+	title.theme_type_variation = &"Heading"
 	title.unique_name_in_owner = true   # overridden to "YOU'RE FIRED" when standing hit 0
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 

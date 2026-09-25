@@ -53,6 +53,7 @@ func _init() -> void:
 	col.owner = root
 
 	var title := _label(col, root, "DetailTitle", "Card Name", 34, &"text")
+	title.theme_type_variation = &"Heading"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.unique_name_in_owner = true
 

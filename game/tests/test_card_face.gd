@@ -118,7 +118,8 @@ func test_the_back_looks_the_same_whether_the_card_is_product_or_support() -> vo
 	h.check("the back shows the car, even though this is a product", product_back._icon._is_product)
 	h.eq("on the dealership's own navy stock, the one universal back",
 		product_back._background.color, Palette.color(&"ink"))
-	h.eq("with the car in brass", product_back._icon._color, Palette.color(&"brass"))
+	h.eq("with the car in its pale blue mark", product_back._icon._color,
+		Palette.color(&"card_back_mark"))
 	product.free()
 
 	var support := _instance()

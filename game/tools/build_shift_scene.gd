@@ -105,27 +105,29 @@ const FLOOR_Y := -4.0
 ## The first pass was a solid-fronted desk with the product card floating in
 ## front of it, and it read as a podium. What makes a table read as a table is
 ## a top you can see down onto and legs with the floor showing between them,
-## so the product card now stands ON the top, at its front, and the top runs
-## back past the customer.
+## so the product card stands ON the top, at its front, and the top runs back
+## past the customer. A light laminate top on a black steel frame - the
+## showroom's desk, not a banker's.
 ##
 ## Seat-local, in the desk's own un-leaned frame. TABLE_TOP_Y is a hair under
 ## the product card's lowest edge (-1.72 once the seat's lean tips it), so the
 ## card stands on the table rather than through it or above it.
 const TABLE_TOP_Y := -1.76
-const TABLE_SIZE := Vector3(5.6, 0.16, 3.4)   ## the top: width, thickness, depth
+const TABLE_SIZE := Vector3(5.6, 0.14, 3.4)   ## the top: width, thickness, depth
 const TABLE_FRONT_Z := 1.1
-const TABLE_LEG := 0.2
-## The customer's chair, behind the table. Without it their card hangs four
-## units above the table top with nothing under it; with it, the card is
-## someone sitting in a chair on the far side of the desk. Its bottom runs
-## down behind the table far enough that no gap shows over the table's back
-## edge from either camera. Wider than their card and taller than its middle,
-## so the chair's shoulders show either side of them - from the floor the
-## front table is below the frame, and a chair seen only BELOW the card read
-## as a pillar rather than a chair.
-const CHAIR_BACK := Vector3(3.5, 6.9, 0.35)
-const CHAIR_BACK_Z := -2.9
-const CHAIR_BACK_BOTTOM := -2.3
+const TABLE_LEG := 0.12
+## The customer's chair: an ordinary office chair on the far side of the desk -
+## a rounded back, a seat, one post and a five-point base. The last one was a
+## tall slab as wide as their card and it read as a church pew. This back is
+## narrower than their card and tops out behind it, so what shows is a chair
+## under someone, not a wall behind them.
+##
+## The seat sits wholly behind the table's back edge (z -2.3), and the back
+## tops out behind their folder, which hides its upper half.
+const CHAIR_Z := -3.3                               ## the seat's centre
+const CHAIR_BACK_SIZE := Vector3(2.3, 3.8, 0.22)   ## width, height, thickness
+const CHAIR_SEAT_Y := -1.0                          ## the seat's top
+const CHAIR_SEAT := Vector3(2.5, 0.3, 1.4)
 
 ## See the header. K = 540 / tan(14deg) = 2165.85.
 const CAM_FOV := 28.0
@@ -178,8 +180,9 @@ const FAN_RADIUS := 24.0
 ## tag that slides out to the RIGHT of their card: the right-hand flanker's tag
 ## ran straight into the log. A tag only ever slides right, so the left rail is
 ## the one side nothing on the table ever reaches toward. Stops well above the
-## bottom strip, which is where the draw pile rises into.
-const LOG_RECT := Rect2(18, 79, 422, 651)
+## bottom strip, which is where the draw pile rises into. As narrow as it is so
+## the left flanker's folder clears it from the floor, where it is biggest.
+const LOG_RECT := Rect2(18, 80, 370, 650)
 ## A column, not a row. The bottom of the screen belongs to the hand and the two
 ## piles, and a Button laid over a card steals the click meant for the card.
 ##
@@ -187,10 +190,14 @@ const LOG_RECT := Rect2(18, 79, 422, 651)
 ## flanker's CLOSE SOON tag reaches while you are seated. On the floor that tag
 ## reaches further, but the buttons are hidden there because there is nobody to
 ## act on. drive_shift.gd pins both edges.
-const ACTION_RECT := Rect2(1560, 300, 330, 340)
-const ACTION_BUTTON := Vector2(330, 100)
-## The manila strip the shift's numbers sit on. The log starts below it.
+const ACTION_RECT := Rect2(1630, 300, 260, 340)
+const ACTION_BUTTON := Vector2(260, 100)
+## The app bar across the top that the shift's numbers sit on. The log starts
+## below it.
 const TOP_STRIP_HEIGHT := 66.0
+## A customer's CLOSE SOON tag hangs this far down their folder - low enough to
+## clear the right-hand flanker's folder beside it.
+const CLOSE_SOON_Y := -1.45
 ## Control.layout_mode's ANCHORS value, which Godot does not expose as a
 ## constant - see _cover_the_hud().
 const LAYOUT_MODE_ANCHORS := 1
@@ -217,17 +224,17 @@ func _init() -> void:
 	root.add_child(floor_mark)
 	floor_mark.owner = root
 
-	# A warm overhead key, and a warm fill rather than the old navy one: the
-	# cards are cream paper now, and a blue ambient turned their shadowed side
-	# the colour of a bruise.
+	# A neutral white key and a neutral fill - showroom lighting, not a desk
+	# lamp. The cards are white now, and a tinted light is the first thing that
+	# makes white look dated.
 	var light := DirectionalLight3D.new()
 	light.name = "DirectionalLight3D"
 	light.position = Vector3(0, 12, 18)
 	light.rotation_degrees = Vector3(-38, -22, 0)
-	light.light_color = Color("fff1dc")
-	# Low enough that cream stock stays cream: key plus fill any brighter
-	# clipped every card face to flat white.
-	light.light_energy = 0.8
+	light.light_color = Color("f8faff")
+	# Low enough that a white card face is not clipped to a flat blank: key
+	# plus fill any brighter and the faces lost their edges.
+	light.light_energy = 0.62
 	light.shadow_enabled = true
 	light.shadow_opacity = 0.55
 	light.shadow_blur = 3.0
@@ -238,8 +245,8 @@ func _init() -> void:
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Palette.color(&"neutral_1")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("b9ad98")
-	env.ambient_light_energy = 0.45
+	env.ambient_light_color = Color("c9ced6")
+	env.ambient_light_energy = 0.4
 	var we := WorldEnvironment.new()
 	we.name = "WorldEnvironment"
 	we.environment = env
@@ -331,15 +338,17 @@ func _init() -> void:
 		# On the CUSTOMER now, not the product slot - a customer you are not
 		# currently seated with can still have something unsigned at risk, and
 		# the old spot (behind the product) was never visible for them at all.
-		# Near the bottom, clear of the name/archetype/patience row up top.
-		# Stamp red with the words knocked out in paper: the loudest thing on
-		# the table, as it should be when the bell is about to take what is
-		# unsigned.
+		# Near the bottom, clear of the photo-and-name row up top. Red with
+		# white words: the loudest thing on the table, as it should be when the
+		# bell is about to take what is unsigned.
 		_slide_flag(who, root, "CloseSoonFlag%d" % i, "CLOSE SOON!",
-			Palette.color(&"stamp"), Palette.color(&"paper"), -1.3)
+			Palette.color(&"stamp"), Palette.color(&"paper"), CLOSE_SOON_Y)
 
-		_detail(detail_scene, "CustomerDetail%d" % i,
+		# The back of their folder is folder-sized too.
+		var back := _detail(detail_scene, "CustomerDetail%d" % i,
 			Vector3(0.0, 0.0, BACK_Z), flip, root)
+		back.set(&"card_size", CustomerCard3D.CARD_SIZE)
+		back.set(&"face_size", CustomerCard3D.FRONT_SIZE)
 
 		# The hover target CANNOT be the card, because the card is what the hover
 		# moves. A rotating quad has no thickness: past about 75 degrees the ray
@@ -347,7 +356,8 @@ func _init() -> void:
 		# "enters" again - and the card stutters. This pad sits in front of the
 		# pair and never moves, so what is under the cursor never depends on what
 		# the cursor started.
-		_hover_pad(i, Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), seat, root)
+		_hover_pad(i, Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), CustomerCard3D.CARD_SIZE,
+			seat, root)
 
 		var chair := _collection(collection_scene, "Chair%d" % i,
 			Vector3(0.0, CHAIR_Y, FACE_Z), seat, root)
@@ -380,15 +390,15 @@ func _init() -> void:
 		# one card offering both. Stamp red, like the words and the CLOSE button.
 		_drag_hint(chair, root, "CloseHint%d" % i, Palette.color(&"stamp"), false)
 
-		# A sticky-note-style tag, tucked invisibly behind the product slot
-		# until shift_controller.gd's own _slide_flag() tweens it clear to the
-		# right - the same slide DetailCard3D's own reveal() does, mirrored in
+		# A tag tucked invisibly behind the product slot until
+		# shift_controller.gd's own _slide_flag() tweens it clear to the right -
+		# the same slide DetailCard3D's own reveal() does, mirrored in
 		# direction. CLOSE SOON used to live here too, but it needs to be
 		# readable for a customer you are not currently seated with - see the
-		# Customer%d loop below instead.
-		# A yellow sticky note in ink, the way you would flag a page for them.
+		# Customer%d loop above instead. The house blue, like the OFFER button
+		# it is the drag-and-drop half of.
 		_slide_flag(chair, root, "OfferFlag%d" % i, "DROP ON CUSTOMER\nTO OFFER",
-			Palette.color(&"sticky"), Palette.color(&"ink"), 0.0)
+			Palette.color(&"primary"), Palette.color(&"paper"), 0.0)
 
 		# A drop target that never actually holds a card - CardHomes never
 		# assigns anything here, so a dropped offer always snaps back to
@@ -399,7 +409,8 @@ func _init() -> void:
 		var customer_zone := _collection(collection_scene, "CustomerZone%d" % i,
 			Vector3(0.0, CUSTOMER_Y, FACE_Z + 0.1), seat, root)
 		customer_zone.card_layout_strategy = PileCardLayout.new()
-		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, Palette.color(&"appeal"))
+		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, Palette.color(&"appeal"),
+			true, CustomerCard3D.CARD_SIZE)
 
 		_detail(detail_scene, "OfferDetail%d" % i,
 			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
@@ -472,12 +483,11 @@ static func lean() -> Basis:
 static func framed(view: Vector3) -> Vector3:
 	return FRONT_SEAT + lean() * view
 
-## A desk for the seat: a walnut table with a green leather writing top on four
-## legs, and the customer's leather chair behind it. It cancels the seat's
-## lean, so it stands level in the world while the cards above it lean back to
-## face the lens. Never collides with anything - it is scenery, and the table's
-## picking is already delicate enough (see shift_controller.gd's drop-zone
-## notes).
+## A desk for the seat: a light laminate table on a black steel frame, and the
+## customer's office chair behind it. It cancels the seat's lean, so it stands
+## level in the world while the cards above it lean back to face the lens.
+## Never collides with anything - it is scenery, and the table's picking is
+## already delicate enough (see shift_controller.gd's drop-zone notes).
 func _desk(seat: Node3D, owner_root: Node, index: int) -> void:
 	var desk := Node3D.new()
 	desk.name = "Desk%d" % index
@@ -485,60 +495,67 @@ func _desk(seat: Node3D, owner_root: Node, index: int) -> void:
 	seat.add_child(desk)
 	desk.owner = owner_root
 
-	var walnut := _matte(Palette.color(&"walnut"), 0.55)
-	var dark := _matte(Palette.color(&"walnut_dark"), 0.7)
-	var leather := _matte(Palette.color(&"desk_leather"), 0.8)
-	var oxblood := _matte(Palette.color(&"chair_leather"), 0.6)
-	var brass := StandardMaterial3D.new()
-	brass.albedo_color = Palette.color(&"brass")
-	brass.metallic = 0.6
-	brass.roughness = 0.35
+	var laminate := _matte(Palette.color(&"desk_top"), 0.4)
+	var steel := _matte(Palette.color(&"desk_frame"), 0.35)
+	steel.metallic = 0.4
+	var mesh_fabric := _matte(Palette.color(&"chair"), 0.9)
+	var chrome := _matte(Palette.color(&"chair_base"), 0.3)
+	chrome.metallic = 0.6
 
 	# --- the table ----------------------------------------------------------
 	var top_z := TABLE_FRONT_Z - TABLE_SIZE.z * 0.5
 	var under := TABLE_TOP_Y - TABLE_SIZE.y
 	_box(desk, owner_root, "Top", TABLE_SIZE,
-		Vector3(0.0, TABLE_TOP_Y - TABLE_SIZE.y * 0.5, top_z), walnut)
-	# The leather writing surface: a banker's-desk green inlaid in the walnut,
-	# which is most of what makes the top read as a desk top from up here.
-	_box(desk, owner_root, "Inlay", Vector3(TABLE_SIZE.x - 0.6, 0.01, TABLE_SIZE.z - 0.6),
-		Vector3(0.0, TABLE_TOP_Y + 0.005, top_z), leather)
-	# A brass edge along the front, where the light catches it.
-	_box(desk, owner_root, "Trim", Vector3(TABLE_SIZE.x, 0.05, 0.05),
-		Vector3(0.0, TABLE_TOP_Y - 0.025, TABLE_FRONT_Z + 0.02), brass)
-	# The apron: a deeper band under the front edge, so the top has some body.
-	_box(desk, owner_root, "Apron", Vector3(TABLE_SIZE.x - 0.5, 0.26, 0.06),
-		Vector3(0.0, under - 0.13, TABLE_FRONT_Z - 0.3), dark)
+		Vector3(0.0, TABLE_TOP_Y - TABLE_SIZE.y * 0.5, top_z), laminate)
+	# A black edge band on the front, the way a modern desk is finished.
+	_box(desk, owner_root, "Edge", Vector3(TABLE_SIZE.x, TABLE_SIZE.y, 0.03),
+		Vector3(0.0, TABLE_TOP_Y - TABLE_SIZE.y * 0.5, TABLE_FRONT_Z + 0.015), steel)
 	var leg_h := under - FLOOR_Y
-	var inset_x := TABLE_SIZE.x * 0.5 - 0.3
-	for corner in [["LegFrontLeft", -inset_x, TABLE_FRONT_Z - 0.3],
-			["LegFrontRight", inset_x, TABLE_FRONT_Z - 0.3],
-			["LegBackLeft", -inset_x, TABLE_FRONT_Z - TABLE_SIZE.z + 0.3],
-			["LegBackRight", inset_x, TABLE_FRONT_Z - TABLE_SIZE.z + 0.3]]:
+	var inset_x := TABLE_SIZE.x * 0.5 - 0.25
+	var back_leg_z := TABLE_FRONT_Z - TABLE_SIZE.z + 0.25
+	for corner in [["LegFrontLeft", -inset_x, TABLE_FRONT_Z - 0.25],
+			["LegFrontRight", inset_x, TABLE_FRONT_Z - 0.25],
+			["LegBackLeft", -inset_x, back_leg_z],
+			["LegBackRight", inset_x, back_leg_z]]:
 		_box(desk, owner_root, corner[0], Vector3(TABLE_LEG, leg_h, TABLE_LEG),
-			Vector3(corner[1], FLOOR_Y + leg_h * 0.5, corner[2]), dark)
+			Vector3(corner[1], FLOOR_Y + leg_h * 0.5, corner[2]), steel)
+	# A stretcher between the back legs - the frame reads as a frame.
+	_box(desk, owner_root, "Stretcher", Vector3(inset_x * 2.0, 0.08, 0.08),
+		Vector3(0.0, FLOOR_Y + leg_h * 0.35, back_leg_z), steel)
 
-	# --- the customer's chair, on the far side of it --------------------------
-	var back_y := CHAIR_BACK_BOTTOM + CHAIR_BACK.y * 0.5
-	_box(desk, owner_root, "ChairBack", CHAIR_BACK, Vector3(0.0, back_y, CHAIR_BACK_Z), oxblood)
-	# A cushion face a shade lighter, so it reads as upholstery, not a slab.
-	_box(desk, owner_root, "ChairCushion",
-		Vector3(CHAIR_BACK.x - 0.5, CHAIR_BACK.y - 0.7, 0.06),
-		Vector3(0.0, back_y + 0.1, CHAIR_BACK_Z + CHAIR_BACK.z * 0.5 + 0.03),
-		_matte(Palette.color(&"chair_leather").lightened(0.12), 0.6))
-	# A pedestal and a round foot, visible between the table's legs.
+	# --- the customer's office chair, on the far side of it ------------------
+	# A rounded back: a capsule pressed flat, so the top and bottom are curves
+	# rather than the corners of a slab.
+	var back := CapsuleMesh.new()
+	back.radius = CHAIR_BACK_SIZE.x * 0.5
+	back.height = CHAIR_BACK_SIZE.y
+	var back_inst := MeshInstance3D.new()
+	back_inst.name = "ChairBack"
+	back_inst.mesh = back
+	back_inst.material_override = mesh_fabric
+	back_inst.position = Vector3(0.0, CHAIR_SEAT_Y + CHAIR_BACK_SIZE.y * 0.5 - 0.1,
+		CHAIR_Z - CHAIR_SEAT.z * 0.5)
+	back_inst.scale = Vector3(1.0, 1.0, CHAIR_BACK_SIZE.z / CHAIR_BACK_SIZE.x)
+	desk.add_child(back_inst)
+	back_inst.owner = owner_root
+	_box(desk, owner_root, "ChairSeat", CHAIR_SEAT,
+		Vector3(0.0, CHAIR_SEAT_Y - CHAIR_SEAT.y * 0.5, CHAIR_Z), mesh_fabric)
+	# One post down to a five-point base, the way every office chair stands.
 	var post := CylinderMesh.new()
-	post.top_radius = 0.16
-	post.bottom_radius = 0.16
-	post.height = CHAIR_BACK_BOTTOM - FLOOR_Y
+	post.top_radius = 0.09
+	post.bottom_radius = 0.09
+	post.height = CHAIR_SEAT_Y - CHAIR_SEAT.y - FLOOR_Y - 0.12
 	_mesh(desk, owner_root, "ChairPost", post,
-		Vector3(0.0, FLOOR_Y + post.height * 0.5, CHAIR_BACK_Z + 0.5), dark)
-	var foot := CylinderMesh.new()
-	foot.top_radius = 0.9
-	foot.bottom_radius = 0.95
-	foot.height = 0.08
-	_mesh(desk, owner_root, "ChairFoot", foot,
-		Vector3(0.0, FLOOR_Y + 0.04, CHAIR_BACK_Z + 0.5), dark)
+		Vector3(0.0, FLOOR_Y + 0.12 + post.height * 0.5, CHAIR_Z), chrome)
+	for k in range(5):
+		var spoke := Node3D.new()
+		spoke.name = "ChairLeg%d" % k
+		spoke.position = Vector3(0.0, FLOOR_Y + 0.1, CHAIR_Z)
+		spoke.rotation = Vector3(0.0, TAU * k / 5.0, 0.0)
+		desk.add_child(spoke)
+		spoke.owner = owner_root
+		_box(spoke, owner_root, "Spoke", Vector3(0.1, 0.08, 0.95),
+			Vector3(0.0, 0.0, 0.47), chrome)
 
 func _box(parent: Node3D, owner_root: Node, node_name: String, size: Vector3,
 		pos: Vector3, mat: Material) -> void:
@@ -577,7 +594,8 @@ func _collection(scene: PackedScene, node_name: String, pos: Vector3,
 ## hover and the click for that seat; the customer card's own collider is
 ## disabled so the two can never disagree about whether the mouse is here.
 ## A box, not a quad, so there is no angle at which it has no area.
-func _hover_pad(index: int, pos: Vector3, parent: Node, owner_root: Node) -> void:
+func _hover_pad(index: int, pos: Vector3, card: Vector2, parent: Node,
+		owner_root: Node) -> void:
 	var body := StaticBody3D.new()
 	body.name = "HoverPad%d" % index
 	body.position = pos
@@ -585,8 +603,10 @@ func _hover_pad(index: int, pos: Vector3, parent: Node, owner_root: Node) -> voi
 	parent.add_child(body)
 	body.owner = owner_root
 
+	# Exactly the card it sits over - a customer's folder is wider than a
+	# product card, and the whole of it should answer the pointer.
 	var box := BoxShape3D.new()
-	box.size = Vector3(SLOT_SIZE.x, SLOT_SIZE.y, 0.1)
+	box.size = Vector3(card.x, card.y, 0.1)
 	var shape := CollisionShape3D.new()
 	shape.name = "CollisionShape3D"
 	shape.shape = box
@@ -673,7 +693,7 @@ func _tag_anchor(zone: Node3D, owner_root: Node) -> void:
 ## CLOSE passes anchored = false: its words are the second half of the empty
 ## table's own note, which hangs from the chair's anchor rather than this one.
 func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, tint: Color,
-		anchored: bool = true) -> void:
+		anchored: bool = true, card: Vector2 = SLOT_SIZE) -> void:
 	var hint := Node3D.new()
 	hint.name = node_name
 	hint.visible = false
@@ -681,8 +701,9 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, tint: Color,
 	zone.add_child(hint)
 	hint.owner = owner_root
 
+	# The size of the card it lights up - a customer's folder is wider.
 	var slab := QuadMesh.new()
-	slab.size = SLOT_SIZE
+	slab.size = card
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(tint.r, tint.g, tint.b, 0.35)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -772,23 +793,25 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(hints)
 	hints.owner = root
 
-	_tag(hints, root, "DrawTag", ^"Camera3D/Draw/TagAnchor", &"manila", &"ink_dim",
+	# White pills for the piles, which only name a place; filled pills in the
+	# button colours for the two drops, which are doing something.
+	_tag(hints, root, "DrawTag", ^"Camera3D/Draw/TagAnchor", &"paper", &"neutral_3",
 		[["Label", "DRAW", 22, &"ink"]])
-	_tag(hints, root, "DiscardTag", ^"Camera3D/Discard/TagAnchor", &"manila", &"ink_dim",
+	_tag(hints, root, "DiscardTag", ^"Camera3D/Discard/TagAnchor", &"paper", &"neutral_3",
 		[["Label", "DISCARD", 22, &"ink"], ["Sub", "drag a card here to dig", 16, &"ink_dim"]])
 	# Same top edge as DiscardTag, and only ever shown in its place.
-	_tag(hints, root, "DropTag", ^"Camera3D/Discard/DropDragHint/TagAnchor", &"paper", &"stamp",
-		[["Label", "DROP PRODUCT", 24, &"stamp"]])
+	_tag(hints, root, "DropTag", ^"Camera3D/Discard/DropDragHint/TagAnchor", &"stamp", &"stamp",
+		[["Label", "DROP PRODUCT", 24, &"paper"]])
 	for i in range(3):
 		_tag(hints, root, "OfferTag%d" % i,
 			NodePath("Table/Carousel/Seat%d/CustomerZone%d/OfferDragHint%d/TagAnchor" % [i, i, i]),
-			&"paper", &"ink", [["Label", "OFFER PRODUCT", 24, &"ink"]])
+			&"primary", &"primary", [["Label", "OFFER PRODUCT", 24, &"paper"]])
 		_table_note(hints, root, i)
 
 	# --- the shift bar, always ------------------------------------------
-	# The deal jacket: a manila strip across the top of the screen that the
-	# shift's numbers are written on, so they read as ink on a folder rather
-	# than as white text floating over the office wall.
+	# A white app bar across the top of the screen that the shift's numbers
+	# sit on, so they read as a dashboard rather than as text floating over
+	# the office wall.
 	var strip := PanelContainer.new()
 	strip.name = "TopStrip"
 	strip.position = Vector2.ZERO
@@ -796,12 +819,12 @@ func _build_hud(root: Node) -> void:
 	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.unique_name_in_owner = true
 	var strip_style := StyleBoxFlat.new()
-	strip_style.bg_color = Palette.color(&"manila")
-	strip_style.border_color = Palette.color(&"brass_dark")
-	strip_style.border_width_bottom = 3
-	strip_style.shadow_color = Color(0, 0, 0, 0.35)
-	strip_style.shadow_size = 6
-	strip_style.shadow_offset = Vector2(0, 3)
+	strip_style.bg_color = Palette.color(&"panel")
+	strip_style.border_color = Palette.color(&"neutral_2")
+	strip_style.border_width_bottom = 1
+	strip_style.shadow_color = Color(0, 0, 0, 0.18)
+	strip_style.shadow_size = 8
+	strip_style.shadow_offset = Vector2(0, 2)
 	strip.add_theme_stylebox_override("panel", strip_style)
 	hud.add_child(strip)
 	strip.owner = root
@@ -840,6 +863,7 @@ func _build_hud(root: Node) -> void:
 	tick_label.name = "TickLabel"
 	tick_label.text = "tick 0/24"
 	tick_label.add_theme_font_size_override("font_size", 30)
+	tick_label.theme_type_variation = &"Heading"
 	tick_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tick_label.unique_name_in_owner = true
 	tick_wrap.add_child(tick_label)
@@ -856,6 +880,7 @@ func _build_hud(root: Node) -> void:
 	banked.name = "BankedLabel"
 	banked.text = "banked $0 / $3,600"
 	banked.add_theme_font_size_override("font_size", 30)
+	banked.theme_type_variation = &"Heading"
 	banked.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	banked.unique_name_in_owner = true
 	top.add_child(banked)
@@ -878,6 +903,7 @@ func _build_hud(root: Node) -> void:
 	standing_label.name = "StandingLabel"
 	standing_label.text = "standing 100/100"
 	standing_label.add_theme_font_size_override("font_size", 30)
+	standing_label.theme_type_variation = &"Heading"
 	standing_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	standing_label.unique_name_in_owner = true
 	standing_wrap.add_child(standing_label)
@@ -894,6 +920,7 @@ func _build_hud(root: Node) -> void:
 	at_risk.name = "AtRiskLabel"
 	at_risk.text = "nothing unsigned"
 	at_risk.add_theme_font_size_override("font_size", 30)
+	at_risk.theme_type_variation = &"Heading"
 	at_risk.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	at_risk.unique_name_in_owner = true
 	top.add_child(at_risk)
@@ -910,96 +937,62 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(actions)
 	actions.owner = root
 
-	# Rubber stamps, each in its own ink: OFFER in the house navy, DROP in a
-	# weaker grey-navy since it throws a product away, and CLOSE in stamp red -
-	# the one that actually signs the deal, and the same red the empty table's
-	# "double-click to close" is written in.
-	for spec in [["OfferButton", "OFFER", &"ink"], ["DropButton", "DROP", &"ink_dim"],
-			["CloseButton", "CLOSE", &"stamp"]]:
+	# OFFER filled in the house blue - it is the move you make most - and CLOSE
+	# filled in red, the one that actually signs the deal and the same red the
+	# empty table's "double-click to close" is written in. DROP only outlined:
+	# it throws a product away, and should never look like the obvious press.
+	for spec in [["OfferButton", "OFFER", &"primary", true],
+			["DropButton", "DROP", &"ink_dim", false],
+			["CloseButton", "CLOSE", &"stamp", true]]:
 		var b := Button.new()
 		b.name = spec[0]
 		b.text = spec[1]
 		b.custom_minimum_size = ACTION_BUTTON
-		b.add_theme_font_size_override("font_size", 30)
-		StampStyle.ink(b, Palette.color(spec[2]))
+		b.add_theme_font_size_override("font_size", 32)
+		if spec[3]:
+			ButtonStyle.filled(b, Palette.color(spec[2]))
+		else:
+			ButtonStyle.outlined(b, Palette.color(spec[2]))
 		b.unique_name_in_owner = true
 		actions.add_child(b)
 		b.owner = root
 
 	# --- yours: the log, left, stopping short of the draw pile ------------
-	# A clipboard: a hardboard back with a brass clip at the top, and the log
-	# written on the sheet of paper it holds.
+	# An activity feed: a white card with a small heading over the entries.
 	var panel := PanelContainer.new()
 	panel.name = "SidePanel"
 	panel.position = LOG_RECT.position
 	panel.size = LOG_RECT.size
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.unique_name_in_owner = true
-	var board := StyleBoxFlat.new()
-	board.bg_color = Palette.color(&"board")
-	board.set_corner_radius_all(12)
-	board.content_margin_left = 12
-	board.content_margin_right = 12
-	board.content_margin_top = 8
-	board.content_margin_bottom = 12
-	board.shadow_color = Color(0, 0, 0, 0.45)
-	board.shadow_size = 8
-	board.shadow_offset = Vector2(2, 4)
-	panel.add_theme_stylebox_override("panel", board)
+	var card := StyleBoxFlat.new()
+	card.bg_color = Palette.color(&"panel")
+	card.border_color = Palette.color(&"neutral_2")
+	card.set_border_width_all(1)
+	card.set_corner_radius_all(14)
+	card.content_margin_left = 18
+	card.content_margin_right = 16
+	card.content_margin_top = 14
+	card.content_margin_bottom = 14
+	card.shadow_color = Color(0, 0, 0, 0.3)
+	card.shadow_size = 10
+	card.shadow_offset = Vector2(0, 4)
+	panel.add_theme_stylebox_override("panel", card)
 	hud.add_child(panel)
 	panel.owner = root
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 6)
+	col.add_theme_constant_override("separation", 8)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(col)
 	col.owner = root
 
-	var clip_wrap := CenterContainer.new()
-	clip_wrap.name = "ClipWrap"
-	clip_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(clip_wrap)
-	clip_wrap.owner = root
-	var clip := PanelContainer.new()
-	clip.name = "Clip"
-	clip.custom_minimum_size = Vector2(150, 26)
-	clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var brass := StyleBoxFlat.new()
-	brass.bg_color = Palette.color(&"brass")
-	brass.border_color = Palette.color(&"brass_dark")
-	brass.set_border_width_all(2)
-	brass.set_corner_radius_all(6)
-	clip.add_theme_stylebox_override("panel", brass)
-	clip_wrap.add_child(clip)
-	clip.owner = root
-
-	var sheet := PanelContainer.new()
-	sheet.name = "Sheet"
-	sheet.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	sheet.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Palette.color(&"paper")
-	paper.set_corner_radius_all(2)
-	paper.content_margin_left = 14
-	paper.content_margin_right = 12
-	paper.content_margin_top = 10
-	paper.content_margin_bottom = 10
-	sheet.add_theme_stylebox_override("panel", paper)
-	col.add_child(sheet)
-	sheet.owner = root
-
-	var lines := VBoxContainer.new()
-	lines.name = "SheetColumn"
-	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sheet.add_child(lines)
-	lines.owner = root
-	col = lines
-
 	var log_title := Label.new()
 	log_title.name = "LogTitle"
 	log_title.text = "SHIFT LOG"
-	log_title.add_theme_font_size_override("font_size", 22)
+	log_title.theme_type_variation = &"Heading"
+	log_title.add_theme_font_size_override("font_size", 20)
 	log_title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	log_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(log_title)
@@ -1053,9 +1046,10 @@ func _cover_the_hud(overlay: Control) -> void:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.set(&"layout_mode", LAYOUT_MODE_ANCHORS)
 
-## A paper tag on the HUD that follows `anchor` on the table. `lines` is one
-## [name, text, font size, palette role] per row, top to bottom. Starts hidden:
-## the controller shows it once it knows where its anchor is.
+## A pill on the HUD that follows `anchor` on the table. `lines` is one
+## [name, text, font size, palette role] per row, top to bottom; the first is
+## the tag's headline, set in the heading face. Starts hidden: the controller
+## shows it once it knows where its anchor is.
 func _tag(parent: Node, owner_root: Node, node_name: String, anchor: NodePath,
 		fill: StringName, edge: StringName, lines: Array) -> PanelContainer:
 	var tag := PanelContainer.new()
@@ -1075,8 +1069,11 @@ func _tag(parent: Node, owner_root: Node, node_name: String, anchor: NodePath,
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tag.add_child(col)
 	col.owner = owner_root
-	for spec in lines:
-		_line(col, owner_root, spec[0], spec[1], spec[2], spec[3])
+	for k in range(lines.size()):
+		var spec: Array = lines[k]
+		var l := _line(col, owner_root, spec[0], spec[1], spec[2], spec[3])
+		if k == 0:
+			l.theme_type_variation = &"Heading"
 	return tag
 
 ## The empty table's note: what to do with it, and - only once there is
@@ -1091,8 +1088,8 @@ func _tag(parent: Node, owner_root: Node, node_name: String, anchor: NodePath,
 ## drive_shift.gd checks the whole note fits inside the product card.
 func _table_note(parent: Node, owner_root: Node, i: int) -> void:
 	var note := _tag(parent, owner_root, "TableNote%d" % i,
-		NodePath("Table/Carousel/Seat%d/Chair%d/TagAnchor" % [i, i]), &"paper", &"ink_dim",
-		[["Title", "Nothing on the table", 20, &"ink"],
+		NodePath("Table/Carousel/Seat%d/Chair%d/TagAnchor" % [i, i]), &"paper", &"neutral_3",
+		[["Title", "Nothing on the table", 21, &"ink"],
 			["Sub", "Place a product here", 17, &"ink_dim"]])
 	var col := note.get_node(^"Lines")
 
@@ -1114,7 +1111,9 @@ func _table_note(parent: Node, owner_root: Node, i: int) -> void:
 	_line(or_row, owner_root, "Or", "or", 16, &"ink_dim")
 	_rule(or_row, owner_root, "RuleRight")
 
-	_line(close_row, owner_root, "Close", "Double-click to\nclose the deal", 20, &"stamp")
+	var close := _line(close_row, owner_root, "Close", "Double-click to\nclose the deal",
+		21, &"stamp")
+	close.theme_type_variation = &"Heading"
 
 func _line(parent: Node, owner_root: Node, node_name: String, text: String,
 		size: int, role: StringName) -> Label:
@@ -1139,24 +1138,24 @@ func _rule(parent: Node, owner_root: Node, node_name: String) -> void:
 	rule.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
-	style.bg_color = Palette.color(&"ink_dim")
+	style.bg_color = Palette.color(&"neutral_3")
 	rule.add_theme_stylebox_override("panel", style)
 	parent.add_child(rule)
 	rule.owner = owner_root
 
-## Paper with an inked edge and a soft drop shadow, so a tag reads as a slip of
-## paper lying on the table rather than a box painted over it.
+## A rounded pill with a hairline edge and a soft shadow, so a tag reads as a
+## label floating just off the card rather than a box painted over it.
 func _tag_style(fill: StringName, edge: StringName) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = Palette.color(fill)
 	s.border_color = Palette.color(edge)
-	s.set_border_width_all(2)
-	s.set_corner_radius_all(3)
-	s.content_margin_left = 12
-	s.content_margin_right = 12
+	s.set_border_width_all(1)
+	s.set_corner_radius_all(12)
+	s.content_margin_left = 14
+	s.content_margin_right = 14
 	s.content_margin_top = 6
 	s.content_margin_bottom = 8
-	s.shadow_color = Color(0, 0, 0, 0.35)
-	s.shadow_size = 4
-	s.shadow_offset = Vector2(2, 3)
+	s.shadow_color = Color(0, 0, 0, 0.28)
+	s.shadow_size = 6
+	s.shadow_offset = Vector2(0, 2)
 	return s

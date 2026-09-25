@@ -37,6 +37,7 @@ func _init() -> void:
 	var title := Label.new()
 	title.name = "DeckViewerTitle"
 	title.text = "YOUR DECK"
+	title.theme_type_variation = &"Heading"
 	title.unique_name_in_owner = true
 	title.add_theme_font_size_override("font_size", 36)
 	title.add_theme_color_override("font_color", Palette.color(&"text"))

@@ -11,7 +11,7 @@ extends SceneTree
 const LAYER := 50
 const DESIGN := Vector2(1920, 1080)
 const MEMO_POS := Vector2(18, 80)
-const MEMO_WIDTH := 422.0
+const MEMO_WIDTH := 370.0
 
 func _init() -> void:
 	var root := CanvasLayer.new()
@@ -46,22 +46,20 @@ func _init() -> void:
 	# behind the memo is anything the lesson asks you to press.
 	memo.mouse_filter = Control.MOUSE_FILTER_STOP
 	memo.unique_name_in_owner = true
-	var paper := StyleBoxFlat.new()
-	paper.bg_color = Palette.color(&"panel_hi")
-	paper.border_color = Palette.color(&"stamp")
-	paper.border_width_left = 8
-	paper.border_width_top = 2
-	paper.border_width_right = 2
-	paper.border_width_bottom = 2
-	paper.set_corner_radius_all(4)
-	paper.content_margin_left = 22
-	paper.content_margin_right = 18
-	paper.content_margin_top = 14
-	paper.content_margin_bottom = 16
-	paper.shadow_color = Color(0, 0, 0, 0.4)
-	paper.shadow_size = 10
-	paper.shadow_offset = Vector2(3, 5)
-	memo.add_theme_stylebox_override("panel", paper)
+	# A white card with the house blue down its leading edge.
+	var card := StyleBoxFlat.new()
+	card.bg_color = Palette.color(&"panel")
+	card.border_color = Palette.color(&"primary")
+	card.border_width_left = 6
+	card.set_corner_radius_all(14)
+	card.content_margin_left = 22
+	card.content_margin_right = 18
+	card.content_margin_top = 16
+	card.content_margin_bottom = 16
+	card.shadow_color = Color(0, 0, 0, 0.35)
+	card.shadow_size = 14
+	card.shadow_offset = Vector2(0, 6)
+	memo.add_theme_stylebox_override("panel", card)
 	canvas.add_child(memo)
 	memo.owner = root
 
@@ -78,24 +76,22 @@ func _init() -> void:
 	col.add_child(header)
 	header.owner = root
 
-	# A rubber stamp across the top of the memo, the way a training handout
-	# would be marked.
-	var stamp := PanelContainer.new()
-	stamp.name = "Stamp"
-	stamp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var ink := StyleBoxFlat.new()
-	ink.draw_center = false
-	ink.border_color = Palette.color(&"stamp")
-	ink.set_border_width_all(2)
-	ink.set_corner_radius_all(3)
-	ink.content_margin_left = 8
-	ink.content_margin_right = 8
-	ink.content_margin_top = 1
-	ink.content_margin_bottom = 1
-	stamp.add_theme_stylebox_override("panel", ink)
-	header.add_child(stamp)
-	stamp.owner = root
-	_label(stamp, root, "StampLabel", "TRAINING", 18, &"stamp")
+	# A small pill saying what this is.
+	var badge := PanelContainer.new()
+	badge.name = "Badge"
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pill := StyleBoxFlat.new()
+	pill.bg_color = Palette.color(&"primary")
+	pill.set_corner_radius_all(10)
+	pill.content_margin_left = 10
+	pill.content_margin_right = 10
+	pill.content_margin_top = 1
+	pill.content_margin_bottom = 2
+	badge.add_theme_stylebox_override("panel", pill)
+	header.add_child(badge)
+	badge.owner = root
+	var badge_label := _label(badge, root, "BadgeLabel", "TUTORIAL", 16, &"paper")
+	badge_label.theme_type_variation = &"Heading"
 
 	var spacer := Control.new()
 	spacer.name = "Spacer"
@@ -105,7 +101,8 @@ func _init() -> void:
 	spacer.owner = root
 	_label(header, root, "StepLabel", "1 / 13", 18, &"text_dim")
 
-	_label(col, root, "TitleLabel", "Welcome to the F&I office", 26, &"text")
+	var title := _label(col, root, "TitleLabel", "Welcome to the F&I office", 28, &"text")
+	title.theme_type_variation = &"Heading"
 	var body := _label(col, root, "BodyLabel",
 		"Their file: who they are, what kind of buyer they are, and their patience. When patience runs out they walk - and a walkout costs you standing.",
 		20, &"text")
@@ -127,7 +124,7 @@ func _init() -> void:
 	skip.name = "SkipButton"
 	skip.text = "SKIP TUTORIAL"
 	skip.add_theme_font_size_override("font_size", 16)
-	StampStyle.ink(skip, Palette.color(&"ink_dim"))
+	ButtonStyle.outlined(skip, Palette.color(&"ink_dim"))
 	skip.unique_name_in_owner = true
 	buttons.add_child(skip)
 	skip.owner = root
@@ -143,6 +140,7 @@ func _init() -> void:
 	next.name = "NextButton"
 	next.text = "NEXT"
 	next.add_theme_font_size_override("font_size", 20)
+	ButtonStyle.filled(next, Palette.color(&"primary"))
 	next.unique_name_in_owner = true
 	buttons.add_child(next)
 	next.owner = root

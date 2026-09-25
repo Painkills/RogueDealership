@@ -15,21 +15,21 @@
 [ext_resource type="Script" path="res://scripts/view/tutorial_coach.gd" id="13_yh7fy"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_14ick"]
-bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8r1wq"]
-bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cuait"]
-bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
-bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
-[node name="Run" type="Node" unique_id=1728013360]
+[node name="Run" type="Node" unique_id=313172434]
 script = ExtResource("1_o3bs3")
 
-[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=2145680051 instance=ExtResource("2_21lnt")]
+[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1618276429 instance=ExtResource("2_21lnt")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -37,10 +37,10 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("3_pgpyo")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=421806399 instance=ExtResource("4_2s4kx")]
+[node name="ShiftView" type="Node3D" parent="." unique_id=2060132747 instance=ExtResource("4_2s4kx")]
 script = ExtResource("5_47ec3")
 
-[node name="ShopView" type="PanelContainer" parent="." unique_id=804347559 instance=ExtResource("6_lc2vt")]
+[node name="ShopView" type="PanelContainer" parent="." unique_id=1781555832 instance=ExtResource("6_lc2vt")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -48,7 +48,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8r1wq")
 script = ExtResource("7_53ha4")
 
-[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=600801018 instance=ExtResource("8_iuvi8")]
+[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=2108512646 instance=ExtResource("8_iuvi8")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -56,7 +56,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
 script = ExtResource("9_w0t45")
 
-[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1220761733 instance=ExtResource("10_072lk")]
+[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1580268081 instance=ExtResource("10_072lk")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -64,14 +64,14 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("11_xh8mu")
 
-[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=600548863 instance=ExtResource("12_i3hux")]
+[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=220422347 instance=ExtResource("12_i3hux")]
 layer = 50
 script = ExtResource("13_yh7fy")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1473282038]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=705799629]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1982469674]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=931550892]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -82,7 +82,7 @@ offset_top = -26.0
 offset_right = -8.0
 offset_bottom = -6.0
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.72156864, 0.5372549, 0.22745098, 1)
+theme_override_colors/font_color = Color(0.8862745, 0.7019608, 0.23529412, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
@@ -90,7 +90,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=755796163]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=393035353]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 56)
 anchors_preset = 1

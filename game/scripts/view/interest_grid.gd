@@ -23,14 +23,16 @@ class_name InterestGrid extends Control
 ## Numerals (and names) are only ever drawn on the FRONTED card - see
 ## `compact` on customer_card_3d.gd - which renders at worst at 0.512 of the
 ## authored face.
-const NUMERAL := 40
+const NUMERAL := 44
 ## The name that used to only ever appear in "what you know"'s growing
 ## sentence - see customer_card_3d.gd's known_text() - now lives on the cell
 ## itself, so a rank means something without reading a second label to match
 ## it back to an interest. Shrinks toward MIN before it would overflow the
-## cell ("Value Retention" is the longest name in the pool).
-const NAME_FONT_MAX := 18
-const NAME_FONT_MIN := 11
+## cell ("Value Retention" is the longest name in the pool). The cap went up
+## when the customer card became a landscape folder: its cells are about twice
+## as wide as they were, and the point of the room was bigger names.
+const NAME_FONT_MAX := 28
+const NAME_FONT_MIN := 14
 const GAP := 14.0
 const RADIUS := 6.0
 ## A lit row used to say nothing about WHICH category lit - the reader had to
@@ -111,11 +113,12 @@ func _draw_row_icon(row: Rect2, cat: Category, in_top_category: bool) -> void:
 		else Palette.color(&"text_dim")
 	CategoryIcon.draw(self, inset, cat.id, tint)
 
-## A lit row is bright paper; every other row is a shade darker, like a form's
-## blank boxes. It used to be near-black, which on a cream card read as a hole
-## punched through it rather than a box waiting to be filled in.
+## A lit row is tinted blue; every other row is a grey box, like a form's blank
+## boxes. It used to be near-black, which read as a hole punched through the
+## card rather than a box waiting to be filled in - and then near-white, which
+## the table's light washed out to nothing at all.
 static func _ground(in_top_category: bool) -> Color:
-	return Palette.color(&"panel_hi") if in_top_category else Palette.color(&"paper_shade")
+	return Palette.color(&"grid_lit") if in_top_category else Palette.color(&"grid_cell")
 
 ## Steps down by 1 from max until the string fits max_width, floored at min -
 ## "Value Retention" and "Affordability" are wider than the cell at
@@ -151,8 +154,8 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 		# bar itself uses, so green only ever means "done."
 		draw_rect(cell, Palette.color(&"patience_warn"), true)
 
-	var edge: Color = Palette.color(&"neutral_3")
-	var thickness := 2.0
+	var edge: Color = Palette.color(&"grid_edge")
+	var thickness := 3.0
 	if rank == 1:
 		# Their number one, named outright - which only upgraded Read the Room
 		# can do. Worth its own mark rather than just being "the cell with a 1".

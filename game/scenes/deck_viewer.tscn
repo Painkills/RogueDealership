@@ -3,19 +3,19 @@
 [ext_resource type="Script" path="res://scripts/view/deck_viewer.gd" id="1_e8xft"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
-bg_color = Color(0.9019608, 0.8627451, 0.7647059, 1)
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lfqni"]
 content_margin_left = 16.0
 content_margin_top = 16.0
 content_margin_right = 16.0
 content_margin_bottom = 16.0
-bg_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(0.6901961, 0.3372549, 0.10980392, 1)
+border_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -26,96 +26,97 @@ content_margin_left = 16.0
 content_margin_top = 16.0
 content_margin_right = 16.0
 content_margin_bottom = 16.0
-bg_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(0.41960785, 0.24705882, 0.627451, 1)
+border_color = Color(0.4862745, 0.22745098, 0.92941177, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[node name="DeckViewer" type="PanelContainer" unique_id=1220761733]
+[node name="DeckViewer" type="PanelContainer" unique_id=1580268081]
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("1_e8xft")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=225589056]
+[node name="Margin" type="MarginContainer" parent="." unique_id=2090725528]
 layout_mode = 2
 theme_override_constants/margin_left = 40
 theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 40
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=89446159]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1603696329]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="DeckViewerTitle" type="Label" parent="Margin/Column" unique_id=487399327]
+[node name="DeckViewerTitle" type="Label" parent="Margin/Column" unique_id=336161034]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 36
-theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "YOUR DECK"
 
-[node name="Scroll" type="ScrollContainer" parent="Margin/Column" unique_id=789685957]
+[node name="Scroll" type="ScrollContainer" parent="Margin/Column" unique_id=1207819901]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Halves" type="HBoxContainer" parent="Margin/Column/Scroll" unique_id=1854237522]
+[node name="Halves" type="HBoxContainer" parent="Margin/Column/Scroll" unique_id=1691865887]
 layout_mode = 2
 theme_override_constants/separation = 96
 
-[node name="ProductsSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=1160476337]
+[node name="ProductsSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=1837132673]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 16
 
-[node name="ProductsSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=2059825048]
+[node name="ProductsSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=1444645956]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
-theme_override_colors/font_color = Color(0.18431373, 0.41960785, 0.24705882, 1)
+theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
 text = "PRODUCTS"
 
-[node name="ProductsSideFrame" type="PanelContainer" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=938032669]
+[node name="ProductsSideFrame" type="PanelContainer" parent="Margin/Column/Scroll/Halves/ProductsSide" unique_id=917215655]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_lfqni")
 
-[node name="ProductsColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/ProductsSide/ProductsSideFrame" unique_id=15222217]
+[node name="ProductsColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/ProductsSide/ProductsSideFrame" unique_id=1374492148]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 20
 columns = 3
 
-[node name="SupportSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=1214394787]
+[node name="SupportSide" type="VBoxContainer" parent="Margin/Column/Scroll/Halves" unique_id=1400467745]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 16
 
-[node name="SupportSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=107888617]
+[node name="SupportSideHeading" type="Label" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=1973614298]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
-theme_override_colors/font_color = Color(0.18431373, 0.41960785, 0.24705882, 1)
+theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
 text = "SUPPORT"
 
-[node name="SupportSideFrame" type="PanelContainer" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=1859341612]
+[node name="SupportSideFrame" type="PanelContainer" parent="Margin/Column/Scroll/Halves/SupportSide" unique_id=311596191]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_opog0")
 
-[node name="SupportColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/SupportSide/SupportSideFrame" unique_id=2012874854]
+[node name="SupportColumn" type="GridContainer" parent="Margin/Column/Scroll/Halves/SupportSide/SupportSideFrame" unique_id=1212037010]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 20
 columns = 3
 
-[node name="DeckCloseButton" type="Button" parent="Margin/Column" unique_id=885478534]
+[node name="DeckCloseButton" type="Button" parent="Margin/Column" unique_id=1474642921]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 64)
 layout_mode = 2

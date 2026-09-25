@@ -1,9 +1,11 @@
 class_name CustomerCard3D extends Card3D
 ## The person you are selling to, as an object on the table.
 ##
-## Built like a product card - a 2D face at 500x700 rendered into a SubViewport
-## and used as the mesh albedo - because a customer should read as the same KIND
-## of thing as the cards you play at them.
+## Built like a product card - a 2D face rendered into a SubViewport and used as
+## the mesh albedo - because a customer should read as the same KIND of thing as
+## the cards you play at them. But WIDER: a customer is a file folder, landscape
+## like a real one, and the width is what gives their interest grid room to be
+## read (see build_customer_front_scene.gd).
 ##
 ## ONE state, deliberately. It used to scale up by a third and unhide a detail
 ## block when you selected it, and that is precisely what drove it down into the
@@ -11,7 +13,12 @@ class_name CustomerCard3D extends Card3D
 ## never changes size, so the seat layout is fixed geometry rather than something
 ## that rearranges itself the moment you look at it.
 
-const FRONT_SIZE := Vector2i(500, 700)
+## World units. The same height as every other card, so rows still line up;
+## build_shift_scene.gd gives this card and its back their own meshes this
+## size, rather than touching the shared product-card mesh.
+const CARD_SIZE := Vector2(4.0, 3.5)
+## The face, at the same pixels-per-unit as a product card's 500x700.
+const FRONT_SIZE := Vector2i(800, 700)
 
 var customer
 var chair: int = -1
@@ -50,19 +57,20 @@ func _bind() -> void:
 	_bound = true
 	_viewport = $FrontViewport
 	var col: Node = $FrontViewport/CustomerFront/Margin/Column
-	# The name sits beside their photo; the archetype is written on the
-	# folder's tab - see build_customer_front_scene.gd.
-	_name = col.get_node(^"Header/NameLabel")
+	# Name and patience sit beside their photo; the archetype is written on
+	# the folder's tab - see build_customer_front_scene.gd.
+	_name = col.get_node(^"Header/Info/NameLabel")
 	_photo = col.get_node(^"Header/Photo")
 	_archetype = $FrontViewport/CustomerFront/Tab/ArchetypeLabel
-	_patience_bar = col.get_node(^"PatienceBar")
-	_patience = col.get_node(^"PatienceLabel")
+	_patience_bar = col.get_node(^"Header/Info/PatienceBar")
+	_patience = col.get_node(^"Header/Info/PatienceLabel")
 	_demand = col.get_node(^"DemandLabel")
 	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
 	_bubble = $FrontViewport/CustomerFront/SpeechBubble
-	_patience_fill.set_corner_radius_all(3)
+	_patience_fill.set_corner_radius_all(8)
 	_patience_bar.add_theme_stylebox_override("fill", _patience_fill)
+	resize_quads(self, CARD_SIZE)
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
@@ -71,6 +79,18 @@ func _bind() -> void:
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
+
+## Gives a card its own front and back quads at `size`. The addon's card scene
+## shares one 2.5 x 3.5 mesh between every card in the game, so a wider card
+## takes copies rather than stretching the one every product card is using.
+static func resize_quads(card: Node3D, size: Vector2) -> void:
+	for path in [^"CardMesh/CardFrontMesh", ^"CardMesh/CardBackMesh"]:
+		var quad := card.get_node(path) as MeshInstance3D
+		var plane := quad.mesh as PlaneMesh
+		if plane != null and plane.size != size:
+			plane = plane.duplicate() as PlaneMesh
+			plane.size = size
+			quad.mesh = plane
 
 ## `c == null` is an empty chair. The card stays - a seat should not blink out of
 ## existence mid-shift - it just says nobody is there.

@@ -20,6 +20,12 @@ const CARD_SIZE := Vector2(2.5, 3.5)
 ## the product pair an identical margin - it is equal by construction rather
 ## than by two numbers agreeing.
 const SLIDE_OUT := Vector3(-2.75, 0.0, 0.03)
+## The card's size in the world and its face's in pixels: CARD_SIZE and
+## FRONT_SIZE for the product's sheet. A customer's back is set to its folder's
+## own by build_shift_scene.gd - a back that is not the same shape as its front
+## is not a back.
+@export var card_size := CARD_SIZE
+@export var face_size := FRONT_SIZE
 const SLIDE_TWEEN := 0.42
 ## Late enough that a pair flipped by hover has finished turning back to face
 ## front before this starts moving it - see FlipPair.FLIP_TWEEN.
@@ -76,7 +82,11 @@ func _bind() -> void:
 	_status = _offer_body.get_node(^"StatusLabel")
 	_hint = _offer_body.get_node(^"HintLabel")
 
-	_viewport.size = FRONT_SIZE
+	_viewport.size = face_size
+	# The face is laid out at 500x700; a wider back (a customer's - see
+	# CustomerCard3D.CARD_SIZE) just gives its text more room across.
+	($FrontViewport/DetailFront as Control).size = Vector2(face_size)
+	CustomerCard3D.resize_quads(self, card_size)
 	_viewport.disable_3d = true
 	# UPDATE_ALWAYS, not UPDATE_ONCE: see card_face_3d.gd - the one-shot bake
 	# raced dynamic card creation on the Web export.

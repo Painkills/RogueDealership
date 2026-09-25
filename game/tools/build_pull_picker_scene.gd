@@ -52,6 +52,7 @@ func _init() -> void:
 	title.name = "PullTitleLabel"
 	title.unique_name_in_owner = true
 	title.text = "CHOOSE ONE"
+	title.theme_type_variation = &"Heading"
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Palette.color(&"text"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -455,7 +455,8 @@ func screen_rect_of(target: StringName) -> Rect2:
 	var card := DetailCard3D.CARD_SIZE
 	match target:
 		&"customer":
-			return _on_screen_rect(_card_rect(_customer_cards[front], card))
+			return _on_screen_rect(_card_rect(_customer_cards[front],
+				CustomerCard3D.CARD_SIZE))
 		&"table":
 			if not _chair_zones[front].visible:
 				return Rect2()
@@ -919,12 +920,15 @@ func _flash_tick_label() -> void:
 ## side), this one toggles real visibility around the tween: CLOSE SOON can
 ## be true with nothing on the table at all, so there is no product card left
 ## to hide behind while tucked.
-## Card half-width is 1.25 (SLOT_SIZE.x/2 in build_shift_scene.gd); 2.1 clears
-## the edge by most of a unit, rather than the card and the tag still
-## overlapping at 1.6.
-const FLAG_SLIDE_X := 2.1
+## How far each kind of tag slides: half its card's width, plus half the tag's
+## own 1.8, plus a gap. The OFFER tag hangs off a 2.5-wide product card (2.1
+## clears its edge by most of a unit, rather than the card and the tag still
+## overlapping at 1.6); CLOSE SOON hangs off a customer's folder, which is
+## CustomerCard3D.CARD_SIZE wide.
+const OFFER_FLAG_SLIDE_X := 2.1
+const CLOSE_SOON_SLIDE_X := 3.05
 const FLAG_SLIDE_DURATION := 0.3
-func _slide_flag(flag: Node3D, want: bool) -> void:
+func _slide_flag(flag: Node3D, want: bool, slide_x: float) -> void:
 	if flag.get_meta(&"shown", false) == want:
 		return
 	flag.set_meta(&"shown", want)
@@ -938,7 +942,7 @@ func _slide_flag(flag: Node3D, want: bool) -> void:
 		var tw := create_tween()
 		tw.set_ease(Tween.EASE_OUT)
 		tw.set_trans(Tween.TRANS_CUBIC)
-		tw.tween_property(flag, "position:x", FLAG_SLIDE_X, FLAG_SLIDE_DURATION)
+		tw.tween_property(flag, "position:x", slide_x, FLAG_SLIDE_DURATION)
 		# Stashed on the node itself, the same place `shown` lives -
 		# drive_shift.gd's own _settle() needs a handle on this to force-step
 		# it, the same way it already does for every DetailCard3D's own
@@ -996,9 +1000,9 @@ func _render_details() -> void:
 		# you are not currently seated with can still have something unsigned
 		# at risk when the clock runs short, and every seat is visible on the
 		# carousel regardless of which one you are at.
-		_slide_flag(_offer_flags[i], at_this_seat and has_offer)
+		_slide_flag(_offer_flags[i], at_this_seat and has_offer, OFFER_FLAG_SLIDE_X)
 		_slide_flag(_close_soon_flags[i],
-			c != null and not c.unsigned.is_empty() and low_on_time)
+			c != null and not c.unsigned.is_empty() and low_on_time, CLOSE_SOON_SLIDE_X)
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):

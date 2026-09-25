@@ -524,6 +524,48 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	_check("and closes the overlay", not detail.visible)
 	shop.run.money = was_affordable   # leave phase 2 its own accounting
 
+## The picker is a calendar's week view: a column per day of the run, today's
+## three shifts as events you click, and the day already worked showing the
+## shift you took and how it went. Checked on the SECOND visit, the first one
+## with a past to show.
+func _check_the_calendar_shows_the_week() -> void:
+	var week: Node = _root._picker_view.get_node(^"%Week")
+	var days: int = _run.cfg.shifts_in_run
+	_check("a column per day of the run, after the hours (%d)" % week.get_child_count(),
+		week.get_child_count() == days + 1)
+	if week.get_child_count() != days + 1:
+		return
+	var today: int = _run.shift_number   # column 0 is the hours
+	var events: Array = []
+	for child in week.get_child(today).get_child(1).get_children():
+		if child is Button:
+			events.append(child)
+	_check("today holds every shift you can pick (%d)" % events.size(),
+		events.size() == _root._profiles.profiles.size())
+	var worked: Node = week.get_child(today - 1).get_child(1)
+	_check("yesterday shows the shift you worked",
+		worked.get_node_or_null(^"Worked") != null)
+	_check("and nothing sits on the days still ahead",
+		week.get_child(today + 1).get_child(1).get_child_count() == 0)
+	# Clicking an event IS the choice - the same signal _pick_tier() drives.
+	# The run's own handler is held off for the click, so checking the button
+	# does not also start a shift (and spend the run's rolls) behind the
+	# rest of this phase's back.
+	var got: Array = []
+	var catch := func(p): got.append(p)
+	_root._picker_view.chosen.disconnect(_root._on_profile_chosen)
+	_root._picker_view.chosen.connect(catch)
+	var midday: Button = null
+	for e in events:
+		if e.name == "Event_midday":
+			midday = e
+	if midday != null:
+		midday.pressed.emit()
+	_root._picker_view.chosen.disconnect(catch)
+	_root._picker_view.chosen.connect(_root._on_profile_chosen)
+	_check("clicking an event chooses that shift",
+		got.size() == 1 and got[0].id == &"midday")
+
 func _phase_2_buy_and_leave() -> void:
 	# Buy the cheapest thing on the shelf, with the money to afford it.
 	var shop: Shop = _root._shop_view._shop
@@ -556,6 +598,7 @@ func _phase_2_buy_and_leave() -> void:
 	_root._shop_view.done.emit()
 	_check("leaving the shop opens the picker, not the floor directly",
 		_root._picker_view.visible and not _root._shop_view.visible)
+	_check_the_calendar_shows_the_week()
 	# Night this time - real coverage of the archetype-pool unlock and the
 	# smaller floor, not just re-picking the same tier phase 0 already did.
 	_pick_tier(&"night")

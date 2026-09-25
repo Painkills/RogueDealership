@@ -57,7 +57,7 @@ func _init() -> void:
 	margin.add_child(col)
 	col.owner = root
 
-	_label(col, root, "TitleLabel", "BETWEEN SHIFTS", 40, &"text")
+	_label(col, root, "TitleLabel", "BETWEEN SHIFTS", 38, &"text").theme_type_variation = &"Heading"
 
 	# The quota line doubles as a mobile stand-in for Ctrl+M (+$10,000) - the
 	# same "no keyboard on touch" gap the shift's tick counter has, and the
