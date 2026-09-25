@@ -20,6 +20,10 @@ var _run: RunState
 func _init() -> void:
 	seed(20260905)
 	_root = (load("res://scenes/run.tscn") as PackedScene).instantiate()
+	# This driver tests the run, not the practice shift in front of it (that
+	# is tools/drive_tutorial.gd's job) - so it boots straight to the picker,
+	# whatever the machine running it has or has not played before.
+	_root.tutorial_at_boot = false
 	get_root().add_child(_root)
 
 func _process(_delta: float) -> bool:

@@ -46,6 +46,21 @@ func _init() -> void:
 	col.add_child(row)
 	row.owner = root
 
+	# The practice shift, on demand - it opens the game by itself only once.
+	var tutorial_wrap := CenterContainer.new()
+	tutorial_wrap.name = "TutorialWrap"
+	col.add_child(tutorial_wrap)
+	tutorial_wrap.owner = root
+	var tutorial := Button.new()
+	tutorial.name = "TutorialButton"
+	tutorial.text = "HOW TO PLAY"
+	tutorial.custom_minimum_size = Vector2(240, 56)
+	tutorial.add_theme_font_size_override("font_size", 20)
+	StampStyle.ink(tutorial, Palette.color(&"ink_dim"))
+	tutorial.unique_name_in_owner = true
+	tutorial_wrap.add_child(tutorial)
+	tutorial.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/shift_picker.tscn")

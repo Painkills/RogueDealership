@@ -73,6 +73,9 @@ jobs:
       - name: Run the live run driver
         run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_run.gd
 
+      - name: Run the live tutorial driver
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_tutorial.gd
+
       # After the gates above, not before: the suite and both drivers run
       # against the same "dev build" placeholder every local run does, so a
       # failure never depends on this step having run first. Only the

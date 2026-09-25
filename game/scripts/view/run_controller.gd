@@ -24,10 +24,22 @@ extends Node
 ## floor's draw pile, and the one least dependent on hitting a specific
 ## click target.
 @onready var _view_deck_btn: Button = $BuildBadge/ViewDeckCornerButton
+## The practice shift's teacher - see scripts/run/tutorial.gd for the shift
+## and tutorial_coach.gd for the lesson.
+@onready var _coach: TutorialCoach = $TutorialCoach
+
+## Open the game on the practice shift, the first time only (TutorialProgress
+## remembers). A driver that is testing something else turns this off BEFORE
+## adding the run to the tree, so it boots straight to the picker as it always
+## has. The picker's HOW TO PLAY button replays it either way.
+@export var tutorial_at_boot := true
 
 var _run: RunState
 var _profiles: ShiftProfilePool
 var _chosen_profile: ShiftProfile
+## True while the floor is playing the practice shift rather than one of the
+## run's: its end goes back to the picker, and never to a report or the shop.
+var _in_tutorial := false
 
 func _ready() -> void:
 	_picker_view.chosen.connect(_on_profile_chosen)
@@ -52,7 +64,11 @@ func _ready() -> void:
 	# badge answer "what build is this" rather than "what build was it when
 	# someone last ran the builder."
 	_build_label.text = BuildInfo.LABEL
+	_coach.finished.connect(_on_tutorial_finished)
+	_picker_view.tutorial_requested.connect(_open_the_tutorial)
 	_start_run()
+	if tutorial_at_boot and not TutorialProgress.is_done():
+		_open_the_tutorial()
 
 func _start_run() -> void:
 	_run = RunState.new(load("res://data/shift_config.tres"),
@@ -75,7 +91,29 @@ func _open_the_floor() -> void:
 	_show_only(_shift_view)
 	_shift_view.setup(_run.start_shift(_chosen_profile), _run.standing)
 
+## The practice shift, on the same floor the real ones use. Dealt from its own
+## starter deck (see Tutorial), so nothing done in practice touches the run.
+func _open_the_tutorial() -> void:
+	_in_tutorial = true
+	_show_only(_shift_view)
+	_shift_view.setup(Tutorial.build_shift(_run.cfg, _run.interests, _run.card_pool,
+		_run.archetypes, _run.dialogue), _run.standing)
+	_coach.start(_shift_view)
+
+## Finished or skipped, it is done: remembered, and back to the picker for
+## the run's first real shift.
+func _on_tutorial_finished(_completed: bool) -> void:
+	_in_tutorial = false
+	_coach.stop()
+	TutorialProgress.mark_done()
+	_open_the_picker()
+
 func _on_shift_finished(report: Dictionary) -> void:
+	# The practice clock running out is the practice being over - never a
+	# report the run keeps, or a trip to the shop.
+	if _in_tutorial:
+		_on_tutorial_finished(false)
+		return
 	_run.finish_shift(report)
 	if _run.is_over():
 		# Neither the floor nor the shop - the run stops here, on top of

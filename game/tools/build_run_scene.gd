@@ -48,6 +48,14 @@ func _init() -> void:
 	root.add_child(deck_viewer)
 	deck_viewer.owner = root
 
+	# The practice shift's teacher. Its own CanvasLayer, above the floor's HUD
+	# so it can point at the log and the buttons, and below the badge layer
+	# so the corner VIEW DECK button still sits on top of everything.
+	var coach: CanvasLayer = (load("res://scenes/tutorial_coach.tscn") as PackedScene).instantiate()
+	coach.name = "TutorialCoach"
+	root.add_child(coach)
+	coach.owner = root
+
 	# A permanent corner badge, not something either screen owns - so it
 	# survives switching between them for free and can never be the thing a
 	# screen's own layout work accidentally covers up. Its own CanvasLayer,

@@ -1,0 +1,238 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/view/tutorial_coach.gd" id="1_3v6kq"]
+[ext_resource type="Script" path="res://scripts/view/tutorial_highlight.gd" id="2_tm3h3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pxwci"]
+content_margin_left = 22.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 16.0
+bg_color = Color(0.9843137, 0.96862745, 0.9254902, 1)
+border_width_left = 8
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7019608, 0.14901961, 0.11764706, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 10
+shadow_offset = Vector2(3, 5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gpe2d"]
+content_margin_left = 8.0
+content_margin_top = 1.0
+content_margin_right = 8.0
+content_margin_bottom = 1.0
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.7019608, 0.14901961, 0.11764706, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cllvj"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 3
+shadow_offset = Vector2(1, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_82dr3"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 3
+shadow_offset = Vector2(1, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mtqnw"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.9843137, 0.96862745, 0.9254902, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 3
+shadow_offset = Vector2(1, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_32xxd"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 3
+shadow_offset = Vector2(1, 2)
+
+[node name="TutorialCoach" type="CanvasLayer" unique_id=600548863]
+layer = 50
+script = ExtResource("1_3v6kq")
+
+[node name="Canvas" type="Control" parent="." unique_id=1878433116]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Highlight" type="Control" parent="Canvas" unique_id=85151650]
+unique_name_in_owner = true
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+script = ExtResource("2_tm3h3")
+
+[node name="Memo" type="PanelContainer" parent="Canvas" unique_id=501269690]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(422, 0)
+layout_mode = 0
+offset_left = 18.0
+offset_top = 80.0
+offset_right = 18.0
+offset_bottom = 80.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_pxwci")
+
+[node name="Column" type="VBoxContainer" parent="Canvas/Memo" unique_id=357570144]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=1283703195]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Stamp" type="PanelContainer" parent="Canvas/Memo/Column/Header" unique_id=1846008458]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gpe2d")
+
+[node name="StampLabel" type="Label" parent="Canvas/Memo/Column/Header/Stamp" unique_id=1847769546]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.7019608, 0.14901961, 0.11764706, 1)
+text = "TRAINING"
+
+[node name="Spacer" type="Control" parent="Canvas/Memo/Column/Header" unique_id=954058808]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="StepLabel" type="Label" parent="Canvas/Memo/Column/Header" unique_id=206613366]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+text = "1 / 13"
+
+[node name="TitleLabel" type="Label" parent="Canvas/Memo/Column" unique_id=347788970]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+text = "Welcome to the F&I office"
+
+[node name="BodyLabel" type="Label" parent="Canvas/Memo/Column" unique_id=1972215831]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.12156863, 0.16470589, 0.26666668, 1)
+text = "Their file: who they are, what kind of buyer they are, and their patience. When patience runs out they walk - and a walkout costs you standing."
+autowrap_mode = 2
+
+[node name="HintLabel" type="Label" parent="Canvas/Memo/Column" unique_id=1269008583]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+theme_override_colors/font_color = Color(0.7019608, 0.14901961, 0.11764706, 1)
+autowrap_mode = 2
+
+[node name="PromptLabel" type="Label" parent="Canvas/Memo/Column" unique_id=106334682]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=2004371173]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="SkipButton" type="Button" parent="Canvas/Memo/Column/Buttons" unique_id=1140992333]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_cllvj")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_82dr3")
+theme_override_styles/hover = SubResource("StyleBoxFlat_mtqnw")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_32xxd")
+theme_override_colors/font_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+theme_override_colors/font_focus_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+theme_override_colors/font_pressed_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
+theme_override_colors/font_hover_color = Color(0.35686275, 0.3882353, 0.47058824, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.95686275, 0.9254902, 0.84705883, 1)
+theme_override_font_sizes/font_size = 16
+text = "SKIP TUTORIAL"
+
+[node name="Gap" type="Control" parent="Canvas/Memo/Column/Buttons" unique_id=1079490077]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="NextButton" type="Button" parent="Canvas/Memo/Column/Buttons" unique_id=205669932]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "NEXT"

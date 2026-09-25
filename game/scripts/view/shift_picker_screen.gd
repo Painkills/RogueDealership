@@ -5,8 +5,14 @@ extends PanelContainer
 ## risk of disagreeing with the pool.
 
 signal chosen(profile: ShiftProfile)
+## HOW TO PLAY - the practice shift, replayed on demand. It opens the game by
+## itself only the first time (see RunController.tutorial_at_boot).
+signal tutorial_requested
 
 @onready var _row: HBoxContainer = %ProfileRow
+
+func _ready() -> void:
+	(%TutorialButton as Button).pressed.connect(func(): tutorial_requested.emit())
 
 func setup(pool: ShiftProfilePool) -> void:
 	for child in _row.get_children():

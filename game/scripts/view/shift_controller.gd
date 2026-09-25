@@ -424,6 +424,75 @@ func _all_zones() -> Array:
 	out.append_array([_hand_zone, _draw_zone, _discard_zone])
 	return out
 
+# --- for the tutorial coach ------------------------------------------------
+# The coach (tutorial_coach.gd) teaches by WATCHING, not by being wired into
+# every command: it reads the model to see what you did, and asks this where
+# things are to point at them. These are the only doors it uses, and none of
+# them changes anything but refresh().
+
+func current_shift() -> Shift:
+	return _shift
+
+## Re-render after something outside the view changed the model - the coach
+## moving the practice customer's Line, say.
+func refresh() -> void:
+	if _shift != null:
+		_render()
+
+func customer_showing_back(chair: int) -> bool:
+	return chair >= 0 and chair < _customer_flips.size() \
+		and _customer_flips[chair].showing_back()
+
+func hud_dimmed() -> bool:
+	return _hud_dimmed
+
+## Where a named thing is on screen right now, in the 1920x1080 design space,
+## clipped to the screen - or an empty Rect2 when it is not showing at all.
+func screen_rect_of(target: StringName) -> Rect2:
+	if _shift == null:
+		return Rect2()
+	var front: int = int(_shift.at) if _shift.at != null else _last_station
+	var card := DetailCard3D.CARD_SIZE
+	match target:
+		&"customer":
+			return _on_screen_rect(_card_rect(_customer_cards[front], card))
+		&"table":
+			if not _chair_zones[front].visible:
+				return Rect2()
+			return _on_screen_rect(_card_rect(_chair_zones[front], card))
+		&"offer_detail":
+			if not _offer_details[front].visible:
+				return Rect2()
+			return _on_screen_rect(_card_rect(_offer_details[front], card))
+		&"hand":
+			var r := Rect2()
+			for c in _hand_zone.cards:
+				var one := _card_rect(c, card)
+				r = one if r.size == Vector2.ZERO else r.merge(one)
+			return _on_screen_rect(r)
+		&"discard":
+			return _on_screen_rect(_card_rect(_discard_zone, card))
+		&"clock":
+			return _tick_label.get_global_rect()
+		&"offer_button":
+			return _offer_btn.get_global_rect() if _action_bar.visible else Rect2()
+		&"close_button":
+			return _close_btn.get_global_rect() if _action_bar.visible else Rect2()
+	return Rect2()
+
+## A card-shaped thing's rect on screen, measured along the camera's own axes -
+## every card faces the lens square-on, so this is its exact outline.
+func _card_rect(node: Node3D, size: Vector2) -> Rect2:
+	var right := _camera.global_basis.x * size.x * 0.5
+	var up := _camera.global_basis.y * size.y * 0.5
+	var centre := node.global_position
+	var tl := _camera.unproject_position(centre - right + up)
+	var br := _camera.unproject_position(centre + right - up)
+	return Rect2(tl, br - tl)
+
+func _on_screen_rect(r: Rect2) -> Rect2:
+	return r.intersection(get_viewport().get_visible_rect())
+
 # --- commands --------------------------------------------------------------
 
 func _on_chair_pressed(chair_index: int) -> void:
@@ -510,6 +579,10 @@ func _on_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: Vector
 	if click.button_index != MOUSE_BUTTON_LEFT or not click.pressed:
 		return
 	if _shift == null or _shift.at == chair:
+		return
+	# A desk this shift has no chair for (the practice shift has one) is
+	# scenery: nothing to peek at, and "No such chair." is not worth a log line.
+	if chair >= _shift.chairs.size():
 		return
 	var already_seen := chair == _peeked if _touch_check.call() \
 		else (chair == _hovered or chair == _peeked)
@@ -879,7 +952,10 @@ func _slide_flag(flag: Node3D, want: bool) -> void:
 func _render_details() -> void:
 	var low_on_time: bool = _shift.ticks_running_low()
 	for i in range(_seats.size()):
-		var c: Customer = _shift.chairs[i]
+		# See _render()'s identical guard: a shift may run with fewer chairs
+		# than the carousel was built for - the practice shift has one - and a
+		# seat past the end is simply nobody.
+		var c: Customer = _shift.chairs[i] if i < _shift.chairs.size() else null
 		_customer_details[i].show_customer(c)
 		# band_for lives on Shift, so the COOL / WARM / ALMOST thresholds that
 		# decide the meter's colour have exactly one definition, in the model.
