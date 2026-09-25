@@ -51,9 +51,15 @@ const ROLES := {
 	&"brass_dark": "7a5a12",
 	&"sticky": "f7d64a",
 	&"manila": "d9c49a",
+	&"manila_back": "b99f68",   ## the back flap of a folder, seen over the front
+	&"photo_bg": "a7b3c4",      ## a studio backdrop's washed-out blue
+	&"photo_figure": "56627a",  ## the silhouette standing in for a portrait
+	&"clip": "8c96a3",          ## paper-clip steel
 	&"board": "7a5334",       ## a clipboard's hardboard back
 	&"walnut": "5a3823",
 	&"walnut_dark": "35200f",
+	&"desk_leather": "2f4a3a",   ## a banker's desk's green writing top
+	&"chair_leather": "5a2a26",  ## oxblood
 	&"wall": "2c3342",
 	&"carpet": "221d21",
 }

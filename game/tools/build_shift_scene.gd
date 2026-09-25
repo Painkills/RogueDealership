@@ -101,13 +101,31 @@ const WALL_Z := -14.0
 ## piles only dip below this off the bottom of the frame.
 const FLOOR_Y := -4.0
 
-## One per seat, and level in the world (see the header). Its front face sits
-## just behind the product card, and its top just under the customer's card,
-## so a customer reads as sitting at their desk and a product as being laid in
-## front of them. Seat-local, in the desk's own un-leaned frame.
-const DESK_SIZE := Vector3(4.4, 0.22, 2.6)  ## the top: width, thickness, depth
-const DESK_TOP_Y := 2.05
-const DESK_FRONT_Z := -0.45
+## One per seat, level in the world (see the header): a TABLE, not a cabinet.
+## The first pass was a solid-fronted desk with the product card floating in
+## front of it, and it read as a podium. What makes a table read as a table is
+## a top you can see down onto and legs with the floor showing between them,
+## so the product card now stands ON the top, at its front, and the top runs
+## back past the customer.
+##
+## Seat-local, in the desk's own un-leaned frame. TABLE_TOP_Y is a hair under
+## the product card's lowest edge (-1.72 once the seat's lean tips it), so the
+## card stands on the table rather than through it or above it.
+const TABLE_TOP_Y := -1.76
+const TABLE_SIZE := Vector3(5.6, 0.16, 3.4)   ## the top: width, thickness, depth
+const TABLE_FRONT_Z := 1.1
+const TABLE_LEG := 0.2
+## The customer's chair, behind the table. Without it their card hangs four
+## units above the table top with nothing under it; with it, the card is
+## someone sitting in a chair on the far side of the desk. Its bottom runs
+## down behind the table far enough that no gap shows over the table's back
+## edge from either camera. Wider than their card and taller than its middle,
+## so the chair's shoulders show either side of them - from the floor the
+## front table is below the frame, and a chair seen only BELOW the card read
+## as a pillar rather than a chair.
+const CHAIR_BACK := Vector3(3.5, 6.9, 0.35)
+const CHAIR_BACK_Z := -2.9
+const CHAIR_BACK_BOTTOM := -2.3
 
 ## See the header. K = 540 / tan(14deg) = 2165.85.
 const CAM_FOV := 28.0
@@ -454,11 +472,12 @@ static func lean() -> Basis:
 static func framed(view: Vector3) -> Vector3:
 	return FRONT_SEAT + lean() * view
 
-## A desk for the seat to sit at: a walnut top with a brass edge, and a
-## panelled front down to the floor. It cancels the seat's lean, so it stands
-## level in the world while the cards above it lean back to face the lens.
-## Never collides with anything - it is scenery, and the table's picking is
-## already delicate enough (see shift_controller.gd's drop-zone notes).
+## A desk for the seat: a walnut table with a green leather writing top on four
+## legs, and the customer's leather chair behind it. It cancels the seat's
+## lean, so it stands level in the world while the cards above it lean back to
+## face the lens. Never collides with anything - it is scenery, and the table's
+## picking is already delicate enough (see shift_controller.gd's drop-zone
+## notes).
 func _desk(seat: Node3D, owner_root: Node, index: int) -> void:
 	var desk := Node3D.new()
 	desk.name = "Desk%d" % index
@@ -467,32 +486,68 @@ func _desk(seat: Node3D, owner_root: Node, index: int) -> void:
 	desk.owner = owner_root
 
 	var walnut := _matte(Palette.color(&"walnut"), 0.55)
-	var panel := _matte(Palette.color(&"walnut_dark"), 0.7)
+	var dark := _matte(Palette.color(&"walnut_dark"), 0.7)
+	var leather := _matte(Palette.color(&"desk_leather"), 0.8)
+	var oxblood := _matte(Palette.color(&"chair_leather"), 0.6)
 	var brass := StandardMaterial3D.new()
 	brass.albedo_color = Palette.color(&"brass")
 	brass.metallic = 0.6
 	brass.roughness = 0.35
 
-	var top_z := DESK_FRONT_Z - DESK_SIZE.z * 0.5
-	_box(desk, owner_root, "Top", DESK_SIZE,
-		Vector3(0.0, DESK_TOP_Y - DESK_SIZE.y * 0.5, top_z), walnut)
-	# A thin brass strip along the top's front edge, where the light catches it.
-	_box(desk, owner_root, "Trim", Vector3(DESK_SIZE.x, 0.06, 0.06),
-		Vector3(0.0, DESK_TOP_Y - 0.03, DESK_FRONT_Z + 0.03), brass)
+	# --- the table ----------------------------------------------------------
+	var top_z := TABLE_FRONT_Z - TABLE_SIZE.z * 0.5
+	var under := TABLE_TOP_Y - TABLE_SIZE.y
+	_box(desk, owner_root, "Top", TABLE_SIZE,
+		Vector3(0.0, TABLE_TOP_Y - TABLE_SIZE.y * 0.5, top_z), walnut)
+	# The leather writing surface: a banker's-desk green inlaid in the walnut,
+	# which is most of what makes the top read as a desk top from up here.
+	_box(desk, owner_root, "Inlay", Vector3(TABLE_SIZE.x - 0.6, 0.01, TABLE_SIZE.z - 0.6),
+		Vector3(0.0, TABLE_TOP_Y + 0.005, top_z), leather)
+	# A brass edge along the front, where the light catches it.
+	_box(desk, owner_root, "Trim", Vector3(TABLE_SIZE.x, 0.05, 0.05),
+		Vector3(0.0, TABLE_TOP_Y - 0.025, TABLE_FRONT_Z + 0.02), brass)
+	# The apron: a deeper band under the front edge, so the top has some body.
+	_box(desk, owner_root, "Apron", Vector3(TABLE_SIZE.x - 0.5, 0.26, 0.06),
+		Vector3(0.0, under - 0.13, TABLE_FRONT_Z - 0.3), dark)
+	var leg_h := under - FLOOR_Y
+	var inset_x := TABLE_SIZE.x * 0.5 - 0.3
+	for corner in [["LegFrontLeft", -inset_x, TABLE_FRONT_Z - 0.3],
+			["LegFrontRight", inset_x, TABLE_FRONT_Z - 0.3],
+			["LegBackLeft", -inset_x, TABLE_FRONT_Z - TABLE_SIZE.z + 0.3],
+			["LegBackRight", inset_x, TABLE_FRONT_Z - TABLE_SIZE.z + 0.3]]:
+		_box(desk, owner_root, corner[0], Vector3(TABLE_LEG, leg_h, TABLE_LEG),
+			Vector3(corner[1], FLOOR_Y + leg_h * 0.5, corner[2]), dark)
 
-	var front_h := DESK_TOP_Y - DESK_SIZE.y - FLOOR_Y
-	var front_y := FLOOR_Y + front_h * 0.5
-	_box(desk, owner_root, "Front", Vector3(DESK_SIZE.x - 0.2, front_h, 0.12),
-		Vector3(0.0, front_y, DESK_FRONT_Z - 0.1), walnut)
-	# A raised panel on the front, darker, so it reads as joinery rather
-	# than a slab of brown.
-	_box(desk, owner_root, "Panel", Vector3(DESK_SIZE.x - 1.2, front_h - 1.2, 0.02),
-		Vector3(0.0, front_y, DESK_FRONT_Z - 0.03), panel)
+	# --- the customer's chair, on the far side of it --------------------------
+	var back_y := CHAIR_BACK_BOTTOM + CHAIR_BACK.y * 0.5
+	_box(desk, owner_root, "ChairBack", CHAIR_BACK, Vector3(0.0, back_y, CHAIR_BACK_Z), oxblood)
+	# A cushion face a shade lighter, so it reads as upholstery, not a slab.
+	_box(desk, owner_root, "ChairCushion",
+		Vector3(CHAIR_BACK.x - 0.5, CHAIR_BACK.y - 0.7, 0.06),
+		Vector3(0.0, back_y + 0.1, CHAIR_BACK_Z + CHAIR_BACK.z * 0.5 + 0.03),
+		_matte(Palette.color(&"chair_leather").lightened(0.12), 0.6))
+	# A pedestal and a round foot, visible between the table's legs.
+	var post := CylinderMesh.new()
+	post.top_radius = 0.16
+	post.bottom_radius = 0.16
+	post.height = CHAIR_BACK_BOTTOM - FLOOR_Y
+	_mesh(desk, owner_root, "ChairPost", post,
+		Vector3(0.0, FLOOR_Y + post.height * 0.5, CHAIR_BACK_Z + 0.5), dark)
+	var foot := CylinderMesh.new()
+	foot.top_radius = 0.9
+	foot.bottom_radius = 0.95
+	foot.height = 0.08
+	_mesh(desk, owner_root, "ChairFoot", foot,
+		Vector3(0.0, FLOOR_Y + 0.04, CHAIR_BACK_Z + 0.5), dark)
 
 func _box(parent: Node3D, owner_root: Node, node_name: String, size: Vector3,
 		pos: Vector3, mat: Material) -> void:
 	var mesh := BoxMesh.new()
 	mesh.size = size
+	_mesh(parent, owner_root, node_name, mesh, pos, mat)
+
+func _mesh(parent: Node3D, owner_root: Node, node_name: String, mesh: Mesh,
+		pos: Vector3, mat: Material) -> void:
 	var inst := MeshInstance3D.new()
 	inst.name = node_name
 	inst.mesh = mesh

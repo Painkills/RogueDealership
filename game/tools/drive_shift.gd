@@ -1104,8 +1104,17 @@ func _check_the_customer_card_carries_its_triage_row() -> void:
 	var card = _controller._customer_cards[_at()]
 	var col: Node = card.get_node(^"FrontViewport/CustomerFront/Margin/Column")
 
-	_check("the placeholder portrait is gone, and its 268 px with it",
+	# The old portrait box took 268 of 700 px from the grid. The photo is back
+	# as a small square BESIDE the name, in a row the name already occupied.
+	_check("the old 268 px portrait box is gone",
 		col.get_node_or_null(^"PortraitFrame") == null)
+	var photo := col.get_node_or_null(^"Header/Photo") as Control
+	_check("their photo sits beside their name, in the name's own row",
+		photo != null and photo.get_parent() == col.get_node(^"Header"))
+	_check("and it is small, not a second portrait box (%s)"
+		% (photo.custom_minimum_size if photo != null else Vector2.ZERO),
+		photo != null and photo.custom_minimum_size.y <= 130.0
+			and is_equal_approx(photo.custom_minimum_size.x, photo.custom_minimum_size.y))
 
 	var grid := col.get_node_or_null(^"InterestGrid") as Control
 	_check("the interest grid is on the card", grid != null)
@@ -1124,8 +1133,13 @@ func _check_the_customer_card_carries_its_triage_row() -> void:
 			wanted += maxf((child as Control).custom_minimum_size.y,
 				(child as Control).get_combined_minimum_size().y)
 	wanted += col.get_theme_constant("separation") * (col.get_child_count() - 1)
-	_check("everything on the face still fits it (%d of %d px)"
-		% [int(wanted), 700 - 26 * 2], wanted <= float(700 - 26 * 2))
+	# Measured against the margins the face really has - the folder's tab and
+	# the sheet inside it take more off the top than the old flat card did.
+	var margin := card.get_node(^"FrontViewport/CustomerFront/Margin") as MarginContainer
+	var room: float = 700.0 - margin.get_theme_constant("margin_top") \
+		- margin.get_theme_constant("margin_bottom")
+	_check("everything on the face still fits it (%d of %d px)" % [int(wanted), int(room)],
+		wanted <= room)
 
 	# Imposed, not waited for: whether this seed seats somebody who happens to
 	# be mid-demand is not what is being checked, and a telegraph that only
@@ -1437,28 +1451,36 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 		label.text == "\"Is there someone else I can speak to?\"")
 
 	# "have it cover up the person's name and right up to where the archetype
-	# name starts". Name checked against its OWN live rect - a VBoxContainer's
-	# first child sits at the container's own origin regardless of whether a
-	# deferred resort has flushed yet, so this is safe to read synchronously
-	# here, unlike a later sibling's (ArchetypeLabel's Y depends on NameLabel's
-	# resolved height, which a resort that has not run yet would still report
-	# as 0 - a real gap this project has hit before, see build_shop_scene.gd's
-	# own DoneButton comment). The archetype boundary is checked the same way
-	# test_run_state.gd's _delta() checks standing_delta: an independent
-	# restatement of build_customer_front_scene.gd's own PAD+116+12 math, not
-	# a call into it, so the two can only agree by actually matching.
+	# name starts" - since the card became a folder, the archetype is written
+	# on its tab ABOVE the name, so the bubble covers the photo-and-name row
+	# and leaves the tab showing who is talking. Containers lay their children
+	# out in a DEFERRED resort, and this all runs inside one frame - read
+	# straight away, the name reads as a 1 px sliver at (0, 0), a real gap this
+	# project has hit before (see build_shop_scene.gd's own DoneButton
+	# comment). So the three containers between the card and the name are told
+	# to lay out NOW, outermost first, and the rects read are the real ones.
+	# The boundaries are checked the same way test_run_state.gd's _delta()
+	# checks standing_delta: an independent restatement of
+	# build_customer_front_scene.gd's own tab and margin math, not a call into
+	# it, so the two can only agree by actually matching.
 	var col: Node = card.get_node(^"FrontViewport/CustomerFront/Margin/Column")
-	var name_label := col.get_node(^"NameLabel") as Control
+	for box in [col.get_parent(), col, col.get_node(^"Header")]:
+		(box as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
+	var name_label := col.get_node(^"Header/NameLabel") as Control
 	var bubble_rect := bubble.get_global_rect()
 	var name_rect := name_label.get_global_rect()
-	_check("the bubble covers the name row (bubble %s, name %s)"
-		% [bubble_rect, name_rect], bubble_rect.encloses(name_rect))
-	const PAD := 26
-	const NAME_HEIGHT := 116
-	const COLUMN_SEPARATION := 12
-	var expected_height := float(PAD + NAME_HEIGHT + COLUMN_SEPARATION)
-	_check("and stops right where the archetype row is meant to start (%.1f of %.1f px)"
-		% [bubble.size.y, expected_height], is_equal_approx(bubble.size.y, expected_height))
+	_check("the bubble covers their name (bubble %s, name %s)"
+		% [bubble_rect, name_rect], name_rect.size.x > 100.0 and bubble_rect.encloses(name_rect))
+	const TAB_HEIGHT := 50
+	const MARGIN_TOP := TAB_HEIGHT + 24
+	const HEADER_HEIGHT := 126
+	const COLUMN_SEPARATION := 10
+	_check("it starts below the folder's tab, so you can still see who said it (%.1f)"
+		% bubble.position.y, is_equal_approx(bubble.position.y, TAB_HEIGHT))
+	var expected_bottom := float(MARGIN_TOP + HEADER_HEIGHT + COLUMN_SEPARATION)
+	_check("and stops right where the patience bar starts (%.1f of %.1f px)"
+		% [bubble.position.y + bubble.size.y, expected_bottom],
+		is_equal_approx(bubble.position.y + bubble.size.y, expected_bottom))
 
 	# "have it be active for 2 ticks instead" - timed against the model's own
 	# clock, not a wall-clock Timer. The literal 2 here, not

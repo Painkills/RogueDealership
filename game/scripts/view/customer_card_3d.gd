@@ -20,6 +20,7 @@ var _material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
 var _name: Label
+var _photo: Control
 var _archetype: Label
 var _patience_bar: ProgressBar
 ## Owned per card, so recolouring one customer's bar never repaints another's.
@@ -49,8 +50,11 @@ func _bind() -> void:
 	_bound = true
 	_viewport = $FrontViewport
 	var col: Node = $FrontViewport/CustomerFront/Margin/Column
-	_name = col.get_node(^"NameLabel")
-	_archetype = col.get_node(^"ArchetypeLabel")
+	# The name sits beside their photo; the archetype is written on the
+	# folder's tab - see build_customer_front_scene.gd.
+	_name = col.get_node(^"Header/NameLabel")
+	_photo = col.get_node(^"Header/Photo")
+	_archetype = $FrontViewport/CustomerFront/Tab/ArchetypeLabel
 	_patience_bar = col.get_node(^"PatienceBar")
 	_patience = col.get_node(^"PatienceLabel")
 	_demand = col.get_node(^"DemandLabel")
@@ -96,9 +100,12 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		_status.text = ""
 		_patience_bar.visible = false
 		_grid.visible = false
+		# An empty file has nobody's photo clipped to it.
+		_photo.visible = false
 		_redraw()
 		return
 
+	_photo.visible = true
 	_name.text = c.display_name
 	_archetype.text = "%s  [%s]" % [c.archetype.display_name, c.key]
 	_patience_bar.visible = true
