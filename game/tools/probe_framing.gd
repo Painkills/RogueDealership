@@ -68,11 +68,10 @@ func _frame(cam: Camera3D, label: String, mark: Node3D, seat: int) -> void:
 		_rect(cam, "customer%d" % i, who.global_position, Vector2(2.5, 3.5))
 
 	if seat >= 0:
-		var out: Vector3 = DetailCard3D.SLIDE_OUT
 		var chair := _root.get_node(NodePath("%%Chair%d" % seat)) as Node3D
 		_rect(cam, "product slot", chair.global_position, Vector2(2.5, 3.5))
-		var od := _root.get_node(NodePath("%%OfferDetail%d" % seat)) as Node3D
-		_rect(cam, "offer detail", od.global_position + out, DetailCard3D.CARD_SIZE)
+		var tablet := _root.get_node(NodePath("%%Tablet%d" % seat)) as Node3D
+		_rect(cam, "tablet", tablet.global_position, OfferTablet.SIZE)
 
 	# Yours ride with the camera, so they are placed in camera-local space and
 	# only their raised positions are worth looking at.

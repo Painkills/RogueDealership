@@ -65,6 +65,7 @@ const ROLES := {
 	&"clip": "9aa3ad",
 	&"desk_top": "e3e7ec",    ## a light laminate desk top
 	&"desk_frame": "20242a",  ## its black steel frame and edge
+	&"tablet": "0f141b",      ## the tablet's black glass edge
 	&"chair": "2a2e35",       ## a black mesh office chair
 	&"chair_base": "3b4048",
 	&"wall": "243044",

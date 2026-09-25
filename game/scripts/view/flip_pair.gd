@@ -16,9 +16,7 @@ class_name FlipPair extends Node3D
 ## which had to be positioned, kept out of the way of everything else, and kept
 ## from swallowing the click that summoned it.
 
-## Shorter than the detail card's slide, and DetailCard3D.SLIDE_DELAY is set to
-## outlast it, so a pair you flipped by hovering has finished turning back to
-## face front before the detail card starts sliding out from behind it.
+## Quick enough to read as turning a card over rather than a slow reveal.
 const FLIP_TWEEN := 0.3
 
 var _tween: Tween

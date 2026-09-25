@@ -23,16 +23,13 @@ extends SceneTree
 const CARD := Vector2(2.5, 3.5)
 ## A customer's folder is wider than every other card - see CustomerCard3D.
 const CUSTOMER := CustomerCard3D.CARD_SIZE
-## A CLOSE SOON tag's size and height on its card - build_shift_scene.gd's
-## _slide_flag(). How far it slides is shift_controller.gd's CLOSE_SOON_SLIDE_X.
-##
-## Nothing of the table may reach into the shift log's column, for the whole
-## shift, or into the action column while you are seated. Those two columns
-## swapped sides once already because a CLOSE SOON tag ran into the log, so
-## both are measured from the real panels (_log_rect(), _action_rect()) rather
-## than from a remembered edge that would go on passing wherever they moved.
-const FLAG := Vector2(1.8, 0.7)
-const FLAG_Y := -1.45
+## The tablet a product stands on - see OfferTablet.
+const TABLET := OfferTablet.SIZE
+
+# Nothing of the table may reach into the shift log's column, for the whole
+# shift, or into the action column while you are seated. Both are measured from
+# the real panels (_log_rect(), _action_rect()) rather than from a remembered
+# edge that would go on passing wherever they moved.
 
 var _controller: Node3D
 var _done := false
@@ -107,9 +104,9 @@ func _physics_process(_delta: float) -> bool:
 	_check_seat_view_brings_your_things_up()
 	_check_the_hints_sit_flat_inside_their_cards()
 	_check_the_other_two_are_still_on_screen_while_you_work_one()
-	_check_the_offer_detail_slid_out_clear()
+	_check_the_tablet_shows_the_offer()
 	_check_the_seat_layout_does_not_overlap_itself()
-	_undo_the_offer_detail_setup()
+	_undo_the_tablet_setup()
 	_check_the_customer_card_shows_who_they_are()
 	_check_the_customer_card_carries_its_triage_row()
 	_check_interest_grid_cell_names_fit_their_cells()
@@ -149,6 +146,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_drop_plays_a_card()
 	_check_dragging_the_table_offer()
 	_check_dragging_the_table_offer_onto_discard_drops_it()
+	_check_letting_go_over_a_customer_leaves_them_face_front()
 	_check_double_tapping_the_empty_table_closes()
 	_check_double_tapping_the_empty_table_closes_on_touch_too()
 	_check_refused_drop_comes_home()
@@ -192,21 +190,6 @@ func _settle() -> void:
 	var t = _controller._framing_tween
 	if t != null and t.is_valid() and t.is_running():
 		t.custom_step(2.0)
-	# Each detail card owns its own slide tween, so stepping the controller's
-	# framing tween alone leaves them halfway out from behind their partner.
-	for card in _controller._customer_details + _controller._offer_details:
-		var st = card._slide_tween
-		if st != null and st.is_valid() and st.is_running():
-			st.custom_step(2.0)
-	# Sticky-note tags own their tween the same way, just stashed as node meta
-	# instead of an instance var - see shift_controller.gd's _slide_flag().
-	for flag in _controller._offer_flags + _controller._close_soon_flags:
-		# has_meta() first: get_meta() with a null default still reports an
-		# error for a key that was never set, and a flag never shown has none.
-		var ft = flag.get_meta(&"tween") if flag.has_meta(&"tween") else null
-		if ft != null and ft.is_valid() and ft.is_running():
-			ft.custom_step(2.0)
-
 	# A tween writes to the NODE; the physics server only learns about it when
 	# the transform is flushed, which normally happens between frames. The pick
 	# checks run inside this same frame, so flush by hand or every ray reports
@@ -220,7 +203,7 @@ func _settle() -> void:
 	_controller._camera.force_update_transform()
 	for flip in _controller._customer_flips:
 		(flip as Node3D).force_update_transform()
-	for card in _controller._customer_details + _controller._offer_details:
+	for card in _controller._customer_details + _controller._tablets:
 		_flush(card)
 	for zone in _controller._all_zones():
 		zone.force_update_transform()
@@ -261,21 +244,37 @@ func _screen() -> Vector2:
 func _rect_of(node: Node3D, size: Vector2) -> Rect2:
 	return _rect_around(node.global_position, size)
 
-## The same, for something sitting at `local` in `node`'s own space - a tag
-## slid out from beside a card, rather than the card itself.
-func _rect_of_at(node: Node3D, local: Vector3, size: Vector2) -> Rect2:
-	return _rect_around(node.to_global(local), size)
-
 func _log_rect() -> Rect2:
 	return (_controller.get_node(^"%SidePanel") as Control).get_global_rect()
 
 func _action_rect() -> Rect2:
 	return _controller._action_bar.get_global_rect()
 
-## Where a customer's CLOSE SOON tag lands once it has slid all the way out.
+## Where a customer's CLOSE SOON tag lands when it shows, whether or not it is
+## showing right now - it is only wanted in the last few ticks, and the layout
+## has to hold for the whole shift. Empty if its corner is off screen.
 func _close_soon_rect(chair: int) -> Rect2:
-	return _rect_of_at(_controller._customer_cards[chair],
-		Vector3(_controller.CLOSE_SOON_SLIDE_X, FLAG_Y, 0.05), FLAG)
+	var tag: ScreenTag = _controller._close_soon_tags[chair]
+	var was: bool = tag.wanted
+	tag.wanted = true
+	tag.follow(_controller._camera)
+	var r := tag.get_global_rect() if tag.visible else Rect2()
+	tag.wanted = was
+	tag.follow(_controller._camera)
+	return r
+
+## "Maybe it needs to appear in the top right corner of the folder, given the
+## available space." Inside the folder, against its right-hand edge, and at its
+## top - in the strip beside the folder's own tab.
+func _check_close_soon_in_its_corner(what: String, tag: Rect2, folder: Rect2) -> void:
+	_check("%s's CLOSE SOON is inside its folder (%s in %s)" % [what, tag, folder],
+		tag.size.x > 0.0 and tag.position.x >= folder.position.x
+			and tag.end.x <= folder.end.x and tag.position.y >= folder.position.y)
+	_check("%s's CLOSE SOON is against the folder's right-hand edge (%d px in)"
+		% [what, int(folder.end.x - tag.end.x)], folder.end.x - tag.end.x <= 24.0)
+	_check("%s's CLOSE SOON is at the folder's top (%d px down)"
+		% [what, int(tag.position.y - folder.position.y)],
+		tag.position.y - folder.position.y <= 8.0)
 
 func _rect_around(centre: Vector3, size: Vector2) -> Rect2:
 	var cam: Camera3D = _controller._camera
@@ -507,13 +506,11 @@ func _check_floor_view_is_bare() -> void:
 			% [pair[0], z.position.y + CARD.y * 0.5, bottom],
 			z.position.y + CARD.y * 0.5 < bottom)
 	# The floor is customer cards and nothing else. The product slot, whatever is
-	# sitting in it and its detail card all belong to the negotiation - and the
-	# detail card would be showing its blank back down there anyway.
+	# sitting in it and the tablet it stands on all belong to the negotiation.
 	for i in range(3):
 		_check("the product slot at seat %d is out of sight on the floor" % i,
 			not _controller._chair_zones[i].visible)
-		_check("and so is seat %d's detail card, which faces away" % i,
-			not _controller._offer_details[i].visible)
+		_check("and so is seat %d's tablet" % i, not _controller._tablets[i].visible)
 		# One line on the floor card is what tells you a product is still sitting
 		# with someone, now that you cannot see the slot.
 		_check("but the floor card still says what you left with them",
@@ -522,9 +519,9 @@ func _check_floor_view_is_bare() -> void:
 		not _controller._action_bar.visible)
 	for i in range(3):
 		_check("seat %d is visible on the floor" % i, _controller._seats[i].visible)
-		_check("seat %d keeps its detail cards tucked away" % i,
-			not _controller._customer_details[i].is_out()
-				and not _controller._offer_details[i].is_out())
+		_check("seat %d's tablet is not drawing a screen nobody can see" % i,
+			(_controller._tablets[i].get_node(^"ScreenViewport") as SubViewport)
+				.render_target_update_mode == SubViewport.UPDATE_DISABLED)
 
 ## The hover tooltip is gone; what a customer DOES is the back of their card.
 ## The pair has to turn as one, or you see the back of the front card and
@@ -719,8 +716,10 @@ func _check_the_floor_cards_are_big_enough_to_read() -> void:
 		_on_screen("floor card %d" % i, r)
 		_check("floor card %d stays out of the log (%s vs %s)" % [i, r, _log_rect()],
 			not r.intersects(_log_rect()))
-		_check("and so does its CLOSE SOON tag, slid out (%s)" % _close_soon_rect(i),
-			not _close_soon_rect(i).intersects(_log_rect()))
+		var tag := _close_soon_rect(i)
+		_check("and so does its CLOSE SOON tag (%s)" % tag,
+			tag.size.x > 0.0 and not tag.intersects(_log_rect()))
+		_check_close_soon_in_its_corner("floor card %d" % i, tag, r)
 
 # --- a seat ----------------------------------------------------------------
 
@@ -772,12 +771,9 @@ func _check_you_can_still_flip_a_customer_card_while_seated() -> void:
 ## piles they named. Every hint is a flat tag on the HUD now, sitting just
 ## inside the top edge of the card it names.
 func _check_the_hints_sit_flat_inside_their_cards() -> void:
-	# The sticky-note tags are the one thing still written into the scene - they
-	# are meant to look like paper stuck to a card, and never were the problem.
 	var stray: Array[String] = []
 	for n in _all_under(_controller):
-		if n is Label3D and not (n.get_parent().name.begins_with("OfferFlag")
-				or n.get_parent().name.begins_with("CloseSoonFlag")):
+		if n is Label3D:
 			stray.append(str(_controller.get_path_to(n)))
 	_check("no hint is a Label3D any more (%s)"
 		% (", ".join(stray) if not stray.is_empty() else "none"), stray.is_empty())
@@ -912,16 +908,26 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 		var yaw: float = _controller._customer_cards[i].global_rotation.y
 		_check("seat %d's card still faces the camera (%.1f degrees off)"
 			% [i, rad_to_deg(yaw)], absf(yaw) < 0.02)
-	# The collision that swapped the two columns: a CLOSE SOON tag, slid all
-	# the way out, is the furthest right anything on the table reaches.
+	# Every folder, and the CLOSE SOON tag in its corner, keeps out of both rails.
 	for i in range(3):
 		var who := _rect_of(_controller._customer_cards[i], CUSTOMER)
 		var tag := _close_soon_rect(i)
+		_check_close_soon_in_its_corner("seat %d" % i, tag, who)
 		for pair in [["the log", _log_rect()], ["the buttons", _action_rect()]]:
 			_check("seat %d's card keeps out of %s (%s vs %s)" % [i, pair[0], who, pair[1]],
 				not who.intersects(pair[1]))
-			_check("and so does its CLOSE SOON tag, slid all the way out (%s)" % tag,
+			_check("and so does its CLOSE SOON tag (%s)" % tag,
 				not tag.intersects(pair[1]))
+	# On the folder you are with it fits beside the folder's own tab rather
+	# than over it - "given the available space".
+	var front := _rect_of(_controller._customer_cards[at], CUSTOMER)
+	var tab := _controller._customer_cards[at].get_node(
+		^"FrontViewport/CustomerFront/Tab") as Control
+	var tab_end: float = front.position.x + front.size.x \
+		* (tab.position.x + tab.size.x) / float(CustomerCard3D.FRONT_SIZE.x)
+	var front_tag := _close_soon_rect(at)
+	_check("the CLOSE SOON on the folder you are at clears its tab (%d vs tab end %d)"
+		% [int(front_tag.position.x), int(tab_end)], front_tag.position.x >= tab_end)
 
 	# A slot you are not at must still refuse drops - you should not be able to
 	# drag a product onto somebody you are not standing with, however visible
@@ -939,14 +945,11 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 	_controller._on_drag_stopped(null)
 	_check_no_drop_zone_is_armed("once the drag is over")
 
-## ONE detail card slides now, not two. The customer detail went back to being
-## purely the back of the floor card - what it used to say when slid out lives
-## on the customer card's own front, and the space it was occupying is where a
-## flanker now sits.
-func _check_the_offer_detail_slid_out_clear() -> void:
+## The product stands in the middle of a tablet, and the tablet - not a second
+## card sliding out beside it - says how it is landing. On at the desk you are
+## at and nowhere else.
+func _check_the_tablet_shows_the_offer() -> void:
 	var at := _at()
-	# OfferDetail only slides out once there is a product to describe now -
-	# "nothing on the table" lives on the chair's own permanent mark instead.
 	# Assigned directly rather than dragged: place() burns a tick, and a tick
 	# can trigger this customer's own demand telegraph mid-sequence, growing
 	# their card past _check_the_customer_card_carries_its_triage_row()'s own
@@ -960,7 +963,7 @@ func _check_the_offer_detail_slid_out_clear() -> void:
 			face = card
 			break
 	if face == null:
-		_check("there was a product in hand to check the offer detail with", false)
+		_check("there was a product in hand to put on the tablet", false)
 		return
 	var idx: int = shift.hand.find(face.instance)
 	if idx == -1:
@@ -970,60 +973,43 @@ func _check_the_offer_detail_slid_out_clear() -> void:
 	shift.chairs[at].offer = Offer.new(face.instance, 50, face.instance.margin())
 	_controller._render()
 	_settle()
-	# You reach a seat by CLICKING a customer, which means you were hovering them,
-	# which means their pair was turned over. It has to turn back before the
-	# detail card slides, or the slide happens in a mirrored space and the card
-	# travels the wrong way.
 	_check("arriving turns the pair back to face front",
 		not _controller._customer_flips[at].showing_back())
 
-	var detail: Node3D = _controller._offer_details[at]
-	var partner: Node3D = _controller._chair_zones[at]
-	_check("the offer detail card slid out from behind",
-		detail.is_out() and not detail.position.is_equal_approx(detail.home()))
-	# It comes out facing the other way and has to turn as it goes, or it
-	# arrives beside its partner still showing its own back.
-	_check("and turned to face front (%s)" % detail.rotation,
-		detail.rotation.is_equal_approx(Vector3.ZERO))
-
-	var d := _rect_of(detail, DetailCard3D.CARD_SIZE)
-	var pr := _rect_of(partner, CARD)
-	_check("and it is clear of what it describes (detail ends %d, partner starts %d)"
-		% [int(d.end.x), int(pr.position.x)], d.end.x <= pr.position.x)
-	_check("on the LEFT of it, as designed", d.position.x < pr.position.x)
-	_check("not on top of it", not d.intersects(pr))
-	_check("and it is the same size as what it hides behind (%d x %d vs %d x %d)"
-		% [int(d.size.x), int(d.size.y), int(pr.size.x), int(pr.size.y)],
-		absf(d.size.x - pr.size.x) < 2.0 and absf(d.size.y - pr.size.y) < 2.0)
-	_on_screen("offer detail card", d)
-	_check("offer detail stays out of the log (%s vs %s)" % [d, _log_rect()],
-		not d.intersects(_log_rect()))
-
-	# The OFFER sticky-note tag rides along with the same product presence -
-	# same trigger as the detail card above, independent mechanism.
-	var offer_flag: Node3D = _controller._offer_flags[at]
-	_check("the OFFER tag slid clear too",
-		offer_flag.visible and offer_flag.get_meta(&"shown", false)
-			and absf(offer_flag.position.x - _controller.OFFER_FLAG_SLIDE_X) < 0.01)
-	_check("and the CLOSE SOON tag did not - nothing unsigned yet",
-		not _controller._close_soon_flags[at].visible)
-
-	_check("the customer detail stayed home, where it is just a card back",
-		not _controller._customer_details[at].is_out())
+	var tablet: OfferTablet = _controller._tablets[at]
+	_check("the tablet at your desk is on", tablet.visible and tablet.is_on())
 	for i in range(3):
-		if i == at:
-			continue
-		_check("seat %d's detail cards stayed home" % i,
-			not _controller._customer_details[i].is_out()
-				and not _controller._offer_details[i].is_out())
+		if i != at:
+			_check("seat %d's tablet is off - you are not at that desk" % i,
+				not _controller._tablets[i].visible)
+	var t := _rect_of(tablet, TABLET)
+	var slot := _rect_of(_controller._chair_zones[at], CARD)
+	_check("the product stands in the middle of it (%s vs %s)"
+		% [slot.get_center(), t.get_center()],
+		slot.get_center().distance_to(t.get_center()) < 2.0)
+	_check("wholly on it (%s in %s)" % [slot, t], t.encloses(slot))
+	var appeal: Rect2 = _controller.screen_rect_of(&"appeal")
+	_check("its appeal side is left of the product (%s vs %s)" % [appeal, slot],
+		appeal.size.x > 0.0 and appeal.end.x <= slot.position.x)
+	_check("and on the tablet (%s in %s)" % [appeal, t], t.encloses(appeal))
+	_check("the meter reads this offer (%d)" % tablet._bar._appeal,
+		tablet._bar.visible and tablet._bar._appeal == 50)
+	_check("and the money side reads its margin (%s)" % tablet._margin.text,
+		tablet._margin.text == Format.money(shift.chairs[at].offer.margin))
+	_on_screen("tablet", t)
+	for pair in [["the log", _log_rect()], ["the buttons", _action_rect()]]:
+		_check("the tablet stays out of %s (%s vs %s)" % [pair[0], t, pair[1]],
+			not t.intersects(pair[1]))
+	_check("and no CLOSE SOON yet - nothing unsigned",
+		not _controller._close_soon_tags[at].visible)
 
-## Undoes _check_the_offer_detail_slid_out_clear()'s own synthetic offer - a
-## real, lasting model mutation _check_the_seat_layout_does_not_overlap_itself()
+## Undoes _check_the_tablet_shows_the_offer()'s own synthetic offer - a real,
+## lasting model mutation _check_the_seat_layout_does_not_overlap_itself()
 ## right after it still needed the product for, but nothing past that point
 ## should see it. Left in place, it grew this customer's own triage row past
 ## its layout budget further down the sequence - a real bleed between two
 ## otherwise-unrelated checks, not a pre-existing flake.
-func _undo_the_offer_detail_setup() -> void:
+func _undo_the_tablet_setup() -> void:
 	var shift = _controller._shift
 	var c = shift.chairs[_at()]
 	if c == null or c.offer == null:
@@ -1034,17 +1020,14 @@ func _undo_the_offer_detail_setup() -> void:
 	_settle()
 
 ## The reported bug: "when zoomed in, the customer card gets overlapped by the
-## product card". FIVE rectangles now - the negotiation is three of them and
-## the two flankers are the other two - and none may touch another. The tight
-## seam is the offer detail against the left flanker, which the design put at
-## about 25 px of vertical clearance; it is governed by SEAT_CAM.y alone.
+## product card". FOUR rectangles now - the folder you are with, the tablet the
+## product stands on, and the two flankers - and none may touch another. The
+## tight seam is the tablet's top against the folder above it.
 func _check_the_seat_layout_does_not_overlap_itself() -> void:
 	var at := _at()
 	var rects := {
 		"customer card": _rect_of(_controller._customer_cards[at], CUSTOMER),
-		"product slot": _rect_of(_controller._chair_zones[at], CARD),
-		"offer detail": _rect_of(_controller._offer_details[at],
-			DetailCard3D.CARD_SIZE),
+		"tablet": _rect_of(_controller._tablets[at], TABLET),
 		"right flanker": _rect_of(_controller._customer_cards[(at + 1) % 3], CUSTOMER),
 		"left flanker": _rect_of(_controller._customer_cards[(at + 2) % 3], CUSTOMER),
 	}
@@ -1228,9 +1211,7 @@ func _check_the_detail_card_shows_what_they_do() -> void:
 
 	_check("the detail card names them (%s)" % det._title.text,
 		det._title.text == who.display_name)
-	_check("its customer half is showing", det._customer_body.visible)
-	_check("and its offer half is not - one card, one subject",
-		not det._offer_body.visible)
+	_check("its sheet about them is showing", det._customer_body.visible)
 	_check("it says what they DO (%s)" % det._does.text.substr(0, 40),
 		not det._does.text.is_empty())
 	_check("and it is live data, not the editor placeholder",
@@ -1560,13 +1541,13 @@ func _check_the_meter_shows_your_appeal_but_hides_their_line() -> void:
 	if c == null or c.offer == null:
 		_check("there is an offer to meter", false)
 		return
-	var det = _controller._offer_details[_at()]
+	var det: OfferTablet = _controller._tablets[_at()]
 	var bar: AppealBar = det._bar
 
-	_check("the offer detail names the product (%s)" % det._title.text,
-		det._title.text == c.offer.product.display_name)
-	_check("its offer half is showing", det._offer_body.visible)
-	_check("and its customer half is not", not det._customer_body.visible)
+	_check("the tablet at your desk is on", det.is_on())
+	_check("with its meter showing", bar.visible)
+	_check("and the offer's own margin (%s)" % det._margin.text,
+		det._margin.text == Format.money(c.offer.margin))
 	_check("the meter fills with YOUR appeal (%d of %d)" % [bar._appeal, bar._scale],
 		bar._appeal == c.offer.appeal)
 	_check("on the model's own fixed scale, not one fitted to this negotiation",
@@ -1596,7 +1577,7 @@ func _check_the_meter_climbs_and_changes_colour() -> void:
 	if c == null or c.offer == null:
 		_check("there is an offer to walk the meter with", false)
 		return
-	var bar: AppealBar = _controller._offer_details[_at()]._bar
+	var bar: AppealBar = _controller._tablets[_at()]._bar
 	var was_appeal: int = c.offer.appeal
 	var was_known: bool = c.known_line
 
@@ -1649,12 +1630,12 @@ func _check_the_meter_keeps_the_line_fogged_after_you_have_asked() -> void:
 		_check("they are still in the chair after offering", false)
 		return
 	_check("offering did NOT teach you their Line", not c.known_line)
-	var det = _controller._offer_details[_at()]
+	var det: OfferTablet = _controller._tablets[_at()]
 	if c.offer == null:
 		# They signed, so the offer left the table - which is its own correct
 		# outcome and leaves nothing to meter.
 		_check("a sale cleared the table, so the meter has nothing to show",
-			det._title.text == "nothing on the table")
+			not det._bar.visible and det._margin.text == "-")
 		return
 	var bar: AppealBar = det._bar
 	_check("so the meter still refuses to draw the marker", not bar._line_known)
@@ -1782,8 +1763,7 @@ func _check_hud_does_not_overlap_itself() -> void:
 	for pair in [["customer card", _rect_of(_controller._customer_cards[at], CUSTOMER)],
 			["customer detail", _rect_of(_controller._customer_details[at], CUSTOMER)],
 			["product slot", _rect_of(_controller._chair_zones[at], CARD)],
-			["offer detail", _rect_of(_controller._offer_details[at],
-				DetailCard3D.CARD_SIZE)]]:
+			["tablet", _rect_of(_controller._tablets[at], TABLET)]]:
 		var card: Rect2 = pair[1]
 		_check("the action column does not sit on the %s" % pair[0],
 			not bar.intersects(card))
@@ -1834,7 +1814,7 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 	_check("plenty of time: the tick counter reads normally",
 		_controller._tick_label.get_theme_color("font_color") == Palette.color(&"text"))
 	_check("plenty of time: the close button is not highlighted",
-		_controller._close_btn.modulate == Color.WHITE)
+		not _controller._close_urgent)
 
 	s.tick = s.tick_budget - s.cfg.low_tick_warning
 	_controller._render()
@@ -1842,29 +1822,50 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 		_controller._tick_label.get_theme_color("font_color") == Palette.color(&"alert"))
 	_check("few ticks left but nothing unsigned: the close button stays put "
 		+ "(closing it would just be refused)",
-		_controller._close_btn.modulate == Color.WHITE)
+		not _controller._close_urgent)
 	_check("and the unsigned total is not flagged with nothing unsigned",
 		_controller._at_risk_label.get_theme_color("font_color") != Palette.color(&"alert"))
 
 	c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
 	_controller._render()
 	_check("few ticks left with something to sign: the close button lights up",
-		_controller._close_btn.modulate == Palette.color(&"alert"))
+		_controller._close_urgent)
+	var dressed := _controller._close_btn.get_theme_stylebox("normal") as StyleBoxFlat
+	_check("ringed in the highlighter, not tinted (%s)" % dressed.border_color,
+		dressed.border_color == Palette.color(&"sticky") and dressed.border_width_top > 0)
+	# The regression this replaced: tinting the red button red turned its own
+	# word red on red, exactly when it most needed reading.
+	_check("and its word is still white on red, readable",
+		_controller._close_btn.modulate == Color.WHITE
+			and _controller._close_btn.get_theme_color("font_color") == Palette.color(&"paper")
+			and dressed.bg_color == Palette.color(&"stamp"))
 	_check("and the unsigned total is flagged too",
 		_controller._at_risk_label.get_theme_color("font_color") == Palette.color(&"alert"))
 
-	# The CLOSE SOON sticky-note tag rides the exact same condition as the
-	# close button's own highlight above - but lives on the CUSTOMER card now,
-	# not the product slot, and is NOT scoped to the seat you are at (unlike
-	# the button, which only ever acts on `current`). A customer flanking the
-	# one you are actually with can still have something at risk.
+	# CLOSE SOON rides the exact same condition as the close button's own
+	# highlight above - but it is the CUSTOMER's, in their folder's corner, and
+	# NOT scoped to the seat you are at (unlike the button, which only ever acts
+	# on `current`). A customer flanking the one you are with can still have
+	# something at risk.
 	_settle()
 	var at := _at()
-	_check("and the CLOSE SOON tag slides out too",
-		_controller._close_soon_flags[at].visible
-			and _controller._close_soon_flags[at].get_meta(&"shown", false)
-			and absf(_controller._close_soon_flags[at].position.x
-				- _controller.CLOSE_SOON_SLIDE_X) < 0.01)
+	var tag: ScreenTag = _controller._close_soon_tags[at]
+	var folder := _rect_of(_controller._customer_cards[at], CUSTOMER)
+	_check("and their folder shows CLOSE SOON", tag.visible)
+	_check_close_soon_in_its_corner("their folder", tag.get_global_rect(), folder)
+
+	# "It should stay visible even if the folder flips." Turn it over to read
+	# the back, and the tag is still there, in the same place.
+	var where := tag.get_global_rect()
+	_controller._on_customer_hover(at)
+	_settle()
+	_check("turning their folder over to read the back",
+		_controller._customer_flips[at].showing_back())
+	_check("leaves CLOSE SOON up", tag.visible)
+	_check("exactly where it was (%s vs %s)" % [tag.get_global_rect(), where],
+		tag.get_global_rect().is_equal_approx(where))
+	_controller._on_customer_unhover(at)
+	_settle()
 
 	# Same setup, on a DIFFERENT seat - proves this is not scoped to at_this_seat.
 	var other := (at + 1) % 3
@@ -1877,19 +1878,20 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 		_settle()
 	_check("a DIFFERENT customer with something unsigned gets the tag too, "
 		+ "though you are not seated with them",
-		other_c != null and _controller._close_soon_flags[other].visible
-			and _controller._close_soon_flags[other].get_meta(&"shown", false))
+		other_c != null and _controller._close_soon_tags[other].visible)
 	if other_c != null:
 		other_c.unsigned = other_was_unsigned
 
 	s.tick = was_tick
 	c.unsigned = was_unsigned
 	_controller._render()
-	# No _settle() here on purpose: hiding is instant now, not tweened - if
-	# this still needed a tween step to reach 0, that would itself be the bug.
-	_check("and disappears immediately once the reason for it is gone, at 0.0",
-		not _controller._close_soon_flags[at].visible
-			and _controller._close_soon_flags[at].position.x == 0.0)
+	# No _settle() here on purpose: nothing about it is tweened, so the render
+	# that removes the reason for it removes it.
+	_check("and disappears the moment the reason for it is gone",
+		not _controller._close_soon_tags[at].visible)
+	_check("and CLOSE goes back to plain red with it",
+		not _controller._close_urgent and (_controller._close_btn.get_theme_stylebox(
+			"normal") as StyleBoxFlat).border_width_top == 0)
 
 # --- the table matches the model -------------------------------------------
 
@@ -2097,6 +2099,75 @@ func _check_dragging_the_table_offer_onto_discard_drops_it() -> void:
 	_check("and the card actually landed in the discard pile",
 		CardIndex.of(shift, uid) == -1)
 	_check_table("after dragging chair B's offer onto discard")
+
+## The reported bug: "Finishing a drag action to the customer (like when
+## offering) activates the hover and turns him around." Letting go over a
+## customer is delivering something to them, not looking at them - so the pad
+## under the pointer when a drag ends, or one reached during it, stays
+## face-front until the pointer leaves it and comes back.
+func _check_letting_go_over_a_customer_leaves_them_face_front() -> void:
+	var shift = _controller._shift
+	if shift.at == null or shift.chairs[_at()] == null:
+		_check("was seated with someone to check letting go over them", false)
+		return
+	var at := _at()
+	var flip = _controller._customer_flips[at]
+	var card = _controller._hand_zone.cards[0] \
+		if not _controller._hand_zone.cards.is_empty() else null
+	if card == null:
+		_check("there was a card in hand to carry", false)
+		return
+	# There is no mouse in a headless run, so say where it is: on the customer.
+	var over: Vector2 = _rect_of(_controller._customer_cards[at], CUSTOMER).get_center()
+	_controller._pointer = func() -> Vector2: return over
+
+	_controller._on_drag_started(card)
+	_controller._on_drag_stopped(card)
+	_check("letting go over them marks them reached, not looked at (%d)"
+		% _controller._hover_held, _controller._hover_held == at)
+	# What physics picking does a frame later, once the drop zones that walled
+	# their pad off during the drag are switched off.
+	_controller._on_customer_hover(at)
+	_settle()
+	_check("so the pointer arriving on them does not turn them over",
+		not flip.showing_back())
+	_controller._on_customer_unhover(at)
+	_controller._on_customer_hover(at)
+	_settle()
+	_check("but leaving and coming back does - a real look again",
+		flip.showing_back())
+	_controller._on_customer_unhover(at)
+	_settle()
+
+	# Reaching someone DURING a drag is the same thing: carrying a card across
+	# the table must not turn over everyone it passes.
+	var other := -1
+	for i in range(3):
+		if i != at and shift.chairs[i] != null:
+			other = i
+			break
+	if other == -1:
+		_check("someone else was seated to carry a card past", false)
+		_controller._pointer = Callable()
+		return
+	var away := Vector2(4.0, 4.0)
+	_controller._pointer = func() -> Vector2: return away
+	_controller._on_drag_started(card)
+	_controller._on_customer_hover(other)
+	_settle()
+	_check("carrying a card over someone does not turn them over",
+		not _controller._customer_flips[other].showing_back())
+	_controller._on_customer_unhover(other)
+	_controller._on_drag_stopped(card)
+	_check("and letting go away from everyone holds nobody (%d)"
+		% _controller._hover_held, _controller._hover_held == -1)
+	_controller._on_customer_hover(other)
+	_settle()
+	_check("so reaching them afterwards turns them over as always",
+		_controller._customer_flips[other].showing_back())
+	_controller._on_customer_unhover(other)
+	_settle()
+	_controller._pointer = Callable()
 
 ## Double-tap the empty table itself, an alternate route to the CLOSE button -
 ## see shift_controller.gd's _on_chair_pad_input(). Manipulates c.unsigned

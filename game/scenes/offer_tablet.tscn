@@ -1,0 +1,219 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/view/offer_tablet.gd" id="1_46ehp"]
+[ext_resource type="Script" path="res://scripts/view/appeal_bar.gd" id="2_hmbjp"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_61gvi"]
+bg_color = Color(0.05882353, 0.078431375, 0.105882354, 1)
+corner_radius_top_left = 48
+corner_radius_top_right = 48
+corner_radius_bottom_right = 48
+corner_radius_bottom_left = 48
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ncb67"]
+bg_color = Color(0.20941176, 0.22588235, 0.24894118, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bean0"]
+bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mm4oq"]
+bg_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.72156864, 0.7529412, 0.8, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fmjxr"]
+content_margin_left = 26.0
+content_margin_top = 24.0
+content_margin_right = 26.0
+content_margin_bottom = 24.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6e6jf"]
+content_margin_left = 26.0
+content_margin_top = 24.0
+content_margin_right = 26.0
+content_margin_bottom = 24.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+
+[sub_resource type="QuadMesh" id="QuadMesh_vr30n"]
+size = Vector2(7.3333335, 3.8222222)
+
+[node name="OfferTablet" type="Node3D" unique_id=1412466257]
+script = ExtResource("1_46ehp")
+
+[node name="ScreenViewport" type="SubViewport" parent="." unique_id=1327075812]
+disable_3d = true
+transparent_bg = true
+size = Vector2i(1320, 688)
+render_target_update_mode = 0
+
+[node name="TabletScreen" type="Control" parent="ScreenViewport" unique_id=1232711555]
+custom_minimum_size = Vector2(1320, 688)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1320.0
+offset_bottom = 688.0
+
+[node name="Edge" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=180256158]
+layout_mode = 0
+offset_right = 1320.0
+offset_bottom = 688.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_61gvi")
+
+[node name="Lens" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=1275740369]
+layout_mode = 0
+offset_left = 655.0
+offset_top = 4.0
+offset_right = 665.0
+offset_bottom = 14.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_ncb67")
+
+[node name="Screen" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=453524352]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 1302.0
+offset_bottom = 670.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bean0")
+
+[node name="Well" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=579036119]
+layout_mode = 0
+offset_left = 435.0
+offset_top = 29.0
+offset_right = 885.0
+offset_bottom = 659.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_mm4oq")
+
+[node name="AppealPanel" type="PanelContainer" parent="ScreenViewport/TabletScreen" unique_id=317377121]
+custom_minimum_size = Vector2(381, 630)
+layout_mode = 0
+offset_left = 32.0
+offset_top = 29.0
+offset_right = 413.0
+offset_bottom = 659.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_fmjxr")
+
+[node name="Column" type="VBoxContainer" parent="ScreenViewport/TabletScreen/AppealPanel" unique_id=520780900]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="AppealTitle" type="Label" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=2093182275]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "APPEAL"
+
+[node name="AppealBar" type="Control" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=1454798148]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("2_hmbjp")
+
+[node name="StatusLabel" type="Label" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=1376187617]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 46
+theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+text = "READY TO SIGN"
+
+[node name="HintLabel" type="Label" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=1796013046]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "their Line is marked - clear it before you offer"
+autowrap_mode = 2
+
+[node name="DealPanel" type="PanelContainer" parent="ScreenViewport/TabletScreen" unique_id=408595650]
+custom_minimum_size = Vector2(381, 630)
+layout_mode = 0
+offset_left = 907.0
+offset_top = 29.0
+offset_right = 1288.0
+offset_bottom = 659.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_6e6jf")
+
+[node name="Column" type="VBoxContainer" parent="ScreenViewport/TabletScreen/DealPanel" unique_id=2062601950]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MarginTitle" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=805051663]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "MARGIN"
+
+[node name="MarginLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=1933193794]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 76
+theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
+text = "$1,600"
+
+[node name="Gap" type="Control" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=856058863]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+
+[node name="ComboTitle" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=790198683]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "COMBO"
+
+[node name="ComboLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=1458708784]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 60
+theme_override_colors/font_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
+text = "×2.35"
+
+[node name="WorthLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=881970266]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
+text = "$3,760 if they buy"
+
+[node name="KnobsLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=728751999]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "Each sale: combo +45%, Line +5"
+autowrap_mode = 2
+
+[node name="Face" type="MeshInstance3D" parent="." unique_id=1776224626]
+mesh = SubResource("QuadMesh_vr30n")

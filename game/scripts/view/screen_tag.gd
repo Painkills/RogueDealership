@@ -18,6 +18,12 @@ class_name ScreenTag extends PanelContainer
 @export var anchor_path: NodePath
 ## How far below the anchor the tag's top edge sits, in design pixels.
 @export var drop_px: float = 14.0
+## How much of the tag's width hangs to the LEFT of its anchor: 0.5 centres it
+## on the anchor, 1.0 puts its right edge there. A corner tag (CLOSE SOON, on
+## a folder's top-right corner) hangs from the corner rather than a midpoint,
+## so it stays tucked into that corner at whatever size perspective draws the
+## folder.
+@export var hang: float = 0.5
 
 var anchor: Node3D
 ## The caller's own condition, on top of the anchor's. The empty-table note's
@@ -41,4 +47,4 @@ func follow(cam: Camera3D) -> void:
 	# Shrink-wrap first. A text change widens the tag, and centring on last
 	# frame's width puts it off-centre by half the difference.
 	reset_size()
-	position = Vector2(roundf(p.x - size.x * 0.5), roundf(p.y + drop_px))
+	position = Vector2(roundf(p.x - size.x * hang), roundf(p.y + drop_px))

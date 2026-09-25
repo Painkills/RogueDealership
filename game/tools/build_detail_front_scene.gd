@@ -1,19 +1,15 @@
 extends SceneTree
-## Builds res://scenes/cards/detail_front_2d.tscn - the face of a DETAIL card.
+## Builds res://scenes/cards/detail_front_2d.tscn - the face of the BACK of a
+## customer's folder: what they do, what is unsigned, what you have worked out.
 ##
-## A detail card is the second card of a pair: it sits flush behind the thing it
-## describes, facing the other way, so the two read as one card with a front and
-## a back. There are two per seat and they show different things, but they share
-## one face scene with two mutually exclusive body blocks, for the same reason
-## the customer face used to carry its own two states: one scene cannot drift
-## from itself.
+## It sits flush behind the folder, facing the other way, so the two read as
+## one folder with a front and a back. Laid out at 500x700 and stretched across
+## the folder's wider face (see DetailCard3D.face_size), which only gives its
+## lines more room.
 ##
-##   CustomerBody - what they do, what is unsigned, what you have worked out
-##   OfferBody    - the product, its margin, and the appeal meter
-##
-## 500x700 on a 2.5 x 3.5 quad, exactly like every other card. It was briefly
-## wider, which broke the illusion the moment the pair flipped: a back that is
-## not the same size as its front is not a back.
+## It used to carry a second body too, for the product slot's own detail card.
+## That card is gone - the tablet the product stands on says how it is landing
+## (see OfferTablet) - and so is the body.
 
 const W := 500
 const H := 700
@@ -46,44 +42,20 @@ func _init() -> void:
 	margin.add_child(col)
 	col.owner = root
 
-	# --- header, shared by both bodies -----------------------------------
-	# Smaller than before: the header's whole job is to say WHOSE card this
-	# is, and it was taking more of the 500x700 face than that job needs -
-	# room CustomerBody's three sections need far more, especially the tells
-	# of an archetype with a lot to say.
-	#
-	# Placeholder text below is always the LONGER of what show_customer() and
-	# show_offer() can put in this shared Label - the product name beats the
-	# longest customer name, so that is what sits here by default, even
-	# though CustomerBody is the body actually visible at rest.
+	# --- header -------------------------------------------------------------
+	# Small: its whole job is to say WHOSE folder this is, and the three sections
+	# below need the room far more, especially the tells of an archetype with a
+	# lot to say.
 	var title := _label("TitleLabel", 34, Palette.color(&"text"))
-	title.text = "Anti-Theft & Key Protection"   # longest of product name / customer name
+	title.text = "Anti-Theft & Key Protection"   # a long line, well past any name
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
 	col.add_child(title)
 	title.owner = root
 
-	# Shared by both bodies (an archetype's name has no category; the offer's
-	# DOES), so the icon is a sibling toggled by whichever show_*() ran last
-	# rather than something always drawn.
-	var sub_row := HBoxContainer.new()
-	sub_row.name = "SubRow"
-	sub_row.add_theme_constant_override("separation", 10)
-	col.add_child(sub_row)
-	sub_row.owner = root
-
-	var sub_icon := Control.new()
-	sub_icon.name = "SubIcon"
-	sub_icon.set_script(load("res://scripts/view/category_icon_control.gd"))
-	sub_icon.custom_minimum_size = Vector2(32, 32)
-	sub_icon.visible = false
-	sub_row.add_child(sub_icon)
-	sub_icon.owner = root
-
 	var sub := _label("SubLabel", 28, Palette.color(&"accent"))
-	sub.text = "Deal . Value Retention"   # longest of "category . interest" / archetype name
+	sub.text = "Tech Enthusiast"   # the longest archetype name
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD
-	sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sub_row.add_child(sub)
+	col.add_child(sub)
 	sub.owner = root
 
 	var rule := ColorRect.new()
@@ -118,62 +90,6 @@ func _init() -> void:
 	_section(who, root, "KnownTitle", "WHAT YOU KNOW",
 		"KnownLabel", "Their number one is a Vehicle need.",
 		&"text_dim")
-
-	# --- the product in front of them ------------------------------------
-	var what := VBoxContainer.new()
-	what.name = "OfferBody"
-	what.visible = false
-	what.add_theme_constant_override("separation", 4)
-	col.add_child(what)
-	what.owner = root
-
-	var margin_title := _label("MarginTitle", 22, Palette.color(&"text_dim"))
-	margin_title.text = "MARGIN"
-	what.add_child(margin_title)
-	margin_title.owner = root
-
-	var margin_label := _label("MarginLabel", 44, Palette.color(&"margin"))
-	margin_label.text = "$1,600"
-	what.add_child(margin_label)
-	margin_label.owner = root
-
-	# Double duty: before any sale this visit it shows the archetype's own
-	# static knobs (line_per_sale / combo_step - the Karen carries the
-	# longest of both in the roster, the actual worst case below, not
-	# generic filler); once c.sales > 0 it switches to the live multiplier
-	# THIS offer would carry, e.g. "x2.35 combo" - a realistic illustrative
-	# figure, not a hard worst case, since a chain has no fixed ceiling, the
-	# same way TableLabel's unsigned list above does not.
-	var combo_now := _label("ComboNowLabel", 26, Palette.color(&"margin"))
-	combo_now.text = "Line +5/sale  ·  Combo +45%/sale"
-	what.add_child(combo_now)
-	combo_now.owner = root
-
-	var appeal_title := _label("AppealTitle", 22, Palette.color(&"text_dim"))
-	appeal_title.text = "APPEAL"
-	what.add_child(appeal_title)
-	appeal_title.owner = root
-
-	# Fill is how much appeal this offer carries, colour is how that compares
-	# with their Line, and the marker only appears once you have earned the Line.
-	var bar := Control.new()
-	bar.name = "AppealBar"
-	bar.custom_minimum_size = Vector2(0, 54)
-	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.set_script(load("res://scripts/view/appeal_bar.gd"))
-	what.add_child(bar)
-	bar.owner = root
-
-	var status := _label("StatusLabel", 32, Palette.color(&"text"))
-	status.text = "READY - they will sign"   # longest of the status branches
-	what.add_child(status)
-	status.owner = root
-
-	var hint := _label("HintLabel", 22, Palette.color(&"text_dim"))
-	hint.text = "their Line is marked - clear it before you offer"   # longer of the two hint branches
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
-	what.add_child(hint)
-	hint.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)

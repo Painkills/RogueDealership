@@ -6,17 +6,14 @@ extends SceneTree
 ## for free, and arriving at a seat only has to tween them up in camera-local
 ## space.
 ##
-## EVERYTHING IS A CARD, AND EVERY CARD HAS A BACK. A seat is four of them: the
-## customer, a detail card tucked behind the customer facing the other way, the
-## product slot, and a detail card tucked behind that. Hovering a customer on
-## the floor turns the PAIR over, so the detail really is the back of the card.
-## Sitting down slides both detail cards out to the LEFT and turns them
-## face-front, so you have both halves side by side.
+## A SEAT IS A FOLDER, A SLOT AND A TABLET. The customer is a file folder with
+## a detail card tucked behind it facing the other way; hovering them turns the
+## PAIR over, so the detail really is the back of the folder. In front of them
+## is the product slot, standing in the middle of a tablet's screen - and the
+## tablet, not a second card, is what says how the product is landing.
 ##
-## Both cards of a pair are the same size, which is not decoration: a back that
-## is not the same shape as its front is not a back, and equal widths are what
-## make the customer's margin and the product's margin equal BY CONSTRUCTION
-## rather than by two numbers happening to agree.
+## Both halves of the folder are the same size, which is not decoration: a back
+## that is not the same shape as its front is not a back.
 ##
 ## THE TABLE IS A CAROUSEL AND THE CAMERA BARELY MOVES. The three seats sit on
 ## a circle; approaching someone spins the circle until they are at the front,
@@ -60,6 +57,7 @@ extends SceneTree
 const COLLECTION := "res://addons/card_3d/scenes/card_collection_3d.tscn"
 const CUSTOMER_CARD := "res://scenes/cards/customer_card_3d.tscn"
 const DETAIL_CARD := "res://scenes/cards/detail_card_3d.tscn"
+const TABLET := "res://scenes/offer_tablet.tscn"
 const REPORT := "res://scenes/report.tscn"
 const PULL_PICKER := "res://scenes/pull_picker.tscn"
 
@@ -80,7 +78,14 @@ const DROPZONE_SHAPE := "res://scenes/dropzone_shape_3d.tres"
 ## puts seat (i+1)%3 on the RIGHT and seat (i+2)%3 on the LEFT, always.
 const CAROUSEL_R := 6.0
 const CUSTOMER_Y := 4.0      ## their card, seat-local
-const CHAIR_Y := 0.0         ## the offer slot in front of them, seat-local
+## The offer slot in front of them, seat-local: the middle of the tablet's
+## screen, with the tablet's bottom edge where the card's own used to be - so
+## the tablet stands on the desk and your hand clears it exactly as it cleared
+## the card.
+const CHAIR_Y := (OfferTablet.SIZE.y - 3.5) * 0.5
+## A hair behind the slot's own outline and highlight slabs, so the card, its
+## outline and its highlight all sit on the screen rather than behind it.
+const TABLET_Z := -0.07
 ## The two halves of a pair, a hair either side of the pair's own plane, so
 ## rotating the pair swaps which one you are looking at.
 const FACE_Z := 0.03
@@ -110,24 +115,30 @@ const FLOOR_Y := -4.0
 ## showroom's desk, not a banker's.
 ##
 ## Seat-local, in the desk's own un-leaned frame. TABLE_TOP_Y is a hair under
-## the product card's lowest edge (-1.72 once the seat's lean tips it), so the
-## card stands on the table rather than through it or above it.
+## the tablet's lowest edge (-1.73 once the seat's lean tips it), so the tablet
+## stands on the table rather than through it or above it.
 const TABLE_TOP_Y := -1.76
-const TABLE_SIZE := Vector3(5.6, 0.14, 3.4)   ## the top: width, thickness, depth
+## Wide enough for the tablet to stand on with room either side of it.
+const TABLE_SIZE := Vector3(8.0, 0.14, 3.4)   ## the top: width, thickness, depth
 const TABLE_FRONT_Z := 1.1
 const TABLE_LEG := 0.12
-## The customer's chair: an ordinary office chair on the far side of the desk -
-## a rounded back, a seat, one post and a five-point base. The last one was a
-## tall slab as wide as their card and it read as a church pew. This back is
-## narrower than their card and tops out behind it, so what shows is a chair
-## under someone, not a wall behind them.
+## The customer's chair: an ordinary office chair on the far side of the desk,
+## drawn to the desk's own scale. The desk top stands 2.24 above the floor -
+## call it 75 cm - so a seat 1.35 up is the usual 45 cm, well BELOW the desk
+## top, and the back tops out about a hand's width above the desk. The first
+## chair was a slab as wide as their folder, which read as a church pew, and
+## the second still had its seat higher than the desk.
 ##
-## The seat sits wholly behind the table's back edge (z -2.3), and the back
-## tops out behind their folder, which hides its upper half.
-const CHAIR_Z := -3.3                               ## the seat's centre
-const CHAIR_BACK_SIZE := Vector3(2.3, 3.8, 0.22)   ## width, height, thickness
-const CHAIR_SEAT_Y := -1.0                          ## the seat's top
-const CHAIR_SEAT := Vector3(2.5, 0.3, 1.4)
+## The seat tucks a little under the desk's back edge (z -2.3), the way a
+## chair is left pushed in.
+const CHAIR_Z := -2.75                              ## the seat's centre
+const CHAIR_SEAT_Y := FLOOR_Y + 1.35                ## the seat's top
+const CHAIR_SEAT := Vector3(1.45, 0.2, 1.3)
+const CHAIR_BACK_SIZE := Vector3(1.3, 1.6, 0.16)   ## width, height, thickness
+## The back's corners: small against its width, so it reads as a chair back's
+## rounded rectangle rather than a ball peering over the desk.
+const CHAIR_BACK_ROUND := 0.4
+const CHAIR_BACK_LIFT := 0.14                       ## the gap above the seat
 
 ## See the header. K = 540 / tan(14deg) = 2165.85.
 const CAM_FOV := 28.0
@@ -176,28 +187,25 @@ const FAN_ANGLE := 24.0
 const FAN_RADIUS := 24.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
-## LEFT rail. It used to be on the right, until each customer grew a CLOSE SOON
-## tag that slides out to the RIGHT of their card: the right-hand flanker's tag
-## ran straight into the log. A tag only ever slides right, so the left rail is
-## the one side nothing on the table ever reaches toward. Stops well above the
-## bottom strip, which is where the draw pile rises into. As narrow as it is so
-## the left flanker's folder clears it from the floor, where it is biggest.
+## LEFT rail. Stops well above the bottom strip, which is where the draw pile
+## rises into. As narrow as it is so the left flanker's folder clears it from
+## the floor, where it is biggest.
 const LOG_RECT := Rect2(18, 80, 370, 650)
 ## A column, not a row. The bottom of the screen belongs to the hand and the two
 ## piles, and a Button laid over a card steals the click meant for the card.
 ##
-## RIGHT rail, mirroring the log. It starts past the furthest the right-hand
-## flanker's CLOSE SOON tag reaches while you are seated. On the floor that tag
-## reaches further, but the buttons are hidden there because there is nobody to
+## RIGHT rail, mirroring the log, clear of the right-hand flanker's folder and
+## of the tablet. The buttons are hidden on the floor, where there is nobody to
 ## act on. drive_shift.gd pins both edges.
 const ACTION_RECT := Rect2(1630, 300, 260, 340)
 const ACTION_BUTTON := Vector2(260, 100)
 ## The app bar across the top that the shift's numbers sit on. The log starts
 ## below it.
 const TOP_STRIP_HEIGHT := 66.0
-## A customer's CLOSE SOON tag hangs this far down their folder - low enough to
-## clear the right-hand flanker's folder beside it.
-const CLOSE_SOON_Y := -1.45
+## How far in from their folder's right-hand edge a customer's CLOSE SOON tag
+## sits, in world units. It hangs in the strip beside the folder's tab, the
+## one empty space on the folder.
+const CLOSE_SOON_INSET := 0.1
 ## Control.layout_mode's ANCHORS value, which Godot does not expose as a
 ## constant - see _cover_the_hud().
 const LAYOUT_MODE_ANCHORS := 1
@@ -291,6 +299,7 @@ func _init() -> void:
 	var collection_scene: PackedScene = load(COLLECTION)
 	var customer_scene: PackedScene = load(CUSTOMER_CARD)
 	var detail_scene: PackedScene = load(DETAIL_CARD)
+	var tablet_scene: PackedScene = load(TABLET)
 
 	for i in range(3):
 		# One node per seat, carrying its own counter-rotation. A flat quad at
@@ -335,14 +344,16 @@ func _init() -> void:
 		flip.add_child(who)
 		who.owner = root
 
-		# On the CUSTOMER now, not the product slot - a customer you are not
-		# currently seated with can still have something unsigned at risk, and
-		# the old spot (behind the product) was never visible for them at all.
-		# Near the bottom, clear of the photo-and-name row up top. Red with
-		# white words: the loudest thing on the table, as it should be when the
-		# bell is about to take what is unsigned.
-		_slide_flag(who, root, "CloseSoonFlag%d" % i, "CLOSE SOON!",
-			Palette.color(&"stamp"), Palette.color(&"paper"), CLOSE_SOON_Y)
+		# Where the customer's CLOSE SOON tag hangs: the folder's top-right
+		# corner, in the strip beside its tab. On the SEAT, not on the folder -
+		# the folder turns over, and a tag riding it vanished with the front
+		# every time you turned it to read the back. The seat never turns.
+		var corner := Marker3D.new()
+		corner.name = "CloseSoonAnchor%d" % i
+		corner.position = Vector3(CustomerCard3D.CARD_SIZE.x * 0.5 - CLOSE_SOON_INSET,
+			CUSTOMER_Y + CustomerCard3D.CARD_SIZE.y * 0.5, FACE_Z)
+		seat.add_child(corner)
+		corner.owner = root
 
 		# The back of their folder is folder-sized too.
 		var back := _detail(detail_scene, "CustomerDetail%d" % i,
@@ -371,11 +382,10 @@ func _init() -> void:
 		# does). Selecting and dragging the card are unaffected - only the
 		# lift-on-hover/press cosmetic is off.
 		chair.highlight_on_hover = false
-		# The slot's own outline - a pale sheet on the desk front, where the
-		# old faint blue vanished into the walnut - plus the anchor the HUD's
-		# TableNote%d hangs from. The note says "nothing on the table", and "or
-		# double-click to close the deal" underneath it when there is
-		# something to close.
+		# The slot's own outline - a pale sheet over the tablet's well - plus
+		# the anchor the HUD's TableNote%d hangs from. The note says "nothing
+		# on the table", and "or double-click to close the deal" underneath it
+		# when there is something to close.
 		_mark(chair, root, Palette.color(&"paper"), 0.28)
 
 		# Double-tap-to-close, only when the table is actually empty - see
@@ -390,16 +400,6 @@ func _init() -> void:
 		# one card offering both. Stamp red, like the words and the CLOSE button.
 		_drag_hint(chair, root, "CloseHint%d" % i, Palette.color(&"stamp"), false)
 
-		# A tag tucked invisibly behind the product slot until
-		# shift_controller.gd's own _slide_flag() tweens it clear to the right -
-		# the same slide DetailCard3D's own reveal() does, mirrored in
-		# direction. CLOSE SOON used to live here too, but it needs to be
-		# readable for a customer you are not currently seated with - see the
-		# Customer%d loop above instead. The house blue, like the OFFER button
-		# it is the drag-and-drop half of.
-		_slide_flag(chair, root, "OfferFlag%d" % i, "DROP ON CUSTOMER\nTO OFFER",
-			Palette.color(&"primary"), Palette.color(&"paper"), 0.0)
-
 		# A drop target that never actually holds a card - CardHomes never
 		# assigns anything here, so a dropped offer always snaps back to
 		# Chair%d once reconciliation runs. It exists only so dragging what's
@@ -412,8 +412,15 @@ func _init() -> void:
 		_drag_hint(customer_zone, root, "OfferDragHint%d" % i, Palette.color(&"appeal"),
 			true, CustomerCard3D.CARD_SIZE)
 
-		_detail(detail_scene, "OfferDetail%d" % i,
-			Vector3(0.0, CHAIR_Y, BACK_Z), seat, root)
+		# The tablet the product stands on. Off until you sit at this desk -
+		# see shift_controller.gd's _render_details().
+		var tablet: Node3D = tablet_scene.instantiate()
+		tablet.name = "Tablet%d" % i
+		tablet.position = Vector3(0.0, CHAIR_Y, TABLET_Z)
+		tablet.visible = false
+		tablet.unique_name_in_owner = true
+		seat.add_child(tablet)
+		tablet.owner = root
 
 
 	var seat_cam := Marker3D.new()
@@ -524,38 +531,45 @@ func _desk(seat: Node3D, owner_root: Node, index: int) -> void:
 		Vector3(0.0, FLOOR_Y + leg_h * 0.35, back_leg_z), steel)
 
 	# --- the customer's office chair, on the far side of it ------------------
-	# A rounded back: a capsule pressed flat, so the top and bottom are curves
-	# rather than the corners of a slab.
+	# A rounded back: a narrow capsule stretched out to the back's width and
+	# pressed flat, so its top and bottom are gentle curves rather than either
+	# the corners of a slab or a half-circle.
+	var back_z := CHAIR_Z - CHAIR_SEAT.z * 0.5
 	var back := CapsuleMesh.new()
-	back.radius = CHAIR_BACK_SIZE.x * 0.5
+	back.radius = CHAIR_BACK_ROUND
 	back.height = CHAIR_BACK_SIZE.y
 	var back_inst := MeshInstance3D.new()
 	back_inst.name = "ChairBack"
 	back_inst.mesh = back
 	back_inst.material_override = mesh_fabric
-	back_inst.position = Vector3(0.0, CHAIR_SEAT_Y + CHAIR_BACK_SIZE.y * 0.5 - 0.1,
-		CHAIR_Z - CHAIR_SEAT.z * 0.5)
-	back_inst.scale = Vector3(1.0, 1.0, CHAIR_BACK_SIZE.z / CHAIR_BACK_SIZE.x)
+	back_inst.position = Vector3(0.0,
+		CHAIR_SEAT_Y + CHAIR_BACK_LIFT + CHAIR_BACK_SIZE.y * 0.5, back_z)
+	back_inst.scale = Vector3(CHAIR_BACK_SIZE.x / (CHAIR_BACK_ROUND * 2.0), 1.0,
+		CHAIR_BACK_SIZE.z / (CHAIR_BACK_ROUND * 2.0))
 	desk.add_child(back_inst)
 	back_inst.owner = owner_root
+	# The spine the back hangs from, so it is held up rather than floating.
+	_box(desk, owner_root, "ChairSpine", Vector3(0.16, CHAIR_BACK_LIFT + 0.5, 0.08),
+		Vector3(0.0, CHAIR_SEAT_Y + (CHAIR_BACK_LIFT + 0.5) * 0.5 - 0.1, back_z - 0.04),
+		chrome)
 	_box(desk, owner_root, "ChairSeat", CHAIR_SEAT,
 		Vector3(0.0, CHAIR_SEAT_Y - CHAIR_SEAT.y * 0.5, CHAIR_Z), mesh_fabric)
 	# One post down to a five-point base, the way every office chair stands.
 	var post := CylinderMesh.new()
-	post.top_radius = 0.09
-	post.bottom_radius = 0.09
-	post.height = CHAIR_SEAT_Y - CHAIR_SEAT.y - FLOOR_Y - 0.12
+	post.top_radius = 0.07
+	post.bottom_radius = 0.07
+	post.height = CHAIR_SEAT_Y - CHAIR_SEAT.y - FLOOR_Y - 0.1
 	_mesh(desk, owner_root, "ChairPost", post,
-		Vector3(0.0, FLOOR_Y + 0.12 + post.height * 0.5, CHAIR_Z), chrome)
+		Vector3(0.0, FLOOR_Y + 0.1 + post.height * 0.5, CHAIR_Z), chrome)
 	for k in range(5):
 		var spoke := Node3D.new()
 		spoke.name = "ChairLeg%d" % k
-		spoke.position = Vector3(0.0, FLOOR_Y + 0.1, CHAIR_Z)
+		spoke.position = Vector3(0.0, FLOOR_Y + 0.08, CHAIR_Z)
 		spoke.rotation = Vector3(0.0, TAU * k / 5.0, 0.0)
 		desk.add_child(spoke)
 		spoke.owner = owner_root
-		_box(spoke, owner_root, "Spoke", Vector3(0.1, 0.08, 0.95),
-			Vector3(0.0, 0.0, 0.47), chrome)
+		_box(spoke, owner_root, "Spoke", Vector3(0.08, 0.07, 0.72),
+			Vector3(0.0, 0.0, 0.36), chrome)
 
 func _box(parent: Node3D, owner_root: Node, node_name: String, size: Vector3,
 		pos: Vector3, mat: Material) -> void:
@@ -718,55 +732,6 @@ func _drag_hint(zone: Node3D, owner_root: Node, node_name: String, tint: Color,
 	if anchored:
 		_tag_anchor(hint, owner_root)
 
-## A sticky-note tag tucked at the zone's own X (hidden - start invisible,
-## since CLOSE SOON must be able to appear over an EMPTY table with no card
-## there to hide it behind, unlike _drag_hint's slab). shift_controller.gd's
-## _slide_flag() makes it visible and tweens it clear to the right when
-## shown, mirroring DetailCard3D's own reveal() - just the opposite
-## direction, and a plain position tween rather than a card turning over.
-func _slide_flag(zone: Node3D, owner_root: Node, node_name: String, text: String,
-		tint: Color, text_color: Color, y: float) -> void:
-	var flag := Node3D.new()
-	flag.name = node_name
-	flag.position = Vector3(0, y, 0.05)
-	flag.visible = false
-	flag.unique_name_in_owner = true
-	zone.add_child(flag)
-	flag.owner = owner_root
-
-	# A solid, opaque tag - a translucent slab read as too faint here, on
-	# something meant to read at a glance rather than while your attention is
-	# already on a drag. text_color is chosen against the tint, not the table:
-	# ink on a yellow sticky note, paper knocked out of a red stamp.
-	var slab := QuadMesh.new()
-	slab.size = Vector2(1.8, 0.7)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = tint
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	var mesh := MeshInstance3D.new()
-	mesh.name = "Slab"
-	mesh.mesh = slab
-	mesh.material_override = mat
-	flag.add_child(mesh)
-	mesh.owner = owner_root
-
-	var label := Label3D.new()
-	label.name = "Label"
-	label.text = text
-	label.font_size = 24
-	label.pixel_size = 0.005
-	label.modulate = text_color
-	# No outline: on a solid note there is nothing to separate the words from
-	# but the note itself, and an outline only thickens them into a blur.
-	label.outline_size = 0
-	label.shaded = false
-	label.double_sided = false
-	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.position = Vector3(0, 0, 0.01)
-	flag.add_child(label)
-	label.owner = owner_root
-
 func _build_hud(root: Node) -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "HUD"
@@ -807,6 +772,7 @@ func _build_hud(root: Node) -> void:
 			NodePath("Table/Carousel/Seat%d/CustomerZone%d/OfferDragHint%d/TagAnchor" % [i, i, i]),
 			&"primary", &"primary", [["Label", "OFFER PRODUCT", 24, &"paper"]])
 		_table_note(hints, root, i)
+		_close_soon_tag(hints, root, i)
 
 	# --- the shift bar, always ------------------------------------------
 	# A white app bar across the top of the screen that the shift's numbers
@@ -1114,6 +1080,29 @@ func _table_note(parent: Node, owner_root: Node, i: int) -> void:
 	var close := _line(close_row, owner_root, "Close", "Double-click to\nclose the deal",
 		21, &"stamp")
 	close.theme_type_variation = &"Heading"
+
+## A customer's CLOSE SOON: a small red tab tucked inside their folder's
+## top-right corner, in the strip beside the folder's own tab - see the
+## CloseSoonAnchor%d markers. On the HUD like every other hint, so it reads at
+## full size on a flanker's folder as well as on yours, and it stays exactly
+## where it is while the folder turns over under it. Red with white words: the
+## loudest thing on the table, as it should be when the bell is about to take
+## what is unsigned.
+func _close_soon_tag(parent: Node, owner_root: Node, i: int) -> void:
+	var tag := _tag(parent, owner_root, "CloseSoonTag%d" % i,
+		NodePath("Table/Carousel/Seat%d/CloseSoonAnchor%d" % [i, i]), &"stamp", &"stamp",
+		[["Label", "CLOSE SOON", 18, &"paper"]])
+	# Hung from the corner rather than a midpoint, and only just inside it.
+	tag.set(&"hang", 1.0)
+	tag.set(&"drop_px", 3.0)
+	# Slimmer than a pill: it has to fit the strip beside the folder's tab.
+	var style := _tag_style(&"stamp", &"stamp")
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 2
+	style.content_margin_bottom = 3
+	tag.add_theme_stylebox_override("panel", style)
 
 func _line(parent: Node, owner_root: Node, node_name: String, text: String,
 		size: int, role: StringName) -> Label:

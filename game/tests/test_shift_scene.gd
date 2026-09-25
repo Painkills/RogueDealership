@@ -39,7 +39,7 @@ func test_a_seat_is_one_node_so_the_other_two_can_be_hidden() -> void:
 			continue
 		for child in ["CustomerFlip%d/Customer%d" % [i, i],
 				"CustomerFlip%d/CustomerDetail%d" % [i, i],
-				"Chair%d" % i, "OfferDetail%d" % i]:
+				"Chair%d" % i, "Tablet%d" % i]:
 			h.check("%s hangs off it, so hiding the seat hides it too" % child,
 				seat.get_node_or_null(NodePath(child)) != null)
 	s.free()
@@ -63,10 +63,8 @@ func test_a_customer_and_their_sheet_turn_over_together() -> void:
 	s.free()
 
 func test_every_slot_is_exactly_one_card_wide() -> void:
-	## "There should be an equal margin between the main cards and the detail
-	## cards for both product and customer." The detail comes out by one fixed
-	## offset, so the margins can only differ if the two slots are different
-	## widths - and the product's marker slab used to be wider than its card.
+	## The slot's outline sits over the tablet's well, and a slab wider than
+	## the card it marks would draw an edge the card does not have.
 	var s := _scene()
 	for i in range(3):
 		var slab := s.get_node(
@@ -75,16 +73,14 @@ func test_every_slot_is_exactly_one_card_wide() -> void:
 			% i + "customer's is", (slab.mesh as QuadMesh).size, CARD)
 	s.free()
 
-func test_the_detail_cards_start_tucked_behind_their_partner() -> void:
-	## "The detail cards are hidden behind the main card." Hidden by being flush
-	## behind an opaque card of its own size, facing the other way - so it is
-	## literally that card's back. No visibility flag to get wrong, and nothing to
-	## pop when the framing changes.
+func test_the_back_of_a_folder_starts_tucked_behind_it() -> void:
+	## Hidden by being flush behind an opaque card of its own size, facing the
+	## other way - so it is literally that folder's back. No visibility flag to
+	## get wrong, and nothing to pop when the framing changes.
 	var s := _scene()
 	for i in range(3):
 		for pair in [["Seat%d/CustomerFlip%d/Customer%d" % [i, i, i],
-					"Seat%d/CustomerFlip%d/CustomerDetail%d" % [i, i, i]],
-				["Seat%d/Chair%d" % [i, i], "Seat%d/OfferDetail%d" % [i, i]]]:
+					"Seat%d/CustomerFlip%d/CustomerDetail%d" % [i, i, i]]]:
 			var front := s.get_node(NodePath("Table/Carousel/" + pair[0])) as Node3D
 			var detail := s.get_node(NodePath("Table/Carousel/" + pair[1])) as Node3D
 			h.check("%s shares its partner's x and y" % detail.name,
@@ -97,21 +93,121 @@ func test_the_detail_cards_start_tucked_behind_their_partner() -> void:
 				% detail.rotation, is_equal_approx(absf(detail.rotation.y), PI))
 	s.free()
 
-func test_a_detail_card_slides_completely_clear_of_what_it_describes() -> void:
-	## The bug this replaces: a shared HUD panel positioned by arithmetic, which
-	## kept landing on top of the product it was describing. Now it is geometry -
-	## and geometry can be checked.
+func test_the_product_stands_in_the_middle_of_its_tablet() -> void:
+	## "The product card shows up in the center" of a tablet, with how it is
+	## landing either side of it - the second card that used to slide out
+	## beside the product is gone.
 	var s := _scene()
-	var gap: float = absf(DetailCard3D.SLIDE_OUT.x) \
-		- (CARD.x * 0.5 + DetailCard3D.CARD_SIZE.x * 0.5)
-	h.check("slid out, the detail card clears its partner by %.2f" % gap, gap > 0.0)
-	h.check("and it goes LEFT, which is the side the seat framing leaves room on",
-		DetailCard3D.SLIDE_OUT.x < 0.0)
-	var mesh := (s.get_node(^"%OfferDetail0/CardMesh/CardFrontMesh")
-		as MeshInstance3D).mesh as PlaneMesh
-	h.eq("and the quad really is the size the slide assumes",
-		mesh.size, DetailCard3D.CARD_SIZE)
-	h.eq("which is the size of the card it hides behind", DetailCard3D.CARD_SIZE, CARD)
+	for i in range(3):
+		var tablet := s.get_node(NodePath("%%Tablet%d" % i)) as Node3D
+		var slot := s.get_node(NodePath("%%Chair%d" % i)) as Node3D
+		h.check("seat %d's tablet is a tablet" % i, tablet is OfferTablet)
+		h.check("with the slot in the middle of its screen (%s vs %s)"
+			% [slot.position, tablet.position],
+			is_equal_approx(slot.position.x, tablet.position.x)
+				and is_equal_approx(slot.position.y, tablet.position.y))
+		h.check("and the tablet just behind the card standing on it (%.2f < %.2f)"
+			% [tablet.position.z, slot.position.z], tablet.position.z < slot.position.z)
+		# Behind the slot's own outline and highlight too, or they would draw
+		# under the screen rather than on it.
+		var outline := slot.get_node(^"ZoneSlab") as Node3D
+		var highlight := slot.get_node(NodePath("CloseHint%d/Slab" % i)) as Node3D
+		for pair in [["outline", slot.position.z + outline.position.z],
+				["highlight", slot.position.z + (highlight.get_parent() as Node3D).position.z
+					+ highlight.position.z]]:
+			h.check("and behind the slot's %s (%.2f < %.2f)"
+				% [pair[0], tablet.position.z, pair[1]], tablet.position.z < pair[1])
+		h.check("starting switched off - it only comes on at the desk you sit at",
+			not tablet.visible)
+		h.check("and no second card behind the product any more",
+			s.get_node_or_null(NodePath("%%OfferDetail%d" % i)) == null)
+	s.free()
+
+func test_the_tablet_stands_on_the_desk() -> void:
+	## Level in the world, the desk; leaning back to face the lens, the tablet -
+	## so its bottom edge is measured in the DESK's frame, the way a stand
+	## would rest it on the desk top.
+	var s := _scene()
+	for i in range(3):
+		var seat := s.get_node(NodePath("%%Seat%d" % i)) as Node3D
+		var desk := seat.get_node(NodePath("Desk%d" % i)) as Node3D
+		var top := desk.get_node(^"Top") as MeshInstance3D
+		var top_size: Vector3 = (top.mesh as BoxMesh).size
+		var desk_top: float = top.position.y + top_size.y * 0.5
+		var tablet := seat.get_node(NodePath("Tablet%d" % i)) as Node3D
+		var lowest := INF
+		for x in [-0.5, 0.5]:
+			var corner: Vector3 = tablet.position \
+				+ Vector3(OfferTablet.SIZE.x * x, -OfferTablet.SIZE.y * 0.5, 0.0)
+			lowest = minf(lowest, (desk.transform.affine_inverse() * corner).y)
+		h.check("seat %d's tablet rests on the desk top, not through it (%.3f vs %.3f)"
+			% [i, lowest, desk_top], lowest >= desk_top - 0.001)
+		h.check("nor floating above it (%.3f vs %.3f)" % [lowest, desk_top],
+			lowest <= desk_top + 0.06)
+		h.check("and the desk is wider than the tablet on it (%.2f > %.2f)"
+			% [top_size.x, OfferTablet.SIZE.x], top_size.x > OfferTablet.SIZE.x + 0.2)
+		# The customer's folder floats above the desk; the tablet must stop
+		# short of it.
+		var flip := seat.get_node(NodePath("CustomerFlip%d" % i)) as Node3D
+		var folder_bottom: float = flip.position.y - CustomerCard3D.CARD_SIZE.y * 0.5
+		var tablet_top: float = tablet.position.y + OfferTablet.SIZE.y * 0.5
+		h.check("and it stops short of their folder (%.2f < %.2f)"
+			% [tablet_top, folder_bottom], tablet_top < folder_bottom - 0.1)
+	s.free()
+
+func test_the_chair_is_a_chair_at_the_desks_scale() -> void:
+	## "The chair needs to be much smaller. The seat of the chair should not be
+	## above the tabletop." It was a slab as wide as their folder, and then an
+	## office chair whose seat stood higher than the desk.
+	var s := _scene()
+	for i in range(3):
+		var desk := s.get_node(NodePath("Table/Carousel/Seat%d/Desk%d" % [i, i])) as Node3D
+		var top := desk.get_node(^"Top") as MeshInstance3D
+		var desk_top: float = top.position.y + (top.mesh as BoxMesh).size.y * 0.5
+		var seat := desk.get_node(^"ChairSeat") as MeshInstance3D
+		var seat_top: float = seat.position.y + (seat.mesh as BoxMesh).size.y * 0.5
+		h.check("seat %d's chair seat is below the desk top (%.2f < %.2f)"
+			% [i, seat_top, desk_top], seat_top < desk_top - 0.5)
+		var back := desk.get_node(^"ChairBack") as MeshInstance3D
+		var capsule := back.mesh as CapsuleMesh
+		var back_top: float = back.position.y + capsule.height * 0.5
+		h.check("its back tops out a little above the desk, not over the room (%.2f)"
+			% (back_top - desk_top), back_top > desk_top and back_top < desk_top + 1.0)
+		var width: float = capsule.radius * 2.0 * back.scale.x
+		h.check("and it is narrower than half their folder (%.2f)" % width,
+			width < CustomerCard3D.CARD_SIZE.x * 0.5)
+		# A back taller than it is wide reads as a chair back; one as wide as it
+		# is tall read as a ball peering over the desk.
+		h.check("and taller than it is wide (%.2f x %.2f)" % [width, capsule.height],
+			capsule.height > width)
+	s.free()
+
+func test_close_soon_hangs_from_the_seat_so_the_folder_can_turn_under_it() -> void:
+	## A CLOSE SOON riding the folder turned over with it and vanished every
+	## time you flipped it to read the back. The seat never turns.
+	var s := _scene()
+	for i in range(3):
+		var seat := s.get_node(NodePath("%%Seat%d" % i)) as Node3D
+		var corner := seat.get_node_or_null(NodePath("CloseSoonAnchor%d" % i)) as Node3D
+		h.check("seat %d has a CLOSE SOON corner" % i, corner != null)
+		if corner == null:
+			continue
+		var flip := seat.get_node(NodePath("CustomerFlip%d" % i)) as Node3D
+		h.check("on the seat, not on the folder that turns over",
+			corner.get_parent() == seat and not flip.is_ancestor_of(corner))
+		var half := CustomerCard3D.CARD_SIZE * 0.5
+		h.check("in the folder's top-right corner (%s)" % corner.position,
+			is_equal_approx(corner.position.y, flip.position.y + half.y)
+				and corner.position.x > 0.0 and corner.position.x < half.x)
+		var tag := s.get_node(NodePath("%%CloseSoonTag%d" % i)) as Control
+		h.check("with its tag on the HUD", tag is ScreenTag
+			and s.get_node(^"HUD").is_ancestor_of(tag))
+		h.eq("following that corner", tag.get(&"anchor_path"),
+			NodePath("Table/Carousel/Seat%d/CloseSoonAnchor%d" % [i, i]))
+		h.eq("and hanging from its right-hand edge", tag.get(&"hang"), 1.0)
+		h.check("and nothing of the old sticky notes is left",
+			s.get_node_or_null(NodePath("%%CloseSoonFlag%d" % i)) == null
+				and s.get_node_or_null(NodePath("%%OfferFlag%d" % i)) == null)
 	s.free()
 
 func test_a_customer_is_a_folder_and_its_back_is_the_same_folder() -> void:
@@ -169,7 +265,7 @@ func test_your_things_are_parented_to_the_camera_and_theirs_are_not() -> void:
 		h.check("%s belongs to the player, so it hangs off the camera" % mine,
 			s.get_node(NodePath("Camera3D/" + mine)).get_parent() == cam)
 	for i in range(3):
-		for theirs in ["Chair%d" % i, "OfferDetail%d" % i,
+		for theirs in ["Chair%d" % i, "Tablet%d" % i,
 				"CustomerFlip%d/Customer%d" % [i, i],
 				"CustomerFlip%d/CustomerDetail%d" % [i, i]]:
 			h.check("%s belongs to the world, not to you" % theirs,
@@ -252,8 +348,8 @@ func test_each_seat_has_a_customer_card_under_the_carousel() -> void:
 		h.check("CustomerDetail%d is a detail card" % i,
 			s.get_node_or_null(NodePath("%s/CustomerFlip%d/CustomerDetail%d" % [seat, i, i]))
 				is DetailCard3D)
-		h.check("OfferDetail%d is a detail card" % i,
-			s.get_node_or_null(NodePath("%s/OfferDetail%d" % [seat, i])) is DetailCard3D)
+		h.check("Tablet%d is a tablet" % i,
+			s.get_node_or_null(NodePath("%s/Tablet%d" % [seat, i])) is OfferTablet)
 	h.check("one seat framing, because the table turns and the camera does not",
 		s.get_node_or_null(^"SeatCam") is Marker3D)
 	h.check("and a floor framing to return to", s.get_node_or_null(^"CameraFloor") is Marker3D)
@@ -405,7 +501,8 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	# moving, and the controller looks these up the same way.
 	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
 			"%ReportOverlay", "%SidePanel", "%ActionBar", "%PullPicker",
-			"%Seat0", "%CustomerFlip0", "%CustomerDetail0", "%OfferDetail0"]:
+			"%Seat0", "%CustomerFlip0", "%CustomerDetail0", "%Tablet0",
+			"%CloseSoonTag0"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
 	h.check("the event log parses bbcode, which the action log relies on",
 		(s.get_node(^"%EventLog") as RichTextLabel).bbcode_enabled)

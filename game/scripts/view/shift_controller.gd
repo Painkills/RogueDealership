@@ -112,11 +112,13 @@ var _customer_zones: Array = []
 ## that seat's table is empty and there is something unsigned left to close.
 var _chair_pads: Array = []
 var _close_hints: Array = []         ## one Node3D (slab+label) per seat, same rule
-## Sticky-note tags tucked behind the product slot - see build_shift_scene.gd's
-## _slide_flag(). Slid clear by _slide_flag() below, independently of each
-## other: an occupied table and a closing clock are unrelated facts.
-var _offer_flags: Array = []         ## "DROP ON CUSTOMER TO OFFER", shown while occupied
-var _close_soon_flags: Array = []    ## "CLOSE SOON!", shown while time is short
+## "CLOSE SOON" - a red tab in each customer's folder corner, shown while time
+## is short and they have something unsigned. A HUD tag, so it stays up while
+## the folder turns over under it.
+var _close_soon_tags: Array = []
+## The tablet at each desk: on at the one you are sitting at, where the product
+## stands on its screen with how it is landing either side of it.
+var _tablets: Array = []
 ## Touch's own double-tap tracker: InputEventMouseButton.double_click never
 ## actually fires for a touch-emulated click on a real device (only real
 ## mice), unlike the hover-equivalence _on_pad_input leans on - confirmed
@@ -136,22 +138,32 @@ var _customer_cards: Array = []
 var _customer_flips: Array = []      ## the pair-turning node, one per seat
 var _hover_pads: Array = []          ## the immovable thing the mouse actually finds
 var _customer_details: Array = []
-var _offer_details: Array = []
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
 var _dragging: CardFace3D = null
 var _framing_tween: Tween
 var _framed_at = null
 var _hovered: int = -1
 var _peeked: int = -1                ## touch's stand-in for hover: tap once to peek
+## A customer pad the pointer reached while carrying a card - or was on when it
+## let go of one - and has not left since. Being there is not looking at them:
+## finishing a drag onto a customer used to turn their folder over, burying the
+## front you were dropping onto. It takes leaving and coming back to turn it.
+var _hover_held: int = -1
 ## Injectable so a test can force the touch branch without a real touchscreen -
 ## production never overrides this, always the real platform check.
 var _touch_check: Callable = DisplayServer.is_touchscreen_available
+## Where the pointer is, for the same reason: a headless run has no mouse to
+## put over a customer. Unset in production, which asks the viewport.
+var _pointer: Callable = Callable()
 var _events_seen: int = 0
 var _actions_seen: int = 0
 ## True once the tick counter has already pulsed for THIS stretch of low time -
 ## reset the moment time is no longer short, so a shift that somehow recovers
 ## (it never does today, but nothing here should assume that) pulses again.
 var _tick_warning_flashed := false
+## Whether CLOSE is dressed as urgent - see ButtonStyle.urgent(). Tracked so
+## the button is only re-dressed when that changes, not on every render.
+var _close_urgent := false
 
 func _ready() -> void:
 	# Card3D takes mouse input through StaticBody3D.input_event, which does
@@ -164,20 +176,20 @@ func _ready() -> void:
 	_offer_drag_hints = [%OfferDragHint0, %OfferDragHint1, %OfferDragHint2]
 	_chair_pads = [%ChairPad0, %ChairPad1, %ChairPad2]
 	_close_hints = [%CloseHint0, %CloseHint1, %CloseHint2]
-	_offer_flags = [%OfferFlag0, %OfferFlag1, %OfferFlag2]
-	_close_soon_flags = [%CloseSoonFlag0, %CloseSoonFlag1, %CloseSoonFlag2]
+	_close_soon_tags = [%CloseSoonTag0, %CloseSoonTag1, %CloseSoonTag2]
+	_tablets = [%Tablet0, %Tablet1, %Tablet2]
 	_seat_cam = %SeatCam
 	_carousel = %Carousel
 	_customer_cards = [%Customer0, %Customer1, %Customer2]
 	_customer_flips = [%CustomerFlip0, %CustomerFlip1, %CustomerFlip2]
 	_hover_pads = [%HoverPad0, %HoverPad1, %HoverPad2]
 	_customer_details = [%CustomerDetail0, %CustomerDetail1, %CustomerDetail2]
-	_offer_details = [%OfferDetail0, %OfferDetail1, %OfferDetail2]
 	_offer_tags = [%OfferTag0, %OfferTag1, %OfferTag2]
 	_table_notes = [%TableNote0, %TableNote1, %TableNote2]
 	_tags = [_draw_tag, _discard_tag, _drop_tag]
 	_tags.append_array(_offer_tags)
 	_tags.append_array(_table_notes)
+	_tags.append_array(_close_soon_tags)
 	# The tag lives in the HUD and its anchor on the table, so the scene root
 	# (this node) is the one place a path between them resolves from.
 	for tag in _tags:
@@ -380,6 +392,7 @@ func setup(shift: Shift, standing_before: int) -> void:
 		if _shift.shift_number >= _shift.cfg.shifts_in_run else "Continue")
 	_hovered = -1
 	_peeked = -1
+	_hover_held = -1
 	_framed_at = -999                     # force the framing to re-apply
 
 	# The ONLY place card nodes are freed. _reconcile() never frees: a freed node
@@ -461,10 +474,17 @@ func screen_rect_of(target: StringName) -> Rect2:
 			if not _chair_zones[front].visible:
 				return Rect2()
 			return _on_screen_rect(_card_rect(_chair_zones[front], card))
-		&"offer_detail":
-			if not _offer_details[front].visible:
+		&"tablet", &"appeal":
+			# The whole tablet, or just its appeal panel - the meter the
+			# practice shift teaches you to read.
+			var tablet: OfferTablet = _tablets[front]
+			if not tablet.is_on():
 				return Rect2()
-			return _on_screen_rect(_card_rect(_offer_details[front], card))
+			if target == &"tablet":
+				return _on_screen_rect(_card_rect(tablet, OfferTablet.SIZE))
+			return _on_screen_rect(_rect_at(
+				tablet.to_global(OfferTablet.centre_of(OfferTablet.APPEAL_RECT)),
+				OfferTablet.size_of(OfferTablet.APPEAL_RECT)))
 		&"hand":
 			var r := Rect2()
 			for c in _hand_zone.cards:
@@ -484,9 +504,12 @@ func screen_rect_of(target: StringName) -> Rect2:
 ## A card-shaped thing's rect on screen, measured along the camera's own axes -
 ## every card faces the lens square-on, so this is its exact outline.
 func _card_rect(node: Node3D, size: Vector2) -> Rect2:
+	return _rect_at(node.global_position, size)
+
+## The same, for a card-shaped patch centred anywhere - a panel on the tablet.
+func _rect_at(centre: Vector3, size: Vector2) -> Rect2:
 	var right := _camera.global_basis.x * size.x * 0.5
 	var up := _camera.global_basis.y * size.y * 0.5
-	var centre := node.global_position
 	var tl := _camera.unproject_position(centre - right + up)
 	var br := _camera.unproject_position(centre + right - up)
 	return Rect2(tl, br - tl)
@@ -648,12 +671,42 @@ func _on_hand_card_released(card: Card3D) -> void:
 
 func _on_customer_hover(chair: int) -> void:
 	_hovered = chair
+	# Reaching a customer while carrying a card is delivering it, not looking
+	# at them - see _hover_held.
+	if _dragging != null:
+		_hover_held = chair
 	_render_hover_flip()
 
 func _on_customer_unhover(chair: int) -> void:
 	if _hovered == chair:
 		_hovered = -1
+	# Leaving is what makes the next arrival a real look.
+	if _hover_held == chair:
+		_hover_held = -1
 	_render_hover_flip()
+
+## Which customer's pad is under screen point `p`, or -1. Asked of the geometry
+## rather than of physics picking, because the one moment it is needed - a drag
+## has just ended - is exactly when picking is between answers: the drop zones
+## that walled the pads off during the drag were only just switched off, and
+## the pad under the pointer has not been told it is there yet. It will be, a
+## frame later, and _hover_held is what that frame finds waiting for it.
+func _pad_under(p: Vector2) -> int:
+	var from := _camera.project_ray_origin(p)
+	var dir := _camera.project_ray_normal(p)
+	var half := CustomerCard3D.CARD_SIZE * 0.5
+	for i in range(_hover_pads.size()):
+		var t: Transform3D = (_hover_pads[i] as Node3D).global_transform
+		var hit = Plane(t.basis.z.normalized(), t.origin).intersects_ray(from, dir)
+		if hit == null:
+			continue
+		var local: Vector3 = t.affine_inverse() * (hit as Vector3)
+		if absf(local.x) <= half.x and absf(local.y) <= half.y:
+			return i
+	return -1
+
+func _pointer_at() -> Vector2:
+	return _pointer.call() if _pointer.is_valid() else get_viewport().get_mouse_position()
 
 ## A customer card carries only identity on its front, so what they DO lives
 ## on its BACK: hovering turns the pair over. This replaced a HUD tooltip
@@ -683,8 +736,8 @@ func _render_hover_flip() -> void:
 		# chairs than the carousel was built for.
 		var chair_here: bool = _shift != null and i < _shift.chairs.size() \
 			and _shift.chairs[i] != null
-		_customer_flips[i].show_back(
-			usable and (i == _hovered or i == _peeked) and chair_here)
+		var looking: bool = (i == _hovered and i != _hover_held) or i == _peeked
+		_customer_flips[i].show_back(usable and looking and chair_here)
 
 # --- framing ---------------------------------------------------------------
 
@@ -706,13 +759,12 @@ func _apply_framing() -> void:
 	# pointer has not moved an inch by the time you arrive. Carried through
 	# uncleared, it would flip the card you just got to (or just left) on the
 	# very next render, simply because the mouse never left it - hiding the
-	# identity card exactly when arriving is supposed to show it, and breaking
-	# the "arriving turns the pair back to face front" guarantee
-	# DetailCard3D's own slide timing depends on. Cleared here, once, on every
-	# real transition, rather than at each of the several places that can
-	# cause one.
+	# identity card exactly when arriving is supposed to show it. Cleared here,
+	# once, on every real transition, rather than at each of the several places
+	# that can cause one.
 	_hovered = -1
 	_peeked = -1
+	_hover_held = -1
 	var seated: bool = _shift.at != null
 	var target: Node3D = _seat_cam if seated else _camera_floor
 	# Staying put on the floor keeps whoever you last dealt with at the front,
@@ -724,15 +776,11 @@ func _apply_framing() -> void:
 	# NOBODY IS HIDDEN ANY MORE. The carousel turns instead, so the two you are
 	# not with fall away to either side - smaller because they are further off,
 	# not because anything scaled them. What still belongs only to the seat you
-	# are at is the NEGOTIATION: the product slot and what is sitting in it.
+	# are at is the NEGOTIATION: the product slot and what is sitting in it. The
+	# tablet it stands on follows the same rule, in _render_details().
 	for i in range(_seats.size()):
 		var here: bool = seated and i == int(_shift.at)
 		_show_seat(i, true)
-		# The customer detail no longer slides out at the seat - it is the BACK
-		# of the floor card and nothing else. Its content moved onto the front.
-		_customer_details[i].reveal(false)
-		# OfferDetail's own reveal/visible are handled by _render_details()
-		# now, gated on having a product to describe, not just being seated.
 		_chair_zones[i].visible = here
 		_customer_zones[i].visible = here
 
@@ -849,9 +897,10 @@ func _render() -> void:
 	# something on THIS table actually worth closing - close() refuses an
 	# empty hand now, so highlighting it with nothing unsigned would be a lie.
 	var current: Customer = _shift.chairs[int(_shift.at)] if seated else null
-	_close_btn.modulate = Palette.color(&"alert") \
-		if (low_on_time and current != null and not current.unsigned.is_empty()) \
-		else Color.WHITE
+	var urgent: bool = low_on_time and current != null and not current.unsigned.is_empty()
+	if urgent != _close_urgent:
+		_close_urgent = urgent
+		ButtonStyle.urgent(_close_btn, Palette.color(&"stamp"), urgent)
 	# Both piles are face down, so a count is the only way to see how much of
 	# the deck is left to draw and how much has already been spent.
 	(_draw_tag.get_node(^"Lines/Label") as Label).text = "DRAW  %d" % _shift.draw.size()
@@ -891,8 +940,7 @@ func _render_pull_picker() -> void:
 		_pull_picker.hide_pull()
 
 ## Grows the tick counter and settles it back over about a second - a Control,
-## so this scales the Label itself rather than tweening a Node3D position the
-## way the sticky-note tags do.
+## so this scales the Label itself.
 func _flash_tick_label() -> void:
 	_tick_label.pivot_offset = _tick_label.size / 2.0
 	var tw := create_tween()
@@ -902,57 +950,13 @@ func _flash_tick_label() -> void:
 	tw.tween_property(_tick_label, "scale", Vector2.ONE, 0.65) \
 		.set_ease(Tween.EASE_IN_OUT).set_delay(0.1)
 
-## The detail cards. There is no positioning to do and no panel to keep clear of
-## anything: each one is a card parked behind the thing it describes, so "beside
-## the product" is geometry the scene already guarantees rather than arithmetic
-## this file has to get right every frame. The shared HUD panel that used to do
-## this job kept landing on top of the very product it was describing.
+## Everything at a desk that is not a card: the folder's back, the tablet, the
+## empty table's note and its double-click-to-close, and CLOSE SOON.
 ##
-## All three seats are refreshed, not just the one you are with. Two of them are
-## occluded so it costs nothing worth counting, and it means a detail card can
-## never slide out carrying what was true the last time you sat down.
-
-## Slides a sticky-note tag (build_shift_scene.gd's _slide_flag()) clear of
-## the product slot, or back under it. Idempotent on repeated calls with the
-## same `want` - _render_details() calls this every render, and a flag mid-
-## tween must not be re-targeted at the same destination every frame. Unlike
-## _drag_hint's slabs (always visible, hidden only by sitting off to the
-## side), this one toggles real visibility around the tween: CLOSE SOON can
-## be true with nothing on the table at all, so there is no product card left
-## to hide behind while tucked.
-## How far each kind of tag slides: half its card's width, plus half the tag's
-## own 1.8, plus a gap. The OFFER tag hangs off a 2.5-wide product card (2.1
-## clears its edge by most of a unit, rather than the card and the tag still
-## overlapping at 1.6); CLOSE SOON hangs off a customer's folder, which is
-## CustomerCard3D.CARD_SIZE wide.
-const OFFER_FLAG_SLIDE_X := 2.1
-const CLOSE_SOON_SLIDE_X := 3.05
-const FLAG_SLIDE_DURATION := 0.3
-func _slide_flag(flag: Node3D, want: bool, slide_x: float) -> void:
-	if flag.get_meta(&"shown", false) == want:
-		return
-	flag.set_meta(&"shown", want)
-	# Showing tweens in, for the same reveal-reads-as-arriving reason
-	# DetailCard3D's own reveal() does. Hiding is instant, not the mirror of
-	# that: the reason it is hiding (the product got offered, or dropped) has
-	# already happened, so a tag still visibly sliding back under the card a
-	# third of a second later reads as lagging behind what just occurred.
-	if want:
-		flag.visible = true
-		var tw := create_tween()
-		tw.set_ease(Tween.EASE_OUT)
-		tw.set_trans(Tween.TRANS_CUBIC)
-		tw.tween_property(flag, "position:x", slide_x, FLAG_SLIDE_DURATION)
-		# Stashed on the node itself, the same place `shown` lives -
-		# drive_shift.gd's own _settle() needs a handle on this to force-step
-		# it, the same way it already does for every DetailCard3D's own
-		# _slide_tween.
-		flag.set_meta(&"tween", tw)
-	else:
-		flag.position.x = 0.0
-		flag.visible = false
-		flag.set_meta(&"tween", null)
-
+## All three desks are refreshed, not just the one you are with. Two of them
+## are hidden or occluded so it costs nothing worth counting, and it means
+## nothing can come into view carrying what was true the last time you sat
+## down.
 func _render_details() -> void:
 	var low_on_time: bool = _shift.ticks_running_low()
 	for i in range(_seats.size()):
@@ -961,48 +965,35 @@ func _render_details() -> void:
 		# seat past the end is simply nobody.
 		var c: Customer = _shift.chairs[i] if i < _shift.chairs.size() else null
 		_customer_details[i].show_customer(c)
-		# band_for lives on Shift, so the COOL / WARM / ALMOST thresholds that
-		# decide the meter's colour have exactly one definition, in the model.
+		var at_this_seat: bool = _shift.at != null and i == int(_shift.at)
+
+		# The tablet is where you play a product, so it is on at the desk you
+		# are sitting at and nowhere else - like the slot standing on it.
+		# band_for lives on Shift, so the thresholds that decide the meter's
+		# colour have exactly one definition, in the model.
 		var band := ""
 		if c != null and c.offer != null:
 			band = _shift.band_for(c.line - c.offer.appeal)
-		_offer_details[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
-
-		var at_this_seat: bool = _shift.at != null and i == int(_shift.at)
-		var has_offer: bool = c != null and c.offer != null
-
-		# The product's own detail card: only worth sliding out once there is
-		# a product to describe. "Nothing on the table" lives on the chair's
-		# own permanent mark now instead (see build_shift_scene.gd), so
-		# show_offer()'s empty-state text above is unreachable and that is
-		# fine - dead but harmless, cheaper than a second code path.
-		_offer_details[i].visible = at_this_seat and has_offer
-		_offer_details[i].reveal(at_this_seat and has_offer)
+		_tablets[i].switch_on(at_this_seat)
+		_tablets[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
 
 		# Double-tap-to-close: only the seat you are AT, only an empty table,
 		# only when there is something unsigned still to close - exactly
 		# close()'s own refusal condition, so the gesture can never do
 		# anything the button behind it could not already do.
-		var can_close_empty: bool = at_this_seat and c != null \
-			and c.offer == null and not c.unsigned.is_empty()
-		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
-			= not can_close_empty
+		var can_close_empty: bool = at_this_seat and c != null 			and c.offer == null and not c.unsigned.is_empty()
+		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled 			= not can_close_empty
 		_close_hints[i].visible = can_close_empty
 		# The empty table's note, and its "or double-click to close" half on
 		# exactly the same condition as the pad that does the closing.
 		_table_notes[i].wanted = at_this_seat and c != null and c.offer == null
 		_table_notes[i].get_node(^"Lines/CloseRow").visible = can_close_empty
 
-		# The OFFER tag stays scoped to the seat you are at - the product slot
-		# it sits on is only ever visible there in the first place. CLOSE SOON
-		# lives on the customer's own card now (see the Customer%d loop in
-		# build_shift_scene.gd) and is NOT scoped to at_this_seat: a customer
-		# you are not currently seated with can still have something unsigned
-		# at risk when the clock runs short, and every seat is visible on the
-		# carousel regardless of which one you are at.
-		_slide_flag(_offer_flags[i], at_this_seat and has_offer, OFFER_FLAG_SLIDE_X)
-		_slide_flag(_close_soon_flags[i],
-			c != null and not c.unsigned.is_empty() and low_on_time, CLOSE_SOON_SLIDE_X)
+		# CLOSE SOON is NOT scoped to the seat you are at: a customer you are
+		# not with can still have something unsigned at risk when the clock
+		# runs short, and every folder is on screen regardless of which one
+		# you are at.
+		_close_soon_tags[i].wanted = c != null and not c.unsigned.is_empty() 			and low_on_time
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
@@ -1052,14 +1043,13 @@ func _show_report() -> void:
 	_action_bar.visible = false
 	_hovered = -1
 	_peeked = -1
+	_hover_held = -1
 	_render_hover_flip()
 	# The camera stays where it is - the overlay covers it - but the table itself
 	# must not be left mid-negotiation underneath, with two thirds of the floor
-	# hidden and two detail cards still slid out over a shift that is finished.
+	# hidden over a shift that is finished.
 	for i in range(_seats.size()):
 		_show_seat(i, true)
-		_customer_details[i].reveal(false)
-		_offer_details[i].reveal(false)
 
 # --- dragging --------------------------------------------------------------
 
@@ -1111,6 +1101,12 @@ func _on_drag_stopped(_card) -> void:
 		hint.visible = false
 	_drop_drag_hint.visible = false
 	(_discard_zone.get_node(^"TagAnchor") as Node3D).visible = true
+	# Letting go over a customer - offering them the product, most often - is
+	# not looking at them. Whoever is under the pointer now stays face-front
+	# until the pointer leaves them and comes back. A pad the pointer reached
+	# during the drag already said so; otherwise the drop zones walled the pads
+	# off, and the geometry has to say which one the pointer is over.
+	_hover_held = _hovered if _hovered >= 0 else _pad_under(_pointer_at())
 	if _shift == null:
 		return
 	# DragController keeps working on the card AFTER emitting card_moved: it

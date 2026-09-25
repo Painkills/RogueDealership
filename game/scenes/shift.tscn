@@ -1,236 +1,224 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="1_2ydfi"]
-[ext_resource type="PackedScene" path="res://addons/card_3d/scenes/card_collection_3d.tscn" id="2_x10gg"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/card_collection_3d.gd" id="3_0ibvx"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/fan_card_layout.gd" id="4_2rsky"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/drag_strategy.gd" id="5_vd5qx"]
-[ext_resource type="Shape3D" path="res://scenes/dropzone_shape_3d.tres" id="6_bex05"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/pile_card_layout.gd" id="7_4415h"]
-[ext_resource type="Script" path="res://scripts/view/flip_pair.gd" id="8_nnevp"]
-[ext_resource type="PackedScene" path="res://scenes/cards/customer_card_3d.tscn" id="9_g8ksb"]
-[ext_resource type="Script" path="res://scripts/view/customer_card_3d.gd" id="10_wdnfd"]
-[ext_resource type="PackedScene" path="res://scenes/cards/detail_card_3d.tscn" id="11_gogk5"]
-[ext_resource type="Script" path="res://scripts/view/detail_card_3d.gd" id="12_rf0hl"]
-[ext_resource type="Script" path="res://addons/card_3d/scripts/drag_controller.gd" id="13_36dmj"]
-[ext_resource type="Script" path="res://scripts/view/screen_tag.gd" id="14_jd3xi"]
-[ext_resource type="PackedScene" path="res://scenes/report.tscn" id="15_b21lq"]
-[ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="16_f1jej"]
-[ext_resource type="PackedScene" path="res://scenes/pull_picker.tscn" id="17_wmubo"]
-[ext_resource type="Script" path="res://scripts/view/pull_picker.gd" id="18_oeuem"]
+[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="1_0ibvx"]
+[ext_resource type="PackedScene" path="res://addons/card_3d/scenes/card_collection_3d.tscn" id="2_2rsky"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/card_collection_3d.gd" id="3_vd5qx"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/fan_card_layout.gd" id="4_bex05"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_collection/drag_strategy.gd" id="5_4415h"]
+[ext_resource type="Shape3D" path="res://scenes/dropzone_shape_3d.tres" id="6_nnevp"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/card_layouts/pile_card_layout.gd" id="7_g8ksb"]
+[ext_resource type="Script" path="res://scripts/view/flip_pair.gd" id="8_wdnfd"]
+[ext_resource type="PackedScene" path="res://scenes/cards/customer_card_3d.tscn" id="9_gogk5"]
+[ext_resource type="Script" path="res://scripts/view/customer_card_3d.gd" id="10_rf0hl"]
+[ext_resource type="PackedScene" path="res://scenes/cards/detail_card_3d.tscn" id="11_36dmj"]
+[ext_resource type="Script" path="res://scripts/view/detail_card_3d.gd" id="12_jd3xi"]
+[ext_resource type="PackedScene" path="res://scenes/offer_tablet.tscn" id="13_b21lq"]
+[ext_resource type="Script" path="res://scripts/view/offer_tablet.gd" id="14_f1jej"]
+[ext_resource type="Script" path="res://addons/card_3d/scripts/drag_controller.gd" id="15_wmubo"]
+[ext_resource type="Script" path="res://scripts/view/screen_tag.gd" id="16_oeuem"]
+[ext_resource type="PackedScene" path="res://scenes/report.tscn" id="17_40fsy"]
+[ext_resource type="Script" path="res://scripts/view/report_panel.gd" id="18_6h2fn"]
+[ext_resource type="PackedScene" path="res://scenes/pull_picker.tscn" id="19_4wc7j"]
+[ext_resource type="Script" path="res://scripts/view/pull_picker.gd" id="20_gkmxb"]
 
-[sub_resource type="Resource" id="Resource_40fsy"]
-script = ExtResource("4_2rsky")
+[sub_resource type="Resource" id="Resource_bgyb6"]
+script = ExtResource("4_bex05")
 arc_angle_deg = 24.0
 arc_radius = 24.0
 
-[sub_resource type="Resource" id="Resource_6h2fn"]
-script = ExtResource("5_vd5qx")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4wc7j"]
-transparency = 1
-shading_mode = 0
-albedo_color = Color(0.08235294, 0.5019608, 0.23921569, 0.16)
-
-[sub_resource type="QuadMesh" id="QuadMesh_gkmxb"]
-size = Vector2(2.5, 3.5)
-
-[sub_resource type="Resource" id="Resource_bgyb6"]
-script = ExtResource("7_4415h")
-
 [sub_resource type="Resource" id="Resource_h0jj3"]
-script = ExtResource("5_vd5qx")
+script = ExtResource("5_4415h")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2xhf5"]
 transparency = 1
 shading_mode = 0
-albedo_color = Color(1, 1, 1, 0.2)
+albedo_color = Color(0.08235294, 0.5019608, 0.23921569, 0.16)
 
 [sub_resource type="QuadMesh" id="QuadMesh_lu07t"]
 size = Vector2(2.5, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p4w1v"]
+[sub_resource type="Resource" id="Resource_p4w1v"]
+script = ExtResource("7_g8ksb")
+
+[sub_resource type="Resource" id="Resource_melxm"]
+script = ExtResource("5_4415h")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1p140"]
 transparency = 1
 shading_mode = 0
-albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 0.35)
+albedo_color = Color(1, 1, 1, 0.2)
 
-[sub_resource type="QuadMesh" id="QuadMesh_melxm"]
+[sub_resource type="QuadMesh" id="QuadMesh_vu1k4"]
 size = Vector2(2.5, 3.5)
-
-[sub_resource type="Resource" id="Resource_1p140"]
-script = ExtResource("7_4415h")
-
-[sub_resource type="Resource" id="Resource_vu1k4"]
-script = ExtResource("5_vd5qx")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3d7pu"]
 transparency = 1
 shading_mode = 0
-albedo_color = Color(0.72156864, 0.7529412, 0.8, 0.16)
+albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 0.35)
 
 [sub_resource type="QuadMesh" id="QuadMesh_p6lgp"]
 size = Vector2(2.5, 3.5)
 
-[sub_resource type="Environment" id="Environment_lfq30"]
+[sub_resource type="Resource" id="Resource_lfq30"]
+script = ExtResource("7_g8ksb")
+
+[sub_resource type="Resource" id="Resource_8nvbc"]
+script = ExtResource("5_4415h")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hetbi"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.72156864, 0.7529412, 0.8, 0.16)
+
+[sub_resource type="QuadMesh" id="QuadMesh_8o8kk"]
+size = Vector2(2.5, 3.5)
+
+[sub_resource type="Environment" id="Environment_xioc8"]
 background_mode = 1
 background_color = Color(0.06666667, 0.09411765, 0.15294118, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.7882353, 0.80784315, 0.8392157, 1)
 ambient_light_energy = 0.4
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8nvbc"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n2mdw"]
 albedo_color = Color(0.14117648, 0.1882353, 0.26666668, 1)
 roughness = 0.95
 
-[sub_resource type="QuadMesh" id="QuadMesh_hetbi"]
+[sub_resource type="QuadMesh" id="QuadMesh_aada7"]
 size = Vector2(220, 130)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8o8kk"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qp1cb"]
 albedo_color = Color(0.22745098, 0.25490198, 0.31764707, 1)
 roughness = 0.95
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_xioc8"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_5legv"]
 size = Vector2(220, 64)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n2mdw"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f2r5k"]
 albedo_color = Color(0.8901961, 0.90588236, 0.9254902, 1)
 roughness = 0.4
 
-[sub_resource type="BoxMesh" id="BoxMesh_aada7"]
-size = Vector3(5.6, 0.14, 3.4)
+[sub_resource type="BoxMesh" id="BoxMesh_oqm2i"]
+size = Vector3(8, 0.14, 3.4)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qp1cb"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s0k1g"]
 albedo_color = Color(0.1254902, 0.14117648, 0.16470589, 1)
 metallic = 0.4
 roughness = 0.35
 
-[sub_resource type="BoxMesh" id="BoxMesh_5legv"]
-size = Vector3(5.6, 0.14, 0.03)
-
-[sub_resource type="BoxMesh" id="BoxMesh_f2r5k"]
-size = Vector3(0.12, 2.1, 0.12)
-
-[sub_resource type="BoxMesh" id="BoxMesh_oqm2i"]
-size = Vector3(0.12, 2.1, 0.12)
-
-[sub_resource type="BoxMesh" id="BoxMesh_s0k1g"]
-size = Vector3(0.12, 2.1, 0.12)
-
 [sub_resource type="BoxMesh" id="BoxMesh_gi5no"]
-size = Vector3(0.12, 2.1, 0.12)
+size = Vector3(8, 0.14, 0.03)
 
 [sub_resource type="BoxMesh" id="BoxMesh_37hxx"]
-size = Vector3(5.1, 0.08, 0.08)
+size = Vector3(0.12, 2.1, 0.12)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wresk"]
+[sub_resource type="BoxMesh" id="BoxMesh_wresk"]
+size = Vector3(0.12, 2.1, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jh1kn"]
+size = Vector3(0.12, 2.1, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_d2sat"]
+size = Vector3(0.12, 2.1, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_w0dj7"]
+size = Vector3(7.5, 0.08, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wavuc"]
 albedo_color = Color(0.16470589, 0.18039216, 0.20784314, 1)
 roughness = 0.9
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_jh1kn"]
-radius = 1.15
-height = 3.8
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_irkmj"]
+radius = 0.4
+height = 1.6
 
-[sub_resource type="BoxMesh" id="BoxMesh_d2sat"]
-size = Vector3(2.5, 0.3, 1.4)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_w0dj7"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mcft5"]
 albedo_color = Color(0.23137255, 0.2509804, 0.28235295, 1)
 metallic = 0.6
 roughness = 0.3
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_wavuc"]
-top_radius = 0.09
-bottom_radius = 0.09
-height = 2.58
-
-[sub_resource type="BoxMesh" id="BoxMesh_irkmj"]
-size = Vector3(0.1, 0.08, 0.95)
-
-[sub_resource type="BoxMesh" id="BoxMesh_mcft5"]
-size = Vector3(0.1, 0.08, 0.95)
-
 [sub_resource type="BoxMesh" id="BoxMesh_v6trm"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.16, 0.64, 0.08)
 
 [sub_resource type="BoxMesh" id="BoxMesh_aet27"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(1.45, 0.2, 1.3)
 
-[sub_resource type="BoxMesh" id="BoxMesh_hoiwk"]
-size = Vector3(0.1, 0.08, 0.95)
+[sub_resource type="CylinderMesh" id="CylinderMesh_hoiwk"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 1.05
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b3h62"]
-shading_mode = 0
-albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+[sub_resource type="BoxMesh" id="BoxMesh_b3h62"]
+size = Vector3(0.08, 0.07, 0.72)
 
-[sub_resource type="QuadMesh" id="QuadMesh_b8iky"]
-size = Vector2(1.8, 0.7)
+[sub_resource type="BoxMesh" id="BoxMesh_b8iky"]
+size = Vector3(0.08, 0.07, 0.72)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_p6qyw"]
+[sub_resource type="BoxMesh" id="BoxMesh_p6qyw"]
+size = Vector3(0.08, 0.07, 0.72)
+
+[sub_resource type="BoxMesh" id="BoxMesh_i4pld"]
+size = Vector3(0.08, 0.07, 0.72)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2ay3n"]
+size = Vector3(0.08, 0.07, 0.72)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kn714"]
 size = Vector3(4, 3.5, 0.1)
 
-[sub_resource type="Resource" id="Resource_i4pld"]
-script = ExtResource("7_4415h")
+[sub_resource type="Resource" id="Resource_mmbmh"]
+script = ExtResource("7_g8ksb")
 
-[sub_resource type="Resource" id="Resource_2ay3n"]
-script = ExtResource("5_vd5qx")
+[sub_resource type="Resource" id="Resource_n5dbl"]
+script = ExtResource("5_4415h")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kn714"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_71g4l"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(1, 1, 1, 0.28)
 
-[sub_resource type="QuadMesh" id="QuadMesh_mmbmh"]
+[sub_resource type="QuadMesh" id="QuadMesh_q2n82"]
 size = Vector2(2.5, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n5dbl"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yxpc3"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 0.35)
 
-[sub_resource type="QuadMesh" id="QuadMesh_71g4l"]
+[sub_resource type="QuadMesh" id="QuadMesh_xmo8m"]
 size = Vector2(2.5, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q2n82"]
-shading_mode = 0
-albedo_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
-
-[sub_resource type="QuadMesh" id="QuadMesh_yxpc3"]
-size = Vector2(1.8, 0.7)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_xmo8m"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_llbxq"]
 size = Vector3(2.5, 3.5, 0.1)
 
-[sub_resource type="Resource" id="Resource_llbxq"]
-script = ExtResource("7_4415h")
-
 [sub_resource type="Resource" id="Resource_qmkfx"]
-script = ExtResource("5_vd5qx")
+script = ExtResource("7_g8ksb")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qkl7i"]
+[sub_resource type="Resource" id="Resource_qkl7i"]
+script = ExtResource("5_4415h")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gocsm"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(0.14509805, 0.3882353, 0.92156863, 0.35)
 
-[sub_resource type="QuadMesh" id="QuadMesh_gocsm"]
+[sub_resource type="QuadMesh" id="QuadMesh_a1mtp"]
 size = Vector2(4, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a1mtp"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ir3tk"]
 albedo_color = Color(0.8901961, 0.90588236, 0.9254902, 1)
 roughness = 0.4
 
-[sub_resource type="BoxMesh" id="BoxMesh_ir3tk"]
-size = Vector3(5.6, 0.14, 3.4)
+[sub_resource type="BoxMesh" id="BoxMesh_tror0"]
+size = Vector3(8, 0.14, 3.4)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tror0"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3ohuo"]
 albedo_color = Color(0.1254902, 0.14117648, 0.16470589, 1)
 metallic = 0.4
 roughness = 0.35
 
-[sub_resource type="BoxMesh" id="BoxMesh_3ohuo"]
-size = Vector3(5.6, 0.14, 0.03)
-
 [sub_resource type="BoxMesh" id="BoxMesh_kwaj7"]
-size = Vector3(0.12, 2.1, 0.12)
+size = Vector3(8, 0.14, 0.03)
 
 [sub_resource type="BoxMesh" id="BoxMesh_6rvl7"]
 size = Vector3(0.12, 2.1, 0.12)
@@ -242,59 +230,58 @@ size = Vector3(0.12, 2.1, 0.12)
 size = Vector3(0.12, 2.1, 0.12)
 
 [sub_resource type="BoxMesh" id="BoxMesh_4dac3"]
-size = Vector3(5.1, 0.08, 0.08)
+size = Vector3(0.12, 2.1, 0.12)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0wj4r"]
+[sub_resource type="BoxMesh" id="BoxMesh_0wj4r"]
+size = Vector3(7.5, 0.08, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hvntu"]
 albedo_color = Color(0.16470589, 0.18039216, 0.20784314, 1)
 roughness = 0.9
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_hvntu"]
-radius = 1.15
-height = 3.8
-
-[sub_resource type="BoxMesh" id="BoxMesh_xathi"]
-size = Vector3(2.5, 0.3, 1.4)
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_xathi"]
+radius = 0.4
+height = 1.6
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a5488"]
 albedo_color = Color(0.23137255, 0.2509804, 0.28235295, 1)
 metallic = 0.6
 roughness = 0.3
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_furwy"]
-top_radius = 0.09
-bottom_radius = 0.09
-height = 2.58
+[sub_resource type="BoxMesh" id="BoxMesh_furwy"]
+size = Vector3(0.16, 0.64, 0.08)
 
 [sub_resource type="BoxMesh" id="BoxMesh_bqw0v"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(1.45, 0.2, 1.3)
 
-[sub_resource type="BoxMesh" id="BoxMesh_ihth3"]
-size = Vector3(0.1, 0.08, 0.95)
+[sub_resource type="CylinderMesh" id="CylinderMesh_ihth3"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 1.05
 
 [sub_resource type="BoxMesh" id="BoxMesh_20rna"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.08, 0.07, 0.72)
 
 [sub_resource type="BoxMesh" id="BoxMesh_a5rts"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.08, 0.07, 0.72)
 
 [sub_resource type="BoxMesh" id="BoxMesh_7cllr"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.08, 0.07, 0.72)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kgrbc"]
-shading_mode = 0
-albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+[sub_resource type="BoxMesh" id="BoxMesh_kgrbc"]
+size = Vector3(0.08, 0.07, 0.72)
 
-[sub_resource type="QuadMesh" id="QuadMesh_pbvde"]
-size = Vector2(1.8, 0.7)
+[sub_resource type="BoxMesh" id="BoxMesh_pbvde"]
+size = Vector3(0.08, 0.07, 0.72)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_mlq2i"]
 size = Vector3(4, 3.5, 0.1)
 
 [sub_resource type="Resource" id="Resource_48lvl"]
-script = ExtResource("7_4415h")
+script = ExtResource("7_g8ksb")
 
 [sub_resource type="Resource" id="Resource_oyo1b"]
-script = ExtResource("5_vd5qx")
+script = ExtResource("5_4415h")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xbg0k"]
 transparency = 1
@@ -312,44 +299,43 @@ albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 0.35)
 [sub_resource type="QuadMesh" id="QuadMesh_sp5wf"]
 size = Vector2(2.5, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qbjbr"]
-shading_mode = 0
-albedo_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
-
-[sub_resource type="QuadMesh" id="QuadMesh_m7k8v"]
-size = Vector2(1.8, 0.7)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_g26yg"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_qbjbr"]
 size = Vector3(2.5, 3.5, 0.1)
 
-[sub_resource type="Resource" id="Resource_4yvs2"]
-script = ExtResource("7_4415h")
+[sub_resource type="Resource" id="Resource_m7k8v"]
+script = ExtResource("7_g8ksb")
 
-[sub_resource type="Resource" id="Resource_werp6"]
-script = ExtResource("5_vd5qx")
+[sub_resource type="Resource" id="Resource_g26yg"]
+script = ExtResource("5_4415h")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3aeyf"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4yvs2"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(0.14509805, 0.3882353, 0.92156863, 0.35)
 
-[sub_resource type="QuadMesh" id="QuadMesh_bjiu5"]
+[sub_resource type="QuadMesh" id="QuadMesh_werp6"]
 size = Vector2(4, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i3cll"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3aeyf"]
 albedo_color = Color(0.8901961, 0.90588236, 0.9254902, 1)
 roughness = 0.4
 
-[sub_resource type="BoxMesh" id="BoxMesh_pp3sg"]
-size = Vector3(5.6, 0.14, 3.4)
+[sub_resource type="BoxMesh" id="BoxMesh_bjiu5"]
+size = Vector3(8, 0.14, 3.4)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oifpn"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i3cll"]
 albedo_color = Color(0.1254902, 0.14117648, 0.16470589, 1)
 metallic = 0.4
 roughness = 0.35
 
+[sub_resource type="BoxMesh" id="BoxMesh_pp3sg"]
+size = Vector3(8, 0.14, 0.03)
+
+[sub_resource type="BoxMesh" id="BoxMesh_oifpn"]
+size = Vector3(0.12, 2.1, 0.12)
+
 [sub_resource type="BoxMesh" id="BoxMesh_4pjpc"]
-size = Vector3(5.6, 0.14, 0.03)
+size = Vector3(0.12, 2.1, 0.12)
 
 [sub_resource type="BoxMesh" id="BoxMesh_3iv2j"]
 size = Vector3(0.12, 2.1, 0.12)
@@ -358,107 +344,90 @@ size = Vector3(0.12, 2.1, 0.12)
 size = Vector3(0.12, 2.1, 0.12)
 
 [sub_resource type="BoxMesh" id="BoxMesh_nbugj"]
-size = Vector3(0.12, 2.1, 0.12)
+size = Vector3(7.5, 0.08, 0.08)
 
-[sub_resource type="BoxMesh" id="BoxMesh_g75lj"]
-size = Vector3(0.12, 2.1, 0.12)
-
-[sub_resource type="BoxMesh" id="BoxMesh_vsemp"]
-size = Vector3(5.1, 0.08, 0.08)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kqrlo"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g75lj"]
 albedo_color = Color(0.16470589, 0.18039216, 0.20784314, 1)
 roughness = 0.9
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_ukp3t"]
-radius = 1.15
-height = 3.8
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_vsemp"]
+radius = 0.4
+height = 1.6
 
-[sub_resource type="BoxMesh" id="BoxMesh_te25x"]
-size = Vector3(2.5, 0.3, 1.4)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rb7q5"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kqrlo"]
 albedo_color = Color(0.23137255, 0.2509804, 0.28235295, 1)
 metallic = 0.6
 roughness = 0.3
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_1w8g8"]
-top_radius = 0.09
-bottom_radius = 0.09
-height = 2.58
+[sub_resource type="BoxMesh" id="BoxMesh_ukp3t"]
+size = Vector3(0.16, 0.64, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_te25x"]
+size = Vector3(1.45, 0.2, 1.3)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rb7q5"]
+top_radius = 0.07
+bottom_radius = 0.07
+height = 1.05
+
+[sub_resource type="BoxMesh" id="BoxMesh_1w8g8"]
+size = Vector3(0.08, 0.07, 0.72)
 
 [sub_resource type="BoxMesh" id="BoxMesh_bpqpx"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.08, 0.07, 0.72)
 
 [sub_resource type="BoxMesh" id="BoxMesh_8cr8s"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.08, 0.07, 0.72)
 
 [sub_resource type="BoxMesh" id="BoxMesh_5krpn"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.08, 0.07, 0.72)
 
 [sub_resource type="BoxMesh" id="BoxMesh_w81wh"]
-size = Vector3(0.1, 0.08, 0.95)
+size = Vector3(0.08, 0.07, 0.72)
 
-[sub_resource type="BoxMesh" id="BoxMesh_h8vd7"]
-size = Vector3(0.1, 0.08, 0.95)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b554g"]
-shading_mode = 0
-albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
-
-[sub_resource type="QuadMesh" id="QuadMesh_7vp2r"]
-size = Vector2(1.8, 0.7)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ycaw7"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_h8vd7"]
 size = Vector3(4, 3.5, 0.1)
 
-[sub_resource type="Resource" id="Resource_l4781"]
-script = ExtResource("7_4415h")
+[sub_resource type="Resource" id="Resource_b554g"]
+script = ExtResource("7_g8ksb")
 
-[sub_resource type="Resource" id="Resource_qqrw6"]
-script = ExtResource("5_vd5qx")
+[sub_resource type="Resource" id="Resource_7vp2r"]
+script = ExtResource("5_4415h")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c8ecv"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ycaw7"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(1, 1, 1, 0.28)
 
-[sub_resource type="QuadMesh" id="QuadMesh_up8gq"]
+[sub_resource type="QuadMesh" id="QuadMesh_l4781"]
 size = Vector2(2.5, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vkkcb"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qqrw6"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(0.8627451, 0.14901961, 0.14901961, 0.35)
 
-[sub_resource type="QuadMesh" id="QuadMesh_qqqof"]
+[sub_resource type="QuadMesh" id="QuadMesh_c8ecv"]
 size = Vector2(2.5, 3.5)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tkcmb"]
-shading_mode = 0
-albedo_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
-
-[sub_resource type="QuadMesh" id="QuadMesh_6151q"]
-size = Vector2(1.8, 0.7)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_jmx4e"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_up8gq"]
 size = Vector3(2.5, 3.5, 0.1)
 
-[sub_resource type="Resource" id="Resource_7v1ru"]
-script = ExtResource("7_4415h")
+[sub_resource type="Resource" id="Resource_vkkcb"]
+script = ExtResource("7_g8ksb")
 
-[sub_resource type="Resource" id="Resource_mpe46"]
-script = ExtResource("5_vd5qx")
+[sub_resource type="Resource" id="Resource_qqqof"]
+script = ExtResource("5_4415h")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_boqpr"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tkcmb"]
 transparency = 1
 shading_mode = 0
 albedo_color = Color(0.14509805, 0.3882353, 0.92156863, 0.35)
 
-[sub_resource type="QuadMesh" id="QuadMesh_ycg6s"]
+[sub_resource type="QuadMesh" id="QuadMesh_6151q"]
 size = Vector2(4, 3.5)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7no6o"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jmx4e"]
 content_margin_left = 14.0
 content_margin_top = 6.0
 content_margin_right = 14.0
@@ -477,7 +446,7 @@ shadow_color = Color(0, 0, 0, 0.28)
 shadow_size = 6
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vanhe"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7v1ru"]
 content_margin_left = 14.0
 content_margin_top = 6.0
 content_margin_right = 14.0
@@ -496,7 +465,7 @@ shadow_color = Color(0, 0, 0, 0.28)
 shadow_size = 6
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5eqh"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mpe46"]
 content_margin_left = 14.0
 content_margin_top = 6.0
 content_margin_right = 14.0
@@ -511,6 +480,69 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.28)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boqpr"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.28)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ycg6s"]
+content_margin_left = 14.0
+content_margin_top = 6.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72156864, 0.7529412, 0.8, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.28)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7no6o"]
+bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vanhe"]
+bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5eqh"]
+content_margin_left = 10.0
+content_margin_top = 2.0
+content_margin_right = 10.0
+content_margin_bottom = 3.0
+bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 shadow_color = Color(0, 0, 0, 0.28)
 shadow_size = 6
 shadow_offset = Vector2(0, 2)
@@ -560,20 +592,20 @@ bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
 bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_28kxc"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
+content_margin_left = 10.0
+content_margin_top = 2.0
+content_margin_right = 10.0
+content_margin_bottom = 3.0
+bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 shadow_color = Color(0, 0, 0, 0.28)
 shadow_size = 6
 shadow_offset = Vector2(0, 2)
@@ -583,31 +615,6 @@ content_margin_left = 14.0
 content_margin_top = 6.0
 content_margin_right = 14.0
 content_margin_bottom = 8.0
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.72156864, 0.7529412, 0.8, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-shadow_color = Color(0, 0, 0, 0.28)
-shadow_size = 6
-shadow_offset = Vector2(0, 2)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rx180"]
-bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mlug2"]
-bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dewu5"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
 bg_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 border_width_left = 1
 border_width_top = 1
@@ -622,7 +629,7 @@ shadow_color = Color(0, 0, 0, 0.28)
 shadow_size = 6
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aqf5x"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rx180"]
 content_margin_left = 14.0
 content_margin_top = 6.0
 content_margin_right = 14.0
@@ -641,13 +648,32 @@ shadow_color = Color(0, 0, 0, 0.28)
 shadow_size = 6
 shadow_offset = Vector2(0, 2)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mlug2"]
+bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dewu5"]
+bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aqf5x"]
+content_margin_left = 10.0
+content_margin_top = 2.0
+content_margin_right = 10.0
+content_margin_bottom = 3.0
+bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.28)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m7dsm"]
-bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_erdrw"]
-bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nhd1b"]
 bg_color = Color(1, 1, 1, 1)
 border_width_bottom = 1
 border_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
@@ -655,11 +681,11 @@ shadow_color = Color(0, 0, 0, 0.18)
 shadow_size = 8
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yoco5"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_erdrw"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nax01"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nhd1b"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lptnf"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yoco5"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -674,7 +700,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g7fbi"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nax01"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -689,7 +715,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2ghgt"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lptnf"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -704,7 +730,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rvnb3"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g7fbi"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -719,7 +745,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_74wku"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2ghgt"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -738,7 +764,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hfqpp"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rvnb3"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -757,7 +783,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p8xa0"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_74wku"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -776,7 +802,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aapbs"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hfqpp"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -795,7 +821,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l2vbk"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p8xa0"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -810,7 +836,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hc6qx"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_aapbs"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -825,7 +851,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6tg8o"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l2vbk"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -840,7 +866,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_acy50"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hc6qx"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -855,7 +881,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qrtho"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6tg8o"]
 content_margin_left = 18.0
 content_margin_top = 14.0
 content_margin_right = 16.0
@@ -874,7 +900,7 @@ shadow_color = Color(0, 0, 0, 0.3)
 shadow_size = 10
 shadow_offset = Vector2(0, 4)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lx3ju"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_acy50"]
 bg_color = Color(0.72156864, 0.7529412, 0.8, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_smm52"]
@@ -883,79 +909,79 @@ bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btk04"]
 bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
 
-[node name="ShiftRoot" type="Node3D" unique_id=2060132747]
-script = ExtResource("1_2ydfi")
+[node name="ShiftRoot" type="Node3D" unique_id=2034604243]
+script = ExtResource("1_0ibvx")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=2064008274]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=2100901877]
 transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.1736482, 0, -0.1736482, 0.9848077, 0, 7.226391, 23.947817)
 current = true
 fov = 28.0
 
-[node name="Hand" type="Node3D" parent="Camera3D" unique_id=402912711 instance=ExtResource("2_x10gg")]
+[node name="Hand" type="Node3D" parent="Camera3D" unique_id=402912711 instance=ExtResource("2_2rsky")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -12.6, -19.91)
-script = ExtResource("3_0ibvx")
-card_layout_strategy = SubResource("Resource_40fsy")
-drag_strategy = SubResource("Resource_6h2fn")
-dropzone_collision_shape = ExtResource("6_bex05")
-
-[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Hand" unique_id=390447973]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
-material_override = SubResource("StandardMaterial3D_4wc7j")
-mesh = SubResource("QuadMesh_gkmxb")
-
-[node name="TagAnchor" type="Marker3D" parent="Camera3D/Hand" unique_id=1987883160]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
-
-[node name="Discard" type="Node3D" parent="Camera3D" unique_id=802681629 instance=ExtResource("2_x10gg")]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, -12.6, -19.91)
-script = ExtResource("3_0ibvx")
+script = ExtResource("3_vd5qx")
 card_layout_strategy = SubResource("Resource_bgyb6")
 drag_strategy = SubResource("Resource_h0jj3")
-dropzone_collision_shape = ExtResource("6_bex05")
+dropzone_collision_shape = ExtResource("6_nnevp")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Discard" unique_id=943372638]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Hand" unique_id=1592626106]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_2xhf5")
 mesh = SubResource("QuadMesh_lu07t")
 
-[node name="TagAnchor" type="Marker3D" parent="Camera3D/Discard" unique_id=88783893]
+[node name="TagAnchor" type="Marker3D" parent="Camera3D/Hand" unique_id=1508977094]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="DropDragHint" type="Node3D" parent="Camera3D/Discard" unique_id=1698951458]
+[node name="Discard" type="Node3D" parent="Camera3D" unique_id=758797881 instance=ExtResource("2_2rsky")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2, -12.6, -19.91)
+script = ExtResource("3_vd5qx")
+card_layout_strategy = SubResource("Resource_p4w1v")
+drag_strategy = SubResource("Resource_melxm")
+dropzone_collision_shape = ExtResource("6_nnevp")
+
+[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Discard" unique_id=1436480644]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
+material_override = SubResource("StandardMaterial3D_1p140")
+mesh = SubResource("QuadMesh_vu1k4")
+
+[node name="TagAnchor" type="Marker3D" parent="Camera3D/Discard" unique_id=1426599361]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+
+[node name="DropDragHint" type="Node3D" parent="Camera3D/Discard" unique_id=1326662353]
 unique_name_in_owner = true
 visible = false
 
-[node name="Slab" type="MeshInstance3D" parent="Camera3D/Discard/DropDragHint" unique_id=754923151]
+[node name="Slab" type="MeshInstance3D" parent="Camera3D/Discard/DropDragHint" unique_id=538734266]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
-material_override = SubResource("StandardMaterial3D_p4w1v")
-mesh = SubResource("QuadMesh_melxm")
-
-[node name="TagAnchor" type="Marker3D" parent="Camera3D/Discard/DropDragHint" unique_id=93887817]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
-
-[node name="Draw" type="Node3D" parent="Camera3D" unique_id=238057971 instance=ExtResource("2_x10gg")]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.27, -12.6, -19.91)
-script = ExtResource("3_0ibvx")
-card_layout_strategy = SubResource("Resource_1p140")
-drag_strategy = SubResource("Resource_vu1k4")
-dropzone_collision_shape = ExtResource("6_bex05")
-
-[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Draw" unique_id=1539433607]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_3d7pu")
 mesh = SubResource("QuadMesh_p6lgp")
 
-[node name="TagAnchor" type="Marker3D" parent="Camera3D/Draw" unique_id=860015130]
+[node name="TagAnchor" type="Marker3D" parent="Camera3D/Discard/DropDragHint" unique_id=125186286]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="CameraFloor" type="Marker3D" parent="." unique_id=669403256]
+[node name="Draw" type="Node3D" parent="Camera3D" unique_id=1472640575 instance=ExtResource("2_2rsky")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.27, -12.6, -19.91)
+script = ExtResource("3_vd5qx")
+card_layout_strategy = SubResource("Resource_lfq30")
+drag_strategy = SubResource("Resource_8nvbc")
+dropzone_collision_shape = ExtResource("6_nnevp")
+
+[node name="ZoneSlab" type="MeshInstance3D" parent="Camera3D/Draw" unique_id=886461181]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
+material_override = SubResource("StandardMaterial3D_hetbi")
+mesh = SubResource("QuadMesh_8o8kk")
+
+[node name="TagAnchor" type="Marker3D" parent="Camera3D/Draw" unique_id=252378666]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+
+[node name="CameraFloor" type="Marker3D" parent="." unique_id=1432546355]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.1736482, 0, -0.1736482, 0.9848077, 0, 7.226391, 23.947817)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1576826945]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1536458105]
 transform = Transform3D(0.92718387, 0.23063084, -0.29519403, 0, 0.7880108, 0.6156615, 0.37460658, -0.5708314, 0.7306309, 0, 12, 18)
 light_color = Color(0.972549, 0.98039216, 1, 1)
 light_energy = 0.62
@@ -963,674 +989,602 @@ shadow_enabled = true
 shadow_opacity = 0.55
 shadow_blur = 3.0
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1460274387]
-environment = SubResource("Environment_lfq30")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=210465386]
+environment = SubResource("Environment_xioc8")
 
-[node name="Wall" type="MeshInstance3D" parent="." unique_id=1445423461]
+[node name="Wall" type="MeshInstance3D" parent="." unique_id=1634099630]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14)
-material_override = SubResource("StandardMaterial3D_8nvbc")
-mesh = SubResource("QuadMesh_hetbi")
+material_override = SubResource("StandardMaterial3D_n2mdw")
+mesh = SubResource("QuadMesh_aada7")
 
-[node name="Floor" type="MeshInstance3D" parent="." unique_id=1668714389]
+[node name="Floor" type="MeshInstance3D" parent="." unique_id=119739591]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 18)
-material_override = SubResource("StandardMaterial3D_8o8kk")
-mesh = SubResource("PlaneMesh_xioc8")
+material_override = SubResource("StandardMaterial3D_qp1cb")
+mesh = SubResource("PlaneMesh_5legv")
 
-[node name="Table" type="Node3D" parent="." unique_id=1994226835]
+[node name="Table" type="Node3D" parent="." unique_id=1326637993]
 
-[node name="Carousel" type="Node3D" parent="Table" unique_id=632095751]
+[node name="Carousel" type="Node3D" parent="Table" unique_id=2119761908]
 unique_name_in_owner = true
 
-[node name="Seat0" type="Node3D" parent="Table/Carousel" unique_id=1468669002]
+[node name="Seat0" type="Node3D" parent="Table/Carousel" unique_id=2052968573]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.1736482, 0, -0.1736482, 0.9848077, 0, 0, 6)
 
-[node name="Desk0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=92355620]
+[node name="Desk0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=1432369920]
 transform = Transform3D(1, 0, 0, 0, 0.9848077, -0.17364818, 0, 0.17364818, 0.9848077, 0, 0, 0)
 
-[node name="Top" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1402769151]
+[node name="Top" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1853841953]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, -0.6)
-material_override = SubResource("StandardMaterial3D_n2mdw")
-mesh = SubResource("BoxMesh_aada7")
-
-[node name="Edge" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=960430591]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, 1.115)
-material_override = SubResource("StandardMaterial3D_qp1cb")
-mesh = SubResource("BoxMesh_5legv")
-
-[node name="LegFrontLeft" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1618491769]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, -2.95, 0.85)
-material_override = SubResource("StandardMaterial3D_qp1cb")
-mesh = SubResource("BoxMesh_f2r5k")
-
-[node name="LegFrontRight" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=231894564]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, -2.95, 0.85)
-material_override = SubResource("StandardMaterial3D_qp1cb")
+material_override = SubResource("StandardMaterial3D_f2r5k")
 mesh = SubResource("BoxMesh_oqm2i")
 
-[node name="LegBackLeft" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=929459113]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, -2.95, -2.0500002)
-material_override = SubResource("StandardMaterial3D_qp1cb")
-mesh = SubResource("BoxMesh_s0k1g")
-
-[node name="LegBackRight" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1676481205]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, -2.95, -2.0500002)
-material_override = SubResource("StandardMaterial3D_qp1cb")
+[node name="Edge" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1835263735]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, 1.115)
+material_override = SubResource("StandardMaterial3D_s0k1g")
 mesh = SubResource("BoxMesh_gi5no")
 
-[node name="Stretcher" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1376294570]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.265, -2.0500002)
-material_override = SubResource("StandardMaterial3D_qp1cb")
+[node name="LegFrontLeft" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=396351369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, -2.95, 0.85)
+material_override = SubResource("StandardMaterial3D_s0k1g")
 mesh = SubResource("BoxMesh_37hxx")
 
-[node name="ChairBack" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1295581163]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.09565218, 0, 0.79999995, -4)
-material_override = SubResource("StandardMaterial3D_wresk")
-mesh = SubResource("CapsuleMesh_jh1kn")
+[node name="LegFrontRight" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=2056095281]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, -2.95, 0.85)
+material_override = SubResource("StandardMaterial3D_s0k1g")
+mesh = SubResource("BoxMesh_wresk")
 
-[node name="ChairSeat" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1180079508]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, -3.3)
-material_override = SubResource("StandardMaterial3D_wresk")
+[node name="LegBackLeft" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=850885763]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, -2.95, -2.0500002)
+material_override = SubResource("StandardMaterial3D_s0k1g")
+mesh = SubResource("BoxMesh_jh1kn")
+
+[node name="LegBackRight" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=546384496]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, -2.95, -2.0500002)
+material_override = SubResource("StandardMaterial3D_s0k1g")
 mesh = SubResource("BoxMesh_d2sat")
 
-[node name="ChairPost" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=2012280283]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5900002, -3.3)
-material_override = SubResource("StandardMaterial3D_w0dj7")
-mesh = SubResource("CylinderMesh_wavuc")
+[node name="Stretcher" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1116832001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.265, -2.0500002)
+material_override = SubResource("StandardMaterial3D_s0k1g")
+mesh = SubResource("BoxMesh_w0dj7")
 
-[node name="ChairLeg0" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=523046708]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.9, -3.3)
+[node name="ChairBack" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=370972839]
+transform = Transform3D(1.625, 0, 0, 0, 1, 0, 0, 0, 0.19999999, 0, -1.71, -3.4)
+material_override = SubResource("StandardMaterial3D_wavuc")
+mesh = SubResource("CapsuleMesh_irkmj")
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg0" unique_id=1702367318]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_w0dj7")
-mesh = SubResource("BoxMesh_irkmj")
-
-[node name="ChairLeg1" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1584085009]
-transform = Transform3D(0.30901697, 0, 0.95105654, 0, 1, 0, -0.95105654, 0, 0.30901697, 0, -3.9, -3.3)
-
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg1" unique_id=1737296861]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_w0dj7")
-mesh = SubResource("BoxMesh_mcft5")
-
-[node name="ChairLeg2" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=973264708]
-transform = Transform3D(-0.80901706, 0, 0.5877852, 0, 1, 0, -0.5877852, 0, -0.80901706, 0, -3.9, -3.3)
-
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg2" unique_id=923173747]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_w0dj7")
+[node name="ChairSpine" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=757572752]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.43, -3.44)
+material_override = SubResource("StandardMaterial3D_mcft5")
 mesh = SubResource("BoxMesh_v6trm")
 
-[node name="ChairLeg3" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1764865004]
-transform = Transform3D(-0.80901694, 0, -0.58778536, 0, 1, 0, 0.58778536, 0, -0.80901694, 0, -3.9, -3.3)
-
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg3" unique_id=916038985]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_w0dj7")
+[node name="ChairSeat" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=445979523]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.75, -2.75)
+material_override = SubResource("StandardMaterial3D_wavuc")
 mesh = SubResource("BoxMesh_aet27")
 
-[node name="ChairLeg4" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1855310955]
-transform = Transform3D(0.30901712, 0, -0.9510565, 0, 1, 0, 0.9510565, 0, 0.30901712, 0, -3.9, -3.3)
+[node name="ChairPost" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1374879807]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.375, -2.75)
+material_override = SubResource("StandardMaterial3D_mcft5")
+mesh = SubResource("CylinderMesh_hoiwk")
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg4" unique_id=1641051268]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_w0dj7")
-mesh = SubResource("BoxMesh_hoiwk")
+[node name="ChairLeg0" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1052650468]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.92, -2.75)
 
-[node name="CustomerFlip0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=841838310]
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg0" unique_id=2143555089]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_mcft5")
+mesh = SubResource("BoxMesh_b3h62")
+
+[node name="ChairLeg1" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1895473047]
+transform = Transform3D(0.30901697, 0, 0.95105654, 0, 1, 0, -0.95105654, 0, 0.30901697, 0, -3.92, -2.75)
+
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg1" unique_id=849694573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_mcft5")
+mesh = SubResource("BoxMesh_b8iky")
+
+[node name="ChairLeg2" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=2074337190]
+transform = Transform3D(-0.80901706, 0, 0.5877852, 0, 1, 0, -0.5877852, 0, -0.80901706, 0, -3.92, -2.75)
+
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg2" unique_id=606589954]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_mcft5")
+mesh = SubResource("BoxMesh_p6qyw")
+
+[node name="ChairLeg3" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1645731663]
+transform = Transform3D(-0.80901694, 0, -0.58778536, 0, 1, 0, 0.58778536, 0, -0.80901694, 0, -3.92, -2.75)
+
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg3" unique_id=1965797918]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_mcft5")
+mesh = SubResource("BoxMesh_i4pld")
+
+[node name="ChairLeg4" type="Node3D" parent="Table/Carousel/Seat0/Desk0" unique_id=1704414272]
+transform = Transform3D(0.30901712, 0, -0.9510565, 0, 1, 0, 0.9510565, 0, 0.30901712, 0, -3.92, -2.75)
+
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat0/Desk0/ChairLeg4" unique_id=256418607]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_mcft5")
+mesh = SubResource("BoxMesh_2ay3n")
+
+[node name="CustomerFlip0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=991524259]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
-script = ExtResource("8_nnevp")
+script = ExtResource("8_wdnfd")
 
-[node name="Customer0" type="Node3D" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=1766232618 instance=ExtResource("9_g8ksb")]
+[node name="Customer0" type="Node3D" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=990697610 instance=ExtResource("9_gogk5")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("10_wdnfd")
+script = ExtResource("10_rf0hl")
 
-[node name="CloseSoonFlag0" type="Node3D" parent="Table/Carousel/Seat0/CustomerFlip0/Customer0" unique_id=1854832645]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.45, 0.05)
-visible = false
-
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat0/CustomerFlip0/Customer0/CloseSoonFlag0" unique_id=217352142]
-material_override = SubResource("StandardMaterial3D_b3h62")
-mesh = SubResource("QuadMesh_b8iky")
-
-[node name="Label" type="Label3D" parent="Table/Carousel/Seat0/CustomerFlip0/Customer0/CloseSoonFlag0" unique_id=1758045054]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-double_sided = false
-text = "CLOSE SOON!"
-font_size = 24
-outline_size = 0
-
-[node name="CustomerDetail0" type="Node3D" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=1189517201 instance=ExtResource("11_gogk5")]
+[node name="CustomerDetail0" type="Node3D" parent="Table/Carousel/Seat0/CustomerFlip0" unique_id=1522946080 instance=ExtResource("11_36dmj")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_rf0hl")
+script = ExtResource("12_jd3xi")
 card_size = Vector2(4, 3.5)
 face_size = Vector2i(800, 700)
 
-[node name="HoverPad0" type="StaticBody3D" parent="Table/Carousel/Seat0" unique_id=1931727554]
+[node name="CloseSoonAnchor0" type="Marker3D" parent="Table/Carousel/Seat0" unique_id=1804768339]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 5.75, 0.03)
+
+[node name="HoverPad0" type="StaticBody3D" parent="Table/Carousel/Seat0" unique_id=2060079601]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat0/HoverPad0" unique_id=870766145]
-shape = SubResource("BoxShape3D_p6qyw")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat0/HoverPad0" unique_id=1370688661]
+shape = SubResource("BoxShape3D_kn714")
 
-[node name="Chair0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=1561062899 instance=ExtResource("2_x10gg")]
+[node name="Chair0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=1579850120 instance=ExtResource("2_2rsky")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("3_0ibvx")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, 0.03)
+script = ExtResource("3_vd5qx")
 highlight_on_hover = false
-card_layout_strategy = SubResource("Resource_i4pld")
-drag_strategy = SubResource("Resource_2ay3n")
-dropzone_collision_shape = ExtResource("6_bex05")
+card_layout_strategy = SubResource("Resource_mmbmh")
+drag_strategy = SubResource("Resource_n5dbl")
+dropzone_collision_shape = ExtResource("6_nnevp")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Carousel/Seat0/Chair0" unique_id=1609423212]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Carousel/Seat0/Chair0" unique_id=10044409]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
-material_override = SubResource("StandardMaterial3D_kn714")
-mesh = SubResource("QuadMesh_mmbmh")
+material_override = SubResource("StandardMaterial3D_71g4l")
+mesh = SubResource("QuadMesh_q2n82")
 
-[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat0/Chair0" unique_id=356418971]
+[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat0/Chair0" unique_id=1948670154]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="CloseHint0" type="Node3D" parent="Table/Carousel/Seat0/Chair0" unique_id=417489582]
+[node name="CloseHint0" type="Node3D" parent="Table/Carousel/Seat0/Chair0" unique_id=1319870850]
 unique_name_in_owner = true
 visible = false
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat0/Chair0/CloseHint0" unique_id=1231671023]
+[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat0/Chair0/CloseHint0" unique_id=1900614957]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
-material_override = SubResource("StandardMaterial3D_n5dbl")
-mesh = SubResource("QuadMesh_71g4l")
+material_override = SubResource("StandardMaterial3D_yxpc3")
+mesh = SubResource("QuadMesh_xmo8m")
 
-[node name="OfferFlag0" type="Node3D" parent="Table/Carousel/Seat0/Chair0" unique_id=539959887]
+[node name="ChairPad0" type="StaticBody3D" parent="Table/Carousel/Seat0" unique_id=1937463059]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.05)
-visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, 0.13)
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat0/Chair0/OfferFlag0" unique_id=1467381994]
-material_override = SubResource("StandardMaterial3D_q2n82")
-mesh = SubResource("QuadMesh_yxpc3")
-
-[node name="Label" type="Label3D" parent="Table/Carousel/Seat0/Chair0/OfferFlag0" unique_id=1172169656]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-double_sided = false
-text = "DROP ON CUSTOMER
-TO OFFER"
-font_size = 24
-outline_size = 0
-
-[node name="ChairPad0" type="StaticBody3D" parent="Table/Carousel/Seat0" unique_id=735685931]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.13)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat0/ChairPad0" unique_id=1397401113]
-shape = SubResource("BoxShape3D_xmo8m")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat0/ChairPad0" unique_id=1829924266]
+shape = SubResource("BoxShape3D_llbxq")
 disabled = true
 
-[node name="CustomerZone0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=2123769098 instance=ExtResource("2_x10gg")]
+[node name="CustomerZone0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=2084923891 instance=ExtResource("2_2rsky")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
-script = ExtResource("3_0ibvx")
-card_layout_strategy = SubResource("Resource_llbxq")
-drag_strategy = SubResource("Resource_qmkfx")
-dropzone_collision_shape = ExtResource("6_bex05")
+script = ExtResource("3_vd5qx")
+card_layout_strategy = SubResource("Resource_qmkfx")
+drag_strategy = SubResource("Resource_qkl7i")
+dropzone_collision_shape = ExtResource("6_nnevp")
 
-[node name="OfferDragHint0" type="Node3D" parent="Table/Carousel/Seat0/CustomerZone0" unique_id=1715867921]
+[node name="OfferDragHint0" type="Node3D" parent="Table/Carousel/Seat0/CustomerZone0" unique_id=2055851371]
 unique_name_in_owner = true
 visible = false
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat0/CustomerZone0/OfferDragHint0" unique_id=544085576]
+[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat0/CustomerZone0/OfferDragHint0" unique_id=1926499582]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
-material_override = SubResource("StandardMaterial3D_qkl7i")
-mesh = SubResource("QuadMesh_gocsm")
+material_override = SubResource("StandardMaterial3D_gocsm")
+mesh = SubResource("QuadMesh_a1mtp")
 
-[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat0/CustomerZone0/OfferDragHint0" unique_id=509580590]
+[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat0/CustomerZone0/OfferDragHint0" unique_id=426202731]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="OfferDetail0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=132967675 instance=ExtResource("11_gogk5")]
+[node name="Tablet0" type="Node3D" parent="Table/Carousel/Seat0" unique_id=1412466257 instance=ExtResource("13_b21lq")]
 unique_name_in_owner = true
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_rf0hl")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, -0.07)
+visible = false
+script = ExtResource("14_f1jej")
 
-[node name="Seat1" type="Node3D" parent="Table/Carousel" unique_id=1084431032]
+[node name="Seat1" type="Node3D" parent="Table/Carousel" unique_id=1450591970]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.1736482, 0, -0.1736482, 0.9848077, 5.196152, 0, -3)
 
-[node name="Desk1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=2072388205]
+[node name="Desk1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=1932060350]
 transform = Transform3D(1, 0, 0, 0, 0.9848077, -0.17364818, 0, 0.17364818, 0.9848077, 0, 0, 0)
 
-[node name="Top" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1651226697]
+[node name="Top" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1062748992]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, -0.6)
-material_override = SubResource("StandardMaterial3D_a1mtp")
-mesh = SubResource("BoxMesh_ir3tk")
+material_override = SubResource("StandardMaterial3D_ir3tk")
+mesh = SubResource("BoxMesh_tror0")
 
-[node name="Edge" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=817768393]
+[node name="Edge" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=849737898]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, 1.115)
-material_override = SubResource("StandardMaterial3D_tror0")
-mesh = SubResource("BoxMesh_3ohuo")
-
-[node name="LegFrontLeft" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=564589349]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, -2.95, 0.85)
-material_override = SubResource("StandardMaterial3D_tror0")
+material_override = SubResource("StandardMaterial3D_3ohuo")
 mesh = SubResource("BoxMesh_kwaj7")
 
-[node name="LegFrontRight" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=711149359]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, -2.95, 0.85)
-material_override = SubResource("StandardMaterial3D_tror0")
+[node name="LegFrontLeft" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=749318241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, -2.95, 0.85)
+material_override = SubResource("StandardMaterial3D_3ohuo")
 mesh = SubResource("BoxMesh_6rvl7")
 
-[node name="LegBackLeft" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1492267977]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, -2.95, -2.0500002)
-material_override = SubResource("StandardMaterial3D_tror0")
+[node name="LegFrontRight" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=549395835]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, -2.95, 0.85)
+material_override = SubResource("StandardMaterial3D_3ohuo")
 mesh = SubResource("BoxMesh_pehs2")
 
-[node name="LegBackRight" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1073445713]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, -2.95, -2.0500002)
-material_override = SubResource("StandardMaterial3D_tror0")
+[node name="LegBackLeft" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=720548103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, -2.95, -2.0500002)
+material_override = SubResource("StandardMaterial3D_3ohuo")
 mesh = SubResource("BoxMesh_wgrbj")
 
-[node name="Stretcher" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1122793934]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.265, -2.0500002)
-material_override = SubResource("StandardMaterial3D_tror0")
+[node name="LegBackRight" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1525468186]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, -2.95, -2.0500002)
+material_override = SubResource("StandardMaterial3D_3ohuo")
 mesh = SubResource("BoxMesh_4dac3")
 
-[node name="ChairBack" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1801449083]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.09565218, 0, 0.79999995, -4)
-material_override = SubResource("StandardMaterial3D_0wj4r")
-mesh = SubResource("CapsuleMesh_hvntu")
+[node name="Stretcher" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=953630986]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.265, -2.0500002)
+material_override = SubResource("StandardMaterial3D_3ohuo")
+mesh = SubResource("BoxMesh_0wj4r")
 
-[node name="ChairSeat" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1212069573]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, -3.3)
-material_override = SubResource("StandardMaterial3D_0wj4r")
-mesh = SubResource("BoxMesh_xathi")
+[node name="ChairBack" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1706063394]
+transform = Transform3D(1.625, 0, 0, 0, 1, 0, 0, 0, 0.19999999, 0, -1.71, -3.4)
+material_override = SubResource("StandardMaterial3D_hvntu")
+mesh = SubResource("CapsuleMesh_xathi")
 
-[node name="ChairPost" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1520107649]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5900002, -3.3)
+[node name="ChairSpine" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=2006864819]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.43, -3.44)
 material_override = SubResource("StandardMaterial3D_a5488")
-mesh = SubResource("CylinderMesh_furwy")
+mesh = SubResource("BoxMesh_furwy")
 
-[node name="ChairLeg0" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1172498193]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.9, -3.3)
-
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg0" unique_id=1980181829]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_a5488")
+[node name="ChairSeat" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=859529275]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.75, -2.75)
+material_override = SubResource("StandardMaterial3D_hvntu")
 mesh = SubResource("BoxMesh_bqw0v")
 
-[node name="ChairLeg1" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=161988424]
-transform = Transform3D(0.30901697, 0, 0.95105654, 0, 1, 0, -0.95105654, 0, 0.30901697, 0, -3.9, -3.3)
-
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg1" unique_id=1703186160]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
+[node name="ChairPost" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1" unique_id=794843517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.375, -2.75)
 material_override = SubResource("StandardMaterial3D_a5488")
-mesh = SubResource("BoxMesh_ihth3")
+mesh = SubResource("CylinderMesh_ihth3")
 
-[node name="ChairLeg2" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=2065274384]
-transform = Transform3D(-0.80901706, 0, 0.5877852, 0, 1, 0, -0.5877852, 0, -0.80901706, 0, -3.9, -3.3)
+[node name="ChairLeg0" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=45095555]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.92, -2.75)
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg2" unique_id=575517183]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg0" unique_id=1181707067]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
 material_override = SubResource("StandardMaterial3D_a5488")
 mesh = SubResource("BoxMesh_20rna")
 
-[node name="ChairLeg3" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=247974354]
-transform = Transform3D(-0.80901694, 0, -0.58778536, 0, 1, 0, 0.58778536, 0, -0.80901694, 0, -3.9, -3.3)
+[node name="ChairLeg1" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1877989805]
+transform = Transform3D(0.30901697, 0, 0.95105654, 0, 1, 0, -0.95105654, 0, 0.30901697, 0, -3.92, -2.75)
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg3" unique_id=281188789]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg1" unique_id=1838893339]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
 material_override = SubResource("StandardMaterial3D_a5488")
 mesh = SubResource("BoxMesh_a5rts")
 
-[node name="ChairLeg4" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=1369810211]
-transform = Transform3D(0.30901712, 0, -0.9510565, 0, 1, 0, 0.9510565, 0, 0.30901712, 0, -3.9, -3.3)
+[node name="ChairLeg2" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=89615495]
+transform = Transform3D(-0.80901706, 0, 0.5877852, 0, 1, 0, -0.5877852, 0, -0.80901706, 0, -3.92, -2.75)
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg4" unique_id=1519436018]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg2" unique_id=185872862]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
 material_override = SubResource("StandardMaterial3D_a5488")
 mesh = SubResource("BoxMesh_7cllr")
 
-[node name="CustomerFlip1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=1174867082]
+[node name="ChairLeg3" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=69259993]
+transform = Transform3D(-0.80901694, 0, -0.58778536, 0, 1, 0, 0.58778536, 0, -0.80901694, 0, -3.92, -2.75)
+
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg3" unique_id=1100971009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_a5488")
+mesh = SubResource("BoxMesh_kgrbc")
+
+[node name="ChairLeg4" type="Node3D" parent="Table/Carousel/Seat1/Desk1" unique_id=135068610]
+transform = Transform3D(0.30901712, 0, -0.9510565, 0, 1, 0, 0.9510565, 0, 0.30901712, 0, -3.92, -2.75)
+
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat1/Desk1/ChairLeg4" unique_id=1757608140]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_a5488")
+mesh = SubResource("BoxMesh_pbvde")
+
+[node name="CustomerFlip1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=1908384659]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
-script = ExtResource("8_nnevp")
+script = ExtResource("8_wdnfd")
 
-[node name="Customer1" type="Node3D" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=207840549 instance=ExtResource("9_g8ksb")]
+[node name="Customer1" type="Node3D" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=1463948985 instance=ExtResource("9_gogk5")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("10_wdnfd")
+script = ExtResource("10_rf0hl")
 
-[node name="CloseSoonFlag1" type="Node3D" parent="Table/Carousel/Seat1/CustomerFlip1/Customer1" unique_id=1972781816]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.45, 0.05)
-visible = false
-
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat1/CustomerFlip1/Customer1/CloseSoonFlag1" unique_id=289059888]
-material_override = SubResource("StandardMaterial3D_kgrbc")
-mesh = SubResource("QuadMesh_pbvde")
-
-[node name="Label" type="Label3D" parent="Table/Carousel/Seat1/CustomerFlip1/Customer1/CloseSoonFlag1" unique_id=1432453784]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-double_sided = false
-text = "CLOSE SOON!"
-font_size = 24
-outline_size = 0
-
-[node name="CustomerDetail1" type="Node3D" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=348016514 instance=ExtResource("11_gogk5")]
+[node name="CustomerDetail1" type="Node3D" parent="Table/Carousel/Seat1/CustomerFlip1" unique_id=1681959538 instance=ExtResource("11_36dmj")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_rf0hl")
+script = ExtResource("12_jd3xi")
 card_size = Vector2(4, 3.5)
 face_size = Vector2i(800, 700)
 
-[node name="HoverPad1" type="StaticBody3D" parent="Table/Carousel/Seat1" unique_id=1441684503]
+[node name="CloseSoonAnchor1" type="Marker3D" parent="Table/Carousel/Seat1" unique_id=1021748887]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 5.75, 0.03)
+
+[node name="HoverPad1" type="StaticBody3D" parent="Table/Carousel/Seat1" unique_id=1386466143]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat1/HoverPad1" unique_id=615648628]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat1/HoverPad1" unique_id=27259609]
 shape = SubResource("BoxShape3D_mlq2i")
 
-[node name="Chair1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=1470397278 instance=ExtResource("2_x10gg")]
+[node name="Chair1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=590543373 instance=ExtResource("2_2rsky")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("3_0ibvx")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, 0.03)
+script = ExtResource("3_vd5qx")
 highlight_on_hover = false
 card_layout_strategy = SubResource("Resource_48lvl")
 drag_strategy = SubResource("Resource_oyo1b")
-dropzone_collision_shape = ExtResource("6_bex05")
+dropzone_collision_shape = ExtResource("6_nnevp")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Carousel/Seat1/Chair1" unique_id=1908151095]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Carousel/Seat1/Chair1" unique_id=212857369]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
 material_override = SubResource("StandardMaterial3D_xbg0k")
 mesh = SubResource("QuadMesh_00v6n")
 
-[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat1/Chair1" unique_id=1172120129]
+[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat1/Chair1" unique_id=1752641913]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="CloseHint1" type="Node3D" parent="Table/Carousel/Seat1/Chair1" unique_id=1395290182]
+[node name="CloseHint1" type="Node3D" parent="Table/Carousel/Seat1/Chair1" unique_id=1613154648]
 unique_name_in_owner = true
 visible = false
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat1/Chair1/CloseHint1" unique_id=1818498786]
+[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat1/Chair1/CloseHint1" unique_id=2040884570]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
 material_override = SubResource("StandardMaterial3D_67b5b")
 mesh = SubResource("QuadMesh_sp5wf")
 
-[node name="OfferFlag1" type="Node3D" parent="Table/Carousel/Seat1/Chair1" unique_id=968361004]
+[node name="ChairPad1" type="StaticBody3D" parent="Table/Carousel/Seat1" unique_id=67943123]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.05)
-visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, 0.13)
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat1/Chair1/OfferFlag1" unique_id=1654109777]
-material_override = SubResource("StandardMaterial3D_qbjbr")
-mesh = SubResource("QuadMesh_m7k8v")
-
-[node name="Label" type="Label3D" parent="Table/Carousel/Seat1/Chair1/OfferFlag1" unique_id=48701179]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-double_sided = false
-text = "DROP ON CUSTOMER
-TO OFFER"
-font_size = 24
-outline_size = 0
-
-[node name="ChairPad1" type="StaticBody3D" parent="Table/Carousel/Seat1" unique_id=1241124144]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.13)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat1/ChairPad1" unique_id=1051191154]
-shape = SubResource("BoxShape3D_g26yg")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat1/ChairPad1" unique_id=1229008641]
+shape = SubResource("BoxShape3D_qbjbr")
 disabled = true
 
-[node name="CustomerZone1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=198671165 instance=ExtResource("2_x10gg")]
+[node name="CustomerZone1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=1240291389 instance=ExtResource("2_2rsky")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
-script = ExtResource("3_0ibvx")
-card_layout_strategy = SubResource("Resource_4yvs2")
-drag_strategy = SubResource("Resource_werp6")
-dropzone_collision_shape = ExtResource("6_bex05")
+script = ExtResource("3_vd5qx")
+card_layout_strategy = SubResource("Resource_m7k8v")
+drag_strategy = SubResource("Resource_g26yg")
+dropzone_collision_shape = ExtResource("6_nnevp")
 
-[node name="OfferDragHint1" type="Node3D" parent="Table/Carousel/Seat1/CustomerZone1" unique_id=1520461144]
+[node name="OfferDragHint1" type="Node3D" parent="Table/Carousel/Seat1/CustomerZone1" unique_id=1122317833]
 unique_name_in_owner = true
 visible = false
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat1/CustomerZone1/OfferDragHint1" unique_id=357492554]
+[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat1/CustomerZone1/OfferDragHint1" unique_id=921298557]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
-material_override = SubResource("StandardMaterial3D_3aeyf")
-mesh = SubResource("QuadMesh_bjiu5")
+material_override = SubResource("StandardMaterial3D_4yvs2")
+mesh = SubResource("QuadMesh_werp6")
 
-[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat1/CustomerZone1/OfferDragHint1" unique_id=775254716]
+[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat1/CustomerZone1/OfferDragHint1" unique_id=999830244]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="OfferDetail1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=293530437 instance=ExtResource("11_gogk5")]
+[node name="Tablet1" type="Node3D" parent="Table/Carousel/Seat1" unique_id=1756151437 instance=ExtResource("13_b21lq")]
 unique_name_in_owner = true
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_rf0hl")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, -0.07)
+visible = false
+script = ExtResource("14_f1jej")
 
-[node name="Seat2" type="Node3D" parent="Table/Carousel" unique_id=1209349503]
+[node name="Seat2" type="Node3D" parent="Table/Carousel" unique_id=639386115]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.1736482, 0, -0.1736482, 0.9848077, -5.196152, 0, -3)
 
-[node name="Desk2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=1737127742]
+[node name="Desk2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=90911823]
 transform = Transform3D(1, 0, 0, 0, 0.9848077, -0.17364818, 0, 0.17364818, 0.9848077, 0, 0, 0)
 
-[node name="Top" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=339055483]
+[node name="Top" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=320616143]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, -0.6)
+material_override = SubResource("StandardMaterial3D_3aeyf")
+mesh = SubResource("BoxMesh_bjiu5")
+
+[node name="Edge" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1003045415]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, 1.115)
 material_override = SubResource("StandardMaterial3D_i3cll")
 mesh = SubResource("BoxMesh_pp3sg")
 
-[node name="Edge" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=2119618932]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.83, 1.115)
-material_override = SubResource("StandardMaterial3D_oifpn")
+[node name="LegFrontLeft" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1287112662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, -2.95, 0.85)
+material_override = SubResource("StandardMaterial3D_i3cll")
+mesh = SubResource("BoxMesh_oifpn")
+
+[node name="LegFrontRight" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1297132516]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, -2.95, 0.85)
+material_override = SubResource("StandardMaterial3D_i3cll")
 mesh = SubResource("BoxMesh_4pjpc")
 
-[node name="LegFrontLeft" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1186202769]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, -2.95, 0.85)
-material_override = SubResource("StandardMaterial3D_oifpn")
+[node name="LegBackLeft" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=4000921]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, -2.95, -2.0500002)
+material_override = SubResource("StandardMaterial3D_i3cll")
 mesh = SubResource("BoxMesh_3iv2j")
 
-[node name="LegFrontRight" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=98838102]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, -2.95, 0.85)
-material_override = SubResource("StandardMaterial3D_oifpn")
+[node name="LegBackRight" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1878246073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, -2.95, -2.0500002)
+material_override = SubResource("StandardMaterial3D_i3cll")
 mesh = SubResource("BoxMesh_fq8tj")
 
-[node name="LegBackLeft" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1769557657]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, -2.95, -2.0500002)
-material_override = SubResource("StandardMaterial3D_oifpn")
+[node name="Stretcher" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1452300657]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.265, -2.0500002)
+material_override = SubResource("StandardMaterial3D_i3cll")
 mesh = SubResource("BoxMesh_nbugj")
 
-[node name="LegBackRight" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1181517891]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, -2.95, -2.0500002)
-material_override = SubResource("StandardMaterial3D_oifpn")
-mesh = SubResource("BoxMesh_g75lj")
+[node name="ChairBack" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=519485100]
+transform = Transform3D(1.625, 0, 0, 0, 1, 0, 0, 0, 0.19999999, 0, -1.71, -3.4)
+material_override = SubResource("StandardMaterial3D_g75lj")
+mesh = SubResource("CapsuleMesh_vsemp")
 
-[node name="Stretcher" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1399525295]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.265, -2.0500002)
-material_override = SubResource("StandardMaterial3D_oifpn")
-mesh = SubResource("BoxMesh_vsemp")
-
-[node name="ChairBack" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=746355691]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.09565218, 0, 0.79999995, -4)
+[node name="ChairSpine" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=610298993]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.43, -3.44)
 material_override = SubResource("StandardMaterial3D_kqrlo")
-mesh = SubResource("CapsuleMesh_ukp3t")
+mesh = SubResource("BoxMesh_ukp3t")
 
-[node name="ChairSeat" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=578478457]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, -3.3)
-material_override = SubResource("StandardMaterial3D_kqrlo")
+[node name="ChairSeat" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=195146568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.75, -2.75)
+material_override = SubResource("StandardMaterial3D_g75lj")
 mesh = SubResource("BoxMesh_te25x")
 
-[node name="ChairPost" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=472483689]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5900002, -3.3)
-material_override = SubResource("StandardMaterial3D_rb7q5")
-mesh = SubResource("CylinderMesh_1w8g8")
+[node name="ChairPost" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1446780853]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.375, -2.75)
+material_override = SubResource("StandardMaterial3D_kqrlo")
+mesh = SubResource("CylinderMesh_rb7q5")
 
-[node name="ChairLeg0" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1807276995]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.9, -3.3)
+[node name="ChairLeg0" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=387852632]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.92, -2.75)
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg0" unique_id=717754405]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_rb7q5")
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg0" unique_id=843731895]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_kqrlo")
+mesh = SubResource("BoxMesh_1w8g8")
+
+[node name="ChairLeg1" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=803165298]
+transform = Transform3D(0.30901697, 0, 0.95105654, 0, 1, 0, -0.95105654, 0, 0.30901697, 0, -3.92, -2.75)
+
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg1" unique_id=1732033857]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_kqrlo")
 mesh = SubResource("BoxMesh_bpqpx")
 
-[node name="ChairLeg1" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1989592811]
-transform = Transform3D(0.30901697, 0, 0.95105654, 0, 1, 0, -0.95105654, 0, 0.30901697, 0, -3.9, -3.3)
+[node name="ChairLeg2" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=889672712]
+transform = Transform3D(-0.80901706, 0, 0.5877852, 0, 1, 0, -0.5877852, 0, -0.80901706, 0, -3.92, -2.75)
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg1" unique_id=1461778536]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_rb7q5")
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg2" unique_id=644729785]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_kqrlo")
 mesh = SubResource("BoxMesh_8cr8s")
 
-[node name="ChairLeg2" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1770188896]
-transform = Transform3D(-0.80901706, 0, 0.5877852, 0, 1, 0, -0.5877852, 0, -0.80901706, 0, -3.9, -3.3)
+[node name="ChairLeg3" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=2051932715]
+transform = Transform3D(-0.80901694, 0, -0.58778536, 0, 1, 0, 0.58778536, 0, -0.80901694, 0, -3.92, -2.75)
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg2" unique_id=581256521]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_rb7q5")
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg3" unique_id=1104633495]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_kqrlo")
 mesh = SubResource("BoxMesh_5krpn")
 
-[node name="ChairLeg3" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=15986612]
-transform = Transform3D(-0.80901694, 0, -0.58778536, 0, 1, 0, 0.58778536, 0, -0.80901694, 0, -3.9, -3.3)
+[node name="ChairLeg4" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=1369346376]
+transform = Transform3D(0.30901712, 0, -0.9510565, 0, 1, 0, 0.9510565, 0, 0.30901712, 0, -3.92, -2.75)
 
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg3" unique_id=573343368]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_rb7q5")
+[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg4" unique_id=512835733]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.36)
+material_override = SubResource("StandardMaterial3D_kqrlo")
 mesh = SubResource("BoxMesh_w81wh")
 
-[node name="ChairLeg4" type="Node3D" parent="Table/Carousel/Seat2/Desk2" unique_id=387437971]
-transform = Transform3D(0.30901712, 0, -0.9510565, 0, 1, 0, 0.9510565, 0, 0.30901712, 0, -3.9, -3.3)
-
-[node name="Spoke" type="MeshInstance3D" parent="Table/Carousel/Seat2/Desk2/ChairLeg4" unique_id=934580803]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.47)
-material_override = SubResource("StandardMaterial3D_rb7q5")
-mesh = SubResource("BoxMesh_h8vd7")
-
-[node name="CustomerFlip2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=1637713625]
+[node name="CustomerFlip2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=882915517]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
-script = ExtResource("8_nnevp")
+script = ExtResource("8_wdnfd")
 
-[node name="Customer2" type="Node3D" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=1318156437 instance=ExtResource("9_g8ksb")]
+[node name="Customer2" type="Node3D" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=248565844 instance=ExtResource("9_gogk5")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("10_wdnfd")
+script = ExtResource("10_rf0hl")
 
-[node name="CloseSoonFlag2" type="Node3D" parent="Table/Carousel/Seat2/CustomerFlip2/Customer2" unique_id=1615456312]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.45, 0.05)
-visible = false
-
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat2/CustomerFlip2/Customer2/CloseSoonFlag2" unique_id=585424032]
-material_override = SubResource("StandardMaterial3D_b554g")
-mesh = SubResource("QuadMesh_7vp2r")
-
-[node name="Label" type="Label3D" parent="Table/Carousel/Seat2/CustomerFlip2/Customer2/CloseSoonFlag2" unique_id=1835455734]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-double_sided = false
-text = "CLOSE SOON!"
-font_size = 24
-outline_size = 0
-
-[node name="CustomerDetail2" type="Node3D" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=834346210 instance=ExtResource("11_gogk5")]
+[node name="CustomerDetail2" type="Node3D" parent="Table/Carousel/Seat2/CustomerFlip2" unique_id=356883287 instance=ExtResource("11_36dmj")]
 unique_name_in_owner = true
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_rf0hl")
+script = ExtResource("12_jd3xi")
 card_size = Vector2(4, 3.5)
 face_size = Vector2i(800, 700)
 
-[node name="HoverPad2" type="StaticBody3D" parent="Table/Carousel/Seat2" unique_id=1777095363]
+[node name="CloseSoonAnchor2" type="Marker3D" parent="Table/Carousel/Seat2" unique_id=694506186]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 5.75, 0.03)
+
+[node name="HoverPad2" type="StaticBody3D" parent="Table/Carousel/Seat2" unique_id=1182133764]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat2/HoverPad2" unique_id=149369365]
-shape = SubResource("BoxShape3D_ycaw7")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat2/HoverPad2" unique_id=536438328]
+shape = SubResource("BoxShape3D_h8vd7")
 
-[node name="Chair2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=1051056652 instance=ExtResource("2_x10gg")]
+[node name="Chair2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=1781963762 instance=ExtResource("2_2rsky")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
-script = ExtResource("3_0ibvx")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, 0.03)
+script = ExtResource("3_vd5qx")
 highlight_on_hover = false
-card_layout_strategy = SubResource("Resource_l4781")
-drag_strategy = SubResource("Resource_qqrw6")
-dropzone_collision_shape = ExtResource("6_bex05")
+card_layout_strategy = SubResource("Resource_b554g")
+drag_strategy = SubResource("Resource_7vp2r")
+dropzone_collision_shape = ExtResource("6_nnevp")
 
-[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Carousel/Seat2/Chair2" unique_id=1090038740]
+[node name="ZoneSlab" type="MeshInstance3D" parent="Table/Carousel/Seat2/Chair2" unique_id=977842580]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
-material_override = SubResource("StandardMaterial3D_c8ecv")
-mesh = SubResource("QuadMesh_up8gq")
+material_override = SubResource("StandardMaterial3D_ycaw7")
+mesh = SubResource("QuadMesh_l4781")
 
-[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat2/Chair2" unique_id=1845025570]
+[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat2/Chair2" unique_id=1748927216]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="CloseHint2" type="Node3D" parent="Table/Carousel/Seat2/Chair2" unique_id=1896395672]
+[node name="CloseHint2" type="Node3D" parent="Table/Carousel/Seat2/Chair2" unique_id=203507721]
 unique_name_in_owner = true
 visible = false
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat2/Chair2/CloseHint2" unique_id=1829265918]
+[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat2/Chair2/CloseHint2" unique_id=1796168475]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
-material_override = SubResource("StandardMaterial3D_vkkcb")
-mesh = SubResource("QuadMesh_qqqof")
+material_override = SubResource("StandardMaterial3D_qqrw6")
+mesh = SubResource("QuadMesh_c8ecv")
 
-[node name="OfferFlag2" type="Node3D" parent="Table/Carousel/Seat2/Chair2" unique_id=1034939126]
+[node name="ChairPad2" type="StaticBody3D" parent="Table/Carousel/Seat2" unique_id=2070291559]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.05)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, 0.13)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat2/ChairPad2" unique_id=492518263]
+shape = SubResource("BoxShape3D_up8gq")
+disabled = true
+
+[node name="CustomerZone2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=1871684842 instance=ExtResource("2_2rsky")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
+script = ExtResource("3_vd5qx")
+card_layout_strategy = SubResource("Resource_vkkcb")
+drag_strategy = SubResource("Resource_qqqof")
+dropzone_collision_shape = ExtResource("6_nnevp")
+
+[node name="OfferDragHint2" type="Node3D" parent="Table/Carousel/Seat2/CustomerZone2" unique_id=1658850044]
+unique_name_in_owner = true
 visible = false
 
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat2/Chair2/OfferFlag2" unique_id=208480263]
+[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat2/CustomerZone2/OfferDragHint2" unique_id=660529984]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
 material_override = SubResource("StandardMaterial3D_tkcmb")
 mesh = SubResource("QuadMesh_6151q")
 
-[node name="Label" type="Label3D" parent="Table/Carousel/Seat2/Chair2/OfferFlag2" unique_id=861101788]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.01)
-double_sided = false
-text = "DROP ON CUSTOMER
-TO OFFER"
-font_size = 24
-outline_size = 0
-
-[node name="ChairPad2" type="StaticBody3D" parent="Table/Carousel/Seat2" unique_id=2012925128]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.13)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Table/Carousel/Seat2/ChairPad2" unique_id=1059743991]
-shape = SubResource("BoxShape3D_jmx4e")
-disabled = true
-
-[node name="CustomerZone2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=15679129 instance=ExtResource("2_x10gg")]
-unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0.13)
-script = ExtResource("3_0ibvx")
-card_layout_strategy = SubResource("Resource_7v1ru")
-drag_strategy = SubResource("Resource_mpe46")
-dropzone_collision_shape = ExtResource("6_bex05")
-
-[node name="OfferDragHint2" type="Node3D" parent="Table/Carousel/Seat2/CustomerZone2" unique_id=1533679323]
-unique_name_in_owner = true
-visible = false
-
-[node name="Slab" type="MeshInstance3D" parent="Table/Carousel/Seat2/CustomerZone2/OfferDragHint2" unique_id=947679565]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04)
-material_override = SubResource("StandardMaterial3D_boqpr")
-mesh = SubResource("QuadMesh_ycg6s")
-
-[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat2/CustomerZone2/OfferDragHint2" unique_id=2070197394]
+[node name="TagAnchor" type="Marker3D" parent="Table/Carousel/Seat2/CustomerZone2/OfferDragHint2" unique_id=432848799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 
-[node name="OfferDetail2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=1154800339 instance=ExtResource("11_gogk5")]
+[node name="Tablet2" type="Node3D" parent="Table/Carousel/Seat2" unique_id=1210165573 instance=ExtResource("13_b21lq")]
 unique_name_in_owner = true
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.03)
-script = ExtResource("12_rf0hl")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16111112, -0.07)
+visible = false
+script = ExtResource("14_f1jej")
 
-[node name="SeatCam" type="Marker3D" parent="." unique_id=719323920]
+[node name="SeatCam" type="Marker3D" parent="." unique_id=1146903034]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.9848077, 0.1736482, 0, -0.1736482, 0.9848077, 0, 5.060072, 26.634817)
 
-[node name="DragController" type="Node3D" parent="." unique_id=309351592]
-script = ExtResource("13_36dmj")
+[node name="DragController" type="Node3D" parent="." unique_id=1812161408]
+script = ExtResource("15_wmubo")
 card_drag_plane = Plane(0, 0.17364818, 0.9848077, 10.508844)
 
-[node name="HUD" type="CanvasLayer" parent="." unique_id=450887532]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=599789365]
 
-[node name="HudRoot" type="Control" parent="HUD" unique_id=1540153018]
+[node name="HudRoot" type="Control" parent="HUD" unique_id=70094666]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
@@ -1638,28 +1592,28 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="HintLayer" type="Control" parent="HUD/HudRoot" unique_id=619492213]
+[node name="HintLayer" type="Control" parent="HUD/HudRoot" unique_id=11926438]
 unique_name_in_owner = true
 anchors_preset = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="DrawTag" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1556653591]
+[node name="DrawTag" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1616233844]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_7no6o")
-script = ExtResource("14_jd3xi")
+theme_override_styles/panel = SubResource("StyleBoxFlat_jmx4e")
+script = ExtResource("16_oeuem")
 anchor_path = NodePath("Camera3D/Draw/TagAnchor")
 
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/DrawTag" unique_id=1321152657]
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/DrawTag" unique_id=807424330]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/DrawTag/Lines" unique_id=987806282]
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/DrawTag/Lines" unique_id=1095019501]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 22
@@ -1667,21 +1621,21 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "DRAW"
 horizontal_alignment = 1
 
-[node name="DiscardTag" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=531000774]
+[node name="DiscardTag" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=811104332]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_vanhe")
-script = ExtResource("14_jd3xi")
+theme_override_styles/panel = SubResource("StyleBoxFlat_7v1ru")
+script = ExtResource("16_oeuem")
 anchor_path = NodePath("Camera3D/Discard/TagAnchor")
 
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/DiscardTag" unique_id=504225628]
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/DiscardTag" unique_id=401773724]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/DiscardTag/Lines" unique_id=1289509593]
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/DiscardTag/Lines" unique_id=176550675]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 22
@@ -1689,28 +1643,28 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "DISCARD"
 horizontal_alignment = 1
 
-[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/DiscardTag/Lines" unique_id=775864848]
+[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/DiscardTag/Lines" unique_id=724261774]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "drag a card here to dig"
 horizontal_alignment = 1
 
-[node name="DropTag" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1716195737]
+[node name="DropTag" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=2036008047]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_u5eqh")
-script = ExtResource("14_jd3xi")
+theme_override_styles/panel = SubResource("StyleBoxFlat_mpe46")
+script = ExtResource("16_oeuem")
 anchor_path = NodePath("Camera3D/Discard/DropDragHint/TagAnchor")
 
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/DropTag" unique_id=1845681901]
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/DropTag" unique_id=745981297]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/DropTag/Lines" unique_id=79896143]
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/DropTag/Lines" unique_id=246995209]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 24
@@ -1718,21 +1672,21 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "DROP PRODUCT"
 horizontal_alignment = 1
 
-[node name="OfferTag0" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=195963676]
+[node name="OfferTag0" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=164968992]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_yh4hh")
-script = ExtResource("14_jd3xi")
+theme_override_styles/panel = SubResource("StyleBoxFlat_boqpr")
+script = ExtResource("16_oeuem")
 anchor_path = NodePath("Table/Carousel/Seat0/CustomerZone0/OfferDragHint0/TagAnchor")
 
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/OfferTag0" unique_id=1116368891]
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/OfferTag0" unique_id=273172614]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/OfferTag0/Lines" unique_id=533652549]
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/OfferTag0/Lines" unique_id=182824341]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 24
@@ -1740,21 +1694,21 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "OFFER PRODUCT"
 horizontal_alignment = 1
 
-[node name="TableNote0" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1433262285]
+[node name="TableNote0" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1836566577]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_va435")
-script = ExtResource("14_jd3xi")
+theme_override_styles/panel = SubResource("StyleBoxFlat_ycg6s")
+script = ExtResource("16_oeuem")
 anchor_path = NodePath("Table/Carousel/Seat0/Chair0/TagAnchor")
 
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote0" unique_id=1810892969]
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote0" unique_id=221093314]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Title" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines" unique_id=945983758]
+[node name="Title" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines" unique_id=1294212359]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 21
@@ -1762,25 +1716,143 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Nothing on the table"
 horizontal_alignment = 1
 
-[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines" unique_id=2002471090]
+[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines" unique_id=641803073]
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Place a product here"
 horizontal_alignment = 1
 
-[node name="CloseRow" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines" unique_id=1001297667]
+[node name="CloseRow" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines" unique_id=1688251203]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="OrRow" type="HBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow" unique_id=635277715]
+[node name="OrRow" type="HBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow" unique_id=1526940200]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="RuleLeft" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow/OrRow" unique_id=293967097]
+[node name="RuleLeft" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow/OrRow" unique_id=1491422652]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_7no6o")
+
+[node name="Or" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow/OrRow" unique_id=436641179]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "or"
+horizontal_alignment = 1
+
+[node name="RuleRight" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow/OrRow" unique_id=1329906345]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_vanhe")
+
+[node name="Close" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow" unique_id=636004378]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 21
+theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+text = "Double-click to
+close the deal"
+horizontal_alignment = 1
+
+[node name="CloseSoonTag0" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=962136598]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_u5eqh")
+script = ExtResource("16_oeuem")
+anchor_path = NodePath("Table/Carousel/Seat0/CloseSoonAnchor0")
+drop_px = 3.0
+hang = 1.0
+
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/CloseSoonTag0" unique_id=1258087888]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/CloseSoonTag0/Lines" unique_id=1400708377]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "CLOSE SOON"
+horizontal_alignment = 1
+
+[node name="OfferTag1" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1591778216]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_yh4hh")
+script = ExtResource("16_oeuem")
+anchor_path = NodePath("Table/Carousel/Seat1/CustomerZone1/OfferDragHint1/TagAnchor")
+
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/OfferTag1" unique_id=841167905]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/OfferTag1/Lines" unique_id=1566323583]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "OFFER PRODUCT"
+horizontal_alignment = 1
+
+[node name="TableNote1" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1905723214]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_va435")
+script = ExtResource("16_oeuem")
+anchor_path = NodePath("Table/Carousel/Seat1/Chair1/TagAnchor")
+
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote1" unique_id=894292659]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Title" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines" unique_id=891408144]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 21
+theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+text = "Nothing on the table"
+horizontal_alignment = 1
+
+[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines" unique_id=1758573924]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "Place a product here"
+horizontal_alignment = 1
+
+[node name="CloseRow" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines" unique_id=950738065]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="OrRow" type="HBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow" unique_id=326803829]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="RuleLeft" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow/OrRow" unique_id=40706263]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -1788,14 +1860,14 @@ size_flags_vertical = 4
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_y8ejy")
 
-[node name="Or" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow/OrRow" unique_id=1146676356]
+[node name="Or" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow/OrRow" unique_id=1829392455]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "or"
 horizontal_alignment = 1
 
-[node name="RuleRight" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow/OrRow" unique_id=118184625]
+[node name="RuleRight" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow/OrRow" unique_id=822477732]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -1803,7 +1875,7 @@ size_flags_vertical = 4
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_nht7m")
 
-[node name="Close" type="Label" parent="HUD/HudRoot/HintLayer/TableNote0/Lines/CloseRow" unique_id=467326302]
+[node name="Close" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow" unique_id=2111322918]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 21
@@ -1812,21 +1884,45 @@ text = "Double-click to
 close the deal"
 horizontal_alignment = 1
 
-[node name="OfferTag1" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=671691469]
+[node name="CloseSoonTag1" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1006534438]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_28kxc")
-script = ExtResource("14_jd3xi")
-anchor_path = NodePath("Table/Carousel/Seat1/CustomerZone1/OfferDragHint1/TagAnchor")
+script = ExtResource("16_oeuem")
+anchor_path = NodePath("Table/Carousel/Seat1/CloseSoonAnchor1")
+drop_px = 3.0
+hang = 1.0
 
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/OfferTag1" unique_id=1063056681]
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/CloseSoonTag1" unique_id=1825468209]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/OfferTag1/Lines" unique_id=157079037]
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/CloseSoonTag1/Lines" unique_id=1201409070]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "CLOSE SOON"
+horizontal_alignment = 1
+
+[node name="OfferTag2" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1629357301]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_i1dx8")
+script = ExtResource("16_oeuem")
+anchor_path = NodePath("Table/Carousel/Seat2/CustomerZone2/OfferDragHint2/TagAnchor")
+
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/OfferTag2" unique_id=1241531916]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/OfferTag2/Lines" unique_id=22973529]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 24
@@ -1834,21 +1930,21 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "OFFER PRODUCT"
 horizontal_alignment = 1
 
-[node name="TableNote1" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=670374418]
+[node name="TableNote2" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=504395698]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_i1dx8")
-script = ExtResource("14_jd3xi")
-anchor_path = NodePath("Table/Carousel/Seat1/Chair1/TagAnchor")
+theme_override_styles/panel = SubResource("StyleBoxFlat_rx180")
+script = ExtResource("16_oeuem")
+anchor_path = NodePath("Table/Carousel/Seat2/Chair2/TagAnchor")
 
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote1" unique_id=594421808]
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote2" unique_id=892335118]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Title" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines" unique_id=1743438323]
+[node name="Title" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines" unique_id=1614743226]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 21
@@ -1856,40 +1952,25 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Nothing on the table"
 horizontal_alignment = 1
 
-[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines" unique_id=167622425]
+[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines" unique_id=700074170]
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Place a product here"
 horizontal_alignment = 1
 
-[node name="CloseRow" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines" unique_id=314607271]
+[node name="CloseRow" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines" unique_id=343360541]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="OrRow" type="HBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow" unique_id=511220280]
+[node name="OrRow" type="HBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow" unique_id=1721999087]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="RuleLeft" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow/OrRow" unique_id=1383820086]
-custom_minimum_size = Vector2(0, 2)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_rx180")
-
-[node name="Or" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow/OrRow" unique_id=1423750514]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-text = "or"
-horizontal_alignment = 1
-
-[node name="RuleRight" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow/OrRow" unique_id=1380477552]
+[node name="RuleLeft" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow/OrRow" unique_id=1246297904]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -1897,101 +1978,22 @@ size_flags_vertical = 4
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mlug2")
 
-[node name="Close" type="Label" parent="HUD/HudRoot/HintLayer/TableNote1/Lines/CloseRow" unique_id=102774920]
-layout_mode = 2
-theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 21
-theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
-text = "Double-click to
-close the deal"
-horizontal_alignment = 1
-
-[node name="OfferTag2" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=570899080]
-unique_name_in_owner = true
-visible = false
-layout_mode = 0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_dewu5")
-script = ExtResource("14_jd3xi")
-anchor_path = NodePath("Table/Carousel/Seat2/CustomerZone2/OfferDragHint2/TagAnchor")
-
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/OfferTag2" unique_id=1704536578]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 2
-
-[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/OfferTag2/Lines" unique_id=1842845545]
-layout_mode = 2
-theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = "OFFER PRODUCT"
-horizontal_alignment = 1
-
-[node name="TableNote2" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1189766433]
-unique_name_in_owner = true
-visible = false
-layout_mode = 0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_aqf5x")
-script = ExtResource("14_jd3xi")
-anchor_path = NodePath("Table/Carousel/Seat2/Chair2/TagAnchor")
-
-[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote2" unique_id=432995755]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 2
-
-[node name="Title" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines" unique_id=742235441]
-layout_mode = 2
-theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 21
-theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
-text = "Nothing on the table"
-horizontal_alignment = 1
-
-[node name="Sub" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines" unique_id=1834279577]
-layout_mode = 2
-theme_override_font_sizes/font_size = 17
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-text = "Place a product here"
-horizontal_alignment = 1
-
-[node name="CloseRow" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines" unique_id=777161705]
-visible = false
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 2
-
-[node name="OrRow" type="HBoxContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow" unique_id=477293320]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 8
-
-[node name="RuleLeft" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow/OrRow" unique_id=1889135827]
-custom_minimum_size = Vector2(0, 2)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_m7dsm")
-
-[node name="Or" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow/OrRow" unique_id=486296250]
+[node name="Or" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow/OrRow" unique_id=1924608415]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "or"
 horizontal_alignment = 1
 
-[node name="RuleRight" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow/OrRow" unique_id=130669432]
+[node name="RuleRight" type="PanelContainer" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow/OrRow" unique_id=2074049108]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_erdrw")
+theme_override_styles/panel = SubResource("StyleBoxFlat_dewu5")
 
-[node name="Close" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow" unique_id=1572527614]
+[node name="Close" type="Label" parent="HUD/HudRoot/HintLayer/TableNote2/Lines/CloseRow" unique_id=1660080664]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 21
@@ -2000,15 +2002,39 @@ text = "Double-click to
 close the deal"
 horizontal_alignment = 1
 
-[node name="TopStrip" type="PanelContainer" parent="HUD/HudRoot" unique_id=316437846]
+[node name="CloseSoonTag2" type="PanelContainer" parent="HUD/HudRoot/HintLayer" unique_id=1722480478]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_aqf5x")
+script = ExtResource("16_oeuem")
+anchor_path = NodePath("Table/Carousel/Seat2/CloseSoonAnchor2")
+drop_px = 3.0
+hang = 1.0
+
+[node name="Lines" type="VBoxContainer" parent="HUD/HudRoot/HintLayer/CloseSoonTag2" unique_id=2061712624]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Label" type="Label" parent="HUD/HudRoot/HintLayer/CloseSoonTag2/Lines" unique_id=1236286443]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "CLOSE SOON"
+horizontal_alignment = 1
+
+[node name="TopStrip" type="PanelContainer" parent="HUD/HudRoot" unique_id=495583960]
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 1920.0
 offset_bottom = 66.0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_nhd1b")
+theme_override_styles/panel = SubResource("StyleBoxFlat_m7dsm")
 
-[node name="TopBar" type="HBoxContainer" parent="HUD/HudRoot" unique_id=1875019960]
+[node name="TopBar" type="HBoxContainer" parent="HUD/HudRoot" unique_id=2143051010]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 28.0
@@ -2018,55 +2044,55 @@ offset_bottom = 14.0
 mouse_filter = 2
 theme_override_constants/separation = 48
 
-[node name="TickWrap" type="PanelContainer" parent="HUD/HudRoot/TopBar" unique_id=2035531445]
+[node name="TickWrap" type="PanelContainer" parent="HUD/HudRoot/TopBar" unique_id=1613072713]
 layout_mode = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxEmpty_yoco5")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_erdrw")
 
-[node name="TickLabel" type="Label" parent="HUD/HudRoot/TopBar/TickWrap" unique_id=1028412403]
+[node name="TickLabel" type="Label" parent="HUD/HudRoot/TopBar/TickWrap" unique_id=568292210]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 30
 text = "tick 0/24"
 
-[node name="TickTapTarget" type="Button" parent="HUD/HudRoot/TopBar/TickWrap" unique_id=1939840343]
+[node name="TickTapTarget" type="Button" parent="HUD/HudRoot/TopBar/TickWrap" unique_id=1090388811]
 unique_name_in_owner = true
 layout_mode = 2
 flat = true
 
-[node name="BankedLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1056907647]
+[node name="BankedLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=782991467]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 30
 text = "banked $0 / $3,600"
 
-[node name="StandingWrap" type="PanelContainer" parent="HUD/HudRoot/TopBar" unique_id=1366136447]
+[node name="StandingWrap" type="PanelContainer" parent="HUD/HudRoot/TopBar" unique_id=1901307039]
 layout_mode = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxEmpty_nax01")
+theme_override_styles/panel = SubResource("StyleBoxEmpty_nhd1b")
 
-[node name="StandingLabel" type="Label" parent="HUD/HudRoot/TopBar/StandingWrap" unique_id=930743467]
+[node name="StandingLabel" type="Label" parent="HUD/HudRoot/TopBar/StandingWrap" unique_id=483907687]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 30
 text = "standing 100/100"
 
-[node name="StandingTapTarget" type="Button" parent="HUD/HudRoot/TopBar/StandingWrap" unique_id=2069786447]
+[node name="StandingTapTarget" type="Button" parent="HUD/HudRoot/TopBar/StandingWrap" unique_id=571198515]
 unique_name_in_owner = true
 layout_mode = 2
 flat = true
 
-[node name="AtRiskLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1487801200]
+[node name="AtRiskLabel" type="Label" parent="HUD/HudRoot/TopBar" unique_id=1755580220]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 30
 text = "nothing unsigned"
 
-[node name="ActionBar" type="VBoxContainer" parent="HUD/HudRoot" unique_id=420402744]
+[node name="ActionBar" type="VBoxContainer" parent="HUD/HudRoot" unique_id=1346830502]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 1630.0
@@ -2076,14 +2102,14 @@ offset_bottom = 640.0
 mouse_filter = 2
 theme_override_constants/separation = 18
 
-[node name="OfferButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=254424877]
+[node name="OfferButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=1451739187]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 100)
 layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_lptnf")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_g7fbi")
-theme_override_styles/hover = SubResource("StyleBoxFlat_2ghgt")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_rvnb3")
+theme_override_styles/normal = SubResource("StyleBoxFlat_yoco5")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_nax01")
+theme_override_styles/hover = SubResource("StyleBoxFlat_lptnf")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_g7fbi")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
@@ -2092,14 +2118,14 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 32
 text = "OFFER"
 
-[node name="DropButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=222749203]
+[node name="DropButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=946274922]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 100)
 layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_74wku")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_hfqpp")
-theme_override_styles/hover = SubResource("StyleBoxFlat_p8xa0")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_aapbs")
+theme_override_styles/normal = SubResource("StyleBoxFlat_2ghgt")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_rvnb3")
+theme_override_styles/hover = SubResource("StyleBoxFlat_74wku")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_hfqpp")
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 theme_override_colors/font_focus_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
@@ -2108,14 +2134,14 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 32
 text = "DROP"
 
-[node name="CloseButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=1380277801]
+[node name="CloseButton" type="Button" parent="HUD/HudRoot/ActionBar" unique_id=225881646]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 100)
 layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_l2vbk")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_hc6qx")
-theme_override_styles/hover = SubResource("StyleBoxFlat_6tg8o")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_acy50")
+theme_override_styles/normal = SubResource("StyleBoxFlat_p8xa0")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_aapbs")
+theme_override_styles/hover = SubResource("StyleBoxFlat_l2vbk")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_hc6qx")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
@@ -2124,7 +2150,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 32
 text = "CLOSE"
 
-[node name="SidePanel" type="PanelContainer" parent="HUD/HudRoot" unique_id=964448250]
+[node name="SidePanel" type="PanelContainer" parent="HUD/HudRoot" unique_id=403710568]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 18.0
@@ -2132,29 +2158,29 @@ offset_top = 80.0
 offset_right = 388.0
 offset_bottom = 730.0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_qrtho")
+theme_override_styles/panel = SubResource("StyleBoxFlat_6tg8o")
 
-[node name="Column" type="VBoxContainer" parent="HUD/HudRoot/SidePanel" unique_id=1267370686]
+[node name="Column" type="VBoxContainer" parent="HUD/HudRoot/SidePanel" unique_id=2031776000]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="LogTitle" type="Label" parent="HUD/HudRoot/SidePanel/Column" unique_id=1485461583]
+[node name="LogTitle" type="Label" parent="HUD/HudRoot/SidePanel/Column" unique_id=1179401383]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "SHIFT LOG"
 
-[node name="TitleRule" type="PanelContainer" parent="HUD/HudRoot/SidePanel/Column" unique_id=99236875]
+[node name="TitleRule" type="PanelContainer" parent="HUD/HudRoot/SidePanel/Column" unique_id=1052045414]
 custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_lx3ju")
+theme_override_styles/panel = SubResource("StyleBoxFlat_acy50")
 
-[node name="EventLog" type="RichTextLabel" parent="HUD/HudRoot/SidePanel/Column" unique_id=1858449933]
+[node name="EventLog" type="RichTextLabel" parent="HUD/HudRoot/SidePanel/Column" unique_id=1668277620]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
@@ -2164,7 +2190,7 @@ bbcode_enabled = true
 text = "Walk-ups, offers and objections show up here."
 scroll_following = true
 
-[node name="ReportOverlay" type="PanelContainer" parent="HUD/HudRoot" unique_id=733389188 instance=ExtResource("15_b21lq")]
+[node name="ReportOverlay" type="PanelContainer" parent="HUD/HudRoot" unique_id=733389188 instance=ExtResource("17_40fsy")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -2172,9 +2198,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_smm52")
-script = ExtResource("16_f1jej")
+script = ExtResource("18_6h2fn")
 
-[node name="PullPicker" type="PanelContainer" parent="HUD/HudRoot" unique_id=384761384 instance=ExtResource("17_wmubo")]
+[node name="PullPicker" type="PanelContainer" parent="HUD/HudRoot" unique_id=384761384 instance=ExtResource("19_4wc7j")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -2182,4 +2208,4 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_btk04")
-script = ExtResource("18_oeuem")
+script = ExtResource("20_gkmxb")

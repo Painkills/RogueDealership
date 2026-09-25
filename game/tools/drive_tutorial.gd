@@ -92,7 +92,13 @@ func _drive() -> void:
 		% [c.offer.appeal, c.line], c.line == c.offer.appeal + Tutorial.LINE_GAP)
 	_check("with a real Appeal in the meter to look at (%d)" % c.offer.appeal,
 		c.offer.appeal >= 20)
-	await _check_it_points_at_something("the product's sheet")
+	await _check_it_points_at_something("the tablet's appeal meter")
+	var appeal: Rect2 = _floor.screen_rect_of(&"appeal")
+	var tablet: Rect2 = _floor.screen_rect_of(&"tablet")
+	_check("the meter it frames is on the tablet (%s in %s)" % [appeal, tablet],
+		appeal.size.x > 0.0 and tablet.encloses(appeal))
+	_check("left of the product standing in the middle of it",
+		appeal.end.x <= _floor.screen_rect_of(&"table").position.x)
 
 	await _next(&"support")
 	# The wrong card on purpose - Small Talk buys patience, not Appeal. The
@@ -179,10 +185,6 @@ func _settle() -> void:
 			var ft = flip._tween
 			if ft != null and ft.is_valid() and ft.is_running():
 				ft.custom_step(5.0)
-		for card in _floor._offer_details + _floor._customer_details:
-			var st = card._slide_tween
-			if st != null and st.is_valid() and st.is_running():
-				st.custom_step(5.0)
 		for zone in _floor._all_zones():
 			for card in zone.cards:
 				var pt = card.position_tween

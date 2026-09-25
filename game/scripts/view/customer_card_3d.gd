@@ -171,12 +171,6 @@ static func behaviour_text(c) -> String:
 		return "Nothing. They just sit and listen."
 	return "\n".join(tells)
 
-## The two per-archetype combo knobs, read straight off their own data so
-## this text can never drift from what _settle() actually does with them.
-static func combo_knobs_text(c) -> String:
-	return "Line +%d/sale  ·  Combo +%d%%/sale" \
-		% [c.archetype.line_per_sale, roundi(c.archetype.combo_step * 100)]
-
 static func unsigned_text(c) -> String:
 	var parts: Array[String] = []
 	for u in c.unsigned:
@@ -219,7 +213,7 @@ static func sold_interests(c) -> Dictionary:
 
 ## The floor card's one non-identity line. Short on purpose: it exists so that
 ## walking away from a live offer is visible from the floor, not to reproduce the
-## detail card in miniature.
+## tablet in miniature.
 static func status_text(c) -> String:
 	var parts: Array[String] = []
 	if c.offer != null:

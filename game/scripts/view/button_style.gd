@@ -35,6 +35,23 @@ static func filled(b: Button, color: Color) -> void:
 			"font_pressed_color", "font_hover_pressed_color"]:
 		b.add_theme_color_override(item, Palette.color(&"paper"))
 
+## A filled button that has to be pressed NOW: the same colour, ringed in the
+## highlighter yellow the tutorial frames things in, and glowing. It used to
+## shout by being tinted red, back when buttons were white - on a red button
+## that tinted the word CLOSE red on red, exactly when it most needed reading.
+## `on` false dresses it back to plain filled().
+static func urgent(b: Button, color: Color, on: bool) -> void:
+	filled(b, color)
+	if not on:
+		return
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		var s := b.get_theme_stylebox(state) as StyleBoxFlat
+		s.border_color = Palette.color(&"sticky")
+		s.set_border_width_all(4)
+		s.shadow_color = Color(color, 0.6)
+		s.shadow_size = 14
+		s.shadow_offset = Vector2.ZERO
+
 ## White with a `color` border and `color` words - and filled in `color` while
 ## pressed, so a press still reads as a press.
 static func outlined(b: Button, color: Color) -> void:
