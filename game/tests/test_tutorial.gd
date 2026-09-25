@@ -29,6 +29,10 @@ func test_the_practice_floor_has_one_chair_and_one_easy_customer() -> void:
 	h.check("who has no actions of their own to interrupt a beginner",
 		c.archetype.actions.is_empty())
 	h.eq("with a name, not a random one", c.display_name, Tutorial.CUSTOMER_NAME)
+	var walked_up: Array = s.events.filter(func(e): return e.contains("walks up"))
+	h.check("and the log says the same name walked up (%s)" % ", ".join(walked_up),
+		not walked_up.is_empty() and walked_up.all(
+			func(e): return e.contains(Tutorial.CUSTOMER_NAME)))
 	h.eq("at full patience", c.patience, c.max_patience)
 	h.check("with their Line shown, for once, so the meter has a mark to aim at",
 		c.known_line)

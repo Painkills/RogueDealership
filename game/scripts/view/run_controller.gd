@@ -28,10 +28,12 @@ extends Node
 ## and tutorial_coach.gd for the lesson.
 @onready var _coach: TutorialCoach = $TutorialCoach
 
-## Open the game on the practice shift, the first time only (TutorialProgress
-## remembers). A driver that is testing something else turns this off BEFORE
-## adding the run to the tree, so it boots straight to the picker as it always
-## has. The picker's HOW TO PLAY button replays it either way.
+## Open the game on the practice shift - every time, not just the first. Its
+## welcome has a way out as big as the way in, and for someone who has been
+## through it before (TutorialProgress remembers) the way out is the loud one.
+## A driver that is testing something else turns this off BEFORE adding the
+## run to the tree, so it boots straight to the picker. The picker's HOW TO
+## PLAY button replays it either way.
 @export var tutorial_at_boot := true
 
 var _run: RunState
@@ -70,7 +72,7 @@ func _ready() -> void:
 	_coach.finished.connect(_on_tutorial_finished)
 	_picker_view.tutorial_requested.connect(_open_the_tutorial)
 	_start_run()
-	if tutorial_at_boot and not TutorialProgress.is_done():
+	if tutorial_at_boot:
 		_open_the_tutorial()
 
 func _start_run() -> void:

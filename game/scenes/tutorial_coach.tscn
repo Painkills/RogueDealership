@@ -35,82 +35,6 @@ content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.14)
-shadow_size = 4
-shadow_offset = Vector2(0, 2)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_82dr3"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
-bg_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.14)
-shadow_size = 4
-shadow_offset = Vector2(0, 2)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mtqnw"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
-bg_color = Color(0.94980395, 0.95356864, 0.9582745, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.14)
-shadow_size = 4
-shadow_offset = Vector2(0, 2)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_32xxd"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
-bg_color = Color(0.4227451, 0.4660392, 0.52015686, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.14)
-shadow_size = 4
-shadow_offset = Vector2(0, 2)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gj1jb"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
 bg_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 border_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 corner_radius_top_left = 10
@@ -121,7 +45,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2p308"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_82dr3"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -136,7 +60,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lpoyx"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mtqnw"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -151,7 +75,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_64cao"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_32xxd"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -166,18 +90,126 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[node name="TutorialCoach" type="CanvasLayer" unique_id=220422347]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gj1jb"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+border_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2p308"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.08682353, 0.11254902, 0.15435295, 1)
+border_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lpoyx"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.21317646, 0.24078432, 0.28564706, 1)
+border_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_64cao"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.09317647, 0.12078432, 0.16564706, 1)
+border_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rh752"]
+bg_color = Color(0.06666667, 0.09411765, 0.15294118, 0.62)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nhmnr"]
+content_margin_left = 56.0
+content_margin_top = 44.0
+content_margin_right = 56.0
+content_margin_bottom = 48.0
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 26
+corner_radius_top_right = 26
+corner_radius_bottom_right = 26
+corner_radius_bottom_left = 26
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 30
+shadow_offset = Vector2(0, 10)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cusxn"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.22)
+shadow_size = 8
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_anu6p"]
+content_margin_top = 4.0
+content_margin_bottom = 6.0
+bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+
+[sub_resource type="Gradient" id="Gradient_k05y5"]
+offsets = PackedFloat32Array(0, 0.75, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="Gradient" id="Gradient_5tvdu"]
+interpolation_mode = 1
+offsets = PackedFloat32Array(0, 0.16666667, 0.33333334, 0.5, 0.6666667, 0.8333333)
+colors = PackedColorArray(0.14509805, 0.3882353, 0.92156863, 1, 0.91764706, 0.34509805, 0.047058824, 1, 0.08235294, 0.5019608, 0.23921569, 1, 0.98039216, 0.8, 0.08235294, 1, 0.8627451, 0.14901961, 0.14901961, 1, 0.4862745, 0.22745098, 0.92941177, 1)
+
+[node name="TutorialCoach" type="CanvasLayer" unique_id=1976832926]
 layer = 50
 script = ExtResource("1_3v6kq")
 
-[node name="Canvas" type="Control" parent="." unique_id=1064302098]
+[node name="Canvas" type="Control" parent="." unique_id=126509264]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2
 
-[node name="Highlight" type="Control" parent="Canvas" unique_id=815449019]
+[node name="Highlight" type="Control" parent="Canvas" unique_id=748893815]
 unique_name_in_owner = true
 anchors_preset = 0
 offset_right = 1920.0
@@ -185,7 +217,7 @@ offset_bottom = 1080.0
 mouse_filter = 2
 script = ExtResource("2_tm3h3")
 
-[node name="Memo" type="PanelContainer" parent="Canvas" unique_id=186938372]
+[node name="Memo" type="PanelContainer" parent="Canvas" unique_id=77481966]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(370, 0)
 layout_mode = 0
@@ -195,49 +227,49 @@ offset_right = 18.0
 offset_bottom = 80.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_pxwci")
 
-[node name="Column" type="VBoxContainer" parent="Canvas/Memo" unique_id=203967439]
+[node name="Column" type="VBoxContainer" parent="Canvas/Memo" unique_id=1417289672]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="Header" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=1859979351]
+[node name="Header" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=109798193]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Badge" type="PanelContainer" parent="Canvas/Memo/Column/Header" unique_id=686513437]
+[node name="Badge" type="PanelContainer" parent="Canvas/Memo/Column/Header" unique_id=1145201763]
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_gpe2d")
 
-[node name="BadgeLabel" type="Label" parent="Canvas/Memo/Column/Header/Badge" unique_id=1216978170]
+[node name="BadgeLabel" type="Label" parent="Canvas/Memo/Column/Header/Badge" unique_id=1142124162]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = "TUTORIAL"
+text = "TRAINING"
 
-[node name="Spacer" type="Control" parent="Canvas/Memo/Column/Header" unique_id=1296389396]
+[node name="Spacer" type="Control" parent="Canvas/Memo/Column/Header" unique_id=840637953]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="StepLabel" type="Label" parent="Canvas/Memo/Column/Header" unique_id=23061689]
+[node name="StepLabel" type="Label" parent="Canvas/Memo/Column/Header" unique_id=629380090]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-text = "1 / 13"
+text = "1 / 12"
 
-[node name="TitleLabel" type="Label" parent="Canvas/Memo/Column" unique_id=1526380631]
+[node name="TitleLabel" type="Label" parent="Canvas/Memo/Column" unique_id=670338083]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
-text = "Welcome to the F&I office"
+text = "Meet your first customer"
 
-[node name="BodyLabel" type="Label" parent="Canvas/Memo/Column" unique_id=863031859]
+[node name="BodyLabel" type="Label" parent="Canvas/Memo/Column" unique_id=330210940]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
@@ -245,7 +277,7 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Their file: who they are, what kind of buyer they are, and their patience. When patience runs out they walk - and a walkout costs you standing."
 autowrap_mode = 2
 
-[node name="HintLabel" type="Label" parent="Canvas/Memo/Column" unique_id=101385921]
+[node name="HintLabel" type="Label" parent="Canvas/Memo/Column" unique_id=359655837]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -253,41 +285,42 @@ theme_override_font_sizes/font_size = 19
 theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 autowrap_mode = 2
 
-[node name="PromptLabel" type="Label" parent="Canvas/Memo/Column" unique_id=1938302677]
+[node name="PromptLabel" type="Label" parent="Canvas/Memo/Column" unique_id=761632511]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 autowrap_mode = 2
 
-[node name="Buttons" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=1813561970]
+[node name="Buttons" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=2075742829]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 12
+alignment = 2
 
-[node name="SkipButton" type="Button" parent="Canvas/Memo/Column/Buttons" unique_id=1106775891]
+[node name="NextButton" type="Button" parent="Canvas/Memo/Column/Buttons" unique_id=869603477]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_cllvj")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_82dr3")
 theme_override_styles/hover = SubResource("StyleBoxFlat_mtqnw")
 theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_32xxd")
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-theme_override_colors/font_focus_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 16
-text = "SKIP TUTORIAL"
+theme_override_font_sizes/font_size = 20
+text = "NEXT"
 
-[node name="Gap" type="Control" parent="Canvas/Memo/Column/Buttons" unique_id=1462180478]
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-
-[node name="NextButton" type="Button" parent="Canvas/Memo/Column/Buttons" unique_id=1623917373]
+[node name="ExitButton" type="Button" parent="Canvas" unique_id=361732088]
 unique_name_in_owner = true
-layout_mode = 2
+visible = false
+custom_minimum_size = Vector2(240, 56)
+layout_mode = 0
+offset_left = 1448.0
+offset_top = 8.0
+offset_right = 1688.0
+offset_bottom = 64.0
 theme_override_styles/normal = SubResource("StyleBoxFlat_gj1jb")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_2p308")
 theme_override_styles/hover = SubResource("StyleBoxFlat_lpoyx")
@@ -297,5 +330,169 @@ theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "EXIT TUTORIAL  ×"
+
+[node name="Splash" type="Control" parent="Canvas" unique_id=31774621]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="Dim" type="Panel" parent="Canvas/Splash" unique_id=1696264208]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_rh752")
+
+[node name="SplashCard" type="PanelContainer" parent="Canvas/Splash" unique_id=314043510]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(880, 0)
+layout_mode = 0
+offset_left = 520.0
+offset_top = 210.0
+offset_right = 520.0
+offset_bottom = 210.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_nhmnr")
+
+[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard" unique_id=432431607]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="NameTagHolder" type="CenterContainer" parent="Canvas/Splash/SplashCard/Column" unique_id=1636068589]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NameTag" type="PanelContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder" unique_id=1243371955]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 150)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cusxn")
+
+[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag" unique_id=1568795003]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Band" type="PanelContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column" unique_id=2264872]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_anu6p")
+
+[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band" unique_id=1384274769]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = -6
+
+[node name="Hello" type="Label" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band/Column" unique_id=1645496443]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "HELLO"
+horizontal_alignment = 1
+
+[node name="MyNameIs" type="Label" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band/Column" unique_id=981845770]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "NEXT"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "my name is"
+horizontal_alignment = 1
+
+[node name="TagName" type="Label" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column" unique_id=49154903]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 46
+theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+text = "F&I MANAGER"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Eyebrow" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=134385214]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
+text = "FIRST DAY ON THE JOB"
+horizontal_alignment = 1
+
+[node name="SplashTitle" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=892203433]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 58
+theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
+text = "Welcome aboard, Manager."
+horizontal_alignment = 1
+
+[node name="SplashBody" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=479550960]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "Sales just sold them the car. Now they're sitting at YOUR desk, and everything else is yours to sell - warranties, GAP, protection plans.
+
+The GM is watching your numbers. No pressure."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Gap" type="Control" parent="Canvas/Splash/SplashCard/Column" unique_id=2076394287]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="SplashButtons" type="HBoxContainer" parent="Canvas/Splash/SplashCard/Column" unique_id=969646286]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 22
+alignment = 1
+
+[node name="SplashSkipButton" type="Button" parent="Canvas/Splash/SplashCard/Column/SplashButtons" unique_id=772720962]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SKIP TRAINING"
+
+[node name="StartButton" type="Button" parent="Canvas/Splash/SplashCard/Column/SplashButtons" unique_id=20102800]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SHOW ME THE ROPES"
+
+[node name="Confetti" type="CPUParticles2D" parent="Canvas" unique_id=1191948046]
+unique_name_in_owner = true
+position = Vector2(960, -40)
+emitting = false
+amount = 140
+lifetime = 3.4
+one_shot = true
+explosiveness = 0.8
+emission_shape = 3
+emission_rect_extents = Vector2(921.6, 10)
+direction = Vector2(0, 1)
+spread = 30.0
+gravity = Vector2(0, 460)
+initial_velocity_min = 180.0
+initial_velocity_max = 520.0
+angular_velocity_min = -420.0
+angular_velocity_max = 420.0
+damping_min = 10.0
+damping_max = 50.0
+angle_max = 360.0
+scale_amount_min = 0.8
+scale_amount_max = 1.5
+color_ramp = SubResource("Gradient_k05y5")
+color_initial_ramp = SubResource("Gradient_5tvdu")

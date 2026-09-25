@@ -12,8 +12,8 @@ extends PanelContainer
 ## disagreeing with the run.
 
 signal chosen(profile: ShiftProfile)
-## HOW TO PLAY - the practice shift, replayed on demand. It opens the game by
-## itself only the first time (see RunController.tutorial_at_boot).
+## HOW TO PLAY - the practice shift, replayed on demand. It also opens the
+## game by itself (see RunController.tutorial_at_boot).
 signal tutorial_requested
 
 const DAY_NAMES := ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]

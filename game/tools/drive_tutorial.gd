@@ -39,10 +39,14 @@ func _drive() -> void:
 	_check("on the real floor", (_floor.get_node(^"HUD") as CanvasLayer).visible)
 	var shift: Shift = _floor.current_shift()
 	_check("with one chair", shift.chairs.size() == 1)
-	_check("memo 1 is the welcome", _coach.step_id() == &"welcome")
+	_check("it opens on the welcome", _coach.step_id() == &"welcome")
 	_check("and it frames nothing yet", _coach._highlight.rects().is_empty())
+	_check_the_first_day_welcome()
 
 	await _next(&"customer")
+	_check("showing the ropes puts the welcome away", not _coach.splash_showing())
+	_check("for the first memo", _coach._memo.visible)
+	_check_the_way_out_is_on_screen()
 	await _check_it_points_at_something("the customer")
 
 	# The other two desks have nobody at them in practice - clicking one must
@@ -123,7 +127,8 @@ func _drive() -> void:
 	_check("signing them moves it on", _coach.step_id() == &"done")
 	_check("the last memo's button says where it goes (%s)" % _coach._next.text,
 		_coach._next.text == "START MY FIRST SHIFT")
-	_check("and there is nothing left to skip", not _coach._skip.visible)
+	_check("and there is nothing left to exit", not _coach._exit.visible)
+	_check("the first deal gets confetti", _coach._confetti.emitting)
 	var run: RunState = _root._run
 	_check("practice never touched the run's deck",
 		run.deck.cards.size() == Deck.build_starting(run.card_pool).cards.size())
@@ -135,31 +140,98 @@ func _drive() -> void:
 	_check("and is remembered", TutorialProgress.is_done())
 	_check("with the run still waiting on its first shift", run.shift_number == 1)
 
-	# HOW TO PLAY replays it, and SKIP gets straight back out.
+	# HOW TO PLAY replays it - welcoming you BACK, with the way out the loud
+	# button - and SKIP TRAINING gets straight back out.
 	_root._picker_view.tutorial_requested.emit()
 	await _frames(2)
 	_check("HOW TO PLAY replays it", _coach.is_running() and _coach.step_id() == &"welcome")
-	_coach._skip.pressed.emit()
+	_check("welcoming you back (%s)" % _coach._splash_title.text,
+		_coach.splash_showing() and _coach._splash_title.text == _coach.WELCOME_BACK["title"])
+	_check_the_loud_button("someone who has done it", _coach._splash_skip, _coach._start)
+	_coach._splash_skip.pressed.emit()
 	await _frames(2)
-	_check("and SKIP goes straight back to the picker",
+	_check("and SKIP TRAINING goes straight back to the picker",
 		_root._picker_view.visible and not _coach.is_running())
 
-	# A second boot, once it has been seen, goes straight to the picker.
+	# The way out mid-lesson: EXIT TUTORIAL, from any memo.
+	_root._picker_view.tutorial_requested.emit()
+	await _frames(2)
+	await _next(&"customer")
+	_check_the_way_out_is_on_screen()
+	_coach._exit.pressed.emit()
+	await _frames(2)
+	_check("EXIT TUTORIAL goes straight back to the picker, mid-lesson",
+		_root._picker_view.visible and not _coach.is_running())
+	_check("and packs the floor away",
+		not (_floor.get_node(^"HUD") as CanvasLayer).visible)
+
+	# A second boot opens on it again - "start the game on the tutorial" - and
+	# someone who has done it is one big button away from their week.
 	_root.queue_free()
 	await _frames(2)
 	_boot()
 	await _frames(3)
-	_check("once it is done, the game boots straight to the picker",
-		_root._picker_view.visible and not _root._coach.is_running())
+	_coach = _root._coach
+	_check("every boot opens on the tutorial, even once it is done",
+		_coach.is_running() and _coach.step_id() == &"welcome"
+			and not _root._picker_view.visible)
+	_check_the_loud_button("a returning player", _coach._splash_skip, _coach._start)
 
 	TutorialProgress.reset()
 	_report()
 
 func _next(expect: StringName) -> void:
-	_coach._next.pressed.emit()
+	# The welcome is not a memo: its way in is its own big button.
+	var button: Button = _coach._start if _coach.splash_showing() else _coach._next
+	button.pressed.emit()
 	await _settle()
 	if expect != &"":
 		_check("NEXT moves on to %s" % expect, _coach.step_id() == expect)
+
+## "A little razzmatazz about how you're the F&I manager and it's your first
+## day": a name tag, a welcome, confetti - and two ways forward of the same
+## size, the lesson filled in for someone who has never done it.
+func _check_the_first_day_welcome() -> void:
+	_check("the welcome is up", _coach.splash_showing())
+	_check("it is day one (%s)" % _coach._eyebrow.text,
+		_coach._eyebrow.text == _coach.FIRST_DAY["eyebrow"])
+	_check("with you on the name tag", (_coach._tag.get_node(^"Column/TagName") as Label)
+		.text.contains("F&I MANAGER"))
+	_check("and the job spelled out (%s)" % _coach._splash_body.text.substr(0, 40),
+		_coach._splash_body.text.contains("warranties"))
+	_check("to confetti", _coach._confetti.emitting)
+	_check("over a floor you cannot click on yet",
+		_coach._dim.visible and _coach._dim.mouse_filter == Control.MOUSE_FILTER_STOP)
+	_check("with no corner EXIT on top of its own way out", not _coach._exit.visible)
+	_check_the_loud_button("a first-timer", _coach._start, _coach._splash_skip)
+	_check("and skipping is as big a button as learning (%s vs %s)"
+		% [_coach._splash_skip.custom_minimum_size, _coach._start.custom_minimum_size],
+		_coach._splash_skip.custom_minimum_size == _coach._start.custom_minimum_size
+			and _coach._splash_skip.custom_minimum_size.x >= 280.0)
+
+## Which of the welcome's two buttons is filled in - and on the right.
+func _check_the_loud_button(who: String, loud: Button, quiet: Button) -> void:
+	var fill := loud.get_theme_stylebox("normal") as StyleBoxFlat
+	var plain := quiet.get_theme_stylebox("normal") as StyleBoxFlat
+	_check("for %s, %s is the filled button" % [who, loud.text],
+		fill.bg_color == Palette.color(&"primary") and plain.bg_color == Palette.color(&"paper"))
+	_check("and it is the one on the right",
+		loud.get_index() > quiet.get_index())
+
+## "Make the exit tutorial option more prominent": big, dark, and top right
+## for every memo, clear of the memo and on screen.
+func _check_the_way_out_is_on_screen() -> void:
+	var exit: Button = _coach._exit
+	var r := exit.get_global_rect()
+	_check("EXIT TUTORIAL is showing", exit.visible and exit.text.begins_with("EXIT TUTORIAL"))
+	_check("and big (%s)" % r.size, r.size.x >= 220.0 and r.size.y >= 50.0)
+	_check("top right (%s)" % r, r.position.x > 1920.0 * 0.6 and r.position.y < 80.0)
+	_check("filled, not a faint outline",
+		(exit.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Palette.color(&"ink"))
+	_check("clear of the memo", not r.intersects(_coach.memo_rect()))
+	_check("and of the VIEW DECK button beside it",
+		not r.intersects((_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control)
+			.get_global_rect()))
 
 ## The memo points at the thing it is talking about - on screen, and never
 ## underneath the memo itself.

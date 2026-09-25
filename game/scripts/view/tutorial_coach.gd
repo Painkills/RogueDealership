@@ -1,6 +1,7 @@
 class_name TutorialCoach extends CanvasLayer
-## The practice shift's teacher: a training memo pinned over the shift log,
-## and a highlighter frame around whatever it is talking about.
+## The practice shift's teacher: a first-day welcome, then a training memo
+## pinned over the shift log and a highlighter frame around whatever it is
+## talking about - with a way out the whole time.
 ##
 ## It teaches by WATCHING rather than by being wired into every command. Each
 ## step either waits for NEXT, or waits for something to have happened on the
@@ -18,12 +19,12 @@ signal finished(completed: bool)
 
 ## One entry per memo. "wait" is &"next" for a memo you read and dismiss, or
 ## the thing that has to happen on the table before it moves on. "targets" are
-## what the highlighter frames - see ShiftController.screen_rect_of().
+## what the highlighter frames - see ShiftController.screen_rect_of(). The first
+## is not a memo at all but the welcome splash, so the memos count from the
+## second.
 const STEPS := [
-	{"id": &"welcome", "title": "Welcome to the F&I office",
-		"body": "The car's already sold. Your job is everything that goes with it - warranties, GAP, protection plans. This practice shift walks you through one customer.",
-		"wait": &"next", "button": "LET'S GO", "targets": []},
-	{"id": &"customer", "title": "This is your customer",
+	{"id": &"welcome", "splash": true, "wait": &"next", "targets": []},
+	{"id": &"customer", "title": "Meet your first customer",
 		"body": "Their file: who they are, what kind of buyer they are, and their patience. When patience runs out they walk - and a walkout costs you standing.",
 		"wait": &"next", "targets": [&"customer"]},
 	{"id": &"details", "title": "Read their file",
@@ -62,10 +63,27 @@ const STEPS := [
 		"body": "They said yes - but it isn't money until they sign. Press CLOSE, or double-click the empty tablet. Anything unsigned when the shift ends is lost.",
 		"wait": &"signed", "prompt": "Close the deal to carry on.",
 		"targets": [&"close_button", &"table"]},
-	{"id": &"done", "title": "That's the job",
-		"body": "Real shifts have three desks, a quota, and customers who push back. Watch the clock - it's everyone's.",
-		"wait": &"next", "button": "START MY FIRST SHIFT", "targets": []},
+	{"id": &"done", "title": "First deal: signed!",
+		"body": "Not bad for day one. Real shifts have three desks, a quota, and customers who push back - and the clock is everyone's.",
+		"wait": &"next", "button": "START MY FIRST SHIFT", "confetti": true, "targets": []},
 ]
+
+## The welcome, for someone who has never done this - and for someone who has,
+## to whom the way straight to the week is the button that should be loudest.
+const FIRST_DAY := {
+	"eyebrow": "FIRST DAY ON THE JOB",
+	"title": "Welcome aboard, Manager.",
+	"body": "Sales just sold them the car. Now they're sitting at YOUR desk, and everything else is yours to sell - warranties, GAP, protection plans.\n\nThe GM is watching your numbers. No pressure.",
+	"start": "SHOW ME THE ROPES",
+	"skip": "SKIP TRAINING",
+}
+const WELCOME_BACK := {
+	"eyebrow": "WELCOME BACK",
+	"title": "Back for another week?",
+	"body": "You know the drill: products, support cards, and a clock that runs the whole floor. Take the practice customer again for a refresher, or go straight to your shifts.",
+	"start": "SHOW ME AGAIN",
+	"skip": "SKIP TRAINING",
+}
 
 @onready var _highlight: TutorialHighlight = %Highlight
 @onready var _memo: Control = %Memo
@@ -75,7 +93,18 @@ const STEPS := [
 @onready var _hint: Label = %HintLabel
 @onready var _prompt: Label = %PromptLabel
 @onready var _next: Button = %NextButton
-@onready var _skip: Button = %SkipButton
+@onready var _exit: Button = %ExitButton
+@onready var _splash: Control = %Splash
+@onready var _dim: Control = %Dim
+@onready var _card: Control = %SplashCard
+@onready var _tag: Control = %NameTag
+@onready var _eyebrow: Label = %Eyebrow
+@onready var _splash_title: Label = %SplashTitle
+@onready var _splash_body: Label = %SplashBody
+@onready var _splash_buttons: Control = %SplashButtons
+@onready var _start: Button = %StartButton
+@onready var _splash_skip: Button = %SplashSkipButton
+@onready var _confetti: CPUParticles2D = %Confetti
 
 var _floor = null            ## the ShiftController being taught on
 var _step := -1
@@ -85,12 +114,16 @@ var _step_stat := {}         ## and when the current memo went up
 ## for a fresh product until the first sale, so swapping products mid-lesson
 ## still leaves exactly one support card between them and a yes.
 var _tuned_uid := -1
+var _splash_tween: Tween
 
 func _ready() -> void:
 	visible = false
 	set_process(false)
 	_next.pressed.connect(_on_next)
-	_skip.pressed.connect(func(): _finish(false))
+	_start.pressed.connect(_on_next)
+	_splash_skip.pressed.connect(func(): _finish(false))
+	_exit.pressed.connect(func(): _finish(false))
+	_confetti.texture = _confetti_piece()
 
 func start(floor_view) -> void:
 	_floor = floor_view
@@ -107,6 +140,8 @@ func stop() -> void:
 	_floor = null
 	_step = -1
 	_highlight.set_rects([])
+	_hide_splash()
+	_confetti.emitting = false
 
 func is_running() -> bool:
 	return _floor != null and _step >= 0
@@ -114,23 +149,34 @@ func is_running() -> bool:
 func step_id() -> StringName:
 	return STEPS[_step]["id"] if _step >= 0 and _step < STEPS.size() else &""
 
+func splash_showing() -> bool:
+	return _splash.visible
+
 func _go(i: int) -> void:
 	_step = i
 	var s: Dictionary = STEPS[i]
 	var shift: Shift = _floor.current_shift()
 	_step_stat = shift.stat.duplicate() if shift != null else {}
-	_step_label.text = "%d / %d" % [i + 1, STEPS.size()]
+	if s.get("splash", false):
+		_show_splash()
+		_update_highlight()
+		return
+	_hide_splash()
+	_memo.visible = true
+	_step_label.text = "%d / %d" % [i, STEPS.size() - 1]
 	_title.text = s["title"]
 	_body.text = s["body"]
 	_hint.visible = false
 	var waits: bool = s["wait"] != &"next"
 	_next.visible = not waits
 	_next.text = s.get("button", "NEXT")
-	# Nothing left to skip on the last memo - and its wider button would push
-	# the memo out over the nearest desk.
-	_skip.visible = i < STEPS.size() - 1
+	# Nothing left to exit on the last memo - its own button already goes
+	# where exiting would.
+	_exit.visible = i < STEPS.size() - 1
 	_prompt.visible = waits
 	_prompt.text = s.get("prompt", "")
+	if s.get("confetti", false):
+		_celebrate()
 	_update_highlight()
 
 func _on_next() -> void:
@@ -144,6 +190,73 @@ func _on_next() -> void:
 func _finish(completed: bool) -> void:
 	stop()
 	finished.emit(completed)
+
+# --- the welcome -----------------------------------------------------------
+
+## Day one - or, for someone who has been here before, day one again with the
+## way straight to the week as the button that is filled in.
+func _show_splash() -> void:
+	_memo.visible = false
+	# The splash carries its own way out, as big as the way in; a second one
+	# in the corner would only be the same button twice.
+	_exit.visible = false
+	_splash.visible = true
+	_dress_the_splash(TutorialProgress.is_done())
+
+	# In with a little bounce, and the name tag slapped on a beat later.
+	if _splash_tween != null and _splash_tween.is_valid():
+		_splash_tween.kill()
+	_dim.modulate.a = 0.0
+	_card.modulate.a = 0.0
+	_card.pivot_offset = Vector2(_card.custom_minimum_size.x * 0.5, 280.0)
+	_card.scale = Vector2(0.9, 0.9)
+	_tag.scale = Vector2(1.7, 1.7)
+	_tag.rotation = deg_to_rad(-16.0)
+	_splash_tween = create_tween()
+	_splash_tween.set_parallel(true)
+	_splash_tween.tween_property(_dim, "modulate:a", 1.0, 0.25)
+	_splash_tween.tween_property(_card, "modulate:a", 1.0, 0.2)
+	_splash_tween.tween_property(_card, "scale", Vector2.ONE, 0.45) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_splash_tween.tween_property(_tag, "scale", Vector2.ONE, 0.35) \
+		.set_delay(0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_splash_tween.tween_property(_tag, "rotation", deg_to_rad(-4.0), 0.35) \
+		.set_delay(0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_celebrate()
+
+## Which way forward is the loud one. A first-timer is pointed at the lesson;
+## someone who has done it is pointed straight at the week, with the lesson
+## still one click away - both buttons are the same size either way.
+func _dress_the_splash(returning: bool) -> void:
+	var copy: Dictionary = WELCOME_BACK if returning else FIRST_DAY
+	_eyebrow.text = copy["eyebrow"]
+	_splash_title.text = copy["title"]
+	_splash_body.text = copy["body"]
+	_start.text = copy["start"]
+	_splash_skip.text = copy["skip"]
+	var loud: Button = _splash_skip if returning else _start
+	var quiet: Button = _start if returning else _splash_skip
+	ButtonStyle.filled(loud, Palette.color(&"primary"))
+	ButtonStyle.outlined(quiet, Palette.color(&"ink"))
+	# The filled one on the right, where the eye lands last.
+	_splash_buttons.move_child(loud, _splash_buttons.get_child_count() - 1)
+
+func _hide_splash() -> void:
+	if _splash_tween != null and _splash_tween.is_valid():
+		_splash_tween.kill()
+	_splash.visible = false
+
+## Confetti. It is the first day, after all.
+func _celebrate() -> void:
+	_confetti.restart()
+
+## One piece of confetti: a small white slip the particles tint and spin.
+static func _confetti_piece() -> Texture2D:
+	var img := Image.create(8, 14, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	return ImageTexture.create_from_image(img)
+
+# --- watching the table ------------------------------------------------------
 
 func _process(_delta: float) -> void:
 	if not is_running():

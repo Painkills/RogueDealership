@@ -45,7 +45,12 @@ static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPo
 	var s := Shift.new(practice, interests, cards, archetypes, SEED, [ARCHETYPE],
 		Deck.build_starting(cards), 0, 1, 0, 0, dialogue, 1)
 	var c: Customer = s.chairs[0]
+	# The floor has already logged them walking up under the name it dealt
+	# them. The log has to agree with the file on the table.
+	var dealt := c.display_name
 	c.display_name = CUSTOMER_NAME
+	for k in range(s.events.size()):
+		s.events[k] = s.events[k].replace(dealt, CUSTOMER_NAME)
 	c.max_patience = PATIENCE
 	c.patience = PATIENCE
 	# Normally the one thing you have to earn a look at. Shown here so the

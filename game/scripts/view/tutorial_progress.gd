@@ -1,7 +1,9 @@
 class_name TutorialProgress extends RefCounted
 ## Whether this player has already been through (or skipped) the practice
-## shift, so it opens the game once rather than every time. Kept in a small
-## file under user://, which a Web build keeps in the browser's own storage.
+## shift. It opens the game every time either way; what this changes is its
+## welcome, which points someone who has done it straight at the week (see
+## TutorialCoach._dress_the_splash()). Kept in a small file under user://,
+## which a Web build keeps in the browser's own storage.
 ##
 ## In the view layer, not scripts/run: it touches disk, and the model and run
 ## layers never do (see test_architecture.gd). The shift picker's own "HOW TO
