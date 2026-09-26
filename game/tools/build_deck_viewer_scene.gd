@@ -13,7 +13,7 @@ extends SceneTree
 ## wrapping list for support cards.
 
 ## Nearly the whole screen: two 3-wide grids of full-size cards side by side.
-## Still clear of the corner VIEW DECK button above it.
+## Still clear of the corner VIEW TOOLKIT button above it.
 const WINDOW := Vector2(1840, 940)
 
 func _init() -> void:

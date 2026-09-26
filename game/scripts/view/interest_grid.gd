@@ -61,7 +61,7 @@ func set_state(pool: InterestPool, known_ranks: Dictionary, top_category,
 
 ## The cells of one category row, known-first by rank and pool order behind.
 ## Static and pure so a test can ask what the ordering is without a canvas -
-## the same reason appeal_bar.gd hoisted marker_x() out of _draw().
+## the same reason appeal_bar.gd hoisted marker_y() out of _draw().
 static func row_order(in_row: Array, known: Dictionary) -> Array:
 	var seen: Array = []
 	var rest: Array = []

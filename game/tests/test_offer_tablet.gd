@@ -91,6 +91,56 @@ func test_it_only_draws_while_it_is_on() -> void:
 	t.free()
 
 # ------------------------------------------------------------------ the meter
+func test_the_meter_stands_upright_beside_the_product() -> void:
+	## "Let's try making the appeal meter vertical so it can be a little
+	## larger." It stands at the inside edge of the appeal panel - the edge
+	## nearest the product - and takes the panel's whole height, where lying
+	## across the panel it was capped at the panel's width.
+	var t := _instance()
+	var bar := t.get_node(^"ScreenViewport/TabletScreen/AppealPanel/Row/AppealBar") as AppealBar
+	h.check("the meter is where the tablet reads it from", bar != null)
+	if bar == null:
+		t.free()
+		return
+	var row := bar.get_parent()
+	h.check("the meter shares a row with the panel's words, not a column",
+		row is HBoxContainer)
+	h.eq("and is the last thing in it, up against the product",
+		bar.get_index(), row.get_child_count() - 1)
+	h.eq("as wide as the tablet says (%s)" % bar.custom_minimum_size,
+		bar.custom_minimum_size, Vector2(OfferTablet.METER_WIDTH, 0))
+	h.check("and left to fill the row's height, not given one of its own",
+		bar.size_flags_vertical & Control.SIZE_FILL != 0)
+	# The panel's content is its rect less the style's padding - the height the
+	# row hands the meter. It used to be a 64-px bar across a 329-px panel.
+	var style := (row.get_parent() as PanelContainer).get_theme_stylebox("panel")
+	var tall: float = OfferTablet.APPEAL_RECT.size.y \
+		- style.get_margin(SIDE_TOP) - style.get_margin(SIDE_BOTTOM)
+	var across: float = OfferTablet.APPEAL_RECT.size.x \
+		- style.get_margin(SIDE_LEFT) - style.get_margin(SIDE_RIGHT)
+	h.check("so it is longer standing (%d px) than it could ever be lying down (%d px)"
+		% [int(tall), int(across)], tall > across)
+	t.free()
+
+func test_the_meter_fills_up_from_the_bottom_and_marks_the_line_across_it() -> void:
+	var bar := AppealBar.new()
+	var track := Rect2(4, 4, 88, 400)
+	bar.set_state(20, 40, 80, "COOL", false)
+	var fill := bar.fill_rect(track)
+	h.eq("the fill stands on the bottom of the track", fill.end.y, track.end.y)
+	h.eq("the full width of it", fill.size.x, track.size.x)
+	h.eq("and as tall as the appeal's share of the scale", fill.size.y, 100.0)
+	h.eq("no marker while the Line is a guess", bar.marker_y(track), -1.0)
+	bar.set_state(20, 40, 80, "COOL", true)
+	h.eq("once known, the Line sits halfway up a bar scaled to twice it",
+		bar.marker_y(track), track.end.y - 200.0)
+	bar.set_state(200, 400, 80, "COLD", true)
+	h.eq("past the ceiling the fill is simply full", bar.fill_rect(track).size.y,
+		track.size.y)
+	h.eq("and the marker pinned at the top, not off the end", bar.marker_y(track),
+		track.position.y)
+	bar.free()
+
 func test_the_meter_fills_with_your_appeal_on_the_models_fixed_scale() -> void:
 	var t := _instance()
 	var scale := _meter_scale()
@@ -135,8 +185,16 @@ func test_the_status_is_a_band_until_you_know_the_line_and_a_number_after() -> v
 	c.offer = _offer(&"vsc", 30, 1600)
 	t.show_offer(c, "COOL", _meter_scale())
 	h.eq("before you offer, no verdict at all", t._status.text, "")
-	h.check("just how to get one", t._hint.visible
-		and t._hint.text.contains("read the room"))
+	## "Remove the Read the Room hint on the product detail box since it's
+	## specific to a single card" - with their Line unknown the panel says
+	## nothing at all, rather than advertising one card on every pitch.
+	h.check("and no nudge toward any one card (%s)" % t._hint.text,
+		not t._hint.visible and t._hint.text == "")
+	c.known_line = true
+	t.show_offer(c, "COOL", _meter_scale())
+	h.check("a Line you can already see still gets its nudge (%s)" % t._hint.text,
+		t._hint.visible and t._hint.text.contains("Line is marked"))
+	c.known_line = false
 
 	c.offer.revealed = true
 	t.show_offer(c, "WARM", _meter_scale())

@@ -54,6 +54,8 @@ var action_state: Dictionary = {}  ## action id -> when it last fired
 ## re-arms the moment patience climbs back out, so a genuine second scare still
 ## warns.
 var warned_leaving_soon: bool = false
+## The same, for saying so out loud - see ShiftConfig.impatient_at.
+var said_impatient: bool = false
 
 var _interests: InterestPool
 

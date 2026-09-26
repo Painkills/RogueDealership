@@ -4,7 +4,7 @@ extends RefCounted
 ##
 ## All of it is reachable without a canvas, which is the whole reason the
 ## ordering was hoisted out of _draw() - the same move appeal_bar.gd made for
-## marker_x(), and for the same reason: a rule that only exists inside _draw()
+## marker_y(), and for the same reason: a rule that only exists inside _draw()
 ## is a rule no headless suite can ever check.
 var h: Harness
 

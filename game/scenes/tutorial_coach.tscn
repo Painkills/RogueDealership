@@ -211,18 +211,18 @@ interpolation_mode = 1
 offsets = PackedFloat32Array(0, 0.16666667, 0.33333334, 0.5, 0.6666667, 0.8333333)
 colors = PackedColorArray(0.14509805, 0.3882353, 0.92156863, 1, 0.91764706, 0.34509805, 0.047058824, 1, 0.08235294, 0.5019608, 0.23921569, 1, 0.98039216, 0.8, 0.08235294, 1, 0.8627451, 0.14901961, 0.14901961, 1, 0.4862745, 0.22745098, 0.92941177, 1)
 
-[node name="TutorialCoach" type="CanvasLayer" unique_id=1412100017]
+[node name="TutorialCoach" type="CanvasLayer" unique_id=1228932464]
 layer = 50
 script = ExtResource("1_tm3h3")
 
-[node name="Canvas" type="Control" parent="." unique_id=2093750954]
+[node name="Canvas" type="Control" parent="." unique_id=245123798]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2
 
-[node name="Highlight" type="Control" parent="Canvas" unique_id=1603937554]
+[node name="Highlight" type="Control" parent="Canvas" unique_id=352345894]
 unique_name_in_owner = true
 anchors_preset = 0
 offset_right = 1920.0
@@ -230,7 +230,7 @@ offset_bottom = 1080.0
 mouse_filter = 2
 script = ExtResource("2_pxwci")
 
-[node name="Memo" type="PanelContainer" parent="Canvas" unique_id=1950460528]
+[node name="Memo" type="PanelContainer" parent="Canvas" unique_id=1657848620]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(370, 0)
 layout_mode = 0
@@ -240,21 +240,21 @@ offset_right = 18.0
 offset_bottom = 80.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cllvj")
 
-[node name="Column" type="VBoxContainer" parent="Canvas/Memo" unique_id=1671065637]
+[node name="Column" type="VBoxContainer" parent="Canvas/Memo" unique_id=1537578519]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="Header" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=45055316]
+[node name="Header" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=923204550]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Badge" type="PanelContainer" parent="Canvas/Memo/Column/Header" unique_id=1240265728]
+[node name="Badge" type="PanelContainer" parent="Canvas/Memo/Column/Header" unique_id=1635250204]
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_82dr3")
 
-[node name="BadgeLabel" type="Label" parent="Canvas/Memo/Column/Header/Badge" unique_id=2060644955]
+[node name="BadgeLabel" type="Label" parent="Canvas/Memo/Column/Header/Badge" unique_id=1868811372]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -262,19 +262,19 @@ theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "TRAINING"
 
-[node name="Spacer" type="Control" parent="Canvas/Memo/Column/Header" unique_id=1363962435]
+[node name="Spacer" type="Control" parent="Canvas/Memo/Column/Header" unique_id=1383577707]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="StepLabel" type="Label" parent="Canvas/Memo/Column/Header" unique_id=1631558821]
+[node name="StepLabel" type="Label" parent="Canvas/Memo/Column/Header" unique_id=369220899]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "1 / 12"
 
-[node name="TitleLabel" type="Label" parent="Canvas/Memo/Column" unique_id=2007185862]
+[node name="TitleLabel" type="Label" parent="Canvas/Memo/Column" unique_id=1792656921]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -282,7 +282,7 @@ theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Meet your first customer"
 
-[node name="BodyLabel" type="Label" parent="Canvas/Memo/Column" unique_id=1091009995]
+[node name="BodyLabel" type="Label" parent="Canvas/Memo/Column" unique_id=549313933]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
@@ -290,7 +290,7 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Their file: who they are, what kind of buyer they are, and their patience. When patience runs out they walk - and a walkout costs you standing."
 autowrap_mode = 2
 
-[node name="HintLabel" type="Label" parent="Canvas/Memo/Column" unique_id=466217690]
+[node name="HintLabel" type="Label" parent="Canvas/Memo/Column" unique_id=12861161]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -298,19 +298,19 @@ theme_override_font_sizes/font_size = 19
 theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 autowrap_mode = 2
 
-[node name="PromptLabel" type="Label" parent="Canvas/Memo/Column" unique_id=728584447]
+[node name="PromptLabel" type="Label" parent="Canvas/Memo/Column" unique_id=1713652894]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 autowrap_mode = 2
 
-[node name="Buttons" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=1150620798]
+[node name="Buttons" type="HBoxContainer" parent="Canvas/Memo/Column" unique_id=1966031801]
 layout_mode = 2
 mouse_filter = 2
 alignment = 2
 
-[node name="NextButton" type="Button" parent="Canvas/Memo/Column/Buttons" unique_id=146644194]
+[node name="NextButton" type="Button" parent="Canvas/Memo/Column/Buttons" unique_id=1583774907]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_mtqnw")
@@ -325,14 +325,14 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
 text = "NEXT"
 
-[node name="ExitButton" type="Button" parent="Canvas" unique_id=431969291]
+[node name="ExitButton" type="Button" parent="Canvas" unique_id=226946786]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(240, 56)
 layout_mode = 0
-offset_left = 1448.0
+offset_left = 1408.0
 offset_top = 8.0
-offset_right = 1688.0
+offset_right = 1648.0
 offset_bottom = 64.0
 theme_override_styles/normal = SubResource("StyleBoxFlat_lpoyx")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_64cao")
@@ -346,7 +346,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 22
 text = "EXIT TUTORIAL  ×"
 
-[node name="Splash" type="Control" parent="Canvas" unique_id=695527172]
+[node name="Splash" type="Control" parent="Canvas" unique_id=666122006]
 unique_name_in_owner = true
 visible = false
 anchors_preset = 0
@@ -354,14 +354,14 @@ offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2
 
-[node name="Dim" type="Panel" parent="Canvas/Splash" unique_id=365335246]
+[node name="Dim" type="Panel" parent="Canvas/Splash" unique_id=2097958114]
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cusxn")
 
-[node name="SplashCard" type="PanelContainer" parent="Canvas/Splash" unique_id=158871628]
+[node name="SplashCard" type="PanelContainer" parent="Canvas/Splash" unique_id=721713140]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(880, 0)
 layout_mode = 0
@@ -371,38 +371,38 @@ offset_right = 520.0
 offset_bottom = 210.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_anu6p")
 
-[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard" unique_id=1071452244]
+[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard" unique_id=1222673601]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 14
 
-[node name="NameTagHolder" type="CenterContainer" parent="Canvas/Splash/SplashCard/Column" unique_id=2056913300]
+[node name="NameTagHolder" type="CenterContainer" parent="Canvas/Splash/SplashCard/Column" unique_id=704891195]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="NameTag" type="PanelContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder" unique_id=490107760]
+[node name="NameTag" type="PanelContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder" unique_id=1467452107]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 150)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_k05y5")
 
-[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag" unique_id=1383552311]
+[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag" unique_id=1689757538]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 
-[node name="Band" type="PanelContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column" unique_id=2037387403]
+[node name="Band" type="PanelContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column" unique_id=572704923]
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5tvdu")
 
-[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band" unique_id=1833308214]
+[node name="Column" type="VBoxContainer" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band" unique_id=417938672]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = -6
 
-[node name="Hello" type="Label" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band/Column" unique_id=170116733]
+[node name="Hello" type="Label" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band/Column" unique_id=781296603]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -411,7 +411,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "HELLO"
 horizontal_alignment = 1
 
-[node name="MyNameIs" type="Label" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band/Column" unique_id=895290680]
+[node name="MyNameIs" type="Label" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column/Band/Column" unique_id=774462225]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
@@ -419,7 +419,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "my name is"
 horizontal_alignment = 1
 
-[node name="TagName" type="LineEdit" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column" unique_id=193937994]
+[node name="TagName" type="LineEdit" parent="Canvas/Splash/SplashCard/Column/NameTagHolder/NameTag/Column" unique_id=646624099]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
@@ -437,7 +437,7 @@ max_length = 18
 flat = true
 caret_blink = true
 
-[node name="Eyebrow" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=1340905299]
+[node name="Eyebrow" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=2045420207]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -446,7 +446,7 @@ theme_override_colors/font_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
 text = "FIRST DAY ON THE JOB"
 horizontal_alignment = 1
 
-[node name="SplashTitle" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=1302272688]
+[node name="SplashTitle" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=2044998250]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -455,7 +455,7 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Welcome aboard, Manager."
 horizontal_alignment = 1
 
-[node name="SplashBody" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=526520828]
+[node name="SplashBody" type="Label" parent="Canvas/Splash/SplashCard/Column" unique_id=459316432]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 25
@@ -466,33 +466,33 @@ The GM is watching your numbers. No pressure."
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="Gap" type="Control" parent="Canvas/Splash/SplashCard/Column" unique_id=18961093]
+[node name="Gap" type="Control" parent="Canvas/Splash/SplashCard/Column" unique_id=1102788206]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="SplashButtons" type="HBoxContainer" parent="Canvas/Splash/SplashCard/Column" unique_id=1892319876]
+[node name="SplashButtons" type="HBoxContainer" parent="Canvas/Splash/SplashCard/Column" unique_id=1893606626]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 22
 alignment = 1
 
-[node name="SplashSkipButton" type="Button" parent="Canvas/Splash/SplashCard/Column/SplashButtons" unique_id=2066955742]
+[node name="SplashSkipButton" type="Button" parent="Canvas/Splash/SplashCard/Column/SplashButtons" unique_id=910300408]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(320, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "SKIP TRAINING"
 
-[node name="StartButton" type="Button" parent="Canvas/Splash/SplashCard/Column/SplashButtons" unique_id=254906217]
+[node name="StartButton" type="Button" parent="Canvas/Splash/SplashCard/Column/SplashButtons" unique_id=1796197763]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(320, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "SHOW ME THE ROPES"
 
-[node name="Confetti" type="CPUParticles2D" parent="Canvas" unique_id=677864863]
+[node name="Confetti" type="CPUParticles2D" parent="Canvas" unique_id=1250595084]
 unique_name_in_owner = true
 position = Vector2(960, -40)
 emitting = false

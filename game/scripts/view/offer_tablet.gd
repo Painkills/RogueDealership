@@ -33,6 +33,9 @@ const WELL_RECT := Rect2i(435, 29, 450, 630)
 ## so it gets the side your eye reaches first.
 const APPEAL_RECT := Rect2i(32, 29, 381, 630)
 const DEAL_RECT := Rect2i(907, 29, 381, 630)
+## The appeal meter stands upright at the inside edge of its panel, right up
+## against the product, as tall as the panel's content - this is its width.
+const METER_WIDTH := 96
 
 var _material := StandardMaterial3D.new()
 var _bound := false
@@ -56,9 +59,9 @@ func _bind() -> void:
 	_bound = true
 	_viewport = $ScreenViewport
 	var screen: Node = $ScreenViewport/TabletScreen
-	_bar = screen.get_node(^"AppealPanel/Column/AppealBar") as AppealBar
-	_status = screen.get_node(^"AppealPanel/Column/StatusLabel")
-	_hint = screen.get_node(^"AppealPanel/Column/HintLabel")
+	_bar = screen.get_node(^"AppealPanel/Row/AppealBar") as AppealBar
+	_status = screen.get_node(^"AppealPanel/Row/Column/StatusLabel")
+	_hint = screen.get_node(^"AppealPanel/Row/Column/HintLabel")
 	_margin = screen.get_node(^"DealPanel/Column/MarginLabel")
 	_combo = screen.get_node(^"DealPanel/Column/ComboLabel")
 	_worth = screen.get_node(^"DealPanel/Column/WorthLabel")
@@ -128,7 +131,7 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 	_status.visible = not _status.text.is_empty()
 	_hint.visible = not _hint.text.is_empty()
 
-## The verdict under the meter: nothing yet, a band, or the exact gap.
+## The verdict beside the meter: nothing yet, a band, or the exact gap.
 ##
 ## The FILL is always honest about your own appeal; only the LINE is fogged, and
 ## Read the Room is the ONLY thing that lifts it. Offering used to lift it too,
@@ -138,11 +141,16 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 ## So the exact gap is gated on known_line rather than on having offered.
 ## Having offered still buys you something real - the band - but a band is a
 ## read and a number is a readout, and only one of those you have paid for.
+##
+## Before you offer, the only nudge is for a Line you can already see. There
+## used to be a second one for a Line you could not - "read the room to learn
+## their Line" - but that is advice about one particular card, printed on every
+## pitch whether or not you are holding it.
 func _read_the_offer(c, o, band: String) -> void:
 	if not o.revealed:
 		_status.text = ""
 		_hint.text = "their Line is marked - clear it before you offer" \
-			if c.known_line else "read the room to learn their Line"
+			if c.known_line else ""
 		return
 
 	_hint.text = ""

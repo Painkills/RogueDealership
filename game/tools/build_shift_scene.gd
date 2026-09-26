@@ -71,6 +71,13 @@ const PULL_PICKER := "res://scenes/pull_picker.tscn"
 ## easier target than the old symmetric slab, biased toward where a dragged
 ## card's cursor typically sits.
 const DROPZONE_SHAPE := "res://scenes/dropzone_shape_3d.tres"
+## The discard's own, a unit taller at the top (+3 where every other zone
+## stops at +2.2): "give the discard dropzone a little more vertical area."
+## The pile sits low in the bottom-right corner, so upward is the only way it
+## can grow on screen - and it stops about 30 px under the action column's
+## bottom edge, so the buttons there never sit over it. drive_shift.gd pins
+## both ends of that.
+const DISCARD_DROPZONE_SHAPE := "res://scenes/discard_dropzone_shape_3d.tres"
 
 # --- table geometry, world units -------------------------------------------
 ## Seats sit on this circle at 0, 120 and 240 degrees. Seat i is at carousel
@@ -445,6 +452,7 @@ func _init() -> void:
 	# appearing at some other height.
 	var discard := _collection(collection_scene, "Discard", DISCARD_STOWED, cam, root)
 	discard.card_layout_strategy = PileCardLayout.new()
+	discard.dropzone_collision_shape = load(DISCARD_DROPZONE_SHAPE)
 	# A pale outline like the empty product slot's, so an empty discard reads
 	# as an empty place to put something rather than a murky purple block.
 	_mark(discard, root, Palette.color(&"paper"), 0.2)

@@ -1,24 +1,30 @@
-﻿class_name AppealBar extends Control
-## The appeal meter on a product's detail card.
+class_name AppealBar extends Control
+## The appeal meter on the tablet, standing upright beside the product.
 ##
 ## Three things at once, and each answers a different question:
 ##
-##   FILL   how much appeal is on this offer right now. Always drawn, and it
-##          grows as you play appeal cards - which is the whole point. Before
-##          this, appeal cards changed nothing you could see until you offered.
+##   FILL   how much appeal is on this offer right now, rising from the bottom.
+##          Always drawn, and it climbs as you play appeal cards - which is the
+##          whole point. Before this, appeal cards changed nothing you could see
+##          until you offered.
 ##   COLOUR how that compares with their Line. Red far, amber close, green once
 ##          you have cleared it. This replaces the COOL / WARM / ALMOST words:
 ##          the band was always a colour pretending to be a noun.
-##   MARKER where the Line actually is. Drawn ONLY once you know it, which is
-##          after you offer or after Read the Room. That is the one number the
-##          fog is protecting, so it is the one thing gated.
+##   MARKER where the Line actually is: a rule across the bar at its height.
+##          Drawn ONLY once you know it, which is after Read the Room. That is
+##          the one number the fog is protecting, so it is the one thing gated.
+##
+## Upright rather than lying across its panel: standing, it runs the whole
+## height of the tablet's screen, where lying down it only ever had the panel's
+## width to fill.
 ##
 ## No text. A bar with a number printed on it is two readouts disagreeing about
 ## which one you should look at.
 
-const TRACK_INSET := 3.0
-const MARKER_WIDTH := 5.0
-const NUB := 7.0
+const TRACK_INSET := 4.0
+const MARKER_WIDTH := 6.0
+const NUB := 8.0
+const RADIUS := 14
 
 var _appeal: int = 0
 var _line: int = 0
@@ -50,34 +56,51 @@ func fill_color() -> Color:
 		return Palette.color(&"patience_warn")
 	return Palette.color(&"patience_bad")
 
-## Where the Line marker goes, or -1 when it must not be drawn at all. The gate
-## lives HERE rather than as a branch inside _draw(), because _draw() needs a
-## real canvas and cannot be called from a headless check - so the one thing the
-## fog is actually protecting would have been the one thing nothing could test.
-func marker_x(track: Rect2) -> float:
+## The part of `track` the fill covers: its full width, standing on its bottom
+## edge, as tall as the appeal is a share of the scale. Hoisted out of _draw()
+## for the same reason marker_y() is - _draw() needs a real canvas, so a rule
+## that lived only in there could never be checked headless.
+func fill_rect(track: Rect2) -> Rect2:
+	var h: float = track.size.y * clampf(float(_appeal) / float(_scale), 0.0, 1.0)
+	return Rect2(track.position.x, track.end.y - h, track.size.x, h)
+
+## Where the Line marker goes, or -1 when it must not be drawn at all. Measured
+## up from the bottom, the way the fill rises. The gate lives HERE rather than
+## as a branch inside _draw(), so the one thing the fog is actually protecting
+## is not the one thing nothing could test.
+func marker_y(track: Rect2) -> float:
 	if not _line_known:
 		return -1.0
-	return track.position.x \
-		+ track.size.x * clampf(float(_line) / float(_scale), 0.0, 1.0)
+	return track.end.y \
+		- track.size.y * clampf(float(_line) / float(_scale), 0.0, 1.0)
+
+func _track() -> Rect2:
+	return Rect2(TRACK_INSET, TRACK_INSET,
+		size.x - TRACK_INSET * 2.0, size.y - TRACK_INSET * 2.0)
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Palette.color(&"neutral_1"))
-	var track := Rect2(TRACK_INSET, TRACK_INSET,
-		size.x - TRACK_INSET * 2.0, size.y - TRACK_INSET * 2.0)
-	draw_rect(track, Palette.color(&"panel_hi"))
+	draw_style_box(_rounded(Palette.color(&"neutral_1"), RADIUS), Rect2(Vector2.ZERO, size))
+	var track := _track()
+	var inner := RADIUS - int(TRACK_INSET)
+	draw_style_box(_rounded(Palette.color(&"panel_hi"), inner), track)
 
-	var frac: float = clampf(float(_appeal) / float(_scale), 0.0, 1.0)
-	if frac > 0.0:
-		draw_rect(Rect2(track.position, Vector2(track.size.x * frac, track.size.y)),
-			fill_color())
+	var fill := fill_rect(track)
+	if fill.size.y > 0.0:
+		draw_style_box(_rounded(fill_color(), inner), fill)
 
-	var mx := marker_x(track)
-	if mx < 0.0:
+	var my := marker_y(track)
+	if my < 0.0:
 		return
-	# Full-height rule plus a nub top and bottom, so the Line stays findable
-	# where the fill has already passed it and the two are the same brightness.
+	# A rule across the whole bar plus a nub either side, so the Line stays
+	# findable where the fill has already risen past it and the two are the
+	# same brightness.
 	var ink := Palette.color(&"text")
-	draw_rect(Rect2(mx - MARKER_WIDTH * 0.5, 0.0, MARKER_WIDTH, size.y), ink)
-	draw_rect(Rect2(mx - NUB, 0.0, NUB * 2.0, TRACK_INSET + 2.0), ink)
-	draw_rect(Rect2(mx - NUB, size.y - TRACK_INSET - 2.0, NUB * 2.0,
-		TRACK_INSET + 2.0), ink)
+	draw_rect(Rect2(0.0, my - MARKER_WIDTH * 0.5, size.x, MARKER_WIDTH), ink)
+	draw_rect(Rect2(0.0, my - NUB, TRACK_INSET + 3.0, NUB * 2.0), ink)
+	draw_rect(Rect2(size.x - TRACK_INSET - 3.0, my - NUB, TRACK_INSET + 3.0, NUB * 2.0), ink)
+
+func _rounded(color: Color, radius: int) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = color
+	s.set_corner_radius_all(maxi(0, radius))
+	return s

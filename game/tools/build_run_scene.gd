@@ -50,7 +50,7 @@ func _init() -> void:
 
 	# The practice shift's teacher. Its own CanvasLayer, above the floor's HUD
 	# so it can point at the log and the buttons, and below the badge layer
-	# so the corner VIEW DECK button still sits on top of everything.
+	# so the corner VIEW TOOLKIT button still sits on top of everything.
 	var coach: CanvasLayer = (load("res://scenes/tutorial_coach.tscn") as PackedScene).instantiate()
 	coach.name = "TutorialCoach"
 	root.add_child(coach)
@@ -96,17 +96,22 @@ func _init() -> void:
 
 	# Top-right, same layer as the badge (always on screen, over any of the
 	# four screens or the deck viewer itself) - a reliable click target for
-	# "your deck" that does not depend on hitting the 3D draw pile's own
+	# "your toolkit" that does not depend on hitting the 3D draw pile's own
 	# pick shape, which is a real click target too (see shift_controller.gd's
 	# _draw_zone wiring) but a much smaller and less forgiving one.
 	var view_deck_btn := Button.new()
 	view_deck_btn.name = "ViewDeckCornerButton"
-	view_deck_btn.text = "VIEW DECK"
+	# The same words as the store's own button to the same page - one name
+	# for the thing, wherever you reach it from.
+	view_deck_btn.text = "VIEW TOOLKIT"
 	view_deck_btn.unique_name_in_owner = true
-	view_deck_btn.custom_minimum_size = Vector2(200, 56)
+	view_deck_btn.custom_minimum_size = Vector2(240, 56)
 	view_deck_btn.add_theme_font_size_override("font_size", 22)
 	view_deck_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	view_deck_btn.offset_left = -216
+	# Anchored to the right edge, so any growth has to go left, into the
+	# screen, rather than off it.
+	view_deck_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	view_deck_btn.offset_left = -256
 	view_deck_btn.offset_top = 8
 	view_deck_btn.offset_right = -16
 	view_deck_btn.offset_bottom = 64

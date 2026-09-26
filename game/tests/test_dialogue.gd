@@ -397,3 +397,108 @@ func test_a_missed_demand_also_says_something() -> void:
 	c.demand_due_tick = s.tick + d.ticks
 	s._settle_demand(c, false)
 	h.check("says something when ignored too", s.action_log[0]["dialogue"] != "")
+
+# ------------------------------------------------- what they say on their own
+## Every line the shift says on its own, not as the voice of a card, an action
+## or a demand - taking a product, running short of patience.
+func _chatter(s: Shift, from: int = 0) -> Array:
+	return s.action_log.slice(from).filter(func(e): return bool(e.get("chatter", false)))
+
+func _texts(tag: StringName, archetype_id: StringName, product_id: StringName) -> Array[String]:
+	var out: Array[String] = []
+	for l in _pool().candidates([tag], archetype_id, product_id, &""):
+		out.append(l.text)
+	return out
+
+func test_taking_a_product_says_so_out_loud() -> void:
+	## "...or replace with a new one about how they are happy about the
+	## product they accepted." Their own yes, from the accepted lines they
+	## qualify for - and a line written for the very product they took is one.
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	_hand(s, [&"gap"])
+	s.place(0)
+	c.line = 0
+	var before := s.action_log.size()
+	var res := s.offer()
+	h.eq("it sold (%s)" % res.msg, res.kind, "sale")
+	var said := _chatter(s, before)
+	h.eq("and they said one thing about it", said.size(), 1)
+	if said.size() != 1:
+		return
+	var entry: Dictionary = said[0]
+	var fits := _texts(&"accepted", &"easygoing", &"gap")
+	h.check("a yes they qualify for (%s)" % entry["dialogue"], fits.has(entry["dialogue"]))
+	h.check("among them one about the GAP itself",
+		fits.has("\"Good. I am not paying off a car I do not have.\""))
+	h.eq("said by the customer who took it", entry["key"], c.key)
+	h.eq("chatter names no action", entry["name"], "")
+	h.check("and did nothing", (entry["descriptions"] as Array).is_empty())
+	for key in ["key", "customer", "name", "dialogue", "descriptions", "floor_wide"]:
+		h.check("but carries everything the log reads (%s)" % key, entry.has(key))
+
+func test_an_offer_that_falls_short_is_not_a_yes() -> void:
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	_hand(s, [&"gap"])
+	s.place(0)
+	c.line = 999
+	var before := s.action_log.size()
+	var res := s.offer()
+	h.eq("it fell short (%s)" % res.msg, res.kind, "miss")
+	var yes := _texts(&"accepted", &"easygoing", &"gap")
+	var said_yes := _chatter(s, before).filter(func(e): return yes.has(e["dialogue"]))
+	h.eq("and nobody said yes to it", said_yes.size(), 0)
+
+func test_reaching_five_patience_says_so_once_per_dip() -> void:
+	## "Add a dialogue line for when a customer reaches 5 or less patience."
+	h.eq("five, as asked", (load("res://data/shift_config.tres") as ShiftConfig).impatient_at, 5)
+	var s := _shift([&"easygoing"])
+	var c := _at(s)
+	_hand(s, [&"smalltalk", &"smalltalk", &"smalltalk", &"smalltalk", &"smalltalk"])
+	c.patience = 7
+	var theirs := func() -> Array:
+		return _chatter(s).filter(func(e): return e["key"] == c.key)
+	s.dig(0)
+	h.eq("at 6, not yet (%d)" % c.patience, theirs.call().size(), 0)
+	s.dig(0)
+	h.eq("at 5, out loud (%d)" % c.patience, theirs.call().size(), 1)
+	if theirs.call().size() == 1:
+		var said: String = theirs.call()[0]["dialogue"]
+		h.check("in their own impatient voice (%s)" % said,
+			_texts(&"impatient", &"easygoing", &"").has(said))
+	s.dig(0)
+	h.eq("once per dip - not again at 4 (%d)" % c.patience, theirs.call().size(), 1)
+	# Back out of it, then down again: a fresh dip is a fresh complaint.
+	c.add_patience(10)
+	s._settle_patience()
+	c.patience = 5
+	s._settle_patience()
+	h.eq("a second dip says it again", theirs.call().size(), 2)
+
+func test_a_customer_nowhere_near_it_says_nothing() -> void:
+	var s := _shift([&"easygoing"])
+	_at(s)
+	var before := s.action_log.size()
+	s._settle_patience()
+	h.eq("full patience, no grumbling", _chatter(s, before).size(), 0)
+
+func test_with_no_pool_nobody_says_anything_on_their_own() -> void:
+	## The same silence every other line falls back to - a shift built without
+	## a pool still plays, it just has nothing to say.
+	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
+	cfg.patience_jitter = 0
+	cfg.prior_slip = 0.0
+	cfg.arrival_patience_min_fraction = 1.0
+	var s := Shift.new(cfg,
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), 1, [&"easygoing"])
+	var c := _at(s)
+	_hand(s, [&"gap"])
+	s.place(0)
+	c.line = 0
+	c.patience = 5
+	s.offer()
+	s._settle_patience()
+	h.eq("nothing logged as chatter", _chatter(s).size(), 0)

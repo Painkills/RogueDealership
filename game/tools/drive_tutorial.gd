@@ -242,7 +242,7 @@ func _check_the_way_out_is_on_screen() -> void:
 	_check("filled, not a faint outline",
 		(exit.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Palette.color(&"ink"))
 	_check("clear of the memo", not r.intersects(_coach.memo_rect()))
-	_check("and of the VIEW DECK button beside it",
+	_check("and of the VIEW TOOLKIT button beside it",
 		not r.intersects((_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control)
 			.get_global_rect()))
 

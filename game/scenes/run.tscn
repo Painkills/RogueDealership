@@ -26,7 +26,7 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.94)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=964589176]
+[node name="Run" type="Node" unique_id=29331707]
 script = ExtResource("1_o3bs3")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=465005308 instance=ExtResource("2_21lnt")]
@@ -37,10 +37,10 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("3_pgpyo")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=1466859234 instance=ExtResource("4_2s4kx")]
+[node name="ShiftView" type="Node3D" parent="." unique_id=1719427924 instance=ExtResource("4_2s4kx")]
 script = ExtResource("5_47ec3")
 
-[node name="ShopView" type="PanelContainer" parent="." unique_id=1378968275 instance=ExtResource("6_lc2vt")]
+[node name="ShopView" type="PanelContainer" parent="." unique_id=1174311798 instance=ExtResource("6_lc2vt")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -64,14 +64,14 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("11_xh8mu")
 
-[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=1412100017 instance=ExtResource("12_i3hux")]
+[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=1228932464 instance=ExtResource("12_i3hux")]
 layer = 50
 script = ExtResource("13_yh7fy")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=2035877521]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1329111333]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=833591810]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1655193085]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -90,15 +90,16 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=1673369241]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=1445178044]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 56)
+custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -216.0
+offset_left = -256.0
 offset_top = 8.0
 offset_right = -16.0
 offset_bottom = 64.0
+grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
-text = "VIEW DECK"
+text = "VIEW TOOLKIT"

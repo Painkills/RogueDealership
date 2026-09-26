@@ -10,7 +10,3 @@ blurb = "Standard traffic. Nothing you haven't handled before."
 floor_size_override = 0
 patience_scale = 1.0
 unlock_full_archetype_pool = false
-allow_upgrades_in_shop = false
-free_purchases = 0
-free_upgrades = 0
-free_choices = 0

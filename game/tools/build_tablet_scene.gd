@@ -58,23 +58,32 @@ func _init() -> void:
 	_box(screen, root, "Well", Rect2(OfferTablet.WELL_RECT), well)
 
 	# --- left: how it is landing -------------------------------------------
+	# The words on the outside and the meter on the inside, standing right up
+	# against the product it is measuring.
 	var appeal := _panel(screen, root, "AppealPanel", OfferTablet.APPEAL_RECT)
-	var col := _column(appeal, root, 14)
+	var row := HBoxContainer.new()
+	row.name = "Row"
+	row.add_theme_constant_override("separation", 20)
+	appeal.add_child(row)
+	row.owner = root
+	var col := _column(row, root, 14)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_label(col, root, "AppealTitle", "APPEAL", 34, &"text_dim", true)
+	# Placeholders are the longest thing each can say.
+	var status := _label(col, root, "StatusLabel", "READY TO SIGN", 42, &"text", true)
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD
+	var hint := _label(col, root, "HintLabel",
+		"their Line is marked - clear it before you offer", 28, &"text_dim")
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
 	# Fill is how much appeal this offer carries, colour is how that compares
 	# with their Line, and the marker only appears once you have earned the Line.
+	# Upright and the panel's full height - see appeal_bar.gd.
 	var bar := Control.new()
 	bar.name = "AppealBar"
-	bar.custom_minimum_size = Vector2(0, 64)
-	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.custom_minimum_size = Vector2(OfferTablet.METER_WIDTH, 0)
 	bar.set_script(load("res://scripts/view/appeal_bar.gd"))
-	col.add_child(bar)
+	row.add_child(bar)
 	bar.owner = root
-	# Placeholders are the longest thing each can say.
-	_label(col, root, "StatusLabel", "READY TO SIGN", 46, &"text", true)
-	var hint := _label(col, root, "HintLabel",
-		"their Line is marked - clear it before you offer", 30, &"text_dim")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
 
 	# --- right: what it is worth ---------------------------------------------
 	var deal := _panel(screen, root, "DealPanel", OfferTablet.DEAL_RECT)

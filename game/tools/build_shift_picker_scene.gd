@@ -7,7 +7,7 @@ extends SceneTree
 
 ## A calendar app's window, nearly the width of the screen. Its height comes
 ## from the week it holds (CalendarDay.HOUR_PX), and it stays clear of the
-## run's corner VIEW DECK button above it.
+## run's corner VIEW TOOLKIT button above it.
 const WINDOW := Vector2(1840, 0)
 
 func _init() -> void:

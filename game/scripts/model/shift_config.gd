@@ -72,6 +72,11 @@ class_name ShiftConfig extends Resource
 @export var arrival_patience_min_fraction: float = 0.6
 @export var arrival_patience_floor: int = 4
 @export var leaving_soon_at: int = 4
+## A customer says so out loud once their patience is down to this or less -
+## once per dip, the way the leaving-soon warning is logged once. A point above
+## leaving_soon_at on purpose: they grumble just before their file turns red,
+## while there is still time to do something about it.
+@export var impatient_at: int = 5
 ## Ticks remaining in the WHOLE SHIFT, not one customer's patience, at which
 ## the clock starts warning you to close out what is unsigned before the bell
 ## takes it for free. See Shift.ticks_running_low().
@@ -100,11 +105,11 @@ class_name ShiftConfig extends Resource
 @export var unique_archetypes_on_floor: bool = true
 
 # --- the shop --------------------------------------------------------------
-@export var shop_offers: int = 3
-## Every un-upgraded card with a real upgrade to sell used to get an "upgrade"
-## button, all at once - eight or more rows deep by the back half of a run.
-## Capped and rolled at random per visit instead, the same shape shop_offers
-## already uses for new cards: a real choice among a few, not a checklist.
+## How many cards a visit offers is the tier's business (see ShiftProfile): one
+## free every time, plus whatever the tier adds. This is how many of YOUR cards
+## a visit with an upgrade lets you choose between - every un-upgraded card with
+## a real upgrade to sell used to get a button at once, eight or more rows deep
+## by the back half of a run. A real choice among a few, not a checklist.
 @export var shop_upgrade_slots: int = 3
 ## An upgrade costs this many times what it gains, so it pays back in that many
 ## sales. Both scale with the card, which is what keeps upgrading a cheap card

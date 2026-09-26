@@ -523,7 +523,16 @@ func _on_chair_pressed(chair_index: int) -> void:
 	_apply(_shift.approach(chair_index))
 
 func _on_offer() -> void:
-	_apply(_shift.offer())
+	var here = _shift.at
+	var res := _shift.offer()
+	# "The chat bubble on the customer whose table you're at should also go
+	# away if you offer them a product." Whatever they were saying before you
+	# asked has been answered: it clears, and whatever the offer itself made
+	# them say - taking the product, most often - is what _drain_log() puts up
+	# in its place.
+	if res.ok and here != null:
+		_customer_cards[int(here)].hush()
+	_apply(res)
 
 func _on_close() -> void:
 	_apply(_shift.close())
@@ -987,8 +996,10 @@ func _render_details() -> void:
 		# only when there is something unsigned still to close - exactly
 		# close()'s own refusal condition, so the gesture can never do
 		# anything the button behind it could not already do.
-		var can_close_empty: bool = at_this_seat and c != null 			and c.offer == null and not c.unsigned.is_empty()
-		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled 			= not can_close_empty
+		var can_close_empty: bool = at_this_seat and c != null \
+			and c.offer == null and not c.unsigned.is_empty()
+		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
+			= not can_close_empty
 		_close_hints[i].visible = can_close_empty
 		# The empty table's note, and its "or double-click to close" half on
 		# exactly the same condition as the pad that does the closing.
@@ -999,7 +1010,8 @@ func _render_details() -> void:
 		# not with can still have something unsigned at risk when the clock
 		# runs short, and every folder is on screen regardless of which one
 		# you are at.
-		_close_soon_tags[i].wanted = c != null and not c.unsigned.is_empty() 			and low_on_time
+		_close_soon_tags[i].wanted = c != null and not c.unsigned.is_empty() \
+			and low_on_time
 
 func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
@@ -1007,6 +1019,15 @@ func _drain_log() -> void:
 	_events_seen = _shift.events.size()
 	for entry in _shift.action_log.slice(_actions_seen):
 		var color := Palette.hex(&"alert") if entry["floor_wide"] else Palette.hex(&"action")
+		var said: String = str(entry.get("dialogue", ""))
+		# Chatter is words and nothing else - taking a product, running short of
+		# patience (see Shift._chatter()) - so it is logged as who said what, on
+		# one line, with no action or effect to name.
+		if bool(entry.get("chatter", false)):
+			_event_log.append_text("[color=%s]>> %s (%s): %s[/color]\n"
+				% [color, entry["customer"], entry["key"], said])
+			_say_on_the_card(str(entry["key"]), said)
+			continue
 		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
 			% [color, entry["customer"], entry["key"], entry["name"],
 				", ".join(entry["descriptions"])])
@@ -1014,7 +1035,6 @@ func _drain_log() -> void:
 		# and silently dropped here every single time. It matters now: a demand
 		# the customer SAYS OUT LOUD reads as a person interrupting you, where the
 		# same event as a bare stat change reads as a rules engine ticking over.
-		var said: String = str(entry.get("dialogue", ""))
 		if said != "":
 			_event_log.append_text("[color=%s]   %s[/color]\n" % [color, said])
 			_say_on_the_card(str(entry["key"]), said)

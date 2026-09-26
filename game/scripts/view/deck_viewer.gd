@@ -14,7 +14,7 @@ extends PanelContainer
 ## label above it. A def you own none of simply has no chip; the card face
 ## itself already names the card.
 ##
-## Reachable from two places - the shop's VIEW DECK button and clicking the
+## Reachable from two places - the shop's VIEW TOOLKIT button and clicking the
 ## draw pile on the floor - which is why this is a RunController-level
 ## overlay rather than owned by either screen: one node, shown on top of
 ## whichever of them is active, never a second instance to keep in sync.

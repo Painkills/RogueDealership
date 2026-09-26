@@ -14,7 +14,7 @@ class_name CategoryIcon extends RefCounted
 ## exact glyph next to the word "Vehicle" on a Vehicle Service Contract.
 ##
 ## Geometry is exposed as pure functions for the same reason
-## InterestGrid.row_order() and AppealBar.marker_x() are: draw_* calls only
+## InterestGrid.row_order() and AppealBar.marker_y() are: draw_* calls only
 ## work inside a live _draw(), so the one thing a headless test CAN check is
 ## that the three shapes are actually shaped like three different things and
 ## stay inside the box they were given.

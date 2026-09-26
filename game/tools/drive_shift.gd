@@ -129,15 +129,19 @@ func _physics_process(_delta: float) -> bool:
 	# live to look at - it returns early and counts for almost nothing while
 	# still reporting a pass. Impose the rare case; never wait for it.
 	_fix_the_line_out_of_reach()
+	_say_something_before_the_offer()
 	_press(KEY_O);            _settle(); _check_table("after offering")
+	_check_the_offer_cleared_what_they_were_saying()
 	_check_the_meter_keeps_the_line_fogged_after_you_have_asked()
 	_put_the_line_back()
+	_lend_the_shift_a_voice_for_their_yes()
 	# The product that missed above is still sitting on the table (a miss never
 	# clears an offer) - offer it again now the Line is back to something
 	# reachable, so there is actually something unsigned to close below. close()
 	# refuses an empty hand now (see shift.gd) - closing on nothing was never
 	# the point of this sequence, only a convenient way to vacate the chair.
 	_press(KEY_O);             _settle(); _check_table("after offering again")
+	_check_their_yes_replaced_it()
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
 	_press(KEY_B);            _settle(); _check_table("after approaching chair B")
@@ -1552,6 +1556,67 @@ func _put_the_line_back() -> void:
 	_parked_line = -1
 	_controller._render()
 
+## "The chat bubble on the customer whose table you're at should also go away
+## if you offer them a product (or replace with a new one about how they are
+## happy about the product they accepted)." Both halves, on the real O key: an
+## offer that falls short clears whatever they were saying, and one they take
+## puts their yes up in its place.
+const _STALE_LINE := "\"Something from before you asked.\""
+
+func _say_something_before_the_offer() -> void:
+	var card: CustomerCard3D = _controller._customer_cards[_at()]
+	card.say(_STALE_LINE, _controller._shift.tick)
+	_check("they are saying something before you offer", card.is_speaking())
+
+func _check_the_offer_cleared_what_they_were_saying() -> void:
+	if _controller._shift.at == null:
+		_check("still seated after the offer that fell short", false)
+		return
+	var card: CustomerCard3D = _controller._customer_cards[_at()]
+	_check("an offer that falls short still clears what they were saying",
+		not card.is_speaking())
+
+## A driven shift has no dialogue pool, so it is lent one for this offer alone
+## - and the rng put back once it is over, so nothing further down this driver
+## is dealt a different floor for it. The Line is brought within reach, since
+## this is the offer they take.
+var _parked_rng_state: int = 0
+var _yes_from: StringName = &""
+var _yes_for: StringName = &""
+
+func _lend_the_shift_a_voice_for_their_yes() -> void:
+	var s: Shift = _controller._shift
+	var c = s.chairs[_at()] if s.at != null else null
+	if c == null or c.offer == null:
+		_check("an offer still on the table to be taken", false)
+		return
+	_parked_rng_state = s.rng.state
+	s.dialogue = load("res://data/dialogue/dialogue_pool.tres")
+	c.line = mini(c.line, c.offer.appeal)
+	_yes_from = c.archetype.id
+	_yes_for = c.offer.product.id
+	_say_something_before_the_offer()
+
+func _check_their_yes_replaced_it() -> void:
+	var s: Shift = _controller._shift
+	if s.at == null or s.dialogue == null:
+		_check("still seated with the customer who was offered it", false)
+		s.dialogue = null
+		s.rng.state = _parked_rng_state
+		return
+	# Taking a product is not signing it: they are still in the chair.
+	var card: CustomerCard3D = _controller._customer_cards[_at()]
+	var said: String = card._bubble._label.text
+	var fits: Array[String] = []
+	for l in (s.dialogue as DialoguePool).candidates([&"accepted"], _yes_from, _yes_for, &""):
+		fits.append(l.text)
+	_check("they took it, and say so in the bubble (%s)" % said,
+		card.is_speaking() and said != _STALE_LINE and fits.has(said))
+	_check("and in the log, as one line in their own name",
+		_controller._event_log.get_parsed_text().contains(said))
+	s.dialogue = null
+	s.rng.state = _parked_rng_state
+
 func _put_a_product_on_the_table() -> void:
 	if _controller._shift.at == null:
 		_check("still with a customer before placing", false)
@@ -1642,15 +1707,15 @@ func _check_the_meter_climbs_and_changes_colour() -> void:
 	# The one number the fog is protecting. The fill is always honest; the marker
 	# is not drawn until the model says you have earned the Line.
 	# Asked of the same expression _draw() uses, not of a flag beside it.
-	var track := Rect2(0, 0, 400, 60)
+	var track := Rect2(0, 0, 60, 400)
 	c.known_line = false
 	_controller._render()
 	_check("with the Line unknown there is nowhere to draw the marker",
-		bar.marker_x(track) < 0.0)
+		bar.marker_y(track) < 0.0)
 	c.known_line = true
 	_controller._render()
 	_check("and once you know it, the marker has a place on the bar (%.0f)"
-		% bar.marker_x(track), bar.marker_x(track) >= 0.0)
+		% bar.marker_y(track), bar.marker_y(track) >= 0.0)
 
 	c.offer.appeal = was_appeal
 	c.known_line = was_known
@@ -1819,7 +1884,8 @@ func _check_hud_does_not_overlap_itself() -> void:
 ## every collection the scene actually builds, not just the one this was
 ## first noticed on.
 func _check_drop_zones_use_the_overridden_shape() -> void:
-	var expected := load("res://scenes/dropzone_shape_3d.tres") as ConvexPolygonShape3D
+	var shared := load("res://scenes/dropzone_shape_3d.tres") as ConvexPolygonShape3D
+	var taller := load("res://scenes/discard_dropzone_shape_3d.tres") as ConvexPolygonShape3D
 	var zones := {
 		"Hand": _controller._hand_zone, "Discard": _controller._discard_zone,
 		"Draw": _controller._draw_zone, "Chair A": _controller._chair_zones[0],
@@ -1828,9 +1894,47 @@ func _check_drop_zones_use_the_overridden_shape() -> void:
 	for zone_name in zones:
 		var zone: CardCollection3D = zones[zone_name]
 		var shape := zone.dropzone_collision.shape as ConvexPolygonShape3D
+		var expected := taller if zone_name == "Discard" else shared
 		_check("%s's drop zone uses the overridden shape, not the vendored default (%s)"
 			% [zone_name, shape.points if shape else "null"],
 			shape != null and shape.points == expected.points)
+	_check_the_discard_takes_drops_from_higher_up(shared, taller)
+
+## "For the discard dropzone, give it a little bit more vertical area." Its own
+## shape reaches higher than every other zone's, over the same width and down to
+## the same bottom - and on screen that top edge lands well above where the
+## shared shape's would, while still stopping short of the action column, whose
+## buttons would take the drop before the pile ever saw it.
+func _check_the_discard_takes_drops_from_higher_up(shared: ConvexPolygonShape3D,
+		taller: ConvexPolygonShape3D) -> void:
+	# Each shape's extent in its own plane, where y runs UP: a span's top is its
+	# end.y and its bottom its position.y.
+	var span := func(shape: ConvexPolygonShape3D) -> Rect2:
+		var r := Rect2(shape.points[0].x, shape.points[0].y, 0, 0)
+		for p in shape.points:
+			r = r.expand(Vector2(p.x, p.y))
+		return r
+	var was: Rect2 = span.call(shared)
+	var now: Rect2 = span.call(taller)
+	_check("the discard's zone is taller than the rest (%.1f vs %.1f units)"
+		% [now.size.y, was.size.y], now.size.y > was.size.y)
+	_check("all of it gained at the top - same bottom, same width",
+		is_equal_approx(now.position.y, was.position.y)
+			and is_equal_approx(now.size.x, was.size.x))
+
+	# Where each top edge lands on screen, with the pile where it sits while
+	# you are seated - the only time it takes a drop.
+	var collider: CollisionShape3D = _controller._discard_zone.dropzone_collision
+	var cam: Camera3D = _controller._camera
+	var top_now: float = cam.unproject_position(
+		collider.global_transform * Vector3(0.0, now.end.y, 0.0)).y
+	var top_was: float = cam.unproject_position(
+		collider.global_transform * Vector3(0.0, was.end.y, 0.0)).y
+	var column_bottom: float = _action_rect().end.y
+	_check("on screen it takes drops from %d px higher than before (top at y %d, was %d)"
+		% [int(top_was - top_now), int(top_now), int(top_was)], top_was - top_now >= 60.0)
+	_check("and still stops below the action column (top at y %d, the column ends at %d)"
+		% [int(top_now), int(column_bottom)], top_now > column_bottom)
 
 ## The clock's own counterpart to _check_the_meter_climbs_and_changes_colour -
 ## few ticks left has to be as loud as a customer's patience going red, and

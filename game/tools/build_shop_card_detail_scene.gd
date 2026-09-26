@@ -1,8 +1,8 @@
 extends SceneTree
 ## Builds res://scenes/cards/shop_card_detail.tscn - the store's
-## confirm-before-you-spend popup, as the employee portal's own product-details
-## dialog (see AppWindow): the card as it is, the card upgraded where there is
-## an upgrade to sell, and what it costs.
+## confirm-before-you-take-it popup, as the employee portal's own
+## product-details dialog (see AppWindow): the card as it is, the card upgraded
+## where there is an upgrade to sell, and what it costs - if anything.
 
 const PREVIEW_SCENE := "res://scenes/cards/card_preview_2d.tscn"
 
@@ -34,8 +34,8 @@ func _init() -> void:
 	_preview_column(cards_row, root, "CurrentWrap", "NOW", "CurrentPreview")
 	var upgraded_wrap := _preview_column(cards_row, root, "UpgradedWrap", "UPGRADED",
 		"UpgradedPreview")
-	# Hidden by show_shelf_card() - an unowned card has nothing "upgraded" to
-	# compare against, unlike show_card()'s deck-browser path.
+	# Hidden for a card you do not own yet (show_free_card(), show_shelf_card())
+	# - it has nothing "upgraded" to compare against, unlike show_card()'s.
 	upgraded_wrap.unique_name_in_owner = true
 
 	var button_row := HBoxContainer.new()
@@ -45,7 +45,9 @@ func _init() -> void:
 	col.add_child(button_row)
 	button_row.owner = root
 
-	# Spending is filled in; taking a card out, or backing out, is not.
+	# Taking and spending are filled in; taking a card out, or backing out, is
+	# not.
+	_button(button_row, root, "TakeButton", "take it - free", &"money", true)
 	_button(button_row, root, "BuyButton", "buy $0", &"money", true)
 	_button(button_row, root, "UpgradeButton", "upgrade $0", &"primary", true)
 	_button(button_row, root, "RemoveButton", "remove $0", &"stamp", false)

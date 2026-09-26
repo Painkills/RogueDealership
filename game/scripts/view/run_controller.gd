@@ -3,8 +3,8 @@ extends Node
 ##
 ## Owns the RunState and does nothing else - the picker chooses a
 ## ShiftProfile, the shift screen plays a shift under it, the shop screen
-## sells cards (gated by that same profile's reward), and this decides which
-## one you are looking at. That split is the whole reason
+## hands out a free card and whatever else that same profile earns, and this
+## decides which one you are looking at. That split is the whole reason
 ## shift_controller.gd stopped building its own shift: it is already the
 ## table, the framing, the HUD and reconciliation.
 
@@ -138,14 +138,13 @@ func _on_shift_finished(report: Dictionary) -> void:
 		_summary_view.setup(tally, fired, rank)
 		_summary_view.visible = true
 		return
-	# The shop's reward gating is what the JUST-PLAYED shift's profile earned,
-	# not whatever gets picked next - so it goes in before the picker is
-	# shown again. And it is EARNED, not just picked: missing quota already
-	# costs standing and leaves the bonus pot untouched, and a free upgrade on
-	# top of that would make picking a harder tier and then failing it better
-	# than picking morning and succeeding.
+	# The shop is what the JUST-PLAYED shift's tier adds to the free card, not
+	# whatever gets picked next - so it goes in before the picker is shown
+	# again. Anything past the free card costs money from the bonus pot, which
+	# only beating quota fills - so failing a harder tier buys nothing it did
+	# not already have saved.
 	_show_only(_shop_view)
-	_shop_view.setup(Shop.new(_run, _chosen_profile, bool(report.get("made_quota", false))))
+	_shop_view.setup(Shop.new(_run, _chosen_profile))
 
 func _on_summary_continue() -> void:
 	_summary_view.visible = false

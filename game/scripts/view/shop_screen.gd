@@ -1,18 +1,16 @@
 extends PanelContainer
-## The shop between shifts: buy from the shelf, edit what is already in the
-## deck. Both are real cards you click, not a text row.
+## The store between shifts: one card on the house every visit, the card for
+## sale if the shift you just worked put one up, and a few of your own to
+## upgrade if it lets you. Every one of them is a real card you click, not a
+## text row.
 ##
-## The deck section shows Shop.upgrade_offers, not the whole deck - a
-## random, capped subset re-rolled once per visit, the same shape the
-## shelf's own offers already have. Only a card with a real upgrade to sell
-## lands in that list (Shop._roll_upgrade_offers() only ever puts one there
-## on those terms), so a card with nothing to upgrade does not appear here
-## at all - not even to drop it. A deliberate scope cut for now: every card
-## shown here supports "upgrade or drop", and nothing shown here supports
-## only one of those two.
+## Your own cards here are Shop.upgrade_offers, not the whole deck - a random
+## few, rolled once per visit, and only ever cards with a real upgrade to sell
+## (Shop._roll_upgrade_offers() puts nothing else there). Dropping one is on
+## the same card, beside upgrading it.
 ##
-## Rebuilds both rows after every action rather than patching them - a visit
-## is a handful of clicks on at most six cards, and a full rebuild cannot
+## Rebuilds every aisle after every action rather than patching them - a visit
+## is a handful of clicks on at most five cards, and a full rebuild cannot
 ## disagree with the deck the way an incremental patch can.
 
 signal done
@@ -25,6 +23,7 @@ signal view_deck_requested
 @onready var _money: Label = %MoneyLabel
 @onready var _shift_label: Label = %ShiftLabel
 @onready var _shift_tap: Button = %ShiftTapTarget
+@onready var _free_row: HBoxContainer = %FreeRow
 @onready var _shelf_row: HBoxContainer = %ShelfRow
 @onready var _deck_row: HBoxContainer = %DeckRow
 @onready var _log: Label = %LogLabel
@@ -93,65 +92,79 @@ func _render() -> void:
 	# Smaller and dimmer than the money line on purpose - this is context for
 	# what is on offer below, not a number that needs the same weight as the
 	# budget you actually have to spend.
-	var perk := _shop.perk_text()
-	if not perk.is_empty():
-		_shift_label.text += "\n" + perk
+	_shift_label.text += "\n" + _shop.perk_text()
 
-	# remove_child() first: queue_free() alone leaves a node in
-	# get_children() until the next idle frame, which is exactly the gap a
-	# second action within the same frame (an upgrade immediately followed by
-	# a drop, say) would fall into - counting stale AND fresh slots both.
-	for child in _shelf_row.get_children():
-		_shelf_row.remove_child(child)
-		child.queue_free()
+	# Not in your toolkit yet - a real CardInstance can only exist once
+	# something owns it. A throwaway one (uid -1, never persisted, never
+	# touching the model) is enough to feed the SAME card face the deck uses,
+	# so a card on offer looks exactly like what it will look like once yours.
+	_clear(_free_row)
+	if _shop.free_card != null:
+		var free: CardDef = _shop.free_card
+		_build_slot(_free_row, CardInstance.new(free, -1), "FREE").pressed.connect(
+			func(): _detail.show_free_card(_shop, free))
+	else:
+		_note(_free_row, "Taken - it is in your toolkit now.")
+
+	_clear(_shelf_row)
 	for def in _shop.offers:
-		# Not on the deck yet - a real CardInstance can only exist once
-		# something owns it. A throwaway one (uid -1, never persisted, never
-		# touching the model) is enough to feed the SAME card face the deck
-		# uses, so an offer looks exactly like what it will look like the
-		# moment you actually buy it.
-		var preview_inst := CardInstance.new(def, -1)
-		var slot := _build_slot(_shelf_row)
-		(slot["card"] as ShopCardButton).show_card(preview_inst)
-		(slot["price"] as Label).text = Format.price(_shop.buy_price(def))
-		_show_rarity(slot["rarity"], preview_inst)
-		(slot["card"] as ShopCardButton).pressed.connect(
-			func(): _detail.show_shelf_card(_shop, def))
+		_build_slot(_shelf_row, CardInstance.new(def, -1),
+			Format.price(_shop.buy_price(def))).pressed.connect(
+				func(): _detail.show_shelf_card(_shop, def))
+	if _shelf_row.get_child_count() == 0:
+		# Bought, or never stocked: an aisle with nothing in it says which,
+		# rather than standing there empty like the page failed to load.
+		_note(_shelf_row, "Sold - it is in your toolkit now." if _shop.cards_for_sale > 0
+			else "Nothing for sale after that shift.")
 
-	for child in _deck_row.get_children():
-		_deck_row.remove_child(child)
-		child.queue_free()
+	_clear(_deck_row)
 	for uid in _shop.upgrade_offers:
 		var inst := _shop.find(uid)
 		if inst == null:
 			continue   # already dropped this visit
-		var slot := _build_slot(_deck_row)
-		(slot["card"] as ShopCardButton).show_card(inst)
-		(slot["price"] as Label).text = "upgraded" if inst.upgraded \
-			else "upgrade %s" % Format.price(_shop.upgrade_price(inst))
-		_show_rarity(slot["rarity"], inst)
-		(slot["card"] as ShopCardButton).pressed.connect(func(): _detail.show_card(_shop, inst))
+		_build_slot(_deck_row, inst, _upgrade_label(inst)).pressed.connect(
+			func(): _detail.show_card(_shop, inst))
+	if _deck_row.get_child_count() == 0:
+		_note(_deck_row, "Nothing of yours left to upgrade." if _shop.upgrades > 0
+			else "No upgrade after that shift.")
 
-	# An aisle with nothing in it says so, rather than standing there empty
-	# like the page failed to load.
-	_note_if_empty(_shelf_row, "Nothing new in the store this visit.")
-	_note_if_empty(_deck_row, "Nothing to upgrade this visit.")
+## What sits under one of your cards: what upgrading it costs - or, once the
+## visit's upgrade is spent, that it is. The cards stay on show either way, so
+## you can still see which one you chose.
+func _upgrade_label(inst: CardInstance) -> String:
+	if inst.upgraded:
+		return "upgraded"
+	if _shop.upgrades_left <= 0:
+		return "upgrade used"
+	return "upgrade %s" % Format.price(_shop.upgrade_price(inst))
 
-func _note_if_empty(row: HBoxContainer, text: String) -> void:
-	if row.get_child_count() > 0:
-		return
+## remove_child() first: queue_free() alone leaves a node in get_children()
+## until the next idle frame, which is exactly the gap a second action within
+## the same frame (an upgrade immediately followed by a drop, say) would fall
+## into - counting stale AND fresh slots both.
+func _clear(row: HBoxContainer) -> void:
+	for child in row.get_children():
+		row.remove_child(child)
+		child.queue_free()
+
+func _note(row: HBoxContainer, text: String) -> void:
 	var note := Label.new()
 	note.name = "EmptyNote"
 	note.text = text
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# In the middle of the aisle, which stays a card's height either way.
+	note.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# The whole aisle's width to wrap in - an autowrapping label claims none
+	# of its own.
+	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	note.add_theme_font_size_override("font_size", 22)
 	note.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	row.add_child(note)
 
-func _show_rarity(label: Label, inst: CardInstance) -> void:
-	label.text = CardText.rarity_name(inst)
-	label.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
-
-func _build_slot(row: HBoxContainer) -> Dictionary:
+## One card on offer: its rarity over it, the card itself (the thing you
+## click), and what it costs under it. Returns the card.
+func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> ShopCardButton:
 	var slot := VBoxContainer.new()
 	slot.add_theme_constant_override("separation", 4)
 	slot.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -160,24 +173,27 @@ func _build_slot(row: HBoxContainer) -> Dictionary:
 	# Store-only, not on the card itself - a corner badge on the card face
 	# made every card busier everywhere it appears (hand, table, deck
 	# viewer), for a fact that only matters here, while you are shopping.
-	# Small: this is a third row stacked into every shelf/deck slot, and the
-	# screen's whole vertical budget was already tuned tight before it existed.
+	# Small: this is a third row stacked into every slot, and the screen's
+	# whole vertical budget was already tuned tight before it existed.
 	var rarity := Label.new()
 	rarity.add_theme_font_size_override("font_size", 12)
 	rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rarity.text = CardText.rarity_name(inst)
+	rarity.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
 	slot.add_child(rarity)
 
 	var card: ShopCardButton = (load("res://scenes/cards/shop_card_button.tscn") \
 		as PackedScene).instantiate()
 	slot.add_child(card)
+	card.show_card(inst)
 
 	var price := Label.new()
 	price.add_theme_font_size_override("font_size", 20)
 	price.add_theme_color_override("font_color", Palette.color(&"margin"))
 	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price.text = price_text
 	slot.add_child(price)
-
-	return {"card": card, "price": price, "rarity": rarity}
+	return card
 
 func _apply(res: Result) -> void:
 	## A refusal costs nothing but must still say why - the same rule the shift

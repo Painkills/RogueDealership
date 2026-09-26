@@ -244,6 +244,16 @@ func _settle_patience() -> void:
 				events.append("[%s] %s is losing patience." % [c.key, c.display_name])
 		else:
 			c.warned_leaving_soon = false
+		# And out loud, a little before that: "a dialogue line for when a
+		# customer reaches 5 or less patience." Once per dip, re-armed the same
+		# way - a customer grumbling every tick is noise, one grumbling once is
+		# a person telling you who needs you next.
+		if c.patience <= cfg.impatient_at:
+			if not c.said_impatient:
+				c.said_impatient = true
+				_chatter(c, [&"impatient"])
+		else:
+			c.said_impatient = false
 
 
 func _walk(chair: int) -> void:
@@ -756,6 +766,10 @@ func offer() -> Result:
 	# being asked cannot retroactively sink an offer that already cleared.
 	var sale := _settle(c)
 	if not sale.is_empty():
+		# They say yes out loud, about the product they just took where a line
+		# was written for it - before anything their archetype does about it,
+		# which is what happens next.
+		_chatter(c, [&"accepted"], sale["product"].id)
 		fire(&"on_sale", c, {"rank": rank, "sale": sale})
 	else:
 		stat["failed_offers"] = int(stat["failed_offers"]) + 1
@@ -1071,6 +1085,29 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 		"dialogue": said,
 		"descriptions": descriptions,
 		"floor_wide": floor_wide,
+	})
+
+
+## Something a customer says that is not the voice of anything they DID -
+## taking a product, running short of patience. It goes in the same action_log
+## every other reaction does, so the view pops the same speech bubble for it,
+## but with no action's name and nothing done: `chatter` is what tells the log
+## to print just the words. Nothing at all is logged when there is no pool, or
+## nothing in it fits - the same silence every other line falls back to.
+func _chatter(c: Customer, tags: Array[StringName], product_id: StringName = &"") -> void:
+	if dialogue == null:
+		return
+	var said := dialogue.pick(rng, tags, c.archetype.id, product_id, &"")
+	if said == "":
+		return
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": "",
+		"dialogue": said,
+		"descriptions": [],
+		"floor_wide": false,
+		"chatter": true,
 	})
 
 

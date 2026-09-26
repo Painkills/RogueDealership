@@ -1,27 +1,29 @@
 extends SceneTree
 ## Builds res://scenes/shop.tscn - the between-shifts screen, as the
 ## Store page of the dealership's employee portal: a website in a browser
-## window (see AppWindow), where the bonus you earned buys new cards and
-## upgrades the ones you have. Its other page, My Toolkit, is the deck viewer.
+## window (see AppWindow). Its other page, My Toolkit, is the deck viewer.
 ##
-## Cards, not text rows: the shelf and the deck browser both show the SAME
-## card face the floor renders (shop_card_button.tscn - a real card wrapped
-## in a flat Button), with the store price underneath each one rather than
-## folded into a line of button text. ShelfRow and DeckRow are EMPTY here
-## and filled at runtime - what is on the shelf and which of the deck's
-## cards may be edited both change every visit.
+## Three aisles, side by side - a browser window's own chrome takes height a
+## full-screen menu never had to give up:
+##   ON THE HOUSE   one card, free, every visit - take it or leave it
+##   FOR SALE       the card a midday shift puts up for sale, bought with the
+##                  bonus you earned
+##   UPGRADE ONE    a few of your own cards, one of which a night shift lets
+##                  you upgrade (or drop)
+## An aisle the shift you just worked does not stock says so in words, filled
+## in at runtime with everything else here - FreeRow, ShelfRow and DeckRow are
+## EMPTY in the scene, because what is in them changes every visit.
 ##
-## DeckRow shows Shop.upgrade_offers, not the whole deck: a random, capped
-## subset of cards you can actually DO something with this visit, the same
-## shape the shelf's own offers already have. A card with nothing to upgrade
-## does not appear here at all - see shop_screen.gd's own header comment for
-## why that is a deliberate scope cut, not an oversight.
-##
-## The two aisles sit side by side rather than stacked: a browser window's
-## own chrome takes height a full-screen menu never had to give up.
+## Cards, not text rows: every aisle shows the SAME card face the floor renders
+## (shop_card_button.tscn - a real card wrapped in a flat Button), with what it
+## costs underneath rather than folded into a line of button text.
 
 const DETAIL_SCENE := "res://scenes/cards/shop_card_detail.tscn"
 const WINDOW := Vector2(1680, 940)
+## One card on offer, as shop_screen.gd's _build_slot() stacks it: a rarity
+## line, the 252-tall card itself, and a price line. drive_run.gd measures a
+## real slot against this.
+const SLOT_HEIGHT := 310
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -59,7 +61,8 @@ func _init() -> void:
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	intro.add_child(titles)
 	titles.owner = root
-	AppWindow.label(titles, root, "TitleLabel", "Spend your bonus", 36, &"text", true, true)
+	AppWindow.label(titles, root, "TitleLabel", "Your perks for that shift", 36, &"text",
+		true, true)
 
 	# The quota line doubles as a mobile stand-in for Ctrl+M (+$10,000) - the
 	# same "no keyboard on touch" gap the shift's tick counter has, and the
@@ -89,16 +92,18 @@ func _init() -> void:
 	money.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
-	# --- the two aisles ------------------------------------------------------------
+	# --- the three aisles ----------------------------------------------------------
+	# The free card and the one for sale each hold one card; yours holds a few,
+	# so it gets the room for them.
 	var aisles := HBoxContainer.new()
 	aisles.name = "Aisles"
 	aisles.add_theme_constant_override("separation", 28)
 	col.add_child(aisles)
 	aisles.owner = root
-	_card_section(aisles, root, "ShelfSection", "OnShelfTitle", "NEW IN THE STORE",
-		"ShelfRow")
-	_card_section(aisles, root, "DeckSection", "DeckTitle",
-		"YOUR TOOLKIT - upgrade or drop", "DeckRow")
+	_card_section(aisles, root, "FreeSection", "FreeTitle", "ON THE HOUSE", "FreeRow", 1.0)
+	_card_section(aisles, root, "ShelfSection", "OnShelfTitle", "FOR SALE", "ShelfRow", 1.0)
+	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADE ONE OF YOURS",
+		"DeckRow", 2.0)
 
 	AppWindow.label(col, root, "LogLabel", "", 22, &"alert", false, true)
 
@@ -111,7 +116,7 @@ func _init() -> void:
 
 	var view_deck := Button.new()
 	view_deck.name = "ViewDeckButton"
-	view_deck.text = "MY TOOLKIT"
+	view_deck.text = "VIEW TOOLKIT"
 	view_deck.custom_minimum_size = Vector2(240, 72)
 	view_deck.add_theme_font_size_override("font_size", 24)
 	ButtonStyle.outlined(view_deck, Palette.color(&"primary"))
@@ -146,14 +151,15 @@ func _init() -> void:
 	root.free()
 	quit(0)
 
-## A titled aisle of cards: the shelf and the deck browser are built from the
-## exact same shape, since both are "some cards, click one" - only what a
-## click DOES differs, and that is wired at runtime by shop_screen.gd, not
-## here.
+## A titled aisle of cards: all three are built from the exact same shape,
+## since each is "some cards, click one" - only what a click DOES differs, and
+## that is wired at runtime by shop_screen.gd, not here. `share` is how much of
+## the width it gets against the others.
 func _card_section(parent: Node, root: Node, section_name: String,
-		title_name: String, title_text: String, row_name: String) -> void:
+		title_name: String, title_text: String, row_name: String, share: float) -> void:
 	var section := AppWindow.box(parent, root, section_name, &"panel_hi", &"neutral_2", 20, 14)
 	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	section.size_flags_stretch_ratio = share
 	var col := VBoxContainer.new()
 	col.name = "Column"
 	col.add_theme_constant_override("separation", 10)
@@ -167,5 +173,9 @@ func _card_section(parent: Node, root: Node, section_name: String,
 	row.unique_name_in_owner = true
 	row.add_theme_constant_override("separation", 24)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	# One card slot tall, whether it holds a card or only the words saying it
+	# is empty - taking the free card must not pull the page (and the button
+	# you are about to press) up the screen.
+	row.custom_minimum_size = Vector2(0, SLOT_HEIGHT)
 	col.add_child(row)
 	row.owner = root

@@ -23,20 +23,20 @@ class_name ShiftProfile extends Resource
 @export var walk_up_scale: float = 1.0
 @export var unlock_full_archetype_pool: bool = false
 
-## The shop that follows it.
-@export var allow_upgrades_in_shop: bool = true
-@export var free_purchases: int = 0          ## dedicated pool, buy() only
-@export var free_upgrades: int = 0           ## dedicated pool, upgrade() only
-@export var free_choices: int = 0            ## shared pool, first buy() OR upgrade()
+## The shop that follows it. Every visit hands you one card free whatever the
+## tier; these are what the tier adds on top - see Shop.
+@export var cards_for_sale: int = 0          ## cards put up for sale
+@export var upgrades: int = 0                ## of your cards you may upgrade
 
-## A static preview of the shop reward for the picker screen, BEFORE any of
-## it exists to spend - Shop.perk_text() says the same thing from its own
-## live, spend-as-you-go pools once a shift is actually underway.
+## A static preview of the shop that follows, for the picker screen, BEFORE any
+## of it exists - Shop.perk_text() says the same thing from the live visit.
 func reward_preview() -> String:
-	if free_purchases > 0 and free_upgrades > 0:
-		return "Shop: one free purchase and one free upgrade."
-	if free_choices > 0:
-		return "Shop: your first purchase or upgrade is free."
-	if not allow_upgrades_in_shop:
-		return "Shop: purchases only, no upgrades."
-	return "Shop: purchases and upgrades, as usual."
+	var extras: Array[String] = []
+	if cards_for_sale > 0:
+		extras.append("a card to buy" if cards_for_sale == 1
+			else "%d cards to buy" % cards_for_sale)
+	if upgrades > 0:
+		extras.append("an upgrade" if upgrades == 1 else "%d upgrades" % upgrades)
+	if extras.is_empty():
+		return "Shop: a free card."
+	return "Shop: a free card, and %s." % " and ".join(extras)
