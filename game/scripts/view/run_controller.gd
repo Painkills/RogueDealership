@@ -129,7 +129,13 @@ func _on_shift_finished(report: Dictionary) -> void:
 		# shift's own ReportOverlay already sits on top of the floor.
 		_shift_view.set_active(false)
 		_shop_view.visible = false
-		_summary_view.setup(Score.tally(_run), _run.standing <= 0)
+		# Filed among this device's personal bests before the boss's email is
+		# written, so the email can say where the week landed.
+		var tally := Score.tally(_run)
+		var fired := _run.standing <= 0
+		var rank := PlayerProfile.record_run(int(tally["total"]),
+			int(tally["margin_banked"]), fired)
+		_summary_view.setup(tally, fired, rank)
 		_summary_view.visible = true
 		return
 	# The shop's reward gating is what the JUST-PLAYED shift's profile earned,

@@ -35,7 +35,7 @@ func _ready() -> void:
 	_close.pressed.connect(func(): visible = false)
 
 func show_deck(run: RunState) -> void:
-	_title.text = "YOUR DECK (%d cards)" % run.deck.cards.size()
+	_title.text = "MY TOOLKIT  -  %d cards" % run.deck.cards.size()
 
 	var by_interest: Dictionary = {}   # interest id -> Array[CardInstance]
 	var support_insts: Array = []      # every support CardInstance, deck order

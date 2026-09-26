@@ -10,6 +10,7 @@ extends SceneTree
 ## the coach watches a real floor, and only a real scene tree has one.
 
 const PROGRESS := "user://drive_tutorial_progress.cfg"
+const PROFILE := "user://drive_tutorial_profile.cfg"
 
 var _root: Node
 var _coach: TutorialCoach
@@ -22,6 +23,8 @@ func _init() -> void:
 	# Its own progress file, so this never reads or clobbers a real player's.
 	TutorialProgress.path = PROGRESS
 	TutorialProgress.reset()
+	PlayerProfile.path = PROFILE
+	PlayerProfile.reset()
 	_boot()
 	_drive.call_deferred()
 
@@ -176,8 +179,11 @@ func _drive() -> void:
 		_coach.is_running() and _coach.step_id() == &"welcome"
 			and not _root._picker_view.visible)
 	_check_the_loud_button("a returning player", _coach._splash_skip, _coach._start)
+	_check("and your name is still on the tag (%s)" % _coach._name_field.text,
+		_coach._name_field.text == "Dana")
 
 	TutorialProgress.reset()
+	PlayerProfile.reset()
 	_report()
 
 func _next(expect: StringName) -> void:
@@ -195,8 +201,15 @@ func _check_the_first_day_welcome() -> void:
 	_check("the welcome is up", _coach.splash_showing())
 	_check("it is day one (%s)" % _coach._eyebrow.text,
 		_coach._eyebrow.text == _coach.FIRST_DAY["eyebrow"])
-	_check("with you on the name tag", (_coach._tag.get_node(^"Column/TagName") as Label)
-		.text.contains("F&I MANAGER"))
+	# "Let players write their own name for themselves": the tag is blank for a
+	# first-timer, asking for one, and whatever is written on it is kept.
+	var tag: LineEdit = _coach._name_field
+	_check("a name tag waiting for your name (%s)" % tag.placeholder_text,
+		tag.text == "" and tag.placeholder_text.contains("NAME") and tag.editable)
+	tag.text = "Dana"
+	tag.text_changed.emit("Dana")
+	_check("writing your name on it keeps it (%s)" % PlayerProfile.player_name(),
+		PlayerProfile.player_name() == "Dana")
 	_check("and the job spelled out (%s)" % _coach._splash_body.text.substr(0, 40),
 		_coach._splash_body.text.contains("warranties"))
 	_check("to confetti", _coach._confetti.emitting)

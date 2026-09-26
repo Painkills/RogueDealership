@@ -31,6 +31,9 @@ signal view_deck_requested
 @onready var _done: Button = %DoneButton
 @onready var _view_deck: Button = %ViewDeckButton
 @onready var _detail: ShopCardDetail = %Detail
+## Who the portal says is signed in - whoever wrote their name on the welcome's
+## name tag (see PlayerProfile).
+@onready var _account: Label = %AccountLabel
 
 var _shop: Shop
 
@@ -75,6 +78,7 @@ func setup(shop: Shop) -> void:
 
 func _render() -> void:
 	var run := _shop.run
+	_account.text = PlayerProfile.display_name()
 	# Name what this pot IS and what just went into it. The budget stacks across
 	# the run, so a total on its own cannot tell you whether the shift you just
 	# played earned anything - and that is the number you came here to find out.
@@ -127,6 +131,21 @@ func _render() -> void:
 			else "upgrade %s" % Format.price(_shop.upgrade_price(inst))
 		_show_rarity(slot["rarity"], inst)
 		(slot["card"] as ShopCardButton).pressed.connect(func(): _detail.show_card(_shop, inst))
+
+	# An aisle with nothing in it says so, rather than standing there empty
+	# like the page failed to load.
+	_note_if_empty(_shelf_row, "Nothing new in the store this visit.")
+	_note_if_empty(_deck_row, "Nothing to upgrade this visit.")
+
+func _note_if_empty(row: HBoxContainer, text: String) -> void:
+	if row.get_child_count() > 0:
+		return
+	var note := Label.new()
+	note.name = "EmptyNote"
+	note.text = text
+	note.add_theme_font_size_override("font_size", 22)
+	note.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	row.add_child(note)
 
 func _show_rarity(label: Label, inst: CardInstance) -> void:
 	label.text = CardText.rarity_name(inst)

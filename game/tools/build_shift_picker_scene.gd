@@ -5,61 +5,37 @@ extends SceneTree
 ## itself - which day is today, what each past day went like - is filled in at
 ## runtime, since it changes every visit.
 
+## A calendar app's window, nearly the width of the screen. Its height comes
+## from the week it holds (CalendarDay.HOUR_PX), and it stays clear of the
+## run's corner VIEW DECK button above it.
+const WINDOW := Vector2(1840, 0)
+
 func _init() -> void:
 	var root := PanelContainer.new()
 	root.name = "ShiftPickerScreen"
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.set_script(load("res://scripts/view/shift_picker_screen.gd"))
-	var ground := StyleBoxFlat.new()
-	ground.bg_color = Palette.color(&"bg")
-	root.add_theme_stylebox_override("panel", ground)
+	AppWindow.desktop(root)
 
-	var margin := MarginContainer.new()
-	margin.name = "Margin"
-	margin.add_theme_constant_override("margin_left", 48)
-	margin.add_theme_constant_override("margin_right", 48)
-	margin.add_theme_constant_override("margin_top", 24)
-	margin.add_theme_constant_override("margin_bottom", 28)
-	root.add_child(margin)
-	margin.owner = root
-
-	var col := VBoxContainer.new()
-	col.name = "Column"
-	col.add_theme_constant_override("separation", 16)
-	margin.add_child(col)
-	col.owner = root
+	var made := AppWindow.build(root, root, "CalendarWindow", "Calendar", WINDOW, "", 16)
+	var col: VBoxContainer = made["body"]
+	col.add_theme_constant_override("separation", 10)
 
 	# --- the header: what week this is, and how to play ---------------------
+	# One line, title and subtitle side by side: a window's own title bar
+	# already took the height a second line would need.
 	var header := HBoxContainer.new()
 	header.name = "Header"
-	header.add_theme_constant_override("separation", 24)
+	header.add_theme_constant_override("separation", 20)
 	col.add_child(header)
 	header.owner = root
 
-	var titles := VBoxContainer.new()
-	titles.name = "Titles"
-	titles.add_theme_constant_override("separation", 0)
-	header.add_child(titles)
-	titles.owner = root
-
-	var title := Label.new()
-	title.name = "TitleLabel"
-	title.text = "THIS WEEK"
-	title.theme_type_variation = &"Heading"
-	title.add_theme_font_size_override("font_size", 44)
-	title.add_theme_color_override("font_color", Palette.color(&"text"))
-	titles.add_child(title)
-	title.owner = root
-
-	var sub := Label.new()
-	sub.name = "SubLabel"
-	sub.text = "Shift 1 of 5 - pick today's  |  quota $3,600"
-	sub.add_theme_font_size_override("font_size", 20)
-	sub.add_theme_color_override("font_color", Palette.color(&"text_dim"))
-	sub.unique_name_in_owner = true
-	titles.add_child(sub)
-	sub.owner = root
+	var title := AppWindow.label(header, root, "TitleLabel", "THIS WEEK", 38, &"text", true)
+	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var sub := AppWindow.label(header, root, "SubLabel",
+		"Shift 1 of 5 - pick today's  |  quota $3,600", 20, &"text_dim", false, true)
+	sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	var spacer := Control.new()
 	spacer.name = "Spacer"
@@ -67,25 +43,16 @@ func _init() -> void:
 	header.add_child(spacer)
 	spacer.owner = root
 
-	# The practice shift, on demand - it opens the game by itself only once.
+	# The practice shift, on demand - it also opens the game by itself.
 	var tutorial := Button.new()
 	tutorial.name = "TutorialButton"
 	tutorial.text = "HOW TO PLAY"
 	tutorial.custom_minimum_size = Vector2(200, 52)
-	tutorial.size_flags_vertical = Control.SIZE_SHRINK_END
 	tutorial.add_theme_font_size_override("font_size", 20)
 	ButtonStyle.outlined(tutorial, Palette.color(&"primary"))
 	tutorial.unique_name_in_owner = true
 	header.add_child(tutorial)
 	tutorial.owner = root
-
-	# Clear of the run's own VIEW DECK button, which sits in the top-right
-	# corner over every screen (see build_run_scene.gd).
-	var corner := Control.new()
-	corner.name = "CornerReserve"
-	corner.custom_minimum_size = Vector2(200, 0)
-	header.add_child(corner)
-	corner.owner = root
 
 	# --- the week ----------------------------------------------------------
 	var calendar := PanelContainer.new()
@@ -95,14 +62,11 @@ func _init() -> void:
 	card.bg_color = Palette.color(&"panel")
 	card.border_color = Palette.color(&"neutral_2")
 	card.set_border_width_all(1)
-	card.set_corner_radius_all(16)
+	card.set_corner_radius_all(12)
 	card.content_margin_left = 12
 	card.content_margin_right = 12
 	card.content_margin_top = 8
 	card.content_margin_bottom = 12
-	card.shadow_color = Color(0, 0, 0, 0.1)
-	card.shadow_size = 10
-	card.shadow_offset = Vector2(0, 4)
 	calendar.add_theme_stylebox_override("panel", card)
 	col.add_child(calendar)
 	calendar.owner = root

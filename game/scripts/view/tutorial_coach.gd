@@ -98,6 +98,8 @@ const WELCOME_BACK := {
 @onready var _dim: Control = %Dim
 @onready var _card: Control = %SplashCard
 @onready var _tag: Control = %NameTag
+## Where you write your own name - see PlayerProfile.
+@onready var _name_field: LineEdit = %TagName
 @onready var _eyebrow: Label = %Eyebrow
 @onready var _splash_title: Label = %SplashTitle
 @onready var _splash_body: Label = %SplashBody
@@ -123,6 +125,10 @@ func _ready() -> void:
 	_start.pressed.connect(_on_next)
 	_splash_skip.pressed.connect(func(): _finish(false))
 	_exit.pressed.connect(func(): _finish(false))
+	# Kept as you type, so whichever way you leave the welcome, the name goes
+	# with you.
+	_name_field.text_changed.connect(PlayerProfile.set_player_name)
+	_name_field.text_submitted.connect(func(_t): _name_field.release_focus())
 	_confetti.texture = _confetti_piece()
 
 func start(floor_view) -> void:
@@ -202,6 +208,7 @@ func _show_splash() -> void:
 	_exit.visible = false
 	_splash.visible = true
 	_dress_the_splash(TutorialProgress.is_done())
+	_name_field.text = PlayerProfile.player_name()
 
 	# In with a little bounce, and the name tag slapped on a beat later.
 	if _splash_tween != null and _splash_tween.is_valid():
@@ -244,6 +251,8 @@ func _dress_the_splash(returning: bool) -> void:
 func _hide_splash() -> void:
 	if _splash_tween != null and _splash_tween.is_valid():
 		_splash_tween.kill()
+	# A name box still holding the keyboard would swallow the shift's own keys.
+	_name_field.release_focus()
 	_splash.visible = false
 
 ## Confetti. It is the first day, after all.

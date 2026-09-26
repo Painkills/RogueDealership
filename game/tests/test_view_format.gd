@@ -10,6 +10,11 @@ func test_money_formats_with_commas_and_no_decimals() -> void:
 func test_money_keeps_the_sign_on_a_loss() -> void:
 	h.eq("a negative margin", Format.money(-300), "-$300")
 
+func test_a_score_is_grouped_like_money_without_the_dollar() -> void:
+	h.eq("a big score", Format.number(18450), "18,450")
+	h.eq("a small one", Format.number(900), "900")
+	h.eq("a penalty keeps its sign", Format.number(-1200), "-1,200")
+
 func test_patience_color_bands_match_the_thresholds() -> void:
 	h.eq("full is ok", Format.patience_color(10, 10), Palette.color(&"patience_ok"))
 	h.eq("just over half is ok", Format.patience_color(6, 10),

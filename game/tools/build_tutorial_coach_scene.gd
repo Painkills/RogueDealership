@@ -370,11 +370,37 @@ func _name_tag(col: Control, root: Node) -> void:
 	var my_name := _label(band_col, root, "MyNameIs", "my name is", 20, &"paper")
 	my_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-	var who := _label(col_tag, root, "TagName", "F&I MANAGER", 46, &"ink")
-	who.theme_type_variation = &"Heading"
-	who.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	who.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# Write your own name in: it is who the boss's email goes to and who your
+	# best runs are filed under (see PlayerProfile).
+	var who := LineEdit.new()
+	who.name = "TagName"
+	who.placeholder_text = "WRITE YOUR NAME"
+	who.max_length = PlayerProfile.MAX_NAME
+	who.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	who.flat = true
+	who.caret_blink = true
 	who.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	who.add_theme_font_override("font", _heading_font())
+	who.add_theme_font_size_override("font_size", 42)
+	who.add_theme_color_override("font_color", Palette.color(&"ink"))
+	who.add_theme_color_override("font_placeholder_color",
+		Color(Palette.color(&"text_dim"), 0.55))
+	who.add_theme_color_override("caret_color", Palette.color(&"stamp"))
+	for state in ["normal", "focus", "read_only"]:
+		who.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	who.unique_name_in_owner = true
+	col_tag.add_child(who)
+	who.owner = root
+
+## The heading face, for the one text box that should look like a heading: a
+## LineEdit cannot take the theme's Label-only "Heading" variation, so it gets
+## the same face directly - the same weight tools/build_theme.gd sets.
+func _heading_font() -> FontVariation:
+	var v := FontVariation.new()
+	v.base_font = load("res://theme/fonts/Oswald-Variable.ttf") as FontFile
+	var ts := TextServerManager.get_primary_interface()
+	v.variation_opentype = {ts.name_to_tag("wght"): 600}
+	return v
 
 func _label(parent: Node, owner_root: Node, node_name: String, text: String,
 		size: int, role: StringName) -> Label:

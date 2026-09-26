@@ -17,6 +17,8 @@ var _checks := 0
 
 var _run: RunState
 
+const PROFILE := "user://drive_run_profile.cfg"
+
 func _init() -> void:
 	seed(20260905)
 	_root = (load("res://scenes/run.tscn") as PackedScene).instantiate()
@@ -24,6 +26,10 @@ func _init() -> void:
 	# is tools/drive_tutorial.gd's job) - so it boots straight to the picker,
 	# whatever the machine running it has or has not played before.
 	_root.tutorial_at_boot = false
+	# Its own profile, so the runs this plays are never filed among a real
+	# player's personal bests.
+	PlayerProfile.path = PROFILE
+	PlayerProfile.reset()
 	get_root().add_child(_root)
 
 func _process(_delta: float) -> bool:
@@ -56,6 +62,7 @@ func _process(_delta: float) -> bool:
 		_phase_2_buy_and_leave()
 		_check_run_summary_screen_appears_at_the_end_of_a_run()
 		_check_the_fired_title_is_distinct_from_a_completed_run()
+		PlayerProfile.reset()
 
 		print("")
 		const EXPECTED_MIN := 20
@@ -190,9 +197,25 @@ func _set_standing_keys(r: Dictionary, standing_before: int) -> void:
 ## minimum, anchors or not, so an oversized child forces its ancestors to grow
 ## past the viewport rather than clipping - which is exactly why this has to be
 ## measured in pixels rather than inferred from the tree.
+## Every screen is an app window centred on the desktop, and the run's VIEW
+## DECK button sits over the top-right corner of all of them - so a window
+## tall enough to reach it would put the button on top of the window's own
+## title bar. Measured from the window's minimum size, which containers give
+## it however deferred their layout pass is.
+func _check_window_fits(what: String, window: Control) -> void:
+	var h: float = maxf(window.custom_minimum_size.y, window.get_combined_minimum_size().y)
+	var top: float = (VIEWPORT.y - h) * 0.5
+	var corner := _root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control
+	var corner_bottom: float = corner.offset_bottom
+	_check("%s's window fits the screen (%d px tall)" % [what, int(h)], h <= VIEWPORT.y)
+	_check("and starts below the corner VIEW DECK button (top %d, button ends %d)"
+		% [int(top), int(corner_bottom)], top >= corner_bottom + 4.0)
+
 func _check_shop_layout_fits_on_screen() -> void:
-	var done_btn := _root._shop_view.get_node(^"Margin/Column/ButtonRow/DoneButton") as Control
-	var log_label := _root._shop_view.get_node(^"Margin/Column/LogLabel") as Control
+	_check_window_fits("the store", _root._shop_view.get_node(^"%PortalWindow"))
+	_check_window_fits("the toolkit", _root._deck_viewer.get_node(^"%DeckWindow"))
+	var done_btn := _root._shop_view.get_node(^"%DoneButton") as Control
+	var log_label := _root._shop_view.get_node(^"%LogLabel") as Control
 	var shelf_row := _root._shop_view.get_node(^"%ShelfRow") as Control
 	var deck_row := _root._shop_view.get_node(^"%DeckRow") as Control
 	_check("the shop has a deck to show (%d cards)" % _run.deck.cards.size(),
@@ -203,6 +226,13 @@ func _check_shop_layout_fits_on_screen() -> void:
 		Rect2(log_label.global_position, log_label.size))
 	_on_screen("the shelf row", Rect2(shelf_row.global_position, shelf_row.size))
 	_on_screen("the deck row", Rect2(deck_row.global_position, deck_row.size))
+	# An aisle with nothing on offer says so, rather than standing empty.
+	for pair in [[shelf_row, _root._shop_view._shop.offers], [deck_row,
+			_root._shop_view._shop.upgrade_offers]]:
+		if (pair[1] as Array).is_empty():
+			_check("an empty aisle says so (%s)" % (pair[0] as Node).name,
+				(pair[0] as Node).get_child_count() == 1
+					and (pair[0] as Node).get_child(0) is Label)
 	var shelf_rect := Rect2(shelf_row.global_position, shelf_row.size)
 	var deck_rect := Rect2(deck_row.global_position, deck_row.size)
 	var done_rect := Rect2(done_btn.global_position, done_btn.size)
@@ -236,6 +266,8 @@ func _check_shop_layout_fits_on_screen() -> void:
 	for row in [shelf_row, deck_row]:
 		for slot in row.get_children():
 			var card := _slot_card(slot) as Control
+			if card == null:
+				continue   # an empty aisle's own note, not a card slot
 			_check("%s's card clips its own content, so a render quirk can never"
 				% slot.name + " paint past its box (%s)" % card.name, card.clip_contents)
 			var texture := card.get_node(^"TextureRect") as TextureRect
@@ -429,8 +461,8 @@ func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 	# Each side's frame border echoes the kind-icon colour its own cards
 	# already carry (card_face_3d.gd's _kind_icon), not a colour invented
 	# just for this overlay.
-	var products_frame := deck_viewer.get_node(^"Margin/Column/Scroll/Halves/ProductsSide/ProductsSideFrame") as PanelContainer
-	var support_frame := deck_viewer.get_node(^"Margin/Column/Scroll/Halves/SupportSide/SupportSideFrame") as PanelContainer
+	var products_frame := deck_viewer.get_node(^"%ProductsSideFrame") as PanelContainer
+	var support_frame := deck_viewer.get_node(^"%SupportSideFrame") as PanelContainer
 	var products_border: Color = (products_frame.get_theme_stylebox("panel") as StyleBoxFlat).border_color
 	var support_border: Color = (support_frame.get_theme_stylebox("panel") as StyleBoxFlat).border_color
 	_check("the products frame border matches the product kind-icon colour (%s)" % products_border,
@@ -529,6 +561,7 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 ## shift you took and how it went. Checked on the SECOND visit, the first one
 ## with a past to show.
 func _check_the_calendar_shows_the_week() -> void:
+	_check_window_fits("the calendar", _root._picker_view.get_node(^"%CalendarWindow"))
 	var week: Node = _root._picker_view.get_node(^"%Week")
 	var days: int = _run.cfg.shifts_in_run
 	_check("a column per day of the run, after the hours (%d)" % week.get_child_count(),
@@ -728,30 +761,63 @@ func _check_report_card_fits_the_worst_case(report) -> void:
 		was[key] = report.get("_" + key).text
 	report.setup(worst)
 
-	var card := report.get_node(^"CenterWrap/Card") as Control
-	var vbox := card.get_node(^"CardMargin/VBoxContainer") as VBoxContainer
-	var width: float = 900.0 - 56.0 - 56.0   # Card's own width minus CardMargin
-	var total := 0.0
-	var shown := 0
-	for child in vbox.get_children():
-		shown += 1
-		if child is Label:
-			var l := child as Label
-			total += l.get_theme_font("font").get_multiline_string_size(
-				l.text, HORIZONTAL_ALIGNMENT_LEFT, width,
-				l.get_theme_font_size("font_size")).y
-		else:
-			total += maxf((child as Control).custom_minimum_size.y, 0.0)
-	if shown > 1:
-		total += float(vbox.get_theme_constant("separation") * (shown - 1))
-	total += 56.0 + 56.0   # CardMargin top + bottom
-	_check("the report card fits a 1080-tall viewport even at its wordiest (%d px)"
+	# The report is an app window now: a title bar, then its body inside the
+	# window's own margins. Measured the way the containers will lay it out -
+	# every nested panel's padding and every column's gaps - at the width the
+	# window gives its text.
+	var window := report.get_node(^"%ReportWindow") as Control
+	var pad := window.get_node(^"WindowColumn/Body") as MarginContainer
+	var content := pad.get_node(^"Content") as Control
+	var side: float = pad.get_theme_constant("margin_left") + pad.get_theme_constant("margin_right")
+	var width: float = window.custom_minimum_size.x - side
+	var total: float = AppWindow.TITLE_BAR_H + pad.get_theme_constant("margin_top") \
+		+ pad.get_theme_constant("margin_bottom") + _needed_height(content, width)
+	_check("the end-of-day report fits a 1080-tall viewport even at its wordiest (%d px)"
 		% int(total), total <= 1080.0)
 
 	# Leave the panel showing what the real shift actually produced, not the
 	# synthetic worst case - nothing downstream expects to see 12345678 again.
 	for key in was:
 		report.get("_" + key).text = was[key]
+
+## How tall a Control will lay out at `width`, without waiting on a layout pass:
+## a Label by its font, a column by its children and gaps, a panel by its
+## padding around what it holds.
+func _needed_height(node: Control, width: float) -> float:
+	if not node.visible:
+		return 0.0
+	if node is Label:
+		var l := node as Label
+		var text := l.text if l.text != "" else " "
+		return l.get_theme_font("font").get_multiline_string_size(text,
+			HORIZONTAL_ALIGNMENT_LEFT, width, l.get_theme_font_size("font_size")).y
+	if node is VBoxContainer:
+		var sum := 0.0
+		var shown := 0
+		for child in node.get_children():
+			if child is Control and (child as Control).visible:
+				sum += _needed_height(child, width)
+				shown += 1
+		if shown > 1:
+			sum += float(node.get_theme_constant("separation") * (shown - 1))
+		return maxf(sum, node.custom_minimum_size.y)
+	if node is PanelContainer:
+		var box: StyleBox = node.get_theme_stylebox("panel")
+		var inner := width - box.get_margin(SIDE_LEFT) - box.get_margin(SIDE_RIGHT)
+		var tallest := 0.0
+		for child in node.get_children():
+			if child is Control:
+				tallest = maxf(tallest, _needed_height(child, inner))
+		return maxf(tallest + box.get_margin(SIDE_TOP) + box.get_margin(SIDE_BOTTOM),
+			node.custom_minimum_size.y)
+	if node is BoxContainer:   # a row: as tall as its tallest
+		var tallest := 0.0
+		for child in node.get_children():
+			if child is Control:
+				tallest = maxf(tallest, maxf((child as Control).custom_minimum_size.y,
+					_needed_height(child, width)))
+		return tallest
+	return node.custom_minimum_size.y
 
 ## "At end of run it would show you all these categories and the points
 ## given and a high score" - the literal ask, end to end: force the run onto
@@ -773,15 +839,29 @@ func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
 
 	var score := Score.tally(_run)
 	var summary = _root._summary_view
-	_check("the total line names the same high score Score.tally computes (%s)"
+	_check("the boss's email totals the same score Score.tally computes (%s)"
 		% summary._total.text,
-		summary._total.text == "HIGH SCORE: %d" % int(score["total"]))
-	_check("margin banked, lifetime, is on its own line (%s)" % summary._margin.text,
-		summary._margin.text.contains(Format.money(score["margin_banked"])))
-	_check("standing at the bell is on its own line (%s)" % summary._standing.text,
-		summary._standing.text.contains(str(score["standing"])))
-	_check("walkout count is on its own line (%s)" % summary._walkouts.text,
-		summary._walkouts.text.contains(str(score["walkouts"])))
+		summary._total.text == Format.number(int(score["total"])))
+	var measured := func(row: String) -> String:
+		return (summary._rows[row].get_node(^"Measured") as Label).text
+	_check("margin banked, lifetime, is on its own line (%s)" % measured.call("MarginRow"),
+		measured.call("MarginRow").contains(Format.money(score["margin_banked"])))
+	_check("standing at the bell is on its own line (%s)" % measured.call("StandingRow"),
+		measured.call("StandingRow").contains(str(score["standing"])))
+	_check("walkout count is on its own line (%s)" % measured.call("WalkoutsRow"),
+		measured.call("WalkoutsRow") == str(score["walkouts"]))
+	# Personal bests: the week is filed on this device, and the email says so.
+	var filed: Array = PlayerProfile.bests().filter(
+		func(r): return int(r["score"]) == int(score["total"]))
+	_check("the week was filed among this device's personal bests",
+		not filed.is_empty())
+	_check("as the device's first week, it is on the board - not a record it beat (%s)"
+		% summary._best_headline.text,
+		summary._best_headline.text == "Your first week on the board")
+	_check("the email lists the best weeks on this device (%d)"
+		% summary._bests_list.get_child_count(), summary._bests_list.get_child_count() >= 1)
+	_check("addressed to whoever is playing (%s)" % summary._to.text,
+		summary._to.text.contains(PlayerProfile.display_name()))
 
 	var stale_run := _run
 	summary.continue_pressed.emit()
@@ -801,13 +881,13 @@ func _check_the_fired_title_is_distinct_from_a_completed_run() -> void:
 	var summary = _root._summary_view
 	var score := Score.tally(_run)
 	summary.setup(score, true)
-	_check("a standing wipeout titles the summary YOU'RE FIRED (%s)"
-		% summary._title.text, summary._title.text == "YOU'RE FIRED")
+	_check("a standing wipeout gets the boss's \"You're fired.\" (%s)"
+		% summary._title.text, summary._title.text == "You're fired.")
 	_check("in the same alert colour the per-shift report already uses for it",
 		summary._title.get_theme_color("font_color") == Palette.color(&"alert"))
 	summary.setup(score, false)
-	_check("a completed run titles it RUN COMPLETE instead (%s)"
-		% summary._title.text, summary._title.text == "RUN COMPLETE")
+	_check("a completed run gets the week's numbers instead (%s)"
+		% summary._title.text, summary._title.text == "Your week, by the numbers")
 	_check("in the same neutral colour the per-shift report uses for a normal close",
 		summary._title.get_theme_color("font_color") == Palette.color(&"text"))
 

@@ -9,7 +9,7 @@ class_name CalendarDay extends Control
 
 const FIRST_HOUR := 8
 const LAST_HOUR := 22
-const HOUR_PX := 56.0
+const HOUR_PX := 48.0
 
 ## Tints the column the way a calendar marks today.
 var today := false

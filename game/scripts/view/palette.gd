@@ -70,6 +70,8 @@ const ROLES := {
 	&"chair_base": "3b4048",
 	&"wall": "243044",
 	&"carpet": "3a4151",
+	# The computer every report and menu is on: its desktop, behind the window.
+	&"desktop": "1a2332",
 	# The shift picker's calendar - one colour per kind of shift, the way a
 	# calendar colours its events by what they are.
 	&"shift_morning": "0ea5e9",

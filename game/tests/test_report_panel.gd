@@ -71,20 +71,34 @@ func test_the_secondary_stats_are_a_quiet_detail_not_a_warning() -> void:
 func test_the_button_matches_the_titles_verdict() -> void:
 	var p = _instance()
 	p.setup(_report({"standing_after": 0}))   # fired
-	h.eq("fired reads alert on the button too",
-		p._restart.get_theme_color("font_color"), Palette.color(&"alert"))
+	h.eq("fired turns the button red, like everything that ends something",
+		(p._restart.get_theme_stylebox("normal") as StyleBoxFlat).bg_color,
+		Palette.color(&"stamp"))
 	p.free()
 
 	var q = _instance()
 	q.setup(_report({"standing_after": 50}))   # not fired
-	h.eq("an ordinary continue is not alert-colored",
-		q._restart.get_theme_color("font_color"), Palette.color(&"text"))
+	h.eq("an ordinary continue is the house blue",
+		(q._restart.get_theme_stylebox("normal") as StyleBoxFlat).bg_color,
+		Palette.color(&"primary"))
+	h.eq("with white words either way",
+		q._restart.get_theme_color("font_color"), Palette.color(&"paper"))
 	q.free()
 
-func test_the_root_panel_is_themed_not_the_engine_default() -> void:
+func test_it_is_a_report_on_a_screen_over_the_floor() -> void:
+	## "Make all report or UI screens look like some digital thing": the
+	## dealership system's end-of-day report, in an app window, over the floor
+	## you just worked - dimmed, not hidden.
 	var p = _instance()
 	var style: StyleBox = p.get_theme_stylebox("panel")
 	h.check("carries its own StyleBoxFlat", style is StyleBoxFlat)
-	h.eq("in the same dark ground the floor's felt uses",
-		(style as StyleBoxFlat).bg_color, Palette.color(&"bg"))
+	var ground := (style as StyleBoxFlat).bg_color
+	h.check("the desktop behind the window (%s)" % ground,
+		Color(ground, 1.0).is_equal_approx(Palette.color(&"desktop")))
+	h.check("see-through, so the floor still shows (%.2f)" % ground.a,
+		ground.a > 0.5 and ground.a < 1.0)
+	var window = p.get_node_or_null(^"%ReportWindow")
+	h.check("in an app window", window is PanelContainer)
+	h.check("with a title bar", window != null
+		and window.get_node_or_null(^"WindowColumn/TitleBar") != null)
 	p.free()

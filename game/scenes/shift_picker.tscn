@@ -3,9 +3,54 @@
 [ext_resource type="Script" path="res://scripts/view/shift_picker_screen.gd" id="1_1bub3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_14ick"]
-bg_color = Color(0.93333334, 0.94509804, 0.9607843, 1)
+bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rh1pw"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72156864, 0.7529412, 0.8, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 36
+shadow_offset = Vector2(0, 12)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_unu0u"]
+content_margin_left = 18.0
+content_margin_right = 18.0
+bg_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
+border_width_bottom = 1
+border_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
+corner_radius_top_left = 13
+corner_radius_top_right = 13
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4hu4a"]
+bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3rq1d"]
+bg_color = Color(0.8862745, 0.7019608, 0.23529412, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kq7su"]
+bg_color = Color(0.18431373, 0.61960787, 0.35686275, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lod72"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -24,7 +69,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_unu0u"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4p18p"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -43,7 +88,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4hu4a"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_womnk"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -62,7 +107,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3rq1d"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_s5ff8"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -81,7 +126,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kq7su"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qjv1k"]
 content_margin_left = 12.0
 content_margin_top = 8.0
 content_margin_right = 12.0
@@ -92,66 +137,117 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.8862745, 0.9019608, 0.9254902, 1)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-shadow_color = Color(0, 0, 0, 0.1)
-shadow_size = 10
-shadow_offset = Vector2(0, 4)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
-[node name="ShiftPickerScreen" type="PanelContainer" unique_id=1618276429]
+[node name="ShiftPickerScreen" type="PanelContainer" unique_id=465005308]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("1_1bub3")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=156470915]
+[node name="CalendarWindowCentre" type="CenterContainer" parent="." unique_id=647816392]
 layout_mode = 2
-theme_override_constants/margin_left = 48
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 48
-theme_override_constants/margin_bottom = 28
+mouse_filter = 2
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1523291654]
+[node name="CalendarWindow" type="PanelContainer" parent="CalendarWindowCentre" unique_id=1827641100]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1840, 0)
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_styles/panel = SubResource("StyleBoxFlat_rh1pw")
 
-[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=376012534]
-layout_mode = 2
-theme_override_constants/separation = 24
-
-[node name="Titles" type="VBoxContainer" parent="Margin/Column/Header" unique_id=260196852]
+[node name="WindowColumn" type="VBoxContainer" parent="CalendarWindowCentre/CalendarWindow" unique_id=895199783]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleLabel" type="Label" parent="Margin/Column/Header/Titles" unique_id=317430092]
+[node name="TitleBar" type="PanelContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn" unique_id=476862149]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_unu0u")
+
+[node name="Row" type="HBoxContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/TitleBar" unique_id=1370296786]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Lights" type="HBoxContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/TitleBar/Row" unique_id=674709700]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Light" type="Panel" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/TitleBar/Row/Lights" unique_id=708084915]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_4hu4a")
+
+[node name="@Panel@2" type="Panel" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/TitleBar/Row/Lights" unique_id=2147377789]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_3rq1d")
+
+[node name="@Panel@3" type="Panel" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/TitleBar/Row/Lights" unique_id=154015905]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_kq7su")
+
+[node name="WindowTitle" type="Label" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/TitleBar/Row" unique_id=1784027932]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 19
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+text = "Calendar"
+horizontal_alignment = 1
+
+[node name="Balance" type="Control" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/TitleBar/Row" unique_id=1703810372]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+
+[node name="Body" type="MarginContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn" unique_id=738791813]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Content" type="VBoxContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body" unique_id=536240289]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body/Content" unique_id=80826199]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body/Content/Header" unique_id=1483652336]
 layout_mode = 2
 theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 44
+theme_override_font_sizes/font_size = 38
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "THIS WEEK"
 
-[node name="SubLabel" type="Label" parent="Margin/Column/Header/Titles" unique_id=583155268]
+[node name="SubLabel" type="Label" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body/Content/Header" unique_id=273885624]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Shift 1 of 5 - pick today's  |  quota $3,600"
 
-[node name="Spacer" type="Control" parent="Margin/Column/Header" unique_id=1014760187]
+[node name="Spacer" type="Control" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body/Content/Header" unique_id=1148867588]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TutorialButton" type="Button" parent="Margin/Column/Header" unique_id=1485155157]
+[node name="TutorialButton" type="Button" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body/Content/Header" unique_id=2134289283]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 52)
 layout_mode = 2
-size_flags_vertical = 8
-theme_override_styles/normal = SubResource("StyleBoxFlat_rh1pw")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_unu0u")
-theme_override_styles/hover = SubResource("StyleBoxFlat_4hu4a")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_3rq1d")
+theme_override_styles/normal = SubResource("StyleBoxFlat_lod72")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_4p18p")
+theme_override_styles/hover = SubResource("StyleBoxFlat_womnk")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_s5ff8")
 theme_override_colors/font_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 theme_override_colors/font_focus_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
@@ -160,16 +256,12 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
 text = "HOW TO PLAY"
 
-[node name="CornerReserve" type="Control" parent="Margin/Column/Header" unique_id=1835555817]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-
-[node name="Calendar" type="PanelContainer" parent="Margin/Column" unique_id=2109252529]
+[node name="Calendar" type="PanelContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body/Content" unique_id=1116402802]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_kq7su")
+theme_override_styles/panel = SubResource("StyleBoxFlat_qjv1k")
 
-[node name="Week" type="HBoxContainer" parent="Margin/Column/Calendar" unique_id=1724344141]
+[node name="Week" type="HBoxContainer" parent="CalendarWindowCentre/CalendarWindow/WindowColumn/Body/Content/Calendar" unique_id=407434976]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 0

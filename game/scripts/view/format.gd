@@ -6,6 +6,11 @@ static func money(n: int) -> String:
 	var minus := "-" if n < 0 else ""
 	return "%s$%s" % [minus, _grouped(abs(n))]
 
+## A count or a score, grouped like money but without the dollar sign.
+static func number(n: int) -> String:
+	var minus := "-" if n < 0 else ""
+	return "%s%s" % [minus, _grouped(abs(n))]
+
 ## Shop.buy_price()/upgrade_price() read 0 as "a dedicated free pool covers
 ## this" (see shop.gd) - here that needs to read as a word, not $0.
 static func price(n: int) -> String:

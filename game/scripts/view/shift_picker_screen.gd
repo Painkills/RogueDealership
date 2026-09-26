@@ -35,6 +35,9 @@ func setup(pool: ShiftProfilePool, day: int = 1, days: int = 5, quota: int = 0,
 		history: Array = []) -> void:
 	_sub.text = "Shift %d of %d - pick today's%s" % [day, days,
 		"  |  quota %s" % Format.money(quota) if quota > 0 else ""]
+	# The week to beat, once there is one - see PlayerProfile.
+	if PlayerProfile.has_best():
+		_sub.text += "  |  your best week: %s" % Format.number(PlayerProfile.best_score())
 	for child in _week.get_children():
 		_week.remove_child(child)
 		child.queue_free()

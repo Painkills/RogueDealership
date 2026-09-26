@@ -122,6 +122,6 @@ func setup(r: Dictionary) -> void:
 	# The button is the last thing your eye lands on. On a fatal shift it
 	# should not read as the same friendly "Continue" every other shift ends
 	# on - set_button_text() already changes its WORDS; this is the button
-	# noticing the same fact its text does.
-	_restart.add_theme_color_override("font_color",
-		Palette.color(&"alert" if fired else &"text"))
+	# noticing the same fact its text does, in the colour of every other
+	# button in the game that ends something.
+	ButtonStyle.filled(_restart, Palette.color(&"stamp" if fired else &"primary"))
