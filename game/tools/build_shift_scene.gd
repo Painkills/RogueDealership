@@ -74,9 +74,9 @@ const DROPZONE_SHAPE := "res://scenes/dropzone_shape_3d.tres"
 ## The discard's own, a unit taller at the top (+3 where every other zone
 ## stops at +2.2): "give the discard dropzone a little more vertical area."
 ## The pile sits low in the bottom-right corner, so upward is the only way it
-## can grow on screen - and it stops about 30 px under the action column's
-## bottom edge, so the buttons there never sit over it. drive_shift.gd pins
-## both ends of that.
+## can grow on screen - and it still stops well short of the middle of the
+## screen, a target in the corner and nowhere else. drive_shift.gd pins both
+## ends of that.
 const DISCARD_DROPZONE_SHAPE := "res://scenes/discard_dropzone_shape_3d.tres"
 
 # --- table geometry, world units -------------------------------------------
@@ -108,6 +108,23 @@ const SLOT_SIZE := Vector2(2.5, 3.5)
 ## the camera pushed in and simply vanish. It did, back when this was a felt.
 ## test_shift_scene.gd pins the clearance now.
 const WALL_Z := -14.0
+## The office windows along that wall - see OfficeWindows. Five tall panes,
+## showroom glass, across the whole width either framing sees: low sills, so
+## the town's rooftops show under the two customers either side of you, and
+## tops past the top of both framings, so they are never in shot. At a desk
+## the customers and the tablet stand in front of most of it, and the sky
+## shows round them - widest on the right, where the old button rail was.
+const WINDOW_PANES := 5
+const WINDOW_W := 7.0
+const WINDOW_GAP := 1.0
+const WINDOW_SILL := -2.6
+const WINDOW_TOP := 11.5
+## The frame's bars: how wide, and how far they stand off the wall.
+const WINDOW_BAR := 0.24
+const WINDOW_BAR_DEPTH := 0.12
+## The sky they look out on, in pixels: the same shape as the five panes laid
+## side by side, gaps left out, since the gaps are wall and never show sky.
+const SKY_PX := Vector2i(1400, 564)
 ## The office floor. Low enough that nothing of yours that is ever on screen
 ## reaches it: the lowest visible point of your hand is about y -3.3, and the
 ## piles only dip below this off the bottom of the frame.
@@ -198,14 +215,8 @@ const FAN_RADIUS := 24.0
 ## rises into. As narrow as it is so the left flanker's folder clears it from
 ## the floor, where it is biggest.
 const LOG_RECT := Rect2(18, 80, 370, 650)
-## A column, not a row. The bottom of the screen belongs to the hand and the two
-## piles, and a Button laid over a card steals the click meant for the card.
-##
-## RIGHT rail, mirroring the log, clear of the right-hand flanker's folder and
-## of the tablet. The buttons are hidden on the floor, where there is nobody to
-## act on. drive_shift.gd pins both edges.
-const ACTION_RECT := Rect2(1630, 300, 260, 340)
-const ACTION_BUTTON := Vector2(260, 100)
+## The log's fold button, in its heading row.
+const LOG_TOGGLE := Vector2(84, 34)
 ## The app bar across the top that the shift's numbers sit on. The log starts
 ## below it.
 const TOP_STRIP_HEIGHT := 66.0
@@ -288,6 +299,8 @@ func _init() -> void:
 	floor_mesh.position = Vector3(0, FLOOR_Y, WALL_Z + 32.0)
 	root.add_child(floor_mesh)
 	floor_mesh.owner = root
+
+	_windows(root)
 
 	# --- theirs: on a turntable ------------------------------------------
 	var table := Node3D.new()
@@ -404,7 +417,7 @@ func _init() -> void:
 		_chair_pad(i, seat, root)
 		# Just the highlight now. The words live on the HUD's TableNote%d, as
 		# the second half of the empty-table note, so the two options read as
-		# one card offering both. Stamp red, like the words and the CLOSE button.
+		# one card offering both. Stamp red, like the words.
 		_drag_hint(chair, root, "CloseHint%d" % i, Palette.color(&"stamp"), false)
 
 		# A drop target that never actually holds a card - CardHomes never
@@ -594,6 +607,73 @@ func _mesh(parent: Node3D, owner_root: Node, node_name: String, mesh: Mesh,
 	inst.position = pos
 	parent.add_child(inst)
 	inst.owner = owner_root
+
+## The windows along the back wall: five panes onto the one sky (see
+## OfficeWindows and SkyView), each in a frame, over one long sill.
+func _windows(root: Node) -> void:
+	var windows := Node3D.new()
+	windows.name = "OfficeWindows"
+	# A hair off the wall, so the glass never fights it for the same depth.
+	windows.position = Vector3(0.0, 0.0, WALL_Z + 0.05)
+	windows.set_script(load("res://scripts/view/office_windows.gd"))
+	windows.unique_name_in_owner = true
+	root.add_child(windows)
+	windows.owner = root
+
+	var vp := SubViewport.new()
+	vp.name = "SkyViewport"
+	vp.size = SKY_PX
+	vp.disable_3d = true
+	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	windows.add_child(vp)
+	vp.owner = root
+	var sky := Control.new()
+	sky.name = "Sky"
+	sky.set_script(load("res://scripts/view/sky_view.gd"))
+	sky.size = Vector2(SKY_PX)
+	vp.add_child(sky)
+	sky.owner = root
+
+	var panes := Node3D.new()
+	panes.name = "Panes"
+	windows.add_child(panes)
+	panes.owner = root
+	var frames := Node3D.new()
+	frames.name = "Frames"
+	windows.add_child(frames)
+	frames.owner = root
+
+	var metal := _matte(Palette.color(&"window_frame"), 0.5)
+	var tall := WINDOW_TOP - WINDOW_SILL
+	var mid := (WINDOW_TOP + WINDOW_SILL) * 0.5
+	var stand := WINDOW_BAR_DEPTH * 0.5
+	for i in range(WINDOW_PANES):
+		var x := (i - (WINDOW_PANES - 1) * 0.5) * (WINDOW_W + WINDOW_GAP)
+		var glass := QuadMesh.new()
+		glass.size = Vector2(WINDOW_W, tall)
+		var pane := MeshInstance3D.new()
+		pane.name = "Pane%d" % i
+		pane.mesh = glass
+		pane.position = Vector3(x, mid, 0.0)
+		pane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		panes.add_child(pane)
+		pane.owner = root
+		# A bar down each side, one along the bottom, and a transom across -
+		# the top of the frame is never in shot.
+		for bar in [
+				["Left%d" % i, Vector3(x - WINDOW_W * 0.5, mid, stand),
+					Vector3(WINDOW_BAR, tall, WINDOW_BAR_DEPTH)],
+				["Right%d" % i, Vector3(x + WINDOW_W * 0.5, mid, stand),
+					Vector3(WINDOW_BAR, tall, WINDOW_BAR_DEPTH)],
+				["Bottom%d" % i, Vector3(x, WINDOW_SILL, stand),
+					Vector3(WINDOW_W + WINDOW_BAR, WINDOW_BAR, WINDOW_BAR_DEPTH)],
+				["Transom%d" % i, Vector3(x, WINDOW_SILL + tall * 0.62, stand),
+					Vector3(WINDOW_W, WINDOW_BAR * 0.6, WINDOW_BAR_DEPTH * 0.8)]]:
+			_box(frames, root, bar[0], bar[2], bar[1], metal)
+	# One long ledge under the lot.
+	var span := WINDOW_PANES * (WINDOW_W + WINDOW_GAP)
+	_box(frames, root, "Sill", Vector3(span, WINDOW_BAR * 0.9, 0.4),
+		Vector3(0.0, WINDOW_SILL - WINDOW_BAR * 0.9, 0.2), metal)
 
 func _matte(color: Color, roughness: float = 0.95) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -900,36 +980,10 @@ func _build_hud(root: Node) -> void:
 	top.add_child(at_risk)
 	at_risk.owner = root
 
-	# --- yours: the action column, on the right rail ------------------------
-	var actions := VBoxContainer.new()
-	actions.name = "ActionBar"
-	actions.position = ACTION_RECT.position
-	actions.size = ACTION_RECT.size
-	actions.add_theme_constant_override("separation", 18)
-	actions.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	actions.unique_name_in_owner = true
-	hud.add_child(actions)
-	actions.owner = root
-
-	# OFFER filled in the house blue - it is the move you make most - and CLOSE
-	# filled in red, the one that actually signs the deal and the same red the
-	# empty table's "double-click to close" is written in. DROP only outlined:
-	# it throws a product away, and should never look like the obvious press.
-	for spec in [["OfferButton", "OFFER", &"primary", true],
-			["DropButton", "DROP", &"ink_dim", false],
-			["CloseButton", "CLOSE", &"stamp", true]]:
-		var b := Button.new()
-		b.name = spec[0]
-		b.text = spec[1]
-		b.custom_minimum_size = ACTION_BUTTON
-		b.add_theme_font_size_override("font_size", 32)
-		if spec[3]:
-			ButtonStyle.filled(b, Palette.color(spec[2]))
-		else:
-			ButtonStyle.outlined(b, Palette.color(spec[2]))
-		b.unique_name_in_owner = true
-		actions.add_child(b)
-		b.owner = root
+	# No action column. OFFER, DROP and CLOSE were buttons on the right rail;
+	# each is a gesture on the table now - drag the product onto the customer
+	# to offer it, onto the discard to drop it, and double-click the empty
+	# tablet to close - with O, D and Shift+C still on the keyboard.
 
 	# --- yours: the log, left, stopping short of the draw pile ------------
 	# An activity feed: a white card with a small heading over the entries.
@@ -962,15 +1016,35 @@ func _build_hud(root: Node) -> void:
 	panel.add_child(col)
 	col.owner = root
 
+	# The heading, and the log's one control beside it: fold the log up to just
+	# this row, out of the way of the table, or open it again.
+	var head := HBoxContainer.new()
+	head.name = "LogHead"
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(head)
+	head.owner = root
+
 	var log_title := Label.new()
 	log_title.name = "LogTitle"
 	log_title.text = "SHIFT LOG"
 	log_title.theme_type_variation = &"Heading"
 	log_title.add_theme_font_size_override("font_size", 20)
 	log_title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	log_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	log_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	log_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(log_title)
+	head.add_child(log_title)
 	log_title.owner = root
+
+	var toggle := Button.new()
+	toggle.name = "LogToggle"
+	toggle.text = "HIDE"
+	toggle.custom_minimum_size = LOG_TOGGLE
+	toggle.add_theme_font_size_override("font_size", 16)
+	ButtonStyle.outlined(toggle, Palette.color(&"ink_dim"))
+	toggle.unique_name_in_owner = true
+	head.add_child(toggle)
+	toggle.owner = root
 	_rule(col, root, "TitleRule")
 
 	var log_box := RichTextLabel.new()

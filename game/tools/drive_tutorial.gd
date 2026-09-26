@@ -123,7 +123,7 @@ func _drive() -> void:
 	await _settle()
 	_check("with Explain on it, the offer sells and moves it on",
 		_coach.step_id() == &"close")
-	await _check_it_points_at_something("the CLOSE button")
+	await _check_it_points_at_something("the empty tablet to close on")
 
 	_floor._on_close()
 	await _settle()
@@ -199,6 +199,8 @@ func _next(expect: StringName) -> void:
 ## size, the lesson filled in for someone who has never done it.
 func _check_the_first_day_welcome() -> void:
 	_check("the welcome is up", _coach.splash_showing())
+	_check("on a first morning, out of the office windows (%s)" % _floor._windows.time_of_day(),
+		_floor._windows.time_of_day() == &"morning")
 	_check("it is day one (%s)" % _coach._eyebrow.text,
 		_coach._eyebrow.text == _coach.FIRST_DAY["eyebrow"])
 	# "Let players write their own name for themselves": the tag is blank for a

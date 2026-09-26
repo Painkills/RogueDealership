@@ -30,6 +30,9 @@ var _name: Label
 var _photo: Control
 var _archetype: Label
 var _patience_bar: ProgressBar
+## The box the bar fills - see build_customer_front_scene.gd. Shown and hidden
+## with the bar, so an empty chair has no empty meter.
+var _patience_frame: Control
 ## Owned per card, so recolouring one customer's bar never repaints another's.
 var _patience_fill := StyleBoxFlat.new()
 var _patience: Label
@@ -62,13 +65,15 @@ func _bind() -> void:
 	_name = col.get_node(^"Header/Info/NameLabel")
 	_photo = col.get_node(^"Header/Photo")
 	_archetype = $FrontViewport/CustomerFront/Tab/ArchetypeLabel
-	_patience_bar = col.get_node(^"Header/Info/PatienceBar")
+	_patience_frame = col.get_node(^"Header/Info/PatienceFrame")
+	_patience_bar = _patience_frame.get_node(^"PatienceBar")
 	_patience = col.get_node(^"Header/Info/PatienceLabel")
 	_demand = col.get_node(^"DemandLabel")
 	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
 	_bubble = $FrontViewport/CustomerFront/SpeechBubble
-	_patience_fill.set_corner_radius_all(8)
+	# Rounded to sit inside the frame's own corners.
+	_patience_fill.set_corner_radius_all(7)
 	_patience_bar.add_theme_stylebox_override("fill", _patience_fill)
 	resize_quads(self, CARD_SIZE)
 
@@ -122,7 +127,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		_patience.text = ""
 		_demand.text = ""
 		_status.text = ""
-		_patience_bar.visible = false
+		_patience_frame.visible = false
 		_grid.visible = false
 		# An empty file has nobody's photo clipped to it.
 		_photo.visible = false
@@ -132,7 +137,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_photo.visible = true
 	_name.text = c.display_name
 	_archetype.text = "%s  [%s]" % [c.archetype.display_name, c.key]
-	_patience_bar.visible = true
+	_patience_frame.visible = true
 	_patience_bar.max_value = c.max_patience
 	_patience_bar.value = c.patience
 	# The FILL carries the colour, not the whole bar. Modulating the bar tinted

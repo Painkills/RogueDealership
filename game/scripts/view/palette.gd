@@ -70,6 +70,7 @@ const ROLES := {
 	&"chair_base": "3b4048",
 	&"wall": "243044",
 	&"carpet": "3a4151",
+	&"window_frame": "c9d1dc",   ## the back wall's window frames, brushed aluminium
 	# The computer every report and menu is on: its desktop, behind the window.
 	&"desktop": "1a2332",
 	# The shift picker's calendar - one colour per kind of shift, the way a

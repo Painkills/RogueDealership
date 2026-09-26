@@ -29,10 +29,14 @@ const BEZEL_PX := 18
 ## of: exactly one 2.5 x 3.5 card, centred, so the card is the middle of the
 ## screen rather than something laid across it.
 const WELL_RECT := Rect2i(435, 29, 450, 630)
-## Either side of the well. The appeal meter is the thing you are steering by,
-## so it gets the side your eye reaches first.
-const APPEAL_RECT := Rect2i(32, 29, 381, 630)
-const DEAL_RECT := Rect2i(907, 29, 381, 630)
+## The status bar along the top of the screen, as on any tablet: the time on
+## the left, signal and battery on the right. The product stands over its
+## middle, the way an app's content sits under one.
+const STATUS_RECT := Rect2i(40, 24, 1240, 30)
+## Either side of the well, under the status bar. The appeal meter is the thing
+## you are steering by, so it gets the side your eye reaches first.
+const APPEAL_RECT := Rect2i(32, 64, 381, 595)
+const DEAL_RECT := Rect2i(907, 64, 381, 595)
 ## The appeal meter stands upright at the inside edge of its panel, right up
 ## against the product, as tall as the panel's content - this is its width.
 const METER_WIDTH := 96
@@ -47,6 +51,7 @@ var _margin: Label
 var _combo: Label
 var _worth: Label
 var _knobs: Label
+var _clock: Label
 
 func _ready() -> void:
 	_bind()
@@ -66,6 +71,7 @@ func _bind() -> void:
 	_combo = screen.get_node(^"DealPanel/Column/ComboLabel")
 	_worth = screen.get_node(^"DealPanel/Column/WorthLabel")
 	_knobs = screen.get_node(^"DealPanel/Column/KnobsLabel")
+	_clock = screen.get_node(^"StatusBar/ClockLabel")
 
 	_viewport.size = SIZE_PX
 	_viewport.disable_3d = true
@@ -93,6 +99,16 @@ func switch_on(on: bool) -> void:
 
 func is_on() -> bool:
 	return visible
+
+## The time in the status bar - the shift's own clock, which ShiftHours turns
+## from ticks into the time of day the shift is being worked at.
+func show_clock(text: String) -> void:
+	_bind()
+	_clock.text = text
+
+func clock_text() -> String:
+	_bind()
+	return _clock.text
 
 ## The product in front of `c` and how it is landing. `band` comes from the
 ## model's own Shift.band_for(), so the colour thresholds are never re-derived

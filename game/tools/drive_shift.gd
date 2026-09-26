@@ -27,9 +27,8 @@ const CUSTOMER := CustomerCard3D.CARD_SIZE
 const TABLET := OfferTablet.SIZE
 
 # Nothing of the table may reach into the shift log's column, for the whole
-# shift, or into the action column while you are seated. Both are measured from
-# the real panels (_log_rect(), _action_rect()) rather than from a remembered
-# edge that would go on passing wherever they moved.
+# shift. It is measured from the real panel (_log_rect()) rather than from a
+# remembered edge that would go on passing wherever it moved.
 
 var _controller: Node3D
 var _done := false
@@ -111,15 +110,18 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_customer_card_carries_its_triage_row()
 	_check_interest_grid_cell_names_fit_their_cells()
 	_check_the_detail_card_shows_what_they_do()
-	_check_the_action_buttons_stay_on_screen()
+	_check_there_are_no_action_buttons()
 	_check_hud_does_not_overlap_itself()
+	_check_the_log_folds_away()
+	_check_the_windows_show_behind_the_customers()
+	_check_the_tablet_keeps_the_shifts_time()
 	_check_drop_zones_use_the_overridden_shape()
 	_check_the_clock_warns_when_time_is_short()
 	_check_table("after approaching chair A")
 
 	_check_the_floor_key_flips()
 	_check_the_pull_picker_locks_input_until_resolved()
-	_check_what_a_customer_says_reaches_the_log()
+	_check_what_a_customer_says_reaches_their_card()
 
 	_put_a_product_on_the_table()
 	_check_the_meter_shows_your_appeal_but_hides_their_line()
@@ -250,9 +252,6 @@ func _rect_of(node: Node3D, size: Vector2) -> Rect2:
 
 func _log_rect() -> Rect2:
 	return (_controller.get_node(^"%SidePanel") as Control).get_global_rect()
-
-func _action_rect() -> Rect2:
-	return _controller._action_bar.get_global_rect()
 
 ## Where a customer's CLOSE SOON tag lands when it shows, whether or not it is
 ## showing right now - it is only wanted in the last few ticks, and the layout
@@ -519,8 +518,6 @@ func _check_floor_view_is_bare() -> void:
 		# with someone, now that you cannot see the slot.
 		_check("but the floor card still says what you left with them",
 			_controller._customer_cards[i]._status.visible)
-	_check("no action bar on the floor - there is nobody to act on",
-		not _controller._action_bar.visible)
 	for i in range(3):
 		_check("seat %d is visible on the floor" % i, _controller._seats[i].visible)
 		_check("seat %d's tablet is not drawing a screen nobody can see" % i,
@@ -846,7 +843,6 @@ func _check_seat_view_brings_your_things_up() -> void:
 		var z := pair[1] as Node3D
 		_check("sitting down raises your %s into view (y %.1f > %.1f)"
 			% [pair[0], z.position.y, bottom], z.position.y > bottom)
-	_check("and the action bar appears", _controller._action_bar.visible)
 
 ## Everything before chair B happens at STATION 0, where the carousel is
 ## unrotated and a missing counter-rotation is indistinguishable from a working
@@ -917,11 +913,10 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 		var who := _rect_of(_controller._customer_cards[i], CUSTOMER)
 		var tag := _close_soon_rect(i)
 		_check_close_soon_in_its_corner("seat %d" % i, tag, who)
-		for pair in [["the log", _log_rect()], ["the buttons", _action_rect()]]:
-			_check("seat %d's card keeps out of %s (%s vs %s)" % [i, pair[0], who, pair[1]],
-				not who.intersects(pair[1]))
-			_check("and so does its CLOSE SOON tag (%s)" % tag,
-				not tag.intersects(pair[1]))
+		_check("seat %d's card keeps out of the log (%s vs %s)" % [i, who, _log_rect()],
+			not who.intersects(_log_rect()))
+		_check("and so does its CLOSE SOON tag (%s)" % tag,
+			not tag.intersects(_log_rect()))
 	# On the folder you are with it fits beside the folder's own tab rather
 	# than over it - "given the available space".
 	var front := _rect_of(_controller._customer_cards[at], CUSTOMER)
@@ -1001,9 +996,8 @@ func _check_the_tablet_shows_the_offer() -> void:
 	_check("and the money side reads its margin (%s)" % tablet._margin.text,
 		tablet._margin.text == Format.money(shift.chairs[at].offer.margin))
 	_on_screen("tablet", t)
-	for pair in [["the log", _log_rect()], ["the buttons", _action_rect()]]:
-		_check("the tablet stays out of %s (%s vs %s)" % [pair[0], t, pair[1]],
-			not t.intersects(pair[1]))
+	_check("the tablet stays out of the log (%s vs %s)" % [t, _log_rect()],
+		not t.intersects(_log_rect()))
 	_check("and no CLOSE SOON yet - nothing unsigned",
 		not _controller._close_soon_tags[at].visible)
 
@@ -1404,16 +1398,16 @@ func _row_height(box: Control, width: float) -> float:
 
 # --- the appeal meter ------------------------------------------------------
 
-## action_log entries have carried a "dialogue" key since G1 and _drain_log()
-## never once read it. Imposed rather than played for: whether a Karen turns up
-## in this seed is not what is being tested, and waiting for one would make
-## this check count for nothing on most runs.
+## Imposed rather than played for: whether a Karen turns up in this seed is not
+## what is being tested, and waiting for one would make this check count for
+## nothing on most runs.
 ##
-## "All customer actions need to show on the screen, not just in the log" - so
-## the same injected line has to reach chair A's own CustomerCard3D too, not
-## only the log beside it, positioned against the card's own rows rather than
-## an assumed pixel number: over their grid, never their name or patience.
-func _check_what_a_customer_says_reaches_the_log() -> void:
+## "All customer actions need to show on the screen, not just in the log" -
+## the injected line reaches chair A's own CustomerCard3D, positioned against
+## the card's own rows rather than an assumed pixel number: over their grid,
+## never their name or patience. And "remove customer dialogue lines from the
+## shift log": the log says what they DID, and only the bubble what they said.
+func _check_what_a_customer_says_reaches_their_card() -> void:
 	var card = _controller._customer_cards[0]
 	var bubble: Control = card.get_node(^"FrontViewport/CustomerFront/SpeechBubble")
 	_check("the bubble starts out hidden", not bubble.visible)
@@ -1429,11 +1423,11 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 	_controller._drain_log()
 	var text: String = _controller._event_log.get_parsed_text()
 	_check("the action itself is logged", text.contains("Asks for the manager"))
-	_check("and so is what they actually said",
-		text.contains("Is there someone else I can speak to?"))
-	_check("and a speech bubble pops on the card that said it", bubble.visible)
+	_check("but not what they said - that is not for the log",
+		not text.contains("Is there someone else I can speak to?"))
+	_check("a speech bubble pops on the card that said it instead", bubble.visible)
 	var label := bubble.get_node(^"Panel/Label") as Label
-	_check("carrying the same words as the log (%s)" % label.text,
+	_check("carrying their words (%s)" % label.text,
 		label.text == "\"Is there someone else I can speak to?\"")
 
 	# "It should never cover the patience" - it sits over their interest grid,
@@ -1464,7 +1458,7 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 			if n is Control:
 				(n as Control).update_minimum_size()
 	var bubble_rect := bubble.get_global_rect()
-	for row in ["Header/Info/NameLabel", "Header/Info/PatienceBar",
+	for row in ["Header/Info/NameLabel", "Header/Info/PatienceFrame",
 			"Header/Info/PatienceLabel", "DemandLabel"]:
 		var r := (col.get_node(NodePath(row)) as Control).get_global_rect()
 		_check("the bubble never covers their %s (bubble %s, %s)"
@@ -1612,8 +1606,8 @@ func _check_their_yes_replaced_it() -> void:
 		fits.append(l.text)
 	_check("they took it, and say so in the bubble (%s)" % said,
 		card.is_speaking() and said != _STALE_LINE and fits.has(said))
-	_check("and in the log, as one line in their own name",
-		_controller._event_log.get_parsed_text().contains(said))
+	_check("and it stays out of the log - the bubble is where words go",
+		not _controller._event_log.get_parsed_text().contains(said))
 	s.dialogue = null
 	s.rng.state = _parked_rng_state
 
@@ -1844,37 +1838,120 @@ func _check_the_pull_picker_locks_input_until_resolved() -> void:
 
 # --- the HUD ---------------------------------------------------------------
 
-func _check_the_action_buttons_stay_on_screen() -> void:
-	## The reported bug: OFFER / DROP / CLOSE vanished the moment you put
-	## something on the table. It was a layout overflow, not a disabled state.
-	for name in ["OfferButton", "DropButton", "CloseButton"]:
-		var b := _controller.get_node_or_null(NodePath("%" + name)) as Control
-		if b == null:
-			_check("%s exists" % name, false)
-			continue
-		_on_screen(name, Rect2(b.global_position, b.size))
+## "Remove the Offer / Drop / Close buttons." Every one of them is a gesture on
+## the table now, and the checks that drive those gestures are further down
+## this file - dragging the offer onto the customer and onto the discard, and
+## double-clicking the empty tablet.
+func _check_there_are_no_action_buttons() -> void:
+	for name in ["ActionBar", "OfferButton", "DropButton", "CloseButton"]:
+		_check("no %s on the table's HUD" % name,
+			_controller.get_node_or_null(NodePath("%" + name)) == null)
 
 ## The panels kept landing on each other, so this is checked rather than eyeballed.
 func _check_hud_does_not_overlap_itself() -> void:
 	var log_panel := _controller.get_node("%SidePanel") as Control
 	var log_rect := Rect2(log_panel.position, log_panel.size)
-	var bar := Rect2(_controller._action_bar.global_position, _controller._action_bar.size)
 
-	_check("the action column clears the log", not bar.intersects(log_rect))
-
-	# Buttons are the only STOP controls over a 3D table, so any button sitting
-	# on a card is a click the card will never see.
+	# The log's own button is a STOP control over a 3D table, so the log sitting
+	# on a card would be a click the card never sees.
 	var at := _at()
 	for pair in [["customer card", _rect_of(_controller._customer_cards[at], CUSTOMER)],
 			["customer detail", _rect_of(_controller._customer_details[at], CUSTOMER)],
 			["product slot", _rect_of(_controller._chair_zones[at], CARD)],
 			["tablet", _rect_of(_controller._tablets[at], TABLET)]]:
 		var card: Rect2 = pair[1]
-		_check("the action column does not sit on the %s" % pair[0],
-			not bar.intersects(card))
-		_check("nor does the log sit on the %s" % pair[0], not log_rect.intersects(card))
+		_check("the log does not sit on the %s" % pair[0], not log_rect.intersects(card))
 
-	_on_screen("action column", bar)
+## "Make the shift log collapsible." Its own button folds it up to its heading,
+## out of the way of the table, and opens it again with everything still in it
+## - including whatever was logged while it was folded.
+func _check_the_log_folds_away() -> void:
+	var panel: Control = _controller._side_panel
+	var toggle: Button = _controller._log_toggle
+	var open := panel.get_global_rect()
+	_check("the log starts open (%d px tall)" % int(open.size.y),
+		not _controller.log_folded() and _controller._event_log.visible and open.size.y > 400.0)
+	_check("with a button to fold it (%s)" % toggle.text, toggle.visible and toggle.text == "HIDE")
+	var toggle_at := toggle.get_global_rect()
+	_on_screen("the log's fold button", toggle_at)
+	var before: String = _controller._event_log.get_parsed_text()
+
+	toggle.pressed.emit()
+	var folded := panel.get_global_rect()
+	_check("pressed, the log folds up to its heading (%d px tall)" % int(folded.size.y),
+		_controller.log_folded() and not _controller._event_log.visible
+			and folded.size.y < 100.0)
+	_check("from the same top corner", folded.position.is_equal_approx(open.position))
+	_check("and the button says how to get it back (%s)" % toggle.text, toggle.text == "SHOW")
+	_check("where it was, so a second press finds it",
+		toggle.get_global_rect().position.is_equal_approx(toggle_at.position))
+	_controller._shift.events.append("[A] Something happened while the log was folded.")
+	_controller._render()
+
+	toggle.pressed.emit()
+	_check("pressed again, it opens back up to its full height",
+		not _controller.log_folded() and _controller._event_log.visible
+			and panel.get_global_rect().size.is_equal_approx(open.size))
+	var after: String = _controller._event_log.get_parsed_text()
+	_check("with everything that was in it", after.begins_with(before))
+	_check("and what came in while it was folded", after.contains("while the log was folded"))
+
+## "Add some windows visible behind the customers that suggest the morning /
+## midday / night shift thing we did." In the framing you work in, the glass
+## shows round the customers: on the right, where the most wall is, and under
+## the customer to your left, between the log and the tablet. Checked at a
+## point on each, against everything that stands in front of the wall.
+func _check_the_windows_show_behind_the_customers() -> void:
+	var windows: OfficeWindows = _controller._windows
+	_check("the office has windows", windows != null)
+	if windows == null:
+		return
+	_check("looking out on the shift's own time of day (%s)" % windows.time_of_day(),
+		windows.time_of_day() == _controller._time_of_day)
+	var cam: Camera3D = _controller._camera
+	var top_bar: float = (_controller.get_node(^"%TopStrip") as Control).get_global_rect().end.y
+	var in_front: Array[Rect2] = [_log_rect(), _rect_of(_controller._tablets[_at()], TABLET)]
+	for i in range(3):
+		in_front.append(_rect_of(_controller._customer_cards[i], CUSTOMER))
+	# Points on the glass itself, measured up from each pane's own sill: the
+	# right-hand pane, and low on the second from the left.
+	var panes := windows.get_node(^"Panes").get_children()
+	for spot in [["on the right", panes[panes.size() - 1], Vector2(1.0, 4.6)],
+			["under the customer on your left", panes[1], Vector2(-1.0, 1.1)]]:
+		var pane := spot[1] as MeshInstance3D
+		var glass: Vector2 = (pane.mesh as QuadMesh).size
+		_check("that pane is showing", pane.is_visible_in_tree())
+		var p := pane.global_transform * Vector3(spot[2].x, -glass.y * 0.5 + spot[2].y, 0.0)
+		var at := cam.unproject_position(p)
+		var hidden := false
+		for r in in_front:
+			if r.has_point(at):
+				hidden = true
+		_check("the window shows %s (%s)" % [spot[0], at],
+			not cam.is_position_behind(p) and at.x > 0.0 and at.x < _screen().x
+				and at.y > top_bar and at.y < _screen().y and not hidden)
+	var last := panes[panes.size() - 1] as MeshInstance3D
+	var tall: float = (last.mesh as QuadMesh).size.y
+	var sky_top := last.global_transform * Vector3(0.0, tall * 0.5, 0.0)
+	_check("and runs up past the top of the shot, so its top is never seen",
+		cam.unproject_position(sky_top).y < top_bar)
+
+## The tablet's status bar tells the time - the shift's own clock, ten minutes
+## a tick through the hours its kind of shift is worked.
+func _check_the_tablet_keeps_the_shifts_time() -> void:
+	var s: Shift = _controller._shift
+	var tablet: OfferTablet = _controller._tablets[_at()]
+	var want := ShiftHours.clock(_controller._time_of_day, s.tick, s.tick_budget)
+	_check("the tablet's clock reads the shift's time (%s vs %s)" % [tablet.clock_text(), want],
+		tablet.clock_text() == want)
+	var was := s.tick
+	s.tick += 3
+	_controller._render()
+	_check("and moves on with the ticks (%s)" % tablet.clock_text(),
+		tablet.clock_text() == ShiftHours.clock(_controller._time_of_day, s.tick, s.tick_budget)
+			and tablet.clock_text() != want)
+	s.tick = was
+	_controller._render()
 
 ## VENDORED.md's own patch: CardCollection3D's dropzone_collision_shape /
 ## dropzone_z_offset setters used to silently fail to persist through
@@ -1903,8 +1980,7 @@ func _check_drop_zones_use_the_overridden_shape() -> void:
 ## "For the discard dropzone, give it a little bit more vertical area." Its own
 ## shape reaches higher than every other zone's, over the same width and down to
 ## the same bottom - and on screen that top edge lands well above where the
-## shared shape's would, while still stopping short of the action column, whose
-## buttons would take the drop before the pile ever saw it.
+## shared shape's would, while the pile stays a target in its own corner.
 func _check_the_discard_takes_drops_from_higher_up(shared: ConvexPolygonShape3D,
 		taller: ConvexPolygonShape3D) -> void:
 	# Each shape's extent in its own plane, where y runs UP: a span's top is its
@@ -1930,16 +2006,16 @@ func _check_the_discard_takes_drops_from_higher_up(shared: ConvexPolygonShape3D,
 		collider.global_transform * Vector3(0.0, now.end.y, 0.0)).y
 	var top_was: float = cam.unproject_position(
 		collider.global_transform * Vector3(0.0, was.end.y, 0.0)).y
-	var column_bottom: float = _action_rect().end.y
+	var middle: float = _screen().y * 0.5
 	_check("on screen it takes drops from %d px higher than before (top at y %d, was %d)"
 		% [int(top_was - top_now), int(top_now), int(top_was)], top_was - top_now >= 60.0)
-	_check("and still stops below the action column (top at y %d, the column ends at %d)"
-		% [int(top_now), int(column_bottom)], top_now > column_bottom)
+	_check("and it is still a target in the corner - it stops below the middle of the screen (top at y %d)"
+		% int(top_now), top_now > middle)
 
 ## The clock's own counterpart to _check_the_meter_climbs_and_changes_colour -
 ## few ticks left has to be as loud as a customer's patience going red, and
-## the close button should only join in when there is actually something on
-## THIS table worth signing (close() refuses an empty hand now).
+## CLOSE SOON should only join in on a folder with something unsigned in it
+## (close() refuses an empty hand now).
 func _check_the_clock_warns_when_time_is_short() -> void:
 	if _controller._shift.at == null:
 		_check("still seated to check the clock warning", false)
@@ -1957,40 +2033,25 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 	_controller._render()
 	_check("plenty of time: the tick counter reads normally",
 		_controller._tick_label.get_theme_color("font_color") == Palette.color(&"text"))
-	_check("plenty of time: the close button is not highlighted",
-		not _controller._close_urgent)
 
 	s.tick = s.tick_budget - s.cfg.low_tick_warning
 	_controller._render()
 	_check("few ticks left: the tick counter turns to alert",
 		_controller._tick_label.get_theme_color("font_color") == Palette.color(&"alert"))
-	_check("few ticks left but nothing unsigned: the close button stays put "
-		+ "(closing it would just be refused)",
-		not _controller._close_urgent)
+	_check("few ticks left but nothing unsigned: no CLOSE SOON "
+		+ "(closing would just be refused)",
+		not _controller._close_soon_tags[_at()].wanted)
 	_check("and the unsigned total is not flagged with nothing unsigned",
 		_controller._at_risk_label.get_theme_color("font_color") != Palette.color(&"alert"))
 
 	c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
 	_controller._render()
-	_check("few ticks left with something to sign: the close button lights up",
-		_controller._close_urgent)
-	var dressed := _controller._close_btn.get_theme_stylebox("normal") as StyleBoxFlat
-	_check("ringed in the highlighter, not tinted (%s)" % dressed.border_color,
-		dressed.border_color == Palette.color(&"sticky") and dressed.border_width_top > 0)
-	# The regression this replaced: tinting the red button red turned its own
-	# word red on red, exactly when it most needed reading.
-	_check("and its word is still white on red, readable",
-		_controller._close_btn.modulate == Color.WHITE
-			and _controller._close_btn.get_theme_color("font_color") == Palette.color(&"paper")
-			and dressed.bg_color == Palette.color(&"stamp"))
-	_check("and the unsigned total is flagged too",
+	_check("few ticks left with something to sign: the unsigned total is flagged",
 		_controller._at_risk_label.get_theme_color("font_color") == Palette.color(&"alert"))
 
-	# CLOSE SOON rides the exact same condition as the close button's own
-	# highlight above - but it is the CUSTOMER's, in their folder's corner, and
-	# NOT scoped to the seat you are at (unlike the button, which only ever acts
-	# on `current`). A customer flanking the one you are with can still have
-	# something at risk.
+	# CLOSE SOON is the CUSTOMER's, in their folder's corner, and NOT scoped to
+	# the seat you are at: a customer flanking the one you are with can still
+	# have something at risk.
 	_settle()
 	var at := _at()
 	var tag: ScreenTag = _controller._close_soon_tags[at]
@@ -2033,9 +2094,6 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 	# that removes the reason for it removes it.
 	_check("and disappears the moment the reason for it is gone",
 		not _controller._close_soon_tags[at].visible)
-	_check("and CLOSE goes back to plain red with it",
-		not _controller._close_urgent and (_controller._close_btn.get_theme_stylebox(
-			"normal") as StyleBoxFlat).border_width_top == 0)
 
 # --- the table matches the model -------------------------------------------
 
@@ -2133,8 +2191,9 @@ func _check_drop_plays_a_card() -> void:
 	_check_table("after dropping a card on seat B")
 
 ## Dragging what's already on a customer's table - not a hand card - onto the
-## customer themselves, an alternate route to the OFFER button that must call
-## the exact same command. See shift_controller.gd's _on_drag_card_moved.
+## customer themselves - the way to offer, now the OFFER button is gone - which
+## must call the exact same command the O key does. See shift_controller.gd's
+## _on_drag_card_moved.
 func _check_dragging_the_table_offer() -> void:
 	var shift = _controller._shift
 	var hand = _controller._hand_zone
@@ -2313,8 +2372,8 @@ func _check_letting_go_over_a_customer_leaves_them_face_front() -> void:
 	_settle()
 	_controller._pointer = Callable()
 
-## Double-tap the empty table itself, an alternate route to the CLOSE button -
-## see shift_controller.gd's _on_chair_pad_input(). Manipulates c.unsigned
+## Double-tap the empty table itself - the way to close, now the CLOSE button
+## is gone - see shift_controller.gd's _on_chair_pad_input(). Manipulates c.unsigned
 ## directly rather than engineering a real sale, the same shortcut
 ## _check_the_clock_warns_when_time_is_short() already uses for this exact
 ## scenario.

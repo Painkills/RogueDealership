@@ -100,7 +100,7 @@ func _frame(cam: Camera3D, label: String, mark: Node3D, seat: int) -> void:
 					int(r.end.y), showing])
 			last = r.position.x
 
-	for pair in [["action column", "%ActionBar"], ["log", "%SidePanel"]]:
+	for pair in [["log", "%SidePanel"]]:
 		var c := _root.get_node(NodePath(pair[1])) as Control
 		print("  %-16s x %4d..%4d   y %4d..%4d" % [pair[0], int(c.position.x),
 			int(c.position.x + c.size.x), int(c.position.y),

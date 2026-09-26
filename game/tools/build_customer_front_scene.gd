@@ -31,6 +31,9 @@ const MARGIN_BOTTOM := 28
 ## bubble included (see GRID_TOP).
 const HEADER_H := 160
 const PHOTO := 150
+## The patience meter's frame, in face pixels - drawn at about half this on the
+## table, so thinner would vanish on the two customers seen from the side.
+const PATIENCE_EDGE := 4
 const SEP := 10
 ## The demand countdown's reserved row, under the name and patience: at least
 ## one line of its 36 px heading face (54 px), so the row never grows past what
@@ -140,7 +143,7 @@ func _init() -> void:
 	info.name = "Info"
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.alignment = BoxContainer.ALIGNMENT_CENTER
-	info.add_theme_constant_override("separation", 8)
+	info.add_theme_constant_override("separation", 6)
 	header.add_child(info)
 	info.owner = root
 
@@ -151,14 +154,33 @@ func _init() -> void:
 	info.add_child(name_label)
 	name_label.owner = root
 
+	# The whole of their patience, in a box: the bar fills a frame that is
+	# always as long as their patience can ever be, so what they have already
+	# lost is an empty stretch you can see - |======    | - rather than a bar
+	# that has simply got shorter, with nothing to say how long it once was.
+	var patience_frame := PanelContainer.new()
+	patience_frame.name = "PatienceFrame"
+	var frame := StyleBoxFlat.new()
+	frame.bg_color = Palette.color(&"paper_shade")
+	frame.border_color = Palette.color(&"neutral_1")
+	frame.set_border_width_all(PATIENCE_EDGE)
+	frame.set_corner_radius_all(12)
+	# The fill sits a hair inside the edge rather than on it.
+	frame.set_content_margin_all(PATIENCE_EDGE + 2)
+	patience_frame.add_theme_stylebox_override("panel", frame)
+	info.add_child(patience_frame)
+	patience_frame.owner = root
+
 	var patience_bar := ProgressBar.new()
 	patience_bar.name = "PatienceBar"
 	patience_bar.min_value = 0
 	patience_bar.max_value = 16
 	patience_bar.value = 12
 	patience_bar.show_percentage = false
-	patience_bar.custom_minimum_size = Vector2(0, 22)
-	info.add_child(patience_bar)
+	patience_bar.custom_minimum_size = Vector2(0, 16)
+	# The frame is the trough now; the theme's own would be a second one inside.
+	patience_bar.add_theme_stylebox_override("background", StyleBoxEmpty.new())
+	patience_frame.add_child(patience_bar)
 	patience_bar.owner = root
 
 	var patience_label := _label("PatienceLabel", 26, Palette.color(&"text_dim"))

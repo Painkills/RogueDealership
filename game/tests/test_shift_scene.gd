@@ -500,7 +500,7 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 	# Addressed by unique name, not by path: the panel layout is expected to keep
 	# moving, and the controller looks these up the same way.
 	for uname in ["%TickLabel", "%BankedLabel", "%AtRiskLabel", "%EventLog",
-			"%ReportOverlay", "%SidePanel", "%ActionBar", "%PullPicker",
+			"%ReportOverlay", "%SidePanel", "%PullPicker",
 			"%Seat0", "%CustomerFlip0", "%CustomerDetail0", "%Tablet0",
 			"%CloseSoonTag0"]:
 		h.check("%s exists" % uname, s.get_node_or_null(NodePath(uname)) != null)
@@ -508,6 +508,16 @@ func test_the_hud_carries_everything_the_controller_renders_into() -> void:
 		(s.get_node(^"%EventLog") as RichTextLabel).bbcode_enabled)
 	h.check("the HUD is a CanvasLayer, so it is not subject to the 3D transform",
 		s.get_node_or_null(^"HUD") is CanvasLayer)
+	s.free()
+
+func test_there_are_no_offer_drop_or_close_buttons() -> void:
+	## "Remove the Offer / Drop / Close buttons." Each is a gesture on the
+	## table instead - drag onto the customer, drag onto the discard,
+	## double-click the empty tablet - and nothing on the right rail stands
+	## between the pointer and the cards.
+	var s := _scene()
+	for gone in ["%ActionBar", "%OfferButton", "%DropButton", "%CloseButton"]:
+		h.check("no %s" % gone, s.get_node_or_null(NodePath(gone)) == null)
 	s.free()
 
 func test_the_hud_no_longer_owns_any_of_the_table() -> void:

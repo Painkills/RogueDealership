@@ -13,6 +13,10 @@ const OUT := "res://scenes/offer_tablet.tscn"
 const EDGE_RADIUS := 48
 const SCREEN_RADIUS := 30
 const PANEL_RADIUS := 22
+## How far a hardware button stands out past the case's edge, and how far it
+## is sunk into it, in world units - about 6 px on screen at the desk.
+const HARDWARE_OUT := 0.055
+const HARDWARE_IN := 0.015
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -48,6 +52,8 @@ func _init() -> void:
 	var b: int = OfferTablet.BEZEL_PX
 	_box(screen, root, "Screen", Rect2(b, b, w - b * 2, h - b * 2),
 		_flat(&"bg", SCREEN_RADIUS))
+
+	_status_bar(screen, root)
 
 	# Where the product stands. The card itself is a real card in front of the
 	# screen - you drag it on, and off again to offer or drop it - so all the
@@ -111,6 +117,31 @@ func _init() -> void:
 	root.add_child(face)
 	face.owner = root
 
+	# Its hardware, as real slivers of the case sticking out past the glass: a
+	# lock button along the top edge and a volume rocker down the right-hand
+	# side, where a tablet lying in landscape keeps them. Seen head-on they are
+	# thin, the way a real one on a desk shows them. Scenery like the rest -
+	# meshes only, nothing to take a click.
+	var case := StandardMaterial3D.new()
+	case.albedo_color = Palette.color(&"tablet").lightened(0.22)
+	case.roughness = 0.45
+	# Each spans from HARDWARE_IN inside the edge to HARDWARE_OUT past it.
+	var top: float = OfferTablet.SIZE.y * 0.5 + (HARDWARE_OUT - HARDWARE_IN) * 0.5
+	var side: float = OfferTablet.SIZE.x * 0.5 + (HARDWARE_OUT - HARDWARE_IN) * 0.5
+	var thick: float = HARDWARE_OUT + HARDWARE_IN
+	for spec in [["LockButton", Vector3(2.55, top, 0.0), Vector3(0.62, thick, 0.08)],
+			["VolumeUp", Vector3(side, 1.02, 0.0), Vector3(thick, 0.48, 0.08)],
+			["VolumeDown", Vector3(side, 0.42, 0.0), Vector3(thick, 0.48, 0.08)]]:
+		var box := BoxMesh.new()
+		box.size = spec[2]
+		var button := MeshInstance3D.new()
+		button.name = spec[0]
+		button.mesh = box
+		button.position = spec[1]
+		button.material_override = case
+		root.add_child(button)
+		button.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, OUT)
@@ -121,6 +152,46 @@ func _init() -> void:
 	print("saved offer_tablet.tscn")
 	root.free()
 	quit(0)
+
+## A tablet's status bar along the top of its screen: the time on the left,
+## signal bars and the battery on the right. The time is the shift's own clock
+## (OfferTablet.show_clock()); the rest is the furniture that makes the screen
+## read as a tablet's rather than as a panel's.
+func _status_bar(screen: Control, root: Node) -> void:
+	var r := OfferTablet.STATUS_RECT
+	var bar := Control.new()
+	bar.name = "StatusBar"
+	bar.position = Vector2(r.position)
+	bar.size = Vector2(r.size)
+	screen.add_child(bar)
+	bar.owner = root
+
+	var clock := _label(bar, root, "ClockLabel", "10:20 AM", 24, &"text", true)
+	clock.position = Vector2(0, -2)
+
+	var w := float(r.size.x)
+	var ink := Palette.color(&"text")
+	# The battery, at the far right: its outline, what is left in it, and the
+	# nub on its end.
+	var shell := StyleBoxFlat.new()
+	shell.bg_color = Color(ink, 0.0)
+	shell.border_color = ink
+	shell.set_border_width_all(2)
+	shell.set_corner_radius_all(5)
+	_box(bar, root, "BatteryShell", Rect2(w - 48, 4, 42, 22), shell)
+	var solid := StyleBoxFlat.new()
+	solid.bg_color = ink
+	solid.set_corner_radius_all(2)
+	_box(bar, root, "BatteryCharge", Rect2(w - 44, 8, 28, 14), solid)
+	_box(bar, root, "BatteryNub", Rect2(w - 5, 11, 4, 8), solid)
+	var charge := _label(bar, root, "BatteryLabel", "82%", 20, &"text")
+	charge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	charge.position = Vector2(w - 116, 0)
+	charge.size = Vector2(60, 30)
+	# Four signal bars, climbing, left of that.
+	for i in range(4):
+		var tall := 8.0 + i * 4.0
+		_box(bar, root, "Signal%d" % i, Rect2(w - 156 + i * 9, 26 - tall, 6, tall), solid)
 
 func _flat(role: StringName, radius: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()

@@ -73,11 +73,8 @@ signal deck_viewed
 @onready var _standing_label: Label = %StandingLabel
 @onready var _at_risk_label: Label = %AtRiskLabel
 @onready var _event_log: RichTextLabel = %EventLog
-@onready var _action_bar: Control = %ActionBar
 @onready var _side_panel: Control = %SidePanel
-@onready var _offer_btn: Button = %OfferButton
-@onready var _drop_btn: Button = %DropButton
-@onready var _close_btn: Button = %CloseButton
+@onready var _log_toggle: Button = %LogToggle
 @onready var _drop_drag_hint: Node3D = %DropDragHint
 @onready var _report_overlay = %ReportOverlay
 @onready var _pull_picker: Control = %PullPicker
@@ -87,8 +84,19 @@ signal deck_viewed
 @onready var _draw_tag: ScreenTag = %DrawTag
 @onready var _discard_tag: ScreenTag = %DiscardTag
 @onready var _drop_tag: ScreenTag = %DropTag
+## The windows along the back wall - see OfficeWindows.
+@onready var _windows: OfficeWindows = %OfficeWindows
 
 var _shift: Shift
+## Which part of the day this shift is worked in: a ShiftProfile id, the key
+## ShiftHours and the week's calendar use. It sets what the windows show and
+## the time on the tablet's clock.
+var _time_of_day: StringName = &"midday"
+## The shift log folded up to its heading - see set_log_folded(). Kept from one
+## shift to the next, since the same ShiftView plays every shift of a run.
+var _log_folded := false
+## The log's size open, as the scene built it, to open it back up to.
+var _log_open_size := Vector2.ZERO
 ## True while a RunController-level overlay (the deck viewer) sits on top of
 ## the floor - see set_hud_dimmed(). Both HUD panels it hides live in their
 ## own CanvasLayer, drawing OVER any plain Control regardless of tree order,
@@ -161,9 +169,6 @@ var _actions_seen: int = 0
 ## reset the moment time is no longer short, so a shift that somehow recovers
 ## (it never does today, but nothing here should assume that) pulses again.
 var _tick_warning_flashed := false
-## Whether CLOSE is dressed as urgent - see ButtonStyle.urgent(). Tracked so
-## the button is only re-dressed when that changes, not on every render.
-var _close_urgent := false
 
 func _ready() -> void:
 	# Card3D takes mouse input through StaticBody3D.input_event, which does
@@ -226,12 +231,6 @@ func _ready() -> void:
 	_hand_zone.card_selected.connect(_on_hand_card_pressed)
 	_hand_zone.card_deselected.connect(_on_hand_card_released)
 
-	# These belong to the PLAYER, so they are wired once and outlive any
-	# particular customer.
-	_offer_btn.pressed.connect(_on_offer)
-	_drop_btn.pressed.connect(_on_drop)
-	_close_btn.pressed.connect(_on_close)
-
 	# Hover and click belong to the PAD, not to the card. The card turns over,
 	# and a flat collider edge-on has no area at all - so hovering the card made
 	# it flicker between flipped and not, and where you brought the cursor in
@@ -249,6 +248,8 @@ func _ready() -> void:
 		(_chair_pads[i] as StaticBody3D).input_event.connect(_on_chair_pad_input.bind(i))
 
 	_register_keyboard_actions()
+	_log_open_size = _side_panel.size
+	_log_toggle.pressed.connect(func(): set_log_folded(not _log_folded))
 	# Mobile has no Ctrl+E: an invisible button laid over the tick counter
 	# itself is the touch equivalent, wired to the exact same method.
 	(%TickTapTarget as Button).pressed.connect(_debug_skip_shift)
@@ -367,7 +368,8 @@ func _debug_add_standing() -> void:
 
 # --- lifecycle -------------------------------------------------------------
 
-func setup(shift: Shift, standing_before: int) -> void:
+func setup(shift: Shift, standing_before: int,
+		time_of_day: StringName = &"midday") -> void:
 	## Play THIS shift. The run builds it - this file used to construct its own,
 	## which made it the run orchestrator as well as the table, the framing, the
 	## HUD and reconciliation.
@@ -378,8 +380,12 @@ func setup(shift: Shift, standing_before: int) -> void:
 	## the one number it needs to start counting from). Kept here too because
 	## _show_report() needs the ORIGINAL value once the shift is over, by which
 	## point Shift.standing has already moved.
+	##
+	## time_of_day is the picked ShiftProfile's id - see _time_of_day.
 	_shift = shift
 	_standing_before = standing_before
+	_time_of_day = time_of_day
+	_windows.show_time(time_of_day)
 	_events_seen = 0
 	_actions_seen = 0
 	_event_log.clear()
@@ -416,10 +422,10 @@ func set_active(on: bool) -> void:
 	($HUD as CanvasLayer).visible = on
 	set_process_unhandled_input(on)
 
-## The deck viewer is a RunController-level overlay, but the action column
-## and the shift log live in the HUD's own CanvasLayer - drawn according to
-## THEIR layer, not tree order, so the deck viewer being visually "in front"
-## does nothing to them on its own. RunController calls this whenever the
+## The deck viewer is a RunController-level overlay, but the shift log and
+## the top bar live in the HUD's own CanvasLayer - drawn according to THEIR
+## layer, not tree order, so the deck viewer being visually "in front" does
+## nothing to them on its own. RunController calls this whenever the
 ## deck viewer opens or closes (see its own _deck_viewer.visibility_changed
 ## wiring), regardless of which of the three ways it was opened.
 func set_hud_dimmed(dimmed: bool) -> void:
@@ -431,6 +437,21 @@ func set_hud_dimmed(dimmed: bool) -> void:
 	(%TopStrip as Control).visible = not dimmed
 	(%TopBar as Control).visible = not dimmed
 	_render()
+
+## "Make the shift log collapsible." Folded, it is its heading row and the
+## button to open it again - the rest of the rail is the table's. Everything
+## logged while it is folded is there when it opens.
+func set_log_folded(folded: bool) -> void:
+	_log_folded = folded
+	_event_log.visible = not folded
+	(_side_panel.get_node(^"Column/TitleRule") as Control).visible = not folded
+	_log_toggle.text = "SHOW" if folded else "HIDE"
+	# A panel keeps whatever size it was given when what is in it hides.
+	# Asked for no height at all, it takes the least its heading needs.
+	_side_panel.size = Vector2(_log_open_size.x, 0.0) if folded else _log_open_size
+
+func log_folded() -> bool:
+	return _log_folded
 
 func _all_zones() -> Array:
 	var out := _chair_zones.duplicate()
@@ -495,10 +516,6 @@ func screen_rect_of(target: StringName) -> Rect2:
 			return _on_screen_rect(_card_rect(_discard_zone, card))
 		&"clock":
 			return _tick_label.get_global_rect()
-		&"offer_button":
-			return _offer_btn.get_global_rect() if _action_bar.visible else Rect2()
-		&"close_button":
-			return _close_btn.get_global_rect() if _action_bar.visible else Rect2()
 	return Rect2()
 
 ## A card-shaped thing's rect on screen, measured along the camera's own axes -
@@ -907,15 +924,6 @@ func _render() -> void:
 	_render_details()
 	_render_hover_flip()
 	_render_pull_picker()
-	_action_bar.visible = seated and not _report_overlay.visible and not _hud_dimmed
-	# Nudges you to close out before the bell, but only when there is
-	# something on THIS table actually worth closing - close() refuses an
-	# empty hand now, so highlighting it with nothing unsigned would be a lie.
-	var current: Customer = _shift.chairs[int(_shift.at)] if seated else null
-	var urgent: bool = low_on_time and current != null and not current.unsigned.is_empty()
-	if urgent != _close_urgent:
-		_close_urgent = urgent
-		ButtonStyle.urgent(_close_btn, Palette.color(&"stamp"), urgent)
 	# Both piles are face down, so a count is the only way to see how much of
 	# the deck is left to draw and how much has already been spent.
 	(_draw_tag.get_node(^"Lines/Label") as Label).text = "DRAW  %d" % _shift.draw.size()
@@ -991,11 +999,13 @@ func _render_details() -> void:
 			band = _shift.band_for(c.line - c.offer.appeal)
 		_tablets[i].switch_on(at_this_seat)
 		_tablets[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
+		_tablets[i].show_clock(ShiftHours.clock(_time_of_day, _shift.tick,
+			_shift.tick_budget))
 
 		# Double-tap-to-close: only the seat you are AT, only an empty table,
 		# only when there is something unsigned still to close - exactly
 		# close()'s own refusal condition, so the gesture can never do
-		# anything the button behind it could not already do.
+		# anything close() itself would refuse.
 		var can_close_empty: bool = at_this_seat and c != null \
 			and c.offer == null and not c.unsigned.is_empty()
 		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
@@ -1018,33 +1028,29 @@ func _drain_log() -> void:
 		_event_log.append_text(line + "\n")
 	_events_seen = _shift.events.size()
 	for entry in _shift.action_log.slice(_actions_seen):
-		var color := Palette.hex(&"alert") if entry["floor_wide"] else Palette.hex(&"action")
+		# What a customer SAYS goes in a speech bubble over their own card, and
+		# not in here: "remove customer dialogue lines from the shift log." The
+		# log is what happened; the bubble is who said what, where they sit. A
+		# demand said out loud still reads as a person interrupting you - it
+		# just does it on their folder rather than in a column of text.
 		var said: String = str(entry.get("dialogue", ""))
-		# Chatter is words and nothing else - taking a product, running short of
-		# patience (see Shift._chatter()) - so it is logged as who said what, on
-		# one line, with no action or effect to name.
-		if bool(entry.get("chatter", false)):
-			_event_log.append_text("[color=%s]>> %s (%s): %s[/color]\n"
-				% [color, entry["customer"], entry["key"], said])
+		if said != "":
 			_say_on_the_card(str(entry["key"]), said)
+		# Chatter is words and nothing else - taking a product, running short of
+		# patience (see Shift._chatter()) - so it leaves nothing here at all.
+		if bool(entry.get("chatter", false)):
 			continue
+		var color := Palette.hex(&"alert") if entry["floor_wide"] else Palette.hex(&"action")
 		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
 			% [color, entry["customer"], entry["key"], entry["name"],
 				", ".join(entry["descriptions"])])
-		# Authored on every action since G1, carried through the model since G1,
-		# and silently dropped here every single time. It matters now: a demand
-		# the customer SAYS OUT LOUD reads as a person interrupting you, where the
-		# same event as a bare stat change reads as a rules engine ticking over.
-		if said != "":
-			_event_log.append_text("[color=%s]   %s[/color]\n" % [color, said])
-			_say_on_the_card(str(entry["key"]), said)
 	_actions_seen = _shift.action_log.size()
 
 ## "All customer actions need to show on the screen, not just in the log" - a
-## speech bubble on the card that said it, not only a line scrolled into the
-## log beside it. Keyed on the chair LETTER the entry itself carries: dialogue
-## is only ever logged the instant it is spoken, before anything could have
-## vacated that chair since, so the letter still names the right card.
+## speech bubble on the card that said it, which is now the only place it
+## shows. Keyed on the chair LETTER the entry itself carries: dialogue is only
+## ever recorded the instant it is spoken, before anything could have vacated
+## that chair since, so the letter still names the right card.
 func _say_on_the_card(key: String, text: String) -> void:
 	var chair: int = Shift.CHAIR_KEYS.find(key)
 	if chair < 0 or chair >= _customer_cards.size():
@@ -1066,7 +1072,6 @@ func _show_report() -> void:
 	if standing_after <= 0:
 		_report_overlay.set_button_text("YOU'RE FIRED")
 	_report_overlay.setup(r)
-	_action_bar.visible = false
 	_hovered = -1
 	_peeked = -1
 	_hover_held = -1
@@ -1161,7 +1166,7 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 
 	# The offer already on the table, not a hand card being played for the
 	# first time - bypass DropRouter entirely (it only knows hand cards) and
-	# call the exact same commands the OFFER/DROP buttons call. Dropped
+	# call the exact same commands the O and D keys call. Dropped
 	# anywhere else (another customer, another chair) - refused, no model
 	# call, and _reconcile() snaps it straight back since CardHomes still
 	# says it belongs where it started.

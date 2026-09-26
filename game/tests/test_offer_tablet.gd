@@ -70,6 +70,44 @@ func test_what_it_says_sits_either_side_of_the_product_on_the_screen() -> void:
 	h.eq("and the two sides are the same width",
 		OfferTablet.APPEAL_RECT.size.x, OfferTablet.DEAL_RECT.size.x)
 
+func test_it_looks_like_a_tablet() -> void:
+	## "Add details to the product table so it looks more like a tablet, like
+	## the battery icon, volume buttons on the top or side, something like that."
+	var t := _instance()
+	var b := OfferTablet.BEZEL_PX
+	var screen := Rect2i(b, b, OfferTablet.SIZE_PX.x - b * 2, OfferTablet.SIZE_PX.y - b * 2)
+	var status := OfferTablet.STATUS_RECT
+	h.check("a status bar along the top of the screen (%s)" % status,
+		screen.encloses(status) and status.position.y - b < 12)
+	h.check("above both side panels, not over them",
+		status.end.y <= OfferTablet.APPEAL_RECT.position.y
+			and status.end.y <= OfferTablet.DEAL_RECT.position.y)
+	var bar := t.get_node_or_null(^"ScreenViewport/TabletScreen/StatusBar")
+	h.check("drawn on the screen", bar != null)
+	if bar != null:
+		for part in ["ClockLabel", "BatteryShell", "BatteryCharge", "BatteryNub",
+				"BatteryLabel", "Signal0", "Signal3"]:
+			h.check("with its %s" % part, bar.get_node_or_null(part) != null)
+	# Hardware: real slivers of the case, standing out past its edge.
+	var half := OfferTablet.SIZE * 0.5
+	var lock := t.get_node_or_null(^"LockButton") as MeshInstance3D
+	h.check("a lock button on the case", lock != null and lock.mesh is BoxMesh)
+	if lock != null:
+		var s: Vector3 = (lock.mesh as BoxMesh).size
+		h.check("standing up out of its top edge (%.3f to %.3f against %.3f)"
+			% [lock.position.y - s.y * 0.5, lock.position.y + s.y * 0.5, half.y],
+			lock.position.y + s.y * 0.5 > half.y and lock.position.y - s.y * 0.5 < half.y)
+	for name in ["VolumeUp", "VolumeDown"]:
+		var v := t.get_node_or_null(NodePath(name)) as MeshInstance3D
+		h.check("a %s button on the case" % name, v != null and v.mesh is BoxMesh)
+		if v != null:
+			var s: Vector3 = (v.mesh as BoxMesh).size
+			h.check("out of its right-hand side",
+				v.position.x + s.x * 0.5 > half.x and v.position.x - s.x * 0.5 < half.x)
+	t.show_clock("10:20 AM")
+	h.eq("and the time, which the shift sets", t.clock_text(), "10:20 AM")
+	t.free()
+
 func test_nothing_on_it_can_take_a_click() -> void:
 	## The product card standing on the screen, and the slot's own
 	## double-click-to-close pad, must keep every pointer aimed at them.

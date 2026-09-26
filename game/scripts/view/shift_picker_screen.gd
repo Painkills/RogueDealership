@@ -17,10 +17,6 @@ signal chosen(profile: ShiftProfile)
 signal tutorial_requested
 
 const DAY_NAMES := ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-## When each kind of shift runs, in hours - where its event sits on the day. A
-## profile this does not name runs through the middle of the day.
-const HOURS := {&"morning": [8.0, 12.0], &"midday": [12.0, 16.0], &"night": [18.0, 22.0]}
-const DEFAULT_HOURS := [12.0, 16.0]
 const GUTTER_W := 84.0
 
 @onready var _week: HBoxContainer = %Week
@@ -106,7 +102,7 @@ func _day_header(d: int, is_today: bool) -> Control:
 ## Today's choice: an event you click to work that shift.
 func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 	var hue := _hue(profile.id)
-	var hours: Array = HOURS.get(profile.id, DEFAULT_HOURS)
+	var hours: Array = ShiftHours.of(profile.id)
 	var event := Button.new()
 	event.name = "Event_%s" % profile.id
 	event.tooltip_text = profile.blurb
@@ -131,7 +127,7 @@ func _worked(body: CalendarDay, entry: Dictionary) -> void:
 	var profile: ShiftProfile = entry.get("profile")
 	var report: Dictionary = entry.get("report", {})
 	var id: StringName = profile.id if profile != null else &""
-	var hours: Array = HOURS.get(id, DEFAULT_HOURS)
+	var hours: Array = ShiftHours.of(id)
 	var card := PanelContainer.new()
 	card.name = "Worked"
 	card.add_theme_stylebox_override("panel",

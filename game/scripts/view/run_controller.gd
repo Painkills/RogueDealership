@@ -96,15 +96,18 @@ func _on_profile_chosen(profile: ShiftProfile) -> void:
 
 func _open_the_floor() -> void:
 	_show_only(_shift_view)
-	_shift_view.setup(_run.start_shift(_chosen_profile), _run.standing)
+	# Worked at the profile's own time of day - the office windows and the
+	# tablet's clock both follow it.
+	_shift_view.setup(_run.start_shift(_chosen_profile), _run.standing, _chosen_profile.id)
 
 ## The practice shift, on the same floor the real ones use. Dealt from its own
 ## starter deck (see Tutorial), so nothing done in practice touches the run.
 func _open_the_tutorial() -> void:
 	_in_tutorial = true
 	_show_only(_shift_view)
+	# A first day starts in the morning.
 	_shift_view.setup(Tutorial.build_shift(_run.cfg, _run.interests, _run.card_pool,
-		_run.archetypes, _run.dialogue), _run.standing)
+		_run.archetypes, _run.dialogue), _run.standing, &"morning")
 	_coach.start(_shift_view)
 
 ## Finished or skipped, it is done: remembered, and back to the picker for

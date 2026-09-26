@@ -116,6 +116,10 @@ func _phase_0_open_and_finish_shift() -> void:
 	_check("on shift 1", _run.shift_number == 1)
 	_pick_tier(&"midday")
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
+	# The office windows and the tablet's clock follow the shift you picked.
+	_check("a midday shift looks out on the middle of the day (%s)"
+		% _root._shift_view._windows.time_of_day(),
+		_root._shift_view._windows.time_of_day() == &"midday")
 	_check_build_badge_is_always_on_screen("on the floor")
 	_check_clicking_the_draw_pile_opens_the_deck_viewer()
 	_check_the_corner_button_opens_the_deck_viewer()
@@ -751,6 +755,14 @@ func _phase_2_leave_and_work_a_night() -> void:
 		_root._shift_view._shift.shift_number == 2)
 	_check("night's shift actually carries its archetype-pool unlock",
 		_root._shift_view._shift.unlock_full_archetype_pool)
+	_check("and the windows have gone dark for it (%s)"
+		% _root._shift_view._windows.time_of_day(),
+		_root._shift_view._windows.time_of_day() == &"night")
+	_check("with the clock on the tablet at the start of a night (%s)"
+		% _root._shift_view._tablets[0].clock_text(),
+		_root._shift_view._tablets[0].clock_text() == ShiftHours.clock(&"night",
+			_root._shift_view._shift.tick, _root._shift_view._shift.tick_budget)
+			and _root._shift_view._tablets[0].clock_text().ends_with("PM"))
 	_check("running to the climbing quota",
 		_root._shift_view._shift.quota == _run.quota_for(2))
 
@@ -771,7 +783,7 @@ func _phase_2_leave_and_work_a_night() -> void:
 	_check("stocked by the night's own tier",
 		_root._shop_view._shop.upgrades == 1 and _root._shop_view._shop.cards_for_sale == 0)
 
-## The action column and the shift log each live in the floor's HUD
+## The shift log and the top bar each live in the floor's HUD
 ## CanvasLayer, which draws by layer number rather than tree order - so the
 ## deck viewer being visually in front of the floor does nothing to them on
 ## its own. shift_controller.gd's set_hud_dimmed(), wired through
@@ -782,20 +794,20 @@ func _phase_2_leave_and_work_a_night() -> void:
 func _check_the_deck_viewer_hides_the_floor_side_panels() -> void:
 	var shift_view = _root._shift_view
 	var side_panel := shift_view.get_node(^"%SidePanel") as Control
-	var action_bar: Control = shift_view._action_bar
+	var top_strip := shift_view.get_node(^"%TopStrip") as Control
 	var res: Result = shift_view._shift.approach(0)
 	_check("approaching chair A to seat someone (%s)" % res.msg, res.ok)
 	shift_view._apply(res)
-	_check("seated, so the action column is showing to start with", action_bar.visible)
-	_check("and the log is showing to start with", side_panel.visible)
+	_check("seated, so the log is showing to start with", side_panel.visible)
+	_check("and the shift's top bar", top_strip.visible)
 
 	_root._view_deck_btn.pressed.emit()
-	_check("opening the deck viewer hides the action column", not action_bar.visible)
-	_check("and the log", not side_panel.visible)
+	_check("opening the deck viewer hides the log", not side_panel.visible)
+	_check("and the top bar", not top_strip.visible)
 
 	(_root._deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
-	_check("closing it brings the action column back", action_bar.visible)
-	_check("and the log", side_panel.visible)
+	_check("closing it brings the log back", side_panel.visible)
+	_check("and the top bar", top_strip.visible)
 
 	shift_view._apply(shift_view._shift.leave())
 
