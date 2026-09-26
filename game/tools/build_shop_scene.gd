@@ -5,7 +5,7 @@ extends SceneTree
 ##
 ## Three aisles, side by side - a browser window's own chrome takes height a
 ## full-screen menu never had to give up:
-##   ON THE HOUSE   one card, free, every visit - take it or leave it
+##   ON THE HOUSE   three cards every visit, to take ONE of free
 ##   FOR SALE       the card a midday shift puts up for sale, bought with the
 ##                  bonus you earned
 ##   UPGRADE ONE    a few of your own cards, one of which a night shift lets
@@ -93,14 +93,15 @@ func _init() -> void:
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 	# --- the three aisles ----------------------------------------------------------
-	# The free card and the one for sale each hold one card; yours holds a few,
-	# so it gets the room for them.
+	# The free picks and your own cards hold three each; the one for sale holds
+	# one, so it gets the least room.
 	var aisles := HBoxContainer.new()
 	aisles.name = "Aisles"
 	aisles.add_theme_constant_override("separation", 28)
 	col.add_child(aisles)
 	aisles.owner = root
-	_card_section(aisles, root, "FreeSection", "FreeTitle", "ON THE HOUSE", "FreeRow", 1.0)
+	_card_section(aisles, root, "FreeSection", "FreeTitle", "ON THE HOUSE - PICK ONE",
+		"FreeRow", 2.0)
 	_card_section(aisles, root, "ShelfSection", "OnShelfTitle", "FOR SALE", "ShelfRow", 1.0)
 	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADE ONE OF YOURS",
 		"DeckRow", 2.0)

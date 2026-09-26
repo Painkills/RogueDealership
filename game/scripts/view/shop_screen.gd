@@ -1,7 +1,7 @@
 extends PanelContainer
-## The store between shifts: one card on the house every visit, the card for
-## sale if the shift you just worked put one up, and a few of your own to
-## upgrade if it lets you. Every one of them is a real card you click, not a
+## The store between shifts: a few cards on the house every visit to pick one
+## from, the card for sale if the shift you just worked put one up, and a few
+## of your own to upgrade if it lets you. Every one of them is a real card you click, not a
 ## text row.
 ##
 ## Your own cards here are Shop.upgrade_offers, not the whole deck - a random
@@ -99,12 +99,16 @@ func _render() -> void:
 	# touching the model) is enough to feed the SAME card face the deck uses,
 	# so a card on offer looks exactly like what it will look like once yours.
 	_clear(_free_row)
-	if _shop.free_card != null:
-		var free: CardDef = _shop.free_card
-		_build_slot(_free_row, CardInstance.new(free, -1), "FREE").pressed.connect(
-			func(): _detail.show_free_card(_shop, free))
-	else:
-		_note(_free_row, "Taken - it is in your toolkit now.")
+	if _shop.free_picks_left > 0:
+		for free in _shop.free_cards:
+			_build_slot(_free_row, CardInstance.new(free, -1), "FREE").pressed.connect(
+				func(): _detail.show_free_card(_shop, free))
+	# Picked: the others go with it, until the next shift's three.
+	if _shop.free_taken != null:
+		_note(_free_row, "Taken - the %s is in your toolkit now."
+			% _shop.free_taken.display_name)
+	elif _free_row.get_child_count() == 0:
+		_note(_free_row, "Nothing on the house this visit.")
 
 	_clear(_shelf_row)
 	for def in _shop.offers:

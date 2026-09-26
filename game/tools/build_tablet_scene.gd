@@ -13,6 +13,8 @@ const OUT := "res://scenes/offer_tablet.tscn"
 const EDGE_RADIUS := 48
 const SCREEN_RADIUS := 30
 const PANEL_RADIUS := 22
+## The appeal verdict's slot under the meter: two lines of its 26 px face.
+const VERDICT_H := 76
 ## How far a hardware button stands out past the case's edge, and how far it
 ## is sunk into it, in world units - about 6 px on screen at the desk.
 const HARDWARE_OUT := 0.055
@@ -64,32 +66,32 @@ func _init() -> void:
 	_box(screen, root, "Well", Rect2(OfferTablet.WELL_RECT), well)
 
 	# --- left: how it is landing -------------------------------------------
-	# The words on the outside and the meter on the inside, standing right up
-	# against the product it is measuring.
-	var appeal := _panel(screen, root, "AppealPanel", OfferTablet.APPEAL_RECT)
-	var row := HBoxContainer.new()
-	row.name = "Row"
-	row.add_theme_constant_override("separation", 20)
-	appeal.add_child(row)
-	row.owner = root
-	var col := _column(row, root, 14)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_label(col, root, "AppealTitle", "APPEAL", 34, &"text_dim", true)
-	# Placeholders are the longest thing each can say.
-	var status := _label(col, root, "StatusLabel", "READY TO SIGN", 42, &"text", true)
-	status.autowrap_mode = TextServer.AUTOWRAP_WORD
-	var hint := _label(col, root, "HintLabel",
-		"their Line is marked - clear it before you offer", 28, &"text_dim")
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD
+	# Only as wide as its meter: "appeal" at the very top, the meter from just
+	# under that down the panel, and under it the verdict once you have asked -
+	# in a slot kept for it either way, so the meter never jumps when a verdict
+	# arrives.
+	var appeal := _panel(screen, root, "AppealPanel", OfferTablet.APPEAL_RECT,
+		(OfferTablet.APPEAL_RECT.size.x - OfferTablet.METER_WIDTH) / 2, 18)
+	var col := _column(appeal, root, 8)
+	var title := _label(col, root, "AppealTitle", "APPEAL", 28, &"text_dim", true)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# Fill is how much appeal this offer carries, colour is how that compares
 	# with their Line, and the marker only appears once you have earned the Line.
-	# Upright and the panel's full height - see appeal_bar.gd.
+	# Upright, the whole width of its panel - see appeal_bar.gd.
 	var bar := Control.new()
 	bar.name = "AppealBar"
 	bar.custom_minimum_size = Vector2(OfferTablet.METER_WIDTH, 0)
+	bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	bar.set_script(load("res://scripts/view/appeal_bar.gd"))
-	row.add_child(bar)
+	col.add_child(bar)
 	bar.owner = root
+	# The placeholder is the longest thing it says, on the two lines it takes
+	# at this width.
+	var status := _label(col, root, "StatusLabel", "READY TO SIGN", 26, &"text", true)
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	status.custom_minimum_size = Vector2(0, VERDICT_H)
 
 	# --- right: what it is worth ---------------------------------------------
 	var deal := _panel(screen, root, "DealPanel", OfferTablet.DEAL_RECT)
@@ -129,7 +131,8 @@ func _init() -> void:
 	var top: float = OfferTablet.SIZE.y * 0.5 + (HARDWARE_OUT - HARDWARE_IN) * 0.5
 	var side: float = OfferTablet.SIZE.x * 0.5 + (HARDWARE_OUT - HARDWARE_IN) * 0.5
 	var thick: float = HARDWARE_OUT + HARDWARE_IN
-	for spec in [["LockButton", Vector3(2.55, top, 0.0), Vector3(0.62, thick, 0.08)],
+	for spec in [["LockButton", Vector3(OfferTablet.SIZE.x * 0.5 - 0.9, top, 0.0),
+				Vector3(0.62, thick, 0.08)],
 			["VolumeUp", Vector3(side, 1.02, 0.0), Vector3(thick, 0.48, 0.08)],
 			["VolumeDown", Vector3(side, 0.42, 0.0), Vector3(thick, 0.48, 0.08)]]:
 		var box := BoxMesh.new()
@@ -209,7 +212,8 @@ func _box(parent: Node, root: Node, node_name: String, r: Rect2, style: StyleBox
 	p.owner = root
 
 ## A white card on the screen, the way an app lays out its panels.
-func _panel(parent: Node, root: Node, node_name: String, r: Rect2i) -> PanelContainer:
+func _panel(parent: Node, root: Node, node_name: String, r: Rect2i, pad_x: int = 26,
+		pad_y: int = 24) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.name = node_name
 	p.position = Vector2(r.position)
@@ -218,10 +222,10 @@ func _panel(parent: Node, root: Node, node_name: String, r: Rect2i) -> PanelCont
 	var s := _flat(&"panel", PANEL_RADIUS)
 	s.set_border_width_all(2)
 	s.border_color = Palette.color(&"neutral_2")
-	s.content_margin_left = 26
-	s.content_margin_right = 26
-	s.content_margin_top = 24
-	s.content_margin_bottom = 24
+	s.content_margin_left = pad_x
+	s.content_margin_right = pad_x
+	s.content_margin_top = pad_y
+	s.content_margin_bottom = pad_y
 	p.add_theme_stylebox_override("panel", s)
 	parent.add_child(p)
 	p.owner = root

@@ -23,8 +23,8 @@ class_name ShiftProfile extends Resource
 @export var walk_up_scale: float = 1.0
 @export var unlock_full_archetype_pool: bool = false
 
-## The shop that follows it. Every visit hands you one card free whatever the
-## tier; these are what the tier adds on top - see Shop.
+## The shop that follows it. Every visit lets you pick one card free whatever
+## the tier; these are what the tier adds on top - see Shop.
 @export var cards_for_sale: int = 0          ## cards put up for sale
 @export var upgrades: int = 0                ## of your cards you may upgrade
 
@@ -38,5 +38,5 @@ func reward_preview() -> String:
 	if upgrades > 0:
 		extras.append("an upgrade" if upgrades == 1 else "%d upgrades" % upgrades)
 	if extras.is_empty():
-		return "Shop: a free card."
-	return "Shop: a free card, and %s." % " and ".join(extras)
+		return "Shop: pick a free card."
+	return "Shop: pick a free card, and %s." % " and ".join(extras)

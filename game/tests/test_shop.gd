@@ -30,64 +30,91 @@ func test_every_card_carries_a_price() -> void:
 		h.check("%s is priced" % c.id, c.price > 0)
 
 # ------------------------------------------------------------- the free card
-func test_every_visit_hands_you_one_card_for_free() -> void:
-	## "At the end of every shift, offer a single card for free (instead of a
-	## shop of 3)." Whatever the tier - even none at all.
+func test_every_visit_offers_three_free_cards_to_pick_one_from() -> void:
+	## "The free offer should offer three card options, out of which the player
+	## picks ONE." Whatever the tier - even none at all.
+	h.eq("three options, as asked",
+		(load("res://data/shift_config.tres") as ShiftConfig).free_card_choices, 3)
 	for p in [null, _shipped(&"morning"), _shipped(&"midday"), _shipped(&"night")]:
 		var shop := Shop.new(_run(), p)
 		var which: String = "no tier" if p == null else String(p.id)
-		h.check("%s: a card on the house" % which, shop.free_card != null)
+		h.eq("%s: three cards on the house" % which, shop.free_cards.size(), 3)
+		h.eq("%s: and one pick of them" % which, shop.free_picks_left, 1)
 	var r := _run()
 	var shop := Shop.new(r)
 	var known := {}
 	for c in r.card_pool.cards:
 		known[c.id] = true
-	h.check("and it is a real card", known.has(shop.free_card.id))
+	var seen := {}
+	for c in shop.free_cards:
+		h.check("%s is a real card" % c.id, known.has(c.id))
+		h.check("%s is offered only once" % c.id, not seen.has(c.id))
+		seen[c.id] = true
 
-func test_the_free_card_is_never_a_starter_card() -> void:
+func test_the_free_cards_are_never_starter_cards() -> void:
 	## Every run already opens with the starter deck - handing it out as well
 	## would stack duplicates of what everyone starts with, instead of this
 	## being where a run diverges from every other run's.
 	var r := _run(1000000)
 	for _visit in range(30):
 		var shop := Shop.new(r, _profile(1))
-		h.check("%s is not a starter card" % shop.free_card.id, not shop.free_card.starter)
-		for c in shop.offers:
-			h.check("%s for sale is not a starter card" % c.id, not c.starter)
+		for c in shop.free_cards + shop.offers:
+			h.check("%s on offer is not a starter card" % c.id, not c.starter)
 
-func test_taking_the_free_card_adds_it_and_costs_nothing() -> void:
+func test_taking_one_adds_it_and_costs_nothing() -> void:
 	var r := _run()
 	var shop := Shop.new(r)
-	var def := shop.free_card
+	var def: CardDef = shop.free_cards[1]
 	var before: int = r.deck.cards.size()
-	var res := shop.take_free()
+	var res := shop.take_free(def)
 	h.check("taken (%s)" % res.msg, res.ok)
 	h.eq("the toolkit grew by one", r.deck.cards.size(), before + 1)
-	h.check("by that card", r.deck.cards.any(func(c): return c.card == def))
+	h.check("by the card picked", r.deck.cards.any(func(c): return c.card == def))
 	h.eq("and not a dollar went", r.money, 10000)
-	h.check("it is off the table", shop.free_card == null)
+	h.eq("the visit's pick is spent", shop.free_picks_left, 0)
+	h.eq("on that card", shop.free_taken, def)
+
+func test_once_one_is_picked_the_others_wait_for_the_next_shift() -> void:
+	## "Once they've picked one, they can't pick any more of these free ones
+	## until the next shift, when they get 3 more options to pick from."
+	var r := _run()
+	var shop := Shop.new(r)
+	shop.take_free(shop.free_cards[0])
+	var size: int = r.deck.cards.size()
+	var res := shop.take_free(shop.free_cards[1])
+	h.check("a second pick is refused (%s)" % res.msg, not res.ok)
+	h.check("because the pick is spent", res.msg.to_lower().contains("already taken"))
+	h.check("and so is taking the same one again", not shop.take_free(shop.free_cards[0]).ok)
+	h.eq("neither added anything", r.deck.cards.size(), size)
+	var next := Shop.new(r)
+	h.eq("the next visit brings a fresh pick", next.free_picks_left, 1)
+	h.eq("of three more", next.free_cards.size(), 3)
+
+func test_only_the_cards_on_offer_can_be_taken_free() -> void:
+	var r := _run()
+	var shop := Shop.new(r)
+	var other: CardDef = null
+	for c in r.card_pool.shoppable_cards():
+		if not shop.free_cards.has(c):
+			other = c
+			break
+	var res := shop.take_free(other)
+	h.check("a card not offered is refused (%s)" % res.msg, not res.ok)
+	h.check("and saying why", res.msg.contains("not one of the free cards"))
+	h.eq("and the pick is still there to make", shop.free_picks_left, 1)
 
 func test_the_free_card_comes_even_when_you_cannot_afford_anything() -> void:
 	## Free means free: a missed quota leaves the bonus pot empty, and the
 	## house still hands you the card.
 	var r := _run(0)
 	var shop := Shop.new(r)
-	var res := shop.take_free()
+	var res := shop.take_free(shop.free_cards[0])
 	h.check("taken with $0 (%s)" % res.msg, res.ok)
 	h.eq("and $0 it stays", r.money, 0)
 
-func test_the_free_card_can_only_be_taken_once() -> void:
-	var r := _run()
-	var shop := Shop.new(r)
-	shop.take_free()
-	var size: int = r.deck.cards.size()
-	var res := shop.take_free()
-	h.check("a second take is refused (%s)" % res.msg, not res.ok)
-	h.eq("and adds nothing", r.deck.cards.size(), size)
-
-func test_leaving_the_free_card_is_allowed() -> void:
-	## "Offer" - take it or leave it. A deckbuilder that forced a card on you
-	## every visit would thin nothing and bloat everything.
+func test_leaving_the_free_cards_is_allowed() -> void:
+	## Pick one, or none. A deckbuilder that forced a card on you every visit
+	## would thin nothing and bloat everything.
 	var r := _run()
 	var before: int = r.deck.cards.size()
 	var _shop := Shop.new(r)
@@ -119,13 +146,13 @@ func test_a_card_for_sale_is_one_card_and_not_the_free_one() -> void:
 	for seed_value in range(1, 40):
 		var shop := Shop.new(_run(10000, seed_value), _profile(1))
 		h.eq("seed %d: exactly one for sale" % seed_value, shop.offers.size(), 1)
-		h.check("seed %d: and never the card you were just handed free" % seed_value,
-			shop.offers[0] != shop.free_card)
+		h.check("seed %d: and never one you could have had free" % seed_value,
+			not shop.free_cards.has(shop.offers[0]))
 
 func test_two_shops_from_one_seed_offer_the_same_cards() -> void:
 	var a := Shop.new(_run(), _profile(1, 1))
 	var b := Shop.new(_run(), _profile(1, 1))
-	h.eq("the same free card", a.free_card, b.free_card)
+	h.eq("the same free cards", a.free_cards, b.free_cards)
 	h.eq("the same card for sale", a.offers, b.offers)
 	h.eq("the same cards of yours to upgrade", a.upgrade_offers, b.upgrade_offers)
 
@@ -145,8 +172,8 @@ func test_buying_adds_the_card_and_debits_the_money() -> void:
 func test_you_cannot_buy_what_is_not_for_sale() -> void:
 	var r := _run()
 	var shop := Shop.new(r, _profile(1))
-	var res := shop.buy(shop.free_card)
-	h.check("the free card is not for sale - it is free (%s)" % res.msg, not res.ok)
+	var res := shop.buy(shop.free_cards[0])
+	h.check("a free card is not for sale - it is free (%s)" % res.msg, not res.ok)
 	h.eq("and nothing was spent", r.money, 10000)
 
 func test_you_cannot_buy_what_you_cannot_afford() -> void:
@@ -344,7 +371,7 @@ func test_nothing_the_visit_does_rerolls_it() -> void:
 	var shop := Shop.new(r, _profile(1, 1))
 	var ups := shop.upgrade_offers.duplicate()
 	var for_sale := shop.offers.duplicate()
-	shop.take_free()
+	shop.take_free(shop.free_cards[0])
 	h.eq("taking the free card rerolls nothing of yours", shop.upgrade_offers, ups)
 	h.eq("or on the shelf", shop.offers, for_sale)
 	shop.buy(shop.offers[0])
@@ -439,7 +466,7 @@ func test_the_cards_on_offer_favor_lower_rarity_tiers_over_many_rolls() -> void:
 	}
 	for seed_value in range(300):
 		var shop := Shop.new(_run(10000, seed_value), _profile(1))
-		for c in [shop.free_card] + shop.offers:
+		for c in shop.free_cards + shop.offers:
 			counts[c.rarity] = counts.get(c.rarity, 0) + 1
 	h.check("economy turns up more than value (%d vs %d)"
 		% [counts[CardDef.Rarity.ECONOMY], counts[CardDef.Rarity.VALUE]],

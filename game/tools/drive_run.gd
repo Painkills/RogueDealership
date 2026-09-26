@@ -249,7 +249,7 @@ func _check_shop_layout_fits_on_screen() -> void:
 		var row: Control = rows[row_name]
 		_on_screen("the %s" % row_name, Rect2(row.global_position, row.size))
 	# An aisle with nothing in it says so, rather than standing empty.
-	for pair in [["free row", shop.free_card == null], ["shelf row", shop.offers.is_empty()],
+	for pair in [["free row", shop.free_picks_left <= 0], ["shelf row", shop.offers.is_empty()],
 			["deck row", shop.upgrade_offers.is_empty()]]:
 		if pair[1]:
 			var row: Node = rows[pair[0]]
@@ -459,8 +459,9 @@ func _check_a_night_visit_has_nothing_for_sale() -> void:
 	var shop: Shop = _root._shop_view._shop
 	var shelf_row := _root._shop_view.get_node(^"%ShelfRow") as HBoxContainer
 	var free_row := _root._shop_view.get_node(^"%FreeRow") as HBoxContainer
-	_check("a night visit still has its free card", shop.free_card != null
-		and free_row.get_child_count() == 1 and _slot_card(free_row.get_child(0)) != null)
+	_check("a night visit still has its three free cards to pick from",
+		shop.free_cards.size() == 3 and shop.free_picks_left == 1
+			and free_row.get_child_count() == 3 and _slot_card(free_row.get_child(0)) != null)
 	_check("but nothing for sale", shop.cards_for_sale == 0 and shop.offers.is_empty())
 	var note := _note_in(shelf_row)
 	_check("and its aisle says so (%s)" % note, note.contains("Nothing for sale"))
@@ -611,26 +612,29 @@ func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 	close_btn.pressed.emit()
 	_check("closing it hides it again", not deck_viewer.visible)
 
-## "At the end of every shift, offer a single card for free." One card in the
-## free aisle, marked FREE; clicking it opens the same overlay every card here
-## uses, with only a way to take it; taking it adds that very card and spends
-## nothing, and the aisle then says where it went.
+## "The free offer should offer three card options, out of which the player
+## picks ONE." Three cards in the free aisle, each marked FREE; clicking one
+## opens the same overlay every card here uses, with only a way to take it;
+## taking it adds that very card and spends nothing - and the other two go
+## with the pick, the aisle saying which card you took.
 func _check_the_free_card_is_on_the_house() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
 	var free_row := shop_view.get_node(^"%FreeRow") as HBoxContainer
-	var one: bool = free_row.get_child_count() == 1 \
+	var three: bool = free_row.get_child_count() == 3 \
 		and _slot_card(free_row.get_child(0)) != null
-	_check("one card in the free aisle (%d)" % free_row.get_child_count(), one)
-	if not one:
+	_check("three cards in the free aisle (%d)" % free_row.get_child_count(), three)
+	if not three:
 		return
-	var slot := free_row.get_child(0)
-	var price := slot.get_child(slot.get_child_count() - 1) as Label
-	_check("marked free (%s)" % price.text, price.text == "FREE")
-	var free: CardDef = shop.free_card
+	for slot in free_row.get_children():
+		var price := slot.get_child(slot.get_child_count() - 1) as Label
+		_check("each marked free (%s)" % price.text, price.text == "FREE")
+	# The middle one - not always the first, so the pick is really a pick.
+	var slot := free_row.get_child(1)
+	var free: CardDef = shop.free_cards[1]
 	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
 	_slot_card(slot).pressed.emit()
-	_check("clicking it opens the overlay, titled after it (%s)" % detail._title.text,
+	_check("clicking one opens the overlay, titled after it (%s)" % detail._title.text,
 		detail.visible and detail._title.text == free.display_name)
 	_check("with a way to take it and nothing to pay",
 		detail._take_btn.visible and not detail._buy_btn.visible
@@ -651,7 +655,11 @@ func _check_the_free_card_is_on_the_house() -> void:
 	if added.size() == 1:
 		_taken_uid = added[0].uid
 	var note := _note_in(shop_view.get_node(^"%FreeRow"))
-	_check("and the aisle says where it went (%s)" % note, note.contains("toolkit"))
+	_check("the other two go with the pick - the aisle says which you took (%s)" % note,
+		note.contains(free.display_name) and note.contains("toolkit"))
+	var another: CardDef = shop.free_cards[0]
+	_check("and no second free card this visit",
+		not shop.take_free(another).ok and _run.deck.cards.size() == uids_before.size() + 1)
 
 ## "At the end of midday shift, offer a chance to buy one card." The shelf
 ## routes through the SAME confirm-before-you-spend overlay: clicking the card

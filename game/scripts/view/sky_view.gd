@@ -9,9 +9,10 @@ class_name SkyView extends Control
 ##
 ## Laid out in fractions of its own size, so the texture can be any resolution.
 ## The windows run up past the top of both framings, so nothing worth seeing is
-## in the top fifth; and at a desk the customers and the tablet stand in front
-## of the middle, so the sun and the moon keep to the right-hand pane, where
-## the most sky shows.
+## in the top fifth. The low morning sun and the moon keep to the right-hand
+## pane, where a desk shows the most sky; the midday sun stands high in the
+## middle one, over the head of the customer in front of you, the way noon
+## would put it.
 
 const LOOKS := {
 	&"morning": {
@@ -24,7 +25,7 @@ const LOOKS := {
 	&"midday": {
 		"top": Color("2e7ed6"), "horizon": Color("aad8ff"),
 		"body": Color("fffbe8"), "halo": Color("fff4b8"),
-		"body_at": Vector2(0.88, 0.37), "body_r": 0.045, "moon": false,
+		"body_at": Vector2(0.5, 0.3), "body_r": 0.045, "moon": false,
 		"clouds": Color(1.0, 1.0, 1.0, 0.92), "stars": false,
 		"skyline": Color("56688a"), "lit": false,
 	},

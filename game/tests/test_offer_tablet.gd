@@ -45,15 +45,19 @@ func test_the_screen_is_drawn_at_the_tablets_own_shape() -> void:
 			float(OfferTablet.SIZE_PX.x) / OfferTablet.SIZE_PX.y))
 	t.free()
 
-func test_the_product_stands_in_the_middle_of_the_screen() -> void:
-	## "The product card shows up in the center." The well is exactly one card
-	## at the screen's own resolution, so the real card standing in front of it
-	## covers it edge to edge.
+func test_the_product_stands_in_the_well() -> void:
+	## The well is exactly one card at the screen's own resolution, so the real
+	## card standing in front of it covers it edge to edge. The appeal side is
+	## the thinner one, so the well sits left of the tablet's middle - and the
+	## desk places the tablet by that offset (well_offset()), not by its middle.
 	var well := OfferTablet.WELL_RECT
 	h.check("the well is exactly one card (%s)" % OfferTablet.size_of(well),
 		OfferTablet.size_of(well).is_equal_approx(CARD))
-	h.check("centred on the tablet (%s)" % OfferTablet.centre_of(well),
-		OfferTablet.centre_of(well).is_equal_approx(Vector3.ZERO))
+	var off := OfferTablet.well_offset()
+	h.check("halfway up the tablet (%s)" % off, is_equal_approx(off.y, 0.0))
+	h.check("left of its middle, toward the thin appeal side (%.2f)" % off.x, off.x < 0.0)
+	h.eq("which is exactly where the desk is told it stands",
+		off, OfferTablet.centre_of(well))
 	h.check("and taller than nothing but the black edge around it",
 		OfferTablet.SIZE.y > CARD.y)
 
@@ -67,8 +71,15 @@ func test_what_it_says_sits_either_side_of_the_product_on_the_screen() -> void:
 			["well", well]]:
 		h.check("the %s panel is on the screen, inside the black edge" % pair[0],
 			screen.encloses(pair[1]))
-	h.eq("and the two sides are the same width",
-		OfferTablet.APPEAL_RECT.size.x, OfferTablet.DEAL_RECT.size.x)
+	## "Appeal could be thinner ... That would give you the option of making
+	## the tablet just a little less wide."
+	h.check("the appeal side is only as wide as its meter and a margin (%d px)"
+		% OfferTablet.APPEAL_RECT.size.x,
+		OfferTablet.APPEAL_RECT.size.x - OfferTablet.METER_WIDTH <= 60)
+	h.check("thinner than the money side", OfferTablet.APPEAL_RECT.size.x
+		< OfferTablet.DEAL_RECT.size.x)
+	h.check("and the tablet is narrower for it (%d px, was 1320)" % OfferTablet.SIZE_PX.x,
+		OfferTablet.SIZE_PX.x < 1320)
 
 func test_it_looks_like_a_tablet() -> void:
 	## "Add details to the product table so it looks more like a tablet, like
@@ -129,29 +140,33 @@ func test_it_only_draws_while_it_is_on() -> void:
 	t.free()
 
 # ------------------------------------------------------------------ the meter
-func test_the_meter_stands_upright_beside_the_product() -> void:
-	## "Let's try making the appeal meter vertical so it can be a little
-	## larger." It stands at the inside edge of the appeal panel - the edge
-	## nearest the product - and takes the panel's whole height, where lying
-	## across the panel it was capped at the panel's width.
+func test_the_meter_stands_upright_under_its_name() -> void:
+	## "Appeal could be thinner, with the word appeal at the very top and the
+	## appeal bar reaching up to just underneath it." A column: the word, the
+	## meter straight under it taking whatever height is left, and a slot for
+	## the verdict at its foot.
 	var t := _instance()
-	var bar := t.get_node(^"ScreenViewport/TabletScreen/AppealPanel/Row/AppealBar") as AppealBar
+	var bar := t.get_node(^"ScreenViewport/TabletScreen/AppealPanel/Column/AppealBar") as AppealBar
 	h.check("the meter is where the tablet reads it from", bar != null)
 	if bar == null:
 		t.free()
 		return
-	var row := bar.get_parent()
-	h.check("the meter shares a row with the panel's words, not a column",
-		row is HBoxContainer)
-	h.eq("and is the last thing in it, up against the product",
-		bar.get_index(), row.get_child_count() - 1)
-	h.eq("as wide as the tablet says (%s)" % bar.custom_minimum_size,
+	var col := bar.get_parent()
+	h.check("the panel is one column", col is VBoxContainer)
+	var title := col.get_child(0) as Label
+	h.check("with APPEAL at the very top (%s)" % (title.text if title != null else "none"),
+		title != null and title.text == "APPEAL")
+	h.eq("and the meter straight under it, nothing between", bar.get_index(), 1)
+	h.eq("the whole width of the panel's content (%s)" % bar.custom_minimum_size,
 		bar.custom_minimum_size, Vector2(OfferTablet.METER_WIDTH, 0))
-	h.check("and left to fill the row's height, not given one of its own",
-		bar.size_flags_vertical & Control.SIZE_FILL != 0)
-	# The panel's content is its rect less the style's padding - the height the
-	# row hands the meter. It used to be a 64-px bar across a 329-px panel.
-	var style := (row.get_parent() as PanelContainer).get_theme_stylebox("panel")
+	h.check("taking all the height the column has left over",
+		bar.size_flags_vertical & Control.SIZE_EXPAND != 0)
+	var verdict := col.get_child(col.get_child_count() - 1) as Label
+	h.check("the verdict under it keeps its slot even while blank, so the meter never jumps",
+		verdict != null and verdict.name == "StatusLabel" and verdict.custom_minimum_size.y > 0.0)
+	# The panel's content is its rect less the style's padding. It used to be a
+	# 64-px bar across a 329-px panel.
+	var style := (col.get_parent() as PanelContainer).get_theme_stylebox("panel")
 	var tall: float = OfferTablet.APPEAL_RECT.size.y \
 		- style.get_margin(SIDE_TOP) - style.get_margin(SIDE_BOTTOM)
 	var across: float = OfferTablet.APPEAL_RECT.size.x \
@@ -224,14 +239,14 @@ func test_the_status_is_a_band_until_you_know_the_line_and_a_number_after() -> v
 	t.show_offer(c, "COOL", _meter_scale())
 	h.eq("before you offer, no verdict at all", t._status.text, "")
 	## "Remove the Read the Room hint on the product detail box since it's
-	## specific to a single card" - with their Line unknown the panel says
-	## nothing at all, rather than advertising one card on every pitch.
-	h.check("and no nudge toward any one card (%s)" % t._hint.text,
-		not t._hint.visible and t._hint.text == "")
+	## specific to a single card" - and with it every other nudge: the panel is
+	## only its name, its meter and, once you have asked, the verdict.
+	h.check("and no nudge left on the panel",
+		t.get_node_or_null(^"ScreenViewport/TabletScreen/AppealPanel/Column/HintLabel") == null)
 	c.known_line = true
 	t.show_offer(c, "COOL", _meter_scale())
-	h.check("a Line you can already see still gets its nudge (%s)" % t._hint.text,
-		t._hint.visible and t._hint.text.contains("Line is marked"))
+	h.check("a Line you can already see is the mark on the meter", t._bar._line_known)
+	h.eq("not a line of words about it", t._status.text, "")
 	c.known_line = false
 
 	c.offer.revealed = true
@@ -296,19 +311,19 @@ func test_an_empty_table_still_shows_their_combo() -> void:
 	var c := _cust(&"karen", 1)
 	c.sales = 1
 	t.show_offer(c, "", _meter_scale())           # c.offer is null
-	h.check("no meter with nothing to meter", not t._bar.visible)
+	h.check("the meter stands empty, saying what it will measure",
+		t._bar.visible and t._bar._appeal == 0 and not t._bar._line_known)
+	h.eq("no verdict on nothing", t._status.text, "")
 	h.eq("no margin with nothing to sell", t._margin.text, "-")
-	h.check("just what to do about it", t._hint.visible
-		and t._hint.text.contains("Place a product"))
 	h.eq("but their combo is still theirs",
 		t._combo.text, "×%.2f" % (1.0 + c.combo_step * c.sales))
 	h.check("and nothing booked", not t._worth.visible)
 	t.free()
 
-func test_an_empty_chair_says_nobody_is_there() -> void:
+func test_an_empty_chair_shows_nobodys_numbers() -> void:
 	var t := _instance()
 	t.show_offer(null, "", _meter_scale())
-	h.check("says so", t._hint.text.contains("Nobody"))
+	h.eq("an empty meter", t._bar._appeal, 0)
 	h.eq("no combo from nobody", t._combo.text, "×1.00")
 	h.eq("and no knobs to read", t._knobs.text, "")
 	t.free()

@@ -16,6 +16,8 @@ class_name CardFace3D extends Card3D
 ## call - this is a card game, not a scene starved for frame budget.
 
 const FRONT_SIZE := Vector2i(500, 700)   ## exactly the mesh's 2.5 x 3.5 aspect
+## A card on the table, in world units: the addon's own card mesh.
+const CARD_SIZE := Vector2(2.5, 3.5)
 
 var uid: int = -1
 var instance: CardInstance

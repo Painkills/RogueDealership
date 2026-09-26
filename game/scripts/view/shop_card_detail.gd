@@ -1,6 +1,6 @@
 class_name ShopCardDetail extends PanelContainer
 ## The shop's one confirm-before-you-take-it overlay, for every card the store
-## shows: the free card (show_free_card()), the card for sale
+## shows: a free one (show_free_card()), the card for sale
 ## (show_shelf_card()), and one of your own to upgrade or drop (show_card()).
 ## One card here reads the same way everywhere it appears, which is the whole
 ## reason this is a single shared scene with three entry points rather than
@@ -51,8 +51,8 @@ func _bind() -> void:
 	_remove_btn.pressed.connect(_on_remove_pressed)
 	_close_btn.pressed.connect(func(): visible = false)
 
-## The card on the house. Nothing to pay and nothing to compare it against -
-## just the card, and whether you want it.
+## One of the cards on the house. Nothing to pay and nothing to compare it
+## against - just the card, and whether it is the one you want.
 func show_free_card(shop: Shop, def: CardDef) -> void:
 	_show_unowned(shop, def)
 	_take_btn.visible = true
@@ -112,7 +112,7 @@ func show_card(shop: Shop, inst: CardInstance) -> void:
 	visible = true
 
 func _on_take_pressed() -> void:
-	_close_on(_shop.take_free())
+	_close_on(_shop.take_free(_shelf_def))
 
 func _on_buy_pressed() -> void:
 	_close_on(_shop.buy(_shelf_def))

@@ -22,6 +22,8 @@ const W := 800
 const H := 700
 ## The folder's tab, which the archetype is written on.
 const TAB_H := 52
+## The archetype written on the tab.
+const ARCHETYPE_FONT := 37
 ## The sheet of paper inside the folder, this far in from its edges.
 const SHEET_INSET := 16
 const MARGIN_X := 36
@@ -84,7 +86,9 @@ func _init() -> void:
 	# produce (data/archetype_pool.tres names/archetypes, data/demands/*.tres
 	# telegraphs, data/card_pool.tres product names) rather than a generic
 	# filler word, so this scene shows its own worst case in the editor.
-	var arch_label := _label("ArchetypeLabel", 30, Palette.color(&"text"))
+	# What kind of buyer they are is the first thing to read off a folder
+	# across the floor, so it is written big enough to read there.
+	var arch_label := _label("ArchetypeLabel", ARCHETYPE_FONT, Palette.color(&"text"))
 	arch_label.theme_type_variation = &"Heading"
 	arch_label.text = "Tech Enthusiast  [C]"   # longest archetype display_name + chair key
 	arch_label.set_anchors_preset(Control.PRESET_FULL_RECT)

@@ -436,7 +436,9 @@ func _init() -> void:
 		# see shift_controller.gd's _render_details().
 		var tablet: Node3D = tablet_scene.instantiate()
 		tablet.name = "Tablet%d" % i
-		tablet.position = Vector3(0.0, CHAIR_Y, TABLET_Z)
+		# Set off the slot by the well's own offset on its screen, so the product
+		# stands in the well - the appeal side is the narrower one.
+		tablet.position = Vector3(0.0, CHAIR_Y, TABLET_Z) - OfferTablet.well_offset()
 		tablet.visible = false
 		tablet.unique_name_in_owner = true
 		seat.add_child(tablet)

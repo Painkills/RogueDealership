@@ -197,20 +197,6 @@ static func unsigned_text(c) -> String:
 		return "nothing agreed yet"
 	return "%s\n(%s at risk)" % ["\n".join(parts), Format.money(c.unsigned_margin())]
 
-## The one thing about their priority list that is not already sitting on the
-## interest grid itself: which CATEGORY narrowed to. Individual ranks used to
-## be repeated here too, as a growing ". "-joined line - the grid now carries
-## that (each known cell names its own interest, see InterestGrid._draw_cell),
-## so saying it twice is a caption for a picture that already has one.
-##
-## `known_top_category` is the whole point of Read the Room - it narrows nine
-## interests to three - and it used to be set by the model and then dropped
-## here, so playing the card looked like it did nothing at all.
-static func known_text(c) -> String:
-	if c.known_top_category != null:
-		return "Their number one is a %s need." % str(c.known_top_category).capitalize()
-	return "you know nothing about their priorities yet"
-
 ## What they are asking for and how long you have, or nothing. The telegraph is
 ## authored SHORT for exactly this - it has to fit one line on a card that may
 ## be 179 px wide - and the countdown is what turns an event into a decision.

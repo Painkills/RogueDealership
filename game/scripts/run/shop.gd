@@ -1,6 +1,7 @@
 class_name Shop extends RefCounted
-## Between shifts. Every visit the house gives you one card, free - take it or
-## leave it. What else is on offer is what the shift you just worked earns: a
+## Between shifts. Every visit the house offers you a few cards and gives you
+## ONE of them, free - pick one, or none. What else is on offer is what the
+## shift you just worked earns: a
 ## midday shift puts one card up for sale, a night shift lets you upgrade one
 ## of your own. Nothing else - no relics, no run modifiers. GODOT_SPEC.md §4's
 ## "one system to balance instead of two", and everything here is legible as a
@@ -10,9 +11,14 @@ class_name Shop extends RefCounted
 ## not the card. Same convention as every model command.
 
 var run: RunState
-## The card on the house this visit, or null once you have taken it. Rolled
-## once, like everything here, and never re-rolled for the life of this Shop.
-var free_card: CardDef = null
+## The cards on the house this visit, to pick ONE from. Rolled once, like
+## everything here, and never re-rolled for the life of this Shop; the next
+## visit rolls its own.
+var free_cards: Array[CardDef] = []
+## Whether this visit's free pick is still to be made, and which card it was
+## once it has been.
+var free_picks_left: int = 1
+var free_taken: CardDef = null
 ## What you may BUY this visit: the card a midday shift puts up for sale, or
 ## nothing at all. A card leaves it the moment you buy it.
 var offers: Array[CardDef] = []
@@ -59,13 +65,14 @@ func _roll_cards() -> void:
 	## every run already opens with one, so this is where a run diverges, not
 	## where it doubles up on its own starting deck.
 	##
-	## One draw WITHOUT replacement for everything: the card for sale is never
-	## the card you were just handed for free.
+	## One draw WITHOUT replacement for everything: no free option turns up
+	## twice, and the card for sale is never one you could have had free.
 	var pool: Array[CardDef] = []
 	for c in run.card_pool.shoppable_cards():
 		pool.append(c)
-	if not pool.is_empty():
-		free_card = pool.pop_at(_weighted_pick(pool))
+	free_cards.clear()
+	for _i in range(mini(run.cfg.free_card_choices, pool.size())):
+		free_cards.append(pool.pop_at(_weighted_pick(pool)))
 	offers.clear()
 	for _i in range(mini(cards_for_sale, pool.size())):
 		offers.append(pool.pop_at(_weighted_pick(pool)))
@@ -153,17 +160,21 @@ func perk_text() -> String:
 	elif upgrades > 1:
 		extras.append("upgrades for %d of your cards" % upgrades)
 	if extras.is_empty():
-		return "Just the free card this visit - your bonus carries over."
+		return "Just your free card this visit - your bonus carries over."
 	return "On top of your free card: %s." % " and ".join(extras)
 
 # --- the verbs ---------------------------------------------------------------
 
-func take_free() -> Result:
-	if free_card == null:
-		return Result.new(false, "There is nothing on the house left to take.")
-	var def := free_card
+## "Out of which the player picks ONE. Once they've picked one, they can't pick
+## any more of these free ones until the next shift."
+func take_free(def: CardDef) -> Result:
+	if free_picks_left <= 0:
+		return Result.new(false, "You have already taken this visit's free card.")
+	if not free_cards.has(def):
+		return Result.new(false, "%s is not one of the free cards." % def.display_name)
 	run.deck.add(def)
-	free_card = null
+	free_picks_left -= 1
+	free_taken = def
 	return Result.new(true, "You add the %s to your toolkit. On the house."
 		% def.display_name, "take", {"price": 0})
 

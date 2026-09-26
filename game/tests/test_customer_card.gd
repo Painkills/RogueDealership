@@ -44,3 +44,22 @@ func test_the_patience_meter_is_a_box_the_bar_fills() -> void:
 	card.setup(null)
 	h.check("an empty chair shows no meter at all, not an empty one", not frame.visible)
 	card.free()
+
+func test_their_archetype_is_written_big_enough_to_read_across_the_floor() -> void:
+	## "Make the customer archetype text a little bit bigger" - and still on
+	## the tab, for the longest archetype and chair key the data can make.
+	var card := _card()
+	var tab := card.get_node(^"FrontViewport/CustomerFront/Tab") as Control
+	var label := tab.get_node(^"ArchetypeLabel") as Label
+	var size := label.get_theme_font_size("font_size")
+	h.check("bigger than the 30 px it was (%d)" % size, size > 30)
+	var longest := ""
+	for a in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
+		var text := "%s  [C]" % a.display_name
+		if text.length() > longest.length():
+			longest = text
+	var wide: float = label.get_theme_font("font").get_string_size(longest,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	h.check("and the longest one still fits its tab (%s: %d of %d px)"
+		% [longest, int(wide), int(tab.size.x)], wide < tab.size.x - 20.0)
+	card.free()

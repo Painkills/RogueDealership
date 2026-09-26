@@ -93,19 +93,20 @@ func test_the_back_of_a_folder_starts_tucked_behind_it() -> void:
 				% detail.rotation, is_equal_approx(absf(detail.rotation.y), PI))
 	s.free()
 
-func test_the_product_stands_in_the_middle_of_its_tablet() -> void:
-	## "The product card shows up in the center" of a tablet, with how it is
-	## landing either side of it - the second card that used to slide out
-	## beside the product is gone.
+func test_the_product_stands_in_its_tablets_well() -> void:
+	## The product stands on a tablet, with how it is landing either side of it
+	## - the second card that used to slide out beside the product is gone. The
+	## appeal side is the thin one, so the tablet sits off the slot by its well's
+	## own offset, and the product stands in the well.
 	var s := _scene()
 	for i in range(3):
 		var tablet := s.get_node(NodePath("%%Tablet%d" % i)) as Node3D
 		var slot := s.get_node(NodePath("%%Chair%d" % i)) as Node3D
 		h.check("seat %d's tablet is a tablet" % i, tablet is OfferTablet)
-		h.check("with the slot in the middle of its screen (%s vs %s)"
-			% [slot.position, tablet.position],
-			is_equal_approx(slot.position.x, tablet.position.x)
-				and is_equal_approx(slot.position.y, tablet.position.y))
+		var well := tablet.position + OfferTablet.well_offset()
+		h.check("with the slot on its well (%s vs %s)" % [slot.position, well],
+			is_equal_approx(slot.position.x, well.x)
+				and is_equal_approx(slot.position.y, well.y))
 		h.check("and the tablet just behind the card standing on it (%.2f < %.2f)"
 			% [tablet.position.z, slot.position.z], tablet.position.z < slot.position.z)
 		# Behind the slot's own outline and highlight too, or they would draw

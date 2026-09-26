@@ -983,10 +983,16 @@ func _check_the_tablet_shows_the_offer() -> void:
 				not _controller._tablets[i].visible)
 	var t := _rect_of(tablet, TABLET)
 	var slot := _rect_of(_controller._chair_zones[at], CARD)
-	_check("the product stands in the middle of it (%s vs %s)"
-		% [slot.get_center(), t.get_center()],
-		slot.get_center().distance_to(t.get_center()) < 2.0)
-	_check("wholly on it (%s in %s)" % [slot, t], t.encloses(slot))
+	# The well is off the tablet's middle - the appeal side is the thin one - so
+	# the product is checked against the well, where it is meant to stand.
+	var well := _rect_around(tablet.to_global(OfferTablet.well_offset()),
+		OfferTablet.size_of(OfferTablet.WELL_RECT))
+	_check("the product stands in the tablet's well (%s vs %s)"
+		% [slot.get_center(), well.get_center()],
+		slot.get_center().distance_to(well.get_center()) < 2.0)
+	_check("covering it (%s vs %s)" % [slot.size, well.size],
+		slot.size.distance_to(well.size) < 3.0)
+	_check("wholly on the tablet (%s in %s)" % [slot, t], t.encloses(slot))
 	var appeal: Rect2 = _controller.screen_rect_of(&"appeal")
 	_check("its appeal side is left of the product (%s vs %s)" % [appeal, slot],
 		appeal.size.x > 0.0 and appeal.end.x <= slot.position.x)
@@ -1223,8 +1229,6 @@ func _check_the_detail_card_shows_what_they_do() -> void:
 			det._does.text.contains(who.archetype.actions[0].display_name))
 	_check("it says what is unsigned (%s)" % det._table.text.substr(0, 40),
 		not det._table.text.begins_with("(what they have"))
-	_check("and what you have worked out (%s)" % det._known.text.substr(0, 40),
-		not det._known.text.begins_with("(what you have"))
 
 	# A standing rule, not an action: close() enforces it, so it never fires and
 	# never reaches the log. A Karen who refuses to sign with no reason stated
@@ -1246,33 +1250,32 @@ func _check_the_detail_card_shows_what_they_do() -> void:
 		was_demands_category != null or not det._does.text.contains("WILL NOT SIGN"))
 
 	_check_the_detail_card_is_not_overflowing(det)
-	_check_read_the_room_shows_you_something(det, who)
+	_check_read_the_room_shows_you_something(who)
 
 ## The reported bug: "sometimes I play Read the Room and no priority category is
-## revealed." It was never shown at all - reveal_room() sets known_top_category
-## on the customer, and known_text() only ever walked known_ranks, which Read the
-## Room does not touch. The card's own promise, "reveals their Line and the
-## category of their number one", was half true.
+## revealed." The card's own promise is "reveals their Line and the category
+## of their number one". The back of the folder used to spell the category out
+## in a "what you know" line; that section is gone - the front's interest grid
+## lights the category's whole row - so this is checked on the grid itself.
 ##
 ## Driven through the model's own reveal_room(), which is exactly what the
 ## RevealRoom effect calls, rather than through whatever happens to be in hand.
-func _check_read_the_room_shows_you_something(det, who) -> void:
+func _check_read_the_room_shows_you_something(who) -> void:
+	var grid := _controller._customer_cards[_at()].get_node(
+		^"FrontViewport/CustomerFront/Margin/Column/InterestGrid") as InterestGrid
 	var was_cat = who.known_top_category
 	var was_line: bool = who.known_line
 	who.known_top_category = null
 	who.known_line = false
 	_controller._render()
-	var before: String = det._known.text
+	_check("before reading the room, no row of their grid is lit",
+		grid._top_category == null)
 
 	who.reveal_room()
 	_controller._render()
-	var after: String = det._known.text
-
-	_check("reading the room changes what the card says (was: %s)"
-		% before.substr(0, 40), after != before)
-	_check("and it names the category of their number one (%s)"
-		% after.split("\n")[0],
-		after.to_lower().contains(str(who.known_top_category)))
+	_check("reading the room lights the row of their number one's category (%s)"
+		% grid._top_category, grid._top_category != null
+			and grid._top_category == who.known_top_category)
 
 	who.known_top_category = was_cat
 	who.known_line = was_line
@@ -1287,14 +1290,16 @@ func _check_read_the_room_shows_you_something(det, who) -> void:
 ## the first frame, before any Control has been laid out - so the container's
 ## own answer is computed at width zero and comes back more than double.
 func _check_the_detail_card_is_not_overflowing(det) -> void:
+	# The words sit on the sheet taped to the folder, not the whole face: the
+	# margin is laid over the sheet, so its own size is the room there is.
 	var margin := det.get_node(^"FrontViewport/DetailFront/Margin") as MarginContainer
 	var pad_x: float = margin.get_theme_constant("margin_left") \
 		+ margin.get_theme_constant("margin_right")
-	var room: float = det.FRONT_SIZE.y \
+	var room: float = margin.size.y \
 		- margin.get_theme_constant("margin_top") \
 		- margin.get_theme_constant("margin_bottom")
 	var col := det.get_node(^"FrontViewport/DetailFront/Margin/Column") as Control
-	var width: float = det.FRONT_SIZE.x - pad_x
+	var width: float = margin.size.x - pad_x
 	var live := _stack_height(col, width)
 	_check("the detail card's contents fit its face (%d of %d px)"
 		% [int(live), int(room)], live <= room)
@@ -1510,9 +1515,12 @@ func _check_what_a_customer_says_reaches_their_card() -> void:
 	var there: CustomerCard3D = _controller._customer_cards[other]
 	there.say("\"from over here\"", _controller._shift.tick)
 	_controller._on_customer_hover(other)
-	_check("hovering one at another desk does not - it runs its three ticks",
-		there.is_speaking())
+	# "Let me remove dialogue from customers I'm not sitting at by hovering
+	# over them as well."
+	_check("hovering one at another desk clears theirs too", not there.is_speaking())
 	_controller._on_customer_unhover(other)
+	there.say("\"left alone\"", _controller._shift.tick)
+	_check("left alone, theirs still stays up its own time", there.is_speaking())
 	there.hush()
 	_settle()
 
@@ -1734,7 +1742,7 @@ func _check_the_meter_keeps_the_line_fogged_after_you_have_asked() -> void:
 		# They signed, so the offer left the table - which is its own correct
 		# outcome and leaves nothing to meter.
 		_check("a sale cleared the table, so the meter has nothing to show",
-			not det._bar.visible and det._margin.text == "-")
+			det._bar._appeal == 0 and det._margin.text == "-")
 		return
 	var bar: AppealBar = det._bar
 	_check("so the meter still refuses to draw the marker", not bar._line_known)

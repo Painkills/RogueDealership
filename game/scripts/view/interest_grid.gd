@@ -24,10 +24,9 @@ class_name InterestGrid extends Control
 ## `compact` on customer_card_3d.gd - which renders at worst at 0.512 of the
 ## authored face.
 const NUMERAL := 44
-## The name that used to only ever appear in "what you know"'s growing
-## sentence - see customer_card_3d.gd's known_text() - now lives on the cell
-## itself, so a rank means something without reading a second label to match
-## it back to an interest. Shrinks toward MIN before it would overflow the
+## The name that used to only ever appear in a "what you know" sentence on the
+## back of the folder now lives on the cell itself, so a rank means something
+## without reading a second label to match it back to an interest. Shrinks toward MIN before it would overflow the
 ## cell ("Value Retention" is the longest name in the pool). The cap went up
 ## when the customer card became a landscape folder: its cells are about twice
 ## as wide as they were, and the point of the room was bigger names.

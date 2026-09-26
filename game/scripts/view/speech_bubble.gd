@@ -22,7 +22,8 @@ class_name SpeechBubble extends Control
 ## from, so the bubble gets out of the way: one tick, or a look at them.
 const AT_YOUR_DESK_TICKS := 1
 ## At a desk you are not at, it is how you hear that someone said something at
-## all, so it stays long enough to be noticed.
+## all, so it stays long enough to be noticed - unless you look at them, which
+## clears any bubble, at any desk.
 const SIDE_SEAT_TICKS := 3
 
 @onready var _panel: PanelContainer = $Panel

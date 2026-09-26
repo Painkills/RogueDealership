@@ -79,6 +79,21 @@ func test_the_office_has_windows_on_the_back_wall() -> void:
 	h.eq("and back", sky.time_of_day, &"morning")
 	s.free()
 
+func test_the_midday_sun_is_in_the_middle_window() -> void:
+	## "For the midday shift sky, the sun should be in the middle window."
+	## Measured against the real panes: the middle one shows the middle fifth
+	## of the sky, and the sun has to be in that slice, above the rooftops.
+	var s: Node3D = (load("res://scenes/shift.tscn") as PackedScene).instantiate()
+	var panes := (s.get_node(^"OfficeWindows/Panes") as Node).get_child_count()
+	var middle := panes / 2
+	var sun: Vector2 = SkyView.LOOKS[&"midday"]["body_at"]
+	var r: float = SkyView.LOOKS[&"midday"]["body_r"]
+	h.check("the midday sun is in pane %d of %d (%.2f in %.2f..%.2f)"
+		% [middle + 1, panes, sun.x, float(middle) / panes, float(middle + 1) / panes],
+		sun.x - r > float(middle) / panes and sun.x + r < float(middle + 1) / panes)
+	h.check("high up, over the rooftops", sun.y < SkyView.SKYLINE_TOP - 0.2)
+	s.free()
+
 func test_every_pane_shows_its_own_slice_of_the_one_sky() -> void:
 	## One picture cut across all of them, so the view carries on behind the
 	## frames between them - not the same square of sky repeated five times.

@@ -486,7 +486,7 @@ func screen_rect_of(target: StringName) -> Rect2:
 	if _shift == null:
 		return Rect2()
 	var front: int = int(_shift.at) if _shift.at != null else _last_station
-	var card := DetailCard3D.CARD_SIZE
+	var card := CardFace3D.CARD_SIZE
 	match target:
 		&"customer":
 			return _on_screen_rect(_card_rect(_customer_cards[front],
@@ -701,11 +701,10 @@ func _on_customer_hover(chair: int) -> void:
 	# at them - see _hover_held.
 	if _dragging != null:
 		_hover_held = chair
-	# A real look at the customer you are sitting with means you have heard
-	# what they just said: it gets out of the way of their grid. The ones at
-	# the other desks keep theirs up for its full time (SpeechBubble).
-	elif _hover_held != chair and _shift != null and _shift.at != null \
-			and int(_shift.at) == chair:
+	# A real look at a customer means you have heard what they just said, so
+	# it gets out of the way - whichever desk they are at. Left alone, it keeps
+	# the time SpeechBubble gives it: short at yours, longer at the others.
+	elif _hover_held != chair:
 		_customer_cards[chair].hush()
 	_render_hover_flip()
 

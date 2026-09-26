@@ -104,7 +104,7 @@ func _drive() -> void:
 	var tablet: Rect2 = _floor.screen_rect_of(&"tablet")
 	_check("the meter it frames is on the tablet (%s in %s)" % [appeal, tablet],
 		appeal.size.x > 0.0 and tablet.encloses(appeal))
-	_check("left of the product standing in the middle of it",
+	_check("left of the product standing on it",
 		appeal.end.x <= _floor.screen_rect_of(&"table").position.x)
 
 	await _next(&"support")

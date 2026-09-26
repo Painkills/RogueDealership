@@ -1,115 +1,200 @@
 [gd_scene format=3]
 
-[node name="DetailFront" type="Control" unique_id=269524342]
-custom_minimum_size = Vector2(500, 700)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8wicd"]
+bg_color = Color(0.7490196, 0.8156863, 0.9098039, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pshcq"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k5ujj"]
+bg_color = Color(1, 0.98, 0.9, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xv61y"]
+bg_color = Color(1, 0.98, 0.9, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_riqn1"]
+content_margin_left = 16.0
+content_margin_top = 4.0
+content_margin_right = 16.0
+content_margin_bottom = 4.0
+bg_color = Color(0.98039216, 0.8, 0.08235294, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+shadow_color = Color(0, 0, 0, 0.18)
+shadow_size = 3
+shadow_offset = Vector2(1, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dmb2a"]
+content_margin_left = 16.0
+content_margin_top = 4.0
+content_margin_right = 16.0
+content_margin_bottom = 4.0
+bg_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+shadow_color = Color(0, 0, 0, 0.18)
+shadow_size = 3
+shadow_offset = Vector2(1, 2)
+
+[node name="DetailFront" type="Control" unique_id=1020120686]
+custom_minimum_size = Vector2(800, 700)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 500.0
+offset_right = 800.0
 offset_bottom = 700.0
 
-[node name="Background" type="ColorRect" parent="." unique_id=2076378497]
+[node name="Background" type="ColorRect" parent="." unique_id=1336259966]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
+color = Color(0.5764706, 0.6627451, 0.7882353, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=992443589]
+[node name="Cover" type="ColorRect" parent="." unique_id=1731892411]
+layout_mode = 0
+offset_top = 52.0
+offset_right = 800.0
+offset_bottom = 700.0
+color = Color(0.7490196, 0.8156863, 0.9098039, 1)
+
+[node name="Tab" type="Panel" parent="." unique_id=44949866]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 6.0
+offset_right = 424.0
+offset_bottom = 54.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_8wicd")
+
+[node name="TitleLabel" type="Label" parent="Tab" unique_id=1889771363]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
-
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1964292405]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="TitleLabel" type="Label" parent="Margin/Column" unique_id=503113021]
-layout_mode = 2
-theme_override_font_sizes/font_size = 34
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-text = "Anti-Theft & Key Protection"
-autowrap_mode = 2
+text = "Sandra Okonkwo"
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
 
-[node name="SubLabel" type="Label" parent="Margin/Column" unique_id=1601504091]
+[node name="Sheet" type="Panel" parent="." unique_id=331736995]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 70.0
+offset_right = 774.0
+offset_bottom = 674.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_pshcq")
+
+[node name="TapeLeft" type="Panel" parent="." unique_id=1724190446]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 60.0
+offset_right = 100.0
+offset_bottom = 90.0
+rotation = -0.2443461
+theme_override_styles/panel = SubResource("StyleBoxFlat_k5ujj")
+
+[node name="TapeRight" type="Panel" parent="." unique_id=202099278]
+layout_mode = 0
+offset_left = 704.0
+offset_top = 56.0
+offset_right = 800.0
+offset_bottom = 86.0
+rotation = 0.20943952
+theme_override_styles/panel = SubResource("StyleBoxFlat_xv61y")
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=748105456]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 70.0
+offset_right = 774.0
+offset_bottom = 674.0
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=76059146]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_constants/separation = 10
+
+[node name="SubLabel" type="Label" parent="Margin/Column" unique_id=626620296]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
 text = "Tech Enthusiast"
 autowrap_mode = 2
 
-[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=1102114515]
-custom_minimum_size = Vector2(0, 3)
+[node name="CustomerBody" type="VBoxContainer" parent="Margin/Column" unique_id=2124088315]
 layout_mode = 2
-color = Color(0.8862745, 0.9019608, 0.9254902, 1)
+theme_override_constants/separation = 8
 
-[node name="CustomerBody" type="VBoxContainer" parent="Margin/Column" unique_id=1148838101]
+[node name="DoesTitle" type="Control" parent="Margin/Column/CustomerBody" unique_id=1609175821]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-theme_override_constants/separation = 4
 
-[node name="DoesTitle" type="Label" parent="Margin/Column/CustomerBody" unique_id=1440473945]
+[node name="Sticker" type="PanelContainer" parent="Margin/Column/CustomerBody/DoesTitle" unique_id=1311226748]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 2.0
+offset_right = 4.0
+offset_bottom = 2.0
+rotation = -0.02617994
+theme_override_styles/panel = SubResource("StyleBoxFlat_riqn1")
+
+[node name="Words" type="Label" parent="Margin/Column/CustomerBody/DoesTitle/Sticker" unique_id=1730252434]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "WHAT THEY DO"
 
-[node name="DoesLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=1450681115]
+[node name="DoesLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=694653946]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
 text = "WILL NOT SIGN until they have bought something in Reliability.
 Needs a minute to talk it over - every 6 ticks. Work someone else for 3 and they come back easier, or lose 5 patience"
 autowrap_mode = 2
 
-[node name="TableTitle" type="Label" parent="Margin/Column/CustomerBody" unique_id=1829213139]
+[node name="TableTitle" type="Control" parent="Margin/Column/CustomerBody" unique_id=539738232]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
+
+[node name="Sticker" type="PanelContainer" parent="Margin/Column/CustomerBody/TableTitle" unique_id=246587797]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 2.0
+offset_right = 4.0
+offset_bottom = 2.0
+rotation = 0.02094395
+theme_override_styles/panel = SubResource("StyleBoxFlat_dmb2a")
+
+[node name="Words" type="Label" parent="Margin/Column/CustomerBody/TableTitle/Sticker" unique_id=942647751]
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 text = "UNSIGNED"
 
-[node name="TableLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=2021855626]
+[node name="TableLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=1660141856]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
 text = "Anti-Theft & Key Protection $800
 Appearance & Wheel Package $900
 ($1,700 at risk)"
-autowrap_mode = 2
-
-[node name="KnownTitle" type="Label" parent="Margin/Column/CustomerBody" unique_id=1233368115]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-text = "WHAT YOU KNOW"
-
-[node name="KnownLabel" type="Label" parent="Margin/Column/CustomerBody" unique_id=529650881]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-theme_override_colors/font_shadow_color = Color(0.105882354, 0.13725491, 0.1882353, 0.25)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-text = "Their number one is a Vehicle need."
 autowrap_mode = 2

@@ -1,7 +1,11 @@
 class_name OfferTablet extends Node3D
 ## The tablet on the desk you are sitting at. The product you are pitching
-## stands in the middle of its screen, and the screen shows how that pitch is
-## landing on either side of it: appeal on the left, the money on the right.
+## stands on its screen, and the screen shows how that pitch is landing on
+## either side of it: appeal on the left, the money on the right.
+##
+## The appeal side is only as wide as its meter, so the product is not quite in
+## the middle of the tablet - the tablet is placed so the product still stands
+## where the desk's slot is (see well_offset()).
 ##
 ## It replaced a second card that slid out beside the product - a sheet that
 ## repeated the product's name and category in smaller type beside a card that
@@ -20,33 +24,32 @@ const PX_PER_UNIT := 180.0
 ## The whole tablet, black edge and all. The edge and its rounded corners are
 ## drawn into the same texture and the corners cut out of the quad, so it has
 ## the corners a tablet has without a second mesh.
-const SIZE_PX := Vector2i(1320, 688)
-## ...and in the world: 7.33 x 3.82, standing on the desk.
-const SIZE := Vector2(1320.0 / PX_PER_UNIT, 688.0 / PX_PER_UNIT)
+const SIZE_PX := Vector2i(1109, 688)
+## ...and in the world: 6.16 x 3.82, standing on the desk.
+const SIZE := Vector2(1109.0 / PX_PER_UNIT, 688.0 / PX_PER_UNIT)
 ## The black glass edge, in pixels.
 const BEZEL_PX := 18
-## The well in the middle of the screen that the product card stands in front
-## of: exactly one 2.5 x 3.5 card, centred, so the card is the middle of the
-## screen rather than something laid across it.
-const WELL_RECT := Rect2i(435, 29, 450, 630)
+## The well the product card stands in front of: exactly one 2.5 x 3.5 card,
+## as tall as the screen, so the card stands ON the screen rather than being
+## laid across it.
+const WELL_RECT := Rect2i(224, 29, 450, 630)
 ## The status bar along the top of the screen, as on any tablet: the time on
 ## the left, signal and battery on the right. The product stands over its
 ## middle, the way an app's content sits under one.
-const STATUS_RECT := Rect2i(40, 24, 1240, 30)
+const STATUS_RECT := Rect2i(40, 24, 1029, 30)
 ## Either side of the well, under the status bar. The appeal meter is the thing
-## you are steering by, so it gets the side your eye reaches first.
-const APPEAL_RECT := Rect2i(32, 64, 381, 595)
-const DEAL_RECT := Rect2i(907, 64, 381, 595)
-## The appeal meter stands upright at the inside edge of its panel, right up
-## against the product, as tall as the panel's content - this is its width.
-const METER_WIDTH := 96
+## you are steering by, so it gets the side your eye reaches first - a thin
+## panel, "appeal" at its top and the meter from just under that to its foot.
+const APPEAL_RECT := Rect2i(32, 64, 170, 595)
+const DEAL_RECT := Rect2i(696, 64, 381, 595)
+## The appeal meter's width: the whole of its panel, less the panel's padding.
+const METER_WIDTH := 124
 
 var _material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
 var _bar: AppealBar
 var _status: Label
-var _hint: Label
 var _margin: Label
 var _combo: Label
 var _worth: Label
@@ -64,9 +67,8 @@ func _bind() -> void:
 	_bound = true
 	_viewport = $ScreenViewport
 	var screen: Node = $ScreenViewport/TabletScreen
-	_bar = screen.get_node(^"AppealPanel/Row/AppealBar") as AppealBar
-	_status = screen.get_node(^"AppealPanel/Row/Column/StatusLabel")
-	_hint = screen.get_node(^"AppealPanel/Row/Column/HintLabel")
+	_bar = screen.get_node(^"AppealPanel/Column/AppealBar") as AppealBar
+	_status = screen.get_node(^"AppealPanel/Column/StatusLabel")
 	_margin = screen.get_node(^"DealPanel/Column/MarginLabel")
 	_combo = screen.get_node(^"DealPanel/Column/ComboLabel")
 	_worth = screen.get_node(^"DealPanel/Column/WorthLabel")
@@ -128,13 +130,13 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 	_knobs.text = knobs_text(c) if c != null else ""
 
 	var o = c.offer if c != null else null
-	_bar.visible = o != null
 	_worth.visible = o != null and mult > 1.0
+	_status.text = ""
 	if o == null:
+		# An empty meter, not no meter: the panel says what it measures before
+		# there is anything on the table to measure.
+		_bar.set_state(0, 0, meter_scale, "", false)
 		_margin.text = "-"
-		_status.text = ""
-		_hint.text = "Place a product to see its appeal" if c != null \
-			else "Nobody in this chair"
 	else:
 		_bar.set_state(o.appeal, c.line, meter_scale, band, c.known_line)
 		_margin.text = Format.money(o.margin)
@@ -143,11 +145,8 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 		# sale will not pay.
 		_worth.text = "%s if they buy" % Format.money(roundi(o.margin * mult))
 		_read_the_offer(c, o, band)
-	# A verdict or a nudge, never an empty line holding the space open.
-	_status.visible = not _status.text.is_empty()
-	_hint.visible = not _hint.text.is_empty()
 
-## The verdict beside the meter: nothing yet, a band, or the exact gap.
+## The verdict under the meter: nothing yet, a band, or the exact gap.
 ##
 ## The FILL is always honest about your own appeal; only the LINE is fogged, and
 ## Read the Room is the ONLY thing that lifts it. Offering used to lift it too,
@@ -158,18 +157,12 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 ## Having offered still buys you something real - the band - but a band is a
 ## read and a number is a readout, and only one of those you have paid for.
 ##
-## Before you offer, the only nudge is for a Line you can already see. There
-## used to be a second one for a Line you could not - "read the room to learn
-## their Line" - but that is advice about one particular card, printed on every
-## pitch whether or not you are holding it.
+## Before you offer it says nothing. It used to nudge you - "read the room",
+## "clear the Line before you offer" - but the first was advice about one card
+## printed on every pitch, and the second the meter's own mark already says.
 func _read_the_offer(c, o, band: String) -> void:
 	if not o.revealed:
-		_status.text = ""
-		_hint.text = "their Line is marked - clear it before you offer" \
-			if c.known_line else ""
 		return
-
-	_hint.text = ""
 	if not c.known_line:
 		# You asked and they said no. How far off you were is a feeling.
 		_status.text = band
@@ -192,6 +185,12 @@ func _read_the_offer(c, o, band: String) -> void:
 static func knobs_text(c) -> String:
 	return "Each sale: combo +%d%%, Line +%d" \
 		% [roundi(c.archetype.combo_step * 100), c.archetype.line_per_sale]
+
+## Where the product stands on this tablet, from the tablet's own middle - the
+## desk places the tablet this far off its slot, the other way, so the product
+## stands in the well.
+static func well_offset() -> Vector3:
+	return centre_of(WELL_RECT)
 
 ## Where a rect of the screen sits in the tablet's own space: its centre...
 static func centre_of(px: Rect2i) -> Vector3:
