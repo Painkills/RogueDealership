@@ -95,10 +95,10 @@ static func resize_quads(card: Node3D, size: Vector2) -> void:
 ## `c == null` is an empty chair. The card stays - a seat should not blink out of
 ## existence mid-shift - it just says nobody is there.
 ##
-## `seated` only decides whether the status line shows. It is there so the FLOOR
-## can tell you that you left a product with someone; once you are with them the
-## product card is sitting directly below this one, and a line of text repeating
-## what a card already says is just something else to keep in sync.
+## `seated` is whether you are sitting with THIS customer. It hides the status
+## line: that is there so the FLOOR can tell you that you left a product with
+## someone, and once you are with them the product is standing right below this
+## card. It also sets how long what they say stays up - see SpeechBubble.
 func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_bind()
 	# A bubble is keyed to whoever said it, not to the chair - the moment the
@@ -109,7 +109,11 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		_bubble.visible = false
 	customer = c
 	if _bubble != null:
-		_bubble.update_visibility(tick)
+		# Quick to clear at the desk you are sitting at, where the grid under it
+		# is what you are working from; slower at the others, where the bubble
+		# is how you hear that someone said anything at all.
+		_bubble.update_visibility(tick, SpeechBubble.AT_YOUR_DESK_TICKS if seated \
+			else SpeechBubble.SIDE_SEAT_TICKS)
 	_status.visible = not seated
 
 	if c == null:
@@ -153,6 +157,15 @@ func say(text: String, tick: int) -> void:
 	_bind()
 	if _bubble != null:
 		_bubble.say(text, tick)
+
+## Clears what they just said - you looked at them, so it has been heard.
+func hush() -> void:
+	_bind()
+	if _bubble != null:
+		_bubble.hush()
+
+func is_speaking() -> bool:
+	return _bubble != null and _bubble.visible
 
 ## What this customer does to you, and what they will not do for you.
 ##

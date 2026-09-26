@@ -27,11 +27,19 @@ const SHEET_INSET := 16
 const MARGIN_X := 36
 const MARGIN_TOP := TAB_H + 28
 const MARGIN_BOTTOM := 28
-## Photo, name and patience. The speech bubble covers exactly this row - see
-## drive_shift.gd's own restatement of this arithmetic.
+## Photo, name and patience - which nothing is ever drawn over, the speech
+## bubble included (see GRID_TOP).
 const HEADER_H := 160
 const PHOTO := 150
 const SEP := 10
+## The demand countdown's reserved row, under the name and patience: at least
+## one line of its 36 px heading face (54 px), so the row never grows past what
+## the speech bubble below it is placed against.
+const DEMAND_H := 56
+## Where the interest grid starts, and so where a speech bubble may start: below
+## the name, the patience and the countdown. See drive_shift.gd's own
+## restatement of this arithmetic.
+const GRID_TOP := MARGIN_TOP + HEADER_H + SEP + DEMAND_H + SEP
 
 func _init() -> void:
 	var root := Control.new()
@@ -167,7 +175,7 @@ func _init() -> void:
 	demand_label.text = "BETTER QUOTE  3t"   # longest telegraph in data/demands/*.tres
 	demand_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	demand_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	demand_label.custom_minimum_size = Vector2(0, 48)
+	demand_label.custom_minimum_size = Vector2(0, DEMAND_H)
 	col.add_child(demand_label)
 	demand_label.owner = root
 
@@ -196,21 +204,29 @@ func _init() -> void:
 	status_label.owner = root
 
 	# What they just SAID, not just what they are asking for - "all customer
-	# actions need to show on the screen, not just in the log". Covers the
-	# photo-and-name row and stops right where the next row starts, in ROOT
-	# coordinates since this sits outside Margin: from the top of the folder's
-	# front flap down to MARGIN_TOP + HEADER_H + SEP. The tab above it stays
-	# uncovered, so you can still see WHO is talking. Added last, so it draws
-	# over the header rather than beside it.
+	# actions need to show on the screen, not just in the log". Over their
+	# INTEREST GRID, never their name or patience: those are what you glance at
+	# to decide who needs you next, and a line of dialogue covering the patience
+	# meter hid the one number that says how long you have. The countdown above
+	# the grid stays uncovered too. Added last, so it draws over the grid, in
+	# ROOT coordinates since it sits outside Margin; a tail points up at the
+	# photo, so it still reads as that person talking.
 	var bubble := Control.new()
 	bubble.name = "SpeechBubble"
 	bubble.set_script(load("res://scripts/view/speech_bubble.gd"))
-	bubble.position = Vector2(0, TAB_H)
-	bubble.size = Vector2(W, MARGIN_TOP - TAB_H + HEADER_H + SEP)
+	bubble.position = Vector2(MARGIN_X - 12, GRID_TOP - 6)
+	bubble.size = Vector2(W - (MARGIN_X - 12) * 2, H - MARGIN_BOTTOM + 6 - (GRID_TOP - 6))
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bubble.visible = false
 	root.add_child(bubble)
 	bubble.owner = root
+
+	# The tail, under the photo: its outline behind the panel, and its white
+	# fill in front, reaching just past the panel's border so the tail opens
+	# into the bubble rather than being cut off from it by a line.
+	var tail_x: float = PHOTO * 0.5 + 12   # the photo's centre, in the bubble's space
+	_tail(bubble, root, "TailEdge", &"action",
+		[Vector2(tail_x - 24, 2), Vector2(tail_x + 24, 2), Vector2(tail_x, -28)])
 
 	var bubble_panel := PanelContainer.new()
 	bubble_panel.name = "Panel"
@@ -218,19 +234,25 @@ func _init() -> void:
 	bubble_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var bubble_style := StyleBoxFlat.new()
 	bubble_style.bg_color = Palette.color(&"panel")
-	bubble_style.border_width_bottom = 4
+	bubble_style.set_border_width_all(4)
 	bubble_style.border_color = Palette.color(&"action")
+	bubble_style.set_corner_radius_all(18)
 	bubble_style.content_margin_left = MARGIN_X
 	bubble_style.content_margin_right = MARGIN_X
 	bubble_style.content_margin_top = 18
 	bubble_style.content_margin_bottom = 18
+	bubble_style.shadow_color = Color(0, 0, 0, 0.15)
+	bubble_style.shadow_size = 8
+	bubble_style.shadow_offset = Vector2(0, 3)
 	bubble_panel.add_theme_stylebox_override("panel", bubble_style)
 	bubble.add_child(bubble_panel)
 	bubble_panel.owner = root
+	_tail(bubble, root, "Tail", &"panel",
+		[Vector2(tail_x - 23, 8), Vector2(tail_x + 23, 8), Vector2(tail_x, -21)])
 
 	var bubble_label := Label.new()
 	bubble_label.name = "Label"
-	bubble_label.add_theme_font_size_override("font_size", 36)
+	bubble_label.add_theme_font_size_override("font_size", 38)
 	bubble_label.add_theme_color_override("font_color", Palette.color(&"text"))
 	bubble_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	bubble_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -253,6 +275,15 @@ func _init() -> void:
 	print("saved customer_front_2d.tscn")
 	root.free()
 	quit(0)
+
+func _tail(bubble: Control, root: Node, node_name: String, role: StringName,
+		points: Array) -> void:
+	var tail := Polygon2D.new()
+	tail.name = node_name
+	tail.polygon = PackedVector2Array(points)
+	tail.color = Palette.color(role)
+	bubble.add_child(tail)
+	tail.owner = root
 
 func _label(node_name: String, size: int, color: Color) -> Label:
 	var l := Label.new()

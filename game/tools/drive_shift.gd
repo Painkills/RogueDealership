@@ -1405,11 +1405,10 @@ func _row_height(box: Control, width: float) -> float:
 ## in this seed is not what is being tested, and waiting for one would make
 ## this check count for nothing on most runs.
 ##
-## "All customer actions need to show on the screen, not just in the log...
-## have it cover up the person's name and right up to where the archetype
-## name starts" - so the same injected line has to reach chair A's own
-## CustomerCard3D too, not only the log beside it, positioned against the
-## card's own Name/Archetype rows rather than an assumed pixel number.
+## "All customer actions need to show on the screen, not just in the log" - so
+## the same injected line has to reach chair A's own CustomerCard3D too, not
+## only the log beside it, positioned against the card's own rows rather than
+## an assumed pixel number: over their grid, never their name or patience.
 func _check_what_a_customer_says_reaches_the_log() -> void:
 	var card = _controller._customer_cards[0]
 	var bubble: Control = card.get_node(^"FrontViewport/CustomerFront/SpeechBubble")
@@ -1433,50 +1432,91 @@ func _check_what_a_customer_says_reaches_the_log() -> void:
 	_check("carrying the same words as the log (%s)" % label.text,
 		label.text == "\"Is there someone else I can speak to?\"")
 
-	# "have it cover up the person's name and right up to where the archetype
-	# name starts" - since the card became a folder, the archetype is written
-	# on its tab ABOVE the name, so the bubble covers the photo-and-name row
-	# and leaves the tab showing who is talking. Containers lay their children
-	# out in a DEFERRED resort, and this all runs inside one frame - read
-	# straight away, the name reads as a 1 px sliver at (0, 0), a real gap this
-	# project has hit before (see build_shop_scene.gd's own DoneButton
-	# comment). So the four containers between the card and the name are told
-	# to lay out NOW, outermost first, and the rects read are the real ones.
-	# The boundaries are checked the same way test_run_state.gd's _delta()
-	# checks standing_delta: an independent restatement of
-	# build_customer_front_scene.gd's own tab and margin math, not a call into
+	# "It should never cover the patience" - it sits over their interest grid,
+	# below the name, the patience and the demand countdown. Containers lay
+	# their children out in a DEFERRED resort, and this all runs inside one
+	# frame - read straight away, the name reads as a 1 px sliver at (0, 0), a
+	# real gap this project has hit before (see build_shop_scene.gd's own
+	# DoneButton comment). So the containers between the card and each row are
+	# told to lay out NOW, outermost first, and the rects read are the real
+	# ones. The bubble's own top is checked against an independent restatement
+	# of build_customer_front_scene.gd's GRID_TOP arithmetic, not a call into
 	# it, so the two can only agree by actually matching.
 	var col: Node = card.get_node(^"FrontViewport/CustomerFront/Margin/Column")
-	for box in [col.get_parent(), col, col.get_node(^"Header"), col.get_node(^"Header/Info")]:
-		(box as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
-	var name_label := col.get_node(^"Header/Info/NameLabel") as Control
+	# More than one pass: the name wraps, and a wrapping label only reports its
+	# real height once a pass has given it its real width. The first pass
+	# measures it at no width at all - a word to a line - and the containers
+	# above it keep that stale height unless told to ask again, which the real
+	# game does for itself over its next frames.
+	var face := card.get_node(^"FrontViewport/CustomerFront") as Control
+	var margin := col.get_parent() as Control
+	for _pass in 3:
+		# The margin is anchored to the whole face; a first pass that measured
+		# too tall grows it, and only a resize would fit it back - so fit it.
+		margin.size = face.size
+		for box in [margin, col, col.get_node(^"Header"), col.get_node(^"Header/Info")]:
+			(box as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
+		for n in _all_under(face):
+			if n is Control:
+				(n as Control).update_minimum_size()
 	var bubble_rect := bubble.get_global_rect()
-	var name_rect := name_label.get_global_rect()
-	_check("the bubble covers their name (bubble %s, name %s)"
-		% [bubble_rect, name_rect], name_rect.size.x > 100.0 and bubble_rect.encloses(name_rect))
+	for row in ["Header/Info/NameLabel", "Header/Info/PatienceBar",
+			"Header/Info/PatienceLabel", "DemandLabel"]:
+		var r := (col.get_node(NodePath(row)) as Control).get_global_rect()
+		_check("the bubble never covers their %s (bubble %s, %s)"
+			% [row.get_file(), bubble_rect, r], r.size.x > 50.0 and not bubble_rect.intersects(r))
+	var grid := (col.get_node(^"InterestGrid") as Control).get_global_rect()
+	_check("it covers their interest grid instead (bubble %s, grid %s)"
+		% [bubble_rect, grid], grid.size.y > 100.0 and bubble_rect.encloses(grid))
 	const TAB_HEIGHT := 52
 	const MARGIN_TOP := TAB_HEIGHT + 28
 	const HEADER_HEIGHT := 160
+	const DEMAND_HEIGHT := 56
 	const COLUMN_SEPARATION := 10
-	_check("it starts below the folder's tab, so you can still see who said it (%.1f)"
-		% bubble.position.y, is_equal_approx(bubble.position.y, TAB_HEIGHT))
-	var expected_bottom := float(MARGIN_TOP + HEADER_HEIGHT + COLUMN_SEPARATION)
-	_check("and stops right where the next row starts (%.1f of %.1f px)"
-		% [bubble.position.y + bubble.size.y, expected_bottom],
-		is_equal_approx(bubble.position.y + bubble.size.y, expected_bottom))
+	var grid_top := float(MARGIN_TOP + HEADER_HEIGHT + COLUMN_SEPARATION + DEMAND_HEIGHT
+		+ COLUMN_SEPARATION)
+	_check("and it starts just above where the grid does, below everything else (%.1f vs %.1f)"
+		% [bubble.position.y, grid_top],
+		bubble.position.y < grid_top and bubble.position.y > grid_top - 10.0)
 
-	# "have it be active for 2 ticks instead" - timed against the model's own
-	# clock, not a wall-clock Timer. The literal 2 here, not
-	# SpeechBubble.HIDE_AFTER_TICKS - testing the constant against itself
-	# would pass no matter what value it held.
-	_check("HIDE_AFTER_TICKS is the 2 that was actually asked for",
-		SpeechBubble.HIDE_AFTER_TICKS == 2)
-	bubble.update_visibility(tick_shown)
-	_check("still showing on the tick it was said", bubble.visible)
-	bubble.update_visibility(tick_shown + 1)
-	_check("and the tick right after", bubble.visible)
-	bubble.update_visibility(tick_shown + 2)
-	_check("but gone 2 ticks later", not bubble.visible)
+	# "Goes away in 1 tick ... if it's the seat you're at, or after 3 ticks if
+	# it's one of the side seats" - the literal numbers asked for, not the
+	# constants: testing a constant against itself passes whatever it holds.
+	_check("a bubble at your own desk lasts the 1 tick asked for",
+		SpeechBubble.AT_YOUR_DESK_TICKS == 1)
+	_check("and at a side desk, the 3 asked for", SpeechBubble.SIDE_SEAT_TICKS == 3)
+	# Through the card's own setup(), which is what every render runs - the
+	# `seated` flag is what picks between the two.
+	var who = _controller._shift.chairs[0]
+	card.setup(who, true, tick_shown)
+	_check("at your desk it is showing on the tick it was said", bubble.visible)
+	card.setup(who, true, tick_shown + 1)
+	_check("and gone one tick later", not bubble.visible)
+	bubble.say("said at a side desk", tick_shown)
+	card.setup(who, false, tick_shown + 2)
+	_check("at a side desk it is still up two ticks later", bubble.visible)
+	card.setup(who, false, tick_shown + 3)
+	_check("and gone after three", not bubble.visible)
+
+	# "...or if you hover the customer card if it's the seat you're at". A
+	# look at the customer you are sitting with clears it; a look at one at
+	# another desk turns their folder over but leaves what they said up.
+	var at := _at()
+	var here: CustomerCard3D = _controller._customer_cards[at]
+	here.say("\"heard it\"", _controller._shift.tick)
+	_controller._on_customer_hover(at)
+	_check("hovering the customer you are with clears what they said",
+		not here.is_speaking())
+	_controller._on_customer_unhover(at)
+	var other := (at + 1) % 3
+	var there: CustomerCard3D = _controller._customer_cards[other]
+	there.say("\"from over here\"", _controller._shift.tick)
+	_controller._on_customer_hover(other)
+	_check("hovering one at another desk does not - it runs its three ticks",
+		there.is_speaking())
+	_controller._on_customer_unhover(other)
+	there.hush()
+	_settle()
 
 	# setup() itself has to clear a stale bubble the instant the customer
 	# under it changes - whoever signs or walks must not leave their last

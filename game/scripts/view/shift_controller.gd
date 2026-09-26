@@ -675,6 +675,12 @@ func _on_customer_hover(chair: int) -> void:
 	# at them - see _hover_held.
 	if _dragging != null:
 		_hover_held = chair
+	# A real look at the customer you are sitting with means you have heard
+	# what they just said: it gets out of the way of their grid. The ones at
+	# the other desks keep theirs up for its full time (SpeechBubble).
+	elif _hover_held != chair and _shift != null and _shift.at != null \
+			and int(_shift.at) == chair:
+		_customer_cards[chair].hush()
 	_render_hover_flip()
 
 func _on_customer_unhover(chair: int) -> void:
