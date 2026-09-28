@@ -1,13 +1,11 @@
-[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+[gd_resource type="Resource" script_class="ShiftProfile" format=3 uid="uid://btlybt0nusv2t"]
 
-[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
+[ext_resource type="Script" uid="uid://2y41jl76kit4" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
 
 [resource]
 script = ExtResource("1_prf")
 id = &"midday"
 display_name = "Midday Shift"
 blurb = "Busy. Everyone's on a shorter fuse."
-floor_size_override = 0
 patience_scale = 0.75
-unlock_full_archetype_pool = false
-cards_for_sale = 1
+cards_for_sale = 3

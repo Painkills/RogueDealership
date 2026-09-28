@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="ShiftProfilePool" format=3]
+[gd_resource type="Resource" script_class="ShiftProfilePool" format=3 uid="uid://bfmwq0c3xc28n"]
 
-[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
+[ext_resource type="Script" uid="uid://2y41jl76kit4" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
 [ext_resource type="Resource" path="res://data/shift_profiles/morning.tres" id="2_morn"]
-[ext_resource type="Resource" path="res://data/shift_profiles/midday.tres" id="3_mid"]
-[ext_resource type="Resource" path="res://data/shift_profiles/night.tres" id="4_night"]
-[ext_resource type="Script" path="res://scripts/model/data/shift_profile_pool.gd" id="5_pool"]
+[ext_resource type="Resource" uid="uid://btlybt0nusv2t" path="res://data/shift_profiles/midday.tres" id="3_mid"]
+[ext_resource type="Resource" uid="uid://bv374liyonhj2" path="res://data/shift_profiles/night.tres" id="4_night"]
+[ext_resource type="Script" uid="uid://cs1q4tn5ujuwx" path="res://scripts/model/data/shift_profile_pool.gd" id="5_pool"]
 
 [resource]
 script = ExtResource("5_pool")

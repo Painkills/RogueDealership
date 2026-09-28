@@ -1,14 +1,13 @@
-[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+[gd_resource type="Resource" script_class="ShiftProfile" format=3 uid="uid://bv374liyonhj2"]
 
-[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
+[ext_resource type="Script" uid="uid://2y41jl76kit4" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
 
 [resource]
 script = ExtResource("1_prf")
 id = &"night"
 display_name = "Night Shift"
 blurb = "Quiet floor. The ones who come in this late are trouble."
-floor_size_override = 0
-patience_scale = 1.0
 walk_up_scale = 1.8
 unlock_full_archetype_pool = true
+cards_for_sale = 2
 upgrades = 1

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3 uid="uid://cpgav1x0haei4"]
+
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_1vllj"]
+[ext_resource type="Script" uid="uid://c1sm1kdlc5c5h" path="res://scripts/model/effects/pull_cards.gd" id="2_01rn0"]
+[ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="3_i4t44"]
+
+[sub_resource type="Resource" id="Resource_jb4hs"]
+script = ExtResource("2_01rn0")
+kind = &"support"
+metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
+
+[sub_resource type="Resource" id="Resource_7mf7q"]
+script = ExtResource("2_01rn0")
+count = 4
+kind = &"support"
+metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
+
+[resource]
+script = ExtResource("3_i4t44")
+needs_offer = false
+id = &"rwrt"
+display_name = "Right Word, Right Time"
+text = "I know I have a word track for this..."
+rarity = 3
+effects = Array[ExtResource("1_1vllj")]([SubResource("Resource_jb4hs")])
+upgraded_effects = Array[ExtResource("1_1vllj")]([SubResource("Resource_7mf7q")])
+metadata/_custom_type_script = "uid://56yr8s6ek5x3"

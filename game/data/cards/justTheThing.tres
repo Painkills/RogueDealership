@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3 uid="uid://moitkvo1a7pb"]
+
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_dyd8x"]
+[ext_resource type="Script" uid="uid://c1sm1kdlc5c5h" path="res://scripts/model/effects/pull_cards.gd" id="2_jb4hs"]
+[ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="2_oyqsc"]
+
+[sub_resource type="Resource" id="Resource_jb4hs"]
+script = ExtResource("2_jb4hs")
+kind = &"product"
+metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
+
+[sub_resource type="Resource" id="Resource_7mf7q"]
+script = ExtResource("2_jb4hs")
+count = 4
+kind = &"product"
+metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
+
+[resource]
+script = ExtResource("2_oyqsc")
+needs_offer = false
+id = &"jtt"
+display_name = "Just the Thing"
+text = "\"Oh, I have just the product for you!\""
+rarity = 3
+effects = Array[ExtResource("1_dyd8x")]([SubResource("Resource_jb4hs")])
+upgraded_effects = Array[ExtResource("1_dyd8x")]([SubResource("Resource_7mf7q")])
+metadata/_custom_type_script = "uid://56yr8s6ek5x3"

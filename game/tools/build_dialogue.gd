@@ -30,37 +30,37 @@ const LINES := [
 	[[&"appeal"], "\"Huh. I had not thought about it that way.\"", [], [], []],
 	[[&"appeal"], "\"That is not nothing, I will give you that.\"", [], [], []],
 	[[&"appeal"], "\"Alright. I am listening.\"", [], [], []],
-	[[&"appeal"], "\"My brother-in-law said the same about these.\"", [], [], []],
+	[[&"appeal"], "\"Oh, I've heard of that.\"", [], [], []],
 
 	[[&"appeal"], "\"You are not really selling me here.\"", [], [], [&"COLD"]],
 	[[&"appeal"], "\"It still feels like a lot for what it is.\"", [], [], [&"COLD"]],
-	[[&"appeal"], "\"You are very close to a yes, you know.\"", [], [], [&"ALMOST"]],
-	[[&"appeal"], "\"Say that last part one more time.\"", [], [], [&"ALMOST"]],
+	[[&"appeal"], "\"Okay, I can see how that would be helpful.\"", [], [], [&"ALMOST"]],
+	[[&"appeal"], "\"Oh, that's pretty good.\"", [], [], [&"ALMOST"]],
 
 	[[&"appeal"], "\"And is that in writing, or just you saying it?\"", [&"karen"], [], []],
 	[[&"appeal"], "\"Fine. What is the other guy charging for that?\"", [&"hawk"], [], []],
 	[[&"appeal"], "\"Do you have the actual spec sheet on that?\"", [&"tech"], [], []],
 	[[&"appeal"], "\"Sure, sure. How much longer is this going to be?\"", [&"kicker"], [], []],
-	[[&"appeal"], "\"Let me run that past her before I say anything.\"", [&"family"], [], []],
+	[[&"appeal"], "\"Let me run that past my partner before I say anything.\"", [&"family"], [], []],
 
 	[[&"appeal"], "\"So if I total it, that is the part that covers me?\"", [], [&"gap"], []],
 	[[&"appeal"], "\"And this is on top of the factory warranty?\"", [], [&"vsc"], []],
 
-	[[&"patience"], "\"Ha. The 401 was a parking lot this morning too.\"", [], [], []],
-	[[&"patience"], "\"No rush on my end. I took the afternoon.\"", [], [], []],
-	[[&"patience"], "\"You are alright, you know that?\"", [], [], []],
-	[[&"patience"], "\"My daughter has a game at six, but we are fine.\"", [], [], []],
-	[[&"patience"], "\"That is nice. The meter is still running though.\"", [&"kicker"], [], []],
+	[[&"patience"], "\"Hah! The 401 was a parking lot this morning.\"", [], [], []],
+	[[&"patience"], "\"No rush on my end. I took the afternoon off.\"", [], [], []],
+	[[&"patience"], "\"Oh, no, I got time, no worries.\"", [], [], []],
+	[[&"patience"], "\"My daughter has a game later, but we should be fine.\"", [], [], []],
+	[[&"patience"], "\"That is nice, but I really do need to go soon.\"", [&"kicker"], [], []],
 
 	[[&"concession"], "\"Now you are speaking my language.\"", [], [], []],
 	[[&"concession"], "\"See, that is what I was waiting for.\"", [], [], []],
-	[[&"concession"], "\"Better. Still not what the place on Dundas quoted.\"", [&"hawk"], [], []],
+	[[&"concession"], "\"Better, but it's still not what the place next door quoted.\"", [&"hawk"], [], []],
 
 	[[&"pressure"], "\"Alright, alright. You do not have to lean on me.\"", [], [], []],
 	[[&"pressure"], "\"Okay. Fine. Just stop.\"", [], [], []],
 	[[&"pressure"], "\"Do not take that tone with me.\"", [&"karen"], [], []],
 
-	[[&"padding"], "\"Sure. Whatever the paperwork says.\"", [], [], []],
+	[[&"padding"], "\"Sure. That sounds reasonable.\"", [], [], []],
 	[[&"padding"], "\"I will take your word on the numbers.\"", [], [], []],
 
 	# Migrated verbatim from CustomerAction.dialogue / Demand.dialogue -
@@ -75,7 +75,7 @@ const LINES := [
 	# Demand.dialogue's own text was never actually spoken anywhere before
 	# this migration (dead data - _settle_demand() hardcoded "" always), so
 	# it is not "the" line for this tag - it becomes a second, free variant.
-	[[&"demand_better_quote"], "\"The place on Dundas does this for less.\"", [], [], []],
+	[[&"demand_better_quote"], "\"The place down the street does this for less.\"", [], [], []],
 
 	# New: demand settlement never spoke at all before this migration
 	# (_settle_demand() hardcoded dialogue to "" unconditionally). Generic
@@ -86,7 +86,7 @@ const LINES := [
 	[[&"relief"], "\"Now we are getting somewhere.\"", [], [], []],
 	[[&"ignored"], "\"Fine. Forget it.\"", [], [], []],
 	[[&"ignored"], "\"Whatever you say.\"", [], [], []],
-	[[&"ignored"], "\"I will remember that.\"", [], [], []],
+	[[&"ignored"], "\"That's not nice.\"", [], [], []],
 
 	# Not asked for by any card, action or demand - Shift says these itself.
 	# accepted: the moment an offer clears their Line and they take it. Where a
@@ -99,7 +99,7 @@ const LINES := [
 	[[&"accepted"], "\"Fine. But I want all of that in writing.\"", [&"karen"], [], []],
 	[[&"accepted"], "\"At that number? Alright, I can live with it.\"", [&"hawk"], [], []],
 	[[&"accepted"], "\"Nice. I will read the fine print tonight.\"", [&"tech"], [], []],
-	[[&"accepted"], "\"She is going to be glad we got that one.\"", [&"family"], [], []],
+	[[&"accepted"], "\"My partner is going to be glad we got that one.\"", [&"family"], [], []],
 	[[&"accepted"], "\"Sure, sure. Throw it on. Are we done?\"", [&"kicker"], [], []],
 	[[&"accepted"], "\"Sounds good to me!\"", [&"easygoing"], [], []],
 	[[&"accepted"], "\"Yep. Whatever you think is best.\"", [&"laydown"], [], []],
@@ -112,6 +112,8 @@ const LINES := [
 	[[&"accepted"], "\"Somebody to call at two in the morning? I will take it.\"", [], [&"concierge"], []],
 	[[&"accepted"], "\"A little breathing room on the payments. Good.\"", [], [&"flex"], []],
 	[[&"accepted"], "\"Towing and a tune-up? Now you are talking.\"", [], [&"perf"], []],
+	[[&"accepted"], "\"I feel so much more confident about this purchase.\"", [], [&"wap"], []],
+	[[&"accepted"], "\"Now I'm confident I'll be covered if it's a total loss.\"", [], [&"tlp"], []],
 
 	# impatient: the moment their patience drops to ShiftConfig.impatient_at or
 	# under - once per dip, not once per tick spent down there.
