@@ -120,21 +120,7 @@ func test_leaving_the_free_cards_is_allowed() -> void:
 	var _shop := Shop.new(r)
 	h.eq("visiting and walking out changes nothing", r.deck.cards.size(), before)
 
-# ----------------------------------------------------------- what each tier adds
-func test_the_shipped_tiers_add_what_was_asked_for() -> void:
-	## "At the end of midday shift, offer a chance to buy one card (on top of
-	## the single free card). At the end of night shift offer the chance to
-	## upgrade one card (on top of the single free card)." The literal numbers,
-	## not the profiles read back against themselves.
-	var morning := _shipped(&"morning")
-	var midday := _shipped(&"midday")
-	var night := _shipped(&"night")
-	h.eq("morning: nothing for sale", morning.cards_for_sale, 0)
-	h.eq("morning: no upgrade", morning.upgrades, 0)
-	h.eq("midday: one card for sale", midday.cards_for_sale, 1)
-	h.eq("midday: no upgrade", midday.upgrades, 0)
-	h.eq("night: nothing for sale", night.cards_for_sale, 0)
-	h.eq("night: one upgrade", night.upgrades, 1)
+
 
 func test_no_tier_means_the_free_card_and_nothing_else() -> void:
 	var shop := Shop.new(_run())

@@ -119,4 +119,3 @@ func test_pull_cards_describes_its_own_count_and_kind() -> void:
 	var d := e.describe()
 	h.check("names the count (%s)" % d, d.contains("4"))
 	h.check("names the kind (%s)" % d, d.contains("support"))
-
