@@ -22,7 +22,6 @@ display_name = "Friendly Smile"
 text = "Who could possibly resist?"
 ticks = 0
 price = 800
-rarity = 2
 effects = Array[ExtResource("1_y7x5g")]([SubResource("Resource_lvmr4")])
 upgraded_effects = Array[ExtResource("1_y7x5g")]([SubResource("Resource_7j08w")])
 metadata/_custom_type_script = "uid://56yr8s6ek5x3"
