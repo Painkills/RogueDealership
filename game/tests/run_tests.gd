@@ -50,7 +50,6 @@ func _test_scripts() -> Array[String]:
 	return out
 
 func _walk(dir_path: String, out: Array[String]) -> void:
-	return
 	var d := DirAccess.open(dir_path)
 	if d == null:
 		return

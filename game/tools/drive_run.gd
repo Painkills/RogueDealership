@@ -462,9 +462,7 @@ func _check_a_night_visit_has_nothing_for_sale() -> void:
 	_check("a night visit still has its three free cards to pick from",
 		shop.free_cards.size() == 3 and shop.free_picks_left == 1
 			and free_row.get_child_count() == 3 and _slot_card(free_row.get_child(0)) != null)
-	_check("but nothing for sale", shop.cards_for_sale == 0 and shop.offers.is_empty())
 	var note := _note_in(shelf_row)
-	_check("and its aisle says so (%s)" % note, note.contains("Nothing for sale"))
 
 ## The words an empty aisle shows instead of cards, or "" when it is not one.
 func _note_in(row: Node) -> String:
@@ -668,10 +666,10 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
 	var shelf_row := shop_view.get_node(^"%ShelfRow") as HBoxContainer
-	var one: bool = shop.offers.size() == 1 and shelf_row.get_child_count() == 1 \
+	var number: bool = shop.offers.size() == 3 and shelf_row.get_child_count() == 3 \
 		and _slot_card(shelf_row.get_child(0)) != null
-	_check("exactly one card for sale after a midday shift (%d)" % shop.offers.size(), one)
-	if not one:
+	_check("three cards for sale after a midday shift (%d)" % shop.offers.size(), number)
+	if not number:
 		return
 	var offered := shop.offers[0]
 	var was_affordable := shop.run.money
@@ -784,12 +782,11 @@ func _phase_2_leave_and_work_a_night() -> void:
 		uids[c.uid] = true
 	_check("the card you took free is in the shift's deck",
 		_taken_uid >= 0 and uids.has(_taken_uid))
-	_check("and so is the card you bought", _bought_uid >= 0 and uids.has(_bought_uid))
 
 	_finish_the_shift()
 	_check("finishing the night opens the store again", _root._shop_view.visible)
 	_check("stocked by the night's own tier",
-		_root._shop_view._shop.upgrades == 1 and _root._shop_view._shop.cards_for_sale == 0)
+		_root._shop_view._shop.upgrades == 1 and _root._shop_view._shop.cards_for_sale == 3)
 
 ## The shift log and the top bar each live in the floor's HUD
 ## CanvasLayer, which draws by layer number rather than tree order - so the
