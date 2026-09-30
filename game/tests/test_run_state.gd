@@ -175,14 +175,18 @@ func test_start_shift_threads_the_picked_profiles_fields_through() -> void:
 	h.check("unlock_full_archetype_pool reached the shift",
 		s.unlock_full_archetype_pool)
 
-func test_a_shifts_quota_scale_sets_its_quota() -> void:
-	## "Make the quota on morning a little higher" - by a scale on the run's own
-	## climbing quota, so it climbs with the week like everyone else's.
+func test_a_shifts_quota_scale_and_offset_set_its_quota() -> void:
+	## "Make the quota on morning a little higher" - "give morning the flat
+	## quota increase": a scale on the run's own climbing quota, then a flat
+	## amount on top.
 	var r := _run()
 	var p := ShiftProfile.new()
 	p.quota_scale = 1.2
 	h.eq("the run's quota, scaled by the shift's own",
 		r.start_shift(p).quota, roundi(r.quota_for(r.shift_number) * 1.2))
+	p.quota_offset = 250
+	h.eq("and the flat offset on top",
+		r.start_shift(p).quota, roundi(r.quota_for(r.shift_number) * 1.2) + 250)
 	p.quota = 1234
 	h.eq("a premade shift's own quota wins over the scale", r.start_shift(p).quota, 1234)
 
