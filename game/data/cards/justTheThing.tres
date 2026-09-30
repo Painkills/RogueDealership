@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
 
 [resource]
 script = ExtResource("2_oyqsc")
+player_dialogue_tags = Array[StringName]([&"player_justthething"])
 needs_offer = false
 id = &"jtt"
 display_name = "Just the Thing"

@@ -23,6 +23,7 @@ inner = SubResource("Resource_o4eqb")
 
 [resource]
 script = ExtResource("4_p12a6")
+player_dialogue_tags = Array[StringName]([&"player_bundle"])
 id = &"bundle"
 display_name = "Bundle It In"
 text = "\"Since we're already doing the other two...\" "

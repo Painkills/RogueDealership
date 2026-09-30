@@ -17,6 +17,7 @@ metadata/_custom_type_script = "uid://bu5uqojkpf1vo"
 
 [resource]
 script = ExtResource("2_6tahm")
+player_dialogue_tags = Array[StringName]([&"player_pitch"])
 interest = ExtResource("3_08iy6")
 margin = 1200
 upgraded_margin = 1500

@@ -16,6 +16,7 @@ metadata/_custom_type_script = "uid://bswvlmlj77d75"
 
 [resource]
 script = ExtResource("2_0mv5s")
+player_dialogue_tags = Array[StringName]([&"player_smile"])
 needs_offer = false
 id = &"smile"
 display_name = "Friendly Smile"

@@ -117,6 +117,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_waiting_list_shows_who_is_next()
 	_check_the_windows_show_behind_the_customers()
 	_check_the_tablet_keeps_the_shifts_time()
+	_check_what_you_say_comes_up_from_the_bottom()
 	_check_drop_zones_use_the_overridden_shape()
 	_check_the_clock_warns_when_time_is_short()
 	_check_table("after approaching chair A")
@@ -2045,6 +2046,111 @@ func _check_the_tablet_keeps_the_shifts_time() -> void:
 			and tablet.clock_text() != want)
 	s.tick = was
 	_controller._render()
+
+## "Play dialogue from the player when cards are played... a speech bubble whose
+## speech triangle comes up from screen bottom, between hand and draw pile, and
+## the speech bubble itself is in that open space between iPad, leftmost
+## customer and incoming customer queue." Measured against the real panels and
+## cards on screen, never a remembered pixel, and timed off SpeechBubble's own
+## constant.
+func _check_what_you_say_comes_up_from_the_bottom() -> void:
+	var s: Shift = _controller._shift
+	var bubble := _controller.get_node(^"%PlayerBubble") as SpeechBubble
+	var panel := bubble.get_node(^"Panel") as PanelContainer
+	var label := panel.get_node(^"Label") as Label
+	_check("your bubble is hidden until you say something", not bubble.visible)
+
+	s.player_lines.append("\"So, folks, here's how it works...\"")
+	_controller._render()
+	_check("a card you play puts your line up (%s)" % label.text,
+		bubble.visible and label.text == s.player_lines[-1])
+	_check("and not in the log - it is not for the log, theirs is not either",
+		not _controller._event_log.get_parsed_text().contains(s.player_lines[-1]))
+
+	# The bubble's own rect: the panel inside it fills it once laid out, and the
+	# fit check below is what says every line leaves it that size.
+	var room := bubble.get_global_rect()
+	var tablet := _rect_of(_controller._tablets[_at()], TABLET)
+	var waiting := _waiting_rect()
+	var leftmost := Rect2()
+	for card in _controller._customer_cards:
+		var r := _rect_of(card, CUSTOMER)
+		if leftmost.size == Vector2.ZERO or r.position.x < leftmost.position.x:
+			leftmost = r
+	var draw := _rect_of(_controller._draw_zone, CARD)
+	var hand := Rect2()
+	for card in _controller._hand_zone.cards:
+		var r := _rect_of(card, CARD)
+		hand = r if hand.size == Vector2.ZERO else hand.merge(r)
+	_on_screen("your bubble", room)
+	_check("left of the tablet (%s vs %s)" % [room, tablet], room.end.x <= tablet.position.x)
+	_check("under the waiting list at its fullest (%s vs %s)" % [room, waiting],
+		room.position.y >= waiting.end.y)
+	_check("under the customer furthest left (%s vs %s)" % [room, leftmost],
+		room.position.y >= leftmost.end.y)
+	_check("over the draw pile (%s vs %s)" % [room, draw], room.end.y <= draw.position.y)
+	_check("clear of your hand (%s vs %s)" % [room, hand], not room.intersects(hand))
+
+	# The tail's point is past the bottom edge, between the pile and the hand.
+	var tail := bubble.get_node(^"Tail") as Polygon2D
+	var tip := Vector2(0.0, -INF)
+	for p in tail.polygon:
+		var g := tail.get_global_transform() * p
+		if g.y > tip.y:
+			tip = g
+	_check("its tail comes up from the bottom of the screen (%s)" % tip,
+		tip.y >= _screen().y)
+	_check("between the draw pile and your hand (%d; the pile ends at %d, the hand starts at %d)"
+		% [int(tip.x), int(draw.end.x), int(hand.position.x)],
+		tip.x > draw.end.x and tip.x < hand.position.x)
+
+	# Every line a card can make you say fits, whatever the library says today.
+	var pool: DialoguePool = load("res://data/dialogue/dialogue_pool.tres")
+	var yours: Array[StringName] = []
+	for card in s.card_pool.cards:
+		for t in card.player_dialogue_tags:
+			if not yours.has(t):
+				yours.append(t)
+	var showing := label.text
+	var worst := ""
+	var tallest := 0.0
+	var lines := 0
+	for l in pool.lines:
+		if not l.carries(yours):
+			continue
+		lines += 1
+		# Laid out now rather than next frame, then measured at the width it
+		# really gets - a wrapping label only knows its height once it knows that.
+		label.text = l.text
+		panel.notification(Container.NOTIFICATION_SORT_CHILDREN)
+		label.update_minimum_size()
+		panel.update_minimum_size()
+		var needs := panel.get_combined_minimum_size().y
+		if needs > tallest:
+			tallest = needs
+			worst = l.text
+	label.text = showing
+	_check("there are lines of yours to fit (%d)" % lines, lines > 0)
+	_check("and the longest of them fits (%s needs %d of %d px)"
+		% [worst, int(tallest), int(bubble.size.y)], tallest <= bubble.size.y)
+
+	# "The speech bubble should go away after a tick."
+	var shown := s.tick
+	s.tick = shown + SpeechBubble.PLAYER_TICKS
+	_controller._render()
+	_check("it goes %d tick(s) after you said it" % SpeechBubble.PLAYER_TICKS,
+		not bubble.visible)
+	s.tick = shown
+	s.player_lines.append("\"Mm-hm. Go on.\"")
+	_controller._render()
+	_check("the next thing you say puts it back up", bubble.visible)
+	_press(KEY_F)
+	_settle()
+	_check("and standing up takes it down (you are on the floor: %s)" % str(s.at == null),
+		s.at == null and not bubble.visible)
+	_press(KEY_F)
+	_settle()
+	_check("back at the desk, it stays down", s.at != null and not bubble.visible)
 
 ## VENDORED.md's own patch: CardCollection3D's dropzone_collision_shape /
 ## dropzone_z_offset setters used to silently fail to persist through

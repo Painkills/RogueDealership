@@ -25,6 +25,7 @@ metadata/_custom_type_script = "uid://bswvlmlj77d75"
 
 [resource]
 script = ExtResource("4_g14ik")
+player_dialogue_tags = Array[StringName]([&"player_hardclose"])
 id = &"hardclose"
 display_name = "Hard Close"
 text = "You stop being pleasant about it. You push them until they take it."

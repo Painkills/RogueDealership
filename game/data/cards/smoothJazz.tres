@@ -16,6 +16,7 @@ metadata/_custom_type_script = "uid://c56u8ssbjh6yb"
 
 [resource]
 script = ExtResource("2_djcht")
+player_dialogue_tags = Array[StringName]([&"player_jazz"])
 needs_offer = false
 id = &"jazz"
 display_name = "Smooth Jazz"

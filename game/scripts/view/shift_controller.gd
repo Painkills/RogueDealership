@@ -80,6 +80,9 @@ signal deck_viewed
 @onready var _waiting_rows: Control = %WaitingRows
 @onready var _waiting_row: Control = %WaitingRow
 @onready var _next_arrival: Label = %NextArrival
+## What YOU say as you play a card - see build_shift_scene.gd's
+## PLAYER_BUBBLE_RECT, and _drain_log().
+@onready var _player_bubble: SpeechBubble = %PlayerBubble
 @onready var _drop_drag_hint: Node3D = %DropDragHint
 @onready var _report_overlay = %ReportOverlay
 @onready var _pull_picker: Control = %PullPicker
@@ -173,6 +176,7 @@ var _touch_check: Callable = DisplayServer.is_touchscreen_available
 var _pointer: Callable = Callable()
 var _events_seen: int = 0
 var _actions_seen: int = 0
+var _player_lines_seen: int = 0
 ## True once the tick counter has already pulsed for THIS stretch of low time -
 ## reset the moment time is no longer short, so a shift that somehow recovers
 ## (it never does today, but nothing here should assume that) pulses again.
@@ -396,6 +400,8 @@ func setup(shift: Shift, standing_before: int,
 	_windows.show_time(time_of_day)
 	_events_seen = 0
 	_actions_seen = 0
+	_player_lines_seen = 0
+	_player_bubble.hush()
 	_event_log.clear()
 	_report_overlay.visible = false
 	# The button that ends this shift must not promise "Continue" on the shift
@@ -938,6 +944,11 @@ func _render() -> void:
 	(_draw_tag.get_node(^"Lines/Label") as Label).text = "DRAW  %d" % _shift.draw.size()
 	(_discard_tag.get_node(^"Lines/Label") as Label).text = \
 		"DISCARD  %d" % _shift.discard.size()
+	# What you said lasts a tick, and only while you are at a desk: stood up,
+	# your hand goes down and the floor's folders fill the space it talks into.
+	_player_bubble.update_visibility(_shift.tick, SpeechBubble.PLAYER_TICKS)
+	if not seated or _hud_dimmed:
+		_player_bubble.hush()
 	_reconcile()
 	_drain_log()
 	_place_tags()
@@ -1094,6 +1105,11 @@ func _drain_log() -> void:
 			% [color, entry["customer"], entry["key"], entry["name"],
 				", ".join(entry["descriptions"])])
 	_actions_seen = _shift.action_log.size()
+	# And what you said yourself, playing a card: the newest of it, in your own
+	# bubble. Like theirs, it is not for the log.
+	if _shift.player_lines.size() > _player_lines_seen:
+		_player_bubble.say(_shift.player_lines[-1], _shift.tick)
+	_player_lines_seen = _shift.player_lines.size()
 
 ## "All customer actions need to show on the screen, not just in the log" - a
 ## speech bubble on the card that said it, which is now the only place it

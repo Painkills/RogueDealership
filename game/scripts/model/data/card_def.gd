@@ -30,6 +30,12 @@ enum Rarity { BASIC, ECONOMY, VALUE, PREFERRED }
 ## separate sub-resource instances, and tagging both in sync is a drift bug
 ## waiting to happen - one place per card avoids it entirely.
 @export var dialogue_tags: Array[StringName] = []
+## Which DialoguePool tag(s) YOUR line is drawn from as you play this card -
+## small talk for Small Talk, the pitch for a product. Empty means you play it
+## without a word. The same library and the same narrowings as a customer's
+## line (Shift._speak()), so a line can be written for one archetype, one
+## product on the table or one band, and a generic one keeps the tag talking.
+@export var player_dialogue_tags: Array[StringName] = []
 ## Assembled in the Inspector, same as a support card's always were - moved
 ## up from SupportCardDef so a product can carry them too. Empty (the
 ## default, and every shipped product today) means pure appeal-and-margin

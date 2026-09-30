@@ -25,6 +25,7 @@ metadata/_custom_type_script = "uid://b41b5fbmrgc8c"
 
 [resource]
 script = ExtResource("4_67703")
+player_dialogue_tags = Array[StringName]([&"player_fearmonger"])
 id = &"fearmonger"
 display_name = "Fearmonger"
 text = "You describe, vividly, what happens to people who skip it. It works. It also makes you scary."

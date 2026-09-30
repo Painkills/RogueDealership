@@ -23,6 +23,7 @@ amount = -150
 
 [resource]
 script = ExtResource("4_srclt")
+player_dialogue_tags = Array[StringName]([&"player_discount"])
 id = &"discount"
 display_name = "Offer a Discount"
 text = "\"... but that's the best I can do!\""

@@ -501,3 +501,123 @@ func test_with_no_pool_nobody_says_anything_on_their_own() -> void:
 	s.offer()
 	s._settle_patience()
 	h.eq("nothing logged as chatter", _chatter(s).size(), 0)
+
+# ------------------------------------------------------------ what YOU say
+# CardDef.player_dialogue_tags. Made-up lines on copies of whatever cards the
+# pool holds, so no retune, rename or new line of dialogue can break these.
+
+func test_every_card_asks_only_for_player_tags_that_exist() -> void:
+	var pool := _pool()
+	var cards: CardPool = load("res://data/card_pool.tres")
+	for c in cards.cards:
+		for t in c.player_dialogue_tags:
+			h.check("%s's own line asks only for a declared tag (%s)" % [c.id, t],
+				pool.known_tags.has(t))
+
+## A library of made-up lines, a row each: [text, tags, archetype_ids,
+## product_ids], the last two optional.
+func _lines(rows: Array) -> DialoguePool:
+	var pool := DialoguePool.new()
+	for r in rows:
+		var l := DialogueLine.new()
+		l.text = r[0]
+		l.tags.assign(r[1])
+		l.archetype_ids.assign(r[2] if r.size() > 2 else [])
+		l.product_ids.assign(r[3] if r.size() > 3 else [])
+		pool.lines.append(l)
+	return pool
+
+func _voiced_shift(pool: DialoguePool, seed_value: int = 1) -> Shift:
+	return Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), seed_value, [],
+		null, 0, 1, 0, 0, pool)
+
+## A copy of the first card in the pool that `keep` passes, saying `tags`.
+func _copy_of(s: Shift, keep: Callable, tags: Array[StringName]) -> CardDef:
+	for c in s.card_pool.cards:
+		if keep.call(c):
+			var copy := c.duplicate() as CardDef
+			copy.player_dialogue_tags = tags
+			return copy
+	return null
+
+## One that can go down on an empty table, so nothing has to be placed first.
+func _a_support_card(s: Shift, tags: Array[StringName]) -> CardDef:
+	return _copy_of(s, func(c): return c is SupportCardDef and not c.needs_offer, tags)
+
+func _a_product(s: Shift, tags: Array[StringName]) -> CardDef:
+	return _copy_of(s, func(c): return c is ProductCardDef, tags)
+
+## Plays `card` on the customer in chair 0, from a hand of just that card.
+func _play(s: Shift, card: CardDef) -> Result:
+	_at(s)
+	s.hand.clear()
+	s.hand.append(CardInstance.new(card, 900))
+	return s.play_card(0)
+
+func test_playing_a_card_says_your_line() -> void:
+	var s := _voiced_shift(_lines([["\"mine\"", [&"t_mine"]]]))
+	var card := _a_support_card(s, [&"t_mine"])
+	h.check("the pool has a support card to play", card != null)
+	if card == null:
+		return
+	h.check("it went down", _play(s, card).ok)
+	h.eq("and you said your line", s.player_lines.size(), 1)
+	if s.player_lines.size() == 1:
+		h.eq("the one it asked for", s.player_lines[0], "\"mine\"")
+
+func test_a_card_with_nothing_to_say_is_played_in_silence() -> void:
+	var s := _voiced_shift(_lines([["\"mine\"", [&"t_mine"]]]))
+	h.check("it went down", _play(s, _a_support_card(s, [])).ok)
+	h.eq("without a word from you", s.player_lines.size(), 0)
+
+func test_a_product_going_down_is_pitched_by_name() -> void:
+	## A line naming the product you put down, beside one naming another: only
+	## the first is yours to say.
+	var s := _voiced_shift(null)
+	var product := _a_product(s, [&"t_pitch"])
+	s.dialogue = _lines([
+		["\"this one\"", [&"t_pitch"], [], [product.id]],
+		["\"some other one\"", [&"t_pitch"], [], [&"not_on_the_table"]]])
+	h.check("it went down", _play(s, product).ok)
+	h.eq("you pitched it", s.player_lines.size(), 1)
+	if s.player_lines.size() == 1:
+		h.eq("by name", s.player_lines[0], "\"this one\"")
+
+func test_your_line_can_be_written_for_who_you_are_talking_to() -> void:
+	var s := _voiced_shift(null)
+	var who: StringName = _at(s).archetype.id
+	s.dialogue = _lines([
+		["\"for them\"", [&"t_mine"], [who]],
+		["\"for somebody else\"", [&"t_mine"], [&"nobody_here"]]])
+	_play(s, _a_support_card(s, [&"t_mine"]))
+	h.eq("you said something", s.player_lines.size(), 1)
+	if s.player_lines.size() == 1:
+		h.eq("the line written for them", s.player_lines[0], "\"for them\"")
+
+func test_a_generic_line_keeps_you_talking_when_nothing_specific_fits() -> void:
+	var s := _voiced_shift(null)
+	s.dialogue = _lines([
+		["\"to anyone\"", [&"t_mine"]],
+		["\"for somebody else\"", [&"t_mine"], [&"nobody_here"]]])
+	_play(s, _a_support_card(s, [&"t_mine"]))
+	h.eq("you said something", s.player_lines.size(), 1)
+	if s.player_lines.size() == 1:
+		h.eq("the generic one", s.player_lines[0], "\"to anyone\"")
+
+func test_what_you_say_never_moves_the_games_own_dice() -> void:
+	## Two shifts dealt from one seed and one card played in each; the only
+	## difference is whether it makes you talk. Whatever the game rolls next -
+	## who walks in, what they want - has to be the same in both. Two lines to
+	## choose between: with one, picking it takes no roll at all.
+	var rows := [["\"mine\"", [&"t_mine"]], ["\"also mine\"", [&"t_mine"]]]
+	var talking := _voiced_shift(_lines(rows), 7)
+	var quiet := _voiced_shift(_lines(rows), 7)
+	_play(talking, _a_support_card(talking, [&"t_mine"]))
+	_play(quiet, _a_support_card(quiet, []))
+	h.eq("you talked in one", talking.player_lines.size(), 1)
+	h.eq("and not in the other", quiet.player_lines.size(), 0)
+	h.eq("and the game's dice are where they would have been",
+		talking.rng.state, quiet.rng.state)

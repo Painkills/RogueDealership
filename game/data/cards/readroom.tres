@@ -13,6 +13,7 @@ exact = true
 
 [resource]
 script = ExtResource("3_kqu7d")
+player_dialogue_tags = Array[StringName]([&"player_readroom"])
 needs_offer = false
 id = &"readroom"
 display_name = "Read the Room"

@@ -23,6 +23,7 @@ amount = 600
 
 [resource]
 script = ExtResource("4_jlfgo")
+player_dialogue_tags = Array[StringName]([&"player_pad"])
 id = &"pad"
 display_name = "Pad the Deal"
 text = "They won't even notice the difference."

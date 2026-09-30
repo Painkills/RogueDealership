@@ -25,6 +25,10 @@ const AT_YOUR_DESK_TICKS := 1
 ## all, so it stays long enough to be noticed - unless you look at them, which
 ## clears any bubble, at any desk.
 const SIDE_SEAT_TICKS := 3
+## What YOU say as you play a card - the HUD's PlayerBubble, this same script
+## laid out along the bottom of the screen (see build_shift_scene.gd). "The
+## speech bubble should go away after a tick."
+const PLAYER_TICKS := 1
 
 @onready var _panel: PanelContainer = $Panel
 @onready var _label: Label = $Panel/Label

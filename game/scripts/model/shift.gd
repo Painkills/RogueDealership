@@ -11,6 +11,10 @@ var card_pool: CardPool
 var archetypes: ArchetypePool
 var dialogue: DialoguePool          ## may be null - a shift with no lines is silent
 var rng := RandomNumberGenerator.new()
+## What YOU say is picked from its own stream, seeded from the shift's, so a
+## card that talks draws nothing from `rng`: adding lines, or giving a card
+## something to say, never changes who walks in next or what they want.
+var voice_rng := RandomNumberGenerator.new()
 
 var tick: int = 0
 var tick_budget: int
@@ -71,6 +75,10 @@ var pending_pull: PendingPull = null
 
 var events: Array[String] = []
 var action_log: Array[Dictionary] = []
+## Every line YOU have said this shift, in order - one per card you played
+## that had something to say (see _speak()). The view drains it the way it
+## drains events and puts the newest in your own bubble.
+var player_lines: Array[String] = []
 var stat: Dictionary = {}
 var lost_to_walks: int = 0
 var served: int = 0
@@ -117,6 +125,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	# while doing it.
 	dialogue = p_dialogue
 	rng.seed = p_seed
+	voice_rng.seed = hash(p_seed)
 	_forced = p_forced
 	shift_number = p_shift_number
 	patience_scale = p_patience_scale
@@ -712,6 +721,9 @@ func place(index: int) -> Result:
 	var iid: StringName = product.interest.id
 	var rank: int = int(c.ranks[iid])
 	c.offer = Offer.new(inst, c.appeal_for(iid), inst.margin())
+	# Your pitch as it goes down, before any effect of its own lands - the same
+	# moment _support() speaks at.
+	_speak(product, c, product.id, StringName(band_for(c.line - c.offer.appeal)))
 
 	# A product's own effects, if it was authored with any - the same loop
 	# _support() runs, so a product is no longer required to be pure
@@ -765,12 +777,29 @@ func _is_floor_wide(e: Effect) -> bool:
 	return e is ChangePatienceFloor or e is ChangeLineFloorWide
 
 
+## What you say as you play `card` on `c`: a line from the card's
+## player_dialogue_tags, narrowed the way a customer's is - by who you are
+## talking to, the product on the table and its band - onto player_lines.
+## Drawn from voice_rng, never rng (see voice_rng).
+func _speak(card: CardDef, c: Customer, product_id: StringName, band: StringName) -> void:
+	if dialogue == null or card.player_dialogue_tags.is_empty():
+		return
+	var said := dialogue.pick(voice_rng, card.player_dialogue_tags, c.archetype.id,
+		product_id, band)
+	if said != "":
+		player_lines.append(said)
+
+
 func _support(c: Customer, index: int) -> Result:
 	var inst: CardInstance = hand[index]
 	var def := inst.card as SupportCardDef
 	if def.needs_offer and c.offer == null:
 		return Result.new(false, "%s needs something on the table."
 			% def.display_name)
+	# Yours is read off the table as you reach for the card, before its effects
+	# land; their reply below reads it after.
+	_speak(def, c, c.offer.product.id if c.offer else &"",
+		StringName(band_for(c.line - c.offer.appeal)) if c.offer else &"")
 
 	var ctx := _context(c)
 	var effects: Array[Effect] = def.upgraded_effects \

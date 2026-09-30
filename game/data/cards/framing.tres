@@ -14,6 +14,7 @@ amount = 5
 
 [resource]
 script = ExtResource("4_u77cc")
+player_dialogue_tags = Array[StringName]([&"player_coffee"])
 id = &"framing"
 display_name = "Coffee Framing"
 text = "'That's just 3 cups of coffee a day!' Paying in coffees seems to make things easier. "

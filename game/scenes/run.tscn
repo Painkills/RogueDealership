@@ -31,7 +31,7 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=699112290]
+[node name="Run" type="Node" unique_id=1869115642]
 script = ExtResource("1_pgpyo")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=465005308 instance=ExtResource("2_2s4kx")]
@@ -42,7 +42,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("3_47ec3")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=1340243854 instance=ExtResource("4_lc2vt")]
+[node name="ShiftView" type="Node3D" parent="." unique_id=1673072781 instance=ExtResource("4_lc2vt")]
 script = ExtResource("5_53ha4")
 
 [node name="ShopView" type="PanelContainer" parent="." unique_id=699821650 instance=ExtResource("6_iuvi8")]
@@ -81,10 +81,10 @@ script = ExtResource("13_jt87d")
 layer = 50
 script = ExtResource("15_hvn1h")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1098944582]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1459515391]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1657784451]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1468525129]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -103,7 +103,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=671037933]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=1074754442]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1

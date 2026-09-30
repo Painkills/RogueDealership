@@ -422,8 +422,806 @@ text = "\"Just tell me where to sign, okay?\""
 tags = Array[StringName]([&"impatient"])
 archetype_ids = Array[StringName]([&"laydown"])
 
+[sub_resource type="Resource" id="Resource_rol5y"]
+script = ExtResource("1_rmhas")
+text = "\"Now, have you heard about this one?\""
+tags = Array[StringName]([&"player_pitch"])
+
+[sub_resource type="Resource" id="Resource_we22v"]
+script = ExtResource("1_rmhas")
+text = "\"Can I show you one more thing? It's quick.\""
+tags = Array[StringName]([&"player_pitch"])
+
+[sub_resource type="Resource" id="Resource_l06qr"]
+script = ExtResource("1_rmhas")
+text = "\"This one is really popular this month.\""
+tags = Array[StringName]([&"player_pitch"])
+
+[sub_resource type="Resource" id="Resource_avw6p"]
+script = ExtResource("1_rmhas")
+text = "\"I'd be doing you a disservice if I skipped this one.\""
+tags = Array[StringName]([&"player_pitch"])
+
+[sub_resource type="Resource" id="Resource_0moyp"]
+script = ExtResource("1_rmhas")
+text = "\"Okay, hear me out on this one.\""
+tags = Array[StringName]([&"player_pitch"])
+
+[sub_resource type="Resource" id="Resource_7c87h"]
+script = ExtResource("1_rmhas")
+text = "\"Most people wish they'd bought this one sooner.\""
+tags = Array[StringName]([&"player_pitch"])
+
+[sub_resource type="Resource" id="Resource_g66co"]
+script = ExtResource("1_rmhas")
+text = "\"I know, I know. Just hear me out.\""
+tags = Array[StringName]([&"player_pitch"])
+appeal_bands = Array[StringName]([&"COLD"])
+
+[sub_resource type="Resource" id="Resource_54dfr"]
+script = ExtResource("1_rmhas")
+text = "\"Oh, this one is right up your alley.\""
+tags = Array[StringName]([&"player_pitch"])
+appeal_bands = Array[StringName]([&"ALMOST"])
+
+[sub_resource type="Resource" id="Resource_onbws"]
+script = ExtResource("1_rmhas")
+text = "\"With the kids in the back, you'll want this one.\""
+tags = Array[StringName]([&"player_pitch"])
+archetype_ids = Array[StringName]([&"family"])
+
+[sub_resource type="Resource" id="Resource_r5c14"]
+script = ExtResource("1_rmhas")
+text = "\"Before you ask: yes, this one comes with paperwork.\""
+tags = Array[StringName]([&"player_pitch"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_x5dge"]
+script = ExtResource("1_rmhas")
+text = "\"And before you ask, nobody else offers this one.\""
+tags = Array[StringName]([&"player_pitch"])
+archetype_ids = Array[StringName]([&"hawk"])
+
+[sub_resource type="Resource" id="Resource_pnl8g"]
+script = ExtResource("1_rmhas")
+text = "\"I've got the full terms on this if you want them.\""
+tags = Array[StringName]([&"player_pitch"])
+archetype_ids = Array[StringName]([&"tech"])
+
+[sub_resource type="Resource" id="Resource_85obm"]
+script = ExtResource("1_rmhas")
+text = "\"Thirty seconds, I promise. Check this out.\""
+tags = Array[StringName]([&"player_pitch"])
+archetype_ids = Array[StringName]([&"kicker"])
+
+[sub_resource type="Resource" id="Resource_6edaf"]
+script = ExtResource("1_rmhas")
+text = "\"You're going to love this one.\""
+tags = Array[StringName]([&"player_pitch"])
+archetype_ids = Array[StringName]([&"easygoing"])
+
+[sub_resource type="Resource" id="Resource_oxypf"]
+script = ExtResource("1_rmhas")
+text = "\"You're going to want this one, trust me.\""
+tags = Array[StringName]([&"player_pitch"])
+archetype_ids = Array[StringName]([&"laydown"])
+
+[sub_resource type="Resource" id="Resource_p8hr3"]
+script = ExtResource("1_rmhas")
+text = "\"Let's talk about what happens if the car gets totaled.\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"gap"])
+
+[sub_resource type="Resource" id="Resource_ocg88"]
+script = ExtResource("1_rmhas")
+text = "\"How long were you planning to keep this car?\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"vsc"])
+
+[sub_resource type="Resource" id="Resource_fy1wp"]
+script = ExtResource("1_rmhas")
+text = "\"Do you park on the street at all?\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"theft"])
+
+[sub_resource type="Resource" id="Resource_gonyq"]
+script = ExtResource("1_rmhas")
+text = "\"Planning to trade this one in someday?\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"tvp"])
+
+[sub_resource type="Resource" id="Resource_2fpsr"]
+script = ExtResource("1_rmhas")
+text = "\"You want it looking showroom-new for years, right?\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"appearance"])
+
+[sub_resource type="Resource" id="Resource_ul5h1"]
+script = ExtResource("1_rmhas")
+text = "\"How secure would you say your job is? Just curious.\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"ppp"])
+
+[sub_resource type="Resource" id="Resource_u2ifa"]
+script = ExtResource("1_rmhas")
+text = "\"How would you like to never sit in a waiting room again?\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"concierge"])
+
+[sub_resource type="Resource" id="Resource_nbajb"]
+script = ExtResource("1_rmhas")
+text = "\"Ever had a month where the budget just didn't stretch?\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"flex"])
+
+[sub_resource type="Resource" id="Resource_od34k"]
+script = ExtResource("1_rmhas")
+text = "\"Do you ever tow anything? Boat? Trailer? Small house?\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"perf"])
+
+[sub_resource type="Resource" id="Resource_qqriq"]
+script = ExtResource("1_rmhas")
+text = "\"Let me tell you about our WALKAWAY program.\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"wap"])
+
+[sub_resource type="Resource" id="Resource_lpo44"]
+script = ExtResource("1_rmhas")
+text = "\"This one pairs really nicely with WALKAWAY.\""
+tags = Array[StringName]([&"player_pitch"])
+product_ids = Array[StringName]([&"tlp"])
+
+[sub_resource type="Resource" id="Resource_ltwq2"]
+script = ExtResource("1_rmhas")
+text = "\"So, how was the drive in? Traffic behave itself?\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_6tlka"]
+script = ExtResource("1_rmhas")
+text = "\"Crazy weather we're having, huh?\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_pggp8"]
+script = ExtResource("1_rmhas")
+text = "\"Any big plans for the weekend?\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_xuo8o"]
+script = ExtResource("1_rmhas")
+text = "\"Can I get you a coffee? It's terrible, but it's free.\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_i7i8f"]
+script = ExtResource("1_rmhas")
+text = "\"So what do you do for work?\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_2s700"]
+script = ExtResource("1_rmhas")
+text = "\"Did you catch the game last night?\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_e6xpm"]
+script = ExtResource("1_rmhas")
+text = "\"Love the jacket, by the way. Where's it from?\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_gum50"]
+script = ExtResource("1_rmhas")
+text = "\"Parking okay out there? That lot is a maze.\""
+tags = Array[StringName]([&"player_smalltalk"])
+
+[sub_resource type="Resource" id="Resource_1xnnq"]
+script = ExtResource("1_rmhas")
+text = "\"How old are the kids? Mine just started school.\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"family"])
+
+[sub_resource type="Resource" id="Resource_mq88t"]
+script = ExtResource("1_rmhas")
+text = "\"The kids doing okay? There are lollipops at the desk.\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"family"])
+
+[sub_resource type="Resource" id="Resource_4hnwe"]
+script = ExtResource("1_rmhas")
+text = "\"Can I get you anything? Water? A manager?\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_wldx1"]
+script = ExtResource("1_rmhas")
+text = "\"I'll keep this quick, I promise.\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"kicker"])
+
+[sub_resource type="Resource" id="Resource_jx512"]
+script = ExtResource("1_rmhas")
+text = "\"You must have done a ton of research on this one.\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"tech"])
+
+[sub_resource type="Resource" id="Resource_50qal"]
+script = ExtResource("1_rmhas")
+text = "\"Bet you shopped around a bit before coming here, huh?\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"hawk"])
+
+[sub_resource type="Resource" id="Resource_xrvta"]
+script = ExtResource("1_rmhas")
+text = "\"Beautiful day to buy a car, isn't it?\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"easygoing"])
+
+[sub_resource type="Resource" id="Resource_clndb"]
+script = ExtResource("1_rmhas")
+text = "\"You look like you could use a coffee. Long day?\""
+tags = Array[StringName]([&"player_smalltalk"])
+archetype_ids = Array[StringName]([&"laydown"])
+
+[sub_resource type="Resource" id="Resource_vwd3k"]
+script = ExtResource("1_rmhas")
+text = "\"So, folks, here's how it works...\""
+tags = Array[StringName]([&"player_explain"])
+
+[sub_resource type="Resource" id="Resource_rl7xi"]
+script = ExtResource("1_rmhas")
+text = "\"Let me walk you through what this actually covers.\""
+tags = Array[StringName]([&"player_explain"])
+
+[sub_resource type="Resource" id="Resource_mwdvu"]
+script = ExtResource("1_rmhas")
+text = "\"Think of it like a seatbelt for your wallet.\""
+tags = Array[StringName]([&"player_explain"])
+
+[sub_resource type="Resource" id="Resource_2tscl"]
+script = ExtResource("1_rmhas")
+text = "\"Here's the short version. No fine print. Well, some.\""
+tags = Array[StringName]([&"player_explain"])
+
+[sub_resource type="Resource" id="Resource_48j0l"]
+script = ExtResource("1_rmhas")
+text = "\"It's simple, really. Something goes wrong, you're covered.\""
+tags = Array[StringName]([&"player_explain"])
+
+[sub_resource type="Resource" id="Resource_4tnhm"]
+script = ExtResource("1_rmhas")
+text = "\"Most people don't know this, but...\""
+tags = Array[StringName]([&"player_explain"])
+
+[sub_resource type="Resource" id="Resource_fjtsu"]
+script = ExtResource("1_rmhas")
+text = "\"Okay, let me try explaining it a different way.\""
+tags = Array[StringName]([&"player_explain"])
+appeal_bands = Array[StringName]([&"COLD"])
+
+[sub_resource type="Resource" id="Resource_ien8r"]
+script = ExtResource("1_rmhas")
+text = "\"And honestly? It pretty much sells itself.\""
+tags = Array[StringName]([&"player_explain"])
+appeal_bands = Array[StringName]([&"ALMOST"])
+
+[sub_resource type="Resource" id="Resource_ub25s"]
+script = ExtResource("1_rmhas")
+text = "\"I'll go slowly. And yes, it's all in writing.\""
+tags = Array[StringName]([&"player_explain"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_dfq1b"]
+script = ExtResource("1_rmhas")
+text = "\"I can pull up the full contract if you want the details.\""
+tags = Array[StringName]([&"player_explain"])
+archetype_ids = Array[StringName]([&"tech"])
+
+[sub_resource type="Resource" id="Resource_w7q1x"]
+script = ExtResource("1_rmhas")
+text = "\"Real quick, the thirty-second version...\""
+tags = Array[StringName]([&"player_explain"])
+archetype_ids = Array[StringName]([&"kicker"])
+
+[sub_resource type="Resource" id="Resource_60433"]
+script = ExtResource("1_rmhas")
+text = "\"Basically? One less thing to worry about with the kids.\""
+tags = Array[StringName]([&"player_explain"])
+archetype_ids = Array[StringName]([&"family"])
+
+[sub_resource type="Resource" id="Resource_h1ni8"]
+script = ExtResource("1_rmhas")
+text = "\"If the car's totaled, GAP pays off what insurance won't.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"gap"])
+
+[sub_resource type="Resource" id="Resource_kjqmg"]
+script = ExtResource("1_rmhas")
+text = "\"When the factory warranty ends, this pays the repair bills.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"vsc"])
+
+[sub_resource type="Resource" id="Resource_wd3ly"]
+script = ExtResource("1_rmhas")
+text = "\"We etch the glass, track the car, and replace lost keys.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"theft"])
+
+[sub_resource type="Resource" id="Resource_yyf1o"]
+script = ExtResource("1_rmhas")
+text = "\"It locks in a floor on your trade-in. No nasty surprises.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"tvp"])
+
+[sub_resource type="Resource" id="Resource_emnrf"]
+script = ExtResource("1_rmhas")
+text = "\"Ceramic coat, tint, wheel care. It stays new for years.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"appearance"])
+
+[sub_resource type="Resource" id="Resource_8m5gw"]
+script = ExtResource("1_rmhas")
+text = "\"Lose your job or get hurt, and this makes the payments.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"ppp"])
+
+[sub_resource type="Resource" id="Resource_i2lj1"]
+script = ExtResource("1_rmhas")
+text = "\"We pick it up, leave you a loaner, bring it back fixed.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"concierge"])
+
+[sub_resource type="Resource" id="Resource_56y13"]
+script = ExtResource("1_rmhas")
+text = "\"Skip a payment when money is tight. No questions asked.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"flex"])
+
+[sub_resource type="Resource" id="Resource_7qpxd"]
+script = ExtResource("1_rmhas")
+text = "\"Tow package, winter traction, and a badge that says so.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"perf"])
+
+[sub_resource type="Resource" id="Resource_342r0"]
+script = ExtResource("1_rmhas")
+text = "\"Life happens. WALKAWAY covers the big 'what ifs.'\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"wap"])
+
+[sub_resource type="Resource" id="Resource_ioyfv"]
+script = ExtResource("1_rmhas")
+text = "\"Fire, theft or a wreck: it covers what the payout misses.\""
+tags = Array[StringName]([&"player_explain"])
+product_ids = Array[StringName]([&"tlp"])
+
+[sub_resource type="Resource" id="Resource_whp24"]
+script = ExtResource("1_rmhas")
+text = "\"...but that's the best I can do!\""
+tags = Array[StringName]([&"player_discount"])
+
+[sub_resource type="Resource" id="Resource_je8rb"]
+script = ExtResource("1_rmhas")
+text = "\"Okay, let me see what I can do here.\""
+tags = Array[StringName]([&"player_discount"])
+
+[sub_resource type="Resource" id="Resource_f5atx"]
+script = ExtResource("1_rmhas")
+text = "\"Tell you what, I'll sharpen my pencil.\""
+tags = Array[StringName]([&"player_discount"])
+
+[sub_resource type="Resource" id="Resource_vnwfu"]
+script = ExtResource("1_rmhas")
+text = "\"Don't tell my manager, but...\""
+tags = Array[StringName]([&"player_discount"])
+
+[sub_resource type="Resource" id="Resource_lw4b7"]
+script = ExtResource("1_rmhas")
+text = "\"I'll knock a little off, just for you.\""
+tags = Array[StringName]([&"player_discount"])
+
+[sub_resource type="Resource" id="Resource_3u23f"]
+script = ExtResource("1_rmhas")
+text = "\"At this price I'm practically paying you.\""
+tags = Array[StringName]([&"player_discount"])
+
+[sub_resource type="Resource" id="Resource_488hv"]
+script = ExtResource("1_rmhas")
+text = "\"Alright, how does THIS number look?\""
+tags = Array[StringName]([&"player_discount"])
+appeal_bands = Array[StringName]([&"COLD"])
+
+[sub_resource type="Resource" id="Resource_p0fj3"]
+script = ExtResource("1_rmhas")
+text = "\"Fine, fine. You drive a hard bargain.\""
+tags = Array[StringName]([&"player_discount"])
+archetype_ids = Array[StringName]([&"hawk"])
+
+[sub_resource type="Resource" id="Resource_821et"]
+script = ExtResource("1_rmhas")
+text = "\"Since you've been SO patient with me...\""
+tags = Array[StringName]([&"player_discount"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_i400x"]
+script = ExtResource("1_rmhas")
+text = "\"You've been great, so let me knock a bit off.\""
+tags = Array[StringName]([&"player_discount"])
+archetype_ids = Array[StringName]([&"easygoing"])
+
+[sub_resource type="Resource" id="Resource_72sxg"]
+script = ExtResource("1_rmhas")
+text = "\"Since we're already doing the other two...\""
+tags = Array[StringName]([&"player_bundle"])
+
+[sub_resource type="Resource" id="Resource_ghrit"]
+script = ExtResource("1_rmhas")
+text = "\"It's cheaper if we roll it all in together.\""
+tags = Array[StringName]([&"player_bundle"])
+
+[sub_resource type="Resource" id="Resource_kkvtj"]
+script = ExtResource("1_rmhas")
+text = "\"Add it to the rest and the payment barely moves.\""
+tags = Array[StringName]([&"player_bundle"])
+
+[sub_resource type="Resource" id="Resource_rq4hg"]
+script = ExtResource("1_rmhas")
+text = "\"You've started the set. Might as well finish it.\""
+tags = Array[StringName]([&"player_bundle"])
+
+[sub_resource type="Resource" id="Resource_g5tvh"]
+script = ExtResource("1_rmhas")
+text = "\"Everything under one roof. Simple.\""
+tags = Array[StringName]([&"player_bundle"])
+
+[sub_resource type="Resource" id="Resource_xwqrs"]
+script = ExtResource("1_rmhas")
+text = "\"One package, and the whole family's covered.\""
+tags = Array[StringName]([&"player_bundle"])
+archetype_ids = Array[StringName]([&"family"])
+
+[sub_resource type="Resource" id="Resource_a01dj"]
+script = ExtResource("1_rmhas")
+text = "\"I had a customer last week who skipped this. Poor guy.\""
+tags = Array[StringName]([&"player_fearmonger"])
+
+[sub_resource type="Resource" id="Resource_dbx66"]
+script = ExtResource("1_rmhas")
+text = "\"You know what a new transmission costs these days?\""
+tags = Array[StringName]([&"player_fearmonger"])
+
+[sub_resource type="Resource" id="Resource_x8eoq"]
+script = ExtResource("1_rmhas")
+text = "\"It won't happen to you. That's what my cousin said.\""
+tags = Array[StringName]([&"player_fearmonger"])
+
+[sub_resource type="Resource" id="Resource_kfq02"]
+script = ExtResource("1_rmhas")
+text = "\"Picture it: 2 a.m., side of the highway, no coverage.\""
+tags = Array[StringName]([&"player_fearmonger"])
+
+[sub_resource type="Resource" id="Resource_tgmim"]
+script = ExtResource("1_rmhas")
+text = "\"Nobody plans for the worst day of their life.\""
+tags = Array[StringName]([&"player_fearmonger"])
+
+[sub_resource type="Resource" id="Resource_h3fwx"]
+script = ExtResource("1_rmhas")
+text = "\"It's all fun and games until the tow truck shows up.\""
+tags = Array[StringName]([&"player_fearmonger"])
+
+[sub_resource type="Resource" id="Resource_u21jk"]
+script = ExtResource("1_rmhas")
+text = "\"Picture the kids, stuck on the highway at night.\""
+tags = Array[StringName]([&"player_fearmonger"])
+archetype_ids = Array[StringName]([&"family"])
+
+[sub_resource type="Resource" id="Resource_sd7s0"]
+script = ExtResource("1_rmhas")
+text = "\"Total it, and you're still paying for it. For years.\""
+tags = Array[StringName]([&"player_fearmonger"])
+product_ids = Array[StringName]([&"gap"])
+
+[sub_resource type="Resource" id="Resource_l3mf7"]
+script = ExtResource("1_rmhas")
+text = "\"Cars around here vanish overnight. I've seen it.\""
+tags = Array[StringName]([&"player_fearmonger"])
+product_ids = Array[StringName]([&"theft"])
+
+[sub_resource type="Resource" id="Resource_4ipr0"]
+script = ExtResource("1_rmhas")
+text = "\"One sensor on these costs more than your rent.\""
+tags = Array[StringName]([&"player_fearmonger"])
+product_ids = Array[StringName]([&"vsc"])
+
+[sub_resource type="Resource" id="Resource_u4io1"]
+script = ExtResource("1_rmhas")
+text = "\"Nobody expects the layoff. Nobody.\""
+tags = Array[StringName]([&"player_fearmonger"])
+product_ids = Array[StringName]([&"ppp"])
+
+[sub_resource type="Resource" id="Resource_4agtm"]
+script = ExtResource("1_rmhas")
+text = "\"One winter of road salt. That's all it takes.\""
+tags = Array[StringName]([&"player_fearmonger"])
+product_ids = Array[StringName]([&"appearance"])
+
+[sub_resource type="Resource" id="Resource_68lai"]
+script = ExtResource("1_rmhas")
+text = "\"That's just three cups of coffee a day!\""
+tags = Array[StringName]([&"player_coffee"])
+
+[sub_resource type="Resource" id="Resource_olva0"]
+script = ExtResource("1_rmhas")
+text = "\"Break it down per day and it's pocket change.\""
+tags = Array[StringName]([&"player_coffee"])
+
+[sub_resource type="Resource" id="Resource_cmun6"]
+script = ExtResource("1_rmhas")
+text = "\"Skip one latte a week and it pays for itself.\""
+tags = Array[StringName]([&"player_coffee"])
+
+[sub_resource type="Resource" id="Resource_ygmu4"]
+script = ExtResource("1_rmhas")
+text = "\"That's less than your streaming subscriptions.\""
+tags = Array[StringName]([&"player_coffee"])
+
+[sub_resource type="Resource" id="Resource_rjuif"]
+script = ExtResource("1_rmhas")
+text = "\"It's cheaper than a sandwich. A small sandwich.\""
+tags = Array[StringName]([&"player_coffee"])
+
+[sub_resource type="Resource" id="Resource_t73yv"]
+script = ExtResource("1_rmhas")
+text = "\"Do the math. Per day, it's basically nothing.\""
+tags = Array[StringName]([&"player_coffee"])
+archetype_ids = Array[StringName]([&"hawk"])
+
+[sub_resource type="Resource" id="Resource_mx42v"]
+script = ExtResource("1_rmhas")
+text = "\"Look, I need an answer today.\""
+tags = Array[StringName]([&"player_hardclose"])
+
+[sub_resource type="Resource" id="Resource_6nxot"]
+script = ExtResource("1_rmhas")
+text = "\"This price is gone the minute you walk out that door.\""
+tags = Array[StringName]([&"player_hardclose"])
+
+[sub_resource type="Resource" id="Resource_8iwo4"]
+script = ExtResource("1_rmhas")
+text = "\"Let's just get the paperwork started, okay?\""
+tags = Array[StringName]([&"player_hardclose"])
+
+[sub_resource type="Resource" id="Resource_vvk5s"]
+script = ExtResource("1_rmhas")
+text = "\"Sign here, here, and initial here.\""
+tags = Array[StringName]([&"player_hardclose"])
+
+[sub_resource type="Resource" id="Resource_dk3q2"]
+script = ExtResource("1_rmhas")
+text = "\"I can't hold this deal forever.\""
+tags = Array[StringName]([&"player_hardclose"])
+
+[sub_resource type="Resource" id="Resource_eq5dd"]
+script = ExtResource("1_rmhas")
+text = "\"I have three people waiting. Are we doing this?\""
+tags = Array[StringName]([&"player_hardclose"])
+
+[sub_resource type="Resource" id="Resource_bcev1"]
+script = ExtResource("1_rmhas")
+text = "\"I know you're not sold. Sign anyway?\""
+tags = Array[StringName]([&"player_hardclose"])
+appeal_bands = Array[StringName]([&"COLD"])
+
+[sub_resource type="Resource" id="Resource_j7ded"]
+script = ExtResource("1_rmhas")
+text = "\"We're so close. Let's just finish this.\""
+tags = Array[StringName]([&"player_hardclose"])
+appeal_bands = Array[StringName]([&"ALMOST"])
+
+[sub_resource type="Resource" id="Resource_e0cvs"]
+script = ExtResource("1_rmhas")
+text = "\"You want out of here? Sign and you're out.\""
+tags = Array[StringName]([&"player_hardclose"])
+archetype_ids = Array[StringName]([&"kicker"])
+
+[sub_resource type="Resource" id="Resource_1kjv1"]
+script = ExtResource("1_rmhas")
+text = "\"There's just a small admin fee on top.\""
+tags = Array[StringName]([&"player_pad"])
+
+[sub_resource type="Resource" id="Resource_daq3g"]
+script = ExtResource("1_rmhas")
+text = "\"That number includes a few little extras.\""
+tags = Array[StringName]([&"player_pad"])
+
+[sub_resource type="Resource" id="Resource_ghlxr"]
+script = ExtResource("1_rmhas")
+text = "\"Standard processing. You'll find that everywhere.\""
+tags = Array[StringName]([&"player_pad"])
+
+[sub_resource type="Resource" id="Resource_w5dhl"]
+script = ExtResource("1_rmhas")
+text = "\"Let me just tidy these numbers up for you.\""
+tags = Array[StringName]([&"player_pad"])
+
+[sub_resource type="Resource" id="Resource_b0hak"]
+script = ExtResource("1_rmhas")
+text = "\"Don't worry about that line. Everybody pays that.\""
+tags = Array[StringName]([&"player_pad"])
+
+[sub_resource type="Resource" id="Resource_mce0p"]
+script = ExtResource("1_rmhas")
+text = "\"And a little extra here. You won't even notice.\""
+tags = Array[StringName]([&"player_pad"])
+archetype_ids = Array[StringName]([&"laydown"])
+
+[sub_resource type="Resource" id="Resource_mm32u"]
+script = ExtResource("1_rmhas")
+text = "\"Mm-hm. Go on.\""
+tags = Array[StringName]([&"player_readroom"])
+
+[sub_resource type="Resource" id="Resource_jbsab"]
+script = ExtResource("1_rmhas")
+text = "\"Tell me more about that.\""
+tags = Array[StringName]([&"player_readroom"])
+
+[sub_resource type="Resource" id="Resource_5melf"]
+script = ExtResource("1_rmhas")
+text = "\"Take your time. I'm listening.\""
+tags = Array[StringName]([&"player_readroom"])
+
+[sub_resource type="Resource" id="Resource_s2f1u"]
+script = ExtResource("1_rmhas")
+text = "\"So what matters most to you here?\""
+tags = Array[StringName]([&"player_readroom"])
+
+[sub_resource type="Resource" id="Resource_76dvv"]
+script = ExtResource("1_rmhas")
+text = "\"What brings you in today, really?\""
+tags = Array[StringName]([&"player_readroom"])
+
+[sub_resource type="Resource" id="Resource_lvlyj"]
+script = ExtResource("1_rmhas")
+text = "\"Go ahead. I'm all ears. Truly.\""
+tags = Array[StringName]([&"player_readroom"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_e7svv"]
+script = ExtResource("1_rmhas")
+text = "\"Uh... and what's really nice about this one is... um...\""
+tags = Array[StringName]([&"player_checknotes"])
+
+[sub_resource type="Resource" id="Resource_e4lwo"]
+script = ExtResource("1_rmhas")
+text = "\"Bear with me, I had this written down somewhere.\""
+tags = Array[StringName]([&"player_checknotes"])
+
+[sub_resource type="Resource" id="Resource_xe5qy"]
+script = ExtResource("1_rmhas")
+text = "\"Hold on, let me check something real quick.\""
+tags = Array[StringName]([&"player_checknotes"])
+
+[sub_resource type="Resource" id="Resource_2wm7t"]
+script = ExtResource("1_rmhas")
+text = "\"It's on the tip of my tongue...\""
+tags = Array[StringName]([&"player_checknotes"])
+
+[sub_resource type="Resource" id="Resource_rxgd7"]
+script = ExtResource("1_rmhas")
+text = "\"Where did I put that brochure...\""
+tags = Array[StringName]([&"player_checknotes"])
+
+[sub_resource type="Resource" id="Resource_mc7xm"]
+script = ExtResource("1_rmhas")
+text = "\"Good news, everyone! A year of WALKAWAY, on the house!\""
+tags = Array[StringName]([&"player_comp"])
+
+[sub_resource type="Resource" id="Resource_c1kjs"]
+script = ExtResource("1_rmhas")
+text = "\"Today only, everyone gets a free year of protection!\""
+tags = Array[StringName]([&"player_comp"])
+
+[sub_resource type="Resource" id="Resource_17jey"]
+script = ExtResource("1_rmhas")
+text = "\"Consider it a gift from the dealership.\""
+tags = Array[StringName]([&"player_comp"])
+
+[sub_resource type="Resource" id="Resource_i5avd"]
+script = ExtResource("1_rmhas")
+text = "\"It's on us. No, really. Free.\""
+tags = Array[StringName]([&"player_comp"])
+
+[sub_resource type="Resource" id="Resource_lff0h"]
+script = ExtResource("1_rmhas")
+text = "\"Oh, I have just the product for you!\""
+tags = Array[StringName]([&"player_justthething"])
+
+[sub_resource type="Resource" id="Resource_36rgw"]
+script = ExtResource("1_rmhas")
+text = "\"Wait, wait. I know exactly what you need.\""
+tags = Array[StringName]([&"player_justthething"])
+
+[sub_resource type="Resource" id="Resource_pnqc1"]
+script = ExtResource("1_rmhas")
+text = "\"You know what? I've got the perfect thing.\""
+tags = Array[StringName]([&"player_justthething"])
+
+[sub_resource type="Resource" id="Resource_j6ygs"]
+script = ExtResource("1_rmhas")
+text = "\"Say no more. I've got just the thing.\""
+tags = Array[StringName]([&"player_justthething"])
+
+[sub_resource type="Resource" id="Resource_g7mv1"]
+script = ExtResource("1_rmhas")
+text = "\"I know I have a word track for this...\""
+tags = Array[StringName]([&"player_rightword"])
+
+[sub_resource type="Resource" id="Resource_jbwfs"]
+script = ExtResource("1_rmhas")
+text = "\"Let me put it this way...\""
+tags = Array[StringName]([&"player_rightword"])
+
+[sub_resource type="Resource" id="Resource_vpg0m"]
+script = ExtResource("1_rmhas")
+text = "\"Okay, here's how I explain it to my own mother.\""
+tags = Array[StringName]([&"player_rightword"])
+
+[sub_resource type="Resource" id="Resource_gvknp"]
+script = ExtResource("1_rmhas")
+text = "\"You know what they say about peace of mind...\""
+tags = Array[StringName]([&"player_rightword"])
+
+[sub_resource type="Resource" id="Resource_0swh5"]
+script = ExtResource("1_rmhas")
+text = "\"Hi! So glad you're here!\""
+tags = Array[StringName]([&"player_smile"])
+
+[sub_resource type="Resource" id="Resource_lehsi"]
+script = ExtResource("1_rmhas")
+text = "\"Welcome, welcome! Make yourself comfortable.\""
+tags = Array[StringName]([&"player_smile"])
+
+[sub_resource type="Resource" id="Resource_2uhyh"]
+script = ExtResource("1_rmhas")
+text = "\"Big day! Congratulations on the new ride!\""
+tags = Array[StringName]([&"player_smile"])
+
+[sub_resource type="Resource" id="Resource_mxnr8"]
+script = ExtResource("1_rmhas")
+text = "\"You're going to love this car. I just know it.\""
+tags = Array[StringName]([&"player_smile"])
+
+[sub_resource type="Resource" id="Resource_h4yde"]
+script = ExtResource("1_rmhas")
+text = "\"Isn't this exciting?\""
+tags = Array[StringName]([&"player_smile"])
+
+[sub_resource type="Resource" id="Resource_pjp0j"]
+script = ExtResource("1_rmhas")
+text = "\"So lovely to see you. Truly.\""
+tags = Array[StringName]([&"player_smile"])
+archetype_ids = Array[StringName]([&"karen"])
+
+[sub_resource type="Resource" id="Resource_8ddhp"]
+script = ExtResource("1_rmhas")
+text = "\"Let me just put a little music on.\""
+tags = Array[StringName]([&"player_jazz"])
+
+[sub_resource type="Resource" id="Resource_6nnt0"]
+script = ExtResource("1_rmhas")
+text = "\"Anybody mind a little smooth jazz?\""
+tags = Array[StringName]([&"player_jazz"])
+
+[sub_resource type="Resource" id="Resource_c15pu"]
+script = ExtResource("1_rmhas")
+text = "\"Ah, saxophone. Instantly calming, isn't it?\""
+tags = Array[StringName]([&"player_jazz"])
+
+[sub_resource type="Resource" id="Resource_1ju57"]
+script = ExtResource("1_rmhas")
+text = "\"Everybody just breathe. Enjoy the tunes.\""
+tags = Array[StringName]([&"player_jazz"])
+
 [resource]
 script = ExtResource("2_xfm46")
-design_rule = "One library, divided by TAG, not by file. A line's tags say which pool it belongs to and are the only required match; archetype_ids, product_ids and appeal_bands are optional narrowings, and an empty one means any. Narrowing is additive and exclusive: a line naming karen is unavailable to everybody else, never merely less likely. Every tag must keep at least one line with NO narrowings at all - that is the fallback that stops a pool going silent, and the suite enforces it. Specific lines are WEIGHTED over generic ones, never substituted for them: one karen line must not make ten generic ones unreachable, or every karen says the same sentence for the rest of the run. GENERATED by tools/build_dialogue.gd - edit the rows there, not this file."
-known_tags = Array[StringName]([&"appeal", &"patience", &"concession", &"pressure", &"padding", &"demand_thinking", &"demand_restless", &"demand_manager", &"demand_show_me", &"demand_better_quote", &"relief", &"ignored", &"accepted", &"impatient"])
-lines = Array[ExtResource("1_rmhas")]([SubResource("Resource_ekxp0"), SubResource("Resource_pivgf"), SubResource("Resource_u7et8"), SubResource("Resource_dn6k0"), SubResource("Resource_1lucu"), SubResource("Resource_ne3hw"), SubResource("Resource_ux88j"), SubResource("Resource_01o8a"), SubResource("Resource_2y2sn"), SubResource("Resource_d5jv2"), SubResource("Resource_dx86f"), SubResource("Resource_8xx72"), SubResource("Resource_4wm27"), SubResource("Resource_wluge"), SubResource("Resource_8blg8"), SubResource("Resource_ggxr6"), SubResource("Resource_4m86u"), SubResource("Resource_cqojf"), SubResource("Resource_qxykp"), SubResource("Resource_svom2"), SubResource("Resource_byol2"), SubResource("Resource_8gac4"), SubResource("Resource_n34fd"), SubResource("Resource_dupj3"), SubResource("Resource_232ah"), SubResource("Resource_yo0mn"), SubResource("Resource_xkles"), SubResource("Resource_k76ca"), SubResource("Resource_jw7i3"), SubResource("Resource_fb3y0"), SubResource("Resource_klppi"), SubResource("Resource_74n1b"), SubResource("Resource_r5ibr"), SubResource("Resource_gheq0"), SubResource("Resource_x1hxi"), SubResource("Resource_oasr4"), SubResource("Resource_d6m7d"), SubResource("Resource_4ncqi"), SubResource("Resource_avjiy"), SubResource("Resource_jhku4"), SubResource("Resource_jbu5l"), SubResource("Resource_rbyhv"), SubResource("Resource_hqhn7"), SubResource("Resource_5hmy8"), SubResource("Resource_kacga"), SubResource("Resource_ifbxp"), SubResource("Resource_6i4r7"), SubResource("Resource_v1532"), SubResource("Resource_5mbb8"), SubResource("Resource_boocb"), SubResource("Resource_1wgsj"), SubResource("Resource_rr0yt"), SubResource("Resource_8l5lt"), SubResource("Resource_50ep8"), SubResource("Resource_umy6g"), SubResource("Resource_drtm8"), SubResource("Resource_j553l"), SubResource("Resource_6lp0v"), SubResource("Resource_ggtni"), SubResource("Resource_hnf5h"), SubResource("Resource_xeray"), SubResource("Resource_a7hk0"), SubResource("Resource_rsarq"), SubResource("Resource_qybp0"), SubResource("Resource_ii3hi"), SubResource("Resource_m6o8j"), SubResource("Resource_b8ok2"), SubResource("Resource_o85b0"), SubResource("Resource_ieqpi"), SubResource("Resource_d8map"), SubResource("Resource_4eyp8"), SubResource("Resource_v506t"), SubResource("Resource_ki20f"), SubResource("Resource_17k5w"), SubResource("Resource_ptdy4"), SubResource("Resource_w713j")])
+design_rule = "One library, divided by TAG, not by file. A line's tags say which pool it belongs to and are the only required match; archetype_ids, product_ids and appeal_bands are optional narrowings, and an empty one means any. Narrowing is additive and exclusive: a line naming karen is unavailable to everybody else, never merely less likely. Every tag must keep at least one line with NO narrowings at all - that is the fallback that stops a pool going silent, and the suite enforces it. Specific lines are WEIGHTED over generic ones, never substituted for them: one karen line must not make ten generic ones unreachable, or every karen says the same sentence for the rest of the run. The player_* tags are YOUR lines, asked for by a card's player_dialogue_tags; on those, an archetype narrowing means who you are talking to. GENERATED by tools/build_dialogue.gd - edit the rows there, not this file."
+known_tags = Array[StringName]([&"appeal", &"patience", &"concession", &"pressure", &"padding", &"demand_thinking", &"demand_restless", &"demand_manager", &"demand_show_me", &"demand_better_quote", &"relief", &"ignored", &"accepted", &"impatient", &"player_pitch", &"player_smalltalk", &"player_explain", &"player_discount", &"player_bundle", &"player_fearmonger", &"player_coffee", &"player_hardclose", &"player_pad", &"player_readroom", &"player_checknotes", &"player_comp", &"player_justthething", &"player_rightword", &"player_smile", &"player_jazz"])
+lines = Array[ExtResource("1_rmhas")]([SubResource("Resource_ekxp0"), SubResource("Resource_pivgf"), SubResource("Resource_u7et8"), SubResource("Resource_dn6k0"), SubResource("Resource_1lucu"), SubResource("Resource_ne3hw"), SubResource("Resource_ux88j"), SubResource("Resource_01o8a"), SubResource("Resource_2y2sn"), SubResource("Resource_d5jv2"), SubResource("Resource_dx86f"), SubResource("Resource_8xx72"), SubResource("Resource_4wm27"), SubResource("Resource_wluge"), SubResource("Resource_8blg8"), SubResource("Resource_ggxr6"), SubResource("Resource_4m86u"), SubResource("Resource_cqojf"), SubResource("Resource_qxykp"), SubResource("Resource_svom2"), SubResource("Resource_byol2"), SubResource("Resource_8gac4"), SubResource("Resource_n34fd"), SubResource("Resource_dupj3"), SubResource("Resource_232ah"), SubResource("Resource_yo0mn"), SubResource("Resource_xkles"), SubResource("Resource_k76ca"), SubResource("Resource_jw7i3"), SubResource("Resource_fb3y0"), SubResource("Resource_klppi"), SubResource("Resource_74n1b"), SubResource("Resource_r5ibr"), SubResource("Resource_gheq0"), SubResource("Resource_x1hxi"), SubResource("Resource_oasr4"), SubResource("Resource_d6m7d"), SubResource("Resource_4ncqi"), SubResource("Resource_avjiy"), SubResource("Resource_jhku4"), SubResource("Resource_jbu5l"), SubResource("Resource_rbyhv"), SubResource("Resource_hqhn7"), SubResource("Resource_5hmy8"), SubResource("Resource_kacga"), SubResource("Resource_ifbxp"), SubResource("Resource_6i4r7"), SubResource("Resource_v1532"), SubResource("Resource_5mbb8"), SubResource("Resource_boocb"), SubResource("Resource_1wgsj"), SubResource("Resource_rr0yt"), SubResource("Resource_8l5lt"), SubResource("Resource_50ep8"), SubResource("Resource_umy6g"), SubResource("Resource_drtm8"), SubResource("Resource_j553l"), SubResource("Resource_6lp0v"), SubResource("Resource_ggtni"), SubResource("Resource_hnf5h"), SubResource("Resource_xeray"), SubResource("Resource_a7hk0"), SubResource("Resource_rsarq"), SubResource("Resource_qybp0"), SubResource("Resource_ii3hi"), SubResource("Resource_m6o8j"), SubResource("Resource_b8ok2"), SubResource("Resource_o85b0"), SubResource("Resource_ieqpi"), SubResource("Resource_d8map"), SubResource("Resource_4eyp8"), SubResource("Resource_v506t"), SubResource("Resource_ki20f"), SubResource("Resource_17k5w"), SubResource("Resource_ptdy4"), SubResource("Resource_w713j"), SubResource("Resource_rol5y"), SubResource("Resource_we22v"), SubResource("Resource_l06qr"), SubResource("Resource_avw6p"), SubResource("Resource_0moyp"), SubResource("Resource_7c87h"), SubResource("Resource_g66co"), SubResource("Resource_54dfr"), SubResource("Resource_onbws"), SubResource("Resource_r5c14"), SubResource("Resource_x5dge"), SubResource("Resource_pnl8g"), SubResource("Resource_85obm"), SubResource("Resource_6edaf"), SubResource("Resource_oxypf"), SubResource("Resource_p8hr3"), SubResource("Resource_ocg88"), SubResource("Resource_fy1wp"), SubResource("Resource_gonyq"), SubResource("Resource_2fpsr"), SubResource("Resource_ul5h1"), SubResource("Resource_u2ifa"), SubResource("Resource_nbajb"), SubResource("Resource_od34k"), SubResource("Resource_qqriq"), SubResource("Resource_lpo44"), SubResource("Resource_ltwq2"), SubResource("Resource_6tlka"), SubResource("Resource_pggp8"), SubResource("Resource_xuo8o"), SubResource("Resource_i7i8f"), SubResource("Resource_2s700"), SubResource("Resource_e6xpm"), SubResource("Resource_gum50"), SubResource("Resource_1xnnq"), SubResource("Resource_mq88t"), SubResource("Resource_4hnwe"), SubResource("Resource_wldx1"), SubResource("Resource_jx512"), SubResource("Resource_50qal"), SubResource("Resource_xrvta"), SubResource("Resource_clndb"), SubResource("Resource_vwd3k"), SubResource("Resource_rl7xi"), SubResource("Resource_mwdvu"), SubResource("Resource_2tscl"), SubResource("Resource_48j0l"), SubResource("Resource_4tnhm"), SubResource("Resource_fjtsu"), SubResource("Resource_ien8r"), SubResource("Resource_ub25s"), SubResource("Resource_dfq1b"), SubResource("Resource_w7q1x"), SubResource("Resource_60433"), SubResource("Resource_h1ni8"), SubResource("Resource_kjqmg"), SubResource("Resource_wd3ly"), SubResource("Resource_yyf1o"), SubResource("Resource_emnrf"), SubResource("Resource_8m5gw"), SubResource("Resource_i2lj1"), SubResource("Resource_56y13"), SubResource("Resource_7qpxd"), SubResource("Resource_342r0"), SubResource("Resource_ioyfv"), SubResource("Resource_whp24"), SubResource("Resource_je8rb"), SubResource("Resource_f5atx"), SubResource("Resource_vnwfu"), SubResource("Resource_lw4b7"), SubResource("Resource_3u23f"), SubResource("Resource_488hv"), SubResource("Resource_p0fj3"), SubResource("Resource_821et"), SubResource("Resource_i400x"), SubResource("Resource_72sxg"), SubResource("Resource_ghrit"), SubResource("Resource_kkvtj"), SubResource("Resource_rq4hg"), SubResource("Resource_g5tvh"), SubResource("Resource_xwqrs"), SubResource("Resource_a01dj"), SubResource("Resource_dbx66"), SubResource("Resource_x8eoq"), SubResource("Resource_kfq02"), SubResource("Resource_tgmim"), SubResource("Resource_h3fwx"), SubResource("Resource_u21jk"), SubResource("Resource_sd7s0"), SubResource("Resource_l3mf7"), SubResource("Resource_4ipr0"), SubResource("Resource_u4io1"), SubResource("Resource_4agtm"), SubResource("Resource_68lai"), SubResource("Resource_olva0"), SubResource("Resource_cmun6"), SubResource("Resource_ygmu4"), SubResource("Resource_rjuif"), SubResource("Resource_t73yv"), SubResource("Resource_mx42v"), SubResource("Resource_6nxot"), SubResource("Resource_8iwo4"), SubResource("Resource_vvk5s"), SubResource("Resource_dk3q2"), SubResource("Resource_eq5dd"), SubResource("Resource_bcev1"), SubResource("Resource_j7ded"), SubResource("Resource_e0cvs"), SubResource("Resource_1kjv1"), SubResource("Resource_daq3g"), SubResource("Resource_ghlxr"), SubResource("Resource_w5dhl"), SubResource("Resource_b0hak"), SubResource("Resource_mce0p"), SubResource("Resource_mm32u"), SubResource("Resource_jbsab"), SubResource("Resource_5melf"), SubResource("Resource_s2f1u"), SubResource("Resource_76dvv"), SubResource("Resource_lvlyj"), SubResource("Resource_e7svv"), SubResource("Resource_e4lwo"), SubResource("Resource_xe5qy"), SubResource("Resource_2wm7t"), SubResource("Resource_rxgd7"), SubResource("Resource_mc7xm"), SubResource("Resource_c1kjs"), SubResource("Resource_17jey"), SubResource("Resource_i5avd"), SubResource("Resource_lff0h"), SubResource("Resource_36rgw"), SubResource("Resource_pnqc1"), SubResource("Resource_j6ygs"), SubResource("Resource_g7mv1"), SubResource("Resource_jbwfs"), SubResource("Resource_vpg0m"), SubResource("Resource_gvknp"), SubResource("Resource_0swh5"), SubResource("Resource_lehsi"), SubResource("Resource_2uhyh"), SubResource("Resource_mxnr8"), SubResource("Resource_h4yde"), SubResource("Resource_pjp0j"), SubResource("Resource_8ddhp"), SubResource("Resource_6nnt0"), SubResource("Resource_c15pu"), SubResource("Resource_1ju57")])

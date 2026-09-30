@@ -16,6 +16,7 @@ metadata/_custom_type_script = "uid://btitvklfppqup"
 
 [resource]
 script = ExtResource("2_d1eeq")
+player_dialogue_tags = Array[StringName]([&"player_comp"])
 needs_offer = false
 id = &"comp"
 display_name = "WALKAWAY Complimentary"

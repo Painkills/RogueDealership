@@ -220,6 +220,19 @@ const WAITING_BADGE := Vector2(34, 34)
 ## The shift log, down the RIGHT rail - the mirror of the waiting list's. Stops
 ## well above the bottom strip, which is where the discard pile rises into.
 const LOG_RECT := Rect2(1532, 80, 370, 650)
+## What YOU say as you play a card. The one talking is you, behind the camera,
+## so its tail comes up from the bottom of the screen, between the draw pile
+## and your hand, into a bubble in the open space left of the tablet: under
+## the waiting list and the customer to your left, over the draw pile. Low in
+## that space, so the practice shift's memo (over the waiting list, and taller
+## than it) clears it too.
+const PLAYER_BUBBLE_RECT := Rect2(40, 540, 620, 140)
+## The tail's point, a little past the bottom edge so no tip ever shows, and
+## where it leaves the bubble's bottom edge (in the bubble's own space).
+const PLAYER_TAIL_TIP := Vector2(366, 1090)
+const PLAYER_TAIL_X := 330.0
+const PLAYER_TAIL_WIDTH := 60.0
+const PLAYER_BUBBLE_BORDER := 4.0
 ## The log's fold button, in its heading row.
 const LOG_TOGGLE := Vector2(84, 34)
 ## The app bar across the top that the shift's numbers sit on. The log starts
@@ -1050,6 +1063,9 @@ func _build_hud(root: Node) -> void:
 	col.add_child(log_box)
 	log_box.owner = root
 
+	# Over the table and the rails, under the report and the pull picker.
+	_player_bubble(hud, root)
+
 	var report: Control = (load(REPORT) as PackedScene).instantiate()
 	report.name = "ReportOverlay"
 	report.visible = false
@@ -1197,6 +1213,87 @@ func _waiting_panel(hud: Control, root: Node) -> void:
 	note.unique_name_in_owner = true
 	col.add_child(note)
 	note.owner = root
+
+## "Play dialogue from the player when cards are played": a speech bubble in
+## the open space left of the tablet, with its tail coming up from the bottom
+## of the screen between the draw pile and your hand. The same SpeechBubble a
+## customer's folder carries, laid out for the HUD - see PLAYER_BUBBLE_RECT.
+##
+## The tail is built the way the folder's is: its outline behind the panel, and
+## its fill in front, reaching up past the panel's border so the tail opens
+## into the bubble rather than being cut off from it by a line.
+func _player_bubble(hud: Control, root: Node) -> void:
+	var bubble := Control.new()
+	bubble.name = "PlayerBubble"
+	bubble.set_script(load("res://scripts/view/speech_bubble.gd"))
+	bubble.position = PLAYER_BUBBLE_RECT.position
+	bubble.size = PLAYER_BUBBLE_RECT.size
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bubble.visible = false
+	bubble.unique_name_in_owner = true
+	hud.add_child(bubble)
+	bubble.owner = root
+
+	var bottom: float = PLAYER_BUBBLE_RECT.size.y
+	var tip: Vector2 = PLAYER_TAIL_TIP - PLAYER_BUBBLE_RECT.position
+	var fill := PackedVector2Array([
+		_toward(tip, Vector2(PLAYER_TAIL_X - PLAYER_TAIL_WIDTH * 0.5, bottom),
+			bottom - PLAYER_BUBBLE_BORDER * 2.0),
+		_toward(tip, Vector2(PLAYER_TAIL_X + PLAYER_TAIL_WIDTH * 0.5, bottom),
+			bottom - PLAYER_BUBBLE_BORDER * 2.0),
+		tip])
+	var edge: PackedVector2Array = Geometry2D.offset_polygon(fill, PLAYER_BUBBLE_BORDER,
+		Geometry2D.JOIN_ROUND)[0]
+	_hud_tail(bubble, root, "TailEdge", &"primary", edge)
+
+	var panel := PanelContainer.new()
+	panel.name = "Panel"
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Palette.color(&"panel")
+	style.set_border_width_all(int(PLAYER_BUBBLE_BORDER))
+	style.border_color = Palette.color(&"primary")
+	style.set_corner_radius_all(22)
+	style.content_margin_left = 26
+	style.content_margin_right = 26
+	style.content_margin_top = 14
+	style.content_margin_bottom = 14
+	style.shadow_color = Color(0, 0, 0, 0.18)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 4)
+	panel.add_theme_stylebox_override("panel", style)
+	bubble.add_child(panel)
+	panel.owner = root
+	_hud_tail(bubble, root, "Tail", &"panel", fill)
+
+	var label := Label.new()
+	label.name = "Label"
+	label.add_theme_font_size_override("font_size", 28)
+	label.add_theme_color_override("font_color", Palette.color(&"text"))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# One of your longer lines, so the scene shows a real one in the editor.
+	# drive_shift.gd fits every line a card can make you say.
+	label.text = "\"It's simple, really. Something goes wrong, you're covered.\""
+	panel.add_child(label)
+	label.owner = root
+
+## The point on the line from `tip` through `through` at height `y` - so the
+## tail's fill can reach up into the bubble along the tail's own edges.
+static func _toward(tip: Vector2, through: Vector2, y: float) -> Vector2:
+	return tip + (through - tip) * ((tip.y - y) / (tip.y - through.y))
+
+func _hud_tail(bubble: Control, root: Node, node_name: String, role: StringName,
+		points: PackedVector2Array) -> void:
+	var tail := Polygon2D.new()
+	tail.name = node_name
+	tail.polygon = points
+	tail.color = Palette.color(role)
+	bubble.add_child(tail)
+	tail.owner = root
 
 ## Stretches an instanced overlay over the whole HUD - and says so in ANCHORS
 ## layout mode, explicitly.
