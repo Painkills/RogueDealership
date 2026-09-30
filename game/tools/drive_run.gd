@@ -714,12 +714,10 @@ func _check_the_calendar_shows_the_week() -> void:
 	if week.get_child_count() != days + 1:
 		return
 	var today: int = _run.shift_number   # column 0 is the hours
-	var events: Array = []
-	for child in week.get_child(today).get_child(1).get_children():
-		if child is Button:
-			events.append(child)
-	_check("today holds every shift you can pick (%d)" % events.size(),
-		events.size() == _root._profiles.profiles.size())
+	var events := _todays_events()
+	_check("today holds every shift you can pick (%d of %d)"
+		% [events.size(), _run.todays_shifts().size()],
+		events.size() == _run.todays_shifts().size() and not events.is_empty())
 	var worked: Node = week.get_child(today - 1).get_child(1)
 	_check("yesterday shows the shift you worked",
 		worked.get_node_or_null(^"Worked") != null)
@@ -733,22 +731,67 @@ func _check_the_calendar_shows_the_week() -> void:
 	var catch := func(p): got.append(p)
 	_root._picker_view.chosen.disconnect(_root._on_profile_chosen)
 	_root._picker_view.chosen.connect(catch)
-	var midday: Button = null
-	for e in events:
-		if e.name == "Event_midday":
-			midday = e
-	if midday != null:
-		midday.pressed.emit()
+	if not events.is_empty():
+		(events[0] as Button).pressed.emit()
 	_root._picker_view.chosen.disconnect(catch)
 	_root._picker_view.chosen.connect(_root._on_profile_chosen)
 	_check("clicking an event chooses that shift",
-		got.size() == 1 and got[0].id == &"midday")
+		got.size() == 1 and got[0] == _run.todays_shifts()[0])
+
+## Today's column's events, in the order the day offers them.
+func _todays_events() -> Array:
+	var week: Node = _root._picker_view.get_node(^"%Week")
+	var out := []
+	for child in week.get_child(_run.shift_number).get_child(1).get_children():
+		if child is Button:
+			out.append(child)
+	return out
+
+## "A boss day", and "a pool of shifts that can show up on other days": a
+## premade shift in a tier's slot says so on the calendar, and a boss day is
+## today's only shift. Dealt from a made-up pool - what ships in data/ is not
+## this check's business - and the run's own week put back after.
+func _check_the_calendar_shows_premade_shifts() -> void:
+	var was: Week = _run.week
+	var pool := ShiftProfilePool.new()
+	pool.profiles = (_root._profiles as ShiftProfilePool).profiles
+	var special := ShiftProfile.new()
+	special.id = &"drive_special"
+	special.display_name = "Drive Special"
+	var nights := ShiftCategory.new()
+	nights.slots = 1 << 2
+	nights.shifts.append(special)
+	pool.categories.append(nights)
+
+	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1)
+	_root._open_the_picker()
+	var events := _todays_events()
+	var tagged := events.filter(func(e): return e.find_child("PremadeTag", true, false) != null)
+	_check("a premade shift takes the night's place, and says so (%d shifts, %d tagged)"
+		% [events.size(), tagged.size()],
+		events.size() == pool.profiles.size() and tagged.size() == 1
+			and tagged[0].name == "Event_drive_special")
+
+	nights.boss_day = true
+	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1)
+	_root._open_the_picker()
+	events = _todays_events()
+	var tag: Label = (events[0] as Node).find_child("PremadeTag", true, false) as Label \
+		if events.size() == 1 else null
+	_check("a boss day is today's only shift, and says so (%s)"
+		% (tag.text if tag != null else "%d shifts" % events.size()),
+		events.size() == 1 and tag != null and tag.text.begins_with("BOSS DAY"))
+
+	_run.week = was
+	_root._open_the_picker()
+	_check("and the run's own week comes back", _todays_events().size() == _run.todays_shifts().size())
 
 func _phase_2_leave_and_work_a_night() -> void:
 	_root._shop_view.done.emit()
 	_check("leaving the shop opens the picker, not the floor directly",
 		_root._picker_view.visible and not _root._shop_view.visible)
 	_check_the_calendar_shows_the_week()
+	_check_the_calendar_shows_premade_shifts()
 	# This driver digs every shift away, and a second total wipeout on top of
 	# the first would end the run before the night's store could open - a
 	# playtest top-up, the same job the floor's own standing tap target does.

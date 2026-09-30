@@ -76,18 +76,18 @@ func _ready() -> void:
 		_open_the_tutorial()
 
 func _start_run() -> void:
+	_profiles = load("res://data/shift_profile_pool.tres")
 	_run = RunState.new(load("res://data/shift_config.tres"),
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), randi(),
-		load("res://data/dialogue/dialogue_pool.tres"))
-	_profiles = load("res://data/shift_profile_pool.tres")
+		load("res://data/dialogue/dialogue_pool.tres"), _profiles)
 	_history = []
 	_open_the_picker()
 
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
-	_picker_view.setup(_profiles, _run.shift_number, _run.cfg.shifts_in_run,
+	_picker_view.setup(_run.todays_shifts(), _run.shift_number, _run.cfg.shifts_in_run,
 		_run.quota_for(_run.shift_number), _history)
 
 func _on_profile_chosen(profile: ShiftProfile) -> void:
@@ -98,7 +98,8 @@ func _open_the_floor() -> void:
 	_show_only(_shift_view)
 	# Worked at the profile's own time of day - the office windows and the
 	# tablet's clock both follow it.
-	_shift_view.setup(_run.start_shift(_chosen_profile), _run.standing, _chosen_profile.id)
+	_shift_view.setup(_run.start_shift(_chosen_profile), _run.standing,
+		_chosen_profile.worked_at())
 
 ## The practice shift, on the same floor the real ones use. Dealt from its own
 ## starter deck (see Tutorial), so nothing done in practice touches the run.

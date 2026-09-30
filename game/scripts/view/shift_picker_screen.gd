@@ -25,9 +25,11 @@ const GUTTER_W := 84.0
 func _ready() -> void:
 	(%TutorialButton as Button).pressed.connect(func(): tutorial_requested.emit())
 
-## `day` is the run's shift number (1-based), `days` how many the run has.
-## `history` is one {"profile", "report"} per shift already worked, in order.
-func setup(pool: ShiftProfilePool, day: int = 1, days: int = 5, quota: int = 0,
+## `offers` is what today has to pick from - the regular tiers, or a premade
+## shift in one's place, or a boss day's one shift (see Week). `day` is the
+## run's shift number (1-based), `days` how many the run has. `history` is one
+## {"profile", "report"} per shift already worked, in order.
+func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int = 0,
 		history: Array = []) -> void:
 	_sub.text = "Shift %d of %d - pick today's%s" % [day, days,
 		"  |  quota %s" % Format.money(quota) if quota > 0 else ""]
@@ -61,7 +63,7 @@ func setup(pool: ShiftProfilePool, day: int = 1, days: int = 5, quota: int = 0,
 		if d + 1 < day and d < history.size():
 			_worked(body, history[d])
 		elif d + 1 == day:
-			for profile in pool.profiles:
+			for profile in offers:
 				_offer(body, profile)
 
 func _day_header(d: int, is_today: bool) -> Control:
@@ -101,8 +103,8 @@ func _day_header(d: int, is_today: bool) -> Control:
 
 ## Today's choice: an event you click to work that shift.
 func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
-	var hue := _hue(profile.id)
-	var hours: Array = ShiftHours.of(profile.id)
+	var hue := _hue(profile)
+	var hours: Array = ShiftHours.of(profile.worked_at())
 	var event := Button.new()
 	event.name = "Event_%s" % profile.id
 	event.tooltip_text = profile.blurb
@@ -114,10 +116,17 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 	event.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	body.place(event, hours[0], hours[1])
 	var col := _event_text(event)
+	# A premade shift says so before anything else: this is not the usual day.
+	if profile.is_premade():
+		var tag := _line(col, "BOSS DAY - TODAY'S ONLY SHIFT" if profile.is_boss_day()
+			else "SPECIAL SHIFT", 14, hue, true)
+		tag.name = "PremadeTag"
 	_line(col, profile.display_name, 24, Palette.color(&"text"), true)
 	_line(col, "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
 		CalendarDay.hour_label(int(hours[1]))], 15, Palette.color(&"text_dim"))
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
+	if profile.quota > 0:
+		_line(col, "Quota %s" % Format.money(profile.quota), 15, Palette.color(&"text"), true)
 	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))
 	event.pressed.connect(func(): chosen.emit(profile))
 
@@ -126,8 +135,7 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 func _worked(body: CalendarDay, entry: Dictionary) -> void:
 	var profile: ShiftProfile = entry.get("profile")
 	var report: Dictionary = entry.get("report", {})
-	var id: StringName = profile.id if profile != null else &""
-	var hours: Array = ShiftHours.of(id)
+	var hours: Array = ShiftHours.of(profile.worked_at() if profile != null else &"")
 	var card := PanelContainer.new()
 	card.name = "Worked"
 	card.add_theme_stylebox_override("panel",
@@ -185,6 +193,12 @@ func _event_style(hue: Color, mix: float) -> StyleBoxFlat:
 	s.shadow_offset = Vector2(0, 1)
 	return s
 
-func _hue(id: StringName) -> Color:
-	var role := StringName("shift_%s" % id)
+## Each tier in its own colour; a premade shift in the accent, and a boss day
+## in the colour the game keeps for danger.
+func _hue(profile: ShiftProfile) -> Color:
+	if profile.is_boss_day():
+		return Palette.color(&"stamp")
+	if profile.is_premade():
+		return Palette.color(&"accent")
+	var role := StringName("shift_%s" % profile.id)
 	return Palette.color(role) if Palette.ROLES.has(role) else Palette.color(&"primary")

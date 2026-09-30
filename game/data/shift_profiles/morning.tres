@@ -7,6 +7,5 @@ script = ExtResource("1_prf")
 id = &"morning"
 display_name = "Morning Shift"
 blurb = "Standard traffic. Nothing you haven't handled before."
-floor_size_override = 0
 patience_scale = 1.0
 unlock_full_archetype_pool = false

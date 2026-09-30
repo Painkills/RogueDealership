@@ -1,12 +1,16 @@
 [gd_resource type="Resource" script_class="ShiftProfilePool" format=3 uid="uid://bfmwq0c3xc28n"]
 
+[ext_resource type="Script" path="res://scripts/model/data/shift_category.gd" id="1_1vyqb"]
 [ext_resource type="Script" uid="uid://2y41jl76kit4" path="res://scripts/model/data/shift_profile.gd" id="1_prf"]
 [ext_resource type="Resource" path="res://data/shift_profiles/morning.tres" id="2_morn"]
+[ext_resource type="Resource" path="res://data/shift_categories/monday_mornings.tres" id="2_v286r"]
+[ext_resource type="Resource" path="res://data/shift_categories/friday_night_boss.tres" id="3_ejxys"]
 [ext_resource type="Resource" uid="uid://btlybt0nusv2t" path="res://data/shift_profiles/midday.tres" id="3_mid"]
 [ext_resource type="Resource" uid="uid://bv374liyonhj2" path="res://data/shift_profiles/night.tres" id="4_night"]
 [ext_resource type="Script" uid="uid://cs1q4tn5ujuwx" path="res://scripts/model/data/shift_profile_pool.gd" id="5_pool"]
 
 [resource]
 script = ExtResource("5_pool")
-design_rule = "Three tiers, always exactly three, and every one of them ends with a free card in the shop: morning (today's baseline - the free card and nothing more), midday (a floor-difficulty knob - shorter patience - paid for with a card put up for sale on top of the free one), and night (a roster-difficulty knob - the whole archetype pool unlocked regardless of the real shift number, fewer walk-ups to offset it - paid for with the chance to upgrade one of your cards on top of the free one). A new tier is a fourth .tres and one more line in profiles below; it is never a branch in Shift.gd or Shop.gd keyed on an id string - every difference a tier makes has to be one of ShiftProfile's own fields."
+design_rule = "Three tiers, always exactly three, and every one of them ends with a free card in the shop: morning (today's baseline - the free card and nothing more), midday (a floor-difficulty knob - shorter patience - paid for with a card put up for sale on top of the free one), and night (a roster-difficulty knob - the whole archetype pool unlocked regardless of the real shift number, fewer walk-ups to offset it - paid for with the chance to upgrade one of your cards on top of the free one). A new tier is a fourth .tres and one more line in profiles below; it is never a branch in Shift.gd or Shop.gd keyed on an id string - every difference a tier makes has to be one of ShiftProfile's own fields. Premade shifts are ShiftProfiles too, dealt onto the calendar by the categories below (see Week): a category says which days and which tier's slot its shifts may take, and whether one is a boss day - the day's only shift. Each shift's own chance is how likely it is to come up instead of the regular tier there."
 profiles = Array[ExtResource("1_prf")]([ExtResource("2_morn"), ExtResource("3_mid"), ExtResource("4_night")])
+categories = Array[ExtResource("1_1vyqb")]([ExtResource("2_v286r"), ExtResource("3_ejxys")])

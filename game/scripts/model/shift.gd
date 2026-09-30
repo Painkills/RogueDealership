@@ -23,6 +23,11 @@ var shift_number: int = 1          ## which shift of the run; gates archetypes
 var patience_scale: float = 1.0
 var walk_up_scale: float = 1.0
 var unlock_full_archetype_pool: bool = false
+## A premade shift's own customers - see ShiftProfile.only_archetypes and
+## lineup. Both empty on any other shift.
+var only_archetypes: Array[CustomerArchetype] = []
+var lineup: Array[CustomerArchetype] = []
+var _lineup_next: int = 0
 var margin_banked: int = 0
 ## The run's HP, LIVE during this shift - seeded from RunState.standing at
 ## construction (0 means "use cfg's own start", the run is never legitimately
@@ -91,7 +96,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_standing: int = 0, p_sale_streak: int = 0,
 		p_dialogue: DialoguePool = null, p_floor_size: int = 0,
 		p_patience_scale: float = 1.0, p_walk_up_scale: float = 1.0,
-		p_unlock_full_archetype_pool: bool = false) -> void:
+		p_unlock_full_archetype_pool: bool = false,
+		p_only_archetypes: Array = [], p_lineup: Array = []) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
@@ -107,6 +113,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	patience_scale = p_patience_scale
 	walk_up_scale = p_walk_up_scale
 	unlock_full_archetype_pool = p_unlock_full_archetype_pool
+	only_archetypes.assign(p_only_archetypes)
+	lineup.assign(p_lineup)
 
 	tick_budget = cfg.shift_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
@@ -122,12 +130,12 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 			"demands_met", "demands_missed"]:
 		stat[key] = 0
 
-	# A picked ShiftProfile (see RunState.start_shift()) may eventually want
-	# fewer chairs than the config's own default - not wired into any shipped
-	# profile yet, see ShiftProfile.floor_size_override's own comment on why.
-	# 0 means "no override", the config decides, same sentinel convention
-	# p_quota/p_standing already use above.
-	var floor_size: int = p_floor_size if p_floor_size > 0 else cfg.floor_size
+	# A picked ShiftProfile (see RunState.start_shift()) may put fewer chairs
+	# in use than the floor has - ShiftProfile.seats - but never more, since
+	# the floor has no others. 0 means "no override", the config decides, same
+	# sentinel convention p_quota/p_standing already use above.
+	var floor_size: int = mini(p_floor_size, cfg.floor_size) if p_floor_size > 0 \
+		else cfg.floor_size
 	chairs.resize(floor_size)
 	for i in range(floor_size):
 		chairs[i] = null
@@ -140,7 +148,10 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	_draw_up()
 
 	for i in range(floor_size):
-		_spawn(i)
+		var arch := _pick_archetype()
+		if arch == null:
+			break        # a lineup shorter than the floor leaves the rest empty
+		_spawn(i, arch)
 	# The floor opens full, and nobody is waiting yet: the first to come in
 	# after opening does so on the same clock as everyone after them.
 	next_arrival = _arrival_gap()
@@ -180,13 +191,20 @@ func ticks_running_low() -> bool:
 
 ## How many ticks until the next customer comes in, or -1 if nobody will
 ## before closing time - including while the waiting list is full, since the
-## door's clock waits then (see _arrive()). Due ON the closing tick is too
-## late: _burn() lets nobody in once the shift is over.
+## door's clock waits then (see _arrive()), and once a lineup has sent everyone
+## in it. Due ON the closing tick is too late: _burn() lets nobody in once the
+## shift is over.
 func next_arrival_in() -> int:
-	if is_over() or waiting.size() >= cfg.waiting_max \
+	if is_over() or door_closed() or waiting.size() >= cfg.waiting_max \
 			or next_arrival >= tick_budget - tick:
 		return -1
 	return next_arrival
+
+
+## A premade shift's lineup has sent in everyone on it: nobody else is coming
+## today, and once the floor is empty the shift is done.
+func door_closed() -> bool:
+	return not lineup.is_empty() and _lineup_next >= lineup.size()
 
 
 # ------------------------------------------------------------------ the tick
@@ -244,10 +262,10 @@ func _burn(n: int, kind: String) -> void:
 ## is next. Nobody comes in while the waiting list is full; the door's clock
 ## waits with them.
 func _arrive(n: int) -> void:
-	if waiting.size() >= cfg.waiting_max:
+	if door_closed() or waiting.size() >= cfg.waiting_max:
 		return
 	next_arrival -= n
-	while next_arrival <= 0 and waiting.size() < cfg.waiting_max:
+	while next_arrival <= 0 and waiting.size() < cfg.waiting_max and not door_closed():
 		waiting.append(_pick_archetype())
 		_seat_the_waiting()
 		next_arrival += _arrival_gap()
@@ -389,11 +407,19 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		% [c.key, c.display_name, arch.display_name])
 
 
+## Who comes in next - null only once a lineup has sent everyone on it.
 func _pick_archetype() -> CustomerArchetype:
 	if not _forced.is_empty():
 		var id = _forced[_forced_next % _forced.size()]
 		_forced_next += 1
 		return archetypes.by_id(id)
+	# A premade shift's lineup is exactly who comes, in its order, and nobody
+	# after - no uniqueness rule, no ladder, no second pass.
+	if not lineup.is_empty():
+		if door_closed():
+			return null
+		_lineup_next += 1
+		return lineup[_lineup_next - 1]
 	var pool := _archetypes_available_this_shift()
 	if cfg.unique_archetypes_on_floor:
 		# The waiting list counts as the floor: they are who sits down next.
@@ -419,6 +445,11 @@ func _archetypes_available_this_shift() -> Array[CustomerArchetype]:
 	## A night ShiftProfile skips the ladder entirely - the whole pool is fair
 	## game regardless of which real shift number this is, which is the actual
 	## point of picking night rather than a side effect of it.
+	##
+	## A premade shift that names its customers skips it too: they are who comes,
+	## whatever the day.
+	if not only_archetypes.is_empty():
+		return only_archetypes.duplicate()
 	if unlock_full_archetype_pool:
 		return archetypes.archetypes.duplicate()
 	var out: Array[CustomerArchetype] = []
@@ -617,9 +648,11 @@ func wait() -> Result:
 
 func _ticks_until_the_door_opens() -> int:
 	## The next arrival, or whatever is left of the shift if nobody is due
-	## before it ends. Never less than one: _burn ignores a zero, and a wait that
-	## does not move the clock is the deadlock it was written to break.
-	return maxi(1, mini(tick_budget - tick, next_arrival))
+	## before it ends - or ever, once a lineup is done: the last of them leaving
+	## is the end of the day. Never less than one: _burn ignores a zero, and a
+	## wait that does not move the clock is the deadlock it was written to break.
+	var left: int = tick_budget - tick
+	return maxi(1, left if door_closed() else mini(left, next_arrival))
 
 
 func play_card(index: int) -> Result:

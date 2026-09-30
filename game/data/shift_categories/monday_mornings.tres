@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ShiftCategory" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_category.gd" id="1_8fxwt"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="2_x07j5"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/monday_open_house.tres" id="3_dp6ya"]
+
+[resource]
+script = ExtResource("1_8fxwt")
+display_name = "Monday mornings"
+days = 1
+slots = 1
+shifts = Array[ExtResource("2_x07j5")]([ExtResource("3_dp6ya")])

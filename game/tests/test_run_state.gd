@@ -164,12 +164,12 @@ func test_the_shift_it_builds_carries_the_run_state() -> void:
 func test_start_shift_threads_the_picked_profiles_fields_through() -> void:
 	var r := _run()
 	var profile := ShiftProfile.new()
-	profile.floor_size_override = 2
+	profile.seats = 2
 	profile.patience_scale = 0.5
 	profile.walk_up_scale = 2.0
 	profile.unlock_full_archetype_pool = true
 	var s := r.start_shift(profile)
-	h.eq("floor_size_override reached the shift", s.chairs.size(), 2)
+	h.eq("seats reached the shift", s.chairs.size(), 2)
 	h.eq("patience_scale reached the shift", s.patience_scale, 0.5)
 	h.eq("walk_up_scale reached the shift", s.walk_up_scale, 2.0)
 	h.check("unlock_full_archetype_pool reached the shift",

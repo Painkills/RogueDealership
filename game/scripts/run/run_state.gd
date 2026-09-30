@@ -24,10 +24,13 @@ var banked_total: int = 0
 var standing: int                    ## the run's HP - no inline default, _init sets it from cfg
 var reports: Array[Dictionary] = []
 var sale_streak: int = 0             ## carried shift to shift - see Shift.sale_streak
+## Which shifts each day offers, dealt when the run starts - see Week. Null for
+## a run built without the pool, which then has no calendar of its own.
+var week: Week = null
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int,
-		p_dialogue: DialoguePool = null) -> void:
+		p_dialogue: DialoguePool = null, p_shifts: ShiftProfilePool = null) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
@@ -36,6 +39,15 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	rng.seed = p_seed
 	deck = Deck.build_starting(card_pool)
 	standing = cfg.standing_start
+	if p_shifts != null:
+		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi())
+
+## What today - the shift about to be played - offers to pick from.
+func todays_shifts() -> Array[ShiftProfile]:
+	var out: Array[ShiftProfile] = []
+	if week != null:
+		out = week.offers(shift_number)
+	return out
 
 func is_over() -> bool:
 	return shift_number > cfg.shifts_in_run or standing <= 0
@@ -48,11 +60,21 @@ func quota_for(n: int) -> int:
 	return roundi(q)
 
 func start_shift(profile: ShiftProfile) -> Shift:
-	return Shift.new(cfg, interests, card_pool, archetypes,
-		rng.randi(), [], deck, quota_for(shift_number), shift_number, standing,
-		sale_streak, dialogue, profile.floor_size_override,
+	# A premade shift's own numbers ride in on a copy of the config, the way
+	# the practice shift's do - the run's own is never touched.
+	var shift_cfg := cfg
+	if profile.shift_ticks > 0 or profile.waiting_room > 0:
+		shift_cfg = cfg.duplicate() as ShiftConfig
+		if profile.shift_ticks > 0:
+			shift_cfg.shift_ticks = profile.shift_ticks
+		if profile.waiting_room > 0:
+			shift_cfg.waiting_max = profile.waiting_room
+	var quota := profile.quota if profile.quota > 0 else quota_for(shift_number)
+	return Shift.new(shift_cfg, interests, card_pool, archetypes,
+		rng.randi(), [], deck, quota, shift_number, standing,
+		sale_streak, dialogue, profile.seats,
 		profile.patience_scale, profile.walk_up_scale,
-		profile.unlock_full_archetype_pool)
+		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup)
 
 func finish_shift(report: Dictionary) -> void:
 	## The quota is the house's cut and it comes out first. What you bank OVER it

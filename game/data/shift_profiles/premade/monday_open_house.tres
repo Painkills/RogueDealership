@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="1_0be1k"]
+[ext_resource type="Resource" path="res://data/archetypes/easygoing.tres" id="2_dlx8y"]
+[ext_resource type="Resource" path="res://data/archetypes/laydown.tres" id="3_cki16"]
+[ext_resource type="Resource" path="res://data/archetypes/family.tres" id="4_p6dfy"]
+[ext_resource type="Resource" path="res://data/archetypes/tech.tres" id="5_jr67i"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="6_6gsr1"]
+
+[resource]
+script = ExtResource("6_6gsr1")
+id = &"monday_open_house"
+display_name = "Monday Open House"
+blurb = "Five appointments, booked in order. Once they're done, so is your day."
+lineup = Array[ExtResource("1_0be1k")]([ExtResource("2_dlx8y"), ExtResource("3_cki16"), ExtResource("4_p6dfy"), ExtResource("5_jr67i"), ExtResource("2_dlx8y")])
