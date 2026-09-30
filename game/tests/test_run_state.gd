@@ -175,6 +175,32 @@ func test_start_shift_threads_the_picked_profiles_fields_through() -> void:
 	h.check("unlock_full_archetype_pool reached the shift",
 		s.unlock_full_archetype_pool)
 
+func test_a_shifts_quota_scale_sets_its_quota() -> void:
+	## "Make the quota on morning a little higher" - by a scale on the run's own
+	## climbing quota, so it climbs with the week like everyone else's.
+	var r := _run()
+	var p := ShiftProfile.new()
+	p.quota_scale = 1.2
+	h.eq("the run's quota, scaled by the shift's own",
+		r.start_shift(p).quota, roundi(r.quota_for(r.shift_number) * 1.2))
+	p.quota = 1234
+	h.eq("a premade shift's own quota wins over the scale", r.start_shift(p).quota, 1234)
+
+func test_a_shifts_bonus_scale_multiplies_what_it_banks_over_quota() -> void:
+	## "Add the multiplier for midday and night" - the harder shifts paying in
+	## money as well as in what their stores stock.
+	var r := _run()
+	var p := ShiftProfile.new()
+	p.bonus_scale = 1.5
+	var report := r.start_shift(p).report()
+	h.eq("the shift's report carries its scale", report["bonus_scale"], 1.5)
+	report["margin_banked"] = int(report["quota"]) - 1
+	h.eq("missing quota still pays nothing", RunState.bonus_from(report), 0)
+	report["margin_banked"] = int(report["quota"]) + 1000
+	h.eq("banking over it pays that much times the scale", RunState.bonus_from(report), 1500)
+	r.finish_shift(report)
+	h.eq("and that is what goes in the pot", r.money, 1500)
+
 func test_two_runs_from_one_seed_are_identical() -> void:
 	## The whole reason the run owns a seeded rng instead of calling randi().
 	var a := _run(4242)

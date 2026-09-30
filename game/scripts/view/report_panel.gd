@@ -63,9 +63,11 @@ func setup(r: Dictionary) -> void:
 	# while the run has not advanced yet - finish_shift() does not run until the
 	# button below is pressed. RunState owns the arithmetic either way.
 	var bonus := RunState.bonus_from(r)
+	var scale := float(r.get("bonus_scale", 1.0))
 	if bonus > 0:
-		_bonus.text = "You exceeded your quota. You got a %s bonus!" \
-			% Format.money(bonus)
+		# A shift that pays over the odds says so, and what it did to the money.
+		_bonus.text = "You exceeded your quota. You got a %s bonus%s!" % [Format.money(bonus),
+			"" if is_equal_approx(scale, 1.0) else " (×%s for this shift)" % String.num(scale, 2)]
 		_bonus.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
 	elif r["made_quota"]:
 		_bonus.text = "You hit quota on the nose - nothing over, nothing banked."

@@ -197,8 +197,12 @@ func _phase_0_open_and_finish_shift() -> void:
 		900.0 / float(r0["quota"]) * _run.cfg.standing_heal_scale)
 	_set_standing_keys(over, _run.cfg.standing_start)
 	panel.setup(over)
+	# What 900 over pays depends on the shift's own bonus_scale - read, not assumed.
+	var paid := RunState.bonus_from(over)
+	var scaled := not is_equal_approx(float(over.get("bonus_scale", 1.0)), 1.0)
 	_check("and announces the bonus when there is one (%s)" % panel._bonus.text,
-		panel._bonus.text.contains("$900") and panel._bonus.text.contains("bonus"))
+		panel._bonus.text.contains(Format.money(paid)) and panel._bonus.text.contains("bonus")
+			and panel._bonus.text.contains("×") == scaled)
 	var r0_shown: Dictionary = r0.duplicate()
 	_set_standing_keys(r0_shown, _run.cfg.standing_start)
 	panel.setup(r0_shown)
@@ -751,6 +755,21 @@ func _check_the_calendar_shows_the_week() -> void:
 	_root._picker_view.chosen.connect(_root._on_profile_chosen)
 	_check("clicking an event chooses that shift",
 		got.size() == 1 and got[0] == _run.todays_shifts()[0])
+	# A shift with its own quota or bonus multiplier says so on its event -
+	# read from each shift's own numbers.
+	var day_quota := _run.quota_for(_run.shift_number)
+	for i in range(mini(events.size(), _run.todays_shifts().size())):
+		var profile: ShiftProfile = _run.todays_shifts()[i]
+		var words := ""
+		for label in (events[i] as Node).find_children("*", "Label", true, false):
+			words += (label as Label).text + " "
+		var quota := profile.quota_on(day_quota)
+		if quota != day_quota:
+			_check("%s's event shows its own quota (%s)" % [profile.id, Format.money(quota)],
+				words.contains(Format.money(quota)))
+		if not is_equal_approx(profile.bonus_scale, 1.0):
+			_check("%s's event shows its bonus multiplier (%s)" % [profile.id, profile.bonus_scale],
+				words.contains("×" + String.num(profile.bonus_scale, 2)))
 
 ## Today's column's events, in the order the day offers them.
 func _todays_events() -> Array:

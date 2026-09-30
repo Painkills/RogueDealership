@@ -21,6 +21,14 @@ class_name ShiftProfile extends Resource
 ## tick budget while every chair still starts, and stays, physically real.
 @export var walk_up_scale: float = 1.0
 @export var unlock_full_archetype_pool: bool = false
+## The shift's quota against the run's climbing one. A little over 1 makes an
+## easy shift pay less: the bonus is only what you bank OVER quota. A premade
+## shift's own `quota` replaces it outright.
+@export var quota_scale: float = 1.0
+## What you bank over quota is multiplied by this on its way into the bonus
+## pot - a harder shift paying out in money as well as in what its store
+## stocks. See RunState.bonus_from().
+@export var bonus_scale: float = 1.0
 
 @export_group("Premade shift")
 ## Ticks in the shift. 0 = ShiftConfig.shift_ticks.
@@ -51,6 +59,11 @@ class_name ShiftProfile extends Resource
 ## took, and the category that dealt it. A regular tier has neither.
 var time_of_day: StringName = &""
 var dealt_by: ShiftCategory = null
+
+## This shift's quota on a day whose own is `base` - the one number RunState
+## runs it to and the calendar shows.
+func quota_on(base: int) -> int:
+	return quota if quota > 0 else roundi(base * quota_scale)
 
 ## Which part of the day it is worked in - &"morning", &"midday" or &"night":
 ## its hours on the calendar and the tablet's clock, and what the office

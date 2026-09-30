@@ -22,6 +22,10 @@ const GUTTER_W := 84.0
 @onready var _week: HBoxContainer = %Week
 @onready var _sub: Label = %SubLabel
 
+## Today's own quota, before any shift's quota_scale - what an event compares
+## its shift's quota against.
+var _day_quota: int = 0
+
 func _ready() -> void:
 	(%TutorialButton as Button).pressed.connect(func(): tutorial_requested.emit())
 
@@ -31,6 +35,7 @@ func _ready() -> void:
 ## {"profile", "report"} per shift already worked, in order.
 func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int = 0,
 		history: Array = []) -> void:
+	_day_quota = quota
 	_sub.text = "Shift %d of %d - pick today's%s" % [day, days,
 		"  |  quota %s" % Format.money(quota) if quota > 0 else ""]
 	# The week to beat, once there is one - see PlayerProfile.
@@ -125,12 +130,16 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 			else "SPECIAL SHIFT", 14, hue, true)
 		tag.name = "PremadeTag"
 	_line(col, profile.display_name, 24, Palette.color(&"text"), true)
-	# A shift with its own quota says so beside its hours, not on a line of its
-	# own - a four-hour block has room for only so many.
+	# A shift with a quota of its own, or a bonus that pays over the odds, says
+	# so beside its hours rather than on a line of its own - a four-hour block
+	# has room for only so many.
 	var when := "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
 		CalendarDay.hour_label(int(hours[1]))]
-	if profile.quota > 0:
-		when += "  |  quota %s" % Format.money(profile.quota)
+	var quota := profile.quota_on(_day_quota)
+	if quota > 0 and quota != _day_quota:
+		when += "  |  quota %s" % Format.money(quota)
+	if not is_equal_approx(profile.bonus_scale, 1.0):
+		when += "  |  bonus ×%s" % String.num(profile.bonus_scale, 2)
 	_line(col, when, 15, Palette.color(&"text_dim"))
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
 	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))

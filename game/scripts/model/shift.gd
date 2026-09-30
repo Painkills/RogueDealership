@@ -23,6 +23,10 @@ var shift_number: int = 1          ## which shift of the run; gates archetypes
 var patience_scale: float = 1.0
 var walk_up_scale: float = 1.0
 var unlock_full_archetype_pool: bool = false
+## What banking over quota pays into the bonus pot, per dollar over - the
+## picked ShiftProfile's bonus_scale. Nothing here uses it but report(); see
+## RunState.bonus_from().
+var bonus_scale: float = 1.0
 ## A premade shift's own customers - see ShiftProfile.only_archetypes and
 ## lineup. Both empty on any other shift.
 var only_archetypes: Array[CustomerArchetype] = []
@@ -1311,6 +1315,7 @@ func report() -> Dictionary:
 		"margin_banked": margin_banked,
 		"quota": quota,
 		"made_quota": margin_banked >= quota,
+		"bonus_scale": bonus_scale,
 		"standing_delta": _standing_delta(),
 		"standing_lost_to_walkouts": _standing_lost_to_walkouts,
 		"ticks": tick,

@@ -9,5 +9,6 @@ display_name = "Night Shift"
 blurb = "Quiet floor. The ones who come in this late are trouble."
 walk_up_scale = 1.8
 unlock_full_archetype_pool = true
+bonus_scale = 2.0
 cards_for_sale = 1
 upgrades = 3

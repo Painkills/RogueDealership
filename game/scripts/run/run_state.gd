@@ -69,12 +69,13 @@ func start_shift(profile: ShiftProfile) -> Shift:
 			shift_cfg.shift_ticks = profile.shift_ticks
 		if profile.waiting_room > 0:
 			shift_cfg.waiting_max = profile.waiting_room
-	var quota := profile.quota if profile.quota > 0 else quota_for(shift_number)
-	return Shift.new(shift_cfg, interests, card_pool, archetypes,
-		rng.randi(), [], deck, quota, shift_number, standing,
-		sale_streak, dialogue, profile.seats,
+	var s := Shift.new(shift_cfg, interests, card_pool, archetypes,
+		rng.randi(), [], deck, profile.quota_on(quota_for(shift_number)), shift_number,
+		standing, sale_streak, dialogue, profile.seats,
 		profile.patience_scale, profile.walk_up_scale,
 		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup)
+	s.bonus_scale = profile.bonus_scale
+	return s
 
 func finish_shift(report: Dictionary) -> void:
 	## The quota is the house's cut and it comes out first. What you bank OVER it
@@ -106,4 +107,8 @@ static func bonus_from(report: Dictionary) -> int:
 	## Static because the report panel needs this number BEFORE finish_shift runs
 	## - it is on screen while you are still looking at the shift you just played,
 	## and the run does not advance until you press the button.
-	return maxi(0, int(report["margin_banked"]) - int(report["quota"]))
+	##
+	## What you banked over quota, times the shift's own bonus_scale - see
+	## ShiftProfile. A report without one (a hand-built one) pays it straight.
+	var over := maxi(0, int(report["margin_banked"]) - int(report["quota"]))
+	return roundi(over * float(report.get("bonus_scale", 1.0)))
