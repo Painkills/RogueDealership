@@ -77,6 +77,7 @@ func _process(_delta: float) -> bool:
 		_check_the_store_holds_what_the_shift_stocks()
 		_check_the_deck_row_shows_exactly_the_random_upgrade_offers()
 		_check_clicking_a_deck_card_opens_its_detail()
+		_check_the_week_report_comes_between_weeks()
 		_check_run_summary_screen_appears_at_the_end_of_a_run()
 		_check_the_fired_title_is_distinct_from_a_completed_run()
 		PlayerProfile.reset()
@@ -726,12 +727,12 @@ func _check_passing_on_the_free_pick_opens_the_store() -> void:
 func _check_the_calendar_shows_the_week() -> void:
 	_check_window_fits("the calendar", _root._picker_view.get_node(^"%CalendarWindow"))
 	var week: Node = _root._picker_view.get_node(^"%Week")
-	var days: int = _run.cfg.shifts_in_run
-	_check("a column per day of the run, after the hours (%d)" % week.get_child_count(),
+	var days: int = mini(_run.cfg.days_per_week, _run.cfg.shifts_in_run)
+	_check("a column per day of the week, after the hours (%d)" % week.get_child_count(),
 		week.get_child_count() == days + 1)
 	if week.get_child_count() != days + 1:
 		return
-	var today: int = _run.shift_number   # column 0 is the hours
+	var today: int = _today_column()   # column 0 is the hours
 	var events := _todays_events()
 	_check("today holds every shift you can pick (%d of %d)"
 		% [events.size(), _run.todays_shifts().size()],
@@ -755,8 +756,8 @@ func _check_the_calendar_shows_the_week() -> void:
 	_root._picker_view.chosen.connect(_root._on_profile_chosen)
 	_check("clicking an event chooses that shift",
 		got.size() == 1 and got[0] == _run.todays_shifts()[0])
-	# A shift with its own quota or bonus multiplier says so on its event -
-	# read from each shift's own numbers.
+	# Every shift shows its quota and its bonus, read from its own numbers,
+	# with its hours at the far right of its title row.
 	var day_quota := _run.quota_for(_run.shift_number)
 	for i in range(mini(events.size(), _run.todays_shifts().size())):
 		var profile: ShiftProfile = _run.todays_shifts()[i]
@@ -764,18 +765,26 @@ func _check_the_calendar_shows_the_week() -> void:
 		for label in (events[i] as Node).find_children("*", "Label", true, false):
 			words += (label as Label).text + " "
 		var quota := profile.quota_on(day_quota)
-		if quota != day_quota:
-			_check("%s's event shows its own quota (%s)" % [profile.id, Format.money(quota)],
-				words.contains(Format.money(quota)))
-		if not is_equal_approx(profile.bonus_scale, 1.0):
-			_check("%s's event shows its bonus multiplier (%s)" % [profile.id, profile.bonus_scale],
-				words.contains("×" + String.num(profile.bonus_scale, 2)))
+		_check("%s's event shows its quota (%s) and bonus (x%s)"
+			% [profile.id, Format.money(quota), String.num(profile.bonus_scale, 2)],
+			words.contains(Format.money(quota))
+				and words.contains("×" + String.num(profile.bonus_scale, 2)))
+		var hours := (events[i] as Node).find_child("Hours", true, false) as Label
+		_check("%s's hours sit at the far right of its title row" % profile.id,
+			hours != null and hours.get_parent().name == "TitleRow"
+				and hours.get_index() == hours.get_parent().get_child_count() - 1
+				and hours.horizontal_alignment == HORIZONTAL_ALIGNMENT_RIGHT)
+
+## Which of the calendar's columns is today - column 0 is the hours, and the
+## calendar shows one week at a time.
+func _today_column() -> int:
+	return (_run.shift_number - 1) % maxi(1, _run.cfg.days_per_week) + 1
 
 ## Today's column's events, in the order the day offers them.
 func _todays_events() -> Array:
 	var week: Node = _root._picker_view.get_node(^"%Week")
 	var out := []
-	for child in week.get_child(_run.shift_number).get_child(1).get_children():
+	for child in week.get_child(_today_column()).get_child(1).get_children():
 		if child is Button:
 			out.append(child)
 	return out
@@ -791,22 +800,25 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	var special := ShiftProfile.new()
 	special.id = &"drive_special"
 	special.display_name = "Drive Special"
-	var nights := ShiftCategory.new()
-	nights.slots = 1 << 2
-	nights.shifts.append(special)
-	pool.categories.append(nights)
+	# Into whichever slot today's calendar actually opens - not every tier is
+	# offered every day (ShiftProfile.from_day).
+	var slot: StringName = was.offers(_run.shift_number)[0].worked_at()
+	var category := ShiftCategory.new()
+	category.slots = 1 << ShiftCategory.SLOTS.find(slot)
+	category.shifts.append(special)
+	pool.categories.append(category)
 
-	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1)
+	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1, _run.cfg.days_per_week)
 	_root._open_the_picker()
 	var events := _todays_events()
 	var tagged := events.filter(func(e): return e.find_child("PremadeTag", true, false) != null)
-	_check("a premade shift takes the night's place, and says so (%d shifts, %d tagged)"
+	_check("a premade shift takes a tier's place, and says so (%d shifts, %d tagged)"
 		% [events.size(), tagged.size()],
-		events.size() == pool.profiles.size() and tagged.size() == 1
+		events.size() == _run.todays_shifts().size() and tagged.size() == 1
 			and tagged[0].name == "Event_drive_special")
 
-	nights.boss_day = true
-	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1)
+	category.boss_day = true
+	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1, _run.cfg.days_per_week)
 	_root._open_the_picker()
 	events = _todays_events()
 	var tag: Label = (events[0] as Node).find_child("PremadeTag", true, false) as Label \
@@ -967,7 +979,7 @@ func _check_report_card_fits_the_worst_case(report) -> void:
 		"margin_conceded": 1234567, "margin_padded": 1234567,
 		"margin_bonus": 1234567, "margin_lost_to_walks": 1234567,
 		"margin_lost_to_closing": 1234567, "standing_delta": -100,
-		"standing_lost_to_walkouts": 100,
+		"standing_lost_to_walkouts": 100, "standing_healed": 100,
 	}
 	_set_standing_keys(worst, 100)
 	var was := {}
@@ -1033,6 +1045,35 @@ func _needed_height(node: Control, width: float) -> float:
 					_needed_height(child, width)))
 		return tallest
 	return node.custom_minimum_size.y
+
+## "Before that week starts, give the player a 'this week so far' kind of
+## report." Put the run on the first day of week 2 and close the store the way
+## a player would: the report comes up instead of the calendar, a row for each
+## day of week 1 this run has worked, and its button opens week 2's calendar.
+func _check_the_week_report_comes_between_weeks() -> void:
+	var was_day: int = _run.shift_number
+	var per_week: int = _run.cfg.days_per_week
+	if _run.cfg.shifts_in_run <= per_week:
+		print("SKIP  week report check: the run is only one week long")
+		return
+	_run.shift_number = per_week + 1
+	var week_view = _root._week_view
+	_check("the week report starts hidden", not week_view.visible)
+	_root._on_shop_done()
+	_check("closing the last store of a week opens its report, not the calendar",
+		week_view.visible and not _root._picker_view.visible)
+	var worked: int = mini(_root._history.size(), per_week)
+	var grid := week_view.get_node(^"%DaysGrid") as GridContainer
+	_check("a row for each day of the week worked (%d cells for %d days)"
+		% [grid.get_child_count(), worked],
+		grid.get_child_count() == grid.columns * (worked + 1))
+	_check("titled for the week just worked (%s)" % week_view._title.text,
+		week_view._title.text.contains("WEEK 1"))
+	var start := week_view.get_node(^"%StartButton") as Button
+	_check("and a way on into week 2 (%s)" % start.text, start.text.contains("2"))
+	start.pressed.emit()
+	_check("which opens week 2's calendar", _root._picker_view.visible and not week_view.visible)
+	_run.shift_number = was_day
 
 ## "At end of run it would show you all these categories and the points
 ## given and a high score" - the literal ask, end to end: force the run onto

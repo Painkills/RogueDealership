@@ -17,9 +17,10 @@ const SLOTS: Array[StringName] = [&"morning", &"midday", &"night"]
 @export var boss_day: bool = false
 @export var shifts: Array[ShiftProfile] = []
 
-## `day` is the run's own 1-based day: day 1 is a Monday.
-func allows_day(day: int) -> bool:
-	return days == 0 or (days & (1 << ((day - 1) % 7))) != 0
+## `day` is the run's own 1-based day: day 1 is a Monday, and a new week starts
+## every `week_length` days - so with a five-day week, day 6 is Monday again.
+func allows_day(day: int, week_length: int = 7) -> bool:
+	return days == 0 or (days & (1 << ((day - 1) % maxi(1, week_length)))) != 0
 
 func allows_slot(slot: StringName) -> bool:
 	var i := SLOTS.find(slot)

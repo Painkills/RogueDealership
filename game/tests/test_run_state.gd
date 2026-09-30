@@ -94,12 +94,12 @@ func test_missing_quota_costs_nothing_more_than_the_bonus() -> void:
 	## invariant now (see test_repeated_total_failure_ends_the_run below) and was
 	## in fact the exact behaviour this whole feature exists to change.
 	var r := _run()
-	for i in range(5):
+	for i in range(r.cfg.shifts_in_run):
 		r.finish_shift({"margin_banked": 0, "quota": r.quota_for(i + 1),
 			"made_quota": false, "standing_delta": 0})
-	h.eq("five straight misses, still nothing to spend", r.money, 0)
+	h.eq("a run of straight misses, still nothing to spend", r.money, 0)
 	h.check("standing untouched by a neutral delta", r.standing == r.cfg.standing_start)
-	h.check("so the run ran its full five shifts", r.is_over())
+	h.check("so the run ran its full length", r.is_over())
 
 func test_repeated_total_failure_ends_the_run_before_it_would_naturally_end() -> void:
 	## The literal bug report: before this feature, you could play every shift
@@ -204,6 +204,40 @@ func test_a_shifts_bonus_scale_multiplies_what_it_banks_over_quota() -> void:
 	h.eq("banking over it pays that much times the scale", RunState.bonus_from(report), 1500)
 	r.finish_shift(report)
 	h.eq("and that is what goes in the pot", r.money, 1500)
+
+func test_a_shift_with_a_heal_restores_standing_by_its_share_of_quota() -> void:
+	## "Boss fights heal you by up to 25%" - all of it for making quota, a share
+	## of it for banking that share, nothing on a shift without one.
+	var r := _run()
+	var p := ShiftProfile.new()
+	p.heal_up_to = 0.25
+	var s := r.start_shift(p)
+	s.quota = 1000
+	var full := 0.25 * r.cfg.standing_start
+	s.margin_banked = 2000
+	h.eq("making quota heals all of it, and no more for beating it",
+		int(s.report()["standing_healed"]), roundi(full))
+	s.margin_banked = 500
+	h.eq("half the quota heals half", int(s.report()["standing_healed"]), roundi(full * 0.5))
+	# Exactly on quota: nothing over it to heal by, nothing short to cost, and
+	# nobody walked - so the heal is the whole of what the run is handed.
+	s.margin_banked = 1000
+	h.eq("and the heal is in the standing the run is given",
+		int(s.report()["standing_delta"]), roundi(full))
+	h.eq("a shift without one heals nothing",
+		int(r.start_shift(ShiftProfile.new()).report()["standing_healed"]), 0)
+
+func test_the_run_knows_its_weeks() -> void:
+	var r := _run()
+	var per_week: int = r.cfg.days_per_week
+	h.eq("day 1 is week 1", r.week_of(1), 1)
+	h.eq("the week's last day still is", r.week_of(per_week), 1)
+	h.eq("the next is week 2", r.week_of(per_week + 1), 2)
+	h.check("the first day does not start a NEW week", not r.week_starts_today())
+	r.shift_number = per_week + 1
+	h.check("the day after the last of a week does", r.week_starts_today())
+	r.shift_number = per_week + 2
+	h.check("and the day after that does not", not r.week_starts_today())
 
 func test_two_runs_from_one_seed_are_identical() -> void:
 	## The whole reason the run owns a seeded rng instead of calling randi().

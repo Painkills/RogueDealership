@@ -23,6 +23,9 @@ class_name ShiftConfig extends Resource
 
 # --- the run ---------------------------------------------------------------
 @export var shifts_in_run: int = 5
+## A working week: the calendar shows one at a time, a category's weekday
+## checkboxes count days within one, and a report comes between them.
+@export var days_per_week: int = 5
 ## The quota climbs this fraction each shift, so the run keeps pace with a deck
 ## that is getting stronger in the shop between them.
 @export var quota_growth: float = 0.15
@@ -36,6 +39,9 @@ class_name ShiftConfig extends Resource
 ## bad shift and you're out." Both are single numbers, guessed and untested
 ## like quota_growth above; retune here, not in code.
 @export var standing_damage_scale: float = 50.0
+## Zeroed in the shipped data: an ordinary shift never heals. A shift can heal
+## on its own terms instead - see ShiftProfile.heal_up_to, which the boss
+## fights use.
 @export var standing_heal_scale: float = 15.0
 ## A walkout costs standing on its own, separate from the quota-delta above -
 ## letting people leave should threaten the job by itself, not only a thin

@@ -40,7 +40,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	deck = Deck.build_starting(card_pool)
 	standing = cfg.standing_start
 	if p_shifts != null:
-		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi())
+		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi(), cfg.days_per_week)
 
 ## What today - the shift about to be played - offers to pick from.
 func todays_shifts() -> Array[ShiftProfile]:
@@ -51,6 +51,14 @@ func todays_shifts() -> Array[ShiftProfile]:
 
 func is_over() -> bool:
 	return shift_number > cfg.shifts_in_run or standing <= 0
+
+## Which week of the run `day` (1-based) falls in, from 1.
+func week_of(day: int) -> int:
+	return (day - 1) / maxi(1, cfg.days_per_week) + 1
+
+## The shift about to be played opens a new week - the one before it is done.
+func week_starts_today() -> bool:
+	return shift_number > 1 and (shift_number - 1) % maxi(1, cfg.days_per_week) == 0
 
 func quota_for(n: int) -> int:
 	## Compounded rather than stepped, so the curve is one number to retune.
@@ -73,8 +81,10 @@ func start_shift(profile: ShiftProfile) -> Shift:
 		rng.randi(), [], deck, profile.quota_on(quota_for(shift_number)), shift_number,
 		standing, sale_streak, dialogue, profile.seats,
 		profile.patience_scale, profile.walk_up_scale,
-		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup)
+		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup,
+		profile.excluded_archetypes)
 	s.bonus_scale = profile.bonus_scale
+	s.heal_up_to = profile.heal_up_to
 	return s
 
 func finish_shift(report: Dictionary) -> void:

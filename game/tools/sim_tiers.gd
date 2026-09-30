@@ -45,7 +45,8 @@ func _init() -> void:
 	for tier in TIERS:
 		var profile: ShiftProfile = profiles[tier]
 		for day in range(1, days + 1):
-			rows.append(_cell(profile, day))
+			if day >= profile.from_day:     # only the days the calendar offers it
+				rows.append(_cell(profile, day))
 	_print(rows)
 	quit(0)
 
@@ -314,7 +315,7 @@ func _print(rows: Array) -> void:
 			r["standing"], r["seen"], r["signed"], r["walked"], r["met"], r["missed"],
 			r["lost_bell"]])
 	print("")
-	print("tier     banked  made%  bonus   stand  seen  signed walked  (averaged over the week)")
+	print("tier     banked  made%  bonus   stand  seen  signed walked  (averaged over the days it is offered)")
 	for tier in TIERS:
 		var n := 0
 		var t := {"margin": 0.0, "made": 0.0, "bonus": 0.0, "standing": 0.0, "seen": 0.0,

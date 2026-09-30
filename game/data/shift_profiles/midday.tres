@@ -8,6 +8,7 @@ id = &"midday"
 display_name = "Midday Shift"
 blurb = "Busy. Everyone's on a shorter fuse."
 patience_scale = 0.75
+from_day = 3
 bonus_scale = 1.25
 cards_for_sale = 3
 upgrades = 1

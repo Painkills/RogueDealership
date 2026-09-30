@@ -27,6 +27,10 @@ var unlock_full_archetype_pool: bool = false
 ## picked ShiftProfile's bonus_scale. Nothing here uses it but report(); see
 ## RunState.bonus_from().
 var bonus_scale: float = 1.0
+## The picked ShiftProfile's heal_up_to - see healed().
+var heal_up_to: float = 0.0
+## Who never comes in on this shift - ShiftProfile.excluded_archetypes.
+var excluded_archetypes: Array[CustomerArchetype] = []
 ## A premade shift's own customers - see ShiftProfile.only_archetypes and
 ## lineup. Both empty on any other shift.
 var only_archetypes: Array[CustomerArchetype] = []
@@ -101,7 +105,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_dialogue: DialoguePool = null, p_floor_size: int = 0,
 		p_patience_scale: float = 1.0, p_walk_up_scale: float = 1.0,
 		p_unlock_full_archetype_pool: bool = false,
-		p_only_archetypes: Array = [], p_lineup: Array = []) -> void:
+		p_only_archetypes: Array = [], p_lineup: Array = [],
+		p_excluded_archetypes: Array = []) -> void:
 	cfg = p_cfg
 	interests = p_interests
 	card_pool = p_cards
@@ -119,6 +124,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	unlock_full_archetype_pool = p_unlock_full_archetype_pool
 	only_archetypes.assign(p_only_archetypes)
 	lineup.assign(p_lineup)
+	excluded_archetypes.assign(p_excluded_archetypes)
 
 	tick_budget = cfg.shift_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
@@ -452,15 +458,26 @@ func _archetypes_available_this_shift() -> Array[CustomerArchetype]:
 	##
 	## A premade shift that names its customers skips it too: they are who comes,
 	## whatever the day.
+	##
+	## Whoever the shift excludes is taken out of whichever pool that is - unless
+	## that would leave nobody, when the exclusion gives way the way the ladder
+	## does.
+	var pool: Array[CustomerArchetype] = []
 	if not only_archetypes.is_empty():
-		return only_archetypes.duplicate()
-	if unlock_full_archetype_pool:
-		return archetypes.archetypes.duplicate()
-	var out: Array[CustomerArchetype] = []
-	for a in archetypes.archetypes:
-		if a.min_shift <= shift_number:
-			out.append(a)
-	return out if not out.is_empty() else archetypes.archetypes.duplicate()
+		pool = only_archetypes.duplicate()
+	elif unlock_full_archetype_pool:
+		pool = archetypes.archetypes.duplicate()
+	else:
+		for a in archetypes.archetypes:
+			if a.min_shift <= shift_number:
+				pool.append(a)
+		if pool.is_empty():
+			pool = archetypes.archetypes.duplicate()
+	if excluded_archetypes.is_empty():
+		return pool
+	var kept: Array[CustomerArchetype] = []
+	kept.assign(pool.filter(func(a): return not excluded_archetypes.has(a)))
+	return kept if not kept.is_empty() else pool
 
 
 func _next_name() -> String:
@@ -1318,6 +1335,7 @@ func report() -> Dictionary:
 		"bonus_scale": bonus_scale,
 		"standing_delta": _standing_delta(),
 		"standing_lost_to_walkouts": _standing_lost_to_walkouts,
+		"standing_healed": healed(),
 		"ticks": tick,
 		"tick_budget": tick_budget,
 		"customers_seen": served,
@@ -1354,8 +1372,19 @@ func _standing_delta() -> int:
 	## is however much of that survived the floor at 0, so a shift this method
 	## never lets the eventual RunState.finish_shift() double-charge. The quota
 	## term is added here because margin_banked is not final until report() is
-	## actually called - it cannot be evaluated any earlier than this.
-	return (standing - _initial_standing) + _standing_delta_from_quota()
+	## actually called - it cannot be evaluated any earlier than this. So is the
+	## shift's own heal, for the same reason.
+	return (standing - _initial_standing) + _standing_delta_from_quota() + healed()
+
+
+## What this shift's own heal gives back - ShiftProfile.heal_up_to of the run's
+## full standing, in proportion to how much of the quota was banked, all of it
+## at quota or better. Nothing for a shift without one.
+func healed() -> int:
+	if heal_up_to <= 0.0 or quota <= 0:
+		return 0
+	var share := minf(1.0, float(margin_banked) / float(quota))
+	return roundi(share * heal_up_to * cfg.standing_start)
 
 
 func _standing_delta_from_quota() -> int:

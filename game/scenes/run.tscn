@@ -1,18 +1,20 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/view/run_controller.gd" id="1_o3bs3"]
-[ext_resource type="PackedScene" path="res://scenes/shift_picker.tscn" id="2_21lnt"]
-[ext_resource type="Script" path="res://scripts/view/shift_picker_screen.gd" id="3_pgpyo"]
-[ext_resource type="PackedScene" path="res://scenes/shift.tscn" id="4_2s4kx"]
-[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="5_47ec3"]
-[ext_resource type="PackedScene" path="res://scenes/shop.tscn" id="6_lc2vt"]
-[ext_resource type="Script" path="res://scripts/view/shop_screen.gd" id="7_53ha4"]
-[ext_resource type="PackedScene" path="res://scenes/run_summary.tscn" id="8_iuvi8"]
-[ext_resource type="Script" path="res://scripts/view/run_summary_panel.gd" id="9_w0t45"]
-[ext_resource type="PackedScene" path="res://scenes/deck_viewer.tscn" id="10_072lk"]
-[ext_resource type="Script" path="res://scripts/view/deck_viewer.gd" id="11_xh8mu"]
-[ext_resource type="PackedScene" path="res://scenes/tutorial_coach.tscn" id="12_i3hux"]
-[ext_resource type="Script" path="res://scripts/view/tutorial_coach.gd" id="13_yh7fy"]
+[ext_resource type="Script" path="res://scripts/view/run_controller.gd" id="1_pgpyo"]
+[ext_resource type="PackedScene" path="res://scenes/shift_picker.tscn" id="2_2s4kx"]
+[ext_resource type="Script" path="res://scripts/view/shift_picker_screen.gd" id="3_47ec3"]
+[ext_resource type="PackedScene" path="res://scenes/shift.tscn" id="4_lc2vt"]
+[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="5_53ha4"]
+[ext_resource type="PackedScene" path="res://scenes/shop.tscn" id="6_iuvi8"]
+[ext_resource type="Script" path="res://scripts/view/shop_screen.gd" id="7_w0t45"]
+[ext_resource type="PackedScene" path="res://scenes/run_summary.tscn" id="8_072lk"]
+[ext_resource type="Script" path="res://scripts/view/run_summary_panel.gd" id="9_xh8mu"]
+[ext_resource type="PackedScene" path="res://scenes/week_report.tscn" id="10_i3hux"]
+[ext_resource type="Script" path="res://scripts/view/week_report_panel.gd" id="11_yh7fy"]
+[ext_resource type="PackedScene" path="res://scenes/deck_viewer.tscn" id="12_0mn38"]
+[ext_resource type="Script" path="res://scripts/view/deck_viewer.gd" id="13_jt87d"]
+[ext_resource type="PackedScene" path="res://scenes/tutorial_coach.tscn" id="14_hge7r"]
+[ext_resource type="Script" path="res://scripts/view/tutorial_coach.gd" id="15_hvn1h"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_14ick"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
@@ -23,55 +25,66 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cuait"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.94)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0nko1"]
+bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=1736728627]
-script = ExtResource("1_o3bs3")
+[node name="Run" type="Node" unique_id=699112290]
+script = ExtResource("1_pgpyo")
 
-[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=465005308 instance=ExtResource("2_21lnt")]
+[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=465005308 instance=ExtResource("2_2s4kx")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
-script = ExtResource("3_pgpyo")
+script = ExtResource("3_47ec3")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=1340243854 instance=ExtResource("4_2s4kx")]
-script = ExtResource("5_47ec3")
+[node name="ShiftView" type="Node3D" parent="." unique_id=1340243854 instance=ExtResource("4_lc2vt")]
+script = ExtResource("5_53ha4")
 
-[node name="ShopView" type="PanelContainer" parent="." unique_id=699821650 instance=ExtResource("6_lc2vt")]
+[node name="ShopView" type="PanelContainer" parent="." unique_id=699821650 instance=ExtResource("6_iuvi8")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8r1wq")
-script = ExtResource("7_53ha4")
+script = ExtResource("7_w0t45")
 
-[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=1075478770 instance=ExtResource("8_iuvi8")]
+[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=1075478770 instance=ExtResource("8_072lk")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
-script = ExtResource("9_w0t45")
+script = ExtResource("9_xh8mu")
 
-[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1879407891 instance=ExtResource("10_072lk")]
+[node name="WeekReportView" type="PanelContainer" parent="." unique_id=2108427986 instance=ExtResource("10_i3hux")]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_0nko1")
+script = ExtResource("11_yh7fy")
+
+[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1879407891 instance=ExtResource("12_0mn38")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
-script = ExtResource("11_xh8mu")
+script = ExtResource("13_jt87d")
 
-[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=1228932464 instance=ExtResource("12_i3hux")]
+[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=1228932464 instance=ExtResource("14_hge7r")]
 layer = 50
-script = ExtResource("13_yh7fy")
+script = ExtResource("15_hvn1h")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=145115256]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1098944582]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=995653511]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1657784451]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -90,7 +103,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=2038037737]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=671037933]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1

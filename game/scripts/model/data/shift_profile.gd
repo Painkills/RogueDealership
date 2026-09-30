@@ -21,6 +21,17 @@ class_name ShiftProfile extends Resource
 ## tick budget while every chair still starts, and stays, physically real.
 @export var walk_up_scale: float = 1.0
 @export var unlock_full_archetype_pool: bool = false
+## Never come in on this shift, whatever else lets them - "remove Lay-Down
+## Larry and Easygoing from the night pool".
+@export var excluded_archetypes: Array[CustomerArchetype] = []
+## The first day of the run this shift is offered on - a regular tier only
+## shows on the calendar from then. See Week.
+@export var from_day: int = 1
+## Heals standing by up to this fraction of the run's full standing (0.25 = up
+## to 25 of 100): all of it for making quota, a share of it for banking that
+## share of the quota. On top of anything missing quota costs. The boss fights'
+## reward - see Shift.healed().
+@export_range(0.0, 1.0, 0.05) var heal_up_to: float = 0.0
 ## The shift's quota against the run's climbing one: scaled by this, then
 ## `quota_offset` added. Raising an easy shift's quota makes it pay less - the
 ## bonus is only what you bank OVER quota. A flat offset costs the same every

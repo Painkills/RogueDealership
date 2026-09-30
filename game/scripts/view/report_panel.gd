@@ -78,8 +78,11 @@ func setup(r: Dictionary) -> void:
 		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
 	var delta: int = int(r["standing_delta"])
-	_standing.text = "Standing: %d/%d (%s%d)" % [r["standing_after"], r["standing_start"],
-		"+" if delta >= 0 else "", delta]
+	# A shift that heals (a boss fight's reward) says how much of that was the
+	# heal - see Shift.healed().
+	var healed: int = int(r.get("standing_healed", 0))
+	_standing.text = "Standing: %d/%d (%s%d)%s" % [r["standing_after"], r["standing_start"],
+		"+" if delta >= 0 else "", delta, "  |  healed +%d" % healed if healed > 0 else ""]
 	_standing.add_theme_color_override("font_color",
 		Palette.color(&"alert" if fired else (&"patience_ok" if delta > 0 else &"text_dim")))
 

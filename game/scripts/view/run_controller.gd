@@ -12,6 +12,8 @@ extends Node
 @onready var _shift_view = $ShiftView
 @onready var _shop_view = $ShopView
 @onready var _summary_view = $RunSummaryView
+## Between weeks - see week_report_panel.gd.
+@onready var _week_view = $WeekReportView
 ## Reachable from the shop's own button AND clicking the draw pile on the
 ## floor, so it lives here rather than inside either screen - one overlay,
 ## shown on top of whichever of the four is active, never toggled by
@@ -61,6 +63,7 @@ func _ready() -> void:
 	_deck_viewer.visibility_changed.connect(
 		func(): _shift_view.set_hud_dimmed(_deck_viewer.visible))
 	_summary_view.continue_pressed.connect(_on_summary_continue)
+	_week_view.continue_pressed.connect(_open_the_picker)
 	# NOT left to whatever build_run_scene.gd happened to bake into run.tscn
 	# at author time: that text is a static property of a committed scene
 	# file, frozen the moment the builder ran locally, and CI stamps
@@ -88,7 +91,7 @@ func _start_run() -> void:
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
 	_picker_view.setup(_run.todays_shifts(), _run.shift_number, _run.cfg.shifts_in_run,
-		_run.quota_for(_run.shift_number), _history)
+		_run.quota_for(_run.shift_number), _history, _run.cfg.days_per_week)
 
 func _on_profile_chosen(profile: ShiftProfile) -> void:
 	_chosen_profile = profile
@@ -154,7 +157,13 @@ func _on_summary_continue() -> void:
 	_summary_view.visible = false
 	_start_run()
 
+## The store closes on the next day's calendar - unless that day starts a new
+## week, when the week just worked gets its report first.
 func _on_shop_done() -> void:
+	if _run.week_starts_today():
+		_show_only(_week_view)
+		_week_view.setup(_run, _history)
+		return
 	_open_the_picker()
 
 func _on_view_deck_requested() -> void:
@@ -169,3 +178,4 @@ func _show_only(screen: Node) -> void:
 	_shift_view.set_active(screen == _shift_view)
 	_picker_view.visible = screen == _picker_view
 	_shop_view.visible = screen == _shop_view
+	_week_view.visible = screen == _week_view

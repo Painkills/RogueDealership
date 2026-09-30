@@ -11,4 +11,5 @@ display_name = "Karen Convention"
 blurb = "Two desks open, and every one of them wants the manager."
 seats = 2
 only_archetypes = Array[ExtResource("1_qg0wf")]([ExtResource("2_hw1oe")])
-chance = 0.5
+chance = 1.0
+heal_up_to = 0.25

@@ -32,12 +32,18 @@ func _ready() -> void:
 ## `offers` is what today has to pick from - the regular tiers, or a premade
 ## shift in one's place, or a boss day's one shift (see Week). `day` is the
 ## run's shift number (1-based), `days` how many the run has. `history` is one
-## {"profile", "report"} per shift already worked, in order.
+## {"profile", "report"} per shift already worked, in order. `week_length` is
+## how many days the calendar shows at once: the week `day` falls in.
 func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int = 0,
-		history: Array = []) -> void:
+		history: Array = [], week_length: int = 7) -> void:
 	_day_quota = quota
-	_sub.text = "Shift %d of %d - pick today's%s" % [day, days,
-		"  |  quota %s" % Format.money(quota) if quota > 0 else ""]
+	var per_week: int = maxi(1, mini(week_length, days))
+	var week_index: int = (day - 1) / per_week
+	var weeks: int = (days + per_week - 1) / per_week
+	var first: int = week_index * per_week
+	# Each shift shows its own quota now, so the header only says where you are.
+	_sub.text = "%sShift %d of %d - pick today's" % [
+		"Week %d of %d  |  " % [week_index + 1, weeks] if weeks > 1 else "", day, days]
 	# The week to beat, once there is one - see PlayerProfile.
 	if PlayerProfile.has_best():
 		_sub.text += "  |  your best week: %s" % Format.number(PlayerProfile.best_score())
@@ -56,12 +62,13 @@ func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int 
 	gutter.gutter = true
 	gutter_col.add_child(gutter)
 
-	for d in range(days):
+	# The week today falls in - `d` is still the run's own day, from 0.
+	for d in range(first, mini(first + per_week, days)):
 		var col := VBoxContainer.new()
 		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		col.add_theme_constant_override("separation", 0)
 		_week.add_child(col)
-		col.add_child(_day_header(d, d + 1 == day))
+		col.add_child(_day_header(d, d % per_week, d + 1 == day))
 		var body := CalendarDay.new()
 		body.today = d + 1 == day
 		col.add_child(body)
@@ -71,13 +78,15 @@ func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int 
 			for profile in offers:
 				_offer(body, profile)
 
-func _day_header(d: int, is_today: bool) -> Control:
+## `d` is the run's own day from 0 - the date in the circle - and `weekday`
+## which day of the week it falls on.
+func _day_header(d: int, weekday: int, is_today: bool) -> Control:
 	var head := VBoxContainer.new()
 	head.custom_minimum_size = Vector2(0, 88)
 	head.alignment = BoxContainer.ALIGNMENT_CENTER
 	head.add_theme_constant_override("separation", 4)
 	var name_label := Label.new()
-	name_label.text = DAY_NAMES[d % DAY_NAMES.size()]
+	name_label.text = DAY_NAMES[weekday % DAY_NAMES.size()]
 	name_label.theme_type_variation = &"Heading"
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.add_theme_font_size_override("font_size", 18)
@@ -129,18 +138,27 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 		var tag := _line(col, "BOSS DAY - TODAY'S ONLY SHIFT" if profile.is_boss_day()
 			else "SPECIAL SHIFT", 14, hue, true)
 		tag.name = "PremadeTag"
-	_line(col, profile.display_name, 24, Palette.color(&"text"), true)
-	# A shift with a quota of its own, or a bonus that pays over the odds, says
-	# so beside its hours rather than on a line of its own - a four-hour block
-	# has room for only so many.
-	var when := "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
-		CalendarDay.hour_label(int(hours[1]))]
+	# The title row: the shift's name, and its hours at the far right.
+	var title_row := HBoxContainer.new()
+	title_row.name = "TitleRow"
+	title_row.add_theme_constant_override("separation", 8)
+	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(title_row)
+	var title := _line(title_row, profile.display_name, 22, Palette.color(&"text"), true)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var when := _line(title_row, "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
+		CalendarDay.hour_label(int(hours[1]))], 15, Palette.color(&"text_dim"))
+	when.name = "Hours"
+	when.autowrap_mode = TextServer.AUTOWRAP_OFF
+	when.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	when.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Every shift's quota and bonus, under its name, whether or not they differ
+	# from anyone else's - what the shift is worth is half of choosing it.
 	var quota := profile.quota_on(_day_quota)
-	if quota > 0 and quota != _day_quota:
-		when += "  |  quota %s" % Format.money(quota)
-	if not is_equal_approx(profile.bonus_scale, 1.0):
-		when += "  |  bonus ×%s" % String.num(profile.bonus_scale, 2)
-	_line(col, when, 15, Palette.color(&"text_dim"))
+	var terms := _line(col, "quota %s  |  bonus ×%s" % [
+		Format.money(quota) if quota > 0 else "-", String.num(profile.bonus_scale, 2)],
+		15, Palette.color(&"text"), true)
+	terms.name = "Terms"
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
 	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))
 	event.pressed.connect(func(): chosen.emit(profile))
@@ -182,7 +200,7 @@ func _event_text(event: Button) -> VBoxContainer:
 	event.add_child(col)
 	return col
 
-func _line(col: VBoxContainer, text: String, size: int, color: Color,
+func _line(col: Container, text: String, size: int, color: Color,
 		heading: bool = false) -> Label:
 	var l := Label.new()
 	l.text = text

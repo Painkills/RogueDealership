@@ -40,6 +40,14 @@ func _init() -> void:
 	root.add_child(summary_view)
 	summary_view.owner = root
 
+	# Between weeks: how the one just worked went, before the next begins.
+	var week_view: Control = \
+		(load("res://scenes/week_report.tscn") as PackedScene).instantiate()
+	week_view.name = "WeekReportView"
+	week_view.visible = false
+	root.add_child(week_view)
+	week_view.owner = root
+
 	# Added last of the four+one, so it draws on top of literally anything
 	# beneath it - reachable from both the shop and the floor, so it cannot
 	# belong to either of them (see run_controller.gd's own comment).
