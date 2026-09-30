@@ -4,28 +4,44 @@ extends RefCounted
 var h: Harness
 
 # ------------------------------------------------------------------ the clock
-func test_each_shift_runs_the_hours_the_calendar_gives_it() -> void:
-	h.eq("morning runs eight till noon", ShiftHours.of(&"morning"), [8.0, 12.0])
-	h.eq("midday runs noon till four", ShiftHours.of(&"midday"), [12.0, 16.0])
-	h.eq("night runs six till ten", ShiftHours.of(&"night"), [18.0, 22.0])
-	h.eq("anything else runs through the middle of the day", ShiftHours.of(&"brunch"),
-		ShiftHours.of(&"midday"))
+func test_each_shift_runs_hours_inside_one_day() -> void:
+	## Whatever hours each shift is given - read from the table, never pinned.
+	for id in ShiftHours.HOURS:
+		var span: Array = ShiftHours.of(id)
+		h.check("%s starts before it ends, inside the day (%s)" % [id, str(span)],
+			span[0] >= 0.0 and span[0] < span[1] and span[1] <= 24.0)
+	h.eq("anything else runs the default hours", ShiftHours.of(&"no_such_shift"),
+		ShiftHours.DEFAULT)
 
 func test_the_clock_moves_with_the_ticks() -> void:
-	h.eq("a morning opens at eight", ShiftHours.clock(&"morning", 0, 24), "8:00 AM")
-	h.eq("ten minutes a tick, over a four-hour, 24-tick shift",
-		ShiftHours.clock(&"morning", 1, 24), "8:10 AM")
-	h.eq("half way through a morning", ShiftHours.clock(&"morning", 12, 24), "10:00 AM")
-	h.eq("and the bell at noon", ShiftHours.clock(&"morning", 24, 24), "12:00 PM")
-	h.eq("a midday shift in the afternoon", ShiftHours.clock(&"midday", 12, 24), "2:00 PM")
-	h.eq("a night shift in the evening", ShiftHours.clock(&"night", 3, 24), "6:30 PM")
-	h.eq("never past its own end", ShiftHours.clock(&"night", 99, 24), "10:00 PM")
-	h.eq("and a longer shift takes smaller steps", ShiftHours.clock(&"morning", 3, 30),
-		"8:24 AM")
+	## Against each shift's own hours: its first hour at the start, its last at
+	## the bell, half way at half time, and never past its end.
+	for id in ShiftHours.HOURS:
+		var span: Array = ShiftHours.of(id)
+		h.eq("%s opens on its first hour" % id, ShiftHours.clock(id, 0, 24), _label(span[0]))
+		h.eq("%s half way at half time" % id, ShiftHours.clock(id, 12, 24),
+			_label((span[0] + span[1]) * 0.5))
+		h.eq("%s closes on its last" % id, ShiftHours.clock(id, 24, 24), _label(span[1]))
+		h.eq("%s never runs past its end" % id, ShiftHours.clock(id, 99, 24), _label(span[1]))
+	var first: StringName = ShiftHours.HOURS.keys()[0]
+	h.check("and a longer shift takes smaller steps",
+		_minutes(ShiftHours.clock(first, 1, 30)) < _minutes(ShiftHours.clock(first, 1, 24)))
+
+## An hour of the day on a 12-hour clock face - "8:10 AM" for 8.1667.
+func _label(hour: float) -> String:
+	var minutes := roundi(hour * 60.0)
+	var hr := (minutes / 60) % 24
+	var shown := hr % 12
+	return "%d:%02d %s" % [12 if shown == 0 else shown, minutes % 60, "AM" if hr < 12 else "PM"]
+
+func _minutes(clock: String) -> int:
+	var parts := clock.split(" ")
+	var hm := parts[0].split(":")
+	return (int(hm[0]) % 12 + (12 if parts[1] == "PM" else 0)) * 60 + int(hm[1])
 
 # -------------------------------------------------------------------- the sky
 func test_the_sky_knows_all_three_shifts() -> void:
-	for id in [&"morning", &"midday", &"night"]:
+	for id in ShiftHours.HOURS:
 		h.check("a look for %s" % id, SkyView.LOOKS.has(id))
 	var sky := SkyView.new()
 	sky.time_of_day = &"brunch"

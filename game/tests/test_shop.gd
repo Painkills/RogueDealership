@@ -21,8 +21,6 @@ func _profile(for_sale: int = 0, ups: int = 0) -> ShiftProfile:
 	p.upgrades = ups
 	return p
 
-func _shipped(id: StringName) -> ShiftProfile:
-	return (load("res://data/shift_profile_pool.tres") as ShiftProfilePool).by_id(id)
 
 func test_every_card_carries_a_price() -> void:
 	## Support cards have no margin to derive a price from, so it is authored.
@@ -34,10 +32,11 @@ func test_every_card_carries_a_price() -> void:
 func test_every_visit_offers_free_cards_to_pick_one_from() -> void:
 	## "You always get one choice of three for free" - whatever the tier, even
 	## none at all. How many to choose between is the config's.
-	for p in [null, _shipped(&"morning"), _shipped(&"midday"), _shipped(&"night")]:
+	for p in [null, _profile(), _profile(3, 1), _profile(1, 3)]:
 		var r := _run()
 		var shop := Shop.new(r, p)
-		var which: String = "no tier" if p == null else String(p.id)
+		var which: String = "no tier" if p == null \
+			else "%d to buy, %d to upgrade" % [p.cards_for_sale, p.upgrades]
 		h.eq("%s: the configured number of cards on the house" % which,
 			shop.free_cards.size(), r.cfg.free_card_choices)
 		h.eq("%s: and one pick of them" % which, shop.free_picks_left, 1)
@@ -199,9 +198,9 @@ func test_perk_text_says_what_the_visit_holds_beyond_the_free_card() -> void:
 func test_the_picker_previews_the_same_visit() -> void:
 	## Whatever each shift stocks, the calendar promises exactly that - and the
 	## store after it holds what was promised.
-	for id in [&"morning", &"midday", &"night"]:
-		var p := _shipped(id)
-		var text := p.reward_preview()
+	for p in [_profile(), _profile(1, 0), _profile(0, 2), _profile(3, 1)]:
+		var id := "%d to buy, %d to upgrade" % [p.cards_for_sale, p.upgrades]
+		var text: String = p.reward_preview()
 		h.check("%s promises the free card (%s)" % [id, text], text.contains("free card"))
 		h.check("%s promises cards to buy exactly when it stocks some" % id,
 			text.contains("buy") == (p.cards_for_sale > 0))

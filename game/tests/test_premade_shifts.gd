@@ -15,8 +15,14 @@ func _cfg() -> ShiftConfig:
 	cfg.shift_ticks = 99
 	return cfg
 
-func _arch(id: StringName) -> CustomerArchetype:
-	return (load("res://data/archetype_pool.tres") as ArchetypePool).by_id(id)
+## `n` archetypes from the pool, whichever it holds, cycling if it holds fewer -
+## no test here names one that could be renamed or retired.
+func _some(n: int) -> Array:
+	var all: Array = (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes
+	var out := []
+	for i in range(n):
+		out.append(all[i % all.size()])
+	return out
 
 func _shift(cfg: ShiftConfig, only: Array = [], lineup: Array = [], seats: int = 0,
 		excluded: Array = [], unlock_all: bool = false) -> Shift:
@@ -29,11 +35,10 @@ func _ids(archetypes: Array) -> Array:
 
 # ------------------------------------------------------------ who comes in
 func test_only_archetypes_is_everyone_who_comes_in() -> void:
-	## "A shift that has only Karens" - on the first day of the run, too, which
-	## the usual ladder would never allow.
+	## "A shift that has only Karens" - any one archetype, whatever the ladder.
 	var cfg := _cfg()
-	var karen := _arch(&"karen")
-	var s := _shift(cfg, [karen])
+	var only: CustomerArchetype = _some(1)[0]
+	var s := _shift(cfg, [only])
 	for c in s.seated():
 		c.patience = 999
 	s._burn(cfg.waiting_max, "cards")
@@ -42,14 +47,14 @@ func test_only_archetypes_is_everyone_who_comes_in() -> void:
 	h.check("the floor and the waiting list filled up (%d)" % seen.size(),
 		seen.size() > s.chairs.size())
 	h.check("with nobody but the archetype the shift names (%s)" % ", ".join(_ids(seen)),
-		seen.all(func(a): return a == karen))
+		seen.all(func(a): return a == only))
 
 func test_excluded_archetypes_never_come_in() -> void:
-	## "Remove Lay-Down Larry and Easygoing from the night-time pool" - out of
-	## the whole pool, however many come in.
+	## "Remove Lay-Down Larry and Easygoing from the night-time pool" - any two,
+	## out of the whole pool, however many come in.
 	var cfg := _cfg()
 	cfg.waiting_max = 1
-	var gone: Array = [_arch(&"easygoing"), _arch(&"laydown")]
+	var gone: Array = _some(2)
 	var s := _shift(cfg, [], [], 0, gone, true)
 	var seen: Array = []
 	for _visit in range(20):
@@ -68,8 +73,7 @@ func test_excluded_archetypes_never_come_in() -> void:
 func test_a_lineup_is_exactly_who_comes_in_and_in_that_order() -> void:
 	## "A fixed number of customers coming in a specified order."
 	var cfg := _cfg()
-	var order: Array = [_arch(&"easygoing"), _arch(&"laydown"), _arch(&"family"),
-		_arch(&"tech")]
+	var order: Array = _some(4)
 	cfg.waiting_max = order.size()
 	var s := _shift(cfg, [], order, 2)
 	h.eq("the first of them take the seats, in order",
@@ -83,7 +87,7 @@ func test_a_lineup_is_exactly_who_comes_in_and_in_that_order() -> void:
 	h.eq("however long the day runs", s.waiting.size(), order.size() - 2)
 
 func test_a_short_lineup_leaves_chairs_empty_and_the_day_ends_with_them() -> void:
-	var s := _shift(_cfg(), [], [_arch(&"easygoing")])
+	var s := _shift(_cfg(), [], _some(1))
 	h.eq("one customer, one chair taken", s.seated().size(), 1)
 	s.chairs[0].patience = 0
 	s._settle_patience()

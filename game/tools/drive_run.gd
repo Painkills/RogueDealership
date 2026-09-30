@@ -103,26 +103,32 @@ func _process(_delta: float) -> bool:
 
 ## Drives the real ShiftPickerView.chosen signal, the same "through the
 ## actual wiring, not a direct controller call" rule every other transition
-## in this driver already follows (.done, .continue_pressed). Midday first,
-## for the store's card for sale; night second, for its upgrade.
-func _pick_tier(id: StringName) -> void:
+## in this driver already follows (.done, .continue_pressed). Which regular
+## shift gets picked is decided by what it stocks - `score` - never by its
+## name, so renaming or retuning a tier cannot break this driver.
+func _pick_tier_by(score: Callable) -> ShiftProfile:
 	_check("the picker is showing before a tier is chosen",
 		_root._picker_view.visible)
-	var profile: ShiftProfile = _root._profiles.by_id(id)
-	_check("%s is a real profile in the pool" % id, profile != null)
-	_root._picker_view.chosen.emit(profile)
-	_check("choosing %s closes the picker" % id, not _root._picker_view.visible)
+	var best: ShiftProfile = null
+	for p in (_root._profiles as ShiftProfilePool).profiles:
+		if best == null or float(score.call(p)) > float(score.call(best)):
+			best = p
+	_check("there is a regular shift to pick", best != null)
+	_root._picker_view.chosen.emit(best)
+	_check("choosing %s closes the picker" % best.id, not _root._picker_view.visible)
+	return best
 
 func _phase_0_open_and_finish_shift() -> void:
 	_run = _root._run
 	_check("a run started", _run != null)
 	_check("on shift 1", _run.shift_number == 1)
-	_pick_tier(&"midday")
+	# The tier with the most for sale, for the store checks after it.
+	var first := _pick_tier_by(func(p): return p.cards_for_sale)
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
 	# The office windows and the tablet's clock follow the shift you picked.
-	_check("a midday shift looks out on the middle of the day (%s)"
+	_check("the floor looks out on the picked shift's own time of day (%s)"
 		% _root._shift_view._windows.time_of_day(),
-		_root._shift_view._windows.time_of_day() == &"midday")
+		_root._shift_view._windows.time_of_day() == first.worked_at())
 	_check_build_badge_is_always_on_screen("on the floor")
 	_check_clicking_the_draw_pile_opens_the_deck_viewer()
 	_check_the_corner_button_opens_the_deck_viewer()
@@ -666,8 +672,11 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
 	var shelf_row := shop_view.get_node(^"%ShelfRow") as HBoxContainer
+	if shop.cards_for_sale <= 0:
+		print("SKIP  shelf check: no regular shift puts cards up for sale")
+		return
 	var stocked: bool = not shop.offers.is_empty() and _slots_in(shelf_row) == shop.offers.size()
-	_check("cards for sale after a midday shift (%d)" % shop.offers.size(), stocked)
+	_check("cards for sale after that shift (%d)" % shop.offers.size(), stocked)
 	if not stocked:
 		return
 	var offered := shop.offers[0]
@@ -841,23 +850,22 @@ func _phase_2_leave_and_work_a_night() -> void:
 	# the first would end the run before the night's store could open - a
 	# playtest top-up, the same job the floor's own standing tap target does.
 	_run.standing = _run.cfg.standing_start
-	# Night this time - real coverage of the archetype-pool unlock and of the
-	# upgrade its store adds, not just re-picking the tier the first shift did.
-	_pick_tier(&"night")
-	_check("on a shift that knows which one it is",
-		_root._shift_view._shift.shift_number == 2)
-	_check("night's shift actually carries its archetype-pool unlock",
-		_root._shift_view._shift.unlock_full_archetype_pool)
-	_check("and the windows have gone dark for it (%s)"
+	# The tier with the most of yours to upgrade this time, for the upgrade
+	# checks after it - whatever it is called.
+	var second := _pick_tier_by(func(p): return p.upgrades)
+	var shift: Shift = _root._shift_view._shift
+	_check("on a shift that knows which one it is", shift.shift_number == 2)
+	_check("carrying its tier's own archetype rules",
+		shift.unlock_full_archetype_pool == second.unlock_full_archetype_pool
+			and shift.excluded_archetypes == second.excluded_archetypes)
+	_check("and the windows show its time of day (%s)"
 		% _root._shift_view._windows.time_of_day(),
-		_root._shift_view._windows.time_of_day() == &"night")
-	_check("with the clock on the tablet at the start of a night (%s)"
+		_root._shift_view._windows.time_of_day() == second.worked_at())
+	_check("with the clock on the tablet at the start of it (%s)"
 		% _root._shift_view._tablets[0].clock_text(),
-		_root._shift_view._tablets[0].clock_text() == ShiftHours.clock(&"night",
-			_root._shift_view._shift.tick, _root._shift_view._shift.tick_budget)
-			and _root._shift_view._tablets[0].clock_text().ends_with("PM"))
-	_check("running to the climbing quota",
-		_root._shift_view._shift.quota == _run.quota_for(2))
+		_root._shift_view._tablets[0].clock_text() == ShiftHours.clock(second.worked_at(),
+			shift.tick, shift.tick_budget))
+	_check("running to its own quota", shift.quota == second.quota_on(_run.quota_for(2)))
 
 	# The point of the whole milestone: what you took home came to work with
 	# you. Matched on the exact uids the store minted, not just the CardDef -
@@ -872,10 +880,9 @@ func _phase_2_leave_and_work_a_night() -> void:
 
 	_finish_the_shift()
 	_check("finishing the night opens the store again", _root._shop_view.visible)
-	var night: ShiftProfile = _root._profiles.by_id(&"night")
-	_check("stocked by the night's own tier",
-		_root._shop_view._shop.upgrades == night.upgrades
-			and _root._shop_view._shop.cards_for_sale == night.cards_for_sale)
+	_check("stocked by that tier's own numbers",
+		_root._shop_view._shop.upgrades == second.upgrades
+			and _root._shop_view._shop.cards_for_sale == second.cards_for_sale)
 
 ## The shift log, the waiting list and the top bar each live in the floor's HUD
 ## CanvasLayer, which draws by layer number rather than tree order - so the

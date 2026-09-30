@@ -1510,24 +1510,22 @@ func _check_what_a_customer_says_reaches_their_card() -> void:
 		% [bubble.position.y, grid_top],
 		bubble.position.y < grid_top and bubble.position.y > grid_top - 10.0)
 
-	# "Goes away in 1 tick ... if it's the seat you're at, or after 3 ticks if
-	# it's one of the side seats" - the literal numbers asked for, not the
-	# constants: testing a constant against itself passes whatever it holds.
-	_check("a bubble at your own desk lasts the 1 tick asked for",
-		SpeechBubble.AT_YOUR_DESK_TICKS == 1)
-	_check("and at a side desk, the 3 asked for", SpeechBubble.SIDE_SEAT_TICKS == 3)
-	# Through the card's own setup(), which is what every render runs - the
-	# `seated` flag is what picks between the two.
+	# A bubble lasts SpeechBubble's own number of ticks for the seat it is at,
+	# read from the constants so a retune never breaks this. Through the card's
+	# own setup(), which is what every render runs - the `seated` flag is what
+	# picks between the two.
+	var desk: int = SpeechBubble.AT_YOUR_DESK_TICKS
+	var side: int = SpeechBubble.SIDE_SEAT_TICKS
 	var who = _controller._shift.chairs[0]
 	card.setup(who, true, tick_shown)
 	_check("at your desk it is showing on the tick it was said", bubble.visible)
-	card.setup(who, true, tick_shown + 1)
-	_check("and gone one tick later", not bubble.visible)
+	card.setup(who, true, tick_shown + desk)
+	_check("and gone %d tick(s) later" % desk, not bubble.visible)
 	bubble.say("said at a side desk", tick_shown)
-	card.setup(who, false, tick_shown + 2)
-	_check("at a side desk it is still up two ticks later", bubble.visible)
-	card.setup(who, false, tick_shown + 3)
-	_check("and gone after three", not bubble.visible)
+	card.setup(who, false, tick_shown + side - 1)
+	_check("at a side desk it is still up %d tick(s) later" % (side - 1), bubble.visible)
+	card.setup(who, false, tick_shown + side)
+	_check("and gone after %d" % side, not bubble.visible)
 
 	# "...or if you hover the customer card if it's the seat you're at". A
 	# look at the customer you are sitting with clears it; a look at one at

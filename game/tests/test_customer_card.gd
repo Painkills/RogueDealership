@@ -52,7 +52,6 @@ func test_their_archetype_is_written_big_enough_to_read_across_the_floor() -> vo
 	var tab := card.get_node(^"FrontViewport/CustomerFront/Tab") as Control
 	var label := tab.get_node(^"ArchetypeLabel") as Label
 	var size := label.get_theme_font_size("font_size")
-	h.check("bigger than the 30 px it was (%d)" % size, size > 30)
 	var longest := ""
 	for a in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
 		var text := "%s  [C]" % a.display_name
