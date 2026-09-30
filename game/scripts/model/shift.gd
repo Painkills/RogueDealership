@@ -34,7 +34,14 @@ var _initial_standing: int
 var _standing_lost_to_walkouts: int = 0
 
 var chairs: Array = []
-var walk_up: Array[int] = []
+## Who is waiting for a chair, first come first seated. Archetypes only: nobody
+## is anybody in particular until they sit down (see _spawn()). The floor shows
+## this, so whether to keep working someone difficult or get them signed and
+## out can depend on who is waiting to take their place.
+var waiting: Array[CustomerArchetype] = []
+## Ticks until the next customer comes in the door and joins the wait. Holds
+## while the waiting list is full - see _arrive().
+var next_arrival: int = 0
 var at = null                      ## chair index you are standing at, or null
 var last_customer = null           ## going back to them is free
 
@@ -122,10 +129,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	# p_quota/p_standing already use above.
 	var floor_size: int = p_floor_size if p_floor_size > 0 else cfg.floor_size
 	chairs.resize(floor_size)
-	walk_up.resize(floor_size)
 	for i in range(floor_size):
 		chairs[i] = null
-		walk_up[i] = 0
 
 	# The run hands in its own deck, carrying whatever the shop did to it. A
 	# shift built without one deals the fixed starter deck, exactly as before.
@@ -136,6 +141,9 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 
 	for i in range(floor_size):
 		_spawn(i)
+	# The floor opens full, and nobody is waiting yet: the first to come in
+	# after opening does so on the same clock as everyone after them.
+	next_arrival = _arrival_gap()
 
 
 func seated() -> Array:
@@ -170,6 +178,17 @@ func ticks_running_low() -> bool:
 	return not is_over() and (tick_budget - tick) <= cfg.low_tick_warning
 
 
+## How many ticks until the next customer comes in, or -1 if nobody will
+## before closing time - including while the waiting list is full, since the
+## door's clock waits then (see _arrive()). Due ON the closing tick is too
+## late: _burn() lets nobody in once the shift is over.
+func next_arrival_in() -> int:
+	if is_over() or waiting.size() >= cfg.waiting_max \
+			or next_arrival >= tick_budget - tick:
+		return -1
+	return next_arrival
+
+
 # ------------------------------------------------------------------ the tick
 func _burn(n: int, kind: String) -> void:
 	## The single choke point for time. Effects have ALREADY resolved by the
@@ -181,12 +200,6 @@ func _burn(n: int, kind: String) -> void:
 	tick += n
 	var key := "ticks_" + kind
 	stat[key] = int(stat.get(key, 0)) + n
-
-	# Chairs already empty are the only ones whose walk-up timer moves; a chair
-	# emptied BY this tick starts its wait now.
-	for i in range(chairs.size()):
-		if chairs[i] == null:
-			walk_up[i] -= n
 
 	for c in seated():
 		c.patience -= n
@@ -222,9 +235,47 @@ func _burn(n: int, kind: String) -> void:
 	_settle_patience()
 
 	if not is_over():
-		for i in range(chairs.size()):
-			if chairs[i] == null and walk_up[i] <= 0:
-				_spawn(i)
+		_arrive(n)
+
+
+## The door. Somebody comes in every few ticks, whoever is on the floor, and
+## takes an empty chair if there is one or waits for one if not - so a slow
+## floor builds a queue, and getting someone signed and out brings in whoever
+## is next. Nobody comes in while the waiting list is full; the door's clock
+## waits with them.
+func _arrive(n: int) -> void:
+	if waiting.size() >= cfg.waiting_max:
+		return
+	next_arrival -= n
+	while next_arrival <= 0 and waiting.size() < cfg.waiting_max:
+		waiting.append(_pick_archetype())
+		_seat_the_waiting()
+		next_arrival += _arrival_gap()
+	# The list filled with more still due: they went elsewhere, and the clock
+	# starts over for the next one.
+	if next_arrival <= 0:
+		next_arrival = _arrival_gap()
+
+
+## Ticks between one customer coming in and the next. Rolled fresh each time,
+## not a fixed wait: a door that always opened on the same tick told you
+## exactly when to be looking at it, the opposite of the triage the floor is
+## for. A night ShiftProfile stretches it - see ShiftProfile.walk_up_scale -
+## so fewer distinct customers come in across the same tick budget.
+func _arrival_gap() -> int:
+	return maxi(1, roundi(rng.randi_range(
+		cfg.walk_up_ticks_min, cfg.walk_up_ticks_max) * walk_up_scale))
+
+
+## Every empty chair takes whoever has waited longest, straight away.
+func _seat_the_waiting() -> void:
+	if is_over():
+		return
+	for i in range(chairs.size()):
+		if waiting.is_empty():
+			return
+		if chairs[i] == null:
+			_spawn(i, waiting.pop_front())
 
 
 func _settle_patience() -> void:
@@ -289,17 +340,18 @@ func _walk(chair: int) -> void:
 
 func _vacate(chair: int) -> void:
 	chairs[chair] = null
-	# A night ShiftProfile stretches this instead of shrinking the floor
-	# itself - see ShiftProfile.walk_up_scale's own comment - so fewer
-	# distinct customers get served across the same tick budget.
-	walk_up[chair] = roundi(rng.randi_range(
-		cfg.walk_up_ticks_min, cfg.walk_up_ticks_max) * walk_up_scale)
 	if at == chair:
 		at = null
+	# Whoever is waiting takes the chair now, not a few ticks from now - that is
+	# what getting a difficult customer out for them buys.
+	_seat_the_waiting()
 
 
-func _spawn(chair: int) -> void:
-	var arch := _pick_archetype()
+## Seats `arch` in `chair`, or whoever the door would send if no one is named -
+## how the floor fills when the shift opens.
+func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
+	if arch == null:
+		arch = _pick_archetype()
 	# patience_scale is the picked ShiftProfile's, not the archetype's own -
 	# applied AFTER jitter, so a midday customer is still "this archetype,
 	# a little worse," not a different roll entirely.
@@ -332,7 +384,6 @@ func _spawn(chair: int) -> void:
 		c.known_top_category = c.demands_category      # they say so, loudly
 
 	chairs[chair] = c
-	walk_up[chair] = 0
 	served += 1
 	events.append("[%s] %s walks up - %s."
 		% [c.key, c.display_name, arch.display_name])
@@ -345,9 +396,12 @@ func _pick_archetype() -> CustomerArchetype:
 		return archetypes.by_id(id)
 	var pool := _archetypes_available_this_shift()
 	if cfg.unique_archetypes_on_floor:
+		# The waiting list counts as the floor: they are who sits down next.
 		var taken := {}
 		for c in seated():
 			taken[c.archetype.id] = true
+		for a in waiting:
+			taken[a.id] = true
 		var fresh: Array[CustomerArchetype] = []
 		for a in pool:
 			if not taken.has(a.id):
@@ -562,14 +616,10 @@ func wait() -> Result:
 
 
 func _ticks_until_the_door_opens() -> int:
-	## The soonest walk-up, or whatever is left of the shift if nobody is due
+	## The next arrival, or whatever is left of the shift if nobody is due
 	## before it ends. Never less than one: _burn ignores a zero, and a wait that
 	## does not move the clock is the deadlock it was written to break.
-	var soonest: int = tick_budget - tick
-	for i in range(chairs.size()):
-		if chairs[i] == null:
-			soonest = mini(soonest, walk_up[i])
-	return maxi(1, soonest)
+	return maxi(1, mini(tick_budget - tick, next_arrival))
 
 
 func play_card(index: int) -> Result:

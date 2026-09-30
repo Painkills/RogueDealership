@@ -60,9 +60,8 @@ func test_closes_build_a_streak_and_a_walkout_anywhere_breaks_it() -> void:
 	h.eq("but does not erase closes already recorded", s.sale_streak_events, [1, 2])
 
 	# A fresh customer in the now-empty chair, spawned directly rather than
-	# burning ticks through walk_up - this test is about the streak, not
-	# about waiting.
-	s.walk_up[2] = 0
+	# burning ticks until the next one comes in - this test is about the
+	# streak, not about waiting.
 	s._spawn(2)
 	var d := _at(s, 2)
 	_sell(s, d, 903)

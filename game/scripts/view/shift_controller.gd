@@ -75,6 +75,11 @@ signal deck_viewed
 @onready var _event_log: RichTextLabel = %EventLog
 @onready var _side_panel: Control = %SidePanel
 @onready var _log_toggle: Button = %LogToggle
+## Who is waiting for a chair - see _render_waiting().
+@onready var _waiting_panel: Control = %WaitingPanel
+@onready var _waiting_rows: Control = %WaitingRows
+@onready var _waiting_row: Control = %WaitingRow
+@onready var _next_arrival: Label = %NextArrival
 @onready var _drop_drag_hint: Node3D = %DropDragHint
 @onready var _report_overlay = %ReportOverlay
 @onready var _pull_picker: Control = %PullPicker
@@ -97,6 +102,9 @@ var _time_of_day: StringName = &"midday"
 var _log_folded := false
 ## The log's size open, as the scene built it, to open it back up to.
 var _log_open_size := Vector2.ZERO
+## The waiting list the rows were last built for, so a render that changes
+## nothing about it leaves them alone.
+var _waiting_shown: Array[CustomerArchetype] = []
 ## True while a RunController-level overlay (the deck viewer) sits on top of
 ## the floor - see set_hud_dimmed(). Both HUD panels it hides live in their
 ## own CanvasLayer, drawing OVER any plain Control regardless of tree order,
@@ -431,6 +439,7 @@ func set_active(on: bool) -> void:
 func set_hud_dimmed(dimmed: bool) -> void:
 	_hud_dimmed = dimmed
 	_side_panel.visible = not dimmed
+	_waiting_panel.visible = not dimmed
 	# The shift's manila strip is opaque now, where its bare numbers used to
 	# float over whatever was beneath them - over the deck viewer it would be a
 	# folder lying across the top of someone else's screen.
@@ -592,8 +601,8 @@ func _apply(res: Result) -> void:
 ## itself out of: your hand is stowed off screen while you are on the floor, and
 ## everything else that moves the clock needs a customer to move it on.
 ##
-## Loops because one wait seats one person, and a walk-up timer that was already
-## running down can leave the floor empty again immediately. The guard is not
+## Loops because a wait only runs to the next arrival, and that can be the
+## closing bell rather than a customer. The guard is not
 ## defensive dressing: this runs inside a UI callback, and a wait that ever
 ## returned ok without advancing would hang the game rather than just misbehave.
 func _let_time_pass_on_an_empty_floor() -> void:
@@ -923,6 +932,7 @@ func _render() -> void:
 	_render_details()
 	_render_hover_flip()
 	_render_pull_picker()
+	_render_waiting()
 	# Both piles are face down, so a count is the only way to see how much of
 	# the deck is left to draw and how much has already been spent.
 	(_draw_tag.get_node(^"Lines/Label") as Label).text = "DRAW  %d" % _shift.draw.size()
@@ -931,6 +941,46 @@ func _render() -> void:
 	_reconcile()
 	_drain_log()
 	_place_tags()
+
+## "Shows what customers are lined up so you know who's coming. If none are
+## queued it would tell you how many ticks until someone is ready." Whether to
+## keep working someone difficult or get them signed and out can turn on who
+## is waiting to take their chair.
+func _render_waiting() -> void:
+	if _shift.waiting != _waiting_shown:
+		_waiting_shown = _shift.waiting.duplicate()
+		for row in _waiting_rows.get_children():
+			if row != _waiting_row:
+				_waiting_rows.remove_child(row)
+				row.queue_free()
+		for i in range(_waiting_shown.size()):
+			_waiting_rows.add_child(_waiting_row_for(i, _waiting_shown[i]))
+	var nobody := _shift.waiting.is_empty()
+	_waiting_rows.visible = not nobody
+	_next_arrival.visible = nobody
+	if nobody:
+		var n := _shift.next_arrival_in()
+		_next_arrival.text = "Nobody waiting.\n" + ("Next customer in %d tick%s." \
+			% [n, "" if n == 1 else "s"] if n >= 0 else "Nobody else is due before close.")
+	# A panel keeps whatever size it was given when what is in it shrinks.
+	# Asked for no height at all, it takes the least its rows need.
+	_waiting_panel.size = Vector2(_waiting_panel.size.x, 0.0)
+
+## One waiting customer's row: their place in the queue and their archetype,
+## the first of them marked as next.
+func _waiting_row_for(place: int, arch: CustomerArchetype) -> Control:
+	var row := _waiting_row.duplicate() as Control
+	row.unique_name_in_owner = false
+	row.visible = true
+	(row.get_node(^"Badge/Place") as Label).text = str(place + 1)
+	(row.get_node(^"Archetype") as Label).text = arch.display_name
+	(row.get_node(^"NextTag") as Control).visible = place == 0
+	if place == 0:
+		var badge := row.get_node(^"Badge") as PanelContainer
+		var dot := badge.get_theme_stylebox(&"panel").duplicate() as StyleBoxFlat
+		dot.bg_color = Palette.color(&"primary")
+		badge.add_theme_stylebox_override(&"panel", dot)
+	return row
 
 ## Every frame as well as on render: the carousel turns and the piles rise on
 ## tweens between renders, and a tag has to ride along with its card rather

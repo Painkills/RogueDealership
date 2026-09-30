@@ -38,37 +38,66 @@ func test_patience_gone_means_gone() -> void:
 	s.chairs[0].patience = 1
 	s._burn(1, "cards")
 	h.eq("they walked", s.chairs[0], null)
-	h.eq("the chair is empty and waiting", s.walk_up[0], 5)
+	h.check("and nobody was waiting to take the chair", s.waiting.is_empty())
 
-func test_a_freed_chair_refills_after_the_walk_up_delay() -> void:
+func test_an_empty_chair_fills_when_the_next_customer_comes_in() -> void:
 	var s := _shift([&"easygoing", &"easygoing"],
 		{"walk_up_ticks_min": 3, "walk_up_ticks_max": 3})
 	s.chairs[0].patience = 1
-	s._burn(1, "cards")                 # they walk; the timer starts now
+	s._burn(1, "cards")                 # they walk, one tick into the gap
 	h.eq("still empty", s.chairs[0], null)
-	s._burn(2, "cards")
-	h.eq("still empty after two more", s.chairs[0], null)
 	s._burn(1, "cards")
-	h.check("someone walks up on the third", s.chairs[0] != null)
+	h.eq("still empty a tick later", s.chairs[0], null)
+	s._burn(1, "cards")
+	h.check("the next one in sits straight down", s.chairs[0] != null)
+	h.check("rather than waiting", s.waiting.is_empty())
 
-func test_the_walk_up_delay_is_drawn_from_a_range_not_fixed() -> void:
+func test_someone_who_comes_in_to_a_full_floor_waits_for_a_chair() -> void:
+	## "Know if you should keep pushing on customers on the floor or get them
+	## out if they're troublesome for someone easier that's waiting."
+	var s := _shift([&"easygoing"], {"walk_up_ticks_min": 1, "walk_up_ticks_max": 1,
+		"waiting_max": 1})
+	s._burn(1, "cards")
+	h.eq("they wait, since every chair is taken", s.waiting.size(), 1)
+	var next: CustomerArchetype = s.waiting[0]
+	s.chairs[0].patience = 0
+	s._settle_patience()
+	h.check("and take the first chair that frees up, straight away",
+		s.chairs[0] != null and s.chairs[0].archetype == next)
+	h.check("leaving the list", not s.waiting.has(next))
+
+func test_the_waiting_list_never_outgrows_its_room() -> void:
+	var s := _shift([&"easygoing"], {"walk_up_ticks_min": 1, "walk_up_ticks_max": 1,
+		"shift_ticks": 999})
+	for c in s.seated():
+		c.patience = 999
+	# One long burn, so more come due at once than there is room for.
+	s._burn(s.cfg.waiting_max + 3, "cards")
+	h.eq("the list stops at its room (%d)" % s.cfg.waiting_max,
+		s.waiting.size(), s.cfg.waiting_max)
+	var held: int = s.next_arrival
+	s._burn(1, "cards")
+	h.eq("and the door's clock waits while it is full", s.next_arrival, held)
+	h.eq("so nobody is due", s.next_arrival_in(), -1)
+
+func test_the_gap_between_customers_is_drawn_from_a_range_not_fixed() -> void:
 	## "increase the amount of time before a new customer fills an empty seat,
-	## but make it variable (between 6 and 8 ticks)" - the literal ask. Bounds
-	## checked on every draw; variety checked across a seed sweep, the same
-	## style test_no_opening_hand_is_ever_dealt_without_a_product() already
-	## uses for its own RNG-dependent claim.
+	## but make it variable" - the gap between arrivals now. Bounds checked on
+	## every draw; variety checked across a seed sweep, the same style
+	## test_no_opening_hand_is_ever_dealt_without_a_product() already uses for
+	## its own RNG-dependent claim.
 	var seen := {}
 	for seed_value in range(1, 61):
 		var s := _seeded(seed_value)
-		s.chairs[0].patience = 1
-		s._burn(1, "cards")
-		var drawn: int = s.walk_up[0]
-		h.check("seed %d draws a delay inside the configured range (%d)"
+		var drawn: int = s.next_arrival
+		h.check("seed %d draws a gap inside the configured range (%d)"
 			% [seed_value, drawn],
 			drawn >= s.cfg.walk_up_ticks_min and drawn <= s.cfg.walk_up_ticks_max)
 		seen[drawn] = true
-	h.check("and the sweep actually saw more than one value, not a fixed delay",
-		seen.size() > 1)
+	var cfg: ShiftConfig = load("res://data/shift_config.tres")
+	if cfg.walk_up_ticks_min < cfg.walk_up_ticks_max:
+		h.check("and the sweep actually saw more than one value, not a fixed gap",
+			seen.size() > 1)
 
 func test_an_empty_chair_burns_nobody() -> void:
 	var s := _shift([&"easygoing", &"easygoing"],

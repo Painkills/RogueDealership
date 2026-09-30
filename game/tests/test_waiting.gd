@@ -21,7 +21,7 @@ func _shift(seed_value: int = 7) -> Shift:
 		seed_value, [])
 
 ## Empty every chair the way the game does - by running them out of patience -
-## so the walk-up timers are in the state a real deadlock would leave them.
+## so the door's clock is in the state a real deadlock would leave it.
 func _empty_the_floor(s: Shift) -> void:
 	for i in range(s.chairs.size()):
 		if s.chairs[i] != null:
@@ -101,8 +101,8 @@ func test_waiting_always_advances_so_it_cannot_spin() -> void:
 
 func test_a_wait_never_returns_without_moving_the_clock() -> void:
 	## The floor of one tick inside _ticks_until_the_door_opens cannot be reached
-	## by playing: _burn seats anybody whose timer has run out, so an empty chair
-	## always has time left on it. Which means the test above walks right past
+	## by playing: _burn lets in anybody whose time has come, so the door always
+	## has time left on its clock. Which means the test above walks right past
 	## the clamp without touching it - it was passing with the clamp removed.
 	##
 	## The clamp still has to hold, because the VIEW waits in a loop: a wait that
@@ -111,11 +111,10 @@ func test_a_wait_never_returns_without_moving_the_clock() -> void:
 	## meet it.
 	var s := _shift()
 	_empty_the_floor(s)
-	for i in range(s.walk_up.size()):
-		s.walk_up[i] = 0
+	s.next_arrival = 0
 	var before: int = s.tick
 	var res := s.wait()
-	h.check("with every walk-up timer already at zero, waiting still moves the "
+	h.check("with the door's clock already at zero, waiting still moves the "
 		+ "clock (%d -> %d)" % [before, s.tick], s.tick > before)
 	h.check("and says so honestly (%s)" % res.data,
 		int(res.data.get("ticks", 0)) == s.tick - before)

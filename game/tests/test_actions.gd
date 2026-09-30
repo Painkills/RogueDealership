@@ -173,11 +173,13 @@ func test_the_tire_kicker_walks_if_you_never_ask_for_the_business() -> void:
 	var walked: int = int(s.stat["customers_walked"])
 	h.check("with patience to spare - this is the demand, not the clock",
 		c.patience > 3)
+	# Watched by who is in the chair rather than whether it is empty: somebody
+	# waiting sits straight down in it.
 	var guard := 0
-	while s.chairs[0] != null and guard < 30:
+	while s.chairs[0] == c and guard < 30:
 		s.dig(0)
 		guard += 1
-	h.check("the chair is empty", s.chairs[0] == null)
+	h.check("he is out of the chair", s.chairs[0] != c)
 	h.eq("counted as a walkout", int(s.stat["customers_walked"]), walked + 1)
 	h.eq("so it cost standing like any other",
 		s.standing, standing - s.cfg.standing_cost_per_walkout)

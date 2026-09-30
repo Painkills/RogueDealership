@@ -7,11 +7,19 @@ class_name ShiftConfig extends Resource
 @export var shift_ticks: int = 24
 @export var quota: int = 3600
 @export var floor_size: int = 3
-## Rolled fresh per vacated chair, not a fixed wait - a seat that always
-## refilled on the same tick told you exactly when to be looking at it, which
-## is the opposite of the triage pressure the floor is supposed to apply.
+## Ticks between one customer coming in the door and the next, rolled fresh
+## each time rather than fixed - a door that always opened on the same tick
+## told you exactly when to be looking at it, which is the opposite of the
+## triage pressure the floor is supposed to apply. They come in whether or
+## not a chair is free, and wait for one (see waiting_max).
 @export var walk_up_ticks_min: int = 6
 @export var walk_up_ticks_max: int = 8
+## How many customers can be waiting for a chair at once. Nobody else comes in
+## while that many are - the door's clock waits with them - so a floor you are
+## slow to clear stops drawing people in rather than stacking up a crowd. At
+## least one: with no room to wait, nobody could come in to a full floor, and
+## the floor's "next customer in N ticks" would have no answer.
+@export_range(1, 10, 1, "or_greater") var waiting_max: int = 3
 
 # --- the run ---------------------------------------------------------------
 @export var shifts_in_run: int = 5

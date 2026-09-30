@@ -16,10 +16,10 @@ class_name ShiftProfile extends Resource
 ## count. Reserved for once that carousel supports a variable seat count.
 @export var floor_size_override: int = 0     ## 0 = use ShiftConfig.floor_size
 @export var patience_scale: float = 1.0
-## "Fewer customers" without touching the seat count above: every empty
-## chair's wait for its next walk-up (Shift._vacate()) is multiplied by
-## this, so fewer distinct customers get served across the same tick budget
-## while every chair still starts, and stays, physically real.
+## "Fewer customers" without touching the seat count above: the gap between
+## one customer coming in the door and the next (Shift._arrival_gap()) is
+## multiplied by this, so fewer distinct customers get served across the same
+## tick budget while every chair still starts, and stays, physically real.
 @export var walk_up_scale: float = 1.0
 @export var unlock_full_archetype_pool: bool = false
 

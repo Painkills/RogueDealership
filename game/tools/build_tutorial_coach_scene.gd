@@ -4,10 +4,11 @@ extends SceneTree
 ## scripts/view/tutorial_coach.gd.
 ##
 ## Its own CanvasLayer, above the shift's HUD, so the memo and the highlighter
-## draw over the log and the buttons they are pointing at. The memo is pinned
-## over the top of the shift log: the log is the one thing on screen the
-## lesson never asks you to look at, and the left rail is the one side the
-## table never reaches toward (see build_shift_scene.gd's LOG_RECT).
+## draw over the panels and the buttons they are pointing at. The memo is
+## pinned over the waiting list, at the top of the left rail: who is waiting
+## is the one thing on screen the lesson never asks you to look at, and the
+## rails are the one space the table never reaches into (see
+## build_shift_scene.gd's WAITING_RECT and LOG_RECT).
 
 const LAYER := 50
 const DESIGN := Vector2(1920, 1080)

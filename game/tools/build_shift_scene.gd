@@ -211,10 +211,15 @@ const FAN_ANGLE := 24.0
 const FAN_RADIUS := 24.0
 
 # --- HUD, in 1920x1080 -----------------------------------------------------
-## LEFT rail. Stops well above the bottom strip, which is where the draw pile
-## rises into. As narrow as it is so the left flanker's folder clears it from
-## the floor, where it is biggest.
-const LOG_RECT := Rect2(18, 80, 370, 650)
+## Who is waiting for a chair, at the top of the LEFT rail. No height: it is
+## only as tall as who is in it. As narrow as it is so the left flanker's
+## folder clears it from the floor, where it is biggest.
+const WAITING_RECT := Rect2(18, 80, 370, 0)
+## Each waiting customer's place in the queue, a round badge.
+const WAITING_BADGE := Vector2(34, 34)
+## The shift log, down the RIGHT rail - the mirror of the waiting list's. Stops
+## well above the bottom strip, which is where the discard pile rises into.
+const LOG_RECT := Rect2(1532, 80, 370, 650)
 ## The log's fold button, in its heading row.
 const LOG_TOGGLE := Vector2(84, 34)
 ## The app bar across the top that the shift's numbers sit on. The log starts
@@ -987,29 +992,11 @@ func _build_hud(root: Node) -> void:
 	# to offer it, onto the discard to drop it, and double-click the empty
 	# tablet to close - with O, D and Shift+C still on the keyboard.
 
-	# --- yours: the log, left, stopping short of the draw pile ------------
+	_waiting_panel(hud, root)
+
+	# --- yours: the log, right, stopping short of the discard pile --------
 	# An activity feed: a white card with a small heading over the entries.
-	var panel := PanelContainer.new()
-	panel.name = "SidePanel"
-	panel.position = LOG_RECT.position
-	panel.size = LOG_RECT.size
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.unique_name_in_owner = true
-	var card := StyleBoxFlat.new()
-	card.bg_color = Palette.color(&"panel")
-	card.border_color = Palette.color(&"neutral_2")
-	card.set_border_width_all(1)
-	card.set_corner_radius_all(14)
-	card.content_margin_left = 18
-	card.content_margin_right = 16
-	card.content_margin_top = 14
-	card.content_margin_bottom = 14
-	card.shadow_color = Color(0, 0, 0, 0.3)
-	card.shadow_size = 10
-	card.shadow_offset = Vector2(0, 4)
-	panel.add_theme_stylebox_override("panel", card)
-	hud.add_child(panel)
-	panel.owner = root
+	var panel := _rail_card(hud, root, "SidePanel", LOG_RECT)
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
@@ -1082,6 +1069,134 @@ func _build_hud(root: Node) -> void:
 	pull_picker.unique_name_in_owner = true
 	hud.add_child(pull_picker)
 	pull_picker.owner = root
+
+## A white card on one of the rails, with a hairline edge and a soft shadow -
+## the log's, and the waiting list's across from it.
+func _rail_card(hud: Control, root: Node, node_name: String, rect: Rect2) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.name = node_name
+	panel.position = rect.position
+	panel.size = rect.size
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.unique_name_in_owner = true
+	var card := StyleBoxFlat.new()
+	card.bg_color = Palette.color(&"panel")
+	card.border_color = Palette.color(&"neutral_2")
+	card.set_border_width_all(1)
+	card.set_corner_radius_all(14)
+	card.content_margin_left = 18
+	card.content_margin_right = 16
+	card.content_margin_top = 14
+	card.content_margin_bottom = 14
+	card.shadow_color = Color(0, 0, 0, 0.3)
+	card.shadow_size = 10
+	card.shadow_offset = Vector2(0, 4)
+	panel.add_theme_stylebox_override("panel", card)
+	hud.add_child(panel)
+	panel.owner = root
+	return panel
+
+## "A system that shows what customers are lined up so you know who's coming."
+## A row per customer waiting for a chair, first in line at the top, or - with
+## nobody waiting - how long until somebody is. The controller fills it with a
+## copy of the hidden WaitingRow per customer (see _render_waiting()).
+func _waiting_panel(hud: Control, root: Node) -> void:
+	var panel := _rail_card(hud, root, "WaitingPanel", WAITING_RECT)
+
+	var col := VBoxContainer.new()
+	col.name = "Column"
+	col.add_theme_constant_override("separation", 10)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(col)
+	col.owner = root
+
+	var title := Label.new()
+	title.name = "WaitingTitle"
+	title.text = "WAITING"
+	title.theme_type_variation = &"Heading"
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(title)
+	title.owner = root
+	_rule(col, root, "TitleRule")
+
+	var rows := VBoxContainer.new()
+	rows.name = "WaitingRows"
+	rows.add_theme_constant_override("separation", 10)
+	rows.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rows.unique_name_in_owner = true
+	col.add_child(rows)
+	rows.owner = root
+
+	# What every row is copied from. Never shown itself.
+	var row := HBoxContainer.new()
+	row.name = "WaitingRow"
+	row.visible = false
+	row.add_theme_constant_override("separation", 14)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.unique_name_in_owner = true
+	rows.add_child(row)
+	row.owner = root
+
+	var badge := PanelContainer.new()
+	badge.name = "Badge"
+	badge.custom_minimum_size = WAITING_BADGE
+	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var dot := StyleBoxFlat.new()
+	dot.bg_color = Palette.color(&"neutral_3")
+	dot.set_corner_radius_all(int(WAITING_BADGE.y * 0.5))
+	badge.add_theme_stylebox_override("panel", dot)
+	row.add_child(badge)
+	badge.owner = root
+
+	var place := Label.new()
+	place.name = "Place"
+	place.text = "1"
+	place.theme_type_variation = &"Heading"
+	place.add_theme_font_size_override("font_size", 18)
+	place.add_theme_color_override("font_color", Palette.color(&"paper"))
+	place.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	place.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	place.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(place)
+	place.owner = root
+
+	var who := Label.new()
+	who.name = "Archetype"
+	who.text = "Archetype"
+	who.theme_type_variation = &"Heading"
+	who.add_theme_font_size_override("font_size", 24)
+	who.add_theme_color_override("font_color", Palette.color(&"text"))
+	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	who.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	who.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(who)
+	who.owner = root
+
+	# Shown on the first row only: whoever takes the next chair to free up.
+	var next := Label.new()
+	next.name = "NextTag"
+	next.text = "NEXT"
+	next.theme_type_variation = &"Heading"
+	next.add_theme_font_size_override("font_size", 16)
+	next.add_theme_color_override("font_color", Palette.color(&"primary"))
+	next.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	next.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(next)
+	next.owner = root
+
+	var note := Label.new()
+	note.name = "NextArrival"
+	note.text = "Nobody waiting.\nNext customer in 6 ticks."
+	note.add_theme_font_size_override("font_size", 22)
+	note.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	note.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	note.unique_name_in_owner = true
+	col.add_child(note)
+	note.owner = root
 
 ## Stretches an instanced overlay over the whole HUD - and says so in ANCHORS
 ## layout mode, explicitly.

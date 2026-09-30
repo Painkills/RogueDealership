@@ -26,9 +26,10 @@ const CUSTOMER := CustomerCard3D.CARD_SIZE
 ## The tablet a product stands on - see OfferTablet.
 const TABLET := OfferTablet.SIZE
 
-# Nothing of the table may reach into the shift log's column, for the whole
-# shift. It is measured from the real panel (_log_rect()) rather than from a
-# remembered edge that would go on passing wherever it moved.
+# Nothing of the table may reach into the shift log's column, or under the
+# waiting list across from it, for the whole shift. Both are measured from the
+# real panels (_log_rect(), _waiting_rect()) rather than from a remembered edge
+# that would go on passing wherever they moved.
 
 var _controller: Node3D
 var _done := false
@@ -113,6 +114,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_there_are_no_action_buttons()
 	_check_hud_does_not_overlap_itself()
 	_check_the_log_folds_away()
+	_check_the_waiting_list_shows_who_is_next()
 	_check_the_windows_show_behind_the_customers()
 	_check_the_tablet_keeps_the_shifts_time()
 	_check_drop_zones_use_the_overridden_shape()
@@ -252,6 +254,25 @@ func _rect_of(node: Node3D, size: Vector2) -> Rect2:
 
 func _log_rect() -> Rect2:
 	return (_controller.get_node(^"%SidePanel") as Control).get_global_rect()
+
+## The waiting list at its tallest - as many rows as it has room for - since it
+## has to keep clear of the table whoever is waiting. Put back as it was after.
+func _waiting_rect() -> Rect2:
+	var s: Shift = _controller._shift
+	var was: Array[CustomerArchetype] = s.waiting.duplicate()
+	_fill_the_waiting_list(s)
+	_controller._render_waiting()
+	var r := (_controller.get_node(^"%WaitingPanel") as Control).get_global_rect()
+	s.waiting.assign(was)
+	_controller._render_waiting()
+	return r
+
+## As many waiting as there is room for, from whoever is in the pool.
+func _fill_the_waiting_list(s: Shift) -> void:
+	var pool: Array = s.archetypes.archetypes
+	s.waiting.clear()
+	for i in range(s.cfg.waiting_max):
+		s.waiting.append(pool[i % pool.size()])
 
 ## Where a customer's CLOSE SOON tag lands when it shows, whether or not it is
 ## showing right now - it is only wanted in the last few ticks, and the layout
@@ -717,9 +738,12 @@ func _check_the_floor_cards_are_big_enough_to_read() -> void:
 		_on_screen("floor card %d" % i, r)
 		_check("floor card %d stays out of the log (%s vs %s)" % [i, r, _log_rect()],
 			not r.intersects(_log_rect()))
+		_check("and out from under the waiting list (%s)" % _waiting_rect(),
+			not r.intersects(_waiting_rect()))
 		var tag := _close_soon_rect(i)
 		_check("and so does its CLOSE SOON tag (%s)" % tag,
-			tag.size.x > 0.0 and not tag.intersects(_log_rect()))
+			tag.size.x > 0.0 and not tag.intersects(_log_rect())
+				and not tag.intersects(_waiting_rect()))
 		_check_close_soon_in_its_corner("floor card %d" % i, tag, r)
 
 # --- a seat ----------------------------------------------------------------
@@ -915,8 +939,10 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 		_check_close_soon_in_its_corner("seat %d" % i, tag, who)
 		_check("seat %d's card keeps out of the log (%s vs %s)" % [i, who, _log_rect()],
 			not who.intersects(_log_rect()))
+		_check("and out from under the waiting list (%s)" % _waiting_rect(),
+			not who.intersects(_waiting_rect()))
 		_check("and so does its CLOSE SOON tag (%s)" % tag,
-			not tag.intersects(_log_rect()))
+			not tag.intersects(_log_rect()) and not tag.intersects(_waiting_rect()))
 	# On the folder you are with it fits beside the folder's own tab rather
 	# than over it - "given the available space".
 	var front := _rect_of(_controller._customer_cards[at], CUSTOMER)
@@ -1004,6 +1030,8 @@ func _check_the_tablet_shows_the_offer() -> void:
 	_on_screen("tablet", t)
 	_check("the tablet stays out of the log (%s vs %s)" % [t, _log_rect()],
 		not t.intersects(_log_rect()))
+	_check("and out from under the waiting list (%s)" % _waiting_rect(),
+		not t.intersects(_waiting_rect()))
 	_check("and no CLOSE SOON yet - nothing unsigned",
 		not _controller._close_soon_tags[at].visible)
 
@@ -1859,6 +1887,9 @@ func _check_there_are_no_action_buttons() -> void:
 func _check_hud_does_not_overlap_itself() -> void:
 	var log_panel := _controller.get_node("%SidePanel") as Control
 	var log_rect := Rect2(log_panel.position, log_panel.size)
+	var waiting := _waiting_rect()
+	_check("the waiting list and the log keep to their own rails (%s vs %s)"
+		% [waiting, log_rect], not waiting.intersects(log_rect))
 
 	# The log's own button is a STOP control over a 3D table, so the log sitting
 	# on a card would be a click the card never sees.
@@ -1869,6 +1900,7 @@ func _check_hud_does_not_overlap_itself() -> void:
 			["tablet", _rect_of(_controller._tablets[at], TABLET)]]:
 		var card: Rect2 = pair[1]
 		_check("the log does not sit on the %s" % pair[0], not log_rect.intersects(card))
+		_check("nor does the waiting list", not waiting.intersects(card))
 
 ## "Make the shift log collapsible." Its own button folds it up to its heading,
 ## out of the way of the table, and opens it again with everything still in it
@@ -1904,11 +1936,65 @@ func _check_the_log_folds_away() -> void:
 	_check("with everything that was in it", after.begins_with(before))
 	_check("and what came in while it was folded", after.contains("while the log was folded"))
 
+## "A system that shows what customers are lined up so you know who's coming.
+## If none are queued it would tell you how many ticks until someone is ready."
+## On the left rail, with the log sent to the right. Read back against the
+## shift's own waiting list and countdown, never against today's tuning.
+func _check_the_waiting_list_shows_who_is_next() -> void:
+	var s: Shift = _controller._shift
+	var panel := _controller.get_node(^"%WaitingPanel") as Control
+	var mid := _screen().x * 0.5
+	_check("the waiting list is on the left, the log on the right (%s, %s)"
+		% [panel.get_global_rect(), _log_rect()],
+		panel.get_global_rect().end.x < mid and _log_rect().position.x > mid)
+	var was: Array[CustomerArchetype] = s.waiting.duplicate()
+
+	s.waiting.clear()
+	_controller._render()
+	var note: Label = _controller._next_arrival
+	var due := s.next_arrival_in()
+	var says := note.text.replace("\n", " ")
+	_check("with nobody waiting it says so (%s)" % says,
+		note.is_visible_in_tree() and _waiting_rows_shown().is_empty())
+	_check("and when the next one is due (%d)" % due,
+		says.contains("in %d tick" % due) if due >= 0 else says.contains("before close"))
+	var empty_height: float = panel.size.y
+
+	_fill_the_waiting_list(s)
+	_controller._render()
+	var rows := _waiting_rows_shown()
+	var names: Array = rows.map(func(r): return (r.get_node(^"Archetype") as Label).text)
+	var want: Array = s.waiting.map(func(a): return a.display_name)
+	_check("a row per customer waiting, first in line first (%s)" % ", ".join(names),
+		names == want)
+	var marked: Array = rows.map(func(r): return (r.get_node(^"NextTag") as Control).visible)
+	_check("the first of them marked as next (%s)" % str(marked),
+		not marked.is_empty() and marked[0] and not marked.slice(1).has(true))
+	_check("and the countdown makes way for them", not note.visible)
+	_check("the card grows to fit them (%d -> %d px)" % [int(empty_height), int(panel.size.y)],
+		panel.size.y > empty_height)
+	_on_screen("the waiting list, full", panel.get_global_rect())
+
+	s.waiting.assign(was)
+	_controller._render()
+	_check("and shrinks back when they are seated (%d px)" % int(panel.size.y),
+		_waiting_rows_shown().size() == s.waiting.size()
+			and (not s.waiting.is_empty() or is_equal_approx(panel.size.y, empty_height)))
+
+## The rows on show - the template every row is copied from never is.
+func _waiting_rows_shown() -> Array:
+	var out := []
+	for row in (_controller._waiting_rows as Control).get_children():
+		if row != _controller._waiting_row and (row as Control).visible:
+			out.append(row)
+	return out
+
 ## "Add some windows visible behind the customers that suggest the morning /
 ## midday / night shift thing we did." In the framing you work in, the glass
-## shows round the customers: on the right, where the most wall is, and under
-## the customer to your left, between the log and the tablet. Checked at a
-## point on each, against everything that stands in front of the wall.
+## shows round the customers: on the left, under the waiting list, and under
+## the customer to your left, beside the tablet. (The right-hand pane is the
+## log's rail now.) Checked at a point on each, against everything that stands
+## in front of the wall.
 func _check_the_windows_show_behind_the_customers() -> void:
 	var windows: OfficeWindows = _controller._windows
 	_check("the office has windows", windows != null)
@@ -1918,13 +2004,14 @@ func _check_the_windows_show_behind_the_customers() -> void:
 		windows.time_of_day() == _controller._time_of_day)
 	var cam: Camera3D = _controller._camera
 	var top_bar: float = (_controller.get_node(^"%TopStrip") as Control).get_global_rect().end.y
-	var in_front: Array[Rect2] = [_log_rect(), _rect_of(_controller._tablets[_at()], TABLET)]
+	var in_front: Array[Rect2] = [_log_rect(), _waiting_rect(),
+		_rect_of(_controller._tablets[_at()], TABLET)]
 	for i in range(3):
 		in_front.append(_rect_of(_controller._customer_cards[i], CUSTOMER))
 	# Points on the glass itself, measured up from each pane's own sill: the
-	# right-hand pane, and low on the second from the left.
+	# left-hand pane, and low on the second from the left.
 	var panes := windows.get_node(^"Panes").get_children()
-	for spot in [["on the right", panes[panes.size() - 1], Vector2(1.0, 4.6)],
+	for spot in [["on the left, under the waiting list", panes[0], Vector2(-1.0, 4.6)],
 			["under the customer on your left", panes[1], Vector2(-1.0, 1.1)]]:
 		var pane := spot[1] as MeshInstance3D
 		var glass: Vector2 = (pane.mesh as QuadMesh).size

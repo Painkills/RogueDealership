@@ -54,21 +54,17 @@ func test_default_patience_scale_matches_the_unscaled_shift() -> void:
 		h.eq("chair %d: 1.0 changes nothing" % i,
 			b.seated()[i].max_patience, a.seated()[i].max_patience)
 
-func test_walk_up_scale_stretches_the_wait_before_a_chair_refills() -> void:
-	## Called directly, right after construction - both shifts have consumed
-	## the identical rng history up to this point (patience_scale and
+func test_walk_up_scale_stretches_the_gap_between_customers() -> void:
+	## Read straight after construction - both shifts have consumed the
+	## identical rng history up to this point (patience_scale and
 	## walk_up_scale change what is done WITH a roll, never how many rolls
-	## happen), so the raw wait each draws is the same number before scaling.
+	## happen), so the raw gap each draws is the same number before scaling.
 	var baseline := _shift()
 	var scaled := _shift(0, 1.0, 2.0)
-	baseline._vacate(0)
-	scaled._vacate(0)
-	h.eq("scaled wait is exactly double the unscaled one, rounded",
-		scaled.walk_up[0], roundi(baseline.walk_up[0] * 2.0))
+	h.eq("scaled gap is exactly double the unscaled one, rounded",
+		scaled.next_arrival, roundi(baseline.next_arrival * 2.0))
 
 func test_default_walk_up_scale_matches_the_unscaled_shift() -> void:
 	var a := _shift()
 	var b := _shift(0, 1.0, 1.0)
-	a._vacate(0)
-	b._vacate(0)
-	h.eq("1.0 changes nothing", b.walk_up[0], a.walk_up[0])
+	h.eq("1.0 changes nothing", b.next_arrival, a.next_arrival)
