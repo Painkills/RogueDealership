@@ -1,7 +1,8 @@
 extends RefCounted
-## The whole meta layer: a free card every visit, and whatever the shift you
-## just worked adds to it - a card to buy, or one of yours to upgrade - plus
-## dropping a card you no longer want.
+## The whole meta layer: a free card every visit, then a store stocked by the
+## shift you just worked - cards to buy and cards of yours to upgrade, as many
+## as you can afford - plus dropping a card you no longer want. Checked against
+## each shift's own numbers, never today's tuning of them.
 var h: Harness
 
 func _run(money: int = 10000, seed_value: int = 7) -> RunState:
@@ -30,15 +31,15 @@ func test_every_card_carries_a_price() -> void:
 		h.check("%s is priced" % c.id, c.price > 0)
 
 # ------------------------------------------------------------- the free card
-func test_every_visit_offers_three_free_cards_to_pick_one_from() -> void:
-	## "The free offer should offer three card options, out of which the player
-	## picks ONE." Whatever the tier - even none at all.
-	h.eq("three options, as asked",
-		(load("res://data/shift_config.tres") as ShiftConfig).free_card_choices, 3)
+func test_every_visit_offers_free_cards_to_pick_one_from() -> void:
+	## "You always get one choice of three for free" - whatever the tier, even
+	## none at all. How many to choose between is the config's.
 	for p in [null, _shipped(&"morning"), _shipped(&"midday"), _shipped(&"night")]:
-		var shop := Shop.new(_run(), p)
+		var r := _run()
+		var shop := Shop.new(r, p)
 		var which: String = "no tier" if p == null else String(p.id)
-		h.eq("%s: three cards on the house" % which, shop.free_cards.size(), 3)
+		h.eq("%s: the configured number of cards on the house" % which,
+			shop.free_cards.size(), r.cfg.free_card_choices)
 		h.eq("%s: and one pick of them" % which, shop.free_picks_left, 1)
 	var r := _run()
 	var shop := Shop.new(r)
@@ -88,7 +89,7 @@ func test_once_one_is_picked_the_others_wait_for_the_next_shift() -> void:
 	h.eq("neither added anything", r.deck.cards.size(), size)
 	var next := Shop.new(r)
 	h.eq("the next visit brings a fresh pick", next.free_picks_left, 1)
-	h.eq("of three more", next.free_cards.size(), 3)
+	h.eq("from a fresh set", next.free_cards.size(), r.cfg.free_card_choices)
 
 func test_only_the_cards_on_offer_can_be_taken_free() -> void:
 	var r := _run()
@@ -112,6 +113,20 @@ func test_the_free_card_comes_even_when_you_cannot_afford_anything() -> void:
 	h.check("taken with $0 (%s)" % res.msg, res.ok)
 	h.eq("and $0 it stays", r.money, 0)
 
+func test_passing_on_the_free_cards_spends_the_pick_and_nothing_else() -> void:
+	## The popup's "no thanks": pick one, or none - and the store after it is
+	## the same either way.
+	var r := _run()
+	var shop := Shop.new(r, _profile(1, 1))
+	var before: int = r.deck.cards.size()
+	var res := shop.pass_on_free()
+	h.check("passing is allowed (%s)" % res.msg, res.ok)
+	h.eq("and spends the visit's pick", shop.free_picks_left, 0)
+	h.eq("adding nothing", r.deck.cards.size(), before)
+	h.check("so taking one after is refused", not shop.take_free(shop.free_cards[0]).ok)
+	h.check("and the store is still stocked",
+		not shop.offers.is_empty() and not shop.upgrade_offers.is_empty())
+
 func test_leaving_the_free_cards_is_allowed() -> void:
 	## Pick one, or none. A deckbuilder that forced a card on you every visit
 	## would thin nothing and bloat everything.
@@ -126,7 +141,6 @@ func test_no_tier_means_the_free_card_and_nothing_else() -> void:
 	var shop := Shop.new(_run())
 	h.check("nothing for sale", shop.offers.is_empty())
 	h.check("nothing of yours to upgrade", shop.upgrade_offers.is_empty())
-	h.eq("and no upgrade to spend", shop.upgrades_left, 0)
 
 func test_a_card_for_sale_is_one_card_and_not_the_free_one() -> void:
 	for seed_value in range(1, 40):
@@ -175,22 +189,53 @@ func test_you_cannot_buy_what_you_cannot_afford() -> void:
 func test_perk_text_says_what_the_visit_holds_beyond_the_free_card() -> void:
 	h.check("no tier: just the free card (%s)" % Shop.new(_run()).perk_text(),
 		Shop.new(_run()).perk_text().contains("free card"))
-	var midday := Shop.new(_run(), _shipped(&"midday")).perk_text()
-	h.check("midday: a card for sale (%s)" % midday, midday.contains("for sale"))
-	var night := Shop.new(_run(), _shipped(&"night")).perk_text()
-	h.check("night: an upgrade (%s)" % night, night.contains("upgrade"))
+	var sale := Shop.new(_run(), _profile(2, 0)).perk_text()
+	h.check("cards for sale, and how many (%s)" % sale,
+		sale.contains("2 cards for sale") and not sale.contains("upgrade"))
+	var ups := Shop.new(_run(), _profile(0, 3)).perk_text()
+	h.check("cards of yours to upgrade, and how many (%s)" % ups,
+		ups.contains("3 of your cards to upgrade") and not ups.contains("for sale"))
 
 func test_the_picker_previews_the_same_visit() -> void:
+	## Whatever each shift stocks, the calendar promises exactly that - and the
+	## store after it holds what was promised.
 	for id in [&"morning", &"midday", &"night"]:
-		h.check("%s promises the free card (%s)" % [id, _shipped(id).reward_preview()],
-			_shipped(id).reward_preview().contains("free card"))
-	h.check("midday promises a card to buy",
-		_shipped(&"midday").reward_preview().contains("buy"))
-	h.check("night promises an upgrade",
-		_shipped(&"night").reward_preview().contains("upgrade"))
-	h.check("and morning promises neither",
-		not _shipped(&"morning").reward_preview().contains("buy")
-			and not _shipped(&"morning").reward_preview().contains("upgrade"))
+		var p := _shipped(id)
+		var text := p.reward_preview()
+		h.check("%s promises the free card (%s)" % [id, text], text.contains("free card"))
+		h.check("%s promises cards to buy exactly when it stocks some" % id,
+			text.contains("buy") == (p.cards_for_sale > 0))
+		h.check("%s promises upgrades exactly when it offers some" % id,
+			text.contains("upgrade") == (p.upgrades > 0))
+		var r := _run()
+		var shop := Shop.new(r, p)
+		# The free cards come off the same pool first - see Shop._roll_cards().
+		var left_to_sell: int = maxi(0, r.card_pool.shoppable_cards().size()
+			- shop.free_cards.size())
+		h.eq("%s: its store stocks the cards it promised for sale" % id,
+			shop.offers.size(), mini(p.cards_for_sale, left_to_sell))
+		h.eq("%s: and offers the cards of yours it promised to upgrade" % id,
+			shop.upgrade_offers.size(), mini(p.upgrades, _eligible(r, shop)))
+
+## How many of the run's cards have an upgrade to sell right now.
+func _eligible(r: RunState, shop: Shop) -> int:
+	var n := 0
+	for inst in r.deck.cards:
+		if not inst.upgraded and shop.upgrade_gain(inst) > 0:
+			n += 1
+	return n
+
+func test_you_can_buy_every_card_on_the_shelf_you_can_afford() -> void:
+	## "You can buy or upgrade as many as you can afford within the choices
+	## provided."
+	var r := _run(1000000)
+	var shop := Shop.new(r, _profile(3, 0))
+	var shelf := shop.offers.duplicate()
+	h.check("a few for sale (%d)" % shelf.size(), shelf.size() >= 2)
+	for def in shelf:
+		var res := shop.buy(def)
+		h.check("buying the %s goes through (%s)" % [def.display_name, res.msg], res.ok)
+	h.check("and the shelf is empty", shop.offers.is_empty())
 
 # ---------------------------------------------------------------- the upgrade
 func test_upgrading_costs_a_multiple_of_what_it_gains() -> void:
@@ -219,26 +264,30 @@ func test_upgrading_costs_a_multiple_of_what_it_gains() -> void:
 	h.eq("and it now earns the upgraded margin", product.margin(), p.upgraded_margin)
 	h.eq("and it was paid for", r.money, 10000 - gain * r.cfg.upgrade_price_multiple)
 
-func test_a_night_upgrades_one_card_and_only_one() -> void:
-	## "The chance to upgrade ONE card." A few of yours are on show to choose
-	## from; once one is upgraded, the visit's upgrade is spent.
+func test_you_can_upgrade_every_card_on_offer_you_can_afford() -> void:
+	## "You can buy or upgrade as many as you can afford within the choices
+	## provided" - no more "the visit's one upgrade".
 	var r := _run(1000000)
-	var shop := Shop.new(r, _profile(0, 1))
-	h.check("a choice of cards to upgrade (%d)" % shop.upgrade_offers.size(),
+	var shop := Shop.new(r, _profile(0, 3))
+	h.check("a few of yours on offer (%d)" % shop.upgrade_offers.size(),
 		shop.upgrade_offers.size() >= 2)
-	var first := shop.upgrade(shop.upgrade_offers[0])
-	h.check("the first goes through (%s)" % first.msg, first.ok)
-	h.eq("and spends the visit's upgrade", shop.upgrades_left, 0)
-	var money_after: int = r.money
-	var second_uid: int = shop.upgrade_offers[1]
-	var second := shop.upgrade(second_uid)
-	h.check("a second is refused (%s)" % second.msg, not second.ok)
-	h.check("because the upgrade is used, not for any other reason",
-		second.msg.to_lower().contains("used"))
-	h.eq("and charged nothing", r.money, money_after)
-	h.check("and left that card as it was", not shop.find(second_uid).upgraded)
-	h.check("the rest stay on show - nothing re-rolled",
-		shop.upgrade_offers.has(second_uid))
+	for uid in shop.upgrade_offers:
+		var res := shop.upgrade(uid)
+		h.check("upgrading %s goes through (%s)" % [shop.find(uid).card.display_name, res.msg],
+			res.ok)
+	h.check("every one of them upgraded",
+		shop.upgrade_offers.all(func(u): return shop.find(u).upgraded))
+
+func test_what_you_cannot_afford_is_where_it_stops() -> void:
+	var r := _run(0)
+	var shop := Shop.new(r, _profile(0, 3))
+	var first: int = shop.upgrade_offers[0]
+	r.money = shop.upgrade_price(shop.find(first))
+	h.check("the first you can pay for goes through", shop.upgrade(first).ok)
+	var res := shop.upgrade(shop.upgrade_offers[1])
+	h.check("the next, with nothing left, is refused (%s)" % res.msg,
+		not res.ok and res.msg.contains("afford"))
+	h.check("and left as it was", not shop.find(shop.upgrade_offers[1]).upgraded)
 
 func test_a_card_cannot_be_upgraded_twice() -> void:
 	var r := _run()
@@ -300,11 +349,12 @@ func test_a_support_card_with_no_authored_upgrade_cannot_be_bought() -> void:
 	h.eq("and nothing was spent", r.money, money_before)
 	h.check("and the instance stayed un-upgraded", not inst.upgraded)
 
-func test_upgrade_offers_are_capped_at_the_configured_slot_count() -> void:
-	var r := _run()
-	var shop := Shop.new(r, _profile(0, 1))
-	h.eq("a few to choose from, not the whole toolkit", shop.upgrade_offers.size(),
-		r.cfg.shop_upgrade_slots)
+func test_a_visit_offers_as_many_of_your_cards_as_its_shift_says() -> void:
+	for n in [1, 2, 3]:
+		var r := _run()
+		var shop := Shop.new(r, _profile(0, n))
+		h.eq("%d on offer, not the whole toolkit" % n, shop.upgrade_offers.size(),
+			mini(n, _eligible(r, shop)))
 
 func test_upgrade_offers_shrink_gracefully_when_fewer_cards_are_eligible() -> void:
 	## mini(), not a hard slot count - fewer eligible cards than slots must not
@@ -324,8 +374,8 @@ func test_upgrade_offers_shrink_gracefully_when_fewer_cards_are_eligible() -> vo
 		shop.upgrade(inst.uid)
 	h.check("left exactly one eligible card behind", left_eligible != null)
 
-	var fresh := Shop.new(r, _profile(0, 1))
-	h.eq("offers exactly the one that is left, not the full slot count",
+	var fresh := Shop.new(r, _profile(0, 3))
+	h.eq("offers exactly the one that is left, not the shift's full count",
 		fresh.upgrade_offers.size(), 1)
 	h.eq("and it is that one", fresh.upgrade_offers, [left_eligible.uid])
 
@@ -375,7 +425,7 @@ func test_a_card_not_on_this_visits_upgrade_offer_refuses_the_upgrade() -> void:
 		if not shop.upgrade_offers.has(inst.uid) and shop.upgrade_gain(inst) > 0:
 			not_offered = inst
 			break
-	h.check("the starter deck has more upgradeable cards than slots, so one exists",
+	h.check("the starter deck has more upgradeable cards than are offered, so one exists",
 		not_offered != null)
 	var res := shop.upgrade(not_offered.uid)
 	h.check("refused (%s)" % res.msg, not res.ok)

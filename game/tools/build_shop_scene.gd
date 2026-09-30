@@ -3,16 +3,16 @@ extends SceneTree
 ## Store page of the dealership's employee portal: a website in a browser
 ## window (see AppWindow). Its other page, My Toolkit, is the deck viewer.
 ##
-## Three aisles, side by side - a browser window's own chrome takes height a
-## full-screen menu never had to give up:
-##   ON THE HOUSE   three cards every visit, to take ONE of free
-##   FOR SALE       the card a midday shift puts up for sale, bought with the
-##                  bonus you earned
-##   UPGRADE ONE    a few of your own cards, one of which a night shift lets
-##                  you upgrade (or drop)
-## An aisle the shift you just worked does not stock says so in words, filled
-## in at runtime with everything else here - FreeRow, ShelfRow and DeckRow are
-## EMPTY in the scene, because what is in them changes every visit.
+## Every visit opens on a popup first - FreePick, a few cards on the house to
+## take ONE of - and then the store behind it, two aisles side by side:
+##   FOR SALE       the cards the shift you worked put up for sale, bought
+##                  with the bonus you earned
+##   UPGRADES       a few of your own cards to upgrade (or drop)
+## How many of each is the shift's own (ShiftProfile.cards_for_sale and
+## upgrades); buy or upgrade as many as the bonus covers. An aisle the shift
+## does not stock says so in words, filled in at runtime with everything else
+## here - FreePickRow, ShelfRow and DeckRow are EMPTY in the scene, because
+## what is in them changes every visit.
 ##
 ## Cards, not text rows: every aisle shows the SAME card face the floor renders
 ## (shop_card_button.tscn - a real card wrapped in a flat Button), with what it
@@ -24,6 +24,8 @@ const WINDOW := Vector2(1680, 940)
 ## line, the 252-tall card itself, and a price line. drive_run.gd measures a
 ## real slot against this.
 const SLOT_HEIGHT := 310
+## The free pick's window: room for three card slots side by side.
+const FREE_PICK_WINDOW := Vector2(760, 0)
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -92,19 +94,17 @@ func _init() -> void:
 	money.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
-	# --- the three aisles ----------------------------------------------------------
-	# The free picks and your own cards hold three each; the one for sale holds
-	# one, so it gets the least room.
+	# --- the two aisles -----------------------------------------------------------
+	# Either can hold a few cards, depending on the shift, so they share the
+	# width evenly.
 	var aisles := HBoxContainer.new()
 	aisles.name = "Aisles"
 	aisles.add_theme_constant_override("separation", 28)
 	col.add_child(aisles)
 	aisles.owner = root
-	_card_section(aisles, root, "FreeSection", "FreeTitle", "ON THE HOUSE - PICK ONE",
-		"FreeRow", 2.0)
 	_card_section(aisles, root, "ShelfSection", "OnShelfTitle", "FOR SALE", "ShelfRow", 1.0)
-	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADE ONE OF YOURS",
-		"DeckRow", 2.0)
+	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADE YOUR CARDS",
+		"DeckRow", 1.0)
 
 	AppWindow.label(col, root, "LogLabel", "", 22, &"alert", false, true)
 
@@ -135,6 +135,9 @@ func _init() -> void:
 	button_row.add_child(done)
 	done.owner = root
 
+	_free_pick(root)
+
+	# After the popup, so a card's details open over it rather than under it.
 	var detail: Control = (load(DETAIL_SCENE) as PackedScene).instantiate()
 	detail.name = "Detail"
 	detail.unique_name_in_owner = true
@@ -152,7 +155,56 @@ func _init() -> void:
 	root.free()
 	quit(0)
 
-## A titled aisle of cards: all three are built from the exact same shape,
+## "First, you get a popup with the one out of three." Over the whole store, so
+## nothing behind it can be clicked until you pick one - or pass. The cards go
+## in FreePickRow at runtime, the same slots the aisles use.
+func _free_pick(root: Control) -> void:
+	var popup := PanelContainer.new()
+	popup.name = "FreePick"
+	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	popup.unique_name_in_owner = true
+	AppWindow.desktop(popup, 0.6)
+	root.add_child(popup)
+	popup.owner = root
+
+	var made := AppWindow.build(popup, root, "FreePickWindow", "On the house",
+		FREE_PICK_WINDOW, "", 36)
+	var col: VBoxContainer = made["body"]
+	col.add_theme_constant_override("separation", 18)
+
+	var title := AppWindow.label(col, root, "FreePickTitle", "Pick one, on the house", 34,
+		&"text", true)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var sub := AppWindow.label(col, root, "FreePickSub",
+		"It goes straight into your toolkit. The store is next.", 20, &"text_dim")
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	var row := HBoxContainer.new()
+	row.name = "FreePickRow"
+	row.unique_name_in_owner = true
+	row.add_theme_constant_override("separation", 24)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.custom_minimum_size = Vector2(0, SLOT_HEIGHT)
+	col.add_child(row)
+	row.owner = root
+
+	var buttons := HBoxContainer.new()
+	buttons.name = "FreePickButtons"
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(buttons)
+	buttons.owner = root
+	var skip := Button.new()
+	skip.name = "SkipFreeButton"
+	skip.text = "no thanks"
+	skip.custom_minimum_size = Vector2(200, 60)
+	skip.add_theme_font_size_override("font_size", 22)
+	ButtonStyle.outlined(skip, Palette.color(&"ink_dim"))
+	skip.unique_name_in_owner = true
+	buttons.add_child(skip)
+	skip.owner = root
+
+## A titled aisle of cards: both are built from the exact same shape,
 ## since each is "some cards, click one" - only what a click DOES differs, and
 ## that is wired at runtime by shop_screen.gd, not here. `share` is how much of
 ## the width it gets against the others.

@@ -115,12 +115,8 @@ class_name ShiftConfig extends Resource
 # --- the shop --------------------------------------------------------------
 ## How many cards the house offers you after every shift, to take ONE of free.
 @export var free_card_choices: int = 3
-## What else a visit offers is the tier's business (see ShiftProfile). This is
-## how many of YOUR cards a visit with an upgrade lets you choose between -
-## every un-upgraded card with a real upgrade to sell used to get a button at
-## once, eight or more rows deep by the back half of a run. A real choice among
-## a few, not a checklist.
-@export var shop_upgrade_slots: int = 3
+## What the store stocks after it - cards for sale, and cards of yours to
+## upgrade - is the shift's business: see ShiftProfile.
 ## An upgrade costs this many times what it gains, so it pays back in that many
 ## sales. Both scale with the card, which is what keeps upgrading a cheap card
 ## and an expensive one the same decision.

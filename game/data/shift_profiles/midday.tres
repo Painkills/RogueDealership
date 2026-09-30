@@ -9,3 +9,4 @@ display_name = "Midday Shift"
 blurb = "Busy. Everyone's on a shorter fuse."
 patience_scale = 0.75
 cards_for_sale = 3
+upgrades = 1

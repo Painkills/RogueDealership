@@ -114,6 +114,9 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 		event.add_theme_stylebox_override(state, _event_style(hue, mix))
 	# Focus is drawn OVER the state's own box - a second tint would double it.
 	event.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	# Words that outgrow their hours stop at the event's edge rather than
+	# spilling over the next shift down the day.
+	event.clip_contents = true
 	body.place(event, hours[0], hours[1])
 	var col := _event_text(event)
 	# A premade shift says so before anything else: this is not the usual day.
@@ -122,11 +125,14 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 			else "SPECIAL SHIFT", 14, hue, true)
 		tag.name = "PremadeTag"
 	_line(col, profile.display_name, 24, Palette.color(&"text"), true)
-	_line(col, "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
-		CalendarDay.hour_label(int(hours[1]))], 15, Palette.color(&"text_dim"))
-	_line(col, profile.blurb, 16, Palette.color(&"text"))
+	# A shift with its own quota says so beside its hours, not on a line of its
+	# own - a four-hour block has room for only so many.
+	var when := "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
+		CalendarDay.hour_label(int(hours[1]))]
 	if profile.quota > 0:
-		_line(col, "Quota %s" % Format.money(profile.quota), 15, Palette.color(&"text"), true)
+		when += "  |  quota %s" % Format.money(profile.quota)
+	_line(col, when, 15, Palette.color(&"text_dim"))
+	_line(col, profile.blurb, 16, Palette.color(&"text"))
 	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))
 	event.pressed.connect(func(): chosen.emit(profile))
 

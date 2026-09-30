@@ -52,12 +52,12 @@ func _process(_delta: float) -> bool:
 		_settle_frames += 1
 		if _settle_frames < 5:
 			return false
-		# After a MIDDAY shift: the free card, and one card for sale.
+		# After a MIDDAY shift: the free pick first, then the store it stocks.
 		_check_shop_layout_fits_on_screen()
 		_check_the_view_deck_button_shows_the_whole_deck()
 		_check_the_free_card_is_on_the_house()
+		_check_the_store_holds_what_the_shift_stocks()
 		_check_clicking_a_shelf_card_buys_it()
-		_check_a_midday_visit_has_no_upgrade()
 		_check_debug_add_money_key_works()
 		_check_shift_label_tap_target_adds_money_too()
 		_check_build_badge_is_always_on_screen("in the shop")
@@ -70,9 +70,11 @@ func _process(_delta: float) -> bool:
 		_settle_frames += 1
 		if _settle_frames < 5:
 			return false
-		# After a NIGHT shift: the free card, and one of yours to upgrade.
+		# After a NIGHT shift: the free pick again - passed on, this time - and
+		# the store it stocks, cards of yours to upgrade among it.
 		_check_shop_layout_fits_on_screen()
-		_check_a_night_visit_has_nothing_for_sale()
+		_check_passing_on_the_free_pick_opens_the_store()
+		_check_the_store_holds_what_the_shift_stocks()
 		_check_the_deck_row_shows_exactly_the_random_upgrade_offers()
 		_check_clicking_a_deck_card_opens_its_detail()
 		_check_run_summary_screen_appears_at_the_end_of_a_run()
@@ -235,7 +237,6 @@ func _check_shop_layout_fits_on_screen() -> void:
 	var done_btn := _root._shop_view.get_node(^"%DoneButton") as Control
 	var log_label := _root._shop_view.get_node(^"%LogLabel") as Control
 	var rows := {
-		"free row": _root._shop_view.get_node(^"%FreeRow") as Control,
 		"shelf row": _root._shop_view.get_node(^"%ShelfRow") as Control,
 		"deck row": _root._shop_view.get_node(^"%DeckRow") as Control,
 	}
@@ -249,7 +250,7 @@ func _check_shop_layout_fits_on_screen() -> void:
 		var row: Control = rows[row_name]
 		_on_screen("the %s" % row_name, Rect2(row.global_position, row.size))
 	# An aisle with nothing in it says so, rather than standing empty.
-	for pair in [["free row", shop.free_picks_left <= 0], ["shelf row", shop.offers.is_empty()],
+	for pair in [["shelf row", shop.offers.is_empty()],
 			["deck row", shop.upgrade_offers.is_empty()]]:
 		if pair[1]:
 			var row: Node = rows[pair[0]]
@@ -258,8 +259,8 @@ func _check_shop_layout_fits_on_screen() -> void:
 					and row.get_child(0) is Label else "no note"],
 				row.get_child_count() == 1 and row.get_child(0) is Label)
 	# An aisle keeps one card slot's height whether it holds a card or only
-	# says it is empty: taking the free card must not pull the page, and the
-	# button you are about to press, up the screen.
+	# says it is empty: buying a card must not pull the page, and the button
+	# you are about to press, up the screen.
 	for row_name in rows:
 		var row: Control = rows[row_name]
 		_check("the %s holds a card's height, full or empty (%d px)"
@@ -342,36 +343,33 @@ func _on_screen(label: String, r: Rect2) -> void:
 ## model's own upgrade_offers array, so this fails if shop_screen.gd's render
 ## loop and Shop's random draw ever disagree about which cards are shown.
 func _check_the_deck_row_shows_exactly_the_random_upgrade_offers() -> void:
-	## The capping behaviour this checks only means anything when the deck
-	## actually has more upgrade-eligible cards than there are slots - a
-	## precondition, not the thing under test. A deck/slot-count retune that
-	## makes it untrue should skip this quietly rather than fail for a reason
-	## unrelated to whether capping itself still works.
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
-	_check("a night's visit gives exactly one upgrade (%d)" % shop.upgrades,
-		shop.upgrades == 1 and shop.upgrades_left == 1)
-	var eligible_uncapped := 0
+	var eligible := 0
 	for inst in _run.deck.cards:
 		if not inst.upgraded and shop.upgrade_gain(inst) > 0:
-			eligible_uncapped += 1
-	if eligible_uncapped <= _run.cfg.shop_upgrade_slots:
-		print("SKIP  deck-row capping check: only %d eligible cards against %d slots, proves nothing"
-			% [eligible_uncapped, _run.cfg.shop_upgrade_slots])
-		return
-
+			eligible += 1
 	var deck_row := shop_view.get_node(^"%DeckRow") as HBoxContainer
-	_check("rendered exactly as many deck slots as were actually offered (%d)"
-		% deck_row.get_child_count(), deck_row.get_child_count() == shop.upgrade_offers.size())
-	_check("which is capped at the configured slot count, not the whole deck",
-		deck_row.get_child_count() <= _run.cfg.shop_upgrade_slots)
+	var shown := _slots_in(deck_row)
+	_check("rendered exactly as many deck slots as were actually offered (%d)" % shown,
+		shown == shop.upgrade_offers.size())
+	_check("which is the shift's own count, not the whole toolkit (%d of %d, %d eligible)"
+		% [shown, shop.upgrades, eligible], shown == mini(shop.upgrades, eligible))
+
+## How many real card slots a row holds - not the words an empty one shows.
+func _slots_in(row: Node) -> int:
+	var n := 0
+	for slot in row.get_children():
+		if _slot_card(slot) != null:
+			n += 1
+	return n
 
 ## "Show the card itself. When you click, it opens up the card, shows the
 ## upgraded card and also has a button for removing from deck" - the literal
 ## ask, end to end: click a deck slot, the detail overlay opens showing both
 ## faces and the right prices, upgrading applies and closes it, and the row
-## behind it reflects the change once it does. Then "upgrade ONE card": the
-## next card along no longer offers an upgrade at all, only the drop.
+## behind it reflects the change once it does. Then "as many as you can
+## afford": the next card along still offers its upgrade, and its drop.
 func _check_clicking_a_deck_card_opens_its_detail() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
@@ -416,26 +414,26 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 	_check("pressing upgrade actually upgrades the card", inst.upgraded and not was_upgraded)
 	_check("and closes the overlay", not detail.visible)
 
-	# The visit's one upgrade is spent. The rest of the few stay on show - so
-	# you can still see what you chose between - but say so, and a click on
-	# one offers only the drop.
+	# "You can buy or upgrade as many as you can afford": the rest of the few
+	# still say what upgrading them costs, and a click on one still offers it.
 	if shop.upgrade_offers.size() < 2:
-		print("SKIP  one-upgrade check: only one card was on offer")
+		print("SKIP  second-upgrade check: only one card was on offer")
 		return
 	deck_row = shop_view.get_node(^"%DeckRow") as HBoxContainer
 	var labels: Array[String] = []
 	for slot in deck_row.get_children():
 		labels.append((slot.get_child(slot.get_child_count() - 1) as Label).text)
-	_check("the card you chose reads upgraded, the rest that the upgrade is used (%s)"
+	_check("the card you upgraded reads upgraded, the rest still their price (%s)"
 		% ", ".join(labels),
-		labels[0] == "upgraded" and labels.slice(1).all(func(t): return t == "upgrade used"))
+		labels[0] == "upgraded"
+			and labels.slice(1).all(func(t): return t.begins_with("upgrade ")))
 	var drop_uid: int = shop.upgrade_offers[1]
 	var deck_size_before_drop := _run.deck.cards.size()
 	_slot_card(deck_row.get_child(1)).pressed.emit()
 	_check("clicking a second card of yours opens its own detail", detail.visible)
-	_check("with no upgrade on it - the visit's one is spent",
-		not detail._upgrade_btn.visible)
-	_check("but the drop still there", detail._remove_btn.visible)
+	_check("still offering its upgrade - as many as you can afford",
+		detail._upgrade_btn.visible)
+	_check("and its drop", detail._remove_btn.visible)
 	var drop_price := shop.remove_price()
 	detail._remove_btn.pressed.emit()
 	_check("pressing remove actually drops the card (%d -> %d, price %s)"
@@ -444,25 +442,21 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 			and shop.find(drop_uid) == null)
 	_check("and closes the overlay too", not detail.visible)
 
-## After a midday shift there is a card for sale and nothing of yours to
-## upgrade - and the aisle for it says so.
-func _check_a_midday_visit_has_no_upgrade() -> void:
+## "What's offered in the store depends on the shift you picked." Read back
+## against that shift's own numbers, never today's tuning of them: its cards
+## for sale on the shelf, and its cards of yours to upgrade.
+func _check_the_store_holds_what_the_shift_stocks() -> void:
 	var shop: Shop = _root._shop_view._shop
-	var deck_row := _root._shop_view.get_node(^"%DeckRow") as HBoxContainer
-	_check("a midday visit offers none of your cards to upgrade",
-		shop.upgrades == 0 and shop.upgrade_offers.is_empty())
-	var note := _note_in(deck_row)
-	_check("and its aisle says there is no upgrade (%s)" % note, note.contains("No upgrade"))
-
-## ...and after a night shift, the other way round.
-func _check_a_night_visit_has_nothing_for_sale() -> void:
-	var shop: Shop = _root._shop_view._shop
-	var shelf_row := _root._shop_view.get_node(^"%ShelfRow") as HBoxContainer
-	var free_row := _root._shop_view.get_node(^"%FreeRow") as HBoxContainer
-	_check("a night visit still has its three free cards to pick from",
-		shop.free_cards.size() == 3 and shop.free_picks_left == 1
-			and free_row.get_child_count() == 3 and _slot_card(free_row.get_child(0)) != null)
-	var note := _note_in(shelf_row)
+	var profile: ShiftProfile = _root._chosen_profile
+	_check("the store is stocked by the %s's own numbers (%d for sale, %d to upgrade)"
+		% [profile.id, shop.cards_for_sale, shop.upgrades],
+		shop.cards_for_sale == profile.cards_for_sale and shop.upgrades == profile.upgrades)
+	var shelf := _slots_in(_root._shop_view.get_node(^"%ShelfRow"))
+	var deck := _slots_in(_root._shop_view.get_node(^"%DeckRow"))
+	_check("a card on the shelf for each one for sale (%d of %d)" % [shelf, shop.offers.size()],
+		shelf == shop.offers.size())
+	_check("and one of yours for each upgrade on offer (%d of %d)"
+		% [deck, shop.upgrade_offers.size()], deck == shop.upgrade_offers.size())
 
 ## The words an empty aisle shows instead of cards, or "" when it is not one.
 func _note_in(row: Node) -> String:
@@ -610,30 +604,33 @@ func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 	close_btn.pressed.emit()
 	_check("closing it hides it again", not deck_viewer.visible)
 
-## "The free offer should offer three card options, out of which the player
-## picks ONE." Three cards in the free aisle, each marked FREE; clicking one
-## opens the same overlay every card here uses, with only a way to take it;
-## taking it adds that very card and spends nothing - and the other two go
-## with the pick, the aisle saying which card you took.
+## "First, you get a popup with the one out of three." It covers the store
+## until you pick one: a card for each free choice, each marked FREE; clicking
+## one opens the same overlay every card here uses, over the popup, with only
+## a way to take it; taking it adds that very card, spends nothing, and opens
+## the store behind it.
 func _check_the_free_card_is_on_the_house() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
-	var free_row := shop_view.get_node(^"%FreeRow") as HBoxContainer
-	var three: bool = free_row.get_child_count() == 3 \
-		and _slot_card(free_row.get_child(0)) != null
-	_check("three cards in the free aisle (%d)" % free_row.get_child_count(), three)
-	if not three:
+	var popup := shop_view.get_node(^"%FreePick") as Control
+	var row := shop_view.get_node(^"%FreePickRow") as HBoxContainer
+	_check("the free pick pops up first, over the store", popup.visible and shop_view.visible)
+	_check_window_fits("the free pick", shop_view.get_node(^"%FreePickWindow"))
+	var slots := row.get_children().filter(func(slot): return _slot_card(slot) != null)
+	_check("a card for each free choice (%d of %d)" % [slots.size(), shop.free_cards.size()],
+		slots.size() == shop.free_cards.size() and slots.size() >= 2)
+	if slots.size() < 2:
 		return
-	for slot in free_row.get_children():
+	for slot in slots:
 		var price := slot.get_child(slot.get_child_count() - 1) as Label
 		_check("each marked free (%s)" % price.text, price.text == "FREE")
-	# The middle one - not always the first, so the pick is really a pick.
-	var slot := free_row.get_child(1)
+	# The second one - not always the first, so the pick is really a pick.
 	var free: CardDef = shop.free_cards[1]
 	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
-	_slot_card(slot).pressed.emit()
+	_slot_card(slots[1]).pressed.emit()
 	_check("clicking one opens the overlay, titled after it (%s)" % detail._title.text,
 		detail.visible and detail._title.text == free.display_name)
+	_check("drawn over the popup, not under it", detail.get_index() > popup.get_index())
 	_check("with a way to take it and nothing to pay",
 		detail._take_btn.visible and not detail._buy_btn.visible
 			and not detail._upgrade_btn.visible and not detail._remove_btn.visible)
@@ -650,26 +647,23 @@ func _check_the_free_card_is_on_the_house() -> void:
 		added.size() == 1 and added[0].card == free)
 	_check("for nothing", _run.money == money_before)
 	_check("and closes the overlay", not detail.visible)
+	_check("and the popup with it, leaving the store", not popup.visible)
 	if added.size() == 1:
 		_taken_uid = added[0].uid
-	var note := _note_in(shop_view.get_node(^"%FreeRow"))
-	_check("the other two go with the pick - the aisle says which you took (%s)" % note,
-		note.contains(free.display_name) and note.contains("toolkit"))
 	var another: CardDef = shop.free_cards[0]
 	_check("and no second free card this visit",
 		not shop.take_free(another).ok and _run.deck.cards.size() == uids_before.size() + 1)
 
-## "At the end of midday shift, offer a chance to buy one card." The shelf
-## routes through the SAME confirm-before-you-spend overlay: clicking the card
-## opens it with a "buy" button, not an instant purchase.
+## The shelf routes through the SAME confirm-before-you-spend overlay:
+## clicking the card opens it with a "buy" button, not an instant purchase -
+## and "you can buy as many as you can afford", so the next goes the same way.
 func _check_clicking_a_shelf_card_buys_it() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
 	var shelf_row := shop_view.get_node(^"%ShelfRow") as HBoxContainer
-	var number: bool = shop.offers.size() == 3 and shelf_row.get_child_count() == 3 \
-		and _slot_card(shelf_row.get_child(0)) != null
-	_check("three cards for sale after a midday shift (%d)" % shop.offers.size(), number)
-	if not number:
+	var stocked: bool = not shop.offers.is_empty() and _slots_in(shelf_row) == shop.offers.size()
+	_check("cards for sale after a midday shift (%d)" % shop.offers.size(), stocked)
+	if not stocked:
 		return
 	var offered := shop.offers[0]
 	var was_affordable := shop.run.money
@@ -698,8 +692,28 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	for c in _run.deck.cards:
 		if not uids_before.has(c.uid):
 			_bought_uid = c.uid
-	var note := _note_in(shop_view.get_node(^"%ShelfRow"))
+	if not shop.offers.is_empty():
+		var next_def: CardDef = shop.offers[0]
+		var size_before_next := _run.deck.cards.size()
+		_slot_card(shelf_row.get_child(0)).pressed.emit()
+		detail._buy_btn.pressed.emit()
+		_check("and the next one on the shelf too - as many as the bonus covers (%s)"
+			% next_def.display_name,
+			_run.deck.cards.size() == size_before_next + 1 and not shop.offers.has(next_def))
 	shop.run.money = was_affordable   # leave the rest of the run its own accounting
+
+## "Pick one, or none": the popup's "no thanks" spends the visit's pick on
+## nothing and opens the store all the same.
+func _check_passing_on_the_free_pick_opens_the_store() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var popup := shop_view.get_node(^"%FreePick") as Control
+	_check("the free pick pops up again after the next shift",
+		popup.visible and shop.free_picks_left == 1)
+	var before := _run.deck.cards.size()
+	(shop_view.get_node(^"%SkipFreeButton") as Button).pressed.emit()
+	_check("no thanks closes it, for the store", not popup.visible)
+	_check("having taken nothing", _run.deck.cards.size() == before and shop.free_picks_left == 0)
 
 ## The picker is a calendar's week view: a column per day of the run, today's
 ## three shifts as events you click, and the day already worked showing the
@@ -827,8 +841,10 @@ func _phase_2_leave_and_work_a_night() -> void:
 
 	_finish_the_shift()
 	_check("finishing the night opens the store again", _root._shop_view.visible)
+	var night: ShiftProfile = _root._profiles.by_id(&"night")
 	_check("stocked by the night's own tier",
-		_root._shop_view._shop.upgrades == 1 and _root._shop_view._shop.cards_for_sale > 0)
+		_root._shop_view._shop.upgrades == night.upgrades
+			and _root._shop_view._shop.cards_for_sale == night.cards_for_sale)
 
 ## The shift log, the waiting list and the top bar each live in the floor's HUD
 ## CanvasLayer, which draws by layer number rather than tree order - so the

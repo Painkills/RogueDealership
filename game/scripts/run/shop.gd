@@ -1,11 +1,11 @@
 class_name Shop extends RefCounted
 ## Between shifts. Every visit the house offers you a few cards and gives you
-## ONE of them, free - pick one, or none. What else is on offer is what the
-## shift you just worked earns: a
-## midday shift puts one card up for sale, a night shift lets you upgrade one
-## of your own. Nothing else - no relics, no run modifiers. GODOT_SPEC.md §4's
-## "one system to balance instead of two", and everything here is legible as a
-## card you can look at.
+## ONE of them, free - pick one, or none. Then the store, stocked by the shift
+## you just worked: a few cards for sale, and a few of your own offered for an
+## upgrade (its ShiftProfile's cards_for_sale and upgrades). Buy or upgrade as
+## many of those as you can afford. Nothing else - no relics, no run
+## modifiers. GODOT_SPEC.md §4's "one system to balance instead of two", and
+## everything here is legible as a card you can look at.
 ##
 ## Every action returns a Result, and a refusal spends nothing - not the money,
 ## not the card. Same convention as every model command.
@@ -19,19 +19,19 @@ var free_cards: Array[CardDef] = []
 ## once it has been.
 var free_picks_left: int = 1
 var free_taken: CardDef = null
-## What you may BUY this visit: the card a midday shift puts up for sale, or
-## nothing at all. A card leaves it the moment you buy it.
+## What you may BUY this visit - as many of them as you can afford. A card
+## leaves it the moment you buy it.
 var offers: Array[CardDef] = []
-## Which of your cards you may pick an upgrade from this visit, by uid - a
-## random few, rolled once. Buying, upgrading or dropping never re-rolls it; a
-## card that becomes upgraded (or leaves the deck) simply stops matching.
+## Which of your cards you may upgrade this visit, by uid - a random few,
+## rolled once, and every one of them yours to upgrade if you can afford it.
+## Buying, upgrading or dropping never re-rolls it; a card that becomes
+## upgraded (or leaves the deck) simply stops matching.
 var upgrade_offers: Array[int] = []
-## How many cards this visit put up for sale, and how many of yours it lets
-## you upgrade - the tier's own shape, from its ShiftProfile, fixed for the
-## visit. `offers` and `upgrades_left` are what is still left of each.
+## How many cards this visit put up for sale, and how many of yours it offers
+## to upgrade - the shift's own shape, from its ShiftProfile, fixed for the
+## visit. `offers` is what is still left on the shelf.
 var cards_for_sale: int = 0
 var upgrades: int = 0
-var upgrades_left: int = 0
 
 ## How often each rarity turns up, relative to the others - not a percentage,
 ## just a ratio consumed by _weighted_pick(). Flat on purpose: the pool is still
@@ -55,7 +55,6 @@ func _init(p_run: RunState, p_profile: ShiftProfile = null) -> void:
 	if p_profile != null:
 		cards_for_sale = maxi(0, p_profile.cards_for_sale)
 		upgrades = maxi(0, p_profile.upgrades)
-	upgrades_left = upgrades
 	_roll_cards()
 	_roll_upgrade_offers()
 
@@ -95,8 +94,8 @@ func _weighted_pick(pool: Array[CardDef]) -> int:
 func _roll_upgrade_offers() -> void:
 	## A choice among a few, not a checklist: every un-upgraded card with an
 	## upgrade to sell used to get a button at once - eight or more deep by the
-	## back half of a run. Capped and rolled at random instead, from the RUN's
-	## seeded rng, so two runs from the same seed offer the same cards.
+	## back half of a run. As many as the shift offers, rolled at random, from
+	## the RUN's seeded rng, so two runs from the same seed offer the same cards.
 	##
 	## By UID, not by CardDef: two copies of the same card (three Explains in
 	## the starter deck) are different CardInstances that can be upgraded
@@ -112,7 +111,7 @@ func _roll_upgrade_offers() -> void:
 		if not inst.upgraded and upgrade_gain(inst) > 0:
 			pool.append(inst.uid)
 	upgrade_offers.clear()
-	var wanted: int = mini(run.cfg.shop_upgrade_slots, pool.size())
+	var wanted: int = mini(upgrades, pool.size())
 	for _i in range(wanted):
 		upgrade_offers.append(pool.pop_at(run.rng.randi_range(0, pool.size() - 1)))
 
@@ -146,22 +145,19 @@ func upgrade_gain(inst: CardInstance) -> int:
 func remove_price() -> int:
 	return run.cfg.remove_price
 
-## What this visit holds beyond the free card, in one line for the store's
-## header - lives here, not in shop_screen.gd, so the wording can never drift
-## from what the visit actually offers.
+## What the store holds beyond the free card, in one line for its header -
+## lives here, not in shop_screen.gd, so the wording can never drift from what
+## the visit actually offers.
 func perk_text() -> String:
 	var extras: Array[String] = []
-	if cards_for_sale == 1:
-		extras.append("a card for sale")
-	elif cards_for_sale > 1:
-		extras.append("%d cards for sale" % cards_for_sale)
-	if upgrades == 1:
-		extras.append("an upgrade for one of your cards")
-	elif upgrades > 1:
-		extras.append("upgrades for %d of your cards" % upgrades)
+	if cards_for_sale > 0:
+		extras.append("%d card%s for sale" % [cards_for_sale, "" if cards_for_sale == 1 else "s"])
+	if upgrades > 0:
+		extras.append("%d of your cards to upgrade" % upgrades)
 	if extras.is_empty():
 		return "Just your free card this visit - your bonus carries over."
-	return "On top of your free card: %s." % " and ".join(extras)
+	return "On top of your free card: %s. Buy as many as your bonus covers." \
+		% " and ".join(extras)
 
 # --- the verbs ---------------------------------------------------------------
 
@@ -177,6 +173,13 @@ func take_free(def: CardDef) -> Result:
 	free_taken = def
 	return Result.new(true, "You add the %s to your toolkit. On the house."
 		% def.display_name, "take", {"price": 0})
+
+## "Pick one, or none": passing spends the visit's pick on nothing.
+func pass_on_free() -> Result:
+	if free_picks_left <= 0:
+		return Result.new(false, "You have already had this visit's free card.")
+	free_picks_left = 0
+	return Result.new(true, "You pass on the free cards this time.", "pass")
 
 func buy(def: CardDef) -> Result:
 	if not offers.has(def):
@@ -204,16 +207,11 @@ func upgrade(uid: int) -> Result:
 	if not upgrade_offers.has(uid):
 		return Result.new(false, "%s is not on offer this visit."
 			% inst.card.display_name)
-	# ...and so is the number of them. "Upgrade ONE card" - the rest of the
-	# few stay on show, but the visit's upgrade is spent.
-	if upgrades_left <= 0:
-		return Result.new(false, "You have used this visit's upgrade.")
 	var price := upgrade_price(inst)
 	if run.money < price:
 		return Result.new(false, "You cannot afford to upgrade the %s."
 			% inst.card.display_name)
 	run.money -= price
-	upgrades_left -= 1
 	run.deck.upgrade(uid)
 	return Result.new(true, "You upgrade the %s." % inst.card.display_name,
 		"upgrade", {"price": price})

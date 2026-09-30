@@ -100,10 +100,9 @@ func show_card(shop: Shop, inst: CardInstance) -> void:
 
 	_take_btn.visible = false
 	_buy_btn.visible = false
-	# Offered, not upgraded yet, and the visit's one upgrade not spent on
-	# another card - the button offers exactly what Shop.upgrade() would do.
-	var can_upgrade := shop.upgrade_offers.has(inst.uid) and not inst.upgraded \
-		and shop.upgrades_left > 0
+	# Offered and not upgraded yet - the button offers exactly what
+	# Shop.upgrade() would do.
+	var can_upgrade := shop.upgrade_offers.has(inst.uid) and not inst.upgraded
 	_upgrade_btn.visible = can_upgrade
 	if can_upgrade:
 		_upgrade_btn.text = "upgrade %s" % Format.price(shop.upgrade_price(inst))

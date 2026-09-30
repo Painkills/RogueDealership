@@ -1,8 +1,9 @@
 extends PanelContainer
-## The store between shifts: a few cards on the house every visit to pick one
-## from, the card for sale if the shift you just worked put one up, and a few
-## of your own to upgrade if it lets you. Every one of them is a real card you click, not a
-## text row.
+## The store between shifts. Every visit opens on a popup first - a few cards
+## on the house, to pick one from, or pass - and then the store itself: the
+## cards the shift you just worked put up for sale, and a few of your own it
+## offers to upgrade. Buy or upgrade as many as the bonus covers. Every one of
+## them is a real card you click, not a text row.
 ##
 ## Your own cards here are Shop.upgrade_offers, not the whole deck - a random
 ## few, rolled once per visit, and only ever cards with a real upgrade to sell
@@ -23,7 +24,10 @@ signal view_deck_requested
 @onready var _money: Label = %MoneyLabel
 @onready var _shift_label: Label = %ShiftLabel
 @onready var _shift_tap: Button = %ShiftTapTarget
-@onready var _free_row: HBoxContainer = %FreeRow
+## The free pick - see build_shop_scene.gd's _free_pick().
+@onready var _free_pick: Control = %FreePick
+@onready var _free_pick_row: HBoxContainer = %FreePickRow
+@onready var _skip_free: Button = %SkipFreeButton
 @onready var _shelf_row: HBoxContainer = %ShelfRow
 @onready var _deck_row: HBoxContainer = %DeckRow
 @onready var _log: Label = %LogLabel
@@ -40,6 +44,7 @@ func _ready() -> void:
 	_done.pressed.connect(func(): done.emit())
 	_view_deck.pressed.connect(func(): view_deck_requested.emit())
 	_detail.action_taken.connect(_apply)
+	_skip_free.pressed.connect(func(): _apply(_shop.pass_on_free()))
 	_bind_key(&"debug_add_money", KEY_M, true)   # Ctrl+M: +$10,000, for testing
 	# Mobile has no Ctrl+M: an invisible button laid over the quota line
 	# itself is the touch equivalent, wired to the exact same effect.
@@ -94,21 +99,19 @@ func _render() -> void:
 	# budget you actually have to spend.
 	_shift_label.text += "\n" + _shop.perk_text()
 
-	# Not in your toolkit yet - a real CardInstance can only exist once
-	# something owns it. A throwaway one (uid -1, never persisted, never
-	# touching the model) is enough to feed the SAME card face the deck uses,
-	# so a card on offer looks exactly like what it will look like once yours.
-	_clear(_free_row)
-	if _shop.free_picks_left > 0:
+	# "First, you get a popup with the one out of three" - up until the pick is
+	# made or passed on, over everything else here. Not in your toolkit yet - a
+	# real CardInstance can only exist once something owns it. A throwaway one
+	# (uid -1, never persisted, never touching the model) is enough to feed the
+	# SAME card face the deck uses, so a card on offer looks exactly like what
+	# it will look like once yours.
+	_clear(_free_pick_row)
+	var picking: bool = _shop.free_picks_left > 0 and not _shop.free_cards.is_empty()
+	_free_pick.visible = picking
+	if picking:
 		for free in _shop.free_cards:
-			_build_slot(_free_row, CardInstance.new(free, -1), "FREE").pressed.connect(
+			_build_slot(_free_pick_row, CardInstance.new(free, -1), "FREE").pressed.connect(
 				func(): _detail.show_free_card(_shop, free))
-	# Picked: the others go with it, until the next shift's three.
-	if _shop.free_taken != null:
-		_note(_free_row, "Taken - the %s is in your toolkit now."
-			% _shop.free_taken.display_name)
-	elif _free_row.get_child_count() == 0:
-		_note(_free_row, "Nothing on the house this visit.")
 
 	_clear(_shelf_row)
 	for def in _shop.offers:
@@ -118,7 +121,7 @@ func _render() -> void:
 	if _shelf_row.get_child_count() == 0:
 		# Bought, or never stocked: an aisle with nothing in it says which,
 		# rather than standing there empty like the page failed to load.
-		_note(_shelf_row, "Sold - it is in your toolkit now." if _shop.cards_for_sale > 0
+		_note(_shelf_row, "Sold out - it is all in your toolkit now." if _shop.cards_for_sale > 0
 			else "Nothing for sale after that shift.")
 
 	_clear(_deck_row)
@@ -130,16 +133,13 @@ func _render() -> void:
 			func(): _detail.show_card(_shop, inst))
 	if _deck_row.get_child_count() == 0:
 		_note(_deck_row, "Nothing of yours left to upgrade." if _shop.upgrades > 0
-			else "No upgrade after that shift.")
+			else "No upgrades after that shift.")
 
-## What sits under one of your cards: what upgrading it costs - or, once the
-## visit's upgrade is spent, that it is. The cards stay on show either way, so
-## you can still see which one you chose.
+## What sits under one of your cards: what upgrading it costs, or that it is
+## done. An upgraded card stays on show, so you can still see what you chose.
 func _upgrade_label(inst: CardInstance) -> String:
 	if inst.upgraded:
 		return "upgraded"
-	if _shop.upgrades_left <= 0:
-		return "upgrade used"
 	return "upgrade %s" % Format.price(_shop.upgrade_price(inst))
 
 ## remove_child() first: queue_free() alone leaves a node in get_children()

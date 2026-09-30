@@ -9,3 +9,5 @@ display_name = "Morning Shift"
 blurb = "Standard traffic. Nothing you haven't handled before."
 patience_scale = 1.0
 unlock_full_archetype_pool = false
+cards_for_sale = 1
+upgrades = 1

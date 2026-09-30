@@ -41,10 +41,11 @@ class_name ShiftProfile extends Resource
 @export_range(0.0, 1.0, 0.05) var chance: float = 1.0
 @export_group("")
 
-## The shop that follows it. Every visit lets you pick one card free whatever
-## the tier; these are what the tier adds on top - see Shop.
+## The store that follows it. Every visit starts with one card free, picked
+## from a few, whatever the shift; this is what the store holds after that -
+## see Shop. Buy or upgrade as many of them as the bonus covers.
 @export var cards_for_sale: int = 0          ## cards put up for sale
-@export var upgrades: int = 0                ## of your cards you may upgrade
+@export var upgrades: int = 0                ## of your cards offered for an upgrade
 
 ## Set on the copy Week deals onto the calendar, never authored: the slot it
 ## took, and the category that dealt it. A regular tier has neither.
@@ -70,10 +71,9 @@ func is_boss_day() -> bool:
 func reward_preview() -> String:
 	var extras: Array[String] = []
 	if cards_for_sale > 0:
-		extras.append("a card to buy" if cards_for_sale == 1
-			else "%d cards to buy" % cards_for_sale)
+		extras.append("%d to buy" % cards_for_sale)
 	if upgrades > 0:
-		extras.append("an upgrade" if upgrades == 1 else "%d upgrades" % upgrades)
+		extras.append("%d to upgrade" % upgrades)
 	if extras.is_empty():
 		return "Shop: pick a free card."
-	return "Shop: pick a free card, and %s." % " and ".join(extras)
+	return "Shop: pick a free card, then a store with %s." % " and ".join(extras)
