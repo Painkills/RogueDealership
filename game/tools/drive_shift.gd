@@ -153,7 +153,9 @@ func _physics_process(_delta: float) -> bool:
 	_press(KEY_O);             _settle(); _check_table("after offering again")
 	_check_their_yes_replaced_it()
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
+	var banked_before: int = _controller._banked_shown
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
+	_check_a_signing_flies_its_money_to_the_top(banked_before)
 	_press(KEY_B);            _settle(); _check_table("after approaching chair B")
 	_check_the_table_really_turns()
 
@@ -164,6 +166,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_double_tapping_the_empty_table_closes()
 	_check_double_tapping_the_empty_table_closes_on_touch_too()
 	_check_refused_drop_comes_home()
+	_check_a_walkout_is_hard_to_miss()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
@@ -2300,6 +2303,63 @@ func _check_a_folder_only_turns_for_a_pointer_that_moved() -> void:
 	_press(KEY_F)       # and back to the desk
 	_settle()
 	_check("back at the desk to carry on", _controller._shift.at != null)
+
+## Every effect still playing, by its words.
+func _fx_texts() -> Array:
+	return _controller._fx.filter(func(n): return is_instance_valid(n)) \
+		.map(func(n): return (n as Label).text)
+
+## Plays every running effect to its end - each landing starts the roll, so
+## more than one pass.
+func _finish_fx() -> void:
+	for _pass in 4:
+		for tw in _controller._fx_tweens.duplicate():
+			if tw != null and tw.is_valid() and tw.is_running():
+				tw.custom_step(10.0)
+
+## "There needs to be some pizzaz around closing a deal. Maybe make the amount
+## banked float up towards the banked part of the screen and the numbers roll
+## up to the new total."
+func _check_a_signing_flies_its_money_to_the_top(before: int) -> void:
+	var s: Shift = _controller._shift
+	var label: Label = _controller._banked_label
+	var texts := _fx_texts()
+	_check("signing stamps their folder SIGNED (%s)" % str(texts), texts.has("SIGNED"))
+	var flying := texts.filter(func(t): return str(t).begins_with("+$"))
+	_check("and the amount banked flies up from it (%s)" % str(flying),
+		flying.size() == 1 and flying[0] == "+" + Format.money(s.margin_banked - before))
+	_check("while the top bar still shows the old total (%s)" % label.text,
+		label.text.begins_with("banked %s " % Format.money(before)))
+	_finish_fx()
+	_check("then rolls up to the new one (%s)" % label.text,
+		label.text.begins_with("banked %s " % Format.money(s.margin_banked)))
+	_check("and the effects clean up after themselves", _fx_texts().is_empty())
+
+## "Same for walkouts. There needs to be some sort of animation or something
+## that helps you understand what happened."
+func _check_a_walkout_is_hard_to_miss() -> void:
+	var s: Shift = _controller._shift
+	var chair := -1
+	for i in range(s.chairs.size()):
+		if s.chairs[i] != null:
+			chair = i
+			break
+	if chair < 0:
+		_check("someone on the floor to lose", false)
+		return
+	var before: int = _controller._standing_shown
+	s._walk(chair)
+	_controller._render()
+	var texts := _fx_texts()
+	_check("a walkout stamps their folder (%s)" % str(texts), texts.has("WALKED OUT"))
+	var cost := before - s.standing
+	_check("and flies what it cost you up to standing (%s)" % str(texts),
+		cost <= 0 or texts.has("-%d standing" % cost))
+	_check("while standing still shows what it was (%s)" % _controller._standing_label.text,
+		cost <= 0 or _controller._standing_label.text.begins_with("standing %d/" % before))
+	_finish_fx()
+	_check("then rolls down to what it is now (%s)" % _controller._standing_label.text,
+		_controller._standing_label.text.begins_with("standing %d/" % s.standing))
 
 ## VENDORED.md's own patch: CardCollection3D's dropzone_collision_shape /
 ## dropzone_z_offset setters used to silently fail to persist through

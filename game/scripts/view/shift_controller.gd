@@ -441,6 +441,7 @@ func setup(shift: Shift, standing_before: int,
 	_player_bubble.hush()
 	_pending_says.clear()
 	_seated_seen = []
+	_clear_fx()
 	_event_log.clear()
 	_report_overlay.visible = false
 	# The button that ends this shift must not promise "Continue" on the shift
@@ -961,16 +962,207 @@ func _refuse_drops_on_slots_you_are_not_at() -> void:
 func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
 	_framing_tween.tween_property(zone, "position", to, PILE_TWEEN).set_delay(delay)
 
+# --- closing and walkouts, out loud -----------------------------------------
+# "There needs to be some pizzaz around closing a deal. Maybe make the amount
+# banked float up towards the banked part of the screen and the numbers roll up
+# to the new total. Same for walkouts." Read off who left which chair since the
+# last render, and how - Customer.state says signed or walked - so it plays the
+# same whichever command, tick or timer caused it.
+
+const FX_FLY := 0.9        ## seconds for an amount to fly to the top bar
+const FX_ROLL := 0.6       ## seconds for the number there to roll to its total
+const FX_STAMP := 1.6      ## seconds a WALKED OUT / SIGNED stamp stays up
+
+## What the top bar is SHOWING, which trails the model while an amount is
+## still on its way up to it.
+var _banked_shown: int = 0
+var _standing_shown: int = 0
+var _banked_rolling := false
+var _standing_rolling := false
+## Every floating label and stamp still playing, and their tweens - cleared
+## with the shift, and stepped through by drive_shift.gd.
+var _fx: Array = []
+var _fx_tweens: Array = []
+
+func _write_banked(v: int) -> void:
+	_banked_shown = v
+	_banked_label.text = "banked %s / %s" % [Format.money(v), Format.money(_shift.quota)]
+
+func _write_standing(v: int) -> void:
+	_standing_shown = v
+	_standing_label.text = "standing %d/%d" % [v, _shift.cfg.standing_start]
+
+func _notice_departures() -> void:
+	var n := mini(_shift.chairs.size(), _seated_seen.size())
+	for i in range(n):
+		var was = _seated_seen[i]
+		if was == null or was == _shift.chairs[i]:
+			continue
+		if was.state == "signed":
+			_celebrate_close(i, was.unsigned_margin())
+		elif was.state == "walked":
+			_mourn_walkout(i, was.unsigned_margin())
+
+func _chair_on_screen(chair: int) -> Vector2:
+	return _card_rect(_customer_cards[chair], CustomerCard3D.CARD_SIZE).get_center()
+
+## A big outlined label on the HUD, centred on `at`.
+func _fx_label(text: String, role: StringName, size: int, at: Vector2) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.theme_type_variation = &"Heading"
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", Palette.color(role))
+	l.add_theme_color_override("font_outline_color", Palette.color(&"paper"))
+	l.add_theme_constant_override("outline_size", maxi(6, size / 6))
+	_hud.add_child(l)
+	l.size = l.get_combined_minimum_size()
+	l.pivot_offset = l.size * 0.5
+	l.position = at - l.size * 0.5
+	_fx.append(l)
+	return l
+
+func _fx_tween() -> Tween:
+	var tw := create_tween()
+	_fx_tweens.append(tw)
+	return tw
+
+func _fx_done(node: Node) -> void:
+	_fx.erase(node)
+	if is_instance_valid(node):
+		node.queue_free()
+
+## Flies `text` from `from` to the middle of `target`, shrinking as it goes,
+## then calls `landed`.
+func _fly(text: String, role: StringName, from: Vector2, target: Control,
+		landed: Callable) -> void:
+	var l := _fx_label(text, role, 60, from)
+	l.scale = Vector2(0.4, 0.4)
+	var to := target.get_global_rect().get_center() - l.size * 0.5
+	var tw := _fx_tween()
+	tw.tween_property(l, "scale", Vector2(1.25, 1.25), 0.18) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(0.25)
+	tw.set_parallel(true)
+	tw.tween_property(l, "position", to, FX_FLY) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(l, "scale", Vector2(0.55, 0.55), FX_FLY) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.set_parallel(false)
+	tw.tween_callback(func():
+		_fx_done(l)
+		landed.call())
+
+## Keeps every stamp on its folder while the camera moves - closing sends you
+## back to the floor, and a stamp left where the folder WAS floats off it.
+func _follow_stamps() -> void:
+	for n in _fx:
+		if is_instance_valid(n) and (n as Node).has_meta(&"chair"):
+			var l := n as Label
+			l.position = _chair_on_screen(int(l.get_meta(&"chair"))) - l.size * 0.5
+
+## A stamp slapped onto a customer's folder, then faded out.
+func _stamp(text: String, role: StringName, chair: int, tilt: float) -> void:
+	var l := _fx_label(text, role, 64, _chair_on_screen(chair))
+	l.set_meta(&"chair", chair)
+	l.rotation_degrees = tilt
+	l.scale = Vector2(2.2, 2.2)
+	l.modulate.a = 0.0
+	var tw := _fx_tween()
+	tw.set_parallel(true)
+	tw.tween_property(l, "scale", Vector2.ONE, 0.22) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(l, "modulate:a", 1.0, 0.12)
+	tw.set_parallel(false)
+	tw.tween_interval(FX_STAMP)
+	tw.tween_property(l, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(func(): _fx_done(l))
+
+## Rolls a top-bar number from what it shows to what the model says, then
+## pulses the label in `role`'s colour - `shake` for a loss.
+func _roll(label: Control, from: int, writer: Callable, done: Callable, role: StringName,
+		shake: bool) -> void:
+	var to: int = _shift.margin_banked if label == _banked_label else _shift.standing
+	var tw := _fx_tween()
+	tw.tween_method(func(v: float): writer.call(roundi(v)), float(from), float(to), FX_ROLL) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func():
+		done.call()
+		writer.call(to))
+	label.pivot_offset = label.size * 0.5
+	label.add_theme_color_override("font_color", Palette.color(role))
+	var pulse := _fx_tween()
+	pulse.tween_property(label, "scale", Vector2(1.25, 1.25), 0.15)
+	if shake:
+		var x := label.position.x
+		for k in range(4):
+			pulse.tween_property(label, "position:x", x + (8.0 if k % 2 == 0 else -8.0), 0.05)
+		pulse.tween_property(label, "position:x", x, 0.05)
+	pulse.tween_property(label, "scale", Vector2.ONE, 0.45)
+	pulse.tween_callback(func(): label.remove_theme_color_override("font_color"))
+
+func _celebrate_close(chair: int, amount: int) -> void:
+	var at := _chair_on_screen(chair)
+	_stamp("SIGNED", &"margin", chair, -8.0)
+	if amount <= 0:
+		return
+	_banked_rolling = true
+	var from := _banked_shown
+	_fly("+" + Format.money(amount), &"margin", at + Vector2(0, 90), _banked_label, func():
+		_roll(_banked_label, from, _write_banked,
+			func(): _banked_rolling = false, &"margin", false))
+
+func _mourn_walkout(chair: int, lost: int) -> void:
+	var at := _chair_on_screen(chair)
+	_stamp("WALKED OUT", &"alert", chair, 8.0)
+	if lost > 0:
+		# What they took with them: dropped, not banked.
+		var gone := _fx_label("-%s unsigned" % Format.money(lost), &"alert", 40,
+			at + Vector2(0, 70))
+		var tw := _fx_tween()
+		tw.tween_interval(0.3)
+		tw.set_parallel(true)
+		tw.tween_property(gone, "position:y", gone.position.y + 90.0, 1.4)
+		tw.tween_property(gone, "modulate:a", 0.0, 1.4).set_ease(Tween.EASE_IN)
+		tw.set_parallel(false)
+		tw.tween_callback(func(): _fx_done(gone))
+	var cost := mini(_shift.cfg.standing_cost_per_walkout, _standing_shown - _shift.standing)
+	if cost <= 0:
+		return
+	_standing_rolling = true
+	var from := _standing_shown
+	_fly("-%d standing" % cost, &"alert", at, _standing_label, func():
+		_roll(_standing_label, from, _write_standing,
+			func(): _standing_rolling = false, &"alert", true))
+
+## Ends every effect now - a new shift, or a driver with no time to watch.
+func _clear_fx() -> void:
+	for tw in _fx_tweens:
+		if tw != null and tw.is_valid():
+			tw.kill()
+	_fx_tweens.clear()
+	for n in _fx:
+		if is_instance_valid(n):
+			n.queue_free()
+	_fx.clear()
+	_banked_rolling = false
+	_standing_rolling = false
+
 # --- rendering -------------------------------------------------------------
 
 func _render() -> void:
 	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget]
-	_banked_label.text = "banked %s / %s" \
-		% [Format.money(_shift.margin_banked), Format.money(_shift.quota)]
+	# Before the numbers are written: a deal signed or a customer lost since
+	# the last render holds its number at the old value while it plays out.
+	_notice_departures()
+	if not _banked_rolling:
+		_write_banked(_shift.margin_banked)
 	# LIVE now, not the setup()-time snapshot it used to be enough to be - a
 	# walkout can move this mid-shift, and the whole point of costing standing
 	# immediately is for the player to be able to see it happen.
-	_standing_label.text = "standing %d/%d" % [_shift.standing, _shift.cfg.standing_start]
+	if not _standing_rolling:
+		_write_standing(_shift.standing)
 	var risk: int = _shift.margin_at_risk()
 	_at_risk_label.text = "%s unsigned on the floor" % Format.money(risk) \
 		if risk > 0 else "nothing unsigned"
@@ -1083,6 +1275,7 @@ func _waiting_row_for(place: int, arch: CustomerArchetype) -> Control:
 func _process(_delta: float) -> void:
 	_place_tags()
 	_release_pending_says()
+	_follow_stamps()
 
 func _place_tags() -> void:
 	# The report and the deck viewer each cover the table, so its hints go with
