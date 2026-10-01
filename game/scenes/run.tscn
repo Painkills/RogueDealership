@@ -1,20 +1,22 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/view/run_controller.gd" id="1_pgpyo"]
-[ext_resource type="PackedScene" path="res://scenes/shift_picker.tscn" id="2_2s4kx"]
-[ext_resource type="Script" path="res://scripts/view/shift_picker_screen.gd" id="3_47ec3"]
-[ext_resource type="PackedScene" path="res://scenes/shift.tscn" id="4_lc2vt"]
-[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="5_53ha4"]
-[ext_resource type="PackedScene" path="res://scenes/shop.tscn" id="6_iuvi8"]
-[ext_resource type="Script" path="res://scripts/view/shop_screen.gd" id="7_w0t45"]
-[ext_resource type="PackedScene" path="res://scenes/run_summary.tscn" id="8_072lk"]
-[ext_resource type="Script" path="res://scripts/view/run_summary_panel.gd" id="9_xh8mu"]
-[ext_resource type="PackedScene" path="res://scenes/week_report.tscn" id="10_i3hux"]
-[ext_resource type="Script" path="res://scripts/view/week_report_panel.gd" id="11_yh7fy"]
-[ext_resource type="PackedScene" path="res://scenes/deck_viewer.tscn" id="12_0mn38"]
-[ext_resource type="Script" path="res://scripts/view/deck_viewer.gd" id="13_jt87d"]
-[ext_resource type="PackedScene" path="res://scenes/tutorial_coach.tscn" id="14_hge7r"]
-[ext_resource type="Script" path="res://scripts/view/tutorial_coach.gd" id="15_hvn1h"]
+[ext_resource type="Script" path="res://scripts/view/run_controller.gd" id="1_47ec3"]
+[ext_resource type="PackedScene" path="res://scenes/shift_picker.tscn" id="2_lc2vt"]
+[ext_resource type="Script" path="res://scripts/view/shift_picker_screen.gd" id="3_53ha4"]
+[ext_resource type="PackedScene" path="res://scenes/shift.tscn" id="4_iuvi8"]
+[ext_resource type="Script" path="res://scripts/view/shift_controller.gd" id="5_w0t45"]
+[ext_resource type="PackedScene" path="res://scenes/shop.tscn" id="6_072lk"]
+[ext_resource type="Script" path="res://scripts/view/shop_screen.gd" id="7_xh8mu"]
+[ext_resource type="PackedScene" path="res://scenes/run_summary.tscn" id="8_i3hux"]
+[ext_resource type="Script" path="res://scripts/view/run_summary_panel.gd" id="9_yh7fy"]
+[ext_resource type="PackedScene" path="res://scenes/week_report.tscn" id="10_0mn38"]
+[ext_resource type="Script" path="res://scripts/view/week_report_panel.gd" id="11_jt87d"]
+[ext_resource type="PackedScene" path="res://scenes/title.tscn" id="12_hge7r"]
+[ext_resource type="Script" path="res://scripts/view/title_screen.gd" id="13_hvn1h"]
+[ext_resource type="PackedScene" path="res://scenes/deck_viewer.tscn" id="14_5j5ag"]
+[ext_resource type="Script" path="res://scripts/view/deck_viewer.gd" id="15_pffcw"]
+[ext_resource type="PackedScene" path="res://scenes/tutorial_coach.tscn" id="16_qo4cx"]
+[ext_resource type="Script" path="res://scripts/view/tutorial_coach.gd" id="17_1561w"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_14ick"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
@@ -31,60 +33,67 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=1701482439]
-script = ExtResource("1_pgpyo")
+[node name="Run" type="Node" unique_id=506441621]
+script = ExtResource("1_47ec3")
 
-[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=465005308 instance=ExtResource("2_2s4kx")]
+[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=973289863 instance=ExtResource("2_lc2vt")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
-script = ExtResource("3_47ec3")
+script = ExtResource("3_53ha4")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=1869521345 instance=ExtResource("4_lc2vt")]
-script = ExtResource("5_53ha4")
+[node name="ShiftView" type="Node3D" parent="." unique_id=1869521345 instance=ExtResource("4_iuvi8")]
+script = ExtResource("5_w0t45")
 
-[node name="ShopView" type="PanelContainer" parent="." unique_id=699821650 instance=ExtResource("6_iuvi8")]
+[node name="ShopView" type="PanelContainer" parent="." unique_id=699821650 instance=ExtResource("6_072lk")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8r1wq")
-script = ExtResource("7_w0t45")
+script = ExtResource("7_xh8mu")
 
-[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=1075478770 instance=ExtResource("8_072lk")]
+[node name="RunSummaryView" type="PanelContainer" parent="." unique_id=1075478770 instance=ExtResource("8_i3hux")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
-script = ExtResource("9_xh8mu")
+script = ExtResource("9_yh7fy")
 
-[node name="WeekReportView" type="PanelContainer" parent="." unique_id=2108427986 instance=ExtResource("10_i3hux")]
+[node name="WeekReportView" type="PanelContainer" parent="." unique_id=2108427986 instance=ExtResource("10_0mn38")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_0nko1")
-script = ExtResource("11_yh7fy")
+script = ExtResource("11_jt87d")
 
-[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1879407891 instance=ExtResource("12_0mn38")]
+[node name="TitleView" type="Control" parent="." unique_id=71017272 instance=ExtResource("12_hge7r")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("13_hvn1h")
+
+[node name="DeckViewer" type="PanelContainer" parent="." unique_id=1879407891 instance=ExtResource("14_5j5ag")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
-script = ExtResource("13_jt87d")
+script = ExtResource("15_pffcw")
 
-[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=1228932464 instance=ExtResource("14_hge7r")]
+[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=1228932464 instance=ExtResource("16_qo4cx")]
 layer = 50
-script = ExtResource("15_hvn1h")
+script = ExtResource("17_1561w")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=6260676]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=2033805850]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1874625567]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=735404996]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -103,7 +112,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=25711178]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=566020249]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1

@@ -22,7 +22,7 @@ func _init() -> void:
 	var col: VBoxContainer = made["body"]
 	col.add_theme_constant_override("separation", 10)
 
-	# --- the header: what week this is, and how to play ---------------------
+	# --- the header: what week this is ------------------------------------
 	# One line, title and subtitle side by side: a window's own title bar
 	# already took the height a second line would need.
 	var header := HBoxContainer.new()
@@ -36,23 +36,7 @@ func _init() -> void:
 	var sub := AppWindow.label(header, root, "SubLabel",
 		"Shift 1 of 5 - pick today's  |  quota $3,600", 20, &"text_dim", false, true)
 	sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-
-	var spacer := Control.new()
-	spacer.name = "Spacer"
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(spacer)
-	spacer.owner = root
-
-	# The practice shift, on demand - it also opens the game by itself.
-	var tutorial := Button.new()
-	tutorial.name = "TutorialButton"
-	tutorial.text = "HOW TO PLAY"
-	tutorial.custom_minimum_size = Vector2(200, 52)
-	tutorial.add_theme_font_size_override("font_size", 20)
-	ButtonStyle.outlined(tutorial, Palette.color(&"primary"))
-	tutorial.unique_name_in_owner = true
-	header.add_child(tutorial)
-	tutorial.owner = root
+	# The practice shift lives on the title screen's menu, not here.
 
 	# --- the week ----------------------------------------------------------
 	var calendar := PanelContainer.new()

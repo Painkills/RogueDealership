@@ -1,8 +1,9 @@
 extends SceneTree
-## Drives the practice shift on the real run.tscn, memo by memo: boots into it
-## the first time, advances only when the thing each memo asks for has really
-## happened on the table, never points at something the memo itself is
-## covering, and hands over to the picker - remembered - when it is done.
+## Drives the title screen and the practice shift on the real run.tscn: boots
+## to the menu, opens the tutorial from it, advances memo by memo only when
+## the thing each memo asks for has really happened on the table, never points
+## at something the memo itself is covering, and hands over to a new game's
+## first day - remembered - when it is done.
 ##
 ##   godot --headless --path game --script res://tools/drive_tutorial.gd
 ##
@@ -37,8 +38,12 @@ func _drive() -> void:
 	_coach = _root._coach
 	_floor = _root._shift_view
 
-	_check("the first boot opens on the practice shift, not the picker",
-		_coach.is_running() and not _root._picker_view.visible)
+	_check_the_title_screen()
+	_title_button("TutorialButton").pressed.emit()
+	await _frames(3)
+	_check("TUTORIAL opens the practice shift",
+		_coach.is_running() and not _root._picker_view.visible
+			and not _root._title_view.visible)
 	_check("on the real floor", (_floor.get_node(^"HUD") as CanvasLayer).visible)
 	var shift: Shift = _floor.current_shift()
 	_check("with one chair", shift.chairs.size() == 1)
@@ -141,54 +146,119 @@ func _drive() -> void:
 		run.deck.cards.size() == Deck.build_starting(run.card_pool).cards.size())
 
 	await _next(&"")
-	_check("finishing hands over to the picker", _root._picker_view.visible)
+	_check("finishing goes on to a new game's first day",
+		_root._title_view.visible and _root._title_view.page() == &"intro"
+			and not _root._picker_view.visible)
 	_check("and packs the floor away", not (_floor.get_node(^"HUD") as CanvasLayer).visible)
 	_check("and the coach", not _coach.visible and not _coach.is_running())
 	_check("and is remembered", TutorialProgress.is_done())
 	_check("with the run still waiting on its first shift", run.shift_number == 1)
+	_check("the first day knows your name (%s)" % _root._title_view._name_field.text,
+		_root._title_view._name_field.text == "Dana")
 
-	# HOW TO PLAY replays it - welcoming you BACK, with the way out the loud
-	# button - and SKIP TRAINING gets straight back out.
-	_root._picker_view.tutorial_requested.emit()
+	# TUTORIAL replays it - welcoming you BACK, with the way out the loud
+	# button - and BACK TO MENU gets straight back out.
+	_title_button("TutorialButton").pressed.emit()
 	await _frames(2)
-	_check("HOW TO PLAY replays it", _coach.is_running() and _coach.step_id() == &"welcome")
+	_check("TUTORIAL replays it", _coach.is_running() and _coach.step_id() == &"welcome")
 	_check("welcoming you back (%s)" % _coach._splash_title.text,
 		_coach.splash_showing() and _coach._splash_title.text == _coach.WELCOME_BACK["title"])
 	_check_the_loud_button("someone who has done it", _coach._splash_skip, _coach._start)
 	_coach._splash_skip.pressed.emit()
 	await _frames(2)
-	_check("and SKIP TRAINING goes straight back to the picker",
-		_root._picker_view.visible and not _coach.is_running())
+	_check("and BACK TO MENU goes straight back to the menu",
+		_on_the_menu() and not _coach.is_running())
 
 	# The way out mid-lesson: EXIT TUTORIAL, from any memo.
-	_root._picker_view.tutorial_requested.emit()
+	_title_button("TutorialButton").pressed.emit()
 	await _frames(2)
 	await _next(&"customer")
 	_check_the_way_out_is_on_screen()
 	_coach._exit.pressed.emit()
 	await _frames(2)
-	_check("EXIT TUTORIAL goes straight back to the picker, mid-lesson",
-		_root._picker_view.visible and not _coach.is_running())
+	_check("EXIT TUTORIAL goes straight back to the menu, mid-lesson",
+		_on_the_menu() and not _coach.is_running())
 	_check("and packs the floor away",
 		not (_floor.get_node(^"HUD") as CanvasLayer).visible)
 
-	# A second boot opens on it again - "start the game on the tutorial" - and
-	# someone who has done it is one big button away from their week.
+	# A second boot opens on the menu again, and someone who has done the
+	# tutorial is one big button away from leaving it.
 	_root.queue_free()
 	await _frames(2)
 	_boot()
 	await _frames(3)
 	_coach = _root._coach
-	_check("every boot opens on the tutorial, even once it is done",
-		_coach.is_running() and _coach.step_id() == &"welcome"
-			and not _root._picker_view.visible)
+	_check("every boot opens on the menu, even once the tutorial is done",
+		_on_the_menu() and not _coach.is_running())
+	_title_button("TutorialButton").pressed.emit()
+	await _frames(2)
 	_check_the_loud_button("a returning player", _coach._splash_skip, _coach._start)
 	_check("and your name is still on the tag (%s)" % _coach._name_field.text,
 		_coach._name_field.text == "Dana")
+	_coach._splash_skip.pressed.emit()
+	await _frames(2)
+	await _check_a_new_game()
 
 	TutorialProgress.reset()
 	PlayerProfile.reset()
 	_report()
+
+func _title_button(node_name: String) -> Button:
+	return _root._title_view.get_node("%" + node_name) as Button
+
+func _on_the_menu() -> bool:
+	return _root._title_view.visible and _root._title_view.page() == &"menu" \
+		and not _root._picker_view.visible
+
+## "A start menu, choice between tutorial, new game, or view high scores" -
+## the game opens on it, and the calendar no longer has a tutorial button.
+func _check_the_title_screen() -> void:
+	_check("the game opens on the title screen's menu", _on_the_menu())
+	_check("not on the practice shift", not _coach.is_running())
+	for b in ["NewGameButton", "TutorialButton", "HighScoresButton"]:
+		var button := _title_button(b)
+		_check("the menu offers %s (%s)" % [b, button.text],
+			button.is_visible_in_tree() and button.text != "")
+	_check("with no toolkit button over the front door",
+		not (_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control).visible)
+	_check("and the calendar has no tutorial button of its own",
+		_root._picker_view.find_child("TutorialButton", true, false) == null)
+	_check("a dealership drawn behind it", _root._title_view._art.is_visible_in_tree())
+
+	# The high scores, empty on a fresh device, and back.
+	_title_button("HighScoresButton").pressed.emit()
+	_check("HIGH SCORES shows them", _root._title_view.page() == &"scores")
+	_check("saying there are none yet on a fresh device",
+		_root._title_view._scores_empty.visible
+			and _root._title_view._scores_list.get_child_count() == 0)
+	PlayerProfile.record_run(4321, 9000, false)
+	_root._title_view.show_scores()
+	_check("and listing a filed week once there is one",
+		_root._title_view._scores_list.get_child_count() == 1
+			and not _root._title_view._scores_empty.visible)
+	PlayerProfile.reset()
+	_title_button("ScoresBackButton").pressed.emit()
+	_check("BACK returns to the menu", _on_the_menu())
+
+## NEW GAME: the first-day welcome over the dealership, then the calendar.
+func _check_a_new_game() -> void:
+	var before: RunState = _root._run
+	_title_button("NewGameButton").pressed.emit()
+	_check("NEW GAME opens on the first day's welcome",
+		_root._title_view.page() == &"intro" and not _root._picker_view.visible)
+	_check("which says it is your first day",
+		(_root._title_view.get_node("%IntroBody") as Label).text.contains("first day"))
+	_title_button("IntroBackButton").pressed.emit()
+	_check("BACK from it returns to the menu", _on_the_menu())
+	_title_button("NewGameButton").pressed.emit()
+	_title_button("StartDayButton").pressed.emit()
+	await _frames(2)
+	_check("starting the day opens the calendar",
+		_root._picker_view.visible and not _root._title_view.visible)
+	_check("on a fresh run's first day",
+		_root._run != before and _root._run.shift_number == 1)
+	_check("with the toolkit button back",
+		(_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control).visible)
 
 func _next(expect: StringName) -> void:
 	# The welcome is not a memo: its way in is its own big button.

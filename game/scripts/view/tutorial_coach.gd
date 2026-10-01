@@ -75,14 +75,14 @@ const FIRST_DAY := {
 	"title": "Welcome aboard, Manager.",
 	"body": "Sales just sold them the car. Now they're sitting at YOUR desk, and everything else is yours to sell - warranties, GAP, protection plans.\n\nThe GM is watching your numbers. No pressure.",
 	"start": "SHOW ME THE ROPES",
-	"skip": "SKIP TRAINING",
+	"skip": "BACK TO MENU",
 }
 const WELCOME_BACK := {
 	"eyebrow": "WELCOME BACK",
-	"title": "Back for another week?",
-	"body": "You know the drill: products, support cards, and a clock that runs the whole floor. Take the practice customer again for a refresher, or go straight to your shifts.",
+	"title": "Back for a refresher?",
+	"body": "You know the drill: products, support cards, and a clock that runs the whole floor. Take the practice customer again, or head back to the menu.",
 	"start": "SHOW ME AGAIN",
-	"skip": "SKIP TRAINING",
+	"skip": "BACK TO MENU",
 }
 
 @onready var _highlight: TutorialHighlight = %Highlight

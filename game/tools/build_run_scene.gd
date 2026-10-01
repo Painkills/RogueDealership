@@ -48,6 +48,13 @@ func _init() -> void:
 	root.add_child(week_view)
 	week_view.owner = root
 
+	# The front door - the menu, the high scores and a new game's first day.
+	# The game opens on it, so it is the one screen visible as built.
+	var title_view: Control = (load("res://scenes/title.tscn") as PackedScene).instantiate()
+	title_view.name = "TitleView"
+	root.add_child(title_view)
+	title_view.owner = root
+
 	# Added last of the four+one, so it draws on top of literally anything
 	# beneath it - reachable from both the shop and the floor, so it cannot
 	# belong to either of them (see run_controller.gd's own comment).

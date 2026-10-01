@@ -27,10 +27,9 @@ const PROFILE := "user://drive_run_profile.cfg"
 func _init() -> void:
 	seed(20260905)
 	_root = (load("res://scenes/run.tscn") as PackedScene).instantiate()
-	# This driver tests the run, not the practice shift in front of it (that
-	# is tools/drive_tutorial.gd's job) - so it boots straight to the picker,
-	# whatever the machine running it has or has not played before.
-	_root.tutorial_at_boot = false
+	# This driver tests the run, not the title screen in front of it (that is
+	# tools/drive_tutorial.gd's job) - so it boots straight to the picker.
+	_root.title_at_boot = false
 	# Its own profile, so the runs this plays are never filed among a real
 	# player's personal bests.
 	PlayerProfile.path = PROFILE
@@ -1139,11 +1138,20 @@ func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
 	var stale_run := _run
 	summary.continue_pressed.emit()
 	_check("pressing the button hides the summary", not summary.visible)
+	_check("and goes back to the title screen's menu",
+		_root._title_view.visible and _root._title_view.page() == &"menu"
+			and not _root._picker_view.visible)
+	_root._title_view.show_scores()
+	_check("whose high scores list the week just filed (%d)"
+		% _root._title_view._scores_list.get_child_count(),
+		_root._title_view._scores_list.get_child_count() == PlayerProfile.bests().size()
+			and not _root._title_view._scores_empty.visible)
 	_check("and rolls a genuinely fresh RunState, not the finished one relabeled",
 		_root._run != stale_run and _root._run.shift_number == 1)
 	_check("with a full standing meter again",
 		_root._run.standing == _root._run.cfg.standing_start)
 	_run = _root._run   # the driver keeps playing the fresh run past this point
+	_root._show_only(_root._picker_view)
 
 ## "YOU'RE FIRED" has to read as a different outcome than finishing the run on
 ## schedule - the same rule report_panel.gd already follows for the per-shift

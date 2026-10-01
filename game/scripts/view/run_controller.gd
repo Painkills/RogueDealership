@@ -30,13 +30,14 @@ extends Node
 ## and tutorial_coach.gd for the lesson.
 @onready var _coach: TutorialCoach = $TutorialCoach
 
-## Open the game on the practice shift - every time, not just the first. Its
-## welcome has a way out as big as the way in, and for someone who has been
-## through it before (TutorialProgress remembers) the way out is the loud one.
-## A driver that is testing something else turns this off BEFORE adding the
-## run to the tree, so it boots straight to the picker. The picker's HOW TO
-## PLAY button replays it either way.
-@export var tutorial_at_boot := true
+## The front door: the menu (NEW GAME, TUTORIAL, HIGH SCORES), and a new
+## game's first-day welcome - see title_screen.gd.
+@onready var _title_view = $TitleView
+
+## Open the game on the title screen's menu. A driver that is testing the run
+## itself turns this off BEFORE adding the run to the tree, so it boots
+## straight to the calendar.
+@export var title_at_boot := true
 
 var _run: RunState
 var _profiles: ShiftProfilePool
@@ -73,12 +74,22 @@ func _ready() -> void:
 	# someone last ran the builder."
 	_build_label.text = BuildInfo.LABEL
 	_coach.finished.connect(_on_tutorial_finished)
-	_picker_view.tutorial_requested.connect(_open_the_tutorial)
-	_start_run()
-	if tutorial_at_boot:
-		_open_the_tutorial()
+	_title_view.tutorial_requested.connect(_open_the_tutorial)
+	_title_view.new_game_started.connect(_start_run)
+	if title_at_boot:
+		_new_run()
+		_open_the_title()
+	else:
+		_start_run()
 
+## A fresh run, straight to its first day's calendar.
 func _start_run() -> void:
+	_new_run()
+	_open_the_picker()
+
+## A fresh RunState with nothing worked yet - built behind the title screen
+## too, since the practice shift borrows its config and pools.
+func _new_run() -> void:
 	_profiles = load("res://data/shift_profile_pool.tres")
 	_run = RunState.new(load("res://data/shift_config.tres"),
 		load("res://data/interests/interest_pool.tres"),
@@ -86,7 +97,14 @@ func _start_run() -> void:
 		load("res://data/archetype_pool.tres"), randi(),
 		load("res://data/dialogue/dialogue_pool.tres"), _profiles)
 	_history = []
-	_open_the_picker()
+
+## The title screen, on its menu - or, `intro`, on a new game's first day.
+func _open_the_title(intro: bool = false) -> void:
+	_show_only(_title_view)
+	if intro:
+		_title_view.show_intro()
+	else:
+		_title_view.show_menu()
 
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
@@ -114,13 +132,14 @@ func _open_the_tutorial() -> void:
 		_run.archetypes, _run.dialogue), _run.standing, &"morning")
 	_coach.start(_shift_view)
 
-## Finished or skipped, it is done: remembered, and back to the picker for
-## the run's first real shift.
-func _on_tutorial_finished(_completed: bool) -> void:
+## Finished or skipped, it is done and remembered. Finished - its last button
+## is START MY FIRST SHIFT - goes on to a new game's first day; skipped or
+## exited goes back to the menu it was opened from.
+func _on_tutorial_finished(completed: bool) -> void:
 	_in_tutorial = false
 	_coach.stop()
 	TutorialProgress.mark_done()
-	_open_the_picker()
+	_open_the_title(completed)
 
 func _on_shift_finished(report: Dictionary) -> void:
 	# The practice clock running out is the practice being over - never a
@@ -155,7 +174,9 @@ func _on_shift_finished(report: Dictionary) -> void:
 
 func _on_summary_continue() -> void:
 	_summary_view.visible = false
-	_start_run()
+	# Back to the front door, where the week just filed is on the high scores.
+	_new_run()
+	_open_the_title()
 
 ## The store closes on the next day's calendar - unless that day starts a new
 ## week, when the week just worked gets its report first.
@@ -179,3 +200,6 @@ func _show_only(screen: Node) -> void:
 	_picker_view.visible = screen == _picker_view
 	_shop_view.visible = screen == _shop_view
 	_week_view.visible = screen == _week_view
+	_title_view.visible = screen == _title_view
+	# No toolkit to look at from the front door.
+	_view_deck_btn.visible = screen != _title_view

@@ -12,9 +12,6 @@ extends PanelContainer
 ## disagreeing with the run.
 
 signal chosen(profile: ShiftProfile)
-## HOW TO PLAY - the practice shift, replayed on demand. It also opens the
-## game by itself (see RunController.tutorial_at_boot).
-signal tutorial_requested
 
 const DAY_NAMES := ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 const GUTTER_W := 84.0
@@ -25,9 +22,6 @@ const GUTTER_W := 84.0
 ## Today's own quota, before any shift's quota_scale - what an event compares
 ## its shift's quota against.
 var _day_quota: int = 0
-
-func _ready() -> void:
-	(%TutorialButton as Button).pressed.connect(func(): tutorial_requested.emit())
 
 ## `offers` is what today has to pick from - the regular tiers, or a premade
 ## shift in one's place, or a boss day's one shift (see Week). `day` is the
