@@ -24,7 +24,7 @@ const CUSTOMER_NAME := "Dana Whitaker"
 const PATIENCE := 20
 ## Left to right: something to dig, two products, and two of the support card
 ## the coach asks for, so digging either one of those still leaves the other.
-const HAND := [&"smalltalk", &"vsc", &"explain", &"gap", &"explain"]
+const HAND := [&"smalltalk", &"vsc", &"explain", &"tvp", &"explain"]
 ## Once a product is on the table, their Line sits this far above its Appeal.
 ## Short enough that the one support card the coach asks for next is exactly
 ## what tips it over - whichever product they happened to put down.
@@ -33,7 +33,7 @@ const LINE_GAP := 3
 ## product they rank last opens at 0 Appeal: the first meter anyone ever sees
 ## is an empty bar with the Line's mark crammed against its start, which
 ## teaches nothing about filling a bar up to a mark.
-const RANKS := {&"vsc": 3, &"gap": 4}
+const RANKS := {&"vsc": 3, &"tvp": 4}
 
 static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPool,
 		archetypes: ArchetypePool, dialogue: DialoguePool = null) -> Shift:

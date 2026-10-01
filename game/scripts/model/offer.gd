@@ -13,6 +13,9 @@ var opened_at: int
 var margin: int
 var revealed: bool = false
 var applied: Array[String] = []
+## Something played on it gave margin away - what a customer with
+## CustomerArchetype.needs_concession_past_rank is waiting for.
+var conceded: bool = false
 
 func _init(p_instance: CardInstance, p_appeal: int, p_margin: int) -> void:
 	instance = p_instance

@@ -441,6 +441,7 @@ func setup(shift: Shift, standing_before: int,
 	_player_bubble.hush()
 	_pending_says.clear()
 	_seated_seen = []
+	_held.clear()
 	_clear_fx()
 	_event_log.clear()
 	_report_overlay.visible = false
@@ -1002,6 +1003,37 @@ func _notice_departures() -> void:
 			_celebrate_close(i, was.unsigned_margin())
 		elif was.state == "walked":
 			_mourn_walkout(i, was.unsigned_margin())
+		else:
+			continue
+		# "Wait to show the new customer who appears in the chair until the
+		# 'signed' or 'walk out' sign has disappeared."
+		_held[i] = {"who": was, "until": Time.get_ticks_msec() + int(HOLD_SECONDS * 1000.0)}
+
+## How long a chair keeps showing who just left it - the stamp's whole life.
+const HOLD_SECONDS := FX_STAMP + 0.7
+## chair -> {who, until}: a chair still showing whoever just signed or walked.
+var _held: Dictionary = {}
+
+## Who the chair's folder shows: whoever just left it while their stamp is up,
+## otherwise whoever is in it.
+func _shown_in(chair: int):
+	if _held.has(chair):
+		return _held[chair]["who"]
+	return _shift.chairs[chair] if chair < _shift.chairs.size() else null
+
+## Lets every chair whose stamp has finished show who is really in it - all of
+## them with `now`, for a driver with no time to wait.
+func _release_holds(now: bool = false) -> void:
+	if _held.is_empty() or _shift == null:
+		return
+	var clock := Time.get_ticks_msec()
+	var done := false
+	for chair in _held.keys():
+		if now or clock >= int(_held[chair]["until"]):
+			_held.erase(chair)
+			done = true
+	if done:
+		_render()
 
 func _chair_on_screen(chair: int) -> Vector2:
 	return _card_rect(_customer_cards[chair], CustomerCard3D.CARD_SIZE).get_center()
@@ -1207,7 +1239,7 @@ func _render() -> void:
 		# scene was built for - the same "no customer here" state
 		# CustomerCard3D.setup(null) already renders for a chair mid-refill,
 		# not a chair this shift never had at all.
-		var chair = _shift.chairs[i] if i < _shift.chairs.size() else null
+		var chair = _shown_in(i)
 		_customer_cards[i].setup(chair,
 			seated and i == int(_shift.at), _shift.tick)
 
@@ -1276,6 +1308,7 @@ func _process(_delta: float) -> void:
 	_place_tags()
 	_release_pending_says()
 	_follow_stamps()
+	_release_holds()
 
 func _place_tags() -> void:
 	# The report and the deck viewer each cover the table, so its hints go with
@@ -1324,7 +1357,7 @@ func _render_details() -> void:
 		# See _render()'s identical guard: a shift may run with fewer chairs
 		# than the carousel was built for - the practice shift has one - and a
 		# seat past the end is simply nobody.
-		var c: Customer = _shift.chairs[i] if i < _shift.chairs.size() else null
+		var c: Customer = _shown_in(i)
 		_customer_details[i].show_customer(c)
 		var at_this_seat: bool = _shift.at != null and i == int(_shift.at)
 

@@ -81,7 +81,8 @@ func _drive() -> void:
 
 	await _next(&"dig")
 	var ticks_before: int = shift.tick
-	_floor._apply(shift.dig(_index_of(shift, &"gap")))
+	# The second of the scripted products - whichever Tutorial deals.
+	_floor._apply(shift.dig(_index_of(shift, Tutorial.RANKS.keys()[1])))
 	await _settle()
 	_check("digging moves it on", _coach.step_id() == &"clock")
 	_check("and the dig really did cost a tick (%d -> %d)" % [ticks_before, shift.tick],

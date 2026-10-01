@@ -24,6 +24,9 @@ const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	# Objections - see ProductCardDef.objection_tags and Shift._object(). The
 	# warm word instead, when a product already clears their Line.
 	&"objection", &"objection_walkaway", &"objection_walkaway_gap", &"interested",
+	# Said by offer() when they turn down an offer that cleared their Line for
+	# want of a concession - see CustomerArchetype.needs_concession_past_rank.
+	&"wants_concession",
 	# Their answers to the method's techniques - the reskinned appeal cards.
 	&"reply_empathize", &"reply_clarify", &"reply_relate", &"reply_value",
 	&"reply_budget", &"reply_listen",
@@ -85,6 +88,11 @@ const LINES := [
 	[[&"pressure"], "\"Alright, alright. You do not have to lean on me.\"", [], [], []],
 	[[&"pressure"], "\"Okay. Fine. Just stop.\"", [], [], []],
 	[[&"pressure"], "\"Do not take that tone with me.\"", [&"karen"], [], []],
+
+	[[&"wants_concession"], "\"Not at that price. Come down on it.\"", [], [], []],
+	[[&"wants_concession"], "\"Knock something off and we'll talk.\"", [], [], []],
+	[[&"wants_concession"], "\"At full price? For that? No chance.\"", [], [], []],
+	[[&"wants_concession"], "\"The other guy would've cut me a deal by now.\"", [], [], []],
 
 	[[&"padding"], "\"Sure. That sounds reasonable.\"", [], [], []],
 	[[&"padding"], "\"I will take your word on the numbers.\"", [], [], []],

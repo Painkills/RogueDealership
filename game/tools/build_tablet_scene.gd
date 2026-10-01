@@ -103,7 +103,9 @@ func _init() -> void:
 	gap.custom_minimum_size = Vector2(0, 18)
 	col.add_child(gap)
 	gap.owner = root
-	_label(col, root, "ComboTitle", "COMBO", 34, &"text_dim", true)
+	# CURRENT: this one is where they stand now; the folder's corner says
+	# what each sale adds to it.
+	_label(col, root, "ComboTitle", "CURRENT COMBO", 34, &"text_dim", true)
 	_label(col, root, "ComboLabel", "×2.35", 60, &"accent", true)
 	_label(col, root, "WorthLabel", "$3,760 if they buy", 32, &"margin")
 	var knobs := _label(col, root, "KnobsLabel", "Each sale: combo +45%, Line +5",

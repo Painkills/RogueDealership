@@ -56,7 +56,7 @@ func test_the_hand_is_dealt_for_the_lesson() -> void:
 func test_one_support_card_tips_whichever_product_they_put_down() -> void:
 	## The coach asks for ONE support card between placing and offering. That
 	## has to hold whichever product the player happens to pick up.
-	for product in [&"vsc", &"gap"]:
+	for product in Tutorial.RANKS.keys():
 		var s := _shift()
 		s.approach(0)
 		var c: Customer = s.chairs[0]

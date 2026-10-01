@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1_prf")
+quota_scale = 0.9
 id = &"morning"
 display_name = "Morning Shift"
 blurb = "Standard traffic. Nothing you haven't handled before."
 patience_scale = 1.0
 unlock_full_archetype_pool = false
-quota_offset = 250
 cards_for_sale = 1
 upgrades = 1

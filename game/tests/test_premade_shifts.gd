@@ -117,6 +117,16 @@ func test_a_premade_shifts_own_numbers_reach_the_shift() -> void:
 
 # ------------------------------------------------------------ the week
 ## Three blank tiers in the regular slots' order, and no categories yet.
+func test_a_category_can_keep_to_some_weeks() -> void:
+	## "Monday Open House should not happen on week two."
+	var cat := ShiftCategory.new()
+	cat.days = 1           # Mondays
+	cat.weeks = 1          # week one only
+	h.check("week one's Monday", cat.allows_day(1, 5))
+	h.check("not week two's", not cat.allows_day(6, 5))
+	cat.weeks = 0
+	h.check("no weeks ticked is every week", cat.allows_day(6, 5))
+
 func _tiers() -> ShiftProfilePool:
 	var pool := ShiftProfilePool.new()
 	var tiers: Array[ShiftProfile] = []

@@ -118,7 +118,15 @@ static func bonus_from(report: Dictionary) -> int:
 	## - it is on screen while you are still looking at the shift you just played,
 	## and the run does not advance until you press the button.
 	##
-	## What you banked over quota, times the shift's own bonus_scale - see
-	## ShiftProfile. A report without one (a hand-built one) pays it straight.
-	var over := maxi(0, int(report["margin_banked"]) - int(report["quota"]))
-	return roundi(over * float(report.get("bonus_scale", 1.0)))
+	## A paycheck, not a cut of the overage: "when you do well you do amazing,
+	## but if you do poorly you just get hammered cuz you can't even buy
+	## upgrades." Missing quota still pays the paycheck; beating it multiplies
+	## the paycheck by the share you beat it by, times the shift's bonus_scale
+	## (ShiftProfile) - 20% over on a x2 night pays 1.4 paychecks.
+	var pay := int(report.get("paycheck", 0))
+	var quota := int(report["quota"])
+	var banked := int(report["margin_banked"])
+	if quota <= 0 or banked <= quota:
+		return pay
+	var over := float(banked - quota) / float(quota)
+	return roundi(pay * (1.0 + over * float(report.get("bonus_scale", 1.0))))

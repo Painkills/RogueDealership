@@ -18,6 +18,11 @@ class_name CustomerArchetype extends Resource
 @export var top_interests: Array[Interest]
 @export var bottom_interests: Array[Interest]
 @export var demands_category: bool = false
+## Will not take a product they rank worse than this unless something was
+## conceded on it first - a card that gave margin away (Offer.conceded). No
+## fuse and nothing swept away: the offer just falls short until you come
+## down. 0 = takes anything that clears their Line.
+@export var needs_concession_past_rank: int = 0
 ## The earliest shift this archetype may walk in on. Nine ticks of patience and
 ## a floor-wide drain are the two hardest problems in the game, and a first-ever
 ## run should open with neither. Defaults to 1, so a bare shift is unaffected.

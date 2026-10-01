@@ -18,6 +18,9 @@ var free_cards: Array[CardDef] = []
 ## Whether this visit's free pick is still to be made, and which card it was
 ## once it has been.
 var free_picks_left: int = 1
+## The lowest CardDef.Rarity the free pick offers - see
+## ShiftProfile.free_pick_min_rarity.
+var free_pick_min_rarity: int = 0
 var free_taken: CardDef = null
 ## What you may BUY this visit - as many of them as you can afford. A card
 ## leaves it the moment you buy it.
@@ -55,6 +58,7 @@ func _init(p_run: RunState, p_profile: ShiftProfile = null) -> void:
 	if p_profile != null:
 		cards_for_sale = maxi(0, p_profile.cards_for_sale)
 		upgrades = maxi(0, p_profile.upgrades)
+		free_pick_min_rarity = p_profile.free_pick_min_rarity
 	_roll_cards()
 	_roll_upgrade_offers()
 
@@ -70,8 +74,20 @@ func _roll_cards() -> void:
 	for c in run.card_pool.shoppable_cards():
 		pool.append(c)
 	free_cards.clear()
-	for _i in range(mini(run.cfg.free_card_choices, pool.size())):
-		free_cards.append(pool.pop_at(_weighted_pick(pool)))
+	# A shift can raise the floor on its free pick - "finishing a boss should
+	# offer cards of a higher rarity" (ShiftProfile.free_pick_min_rarity).
+	# Drawn from the cards that clear it, while there are any left to draw.
+	for _i in range(run.cfg.free_card_choices):
+		var fine: Array[CardDef] = []
+		for c in pool:
+			if c.rarity >= free_pick_min_rarity:
+				fine.append(c)
+		var from: Array[CardDef] = fine if not fine.is_empty() else pool
+		if from.is_empty():
+			break
+		var picked: CardDef = from[_weighted_pick(from)]
+		pool.erase(picked)
+		free_cards.append(picked)
 	offers.clear()
 	for _i in range(mini(cards_for_sale, pool.size())):
 		offers.append(pool.pop_at(_weighted_pick(pool)))

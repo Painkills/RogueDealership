@@ -8,15 +8,21 @@ func _run(seed_value: int = 7) -> RunState:
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), seed_value)
 
-## Mirrors Shift._standing_delta() exactly, the way test_cards.gd's
-## `p.margin * 5 / 4` mirrors the upgrade-ratio rule it is checking - an
-## independent restatement of the formula, not a call into it, so a fabricated
-## report dict here can carry a genuinely correct standing_delta rather than a
-## placeholder that happens not to crash finish_shift().
-func _delta(margin: int, quota: int, cfg: ShiftConfig) -> int:
+## Mirrors Shift._standing_delta_from_quota() - an independent restatement of
+## the rule, not a call into it, so a fabricated report can carry a genuinely
+## correct standing_delta.
+func _delta(margin: int, quota: int, cfg: ShiftConfig, week: int = 0) -> int:
 	if margin >= quota:
 		return roundi(float(margin - quota) / float(quota) * cfg.standing_heal_scale)
-	return -roundi(float(quota - margin) / float(quota) * cfg.standing_damage_scale)
+	var caps: Array[int] = cfg.miss_standing_max_by_week
+	var cap: int = caps[mini(week, caps.size() - 1)] if not caps.is_empty() \
+		else cfg.miss_standing_min
+	var short := float(quota - margin) / float(quota)
+	return -roundi(lerpf(float(cfg.miss_standing_min), float(cap), short))
+
+func _report(margin: int, quota: int, cfg: ShiftConfig) -> Dictionary:
+	return {"margin_banked": margin, "quota": quota, "made_quota": margin >= quota,
+		"paycheck": cfg.paycheck, "standing_delta": _delta(margin, quota, cfg)}
 
 func test_a_run_starts_on_shift_one_with_a_starter_deck_and_no_money() -> void:
 	var r := _run()
@@ -40,52 +46,32 @@ func test_the_quota_climbs_by_the_configured_growth_rate() -> void:
 		h.eq("shift %d compounds from cfg.quota by cfg.quota_growth" % n,
 			r.quota_for(n), expected)
 
-func test_only_what_you_bank_over_quota_becomes_a_bonus() -> void:
-	## The quota is the house's cut and comes out first. What survives it is the
-	## bonus, and bonuses STACK for the length of the run.
+func test_every_shift_pays_its_paycheck() -> void:
+	## "There should be a 'paycheck'... You get that as long as you're not
+	## fired" - made quota or not.
 	var r := _run()
-	r.finish_shift({"margin_banked": 4200, "quota": 3600, "made_quota": true,
-		"standing_delta": _delta(4200, 3600, r.cfg)})
-	h.eq("you advance a shift", r.shift_number, 2)
-	h.eq("the bonus is the OVERAGE, not the take", r.money, 600)
-	h.eq("and the shift says what it just added", r.last_bonus, 600)
-	h.eq("while the lifetime total counts every dollar", r.banked_total, 4200)
+	var pay: int = r.cfg.paycheck
+	r.finish_shift(_report(500, 3600, r.cfg))
+	h.eq("missing quota still pays it", r.money, pay)
+	h.eq("and the shift says so", r.last_bonus, pay)
+	r.finish_shift(_report(4140, 4140, r.cfg))
+	h.eq("landing exactly on quota pays it, no more", r.last_bonus, pay)
+	h.eq("and paychecks stack in the pot", r.money, pay * 2)
+	h.eq("while the lifetime total counts every dollar banked", r.banked_total, 4640)
 
-	r.finish_shift({"margin_banked": 5000, "quota": 4140, "made_quota": true,
-		"standing_delta": _delta(5000, 4140, r.cfg)})
-	h.eq("the next bonus STACKS rather than replacing", r.money, 600 + 860)
-	h.eq("though last_bonus is only the latest shift's", r.last_bonus, 860)
-	h.eq("and the lifetime total keeps climbing", r.banked_total, 9200)
-	h.eq("with every report kept", r.reports.size(), 2)
-
-func test_a_shift_that_earns_no_bonus_leaves_the_pot_untouched() -> void:
-	## The threshold has teeth on both sides, and neither side goes negative or
-	## takes back what earlier shifts already earned.
-	var r := _run()
-	r.finish_shift({"margin_banked": 4600, "quota": 3600, "made_quota": true,
-		"standing_delta": _delta(4600, 3600, r.cfg)})
-	h.eq("a good shift builds the pot", r.money, 1000)
-
-	r.finish_shift({"margin_banked": 500, "quota": 4140, "made_quota": false,
-		"standing_delta": _delta(500, 4140, r.cfg)})
-	h.eq("missing quota adds nothing", r.last_bonus, 0)
-	h.eq("but never DRAINS what you already had", r.money, 1000)
-
-	r.finish_shift({"margin_banked": 4761, "quota": 4761, "made_quota": true,
-		"standing_delta": _delta(4761, 4761, r.cfg)})
-	h.eq("and landing on it exactly adds nothing either", r.money, 1000)
-
-	r.finish_shift({"margin_banked": 5476, "quota": 5475, "made_quota": true,
-		"standing_delta": _delta(5476, 5475, r.cfg)})
-	h.eq("one dollar over is one dollar added", r.money, 1001)
-
-func test_the_bonus_is_readable_before_the_run_advances() -> void:
-	## The report panel puts this number on screen while you are still looking at
-	## the shift you just played - finish_shift() has not run yet.
-	h.eq("an over-quota shift", RunState.bonus_from(
-		{"margin_banked": 4200, "quota": 3600}), 600)
-	h.eq("never reads negative", RunState.bonus_from(
+func test_beating_quota_multiplies_the_paycheck() -> void:
+	## "If you go over quota, it gets multiplied by % over ... times shift
+	## multiplier." Made-up reports, so no tuned number is pinned here.
+	h.eq("50% over pays one and a half paychecks", RunState.bonus_from(
+		{"margin_banked": 1500, "quota": 1000, "paycheck": 1000}), 1500)
+	h.eq("100% over on a x2 shift pays three", RunState.bonus_from(
+		{"margin_banked": 2000, "quota": 1000, "paycheck": 1000, "bonus_scale": 2.0}), 3000)
+	h.eq("never less than the paycheck", RunState.bonus_from(
+		{"margin_banked": 0, "quota": 1000, "paycheck": 1000}), 1000)
+	h.eq("and a report without one pays nothing extra", RunState.bonus_from(
 		{"margin_banked": 100, "quota": 3600}), 0)
+
+
 
 func test_missing_quota_costs_nothing_more_than_the_bonus() -> void:
 	## Money's OWN floor, isolated from standing: standing_delta is pinned to 0
@@ -102,21 +88,18 @@ func test_missing_quota_costs_nothing_more_than_the_bonus() -> void:
 	h.check("so the run ran its full length", r.is_over())
 
 func test_repeated_total_failure_ends_the_run_before_it_would_naturally_end() -> void:
-	## The literal bug report: before this feature, you could play every shift
-	## badly and still walk into shift 5 on schedule - a scorecard with no
-	## stakes. A standing meter has to make that false.
+	## "You shouldn't be able to 'lose' and keep going."
 	var r := _run()
-	var wiped_out := {"margin_banked": 0, "quota": r.quota_for(1), "made_quota": false,
-		"standing_delta": _delta(0, r.quota_for(1), r.cfg)}
-	r.finish_shift(wiped_out)
+	r.finish_shift(_report(0, r.quota_for(1), r.cfg))
 	h.check("one wipeout survives", not r.is_over())
-	## A total miss (0 of quota) costs the FULL standing_damage_scale - the
-	## short fraction is 1.0, so _delta() above reduces to exactly that.
-	h.eq("costs the full standing_damage_scale, missing by 100%",
-		r.standing, r.cfg.standing_start - roundi(r.cfg.standing_damage_scale))
-	r.finish_shift(wiped_out)
-	h.check("a second wipeout ends the run", r.is_over())
-	h.check("strictly before shift 5", r.shift_number <= r.cfg.shifts_in_run)
+	h.eq("costing the week's whole cap",
+		r.standing, r.cfg.standing_start - r.cfg.miss_standing_max_by_week[0])
+	var guard := 0
+	while not r.is_over() and guard < 20:
+		r.finish_shift(_report(0, r.quota_for(r.shift_number), r.cfg))
+		guard += 1
+	h.check("enough wipeouts end the run", r.is_over() and r.standing == 0)
+	h.check("before its last shift", r.shift_number <= r.cfg.shifts_in_run)
 
 func test_letting_customers_walk_can_end_a_run_on_its_own() -> void:
 	## The literal ask: "if you let too many people leave on you you will get
@@ -190,40 +173,38 @@ func test_a_shifts_quota_scale_and_offset_set_its_quota() -> void:
 	p.quota = 1234
 	h.eq("a premade shift's own quota wins over the scale", r.start_shift(p).quota, 1234)
 
-func test_a_shifts_bonus_scale_multiplies_what_it_banks_over_quota() -> void:
-	## "Add the multiplier for midday and night" - the harder shifts paying in
-	## money as well as in what their stores stock.
+func test_a_shifts_bonus_scale_multiplies_what_beating_quota_pays() -> void:
+	## Midday and night pay better for the same margin over quota.
 	var r := _run()
 	var p := ShiftProfile.new()
 	p.bonus_scale = 1.5
 	var report := r.start_shift(p).report()
 	h.eq("the shift's report carries its scale", report["bonus_scale"], 1.5)
+	h.eq("and the config's paycheck", report["paycheck"], r.cfg.paycheck)
 	report["margin_banked"] = int(report["quota"]) - 1
-	h.eq("missing quota still pays nothing", RunState.bonus_from(report), 0)
-	report["margin_banked"] = int(report["quota"]) + 1000
-	h.eq("banking over it pays that much times the scale", RunState.bonus_from(report), 1500)
+	h.eq("missing quota pays the paycheck", RunState.bonus_from(report), r.cfg.paycheck)
+	report["margin_banked"] = int(report["quota"]) * 2
+	var doubled := roundi(r.cfg.paycheck * (1.0 + 1.5))
+	h.eq("doubling quota pays it times one plus the scale", RunState.bonus_from(report), doubled)
 	r.finish_shift(report)
-	h.eq("and that is what goes in the pot", r.money, 1500)
+	h.eq("and that is what goes in the pot", r.money, doubled)
 
-func test_a_shift_with_a_heal_restores_standing_by_its_share_of_quota() -> void:
-	## "Boss fights heal you by up to 25%" - all of it for making quota, a share
-	## of it for banking that share, nothing on a shift without one.
+func test_a_shift_with_a_heal_restores_standing_only_for_passing() -> void:
+	## "You should only heal at the end of a boss fight if you pass quota."
 	var r := _run()
 	var p := ShiftProfile.new()
 	p.heal_up_to = 0.25
 	var s := r.start_shift(p)
 	s.quota = 1000
-	var full := 0.25 * r.cfg.standing_start
+	var full := roundi(0.25 * r.cfg.standing_start)
 	s.margin_banked = 2000
-	h.eq("making quota heals all of it, and no more for beating it",
-		int(s.report()["standing_healed"]), roundi(full))
-	s.margin_banked = 500
-	h.eq("half the quota heals half", int(s.report()["standing_healed"]), roundi(full * 0.5))
-	# Exactly on quota: nothing over it to heal by, nothing short to cost, and
-	# nobody walked - so the heal is the whole of what the run is handed.
+	h.eq("passing heals all of it, and no more for beating it",
+		int(s.report()["standing_healed"]), full)
+	s.margin_banked = 999
+	h.eq("a dollar short heals nothing", int(s.report()["standing_healed"]), 0)
 	s.margin_banked = 1000
 	h.eq("and the heal is in the standing the run is given",
-		int(s.report()["standing_delta"]), roundi(full))
+		int(s.report()["standing_delta"]), full)
 	h.eq("a shift without one heals nothing",
 		int(r.start_shift(ShiftProfile.new()).report()["standing_healed"]), 0)
 

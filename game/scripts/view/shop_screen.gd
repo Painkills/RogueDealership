@@ -86,11 +86,11 @@ func _render() -> void:
 	# Name what this pot IS and what just went into it. The budget stacks across
 	# the run, so a total on its own cannot tell you whether the shift you just
 	# played earned anything - and that is the number you came here to find out.
-	_money.text = "Bonus to spend: %s" % Format.money(run.money)
+	_money.text = "Money to spend: %s" % Format.money(run.money)
 	if run.last_bonus > 0:
 		_money.text += "   (+%s from that shift)" % Format.money(run.last_bonus)
 	elif not run.reports.is_empty():
-		_money.text += "   (no bonus that shift)"
+		_money.text += "   (no pay that shift)"
 	_money.text += "   |   Standing: %d/%d" % [run.standing, run.cfg.standing_start]
 	_shift_label.text = "shift %d of %d next - quota %s" % [run.shift_number,
 		run.cfg.shifts_in_run, Format.money(run.quota_for(run.shift_number))]

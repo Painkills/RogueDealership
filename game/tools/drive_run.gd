@@ -154,14 +154,14 @@ func _phase_0_open_and_finish_shift() -> void:
 		not (_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
 	_check("the run advanced to shift 2", _run.shift_number == 2)
 	var r0: Dictionary = _run.reports[0]
-	_check("with only what that shift banked OVER quota (%d banked, %d quota)"
+	_check("with what that shift paid (%d banked, %d quota)"
 		% [int(r0["margin_banked"]), int(r0["quota"])],
 		_run.money == RunState.bonus_from(r0))
 	# This driver digs the clock away rather than selling anything, so it always
-	# lands on the missed-quota branch. Pin that down, or the check above is
-	# 0 == max(0, 0 - 3600) and proves nothing about the subtraction.
-	_check("which after a shift that banked nothing is nothing",
-		not bool(r0["made_quota"]) and _run.money == 0 and _run.last_bonus == 0)
+	# lands on the missed-quota branch: the paycheck, and nothing on top.
+	_check("which after a shift that banked nothing is the paycheck alone",
+		not bool(r0["made_quota"]) and _run.money == _run.cfg.paycheck
+			and _run.last_bonus == _run.cfg.paycheck)
 	# The total wipeout costs standing too - but not all of it, so the run must
 	# have SURVIVED to reach shift 2 at all. This is also where a stale _run
 	# reference (the exact bug class this project has already caught once - a
@@ -186,8 +186,9 @@ func _phase_0_open_and_finish_shift() -> void:
 	# The panel you were just looking at had to show that number before
 	# finish_shift() ran at all, so the two must agree.
 	var panel = _root._shift_view._report_overlay
-	_check("and the report panel's own bonus line agrees",
-		panel._bonus.text.contains("No bonus"))
+	_check("and the report panel's own pay line agrees (%s)" % panel._bonus.text,
+		panel._bonus.text.contains(Format.money(_run.cfg.paycheck))
+			and panel._bonus.text.contains("short"))
 	# Missing quota is the only branch this driver's own play can reach, and the
 	# line that ANNOUNCES a bonus is the whole point of the feature. Drive it
 	# directly rather than leave the copy that matters unrendered by any test.
@@ -208,7 +209,7 @@ func _phase_0_open_and_finish_shift() -> void:
 	var paid := RunState.bonus_from(over)
 	var scaled := not is_equal_approx(float(over.get("bonus_scale", 1.0)), 1.0)
 	_check("and announces the bonus when there is one (%s)" % panel._bonus.text,
-		panel._bonus.text.contains(Format.money(paid)) and panel._bonus.text.contains("bonus")
+		panel._bonus.text.contains(Format.money(paid)) and panel._bonus.text.contains("paycheck")
 			and panel._bonus.text.contains("×") == scaled)
 	var r0_shown: Dictionary = r0.duplicate()
 	_set_standing_keys(r0_shown, _run.cfg.standing_start)

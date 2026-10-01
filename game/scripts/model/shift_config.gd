@@ -32,13 +32,16 @@ class_name ShiftConfig extends Resource
 ## The run's HP. Standing hits 0 and the run ends, same as running out of
 ## shifts - a scorecard with no stakes was the whole problem this fixes.
 @export var standing_start: int = 100
-## The same over/under-quota delta that funds the shop bonus also funds
-## standing, so failure has a second consequence without a second resource to
-## learn. Asymmetric on purpose: beating quota by 100% (doubling it) heals only
-## 15, while missing it completely costs 50 - "more likely to die," not "one
-## bad shift and you're out." Both are single numbers, guessed and untested
-## like quota_growth above; retune here, not in code.
-@export var standing_damage_scale: float = 50.0
+## Missing quota costs standing: never less than this, however close you came -
+## "you shouldn't be able to 'lose' and keep going."
+@export var miss_standing_min: int = 15
+## ...and more the further short you fell, up to this at nothing banked. One
+## entry per week of the run; weeks past the end use the last.
+@export var miss_standing_max_by_week: Array[int] = [35, 45]
+## What a shift pays, fired or not: the floor under the shop budget, so one bad
+## shift does not also mean a shop you cannot buy anything in. Beating quota
+## multiplies it - see RunState.bonus_from().
+@export var paycheck: int = 1000
 ## Zeroed in the shipped data: an ordinary shift never heals. A shift can heal
 ## on its own terms instead - see ShiftProfile.heal_up_to, which the boss
 ## fights use.

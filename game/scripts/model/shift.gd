@@ -863,6 +863,7 @@ func _support(c: Customer, index: int) -> Result:
 	var effects: Array[Effect] = def.upgraded_effects \
 		if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
 	var before_margin: int = c.offer.margin if c.offer else 0
+	var patience_before: int = c.patience
 	# One pass, the same one fire() and _settle_demand() make: apply, collect
 	# what to say it did, and notice a floor-wide hit while we are here.
 	var descriptions: Array[String] = []
@@ -880,6 +881,7 @@ func _support(c: Customer, index: int) -> Result:
 	if c.offer:
 		var delta: int = c.offer.margin - before_margin
 		if delta < 0:
+			c.offer.conceded = true
 			stat["margin_conceded"] = int(stat["margin_conceded"]) - delta
 		elif delta > 0:
 			stat["margin_padded"] = int(stat["margin_padded"]) + delta
@@ -932,7 +934,8 @@ func _support(c: Customer, index: int) -> Result:
 	_draw_up()
 	# Before the burn, so playing the card they asked for answers them rather
 	# than racing the very tick it costs to play it.
-	_demand_saw(c, DemandResolve.SUPPORT, {"card": def, "effects": effects})
+	_demand_saw(c, DemandResolve.SUPPORT, {"card": def, "effects": effects,
+		"patience_before": patience_before})
 	_settle_patience()
 	_burn(def.ticks, "cards")
 	return Result.new(true, def.display_name + ".", "support")
@@ -967,6 +970,7 @@ func offer() -> Result:
 
 	# They evaluate at the Line they had when you ASKED. A Hawk's reaction to
 	# being asked cannot retroactively sink an offer that already cleared.
+	var patience_before: int = c.patience
 	var sale := _settle(c)
 	if not sale.is_empty():
 		# They say yes out loud, about the product they just took where a line
@@ -977,9 +981,14 @@ func offer() -> Result:
 	else:
 		stat["failed_offers"] = int(stat["failed_offers"]) + 1
 		c.patience -= cfg.failed_offer_patience
+		# Turned down for want of a concession, not for appeal: say so, or
+		# nothing on screen tells the player what would have worked.
+		if o.appeal >= c.line and holds_out_for_a_concession(c):
+			_chatter(c, [&"wants_concession"], o.product.id)
 
 	fire(&"on_offer", c, {"rank": rank, "short": gap, "sale": sale})
-	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": gap, "sale": sale})
+	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": gap, "sale": sale,
+		"patience_before": patience_before})
 	_settle_patience()
 
 	if not sale.is_empty():
@@ -999,7 +1008,7 @@ func _settle(c: Customer) -> Dictionary:
 	## Accept the moment appeal reaches the Line - never above it, so a card
 	## that overshoots is margin you threw away.
 	var o = c.offer
-	if o == null or o.appeal < c.line:
+	if o == null or o.appeal < c.line or holds_out_for_a_concession(c):
 		return {}
 	# c.sales is PRIOR sales this visit only - it has not been incremented
 	# for this one yet, so the first sale always multiplies by exactly 1.0.
@@ -1020,6 +1029,16 @@ func _settle(c: Customer) -> Dictionary:
 		% [c.key, sale["product"].display_name,
 			" (×%.1f combo)" % multiplier if multiplier > 1.0 else ""])
 	return sale
+
+
+## True while what is on their table is outside their top
+## CustomerArchetype.needs_concession_past_rank and nothing has been conceded
+## on it - "not accept anything under their top 5 unless there's a concession."
+func holds_out_for_a_concession(c: Customer) -> bool:
+	var past: int = c.archetype.needs_concession_past_rank
+	if past <= 0 or c.offer == null or c.offer.conceded:
+		return false
+	return int(c.ranks[c.offer.product.interest.id]) > past
 
 
 func drop_offer() -> Result:
@@ -1441,6 +1460,7 @@ func report() -> Dictionary:
 		"quota": quota,
 		"made_quota": margin_banked >= quota,
 		"bonus_scale": bonus_scale,
+		"paycheck": cfg.paycheck,
 		"standing_delta": _standing_delta(),
 		"standing_lost_to_walkouts": _standing_lost_to_walkouts,
 		"standing_healed": healed(),
@@ -1489,10 +1509,11 @@ func _standing_delta() -> int:
 ## full standing, in proportion to how much of the quota was banked, all of it
 ## at quota or better. Nothing for a shift without one.
 func healed() -> int:
-	if heal_up_to <= 0.0 or quota <= 0:
+	# Earned by passing, not by trying: "you should only heal at the end of a
+	# boss fight if you pass quota."
+	if heal_up_to <= 0.0 or quota <= 0 or margin_banked < quota:
 		return 0
-	var share := minf(1.0, float(margin_banked) / float(quota))
-	return roundi(share * heal_up_to * cfg.standing_start)
+	return roundi(heal_up_to * cfg.standing_start)
 
 
 func _standing_delta_from_quota() -> int:
@@ -1503,5 +1524,17 @@ func _standing_delta_from_quota() -> int:
 	if margin_banked >= quota:
 		var over := float(margin_banked - quota) / float(quota)
 		return roundi(over * cfg.standing_heal_scale)
-	var short := float(quota - margin_banked) / float(quota)
-	return -roundi(short * cfg.standing_damage_scale)
+	# At least miss_standing_min however close, up to this week's cap at
+	# nothing banked.
+	var short := clampf(float(quota - margin_banked) / float(quota), 0.0, 1.0)
+	return -roundi(lerpf(float(cfg.miss_standing_min), float(miss_cap()), short))
+
+
+## The most missing quota can cost this shift - its week's entry in
+## ShiftConfig.miss_standing_max_by_week.
+func miss_cap() -> int:
+	var caps := cfg.miss_standing_max_by_week
+	if caps.is_empty():
+		return cfg.miss_standing_min
+	var week := (shift_number - 1) / maxi(1, cfg.days_per_week)
+	return caps[mini(week, caps.size() - 1)]

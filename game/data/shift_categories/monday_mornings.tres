@@ -9,4 +9,5 @@ script = ExtResource("1_8fxwt")
 display_name = "Monday mornings"
 days = 1
 slots = 1
+weeks = 1
 shifts = Array[ExtResource("2_x07j5")]([ExtResource("3_dp6ya")])

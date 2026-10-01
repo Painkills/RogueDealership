@@ -61,8 +61,8 @@ func test_show_card_writes_a_products_words_onto_the_face() -> void:
 	h.check("carries the same category badge every other card uses", icon.visible)
 	h.eq("naming the product's own category", icon._category_id,
 		vsc.interest.category.id)
-	h.eq("the authored flavor text, verbatim",
-		(col.get_node(^"FlavorLabel") as Label).text, vsc.text)
+	h.eq("under it, what the product does beyond its margin",
+		(col.get_node(^"FlavorLabel") as Label).text, CardText.flavor(_card(&"vsc")))
 	c.free()
 
 func test_a_products_badge_shares_the_products_own_color() -> void:

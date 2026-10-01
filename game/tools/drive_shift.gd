@@ -231,8 +231,10 @@ func _settle() -> void:
 	# The HUD's tags follow their anchors every frame in _process(), and there
 	# is no next frame inside this one - place them against the settled table.
 	_controller._place_tags()
-	# Nor is there time for a customer's reply to wait out REPLY_DELAY.
+	# Nor is there time for a customer's reply to wait out REPLY_DELAY, or for
+	# a chair to wait out its SIGNED / WALKED OUT stamp.
 	_controller._release_pending_says(true)
+	_controller._release_holds(true)
 
 func _flush(node: Node3D) -> void:
 	# Each card also owns the tween that walks it to its place in the layout.
@@ -2348,8 +2350,16 @@ func _check_a_walkout_is_hard_to_miss() -> void:
 		_check("someone on the floor to lose", false)
 		return
 	var before: int = _controller._standing_shown
+	var leaving = s.chairs[chair]
 	s._walk(chair)
 	_controller._render()
+	# "Wait to show the new customer who appears in the chair until the sign has
+	# disappeared."
+	_check("their chair still shows them while the stamp is up",
+		_controller._customer_cards[chair].customer == leaving)
+	_controller._release_holds(true)
+	_check("and whoever is really in it once it is gone",
+		_controller._customer_cards[chair].customer == s.chairs[chair])
 	var texts := _fx_texts()
 	_check("a walkout stamps their folder (%s)" % str(texts), texts.has("WALKED OUT"))
 	var cost := before - s.standing

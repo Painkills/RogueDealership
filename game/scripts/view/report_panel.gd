@@ -62,19 +62,20 @@ func setup(r: Dictionary) -> void:
 	# The bonus is derived here rather than passed in, because this panel is up
 	# while the run has not advanced yet - finish_shift() does not run until the
 	# button below is pressed. RunState owns the arithmetic either way.
-	var bonus := RunState.bonus_from(r)
+	var pay := RunState.bonus_from(r)
+	var base := int(r.get("paycheck", 0))
 	var scale := float(r.get("bonus_scale", 1.0))
-	if bonus > 0:
-		# A shift that pays over the odds says so, and what it did to the money.
-		_bonus.text = "You exceeded your quota. You got a %s bonus%s!" % [Format.money(bonus),
+	if pay > base:
+		# Beating quota multiplies the paycheck: say so, and by what.
+		_bonus.text = "You beat quota - your paycheck is %s%s!" % [Format.money(pay),
 			"" if is_equal_approx(scale, 1.0) else " (×%s for this shift)" % String.num(scale, 2)]
 		_bonus.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
 	elif r["made_quota"]:
-		_bonus.text = "You hit quota on the nose - nothing over, nothing banked."
+		_bonus.text = "Paycheck: %s. Quota hit on the nose." % Format.money(pay)
 		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	else:
-		_bonus.text = "No bonus - you finished %s short of quota." \
-			% Format.money(int(r["quota"]) - int(r["margin_banked"]))
+		_bonus.text = "Paycheck: %s. You finished %s short of quota." % [Format.money(pay),
+			Format.money(int(r["quota"]) - int(r["margin_banked"]))]
 		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
 	var delta: int = int(r["standing_delta"])

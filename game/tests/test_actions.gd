@@ -67,82 +67,64 @@ func _sat_a_while(s: Shift, chair: int = 0) -> Customer:
 	s.chairs[chair].ticks_on_floor = s.cfg.demand_grace_ticks
 	return s.chairs[chair]
 
-# ------------------------------------------------------------- Budget Hawk
-func test_the_hawk_shops_you_the_moment_you_place_something_off_his_list() -> void:
-	var s := _shift([&"hawk"])
-	var c := _sat_a_while(s)
-	# See test_the_hawk_shops_you_according_to_his_own_trigger for the version
-	# that checks the trigger's own verdict at arbitrary ranks - this one just
-	# needs a scenario guaranteed to fire it, whatever it's tuned to.
-	_rank_worst(c, &"reliability")
-	_hand(s, [&"vsc"])
-	h.check("nothing to complain about yet", c.demand == null)
-	s.place(0)
-	h.check("the worst possible placement gets him shopping - before you have",
-		c.demand != null)
-	h.check("even asked", not s.chairs[s.at].offer.revealed)
-	h.eq("by name", c.demand.id, &"better_quote")
-	h.check("and he does not wait long", c.demand.ticks > 0)
+# ------------------------------------------------------------- holding out
+# CustomerArchetype.needs_concession_past_rank - the Budget Hawk's rule ("not
+# accept anything under their top 5 unless there's a concession"), checked on
+# a copy of whoever sits down, with it set, so no tuning is pinned here.
 
-func test_the_hawk_sweeps_the_table_if_you_will_not_come_down() -> void:
-	var s := _shift([&"hawk"])
+func _holdout(past: int) -> Array:
+	var s := _shift([&"easygoing"])
 	var c := _sat_a_while(s)
+	var arch := c.archetype.duplicate() as CustomerArchetype
+	arch.needs_concession_past_rank = past
+	arch.actions = []
+	c.archetype = arch
+	return [s, c]
+
+func test_a_holdout_will_not_take_what_is_past_their_rank_at_full_price() -> void:
+	var made := _holdout(5)
+	var s: Shift = made[0]
+	var c: Customer = made[1]
 	_rank_worst(c, &"reliability")
 	_hand(s, [&"vsc"])
 	s.place(0)
-	h.check("he is shopping you", c.demand != null)
-	var discarded: int = s.discard.size()
-	# Dig (no concession) until the fuse runs out on its own, whatever length
-	# it's currently tuned to - bounded so a stuck fuse fails loudly instead
-	# of hanging.
-	var guard := 0
-	while c.demand != null and guard < 30:
-		s.dig(0)
-		guard += 1
-	h.check("the fuse ran out", c.demand == null)
-	h.check("and your product came off the table", c.offer == null)
-	h.check("into the discard, not out of the deck",
-		s.discard.size() >= discarded + 1)
+	c.line = 0
+	h.eq("it clears their Line and still does not sell", s.offer().kind, "miss")
+	h.check("it stays on the table", c.offer != null)
+	h.check("and there is no fuse running down", c.demand == null)
+	var said: Array = s.action_log.filter(func(e): return bool(e.get("chatter", false)))
+	h.check("and they say what they are waiting for", not said.is_empty())
 
-func test_coming_down_on_the_price_sends_the_hawk_away_satisfied() -> void:
-	var s := _shift([&"hawk"])
-	var c := _sat_a_while(s)
+func test_a_concession_gets_a_holdout_to_take_it() -> void:
+	var made := _holdout(5)
+	var s: Shift = made[0]
+	var c: Customer = made[1]
 	_rank_worst(c, &"reliability")
 	_hand(s, [&"vsc", &"discount"])
 	s.place(0)
-	h.check("he is shopping you", c.demand != null)
 	s.play_card(_index_of(s, &"discount"))
-	h.check("money off answers him", c.demand == null)
-	h.check("and your product stays where it is", c.offer != null)
+	h.check("money came off it", c.offer.conceded)
+	c.line = 0
+	h.eq("and now they take it", s.offer().kind, "sale")
 
-func test_the_hawk_shops_you_according_to_his_own_trigger() -> void:
-	## His trigger config (rank_worse_than) is a live balance knob - already
-	## retuned more than once while this suite was being audited. Rather than
-	## this test assuming one specific configuration, build the same rank the
-	## model computes, ask his own OnPlace.matches() what SHOULD happen, and
-	## confirm the shift agrees - so whatever the trigger is dialed to right
-	## now, this keeps testing "the trigger decides, and the shift obeys it"
-	## rather than a snapshot.
-	var hawk_arch := (load("res://data/archetype_pool.tres") as ArchetypePool).by_id(&"hawk")
-	var trigger := hawk_arch.actions[0].trigger
+func test_a_holdout_takes_their_top_ranks_at_full_price() -> void:
+	var made := _holdout(5)
+	var s: Shift = made[0]
+	var c: Customer = made[1]
+	_rank(c, [&"reliability"])
+	_hand(s, [&"vsc"])
+	s.place(0)
+	c.line = 0
+	h.eq("their number one sells without a concession", s.offer().kind, "sale")
 
-	for rank in [1, 9]:
-		var s := _shift([&"hawk"])
-		var c := _sat_a_while(s)
-		var others: Array = []
-		for iid in NINE:
-			if iid != &"reliability":
-				others.append(iid)
-		_rank(c, others.slice(0, rank - 1) + [&"reliability"])
-		_hand(s, [&"vsc"])
-
-		var probe := EffectContext.new()
-		probe.rank = rank
-		var should_demand: bool = trigger.matches(probe)
-
-		s.place(0)
-		h.eq("rank %d: the trigger's own verdict matches what happened"
-			% rank, c.demand != null, should_demand)
+func test_nobody_holds_out_by_default() -> void:
+	var s := _shift([&"easygoing"])
+	var c := _sat_a_while(s)
+	_rank_worst(c, &"reliability")
+	_hand(s, [&"vsc"])
+	s.place(0)
+	c.line = 0
+	h.eq("their worst still sells once it clears the Line", s.offer().kind, "sale")
 
 # -------------------------------------------------------------- Tire Kicker
 ## The cadence itself (how many ticks the Kicker waits before speaking up) is
@@ -357,6 +339,23 @@ func test_raising_her_patience_gets_the_karen_off_your_back() -> void:
 	s.play_card(_index_of(s, &"smalltalk"))
 	h.check("a real patience gain answers her", c.demand == null)
 	h.eq("and your standing is untouched", s.standing, standing)
+
+func test_a_sale_answers_the_karen_even_after_her_patience_drained() -> void:
+	## "The increase of patience caused by an accepted offer is NOT clearing the
+	## karen's request for a manager." Her patience keeps draining while she
+	## waits, so the sale's increase never got her back above where she asked.
+	var s := _shift([&"karen"])
+	var c := _sat_a_while(s)
+	s.raise_demand(c, load("res://data/demands/manager.tres"))
+	c.patience -= s.cfg.patience_per_sale + 2
+	_rank(c, [&"reliability"])
+	_hand(s, [&"vsc"])
+	s.place(0)
+	c.line = 0
+	h.check("her patience is below where she asked",
+		c.patience < c.demand_patience_at_raise)
+	h.eq("she takes it", s.offer().kind, "sale")
+	h.check("and the sale's patience answers her", c.demand == null)
 
 func test_a_card_that_does_not_actually_raise_her_patience_does_not_answer_her() -> void:
 	## The old rule answered to ANY concession card, whether or not it moved

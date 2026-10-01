@@ -73,6 +73,19 @@ func _init() -> void:
 	tab.add_child(title)
 	title.owner = root
 
+	# What each sale does to them, in the folder's top-right corner beside the
+	# tab: "a concise way to inform players of the combo and line increase of
+	# each archetype." The same words the tablet uses (OfferTablet.knobs_text).
+	var knobs := _label("KnobsLabel", 24, Palette.color(&"ink"), true)
+	knobs.text = "Each sale: combo +45%, Line +5"   # the widest it reads
+	knobs.position = Vector2(TAB_INSET + TAB_W + 12, 4)
+	knobs.size = Vector2(W - (TAB_INSET + TAB_W + 12) - TAB_INSET, TAB_H - 8)
+	knobs.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	knobs.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	knobs.clip_text = true
+	root.add_child(knobs)
+	knobs.owner = root
+
 	# The sheet, taped to the cover at its two top corners.
 	var sheet := Panel.new()
 	sheet.name = "Sheet"

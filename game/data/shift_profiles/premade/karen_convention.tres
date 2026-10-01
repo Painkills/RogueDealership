@@ -12,3 +12,5 @@ blurb = "Every desk open, and every one of them wants the manager."
 only_archetypes = Array[ExtResource("1_qg0wf")]([ExtResource("2_hw1oe")])
 chance = 1.0
 heal_up_to = 0.25
+upgrades = 3
+free_pick_min_rarity = 2

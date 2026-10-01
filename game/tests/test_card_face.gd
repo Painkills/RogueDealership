@@ -60,8 +60,8 @@ func test_setup_writes_a_products_words_onto_the_face() -> void:
 		(col.get_node(^"MarginLabel") as Label).text, Format.money(vsc.margin))
 	h.eq("tick cost", (col.get_node(^"Header/CostLabel") as Label).text,
 		"%dt" % vsc.ticks)
-	h.eq("the authored flavor text, verbatim",
-		(col.get_node(^"FlavorLabel") as Label).text, vsc.text)
+	h.eq("under it, what the product does beyond its margin",
+		(col.get_node(^"FlavorLabel") as Label).text, CardText.flavor(_card(&"vsc")))
 	c.free()
 
 func test_a_products_body_carries_the_same_badge_the_interest_grid_uses() -> void:
@@ -139,6 +139,29 @@ func test_a_support_cards_body_carries_no_badge() -> void:
 	h.check("no badge on a support card", not icon.visible)
 	c.free()
 
+func test_a_products_own_effects_show_and_follow_its_upgrade() -> void:
+	## "Make the amount of line reduced show up in the text without hard coding
+	## it, so that when you upgrade you see the upgraded amount." A made-up
+	## effect on a copy of whatever product the pool holds first.
+	var product: ProductCardDef = null
+	for c in _pool().cards:
+		if c is ProductCardDef:
+			product = (c as ProductCardDef).duplicate() as ProductCardDef
+			break
+	var base := ChangeLine.new()
+	base.amount = -3
+	var better := ChangeLine.new()
+	better.amount = -7
+	product.effects.assign([base])
+	product.upgraded_effects.assign([better])
+	var inst := CardInstance.new(product, 1)
+	h.eq("what it does, in the effect's own words", CardText.flavor(inst), base.describe())
+	inst.upgraded = true
+	h.eq("and the upgraded amount once upgraded", CardText.flavor(inst), better.describe())
+	product.effects.clear()
+	product.upgraded_effects.clear()
+	h.eq("nothing at all for a product that does nothing more", CardText.flavor(inst), "")
+
 func test_setup_writes_a_support_cards_effects_onto_the_face() -> void:
 	var c := _instance()
 	var discount := _pool().by_id(&"discount")
@@ -151,8 +174,8 @@ func test_setup_writes_a_support_cards_effects_onto_the_face() -> void:
 			(discount as SupportCardDef).effects[0].describe()))
 	h.eq("support cards carry no margin of their own",
 		(col.get_node(^"MarginLabel") as Label).text, "")
-	h.eq("the authored flavor text, verbatim",
-		(col.get_node(^"FlavorLabel") as Label).text, discount.text)
+	h.eq("no flavour text - the dialogue says it now",
+		(col.get_node(^"FlavorLabel") as Label).text, "")
 	c.free()
 
 func test_setup_works_before_the_card_is_in_the_tree() -> void:

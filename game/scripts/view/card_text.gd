@@ -33,10 +33,24 @@ static func body(inst: CardInstance) -> String:
 static func margin(inst: CardInstance) -> String:
 	return Format.money(inst.margin()) if inst.is_product() else ""
 
-## The authored CardDef.text - flavour only, same for every copy and every
-## upgrade of a card, unlike body() which reads differently once upgraded.
+## The line under the body. It used to be the authored flavour text; that is
+## the dialogue's job now. On a product it is what the product DOES beyond its
+## margin - WALKAWAY's "their Line moves -3" - generated from the effects that
+## actually run, so an upgrade shows the upgraded amount and a rebalance never
+## means rewriting a card. Empty on a support card, whose body already says
+## what it does, and on a product that does nothing more.
 static func flavor(inst: CardInstance) -> String:
-	return inst.card.text
+	if not inst.is_product():
+		return ""
+	var p := inst.card as ProductCardDef
+	var effects := p.upgraded_effects if inst.upgraded and not p.upgraded_effects.is_empty() \
+		else p.effects
+	var parts: Array[String] = []
+	for e in effects:
+		var d := e.describe()
+		if d != "":
+			parts.append(d)
+	return ", ".join(parts)
 
 ## B/E/V/P - the corner badge. One letter, not a word, so it reads at the
 ## minified size every card face is actually viewed at.

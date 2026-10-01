@@ -47,17 +47,25 @@ func test_the_report_carries_every_key_the_ui_will_need() -> void:
 			"peak_combo_multiplier"]:
 		h.check("report has %s" % key, r.has(key))
 
-func test_standing_delta_matches_the_scale_configured() -> void:
-	## Exact 50% steps with both scales set to 100, so the formula's shape is
-	## checked without any rounding-tie ambiguity.
-	var s := _shift([&"easygoing"], {"quota": 1000, "standing_damage_scale": 100.0,
-		"standing_heal_scale": 100.0})
+func test_missing_quota_costs_the_minimum_up_to_the_weeks_cap() -> void:
+	## "A minimum amount of standing lost, like 15, and the rest scales with how
+	## far you are from making quota, up to a max of 35 in week one and 45 in
+	## week two." Read from the config, never restated.
+	var s := _shift([&"easygoing"], {"quota": 1000, "standing_heal_scale": 0.0})
+	var low: int = s.cfg.miss_standing_min
+	var caps: Array[int] = s.cfg.miss_standing_max_by_week
+	s.margin_banked = 999
+	h.eq("a dollar short costs the minimum", int(s.report()["standing_delta"]), -low)
 	s.margin_banked = 500
-	h.eq("a 50% shortfall costs half the scale", int(s.report()["standing_delta"]), -50)
+	h.eq("halfway short, halfway to the cap", int(s.report()["standing_delta"]),
+		-roundi(lerpf(float(low), float(caps[0]), 0.5)))
+	s.margin_banked = 0
+	h.eq("nothing banked costs the week's cap", int(s.report()["standing_delta"]), -caps[0])
+	s.shift_number = s.cfg.days_per_week + 1
+	h.eq("and the next week's cap in the next week", int(s.report()["standing_delta"]),
+		-caps[mini(1, caps.size() - 1)])
 	s.margin_banked = 1000
-	h.eq("landing exactly on quota is a wash", int(s.report()["standing_delta"]), 0)
-	s.margin_banked = 1500
-	h.eq("a 50% overage heals half the scale", int(s.report()["standing_delta"]), 50)
+	h.eq("landing exactly on quota costs nothing", int(s.report()["standing_delta"]), 0)
 
 func test_walkouts_cost_standing_on_their_own() -> void:
 	## Independent of the quota-delta - letting people leave threatens the job

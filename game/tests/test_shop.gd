@@ -29,6 +29,24 @@ func test_every_card_carries_a_price() -> void:
 		h.check("%s is priced" % c.id, c.price > 0)
 
 # ------------------------------------------------------------- the free card
+func test_a_shift_can_raise_the_floor_on_its_free_pick() -> void:
+	## "Finishing a boss should offer cards of a higher rarity" - nothing below
+	## the shift's free_pick_min_rarity while the pool has enough above it.
+	var floor_rarity := CardDef.Rarity.VALUE
+	var above := 0
+	for c in _run().card_pool.shoppable_cards():
+		if c.rarity >= floor_rarity:
+			above += 1
+	for seed_value in range(1, 9):
+		var p := _profile()
+		p.free_pick_min_rarity = floor_rarity
+		var shop := Shop.new(_run(10000, seed_value), p)
+		var low := shop.free_cards.filter(func(c): return c.rarity < floor_rarity)
+		h.check("seed %d: nothing below the floor while there is enough above it (%d above)"
+				% [seed_value, above],
+			low.is_empty() or above < shop.free_cards.size())
+
+
 func test_every_visit_offers_free_cards_to_pick_one_from() -> void:
 	## "You always get one choice of three for free" - whatever the tier, even
 	## none at all. How many to choose between is the config's.

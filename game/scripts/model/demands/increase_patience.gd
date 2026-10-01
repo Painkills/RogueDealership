@@ -7,8 +7,16 @@ class_name IncreasePatience extends DemandResolve
 ## changing. Unlike PlayConcession it never inspects which effect ran - only
 ## whether the number actually moved.
 
+##
+## Also answered by whatever you just did RAISING it, wherever it started: her
+## patience keeps draining while she waits, so after three ticks a sale's +3
+## only got her back to where she asked - and "the increase of patience caused
+## by an accepted offer is NOT clearing the karen's request for a manager."
 func satisfied(_kind: StringName, data: Dictionary) -> bool:
-	return int(data.get("patience", 0)) > int(data.get("patience_at_raise", 0))
+	var now := int(data.get("patience", 0))
+	if now > int(data.get("patience_at_raise", 0)):
+		return true
+	return data.has("patience_before") and now > int(data["patience_before"])
 
 func describe() -> String:
 	return "raise their patience"

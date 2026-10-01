@@ -68,6 +68,8 @@ class_name ShiftProfile extends Resource
 ## see Shop. Buy or upgrade as many of them as the bonus covers.
 @export var cards_for_sale: int = 0          ## cards put up for sale
 @export var upgrades: int = 0                ## of your cards offered for an upgrade
+## The lowest rarity the free pick after this shift offers - a boss's reward.
+@export_enum("Basic", "Economy", "Value", "Preferred") var free_pick_min_rarity: int = 0
 
 ## Set on the copy Week deals onto the calendar, never authored: the slot it
 ## took, and the category that dealt it. A regular tier has neither.
