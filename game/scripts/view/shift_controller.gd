@@ -325,6 +325,25 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion \
 			and (event as InputEventMouseMotion).relative.length_squared() > 4.0:
 		_arm_hover()
+		return
+	var pressed_at = null
+	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+		pressed_at = (event as InputEventMouseButton).position
+	elif event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
+		pressed_at = (event as InputEventScreenTouch).position
+	if pressed_at == null:
+		return
+	# A tap is a deliberate act at a place - as good as a move for hover.
+	_arm_hover()
+	# "Tapping away or anywhere else doesn't clear the hover. Only tapping on
+	# the other customer flips them, and the one you most recently tapped gets
+	# stuck. Mobile specifically." A peek is touch's hover, and a touchscreen
+	# has no pointer to ever leave the folder - so a press anywhere but on the
+	# peeked one is it looking away. A tap on another customer still peeks
+	# them, in _on_pad_input(), which runs after this.
+	if _peeked >= 0 and _pad_under(pressed_at) != _peeked:
+		_peeked = -1
+		_render_hover_flip()
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Never handle mouse here: _unhandled_input runs BEFORE physics picking, so

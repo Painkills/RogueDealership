@@ -83,6 +83,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_hovering_a_customer_turns_their_card_over()
 	_check_tapping_a_seat_peeks_before_it_approaches()
 	_check_a_touchscreen_never_trusts_hover_to_skip_the_peek()
+	_check_a_tap_elsewhere_turns_a_peek_back()
 	_check_pressing_a_hand_card_lifts_it_like_hovering_would()
 	_check_dragging_a_hand_card_keeps_it_lifted_for_reading()
 	_check_table("on arrival")
@@ -647,6 +648,46 @@ func _check_a_touchscreen_never_trusts_hover_to_skip_the_peek() -> void:
 	_controller._apply(_controller._shift.leave())
 	_check("back on the floor, touch check restored", _controller._shift.at == null
 		and not _controller._touch_check.call())
+
+## "Tapping away or anywhere else doesn't clear the hover. Only tapping on the
+## other customer flips them, and the one you most recently tapped gets stuck.
+## Mobile specifically." A touchscreen has no pointer to leave a folder, so a
+## press anywhere but on the peeked one has to be what turns it back.
+func _check_a_tap_elsewhere_turns_a_peek_back() -> void:
+	_controller._touch_check = func(): return true
+	var down := InputEventMouseButton.new()
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	var tap := InputEventScreenTouch.new()
+	tap.pressed = true
+
+	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, 1)
+	_settle()
+	_check("a tap peeks at a customer", _controller._customer_flips[1].showing_back())
+	tap.position = Vector2(4, _screen().y - 4)     # a corner, nowhere near a folder
+	_check("(the corner really is clear of every folder)",
+		_controller._pad_under(tap.position) == -1)
+	_controller._input(tap)
+	_settle()
+	_check("a tap anywhere else turns them back",
+		not _controller._customer_flips[1].showing_back() and _controller._peeked == -1)
+
+	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, 1)
+	tap.position = _controller._camera.unproject_position(
+		(_controller._hover_pads[2] as Node3D).global_position)
+	_controller._input(tap)
+	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, 2)
+	_settle()
+	_check("a tap on another customer turns the first back and peeks the second",
+		not _controller._customer_flips[1].showing_back()
+			and _controller._customer_flips[2].showing_back())
+	_check("and has not sat you down with either", _controller._shift.at == null)
+
+	tap.position = Vector2(4, _screen().y - 4)
+	_controller._input(tap)
+	_settle()
+	_controller._touch_check = DisplayServer.is_touchscreen_available
+	_check("nothing left turned over", not _controller._customer_flips[2].showing_back())
 
 ## card_selected fires on the raw PRESS, before DragController's own threshold
 ## check decides whether this becomes a real drag - which is exactly the moment
