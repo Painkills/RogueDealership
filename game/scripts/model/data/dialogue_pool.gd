@@ -31,7 +31,7 @@ func count() -> int:
 
 func candidates(tags: Array[StringName], archetype_id: StringName,
 		product_id: StringName, band: StringName,
-		objection: StringName = &"") -> Array[DialogueLine]:
+		objection: StringName = &"", answering: StringName = &"") -> Array[DialogueLine]:
 	## Deterministic and rng-free on purpose: every filtering rule in this
 	## system is testable through here without a seed anywhere in the test.
 	##
@@ -41,13 +41,13 @@ func candidates(tags: Array[StringName], archetype_id: StringName,
 	## answer, not one option among the generic ones; those are what is left
 	## where nothing was written for it.
 	var out: Array[DialogueLine] = []
-	var answering: Array[DialogueLine] = []
+	var on_point: Array[DialogueLine] = []
 	for l in lines:
-		if l.carries(tags) and l.fits(archetype_id, product_id, band, objection):
+		if l.carries(tags) and l.fits(archetype_id, product_id, band, objection, answering):
 			out.append(l)
 			if l.answers_an_objection():
-				answering.append(l)
-	return answering if not answering.is_empty() else out
+				on_point.append(l)
+	return on_point if not on_point.is_empty() else out
 
 
 func weight_of(l: DialogueLine) -> int:
@@ -60,7 +60,7 @@ func weight_of(l: DialogueLine) -> int:
 func pick_line(rng: RandomNumberGenerator, tags: Array[StringName],
 		archetype_id: StringName, product_id: StringName,
 		band: StringName, objection: StringName = &"",
-		avoid: Array = []) -> DialogueLine:
+		avoid: Array = [], answering: StringName = &"") -> DialogueLine:
 	## The line itself, for a caller that needs more than its words - what it
 	## becomes, say. null when nothing fits.
 	##
@@ -68,7 +68,7 @@ func pick_line(rng: RandomNumberGenerator, tags: Array[StringName],
 	## fits, so playing the same card three times is three different sentences
 	## rather than one sentence three times. Never silence - with nothing else
 	## left, a repeat beats saying nothing.
-	var pool := candidates(tags, archetype_id, product_id, band, objection)
+	var pool := candidates(tags, archetype_id, product_id, band, objection, answering)
 	if not avoid.is_empty():
 		var fresh: Array[DialogueLine] = []
 		for l in pool:

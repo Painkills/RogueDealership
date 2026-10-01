@@ -30,6 +30,14 @@ class_name DialogueLine extends Resource
 ## the coverage?" turns a "No thanks" into the real objection. &"" changes
 ## nothing. Also declared in DialoguePool.known_objections.
 @export var becomes: StringName = &""
+## Pairs a line of YOURS with the replies written for it. "Love the jacket"
+## must not be answered with "the parking lot was a maze": a line with a key
+## is answered only by lines whose replies_to names it - and by nothing at
+## all, rather than by something that makes no sense, where none fits.
+@export var key: StringName = &""
+## The keys of the lines this one answers. Empty: it answers any line that
+## has no key (a generic "Thanks. I appreciate that.").
+@export var replies_to: Array[StringName] = []
 
 
 func carries(wanted: Array[StringName]) -> bool:
@@ -41,7 +49,8 @@ func carries(wanted: Array[StringName]) -> bool:
 
 
 func fits(archetype_id: StringName, product_id: StringName,
-		band: StringName, objection: StringName = &"") -> bool:
+		band: StringName, objection: StringName = &"",
+		answering: StringName = &"") -> bool:
 	## Hard exclusion, not a preference: a line that names a product is not
 	## merely less likely with nothing on the table, it is unavailable. That
 	## is what makes an empty table (product_id and band both &"") fall back
@@ -56,7 +65,11 @@ func fits(archetype_id: StringName, product_id: StringName,
 		return false
 	if not objection_ids.is_empty() and not objection_ids.has(objection):
 		return false
-	return true
+	# Answering a keyed line: only what was written for it. Answering anything
+	# else: only what was written for no line in particular.
+	if answering != &"":
+		return replies_to.has(answering)
+	return replies_to.is_empty()
 
 
 func answers_an_objection() -> bool:
@@ -76,5 +89,7 @@ func specificity() -> int:
 	if not appeal_bands.is_empty():
 		n += 1
 	if not objection_ids.is_empty():
+		n += 1
+	if not replies_to.is_empty():
 		n += 1
 	return n

@@ -791,15 +791,16 @@ func _is_floor_wide(e: Effect) -> bool:
 ## you are answering - onto player_lines. Drawn from voice_rng, never rng (see
 ## voice_rng).
 func _speak(tags: Array[StringName], c: Customer, product_id: StringName,
-		band: StringName) -> void:
+		band: StringName) -> DialogueLine:
 	if dialogue == null or tags.is_empty():
-		return
+		return null
 	var l := dialogue.pick_line(voice_rng, tags, c.archetype.id, product_id, band,
 		_objection_of(c), player_lines.slice(-RECENT_LINES))
 	if l == null:
-		return
+		return null
 	player_lines.append(l.text)
 	_open(c, l)
+	return l
 
 
 ## How many of a speaker's latest lines a new one steers clear of repeating -
@@ -855,7 +856,7 @@ func _support(c: Customer, index: int) -> Result:
 			% def.display_name)
 	# Yours is read off the table as you reach for the card, before its effects
 	# land; their reply below reads it after.
-	_speak(def.player_dialogue_tags, c, c.offer.product.id if c.offer else &"",
+	var yours := _speak(def.player_dialogue_tags, c, c.offer.product.id if c.offer else &"",
 		StringName(band_for(c.line - c.offer.appeal)) if c.offer else &"")
 
 	var ctx := _context(c)
@@ -898,8 +899,11 @@ func _support(c: Customer, index: int) -> Result:
 		var product_id: StringName = c.offer.product.id if c.offer else &""
 		var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
 			if c.offer else &""
+		# An answer to what you just said, where you said something with a key
+		# - or silence, never a non sequitur (DialogueLine.key).
 		var reply := dialogue.pick_line(rng, def.dialogue_tags, c.archetype.id,
-			product_id, band, _objection_of(c), c.recent_lines)
+			product_id, band, _objection_of(c), c.recent_lines,
+			yours.key if yours != null else &"")
 		if reply != null:
 			said = reply.text
 			_heard(c, said)

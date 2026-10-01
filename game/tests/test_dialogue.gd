@@ -534,6 +534,8 @@ func _lines(rows: Array) -> DialoguePool:
 		l.product_ids.assign(r[3] if r.size() > 3 else [])
 		l.objection_ids.assign(r[4] if r.size() > 4 else [])
 		l.becomes = r[5] if r.size() > 5 else &""
+		l.key = r[6] if r.size() > 6 else &""
+		l.replies_to.assign(r[7] if r.size() > 7 else [])
 		pool.lines.append(l)
 	return pool
 
@@ -658,6 +660,48 @@ func test_playing_the_same_card_again_says_something_new() -> void:
 		yours[0] != yours[1] and yours[1] != yours[2] and yours[0] != yours[2])
 	h.check("and they never answer the same way twice running (%s)" % str(theirs),
 		theirs[0] != theirs[1] and theirs[1] != theirs[2])
+
+func test_every_reply_answers_a_line_that_exists() -> void:
+	## A typo in a key is a line that is never answered again.
+	var keys := {}
+	for l in _pool().lines:
+		if l.key != &"":
+			keys[l.key] = true
+	for l in _pool().lines:
+		for k in l.replies_to:
+			h.check("%s answers a line that exists (%s)" % [l.text, k], keys.has(k))
+
+func test_a_keyed_line_is_answered_by_its_own_replies_or_not_at_all() -> void:
+	## "Nice jacket" must not get "yeah, parking's a mess".
+	var rows := [["\"nice jacket\"", [&"t_mine"], [], [], [], &"", &"k_jacket"],
+		["\"thanks, it was on sale\"", [&"t_back"], [], [], [], &"", &"", [&"k_jacket"]],
+		["\"parking's a mess\"", [&"t_back"], [], [], [], &"", &"", [&"k_parking"]],
+		["\"ha, yeah\"", [&"t_back"]]]
+	for seed_value in range(1, 9):
+		var s := _voiced_shift(_lines(rows), seed_value)
+		var card := _a_support_card(s, [&"t_mine"])
+		card.dialogue_tags = [&"t_back"]
+		var before := s.action_log.size()
+		_play(s, card)
+		h.eq("seed %d: the jacket gets the jacket's answer" % seed_value,
+			s.action_log[before]["dialogue"], "\"thanks, it was on sale\"")
+	var lonely := _voiced_shift(_lines([rows[0], rows[2], rows[3]]))
+	var card := _a_support_card(lonely, [&"t_mine"])
+	card.dialogue_tags = [&"t_back"]
+	var before := lonely.action_log.size()
+	_play(lonely, card)
+	h.eq("with no answer written for it, silence - not a generic one",
+		lonely.action_log[before]["dialogue"], "")
+
+func test_an_unkeyed_line_never_gets_someone_elses_answer() -> void:
+	var s := _voiced_shift(_lines([["\"well then\"", [&"t_mine"]],
+		["\"parking's a mess\"", [&"t_back"], [], [], [], &"", &"", [&"k_parking"]],
+		["\"ha, yeah\"", [&"t_back"]]]))
+	var card := _a_support_card(s, [&"t_mine"])
+	card.dialogue_tags = [&"t_back"]
+	var before := s.action_log.size()
+	_play(s, card)
+	h.eq("only the generic answer", s.action_log[before]["dialogue"], "\"ha, yeah\"")
 
 # -------------------------------------------------------------- objections
 # A product under their Line draws an objection, the method's techniques answer

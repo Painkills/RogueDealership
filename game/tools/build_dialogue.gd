@@ -72,10 +72,10 @@ const LINES := [
 	[[&"appeal"], "\"So if I total it, that is the part that covers me?\"", [], [&"gap"], []],
 	[[&"appeal"], "\"And this is on top of the factory warranty?\"", [], [&"vsc"], []],
 
-	[[&"patience"], "\"Hah! The 401 was a parking lot this morning.\"", [], [], []],
-	[[&"patience"], "\"No rush on my end. I took the afternoon off.\"", [], [], []],
-	[[&"patience"], "\"Oh, no, I got time, no worries.\"", [], [], []],
-	[[&"patience"], "\"My daughter has a game later, but we should be fine.\"", [], [], []],
+
+	[[&"patience"], "\"Ha. Yeah.\"", [], [], []],
+	[[&"patience"], "\"Oh, totally.\"", [], [], []],
+	[[&"patience"], "\"Mm, right?\"", [], [], []],
 	[[&"patience"], "\"That is nice, but I really do need to go soon.\"", [&"kicker"], [], []],
 
 	[[&"concession"], "\"Now you are speaking my language.\"", [], [], []],
@@ -196,22 +196,6 @@ const LINES := [
 	[[&"player_pitch"], "\"Let me tell you about our WALKAWAY program.\"", [], [&"wap"], []],
 	[[&"player_pitch"], "\"This one pairs really nicely with WALKAWAY.\"", [], [&"tlp"], []],
 
-	[[&"player_smalltalk"], "\"So, how was the drive in? Traffic behave itself?\"", [], [], []],
-	[[&"player_smalltalk"], "\"Crazy weather we're having, huh?\"", [], [], []],
-	[[&"player_smalltalk"], "\"Any big plans for the weekend?\"", [], [], []],
-	[[&"player_smalltalk"], "\"Can I get you a coffee? It's terrible, but it's free.\"", [], [], []],
-	[[&"player_smalltalk"], "\"So what do you do for work?\"", [], [], []],
-	[[&"player_smalltalk"], "\"Did you catch the game last night?\"", [], [], []],
-	[[&"player_smalltalk"], "\"Love the jacket, by the way. Where's it from?\"", [], [], []],
-	[[&"player_smalltalk"], "\"Parking okay out there? That lot is a maze.\"", [], [], []],
-	[[&"player_smalltalk"], "\"How old are the kids? Mine just started school.\"", [&"family"], [], []],
-	[[&"player_smalltalk"], "\"The kids doing okay? There are lollipops at the desk.\"", [&"family"], [], []],
-	[[&"player_smalltalk"], "\"Can I get you anything? Water? A manager?\"", [&"karen"], [], []],
-	[[&"player_smalltalk"], "\"I'll keep this quick, I promise.\"", [&"kicker"], [], []],
-	[[&"player_smalltalk"], "\"You must have done a ton of research on this one.\"", [&"tech"], [], []],
-	[[&"player_smalltalk"], "\"Bet you shopped around a bit before coming here, huh?\"", [&"hawk"], [], []],
-	[[&"player_smalltalk"], "\"Beautiful day to buy a car, isn't it?\"", [&"easygoing"], [], []],
-	[[&"player_smalltalk"], "\"You look like you could use a coffee. Long day?\"", [&"laydown"], [], []],
 
 	# player_empathize: Acknowledge & Empathize (the card that was Explain the
 	# Product). Acknowledge the worry; never tell them they're wrong.
@@ -237,21 +221,6 @@ const LINES := [
 
 	# player_clarify: Ask Clarifying Questions (was Hard Close). Flush out
 	# whether it's the cost or the coverage.
-	[[&"player_clarify"], "\"What matters most to you in all this?\"", [], [], []],
-	[[&"player_clarify"], "\"Can I ask what's giving you pause?\"", [], [], []],
-	[[&"player_clarify"], "\"Is it the price, or the coverage itself?\"", [], [], []],
-	[[&"player_clarify"], "\"Just so I understand, what's the hesitation?\"", [], [], []],
-	[[&"player_clarify"], "\"Help me understand. What's the part that bugs you?\"", [], [], []],
-	[[&"player_clarify"], "\"Is it the monthly number, or the total?\"", [], [], []],
-	[[&"player_clarify"], "\"What would make this a yes for you?\"", [], [], []],
-	[[&"player_clarify"], "\"Have you had something like this before?\"", [], [], []],
-	[[&"player_clarify"], "\"Is that a 'not now', or a 'not ever'?\"", [], [], []],
-	[[&"player_clarify"], "\"What's your biggest worry about owning the car?\"", [], [], []],
-	[[&"player_clarify"], "\"Quick question, then I'll let you go.\"", [&"kicker"], [], []],
-	[[&"player_clarify"], "\"How many years were you planning to keep it?\"", [&"tech"], [], []],
-	[[&"player_clarify"], "\"What number did you have in your head?\"", [&"hawk"], [], []],
-	[[&"player_clarify"], "\"What would you expect to get for that price?\"", [&"karen"], [], []],
-	[[&"player_clarify"], "\"Who else will be driving the car?\"", [&"family"], [], []],
 
 	# player_relate: Keep It Relatable (was Coffee Framing).
 	[[&"player_relate"], "\"That's just three cups of coffee a day!\"", [], [], []],
@@ -344,17 +313,6 @@ const LINES := [
 
 	# player_listen: Active Listening (was Read the Room). Stay calm and
 	# curious, and let them talk.
-	[[&"player_listen"], "\"Mm-hm. Go on.\"", [], [], []],
-	[[&"player_listen"], "\"Tell me more about that.\"", [], [], []],
-	[[&"player_listen"], "\"Take your time. I'm listening.\"", [], [], []],
-	[[&"player_listen"], "\"So what matters most to you here?\"", [], [], []],
-	[[&"player_listen"], "\"What brings you in today, really?\"", [], [], []],
-	[[&"player_listen"], "\"Interesting. Tell me why that matters to you.\"", [], [], []],
-	[[&"player_listen"], "\"Okay. What else is on your mind?\"", [], [], []],
-	[[&"player_listen"], "\"Walk me through what you're picturing.\"", [], [], []],
-	[[&"player_listen"], "\"And what would the perfect deal look like?\"", [], [], []],
-	[[&"player_listen"], "\"Got it. Anything else I should know?\"", [], [], []],
-	[[&"player_listen"], "\"Go ahead. I'm all ears. Truly.\"", [&"karen"], [], []],
 
 	# player_guide: The Program Guide (was Check Your Notes).
 	[[&"player_guide"], "\"Uh... let me just check the Program Guide...\"", [], [], []],
@@ -472,6 +430,166 @@ const LINES := [
 	[[&"reply_listen"], "\"I just want this done today.\"", [&"kicker"], [], []],
 	[[&"reply_listen"], "\"Honestly? I'm happy either way.\"", [&"easygoing"], [], []],
 	[[&"reply_listen"], "\"Whatever you think is best, really.\"", [&"laydown"], [], []],
+]
+
+# ------------------------------------------------------------- EXCHANGES
+# A line of yours and the answers written for IT - so "Love the jacket" is
+# never answered with something about the parking lot. Each line here gets a
+# key (DialogueLine.key) and its replies answer only that key; a line with no
+# reply that fits the customer is met with silence, not a non sequitur.
+#
+# [your tag, their tag, your line, your archetype_ids, replies], each reply
+# [text] or [text, archetype_ids].
+const EXCHANGES := [
+	# Small Talk.
+	[&"player_smalltalk", &"patience", "\"So, how was the drive in? Traffic behave itself?\"", [], [
+		["\"Hah! The 401 was a parking lot this morning.\""],
+		["\"Not bad, actually. Green lights all the way.\""],
+		["\"That is nice, but I really do need to go soon.\"", [&"kicker"]]]],
+	[&"player_smalltalk", &"patience", "\"Crazy weather we're having, huh?\"", [], [
+		["\"Tell me about it. I forgot my umbrella.\""],
+		["\"I'll take it over snow.\""]]],
+	[&"player_smalltalk", &"patience", "\"Any big plans for the weekend?\"", [], [
+		["\"My daughter has a game, actually.\""],
+		["\"Just sleeping in, hopefully.\""],
+		["\"Soccer, swimming, and a birthday party. Send help.\"", [&"family"]]]],
+	[&"player_smalltalk", &"patience", "\"Can I get you a coffee? It's terrible, but it's free.\"", [], [
+		["\"Ha. Free and terrible? Sure.\""],
+		["\"I'm good, thanks. Already had three.\""],
+		["\"Is it at least fresh?\"", [&"karen"]],
+		["\"No time for coffee, thanks.\"", [&"kicker"]]]],
+	[&"player_smalltalk", &"patience", "\"So what do you do for work?\"", [], [
+		["\"Accounting. Don't get too excited.\""],
+		["\"Nursing. Long shifts.\""],
+		["\"Software. Please don't ask me to fix your printer.\"", [&"tech"]]]],
+	[&"player_smalltalk", &"patience", "\"Did you catch the game last night?\"", [], [
+		["\"Don't remind me.\""],
+		["\"Fell asleep in the third period.\""],
+		["\"No time for games. Literally.\"", [&"kicker"]]]],
+	[&"player_smalltalk", &"patience", "\"Love the jacket, by the way. Where's it from?\"", [], [
+		["\"Oh, thanks! It was on sale.\""],
+		["\"This old thing? Thank you.\""],
+		["\"It's designer, actually.\"", [&"karen"]]]],
+	[&"player_smalltalk", &"patience", "\"Parking okay out there? That lot is a maze.\"", [], [
+		["\"Took me two laps to find a spot.\""],
+		["\"Found one right by the door, for once.\""],
+		["\"Which is why I'd like to be out soon.\"", [&"kicker"]]]],
+	[&"player_smalltalk", &"patience", "\"How old are the kids? Mine just started school.\"", [&"family"], [
+		["\"Six and nine. Send help.\""],
+		["\"The baby's due in March!\""]]],
+	[&"player_smalltalk", &"patience", "\"The kids doing okay? There are lollipops at the desk.\"", [&"family"], [
+		["\"Oh, they'll love that. Thanks.\""],
+		["\"Please don't. They've had enough sugar.\""]]],
+	[&"player_smalltalk", &"patience", "\"Can I get you anything? Water? A manager?\"", [&"karen"], [
+		["\"Water. I'll let you know about the manager.\""],
+		["\"Just get on with it, please.\""]]],
+	[&"player_smalltalk", &"patience", "\"I'll keep this quick, I promise.\"", [&"kicker"], [
+		["\"I'll believe it when I see it.\""],
+		["\"Good. I have somewhere to be.\""]]],
+	[&"player_smalltalk", &"patience", "\"You must have done a ton of research on this one.\"", [&"tech"], [
+		["\"Forty-two browser tabs. At least.\""],
+		["\"I've read every review there is.\""]]],
+	[&"player_smalltalk", &"patience", "\"Bet you shopped around a bit before coming here, huh?\"", [&"hawk"], [
+		["\"Three dealers. You're the fourth.\""],
+		["\"Of course. I'm not a rookie.\""]]],
+	[&"player_smalltalk", &"patience", "\"Beautiful day to buy a car, isn't it?\"", [&"easygoing"], [
+		["\"Isn't it? I'm in a great mood.\""],
+		["\"Couldn't ask for better.\""]]],
+	[&"player_smalltalk", &"patience", "\"You look like you could use a coffee. Long day?\"", [&"laydown"], [
+		["\"So long. Yes, please.\""],
+		["\"Is it that obvious?\""]]],
+
+	# Ask Clarifying Questions, with nothing open to ask about: a question
+	# deserves its own answer.
+	[&"player_clarify", &"reply_clarify", "\"What matters most to you in all this?\"", [], [
+		["\"Honestly? Keeping the payment down.\""],
+		["\"Not getting stuck with surprises.\""],
+		["\"The kids being safe.\"", [&"family"]],
+		["\"Why do you need to know that?\"", [&"karen"]]]],
+	[&"player_clarify", &"reply_clarify", "\"Can I ask what's giving you pause?\"", [], [
+		["\"It's just a lot of money.\""],
+		["\"I'm not sure I'd use it.\""],
+		["\"Can we skip the questions?\"", [&"kicker"]]]],
+	[&"player_clarify", &"reply_clarify", "\"Is it the price, or the coverage itself?\"", [], [
+		["\"The price, mostly.\""],
+		["\"Bit of both, honestly.\""],
+		["\"Depends. What are the exact terms?\"", [&"tech"]]]],
+	[&"player_clarify", &"reply_clarify", "\"Just so I understand, what's the hesitation?\"", [], [
+		["\"I don't like add-ons.\""],
+		["\"I just need to think about it.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"Help me understand. What's the part that bugs you?\"", [], [
+		["\"The monthly number.\""],
+		["\"All the fine print.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"Is it the monthly number, or the total?\"", [], [
+		["\"The monthly.\""],
+		["\"The total, honestly.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"What would make this a yes for you?\"", [], [
+		["\"A lower price.\""],
+		["\"Knowing I'd actually use it.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"Have you had something like this before?\"", [], [
+		["\"Once. Never used it.\""],
+		["\"No, first time.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"Is that a 'not now', or a 'not ever'?\"", [], [
+		["\"Probably not now.\""],
+		["\"Ha. Not ever, maybe.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"What's your biggest worry about owning the car?\"", [], [
+		["\"Repairs, honestly.\""],
+		["\"Getting stuck with the payments.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"Quick question, then I'll let you go.\"", [&"kicker"], [
+		["\"Fine. Quick.\""],
+		["\"Go ahead. Fast.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"How many years were you planning to keep it?\"", [&"tech"], [
+		["\"Ten, if it lasts.\""],
+		["\"Five, then I upgrade.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"What number did you have in your head?\"", [&"hawk"], [
+		["\"Lower than that.\""],
+		["\"Zero, ideally.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"What would you expect to get for that price?\"", [&"karen"], [
+		["\"Everything. In writing.\""],
+		["\"A lot more than this.\""]]],
+	[&"player_clarify", &"reply_clarify", "\"Who else will be driving the car?\"", [&"family"], [
+		["\"My partner, and soon our teenager.\""],
+		["\"Just me and my spouse.\""]]],
+
+	# Active Listening, with nothing open: you ask, they open up.
+	[&"player_listen", &"reply_listen", "\"Mm-hm. Go on.\"", [], [
+		["\"I just want something reliable.\""],
+		["\"I just don't want any surprises.\""]]],
+	[&"player_listen", &"reply_listen", "\"Tell me more about that.\"", [], [
+		["\"Well, my last car was a lemon.\""],
+		["\"I had a bad experience last time.\""]]],
+	[&"player_listen", &"reply_listen", "\"Take your time. I'm listening.\"", [], [
+		["\"Thanks. It's a lot to take in.\""],
+		["\"I appreciate that.\""],
+		["\"I just want this done today.\"", [&"kicker"]]]],
+	[&"player_listen", &"reply_listen", "\"So what matters most to you here?\"", [], [
+		["\"Keeping it running for years.\""],
+		["\"A payment I can live with.\""],
+		["\"Honestly? I'm happy either way.\"", [&"easygoing"]]]],
+	[&"player_listen", &"reply_listen", "\"What brings you in today, really?\"", [], [
+		["\"The old car finally died.\""],
+		["\"We need something bigger.\""],
+		["\"We've got a baby on the way, so...\"", [&"family"]],
+		["\"I've read every review of this car. Twice.\"", [&"tech"]]]],
+	[&"player_listen", &"reply_listen", "\"Interesting. Tell me why that matters to you.\"", [], [
+		["\"I've been burned before.\""],
+		["\"I just like knowing I'm covered.\""]]],
+	[&"player_listen", &"reply_listen", "\"Okay. What else is on your mind?\"", [], [
+		["\"Honestly, the payments.\""],
+		["\"Whether I'm overpaying.\""],
+		["\"Whatever you think is best, really.\"", [&"laydown"]]]],
+	[&"player_listen", &"reply_listen", "\"Walk me through what you're picturing.\"", [], [
+		["\"Something that lasts.\""],
+		["\"No surprise bills, ever.\""]]],
+	[&"player_listen", &"reply_listen", "\"And what would the perfect deal look like?\"", [], [
+		["\"Cheap and worry-free.\""],
+		["\"Ha. Free.\""]]],
+	[&"player_listen", &"reply_listen", "\"Got it. Anything else I should know?\"", [], [
+		["\"I'm on a tight budget.\""],
+		["\"I drive a lot for work.\""]]],
+	[&"player_listen", &"reply_listen", "\"Go ahead. I'm all ears. Truly.\"", [&"karen"], [
+		["\"Good. Because I have a list.\""],
+		["\"Finally, someone who listens.\""]]],
 ]
 
 ## Each of the method's techniques: [the tag your line goes in, the tag their
@@ -1088,6 +1206,8 @@ func _init() -> void:
 	var built: Array[DialogueLine] = []
 	for row in LINES:
 		built.append(_line(row[0], row[1], row[2], row[3], row[4]))
+	for k in range(EXCHANGES.size()):
+		built.append_array(_exchange_lines(EXCHANGES[k], k))
 	for o in OBJECTIONS:
 		built.append_array(_objection_lines(o))
 
@@ -1146,4 +1266,16 @@ func _objection_lines(o: Dictionary) -> Array[DialogueLine]:
 				out.append(_line([theirs], answer[0], [], [], [], [id], answer[1]))
 			else:
 				out.append(_line([theirs], answer, [], [], [], [id]))
+	return out
+
+## One EXCHANGES row, as lines: yours, keyed, and the replies written for it.
+func _exchange_lines(x: Array, index: int) -> Array[DialogueLine]:
+	var key := StringName("%s_%d" % [x[0], index])
+	var yours := _line([x[0]], x[2], x[3])
+	yours.key = key
+	var out: Array[DialogueLine] = [yours]
+	for r in x[4]:
+		var reply := _line([x[1]], r[0], r[1] if r.size() > 1 else [])
+		reply.replies_to.assign([key])
+		out.append(reply)
 	return out
