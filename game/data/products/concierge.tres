@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("2_b7lbm")
 player_dialogue_tags = Array[StringName]([&"player_pitch"])
+objection_tags = Array[StringName]([&"objection"])
 interest = ExtResource("1_25u84")
 margin = 600
 upgraded_margin = 750

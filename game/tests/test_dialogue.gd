@@ -262,12 +262,15 @@ func test_playing_a_support_card_finally_reaches_the_shift_log() -> void:
 	c.line = 0
 	_hand(s, [&"vsc", &"explain"])
 	s.place(0)
+	# Putting the product down has its own say (see test_..._objection below);
+	# what is counted here is the card's own entry.
+	var before := s.action_log.size()
 	s.play_card(_index_of(s, &"explain"))
-	h.eq("one new entry", s.action_log.size(), 1)
-	var entry: Dictionary = s.action_log[0]
+	h.eq("one new entry", s.action_log.size(), before + 1)
+	var entry: Dictionary = s.action_log[before]
 	for key in ["key", "customer", "name", "dialogue", "descriptions", "floor_wide"]:
 		h.check("entry carries %s" % key, entry.has(key))
-	h.eq("named for the card", entry["name"], "Explain the Product")
+	h.eq("named for the card", entry["name"], s.card_pool.by_id(&"explain").display_name)
 
 func test_the_customer_says_something_back() -> void:
 	var s := _shift([&"karen"])
@@ -275,8 +278,9 @@ func test_the_customer_says_something_back() -> void:
 	c.line = 0
 	_hand(s, [&"vsc", &"explain"])
 	s.place(0)
+	var before := s.action_log.size()
 	s.play_card(_index_of(s, &"explain"))
-	var said: String = s.action_log[0]["dialogue"]
+	var said: String = s.action_log[before]["dialogue"]
 	h.check("something was said", said != "")
 	h.check("in the house voice - a quoted sentence", said.begins_with("\""))
 
@@ -286,22 +290,25 @@ func test_a_karen_gets_a_karen_line() -> void:
 	c.line = 0
 	_hand(s, [&"vsc", &"explain"])
 	s.place(0)
+	var before := s.action_log.size()
+	var card: CardDef = s.card_pool.by_id(&"explain")
 	s.play_card(_index_of(s, &"explain"))
-	var said: String = s.action_log[0]["dialogue"]
+	var said: String = s.action_log[before]["dialogue"]
 	var band := StringName(s.band_for(c.line - c.offer.appeal))
 	var eligible: Array[String] = []
-	for l in _pool().candidates([&"appeal"], c.archetype.id, c.offer.product.id, band):
+	for l in _pool().candidates(card.dialogue_tags, c.archetype.id, c.offer.product.id,
+			band, c.objection):
 		eligible.append(l.text)
 	h.check("the line said is one the karen actually qualifies for (got: %s)" % said,
 		eligible.has(said))
 
 func test_an_untagged_card_is_logged_but_silent() -> void:
 	var s := _shift([&"easygoing"])
-	_at(s)
-	_hand(s, [&"readroom"])
-	s.play_card(0)
+	var quiet := _a_support_card(s, [])
+	quiet.dialogue_tags = []
+	_play(s, quiet)
 	h.eq("one entry", s.action_log.size(), 1)
-	h.eq("but nothing said - readroom carries no dialogue_tags",
+	h.eq("but nothing said - the card carries no dialogue_tags",
 		s.action_log[0]["dialogue"], "")
 
 func test_a_shift_with_no_dialogue_pool_still_logs_every_card() -> void:
@@ -338,8 +345,9 @@ func test_the_band_a_line_is_matched_against_is_the_one_after_the_card_lands() -
 		s.place(0)
 		c.offer.appeal = 75   # gap 25 - COLD, before the card
 		s.rng.seed = seed
+		var before := s.action_log.size()
 		s.play_card(_index_of(s, &"explain"))   # +4 appeal -> gap 21 - COOL, after
-		var said: String = s.action_log[0]["dialogue"]
+		var said: String = s.action_log[before]["dialogue"]
 		h.check(("seed %d never drew a COLD-only line once the gap left COLD "
 				+ "(got: %s)") % [seed, said], not cold_texts.has(said))
 
@@ -515,7 +523,7 @@ func test_every_card_asks_only_for_player_tags_that_exist() -> void:
 				pool.known_tags.has(t))
 
 ## A library of made-up lines, a row each: [text, tags, archetype_ids,
-## product_ids], the last two optional.
+## product_ids, objection_ids, becomes], all but the first two optional.
 func _lines(rows: Array) -> DialoguePool:
 	var pool := DialoguePool.new()
 	for r in rows:
@@ -524,6 +532,8 @@ func _lines(rows: Array) -> DialoguePool:
 		l.tags.assign(r[1])
 		l.archetype_ids.assign(r[2] if r.size() > 2 else [])
 		l.product_ids.assign(r[3] if r.size() > 3 else [])
+		l.objection_ids.assign(r[4] if r.size() > 4 else [])
+		l.becomes = r[5] if r.size() > 5 else &""
 		pool.lines.append(l)
 	return pool
 
@@ -621,3 +631,182 @@ func test_what_you_say_never_moves_the_games_own_dice() -> void:
 	h.eq("and not in the other", quiet.player_lines.size(), 0)
 	h.eq("and the game's dice are where they would have been",
 		talking.rng.state, quiet.rng.state)
+
+# -------------------------------------------------------------- objections
+# A product under their Line draws an objection, the method's techniques answer
+# it, and offering closes on it. The library's own rules are checked against
+# the shipped library; the behaviour against made-up lines and copies of
+# whatever cards the pool holds.
+
+func test_every_objection_a_line_answers_or_opens_is_declared() -> void:
+	var pool := _pool()
+	for l in pool.lines:
+		for o in l.objection_ids:
+			h.check("%s answers a declared objection (%s)" % [l.text, o],
+				pool.known_objections.has(o))
+		if l.becomes != &"":
+			h.check("%s opens a declared objection (%s)" % [l.text, l.becomes],
+				pool.known_objections.has(l.becomes))
+
+func test_every_products_objection_tags_are_declared() -> void:
+	var pool := _pool()
+	var cards: CardPool = load("res://data/card_pool.tres")
+	for c in cards.cards:
+		if c is ProductCardDef:
+			for t in (c as ProductCardDef).objection_tags:
+				h.check("%s objects only from a declared tag (%s)" % [c.id, t],
+					pool.known_tags.has(t))
+
+func test_every_objection_that_can_be_opened_gets_an_answer() -> void:
+	## An objection nothing answers is a conversation that goes generic the
+	## moment it starts - almost certainly a typo in an id.
+	var pool := _pool()
+	var answered := {}
+	for l in pool.lines:
+		for o in l.objection_ids:
+			answered[o] = true
+	for l in pool.lines:
+		if l.becomes != &"":
+			h.check("%s is answered somewhere (opened by %s)" % [l.becomes, l.text],
+				answered.has(l.becomes))
+
+## A shift with `rows` for a library, its chair-0 customer's Line put where
+## `under` says, and a copy of a product that objects from `raise_tags`.
+func _objecting(rows: Array, under: bool, raise_tags: Array[StringName],
+		seed_value: int = 1) -> Array:
+	var s := _voiced_shift(_lines(rows), seed_value)
+	var product := _a_product(s, [])
+	(product as ProductCardDef).objection_tags = raise_tags
+	_at(s).line = 999 if under else 0
+	return [s, product]
+
+func test_a_product_under_their_line_draws_an_objection() -> void:
+	var made := _objecting([["\"too much\"", [&"t_raise"], [], [], [], &"o_cost"]],
+		true, [&"t_raise"])
+	var s: Shift = made[0]
+	var before := s.action_log.size()
+	h.check("it went down", _play(s, made[1]).ok)
+	var said := _chatter(s, before)
+	h.eq("they said something", said.size(), 1)
+	if said.size() == 1:
+		h.eq("the objection", said[0]["dialogue"], "\"too much\"")
+	h.eq("and it is open", s.chairs[0].objection, &"o_cost")
+
+func test_a_product_over_their_line_draws_something_warm_instead() -> void:
+	var made := _objecting([
+			["\"too much\"", [&"t_raise"], [], [], [], &"o_cost"],
+			["\"nice\"", [&"interested"]]],
+		false, [&"t_raise"])
+	var s: Shift = made[0]
+	var before := s.action_log.size()
+	_play(s, made[1])
+	var said := _chatter(s, before)
+	h.eq("they said something", said.size(), 1)
+	if said.size() == 1:
+		h.eq("and it was warm", said[0]["dialogue"], "\"nice\"")
+	h.eq("nothing to object to", s.chairs[0].objection, &"")
+
+func test_an_open_objection_is_answered_by_the_line_written_for_it() -> void:
+	## Every time, not most of the time: this is the one place the library
+	## overrides instead of weighting.
+	for seed_value in range(1, 13):
+		var made := _objecting([
+				["\"too much\"", [&"t_raise"], [], [], [], &"o_cost"],
+				["\"generic\"", [&"t_mine"]],
+				["\"also generic\"", [&"t_mine"]],
+				["\"for the cost\"", [&"t_mine"], [], [], [&"o_cost"]],
+				["\"they shrug\"", [&"t_reply"]],
+				["\"they get it\"", [&"t_reply"], [], [], [&"o_cost"]]],
+			true, [&"t_raise"], seed_value)
+		var s: Shift = made[0]
+		_play(s, made[1])
+		var answer := _a_support_card(s, [&"t_mine"])
+		answer.dialogue_tags = [&"t_reply"]
+		s.hand.append(CardInstance.new(answer, 901))
+		var before := s.action_log.size()
+		s.play_card(s.hand.size() - 1)
+		h.eq("seed %d: you answer the objection" % seed_value,
+			s.player_lines[-1], "\"for the cost\"")
+		h.eq("seed %d: and so do they" % seed_value,
+			s.action_log[before]["dialogue"], "\"they get it\"")
+
+func test_where_nothing_answers_it_the_generic_line_plays() -> void:
+	var made := _objecting([
+			["\"too much\"", [&"t_raise"], [], [], [], &"o_cost"],
+			["\"generic\"", [&"t_mine"]],
+			["\"for another\"", [&"t_mine"], [], [], [&"o_other"]]],
+		true, [&"t_raise"])
+	var s: Shift = made[0]
+	_play(s, made[1])
+	var answer := _a_support_card(s, [&"t_mine"])
+	s.hand.append(CardInstance.new(answer, 901))
+	s.play_card(s.hand.size() - 1)
+	h.eq("the generic line", s.player_lines[-1], "\"generic\"")
+
+func test_an_answer_can_flush_out_the_real_objection() -> void:
+	## "No thanks" -> "is it the payment, or the coverage?" -> "the payment".
+	var made := _objecting([
+			["\"no thanks\"", [&"t_raise"], [], [], [], &"o_no"],
+			["\"the payment?\"", [&"t_mine"], [], [], [&"o_no"]],
+			["\"yes, the payment\"", [&"t_reply"], [], [], [&"o_no"], &"o_cost"]],
+		true, [&"t_raise"])
+	var s: Shift = made[0]
+	_play(s, made[1])
+	h.eq("they open with no thanks", s.chairs[0].objection, &"o_no")
+	var answer := _a_support_card(s, [&"t_mine"])
+	answer.dialogue_tags = [&"t_reply"]
+	s.hand.append(CardInstance.new(answer, 901))
+	s.play_card(s.hand.size() - 1)
+	h.eq("and answering it turns it into the real one", s.chairs[0].objection, &"o_cost")
+
+func test_the_objection_goes_with_the_product() -> void:
+	var made := _objecting([
+			["\"too much\"", [&"t_raise"], [], [], [], &"o_cost"],
+			["\"generic\"", [&"t_mine"]],
+			["\"for the cost\"", [&"t_mine"], [], [], [&"o_cost"]]],
+		true, [&"t_raise"])
+	var s: Shift = made[0]
+	_play(s, made[1])
+	h.check("taken back off the table", s.drop_offer().ok)
+	h.eq("nothing is objected to now", s.chairs[0].objection, &"")
+	var answer := _a_support_card(s, [&"t_mine"])
+	s.hand.append(CardInstance.new(answer, 901))
+	s.play_card(s.hand.size() - 1)
+	h.eq("so a card says its generic line again", s.player_lines[-1], "\"generic\"")
+
+func test_offering_is_the_trial_close() -> void:
+	var made := _objecting([
+			["\"too much\"", [&"t_raise"], [], [], [], &"o_cost"],
+			["\"shall we?\"", [&"player_close"]],
+			["\"the whole year?\"", [&"player_close"], [], [], [&"o_cost"]]],
+		true, [&"t_raise"])
+	var s: Shift = made[0]
+	_play(s, made[1])
+	var c: Customer = s.chairs[0]
+	c.line = c.offer.appeal          # clears now, so the close sells
+	h.check("offered", s.offer().ok)
+	h.eq("you closed on the objection they had", s.player_lines[-1], "\"the whole year?\"")
+	h.eq("and the sale ends it", c.objection, &"")
+
+func test_with_no_pool_nobody_objects() -> void:
+	var s := _voiced_shift(null)
+	var product := _a_product(s, [])
+	(product as ProductCardDef).objection_tags = [&"t_raise"]
+	_at(s).line = 999
+	var before := s.action_log.size()
+	h.check("it went down", _play(s, product).ok)
+	h.eq("nothing said", _chatter(s, before).size(), 0)
+	h.eq("nothing open", s.chairs[0].objection, &"")
+
+func test_objecting_never_moves_the_games_own_dice() -> void:
+	## Two raises to choose between, so picking one really rolls.
+	var rows := [["\"too much\"", [&"t_raise"], [], [], [], &"o_cost"],
+		["\"no thanks\"", [&"t_raise"], [], [], [], &"o_no"]]
+	var objecting := _objecting(rows, true, [&"t_raise"], 7)
+	var silent := _objecting(rows, true, [], 7)
+	_play(objecting[0], objecting[1])
+	_play(silent[0], silent[1])
+	h.check("one objected", (objecting[0] as Shift).chairs[0].objection != &"")
+	h.eq("the other did not", (silent[0] as Shift).chairs[0].objection, &"")
+	h.eq("and the game's dice are where they would have been",
+		(objecting[0] as Shift).rng.state, (silent[0] as Shift).rng.state)

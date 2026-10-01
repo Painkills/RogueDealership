@@ -58,6 +58,16 @@ static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPo
 	c.known_line = true
 	for product in RANKS:
 		_rank(c, cards, product, RANKS[product])
+	# Whichever of the scripted products they put down lands under their Line,
+	# so it draws an objection the way it would on the floor - the coach's
+	# next lesson is answering it. tune_line() then settles the Line just
+	# above whatever landed.
+	var top := 0
+	for product in RANKS:
+		var def := cards.by_id(product) as ProductCardDef
+		if def != null:
+			top = maxi(top, c.appeal_for(def.interest.id))
+	c.line = top + LINE_GAP
 	_deal(s, HAND)
 	return s
 

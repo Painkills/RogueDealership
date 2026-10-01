@@ -15,11 +15,11 @@ metadata/_custom_type_script = "uid://c1sm1kdlc5c5h"
 
 [resource]
 script = ExtResource("2_sijsq")
-player_dialogue_tags = Array[StringName]([&"player_checknotes"])
+player_dialogue_tags = Array[StringName]([&"player_guide"])
 needs_offer = false
 id = &"checknotes"
-display_name = "Check Your Notes"
-text = "\"Uh... and what's really nice about this one is that... um...\""
+display_name = "The Program Guide"
+text = "\"Uh... let me just check the Program Guide...\""
 price = 1200
 rarity = 2
 effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_5u756")])

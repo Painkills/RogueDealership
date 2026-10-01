@@ -721,9 +721,13 @@ func place(index: int) -> Result:
 	var iid: StringName = product.interest.id
 	var rank: int = int(c.ranks[iid])
 	c.offer = Offer.new(inst, c.appeal_for(iid), inst.margin())
+	# A new product is a new conversation: whatever they objected to about the
+	# last one went with it.
+	c.objection = &""
 	# Your pitch as it goes down, before any effect of its own lands - the same
 	# moment _support() speaks at.
-	_speak(product, c, product.id, StringName(band_for(c.line - c.offer.appeal)))
+	_speak(product.player_dialogue_tags, c, product.id,
+		StringName(band_for(c.line - c.offer.appeal)))
 
 	# A product's own effects, if it was authored with any - the same loop
 	# _support() runs, so a product is no longer required to be pure
@@ -763,6 +767,10 @@ func place(index: int) -> Result:
 	# internally, the same way OnOffer already reacts to a rank you never see.
 	fire(&"on_place", c, {"rank": rank})
 	_demand_saw(c, DemandResolve.PLACE, {"product": product})
+	# After their archetype has had its say, so the objection is what is left
+	# in the bubble - and read against the Line as it stands after that, which
+	# an archetype's own reaction may just have moved.
+	_object(c, product)
 	_burn(cfg.place_ticks, "place")
 	return Result.new(true, "You put the %s in front of %s."
 		% [product.display_name, c.display_name], "place", {"band": band})
@@ -777,17 +785,55 @@ func _is_floor_wide(e: Effect) -> bool:
 	return e is ChangePatienceFloor or e is ChangeLineFloorWide
 
 
-## What you say as you play `card` on `c`: a line from the card's
-## player_dialogue_tags, narrowed the way a customer's is - by who you are
-## talking to, the product on the table and its band - onto player_lines.
-## Drawn from voice_rng, never rng (see voice_rng).
-func _speak(card: CardDef, c: Customer, product_id: StringName, band: StringName) -> void:
-	if dialogue == null or card.player_dialogue_tags.is_empty():
+## What you say to `c`: a line from `tags` (a card's player_dialogue_tags, or
+## the close offer() says itself), narrowed the way a customer's is - by who
+## you are talking to, the product on the table, its band and the objection
+## you are answering - onto player_lines. Drawn from voice_rng, never rng (see
+## voice_rng).
+func _speak(tags: Array[StringName], c: Customer, product_id: StringName,
+		band: StringName) -> void:
+	if dialogue == null or tags.is_empty():
 		return
-	var said := dialogue.pick(voice_rng, card.player_dialogue_tags, c.archetype.id,
-		product_id, band)
-	if said != "":
-		player_lines.append(said)
+	var l := dialogue.pick_line(voice_rng, tags, c.archetype.id, product_id, band,
+		_objection_of(c))
+	if l == null:
+		return
+	player_lines.append(l.text)
+	_open(c, l)
+
+
+## What they object to, while there is still something on the table to object
+## to. Whatever takes the product off it - a sale, a drop, a walkout, an
+## archetype sweeping it away - ends the conversation about it, without every
+## one of those having to remember to say so.
+func _objection_of(c: Customer) -> StringName:
+	return c.objection if c.offer != null else &""
+
+
+## A line that, once said, opens or moves their objection - DialogueLine.becomes.
+func _open(c: Customer, l: DialogueLine) -> void:
+	if l.becomes != &"":
+		c.objection = l.becomes
+
+
+## What they say about the product you just put in front of them. Under their
+## Line it is an objection from the product's objection_tags - "It's too
+## expensive" - which stays open while you work through it; already over it,
+## something warm. Read against the Line itself rather than the band: ALMOST
+## covers both sides of it, and the bar's colour already says as much as a
+## warm word does. Drawn from voice_rng, like your own lines.
+func _object(c: Customer, product: ProductCardDef) -> void:
+	if dialogue == null or c.offer == null:
+		return
+	var tags: Array[StringName] = [&"interested"]
+	if c.offer.appeal < c.line:
+		tags = product.objection_tags
+	var l := dialogue.pick_line(voice_rng, tags, c.archetype.id, product.id,
+		StringName(band_for(c.line - c.offer.appeal)))
+	if l == null:
+		return
+	_log_words(c, l.text)
+	_open(c, l)
 
 
 func _support(c: Customer, index: int) -> Result:
@@ -798,7 +844,7 @@ func _support(c: Customer, index: int) -> Result:
 			% def.display_name)
 	# Yours is read off the table as you reach for the card, before its effects
 	# land; their reply below reads it after.
-	_speak(def, c, c.offer.product.id if c.offer else &"",
+	_speak(def.player_dialogue_tags, c, c.offer.product.id if c.offer else &"",
 		StringName(band_for(c.line - c.offer.appeal)) if c.offer else &"")
 
 	var ctx := _context(c)
@@ -833,14 +879,19 @@ func _support(c: Customer, index: int) -> Result:
 	# nothing on the table both the product and the band read as &"", and
 	# DialogueLine.fits() excludes every line that names either - so a card
 	# played on an empty table falls back to the unfiltered lines instead of
-	# talking about a car that is not there.
+	# talking about a car that is not there. With an objection open, the reply
+	# written for it - and what it becomes, where answering it flushes out the
+	# real one ("No thanks" turning out to be the price).
 	var said := ""
 	if dialogue != null and not def.dialogue_tags.is_empty():
 		var product_id: StringName = c.offer.product.id if c.offer else &""
 		var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
 			if c.offer else &""
-		said = dialogue.pick(rng, def.dialogue_tags, c.archetype.id,
-			product_id, band)
+		var reply := dialogue.pick_line(rng, def.dialogue_tags, c.archetype.id,
+			product_id, band, _objection_of(c))
+		if reply != null:
+			said = reply.text
+			_open(c, reply)
 	# Appended even when nothing was said, and even when the card is untagged:
 	# until now playing a support card produced NO log line at all, while
 	# every archetype action did. Same shape fire() appends, so _drain_log()
@@ -885,6 +936,9 @@ func offer() -> Result:
 	var iid: StringName = o.product.interest.id
 	var rank: int = int(c.ranks[iid])
 	var gap: int = max(0, c.line - o.appeal)
+	# The trial close - asking is what you say, before they answer, and it
+	# closes on whatever they were objecting to where a close was written for it.
+	_speak([&"player_close"], c, o.product.id, StringName(band_for(c.line - o.appeal)))
 
 	# Offering teaches you the RANK of what you just put in front of them, and
 	# nothing about their Line. It used to set known_line too, which made Read
@@ -944,6 +998,7 @@ func _settle(c: Customer) -> Dictionary:
 	c.add_patience(cfg.patience_per_sale)
 	discard.append(o.instance)
 	c.offer = null
+	c.objection = &""
 	stat["sales"] = int(stat["sales"]) + 1
 	events.append("[%s] agrees to %s - unsigned%s."
 		% [c.key, sale["product"].display_name,
@@ -963,6 +1018,7 @@ func drop_offer() -> Result:
 	var product_name: String = c.offer.product.display_name
 	discard.append(c.offer.instance)
 	c.offer = null
+	c.objection = &""
 	stat["offers_dropped"] = int(stat["offers_dropped"]) + 1
 	return Result.new(true,
 		"You take the %s back off the table." % product_name, "drop")
@@ -1233,6 +1289,11 @@ func _chatter(c: Customer, tags: Array[StringName], product_id: StringName = &""
 	var said := dialogue.pick(rng, tags, c.archetype.id, product_id, &"")
 	if said == "":
 		return
+	_log_words(c, said)
+
+
+## Their words and nothing done - the entry _chatter() and _object() append.
+func _log_words(c: Customer, said: String) -> void:
 	action_log.append({
 		"key": c.key,
 		"customer": c.display_name,

@@ -23,12 +23,12 @@ inner = SubResource("Resource_o4eqb")
 
 [resource]
 script = ExtResource("4_p12a6")
-player_dialogue_tags = Array[StringName]([&"player_bundle"])
+player_dialogue_tags = Array[StringName]([&"player_value"])
 id = &"bundle"
-display_name = "Bundle It In"
-text = "\"Since we're already doing the other two...\" "
+display_name = "Back to Value"
+text = "Tie it all back to value. Every yes so far makes the next one easier."
 price = 1200
 rarity = 2
-dialogue_tags = Array[StringName]([&"appeal"])
+dialogue_tags = Array[StringName]([&"reply_value", &"appeal"])
 effects = Array[ExtResource("1_1jlqr")]([SubResource("Resource_dq0bg")])
 upgraded_effects = Array[ExtResource("1_1jlqr")]([SubResource("Resource_21l6v")])

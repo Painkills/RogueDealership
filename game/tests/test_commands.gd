@@ -294,7 +294,7 @@ func test_support_cards_alone_never_close_a_sale() -> void:
 	h.eq("each support card play reached the shift log",
 		s.action_log.size(), 2)
 	h.eq("named for the card, not a demand or an objection",
-		s.action_log[0]["name"], "Explain the Product")
+		s.action_log[0]["name"], s.card_pool.by_id(&"explain").display_name)
 	s.offer()
 	h.eq("until you ask", c.unsigned.size(), 1)
 

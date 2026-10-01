@@ -56,6 +56,10 @@ var action_state: Dictionary = {}  ## action id -> when it last fired
 var warned_leaving_soon: bool = false
 ## The same, for saying so out loud - see ShiftConfig.impatient_at.
 var said_impatient: bool = false
+## What they are objecting to about the product on their table - "It's too
+## expensive" - while you work through it. &"" when nothing is: see
+## Shift._object(), and DialogueLine.becomes for how a conversation moves it.
+var objection: StringName = &""
 
 var _interests: InterestPool
 

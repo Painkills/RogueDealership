@@ -23,14 +23,14 @@ amount = -150
 
 [resource]
 script = ExtResource("4_srclt")
-player_dialogue_tags = Array[StringName]([&"player_discount"])
+player_dialogue_tags = Array[StringName]([&"player_budget"])
 id = &"discount"
-display_name = "Offer a Discount"
-text = "\"... but that's the best I can do!\""
+display_name = "Budget Options"
+text = "\"We have different options to suit different budgets.\" A lighter plan, for a lighter margin."
 copies = 2
 starter = true
 price = 900
 rarity = 0
-dialogue_tags = Array[StringName]([&"concession"])
+dialogue_tags = Array[StringName]([&"reply_budget", &"concession"])
 effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_y1lle"), SubResource("Resource_5ct8g")])
 upgraded_effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_2tkkk"), SubResource("Resource_ij5n2")])

@@ -14,14 +14,14 @@ amount = 6
 
 [resource]
 script = ExtResource("3_m8x0i")
-player_dialogue_tags = Array[StringName]([&"player_explain"])
+player_dialogue_tags = Array[StringName]([&"player_empathize"])
 id = &"explain"
-display_name = "Explain the Product"
-text = "\"So, folks, here's how it works...\""
+display_name = "Acknowledge & Empathize"
+text = "\"I can certainly appreciate that.\" Acknowledge the worry before you answer it."
 copies = 4
 starter = true
 price = 600
 rarity = 0
-dialogue_tags = Array[StringName]([&"appeal"])
+dialogue_tags = Array[StringName]([&"reply_empathize", &"appeal"])
 effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_crdwm")])
 upgraded_effects = Array[ExtResource("1_75fpj")]([SubResource("Resource_s6afa")])

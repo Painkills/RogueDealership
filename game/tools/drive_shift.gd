@@ -126,7 +126,9 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_pull_picker_locks_input_until_resolved()
 	_check_what_a_customer_says_reaches_their_card()
 
+	_lend_the_shift_a_voice_for_an_objection()
 	_put_a_product_on_the_table()
+	_check_they_objected_on_their_folder()
 	_check_the_meter_shows_your_appeal_but_hides_their_line()
 	_check_the_meter_climbs_and_changes_colour()
 	# A Line they cannot clear, so KEY_O below is guaranteed to MISS. Left to the
@@ -1645,6 +1647,47 @@ func _check_their_yes_replaced_it() -> void:
 		not _controller._event_log.get_parsed_text().contains(said))
 	s.dialogue = null
 	s.rng.state = _parked_rng_state
+
+## "When you place the product, they reply with an objection (assuming it's
+## under the line)." Lent the shipped library for this one placement, with
+## their Line out of reach; the Line, the rng and the silence are all put back
+## once it has been checked, so nothing further down is dealt anything new.
+var _objection_parked: Dictionary = {}
+
+func _lend_the_shift_a_voice_for_an_objection() -> void:
+	var s: Shift = _controller._shift
+	var c = s.chairs[_at()] if s.at != null else null
+	if c == null:
+		_check("seated with someone to object", false)
+		return
+	_objection_parked = {"rng": s.rng.state, "line": c.line}
+	s.dialogue = load("res://data/dialogue/dialogue_pool.tres")
+	c.line = 999
+
+func _check_they_objected_on_their_folder() -> void:
+	var s: Shift = _controller._shift
+	var c = s.chairs[_at()] if s.at != null else null
+	if c == null or c.offer == null or _objection_parked.is_empty():
+		_check("a product went down for them to object to", false)
+		return
+	var card: CustomerCard3D = _controller._customer_cards[_at()]
+	var said: String = card._bubble._label.text
+	var raises: Array[String] = []
+	for l in (s.dialogue as DialoguePool).candidates(
+			(c.offer.product as ProductCardDef).objection_tags, c.archetype.id,
+			c.offer.product.id, StringName(s.band_for(c.line - c.offer.appeal))):
+		raises.append(l.text)
+	_check("under their Line, they object on their folder (%s)" % said,
+		card.is_speaking() and raises.has(said))
+	_check("and it stays open while you work it (%s)" % c.objection, c.objection != &"")
+	_check("but not in the log - the bubble is where words go",
+		not _controller._event_log.get_parsed_text().contains(said))
+	s.dialogue = null
+	c.line = _objection_parked["line"]
+	s.rng.state = _objection_parked["rng"]
+	_objection_parked = {}
+	# The tablet's meter was drawn against the borrowed Line - draw it again.
+	_controller._render()
 
 func _put_a_product_on_the_table() -> void:
 	if _controller._shift.at == null:

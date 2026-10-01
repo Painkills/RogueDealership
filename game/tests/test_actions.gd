@@ -394,7 +394,10 @@ func test_the_quiet_archetypes_never_do_anything() -> void:
 		s.offer()
 		for _i in range(6):
 			s.dig(0)
-		h.eq("%s does nothing to you" % id, s.action_log.size(), 0)
+		# Words are not deeds: putting a product down under their Line draws an
+		# objection, and that is something they SAY - chatter - not an action.
+		var deeds := s.action_log.filter(func(e): return not e.get("chatter", false))
+		h.eq("%s does nothing to you" % id, deeds.size(), 0)
 		h.check("%s never asks for anything" % id, c.demand == null)
 
 # ----------------------------------------------------------- announcements
