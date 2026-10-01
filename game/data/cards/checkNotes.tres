@@ -20,7 +20,6 @@ needs_offer = false
 id = &"checknotes"
 display_name = "The Program Guide"
 text = "\"Uh... let me just check the Program Guide...\""
-price = 1200
 rarity = 2
 effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_5u756")])
 upgraded_effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_ejqt0")])

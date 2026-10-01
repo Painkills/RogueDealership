@@ -39,10 +39,11 @@ class_name ShiftProfile extends Resource
 ## shift's own `quota` replaces both outright.
 @export var quota_scale: float = 1.0
 @export var quota_offset: int = 0            ## dollars; negative lowers it
-## What you bank over quota is multiplied by this on its way into the bonus
-## pot - a harder shift paying out in money as well as in what its store
-## stocks. See RunState.bonus_from().
-@export var bonus_scale: float = 1.0
+## Commission: this share of what you bank OVER quota is paid on top of the
+## base salary - a harder shift paying out in money as well as in what its
+## store stocks (morning lowest, then midday, night, and the boss highest). See
+## RunState.bonus_from().
+@export_range(0.0, 1.0, 0.01) var commission: float = 0.25
 
 @export_group("Premade shift")
 ## Ticks in the shift. 0 = ShiftConfig.shift_ticks.

@@ -22,7 +22,6 @@ needs_offer = false
 id = &"rwrt"
 display_name = "Right Word, Right Time"
 text = "I know I have a word track for this..."
-price = 1800
 rarity = 3
 effects = Array[ExtResource("1_1vllj")]([SubResource("Resource_jb4hs")])
 upgraded_effects = Array[ExtResource("1_1vllj")]([SubResource("Resource_7mf7q")])

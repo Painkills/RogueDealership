@@ -21,7 +21,6 @@ needs_offer = false
 id = &"comp"
 display_name = "WALKAWAY Complimentary"
 text = "One year protection from your \"What Ifs\", on the house!"
-price = 1500
 rarity = 3
 effects = Array[ExtResource("1_2v7db")]([SubResource("Resource_2jt7e")])
 upgraded_effects = Array[ExtResource("1_2v7db")]([SubResource("Resource_8bu43")])

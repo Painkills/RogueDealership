@@ -83,7 +83,7 @@ func start_shift(profile: ShiftProfile) -> Shift:
 		profile.patience_scale, profile.walk_up_scale,
 		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup,
 		profile.excluded_archetypes)
-	s.bonus_scale = profile.bonus_scale
+	s.commission = profile.commission
 	s.heal_up_to = profile.heal_up_to
 	return s
 
@@ -118,15 +118,11 @@ static func bonus_from(report: Dictionary) -> int:
 	## - it is on screen while you are still looking at the shift you just played,
 	## and the run does not advance until you press the button.
 	##
-	## A paycheck, not a cut of the overage: "when you do well you do amazing,
-	## but if you do poorly you just get hammered cuz you can't even buy
-	## upgrades." Missing quota still pays the paycheck; beating it multiplies
-	## the paycheck by the share you beat it by, times the shift's bonus_scale
-	## (ShiftProfile) - 20% over on a x2 night pays 1.4 paychecks.
+	## Base salary plus commission: "when you do well you do amazing, but if you
+	## do poorly you just get hammered cuz you can't even buy upgrades." Missing
+	## quota still pays the base salary; beating it adds the shift's commission
+	## (ShiftProfile.commission) on every dollar banked over - 1,000 over on a
+	## 35% night shift is 350 on top of the base.
 	var pay := int(report.get("paycheck", 0))
-	var quota := int(report["quota"])
-	var banked := int(report["margin_banked"])
-	if quota <= 0 or banked <= quota:
-		return pay
-	var over := float(banked - quota) / float(quota)
-	return roundi(pay * (1.0 + over * float(report.get("bonus_scale", 1.0))))
+	var over := maxi(0, int(report["margin_banked"]) - int(report["quota"]))
+	return pay + roundi(over * float(report.get("commission", 0.0)))

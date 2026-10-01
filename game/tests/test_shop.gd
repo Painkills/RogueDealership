@@ -22,11 +22,18 @@ func _profile(for_sale: int = 0, ups: int = 0) -> ShiftProfile:
 	return p
 
 
-func test_every_card_carries_a_price() -> void:
-	## Support cards have no margin to derive a price from, so it is authored.
-	var pool: CardPool = load("res://data/card_pool.tres")
-	for c in pool.cards:
-		h.check("%s is priced" % c.id, c.price > 0)
+func test_every_card_costs_its_raritys_rung_on_the_ladder() -> void:
+	## "A standard ladder based on rarity": one price per rarity, rising with it,
+	## and every card costs exactly its rarity's.
+	var r := _run()
+	var ladder: Array[int] = r.cfg.card_prices
+	h.eq("the ladder has a rung for every rarity", ladder.size(), CardDef.Rarity.size())
+	for i in range(1, ladder.size()):
+		h.check("rung %d costs more than the one below it (%d vs %d)" % [i, ladder[i], ladder[i - 1]],
+			ladder[i] > ladder[i - 1])
+	var shop := Shop.new(r, _profile())
+	for c in r.card_pool.cards:
+		h.eq("%s costs its rarity's rung" % c.id, shop.buy_price(c), ladder[int(c.rarity)])
 
 # ------------------------------------------------------------- the free card
 func test_a_shift_can_raise_the_floor_on_its_free_pick() -> void:
@@ -179,7 +186,7 @@ func test_buying_adds_the_card_and_debits_the_money() -> void:
 	var def: CardDef = shop.offers[0]
 	var before: int = r.deck.cards.size()
 	var price: int = shop.buy_price(def)
-	h.eq("priced at its sticker price", price, def.price)
+	h.eq("priced at its rarity's rung", price, r.cfg.card_prices[int(def.rarity)])
 	var res := shop.buy(def)
 	h.check("bought (%s)" % res.msg, res.ok)
 	h.eq("the toolkit grew by one", r.deck.cards.size(), before + 1)
@@ -255,10 +262,9 @@ func test_you_can_buy_every_card_on_the_shelf_you_can_afford() -> void:
 	h.check("and the shelf is empty", shop.offers.is_empty())
 
 # ---------------------------------------------------------------- the upgrade
-func test_upgrading_costs_a_multiple_of_what_it_gains() -> void:
-	## Both the gain and the price scale with the card, so a percentage upgrade
-	## is value-neutral across the margin ladder - the decision is which product
-	## you actually sell, not which number is biggest.
+func test_upgrading_costs_a_share_of_buying_the_card() -> void:
+	## "Upgrades should cost half of a purchase": of what buying that very card
+	## costs on the ladder, whatever the upgrade gains.
 	var r := _run()
 	var shop := Shop.new(r, _profile(0, 1))
 	var product: CardInstance = null
@@ -271,15 +277,15 @@ func test_upgrading_costs_a_multiple_of_what_it_gains() -> void:
 	# whether this seed happened to roll a product into the offer.
 	shop.upgrade_offers = [product.uid]
 	var p := product.card as ProductCardDef
-	var gain: int = p.upgraded_margin - p.margin
-	h.eq("priced at the multiple of the gain", shop.upgrade_price(product),
-		gain * r.cfg.upgrade_price_multiple)
+	var cost: int = roundi(shop.buy_price(p) * r.cfg.upgrade_price_share)
+	h.eq("priced at the share of its purchase price", shop.upgrade_price(product), cost)
+	h.check("which is cheaper than buying it", shop.upgrade_price(product) < shop.buy_price(p))
 
 	var res := shop.upgrade(product.uid)
 	h.check("upgraded (%s)" % res.msg, res.ok)
 	h.check("the instance knows", product.upgraded)
 	h.eq("and it now earns the upgraded margin", product.margin(), p.upgraded_margin)
-	h.eq("and it was paid for", r.money, 10000 - gain * r.cfg.upgrade_price_multiple)
+	h.eq("and it was paid for", r.money, 10000 - cost)
 
 func test_you_can_upgrade_every_card_on_offer_you_can_afford() -> void:
 	## "You can buy or upgrade as many as you can afford within the choices
@@ -334,7 +340,6 @@ func test_a_product_with_no_authored_upgrade_cannot_be_bought() -> void:
 	var def := ProductCardDef.new()
 	def.id = &"test_no_upgrade_product"
 	def.display_name = "Test Product"
-	def.price = 100
 	def.margin = 200
 	def.upgraded_margin = 0
 	var inst := r.deck.add(def)
@@ -354,7 +359,6 @@ func test_a_support_card_with_no_authored_upgrade_cannot_be_bought() -> void:
 	var def := SupportCardDef.new()
 	def.id = &"test_no_upgrade_support"
 	def.display_name = "Test Support"
-	def.price = 100
 	def.effects = []
 	def.upgraded_effects = []
 	var inst := r.deck.add(def)

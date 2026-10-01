@@ -12,11 +12,9 @@ class_name CardDef extends Resource
 @export var ticks: int = 1
 @export var copies: int = 1
 @export var starter: bool = false
-## What the shop charges to add this card to the deck. Authored rather than
-## derived: support cards have no margin to compute a price from. Defaults to
-## 0, not some plausible-looking number, so an unpriced card fails
-## test_every_card_carries_a_price() instead of silently passing it.
-@export var price: int = 0
+## No price of its own: what the shop charges for a card is its rarity's rung
+## on ShiftConfig.card_prices, so every card of a rarity costs the same and
+## retuning the economy never means touching a card.
 ## Basic isn't only "starter" spelled differently - a Basic card could later
 ## be sold outside the starter deck too - so every starter card authors this
 ## explicitly rather than having it inferred from `starter`.

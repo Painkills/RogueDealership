@@ -78,7 +78,7 @@ func setup(run: RunState, history: Array) -> void:
 
 	_headline.text = "%s banked against %s of quota - %d of %d quotas made." \
 		% [Format.money(banked), Format.money(quota), made, entries.size()]
-	_totals.text = "Bonus earned: %s   |   Standing: %d/%d (%s%d this week)   |   %d signed, %d walked out" \
+	_totals.text = "Pay earned: %s   |   Standing: %d/%d (%s%d this week)   |   %d signed, %d walked out" \
 		% [Format.money(bonus), run.standing, run.cfg.standing_start,
 			"+" if standing >= 0 else "", standing, signed, walked]
 
@@ -88,6 +88,13 @@ func setup(run: RunState, history: Array) -> void:
 	var next_last: int = mini(next_first + per_week - 1, run.cfg.shifts_in_run)
 	_next.text = "Monday's quota is %s, and it climbs every day." \
 		% Format.money(run.quota_for(next_first))
+	# "Base pay should increase each week by a little bit, and the end of week
+	# email should mention it."
+	var was_pay: int = run.cfg.paycheck_in_week(week)
+	var new_pay: int = run.cfg.paycheck_in_week(week + 1)
+	if new_pay > was_pay:
+		_next.text += " Good news: your base pay goes up %s, to %s a shift." \
+			% [Format.money(new_pay - was_pay), Format.money(new_pay)]
 	if run.week != null:
 		var finale := run.week.offers(next_last)
 		if finale.size() == 1 and finale[0].is_boss_day():

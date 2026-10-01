@@ -22,7 +22,6 @@ needs_offer = false
 id = &"jtt"
 display_name = "Just the Thing"
 text = "\"Oh, I have just the product for you!\""
-price = 1700
 rarity = 3
 effects = Array[ExtResource("1_dyd8x")]([SubResource("Resource_jb4hs")])
 upgraded_effects = Array[ExtResource("1_dyd8x")]([SubResource("Resource_7mf7q")])

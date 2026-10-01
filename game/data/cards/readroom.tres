@@ -19,6 +19,5 @@ needs_offer = false
 id = &"readroom"
 display_name = "Active Listening"
 text = "Stay calm and curious. Let them talk, and they'll tell you what matters."
-price = 1100
 effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])
 upgraded_effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_a4ajm")])

@@ -205,12 +205,12 @@ func _phase_0_open_and_finish_shift() -> void:
 		900.0 / float(r0["quota"]) * _run.cfg.standing_heal_scale)
 	_set_standing_keys(over, _run.cfg.standing_start)
 	panel.setup(over)
-	# What 900 over pays depends on the shift's own bonus_scale - read, not assumed.
+	# What 900 over pays depends on the shift's own commission - read, not assumed.
 	var paid := RunState.bonus_from(over)
-	var scaled := not is_equal_approx(float(over.get("bonus_scale", 1.0)), 1.0)
-	_check("and announces the bonus when there is one (%s)" % panel._bonus.text,
+	_check("and announces the pay, base and commission, when there is some (%s)" % panel._bonus.text,
 		panel._bonus.text.contains(Format.money(paid)) and panel._bonus.text.contains("paycheck")
-			and panel._bonus.text.contains("×") == scaled)
+			and panel._bonus.text.contains("commission")
+			and panel._bonus.text.contains(Format.money(int(over["paycheck"]))))
 	var r0_shown: Dictionary = r0.duplicate()
 	_set_standing_keys(r0_shown, _run.cfg.standing_start)
 	panel.setup(r0_shown)
@@ -775,10 +775,10 @@ func _check_the_calendar_shows_the_week() -> void:
 		for label in (events[i] as Node).find_children("*", "Label", true, false):
 			words += (label as Label).text + " "
 		var quota := profile.quota_on(day_quota)
-		_check("%s's event shows its quota (%s) and bonus (x%s)"
-			% [profile.id, Format.money(quota), String.num(profile.bonus_scale, 2)],
-			words.contains(Format.money(quota))
-				and words.contains("×" + String.num(profile.bonus_scale, 2)))
+		var rate := "%d%% commission" % roundi(profile.commission * 100.0)
+		_check("%s's event shows its quota (%s) and commission (%s)"
+			% [profile.id, Format.money(quota), rate],
+			words.contains(Format.money(quota)) and words.contains(rate))
 		var hours := (events[i] as Node).find_child("Hours", true, false) as Label
 		_check("%s's hours sit at the far right of its title row" % profile.id,
 			hours != null and hours.get_parent().name == "TitleRow"
@@ -1077,6 +1077,13 @@ func _check_the_week_report_comes_between_weeks() -> void:
 		grid.get_child_count() == grid.columns * (worked + 1))
 	_check("titled for the week just worked (%s)" % week_view._title.text,
 		week_view._title.text.contains("WEEK 1"))
+	# "Base pay should increase each week by a little bit, and the end of week
+	# email should mention it."
+	var next_pay: int = _run.cfg.paycheck_in_week(2)
+	_check("the email says the base pay goes up, and to what (%s)" % week_view._next.text,
+		_run.cfg.paycheck_raise_per_week <= 0
+			or (week_view._next.text.contains("base pay")
+				and week_view._next.text.contains(Format.money(next_pay))))
 	var start := week_view.get_node(^"%StartButton") as Button
 	_check("and a way on into week 2 (%s)" % start.text, start.text.contains("2"))
 	start.pressed.emit()

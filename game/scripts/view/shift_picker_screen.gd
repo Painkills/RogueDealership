@@ -152,11 +152,11 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 	when.autowrap_mode = TextServer.AUTOWRAP_OFF
 	when.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	when.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	# Every shift's quota and bonus, under its name, whether or not they differ
-	# from anyone else's - what the shift is worth is half of choosing it.
+	# Every shift's quota and commission, under its name, whether or not they
+	# differ from anyone else's - what the shift is worth is half of choosing it.
 	var quota := profile.quota_on(_day_quota)
-	var terms := _line(col, "quota %s  |  bonus ×%s" % [
-		Format.money(quota) if quota > 0 else "-", String.num(profile.bonus_scale, 2)],
+	var terms := _line(col, "quota %s  |  %d%% commission" % [
+		Format.money(quota) if quota > 0 else "-", roundi(profile.commission * 100.0)],
 		15, Palette.color(&"text"), true)
 	terms.name = "Terms"
 	_line(col, profile.blurb, 16, Palette.color(&"text"))

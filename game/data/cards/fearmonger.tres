@@ -29,7 +29,6 @@ player_dialogue_tags = Array[StringName]([&"player_fearmonger"])
 id = &"fearmonger"
 display_name = "Fearmonger"
 text = "You describe, vividly, what happens to people who skip it. It works. It also makes you scary."
-price = 1000
 rarity = 2
 dialogue_tags = Array[StringName]([&"appeal", &"pressure"])
 effects = Array[ExtResource("1_fo6ct")]([SubResource("Resource_1wqcv"), SubResource("Resource_fo6ct")])

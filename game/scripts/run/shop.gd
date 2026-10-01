@@ -133,16 +133,27 @@ func _roll_upgrade_offers() -> void:
 
 # --- prices ----------------------------------------------------------------
 
+## Its rarity's rung on the ladder - see ShiftConfig.card_prices. A rarity the
+## ladder has no rung for costs the top one rather than nothing.
 func buy_price(def: CardDef) -> int:
-	return def.price
+	var ladder := run.cfg.card_prices
+	if ladder.is_empty():
+		return 0
+	return ladder[clampi(int(def.rarity), 0, ladder.size() - 1)]
 
+## "Upgrades should cost half of a purchase": a share of what BUYING that card
+## costs, whatever it would gain - nothing for a card with no upgrade to sell.
 func upgrade_price(inst: CardInstance) -> int:
-	return upgrade_gain(inst) * run.cfg.upgrade_price_multiple
+	if upgrade_gain(inst) <= 0:
+		return 0
+	return roundi(buy_price(inst.card) * run.cfg.upgrade_price_share)
 
+## Whether (and, for a product, by how much) a card improves. It no longer sets
+## the price - see upgrade_price() - only whether there is an upgrade to buy.
 func upgrade_gain(inst: CardInstance) -> int:
 	## For a product this is real money per sale. A support card upgrades its
-	## EFFECTS, which have no cash value to read, so its price is pinned to the
-	## card's own price by the same quarter the product ladder uses.
+	## EFFECTS, which have no cash value to read, so it reads as a quarter of
+	## what the card costs - positive whenever an upgrade is authored.
 	if not inst.is_product():
 		var s := inst.card as SupportCardDef
 		# product_card_def.gd's upgraded_margin == 0 means "no upgrade authored
@@ -152,7 +163,7 @@ func upgrade_gain(inst: CardInstance) -> int:
 		# here would be a purchase that changes nothing at all.
 		if s.upgraded_effects.is_empty():
 			return 0
-		return int(round(float(inst.card.price) * 0.25))
+		return int(round(float(buy_price(inst.card)) * 0.25))
 	var p := inst.card as ProductCardDef
 	if p.upgraded_margin <= 0:
 		return 0

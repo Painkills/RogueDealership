@@ -29,7 +29,6 @@ display_name = "Budget Options"
 text = "\"We have different options to suit different budgets.\" A lighter plan, for a lighter margin."
 copies = 2
 starter = true
-price = 900
 rarity = 0
 dialogue_tags = Array[StringName]([&"reply_budget", &"concession"])
 effects = Array[ExtResource("1_x4q03")]([SubResource("Resource_y1lle"), SubResource("Resource_5ct8g")])

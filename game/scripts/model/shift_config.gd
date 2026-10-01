@@ -38,10 +38,17 @@ class_name ShiftConfig extends Resource
 ## ...and more the further short you fell, up to this at nothing banked. One
 ## entry per week of the run; weeks past the end use the last.
 @export var miss_standing_max_by_week: Array[int] = [35, 45]
-## What a shift pays, fired or not: the floor under the shop budget, so one bad
-## shift does not also mean a shop you cannot buy anything in. Beating quota
-## multiplies it - see RunState.bonus_from().
+## Base salary: what a shift pays however it went, so one bad shift does not
+## also mean a shop you cannot buy anything in. Beating quota adds a commission
+## on top - see RunState.bonus_from() and ShiftProfile.commission.
 @export var paycheck: int = 1000
+## "Base pay should increase each week by a little bit": this much more in each
+## week after the first. The end-of-week report says so.
+@export var paycheck_raise_per_week: int = 100
+
+## Base salary in `week` (1-based).
+func paycheck_in_week(week: int) -> int:
+	return paycheck + paycheck_raise_per_week * maxi(0, week - 1)
 ## Zeroed in the shipped data: an ordinary shift never heals. A shift can heal
 ## on its own terms instead - see ShiftProfile.heal_up_to, which the boss
 ## fights use.
@@ -126,10 +133,14 @@ class_name ShiftConfig extends Resource
 @export var free_card_choices: int = 3
 ## What the store stocks after it - cards for sale, and cards of yours to
 ## upgrade - is the shift's business: see ShiftProfile.
-## An upgrade costs this many times what it gains, so it pays back in that many
-## sales. Both scale with the card, which is what keeps upgrading a cheap card
-## and an expensive one the same decision.
-@export var upgrade_price_multiple: int = 4
+## What a card costs to buy, by rarity - Basic, Economy, Value, Preferred, in
+## the order of CardDef.Rarity. One ladder for every card: a card's own cost is
+## its rarity's, so retuning the economy is four numbers. Cards you start with
+## are never for sale, but their upgrades are priced off the same ladder.
+@export var card_prices: Array[int] = [600, 900, 1200, 1500]
+## An upgrade costs this share of what buying that card does - "upgrades should
+## cost half of a purchase."
+@export var upgrade_price_share: float = 0.5
 @export var remove_price: int = 500
 ## Thinning below a full hand would leave _draw_up unable to fill one: nothing
 ## to dig, and nothing to wait for if you are seated. That is a softlock.

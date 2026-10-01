@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_prf")
+commission = 0.25
 quota_scale = 0.9
 id = &"morning"
 display_name = "Morning Shift"

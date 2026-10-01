@@ -19,7 +19,6 @@ id = &"framing"
 display_name = "Keep It Relatable"
 text = "\"It's just like why cars come with a warranty.\" A quick analogy takes no time at all."
 ticks = 0
-price = 1000
 dialogue_tags = Array[StringName]([&"reply_relate", &"appeal"])
 effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_g0c8w")])
 upgraded_effects = Array[ExtResource("1_j6e0e")]([SubResource("Resource_cpvyu")])

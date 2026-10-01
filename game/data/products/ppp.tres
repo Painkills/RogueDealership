@@ -14,5 +14,4 @@ upgraded_margin = 1500
 id = &"ppp"
 display_name = "Payment Protection Plan"
 text = "Covers a payment when they can't."
-price = 1200
 rarity = 1

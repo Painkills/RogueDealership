@@ -59,19 +59,32 @@ func test_every_shift_pays_its_paycheck() -> void:
 	h.eq("and paychecks stack in the pot", r.money, pay * 2)
 	h.eq("while the lifetime total counts every dollar banked", r.banked_total, 4640)
 
-func test_beating_quota_multiplies_the_paycheck() -> void:
-	## "If you go over quota, it gets multiplied by % over ... times shift
-	## multiplier." Made-up reports, so no tuned number is pinned here.
-	h.eq("50% over pays one and a half paychecks", RunState.bonus_from(
-		{"margin_banked": 1500, "quota": 1000, "paycheck": 1000}), 1500)
-	h.eq("100% over on a x2 shift pays three", RunState.bonus_from(
-		{"margin_banked": 2000, "quota": 1000, "paycheck": 1000, "bonus_scale": 2.0}), 3000)
-	h.eq("never less than the paycheck", RunState.bonus_from(
-		{"margin_banked": 0, "quota": 1000, "paycheck": 1000}), 1000)
+func test_beating_quota_adds_a_commission_on_the_overage() -> void:
+	## "Base salary plus X percent over quota (differentiated by shift type)."
+	## Made-up reports, so no tuned number is pinned here.
+	h.eq("a share of the dollars banked over quota, on top of the base", RunState.bonus_from(
+		{"margin_banked": 1500, "quota": 1000, "paycheck": 1000, "commission": 0.3}), 1150)
+	h.eq("a higher commission pays more for the same overage", RunState.bonus_from(
+		{"margin_banked": 1500, "quota": 1000, "paycheck": 1000, "commission": 0.5}), 1250)
+	h.eq("landing on quota pays the base alone", RunState.bonus_from(
+		{"margin_banked": 1000, "quota": 1000, "paycheck": 1000, "commission": 0.5}), 1000)
+	h.eq("never less than the base salary", RunState.bonus_from(
+		{"margin_banked": 0, "quota": 1000, "paycheck": 1000, "commission": 0.5}), 1000)
 	h.eq("and a report without one pays nothing extra", RunState.bonus_from(
 		{"margin_banked": 100, "quota": 3600}), 0)
 
-
+func test_base_pay_rises_each_week() -> void:
+	## "Base pay should increase each week by a little bit."
+	var r := _run()
+	var cfg: ShiftConfig = r.cfg
+	h.eq("week one is the base", cfg.paycheck_in_week(1), cfg.paycheck)
+	h.eq("each week after adds the raise", cfg.paycheck_in_week(3),
+		cfg.paycheck + 2 * cfg.paycheck_raise_per_week)
+	var first_week := r.start_shift(ShiftProfile.new()).report()
+	h.eq("a shift in week one carries week one's pay", first_week["paycheck"], cfg.paycheck)
+	r.shift_number = cfg.days_per_week + 1
+	h.eq("and one in week two carries week two's",
+		r.start_shift(ShiftProfile.new()).report()["paycheck"], cfg.paycheck_in_week(2))
 
 func test_missing_quota_costs_nothing_more_than_the_bonus() -> void:
 	## Money's OWN floor, isolated from standing: standing_delta is pinned to 0
@@ -173,21 +186,22 @@ func test_a_shifts_quota_scale_and_offset_set_its_quota() -> void:
 	p.quota = 1234
 	h.eq("a premade shift's own quota wins over the scale", r.start_shift(p).quota, 1234)
 
-func test_a_shifts_bonus_scale_multiplies_what_beating_quota_pays() -> void:
-	## Midday and night pay better for the same margin over quota.
+func test_a_shifts_commission_sets_what_beating_quota_pays() -> void:
+	## Midday, night and the boss pay better for the same margin over quota.
 	var r := _run()
 	var p := ShiftProfile.new()
-	p.bonus_scale = 1.5
+	p.commission = 0.4
 	var report := r.start_shift(p).report()
-	h.eq("the shift's report carries its scale", report["bonus_scale"], 1.5)
-	h.eq("and the config's paycheck", report["paycheck"], r.cfg.paycheck)
+	h.eq("the shift's report carries its commission", report["commission"], 0.4)
+	h.eq("and the base salary", report["paycheck"], r.cfg.paycheck)
 	report["margin_banked"] = int(report["quota"]) - 1
-	h.eq("missing quota pays the paycheck", RunState.bonus_from(report), r.cfg.paycheck)
-	report["margin_banked"] = int(report["quota"]) * 2
-	var doubled := roundi(r.cfg.paycheck * (1.0 + 1.5))
-	h.eq("doubling quota pays it times one plus the scale", RunState.bonus_from(report), doubled)
+	h.eq("missing quota pays the base", RunState.bonus_from(report), r.cfg.paycheck)
+	var over := 1000
+	report["margin_banked"] = int(report["quota"]) + over
+	var expected: int = r.cfg.paycheck + roundi(over * 0.4)
+	h.eq("beating it pays the base plus the commission", RunState.bonus_from(report), expected)
 	r.finish_shift(report)
-	h.eq("and that is what goes in the pot", r.money, doubled)
+	h.eq("and that is what goes in the pot", r.money, expected)
 
 func test_a_shift_with_a_heal_restores_standing_only_for_passing() -> void:
 	## "You should only heal at the end of a boss fight if you pass quota."

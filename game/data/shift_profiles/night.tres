@@ -7,6 +7,7 @@
 
 [resource]
 script = ExtResource("1_prf")
+commission = 0.35
 id = &"night"
 display_name = "Night Shift"
 blurb = "Quiet floor. The ones who come in this late are trouble."
@@ -14,6 +15,5 @@ walk_up_scale = 1.8
 unlock_full_archetype_pool = true
 excluded_archetypes = Array[ExtResource("2_arch")]([ExtResource("3_easy"), ExtResource("4_lay")])
 from_day = 3
-bonus_scale = 2.0
 cards_for_sale = 1
 upgrades = 3

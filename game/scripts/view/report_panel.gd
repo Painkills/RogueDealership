@@ -64,11 +64,11 @@ func setup(r: Dictionary) -> void:
 	# button below is pressed. RunState owns the arithmetic either way.
 	var pay := RunState.bonus_from(r)
 	var base := int(r.get("paycheck", 0))
-	var scale := float(r.get("bonus_scale", 1.0))
 	if pay > base:
-		# Beating quota multiplies the paycheck: say so, and by what.
-		_bonus.text = "You beat quota - your paycheck is %s%s!" % [Format.money(pay),
-			"" if is_equal_approx(scale, 1.0) else " (×%s for this shift)" % String.num(scale, 2)]
+		# Beating quota adds commission on top of the base salary: say both.
+		_bonus.text = "You beat quota - paycheck %s: %s base + %s commission (%d%% of what you banked over)!" \
+			% [Format.money(pay), Format.money(base), Format.money(pay - base),
+				roundi(float(r.get("commission", 0.0)) * 100.0)]
 		_bonus.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
 	elif r["made_quota"]:
 		_bonus.text = "Paycheck: %s. Quota hit on the nose." % Format.money(pay)

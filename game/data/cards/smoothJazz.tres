@@ -21,7 +21,6 @@ needs_offer = false
 id = &"jazz"
 display_name = "Smooth Jazz"
 text = "Nothing like elevator music to keep everyone nice and calm."
-price = 1500
 rarity = 2
 effects = Array[ExtResource("1_48f2h")]([SubResource("Resource_7nfcx")])
 upgraded_effects = Array[ExtResource("1_48f2h")]([SubResource("Resource_moj2g")])
