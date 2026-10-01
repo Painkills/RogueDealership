@@ -163,6 +163,10 @@ const LINES := [
 	# method's techniques - empathize, clarify, relate, value, budget, listen -
 	# are the reskinned appeal cards. What each says to an OPEN objection is in
 	# OBJECTIONS below; these rows are what they say to anything else.
+	#
+	# Several lines per tag on purpose: a speaker skips what they said lately
+	# (DialoguePool.pick_line's `avoid`), so playing a card three times says
+	# three different things - as long as there are three things to say.
 
 	# player_pitch: putting a product in front of them.
 	[[&"player_pitch"], "\"Now, have you heard about this one?\"", [], [], []],
@@ -216,9 +220,20 @@ const LINES := [
 	[[&"player_empathize"], "\"That makes complete sense.\"", [], [], []],
 	[[&"player_empathize"], "\"I'd feel the same way in your shoes.\"", [], [], []],
 	[[&"player_empathize"], "\"Lots of people feel that way at first.\"", [], [], []],
+	[[&"player_empathize"], "\"Honestly? That's a smart thing to ask about.\"", [], [], []],
+	[[&"player_empathize"], "\"You're not the first to say that, believe me.\"", [], [], []],
+	[[&"player_empathize"], "\"That's completely understandable.\"", [], [], []],
+	[[&"player_empathize"], "\"I appreciate you being straight with me.\"", [], [], []],
+	[[&"player_empathize"], "\"Fair enough. I'd want to know that too.\"", [], [], []],
+	[[&"player_empathize"], "\"No, I get it. It's a big decision.\"", [], [], []],
+	[[&"player_empathize"], "\"Good. I'd rather you ask than wonder.\"", [], [], []],
 	[[&"player_empathize"], "\"I'll go slowly. And yes, it's all in writing.\"", [&"karen"], [], []],
 	[[&"player_empathize"], "\"I know your time matters. I'll keep it short.\"", [&"kicker"], [], []],
 	[[&"player_empathize"], "\"With the kids, I get why every dollar counts.\"", [&"family"], [], []],
+	[[&"player_empathize"], "\"I respect that. You know what you want.\"", [&"hawk"], [], []],
+	[[&"player_empathize"], "\"Good question. You clearly did your homework.\"", [&"tech"], [], []],
+	[[&"player_empathize"], "\"I hear you. No pressure at all.\"", [&"easygoing"], [], []],
+	[[&"player_empathize"], "\"Don't worry, I'll walk you through all of it.\"", [&"laydown"], [], []],
 
 	# player_clarify: Ask Clarifying Questions (was Hard Close). Flush out
 	# whether it's the cost or the coverage.
@@ -226,8 +241,17 @@ const LINES := [
 	[[&"player_clarify"], "\"Can I ask what's giving you pause?\"", [], [], []],
 	[[&"player_clarify"], "\"Is it the price, or the coverage itself?\"", [], [], []],
 	[[&"player_clarify"], "\"Just so I understand, what's the hesitation?\"", [], [], []],
+	[[&"player_clarify"], "\"Help me understand. What's the part that bugs you?\"", [], [], []],
+	[[&"player_clarify"], "\"Is it the monthly number, or the total?\"", [], [], []],
+	[[&"player_clarify"], "\"What would make this a yes for you?\"", [], [], []],
+	[[&"player_clarify"], "\"Have you had something like this before?\"", [], [], []],
+	[[&"player_clarify"], "\"Is that a 'not now', or a 'not ever'?\"", [], [], []],
+	[[&"player_clarify"], "\"What's your biggest worry about owning the car?\"", [], [], []],
 	[[&"player_clarify"], "\"Quick question, then I'll let you go.\"", [&"kicker"], [], []],
 	[[&"player_clarify"], "\"How many years were you planning to keep it?\"", [&"tech"], [], []],
+	[[&"player_clarify"], "\"What number did you have in your head?\"", [&"hawk"], [], []],
+	[[&"player_clarify"], "\"What would you expect to get for that price?\"", [&"karen"], [], []],
+	[[&"player_clarify"], "\"Who else will be driving the car?\"", [&"family"], [], []],
 
 	# player_relate: Keep It Relatable (was Coffee Framing).
 	[[&"player_relate"], "\"That's just three cups of coffee a day!\"", [], [], []],
@@ -237,8 +261,16 @@ const LINES := [
 	[[&"player_relate"], "\"It's cheaper than a sandwich. A small sandwich.\"", [], [], []],
 	[[&"player_relate"], "\"Think of it like a seatbelt for your wallet.\"", [], [], []],
 	[[&"player_relate"], "\"It's like a warranty, but for you.\"", [], [], []],
+	[[&"player_relate"], "\"It's like your phone case. Cheap next to the phone.\"", [], [], []],
+	[[&"player_relate"], "\"You insure the house. This is the same idea.\"", [], [], []],
+	[[&"player_relate"], "\"Think of it like a spare tire for your budget.\"", [], [], []],
+	[[&"player_relate"], "\"Nobody buys an umbrella on a sunny day, right?\"", [], [], []],
+	[[&"player_relate"], "\"Like a fire extinguisher. Boring, until it isn't.\"", [], [], []],
 	[[&"player_relate"], "\"Okay, let me try explaining it a different way.\"", [], [], [&"COLD"]],
 	[[&"player_relate"], "\"Do the math. Per day, it's basically nothing.\"", [&"hawk"], [], []],
+	[[&"player_relate"], "\"Like a car seat. You hope it never matters.\"", [&"family"], [], []],
+	[[&"player_relate"], "\"Think of it as a backup drive for your finances.\"", [&"tech"], [], []],
+	[[&"player_relate"], "\"Short version: a seatbelt for your wallet.\"", [&"kicker"], [], []],
 
 	# player_value: Back to Value (was Bundle It In) - and each product's own
 	# value proposition, where one is written for it.
@@ -249,10 +281,17 @@ const LINES := [
 	[[&"player_value"], "\"Here's the short version. No fine print. Well, some.\"", [], [], []],
 	[[&"player_value"], "\"It's simple, really. Something goes wrong, you're covered.\"", [], [], []],
 	[[&"player_value"], "\"Most people don't know this, but...\"", [], [], []],
+	[[&"player_value"], "\"Peace of mind is the real product here.\"", [], [], []],
+	[[&"player_value"], "\"For a few dollars, a lot of worry goes away.\"", [], [], []],
+	[[&"player_value"], "\"This is the part people thank me for later.\"", [], [], []],
+	[[&"player_value"], "\"It protects the investment you just made.\"", [], [], []],
+	[[&"player_value"], "\"Small cost now, a big save if anything happens.\"", [], [], []],
 	[[&"player_value"], "\"And honestly? It pretty much sells itself.\"", [], [], [&"ALMOST"]],
 	[[&"player_value"], "\"One package, and the whole family's covered.\"", [&"family"], [], []],
 	[[&"player_value"], "\"I can pull up the full contract if you want the details.\"", [&"tech"], [], []],
 	[[&"player_value"], "\"Real quick, the thirty-second version...\"", [&"kicker"], [], []],
+	[[&"player_value"], "\"Do the math on one bad day. It pays for itself.\"", [&"hawk"], [], []],
+	[[&"player_value"], "\"And it's all in writing, start to finish.\"", [&"karen"], [], []],
 	[[&"player_value"], "\"If the car's totaled, GAP pays off what insurance won't.\"", [], [&"gap"], []],
 	[[&"player_value"], "\"When the factory warranty ends, this pays the repair bills.\"", [], [&"vsc"], []],
 	[[&"player_value"], "\"We etch the glass, track the car, and replace lost keys.\"", [], [&"theft"], []],
@@ -273,8 +312,13 @@ const LINES := [
 	[[&"player_budget"], "\"Tell you what, I'll sharpen my pencil.\"", [], [], []],
 	[[&"player_budget"], "\"...but that's the best I can do!\"", [], [], []],
 	[[&"player_budget"], "\"Don't tell my manager, but...\"", [], [], []],
+	[[&"player_budget"], "\"Let's find a version that fits your number.\"", [], [], []],
+	[[&"player_budget"], "\"We can trim it down and keep the important part.\"", [], [], []],
+	[[&"player_budget"], "\"I can stretch the term so the payment stays put.\"", [], [], []],
+	[[&"player_budget"], "\"Tell me the number, and I'll build around it.\"", [], [], []],
 	[[&"player_budget"], "\"Alright, how does THIS number look?\"", [], [], [&"COLD"]],
 	[[&"player_budget"], "\"Fine, fine. You drive a hard bargain.\"", [&"hawk"], [], []],
+	[[&"player_budget"], "\"Fine. Here's my best number. Really.\"", [&"hawk"], [], []],
 	[[&"player_budget"], "\"Since you've been SO patient with me...\"", [&"karen"], [], []],
 	[[&"player_budget"], "\"You've been great, so let me knock a bit off.\"", [&"easygoing"], [], []],
 
@@ -305,6 +349,11 @@ const LINES := [
 	[[&"player_listen"], "\"Take your time. I'm listening.\"", [], [], []],
 	[[&"player_listen"], "\"So what matters most to you here?\"", [], [], []],
 	[[&"player_listen"], "\"What brings you in today, really?\"", [], [], []],
+	[[&"player_listen"], "\"Interesting. Tell me why that matters to you.\"", [], [], []],
+	[[&"player_listen"], "\"Okay. What else is on your mind?\"", [], [], []],
+	[[&"player_listen"], "\"Walk me through what you're picturing.\"", [], [], []],
+	[[&"player_listen"], "\"And what would the perfect deal look like?\"", [], [], []],
+	[[&"player_listen"], "\"Got it. Anything else I should know?\"", [], [], []],
 	[[&"player_listen"], "\"Go ahead. I'm all ears. Truly.\"", [&"karen"], [], []],
 
 	# player_guide: The Program Guide (was Check Your Notes).
@@ -313,6 +362,9 @@ const LINES := [
 	[[&"player_guide"], "\"Hold on, let me look that up real quick.\"", [], [], []],
 	[[&"player_guide"], "\"It's on the tip of my tongue...\"", [], [], []],
 	[[&"player_guide"], "\"Where did I put that brochure...\"", [], [], []],
+	[[&"player_guide"], "\"One sec, the Program Guide has a page on this.\"", [], [], []],
+	[[&"player_guide"], "\"Let me find the exact wording for you.\"", [], [], []],
+	[[&"player_guide"], "\"Page six... no, seven. Here it is.\"", [], [], []],
 
 	[[&"player_comp"], "\"Good news, everyone! A year of WALKAWAY, on the house!\"", [], [], []],
 	[[&"player_comp"], "\"Today only, everyone gets a free year of protection!\"", [], [], []],
@@ -347,6 +399,15 @@ const LINES := [
 	[[&"player_close"], "\"Should we put you down for it?\"", [], [], []],
 	[[&"player_close"], "\"Sound good? Let's get you protected.\"", [], [], []],
 	[[&"player_close"], "\"Sign here, here, and initial here.\"", [], [], []],
+	[[&"player_close"], "\"Shall I put that in the paperwork?\"", [], [], []],
+	[[&"player_close"], "\"Ready to add it?\"", [], [], []],
+	[[&"player_close"], "\"So, are we protecting you?\"", [], [], []],
+	[[&"player_close"], "\"Want me to include it today?\"", [], [], []],
+	[[&"player_close"], "\"Can I go ahead and add that?\"", [], [], []],
+	[[&"player_close"], "\"Does that sound like something you'd want?\"", [], [], []],
+	[[&"player_close"], "\"Should I make it part of the deal?\"", [], [], []],
+	[[&"player_close"], "\"Quick yes, and you're out of here.\"", [&"kicker"], [], []],
+	[[&"player_close"], "\"I'll put every word in writing. Shall we?\"", [&"karen"], [], []],
 
 	# --------------------------------------------------------- THEIR SIDE
 	# interested: said instead of an objection when the product you put down
@@ -354,28 +415,63 @@ const LINES := [
 	[[&"interested"], "\"Oh, that actually sounds good.\"", [], [], []],
 	[[&"interested"], "\"Okay, I like the sound of that.\"", [], [], []],
 	[[&"interested"], "\"Huh. That's right up my alley.\"", [], [], []],
+	[[&"interested"], "\"Oh, now that's interesting.\"", [], [], []],
+	[[&"interested"], "\"Yeah, I could see that.\"", [], [], []],
+	[[&"interested"], "\"That's exactly what I was hoping for.\"", [], [], []],
 	[[&"interested"], "\"Finally, something sensible.\"", [&"karen"], [], []],
+	[[&"interested"], "\"Hm. Not bad. Not bad at all.\"", [&"hawk"], [], []],
 
 	# reply_*: their answer to one of the method's techniques, where nothing
 	# was written for the objection they have open (or none is).
 	[[&"reply_empathize"], "\"Thanks. I appreciate that.\"", [], [], []],
 	[[&"reply_empathize"], "\"Okay. I'm listening.\"", [], [], []],
 	[[&"reply_empathize"], "\"That's fair, I guess.\"", [], [], []],
+	[[&"reply_empathize"], "\"Thank you. That helps.\"", [], [], []],
+	[[&"reply_empathize"], "\"At least you get it.\"", [], [], []],
+	[[&"reply_empathize"], "\"Okay. Go on.\"", [], [], []],
+	[[&"reply_empathize"], "\"That's... actually nice to hear.\"", [], [], []],
+	[[&"reply_empathize"], "\"Well, finally someone understands.\"", [&"karen"], [], []],
+	[[&"reply_empathize"], "\"Fine. But I'm still watching the number.\"", [&"hawk"], [], []],
 	[[&"reply_clarify"], "\"Honestly? I'm not sure.\"", [], [], []],
 	[[&"reply_clarify"], "\"It's just a lot to think about.\"", [], [], []],
 	[[&"reply_clarify"], "\"Do I have to answer all these questions?\"", [], [], []],
+	[[&"reply_clarify"], "\"Hm. Good question.\"", [], [], []],
+	[[&"reply_clarify"], "\"Let me think about that.\"", [], [], []],
+	[[&"reply_clarify"], "\"I guess it's mostly the money.\"", [], [], []],
+	[[&"reply_clarify"], "\"I'm just not sure I need it.\"", [], [], []],
 	[[&"reply_clarify"], "\"Why do you need to know that?\"", [&"karen"], [], []],
+	[[&"reply_clarify"], "\"Can we skip the questions?\"", [&"kicker"], [], []],
+	[[&"reply_clarify"], "\"Depends. What are the exact terms?\"", [&"tech"], [], []],
 	[[&"reply_relate"], "\"Ha. Fair enough.\"", [], [], []],
 	[[&"reply_relate"], "\"Okay, that makes it easier to picture.\"", [], [], []],
 	[[&"reply_relate"], "\"I do drink a lot of coffee.\"", [], [], []],
+	[[&"reply_relate"], "\"Ha. I never thought of it like that.\"", [], [], []],
+	[[&"reply_relate"], "\"Okay, okay. I see what you mean.\"", [], [], []],
+	[[&"reply_relate"], "\"That's a weird way to put it, but sure.\"", [], [], []],
+	[[&"reply_relate"], "\"Car seats, yeah. That makes sense.\"", [&"family"], [], []],
 	[[&"reply_value"], "\"Huh. When you put it that way...\"", [], [], []],
 	[[&"reply_value"], "\"Okay, that's worth something.\"", [], [], []],
+	[[&"reply_value"], "\"Alright, that's a fair point.\"", [], [], []],
+	[[&"reply_value"], "\"Okay. I can see the use.\"", [], [], []],
+	[[&"reply_value"], "\"Hm. That does sound useful.\"", [], [], []],
+	[[&"reply_value"], "\"You're making a decent case.\"", [], [], []],
+	[[&"reply_value"], "\"Still sounds pricey. But okay.\"", [&"hawk"], [], []],
 	[[&"reply_budget"], "\"Okay, that's more like it.\"", [], [], []],
+	[[&"reply_budget"], "\"Better. Keep going.\"", [], [], []],
+	[[&"reply_budget"], "\"Okay, that I can work with.\"", [], [], []],
+	[[&"reply_budget"], "\"That's closer to what I had in mind.\"", [], [], []],
+	[[&"reply_budget"], "\"That's the least you could do.\"", [&"karen"], [], []],
 	[[&"reply_listen"], "\"Honestly, I just want something reliable.\"", [], [], []],
 	[[&"reply_listen"], "\"I just don't want any surprises.\"", [], [], []],
+	[[&"reply_listen"], "\"Mostly I just want it to last.\"", [], [], []],
+	[[&"reply_listen"], "\"I worry about the payments, honestly.\"", [], [], []],
+	[[&"reply_listen"], "\"I had a bad experience last time.\"", [], [], []],
+	[[&"reply_listen"], "\"I just want to understand what I'm buying.\"", [], [], []],
 	[[&"reply_listen"], "\"We've got a baby on the way, so...\"", [&"family"], [], []],
 	[[&"reply_listen"], "\"I've read every review of this car. Twice.\"", [&"tech"], [], []],
 	[[&"reply_listen"], "\"I just want this done today.\"", [&"kicker"], [], []],
+	[[&"reply_listen"], "\"Honestly? I'm happy either way.\"", [&"easygoing"], [], []],
+	[[&"reply_listen"], "\"Whatever you think is best, really.\"", [&"laydown"], [], []],
 ]
 
 ## Each of the method's techniques: [the tag your line goes in, the tag their
@@ -401,123 +497,340 @@ const TECHNIQUES := {
 # objections": who tends to raise it. Saying any of them opens this objection.
 # No "raise" means it is only ever flushed out of another.
 #
-# Each technique is [your line, their answer], either of which may be "". An
-# answer can instead be a list of [text, objection] pairs, where answering
-# flushes out the real objection behind this one - "No thanks" turning out to
-# be the price.
+# Each technique is [your lines, their answers]. Either side is a list of
+# variants - say the same thing a different way, since any of yours can meet
+# any of theirs - and either may be left out. An answer written as [text,
+# objection] instead flushes out the real objection behind this one: "No
+# thanks" turning out to be the price.
 const OBJECTIONS := [
 	# ---- WALKAWAY: the deck's own, condensed.
 	{"id": &"walkaway_too_expensive",
 		"raise": [&"objection_walkaway", [
 			["\"It's too expensive.\""],
 			["\"That's a lot to add to my payment.\""],
+			["\"That's more than I wanted to spend.\""],
+			["\"Another add-on? My payment's already high.\""],
 			["\"Whoa. How much a month is that?\"", [&"hawk"]],
 			["\"I'm not paying extra for that.\"", [&"karen"]],
 		]],
-		"clarify": ["\"So you see the benefit, it's just more than you want to spend?\"", "\"Well, yeah.\""],
-		"empathize": ["\"I can appreciate that. We have options for every budget.\"", "\"Okay. Like what?\""],
-		"budget": ["\"Standard Plus 4 is great protection, under $7 a payment.\"", "\"Under seven bucks? Huh.\""],
-		"relate": ["\"Would 4 months get you back on your feet, or a full year?\"", "\"A full year would be nice.\""],
-		"value": ["\"A full year of payments covered, for a few dollars more.\"", "\"When you put it like that...\""],
-		"listen": ["\"What were you hoping to keep the payment at?\"", "\"Somewhere under five hundred.\""],
-		"guide": ["\"It says here Plus 4 covers 4 payments instead of 12.\""],
-		"close": ["\"Four months covered, or the whole year?\""],
+		"clarify": [[
+				"\"So you see the benefit, it's just more than you want to spend?\"",
+				"\"So the coverage makes sense, it's just the price?\"",
+				"\"You like what it does, just not the cost, right?\"",
+			], ["\"Well, yeah.\"", "\"Yeah, basically.\"", "\"Pretty much, yeah.\""]],
+		"empathize": [[
+				"\"I can appreciate that. We have options for every budget.\"",
+				"\"Totally fair. That's why there's more than one plan.\"",
+				"\"I hear you. Let's find one that fits your budget.\"",
+			], ["\"Okay. Like what?\"", "\"Okay. What else is there?\"", "\"Alright, show me.\""]],
+		"budget": [[
+				"\"Standard Plus 4 is great protection, under $7 a payment.\"",
+				"\"Plus 4 covers four payments, for much less a month.\"",
+				"\"There's a lighter plan, Standard Plus 4. Under $7.\"",
+			], ["\"Under seven bucks? Huh.\"", "\"Seven bucks I can do.\"",
+				"\"Okay, that's more reasonable.\""]],
+		"relate": [[
+				"\"Would 4 months get you back on your feet, or a full year?\"",
+				"\"Four months is a cushion. A year is peace of mind.\"",
+				"\"Could you get back on your feet in four months?\"",
+			], ["\"A full year would be nice.\"", "\"Four months... maybe?\"",
+				"\"A year sounds safer, honestly.\""]],
+		"value": [[
+				"\"A full year of payments covered, for a few dollars more.\"",
+				"\"The full plan covers twelve payments, not four.\"",
+				"\"For a few dollars more, the whole year is covered.\"",
+			], ["\"When you put it like that...\"", "\"Twelve, huh?\"",
+				"\"That's a big difference.\""]],
+		"listen": [[
+				"\"What were you hoping to keep the payment at?\"",
+				"\"What number feels comfortable for you?\"",
+				"\"Is there a payment you won't go over?\"",
+			], ["\"Somewhere under five hundred.\"", "\"I'd like to stay under five hundred.\"",
+				"\"Under five hundred, if I can.\""]],
+		"guide": [["\"It says here Plus 4 covers 4 payments instead of 12.\""]],
+		"close": [["\"Four months covered, or the whole year?\"",
+			"\"Plus 4 or the full year, which feels right?\"",
+			"\"Shall we start you on Plus 4?\""]],
 	},
 	{"id": &"walkaway_no_thanks",
 		"raise": [&"objection_walkaway", [
 			["\"No thanks.\""],
 			["\"I think I'll pass.\""],
+			["\"I'm good, thanks.\""],
+			["\"Not for me, thanks.\""],
 			["\"No thanks. Can we wrap this up?\"", [&"kicker"]],
 			["\"No. Absolutely not.\"", [&"karen"]],
 		]],
-		"clarify": ["\"Is it the payment, or you don't see yourself using it?\"", [
-			["\"Honestly? It's the payment.\"", &"walkaway_too_expensive"],
-			["\"I just don't see myself needing it.\"", &"walkaway_dont_need"],
-		]],
-		"listen": ["\"No pressure. What's making you hesitate?\"", [
-			["\"It's the money, mostly.\"", &"walkaway_too_expensive"],
-			["\"I don't think I'd ever use it.\"", &"walkaway_dont_need"],
-		]],
-		"empathize": ["\"No problem at all. Most people say that at first.\"", "\"Yeah, I'm just not sure.\""],
-		"guide": ["\"Can I show you one page of the Program Guide? It's quick.\""],
+		"clarify": [[
+				"\"Is it the payment, or you don't see yourself using it?\"",
+				"\"Can I ask, is it the cost or the coverage?\"",
+				"\"Is it the price, or you don't think you'd use it?\"",
+			], [
+				["\"Honestly? It's the payment.\"", &"walkaway_too_expensive"],
+				["\"The cost, mostly.\"", &"walkaway_too_expensive"],
+				["\"I just don't see myself needing it.\"", &"walkaway_dont_need"],
+				["\"I don't think I'd ever need it.\"", &"walkaway_dont_need"],
+			]],
+		"listen": [[
+				"\"No pressure. What's making you hesitate?\"",
+				"\"Totally fine. What's your hesitation?\"",
+				"\"No problem. What's on your mind?\"",
+			], [
+				["\"It's the money, mostly.\"", &"walkaway_too_expensive"],
+				["\"It's just more money.\"", &"walkaway_too_expensive"],
+				["\"I don't think I'd ever use it.\"", &"walkaway_dont_need"],
+				["\"I can't see myself using it.\"", &"walkaway_dont_need"],
+			]],
+		"empathize": [[
+				"\"No problem at all. Most people say that at first.\"",
+				"\"Fair enough. Can I ask one quick thing?\"",
+				"\"No worries. Most people need a minute.\"",
+			], ["\"Yeah, I'm just not sure.\"", "\"Sure, go ahead.\"", "\"I guess.\""]],
+		"guide": [["\"Can I show you one page of the Program Guide? It's quick.\"",
+			"\"The guide covers the what, why and how. Quick look?\""]],
 	},
 	{"id": &"walkaway_dont_need",
 		"raise": [&"objection_walkaway", [
 			["\"I don't think I need it.\""],
 			["\"I don't see myself using it.\""],
+			["\"I've never needed anything like that.\""],
+			["\"I'm healthy and my job's solid.\""],
 			["\"Ah, I don't think I'll ever need that.\"", [&"easygoing"]],
 		]],
-		"clarify": ["\"Because you won't get sick or laid off, or you have a plan?\"", "\"I just don't see it happening.\""],
-		"empathize": ["\"Totally understand, and hopefully you never do.\"", "\"Right. Exactly.\""],
-		"relate": ["\"It's like a car warranty. Built well, but you never know.\"", "\"Huh. I guess that's fair.\""],
-		"value": ["\"That's why most clients like a warranty for themselves.\"", "\"A warranty for me. Okay.\""],
-		"listen": ["\"If you lost your job, how would you make the payments?\"", [
-			["\"From my savings, I guess.\"", &"walkaway_savings"],
-			["\"I'd use my line of credit.\"", &"walkaway_line_of_credit"],
-		]],
-		"close": ["\"Can you see how that might be of value to you, too?\""],
+		"clarify": [[
+				"\"Because you won't get sick or laid off, or you have a plan?\"",
+				"\"Is that because you won't need it, or you'd manage?\"",
+				"\"Do you have a plan in place if something happened?\"",
+			], ["\"I just don't see it happening.\"", "\"I'd figure something out.\"",
+				"\"Not really, I guess.\""]],
+		"empathize": [[
+				"\"Totally understand, and hopefully you never do.\"",
+				"\"I hope you never do. Truly.\"",
+				"\"I get it. Nobody plans on bad luck.\"",
+			], ["\"Right. Exactly.\"", "\"Thanks. Me neither.\"", "\"Exactly.\""]],
+		"relate": [[
+				"\"It's like a car warranty. Built well, but you never know.\"",
+				"\"Cars come with a warranty for a reason.\"",
+				"\"You'd never drive off without a warranty, right?\"",
+			], ["\"Huh. I guess that's fair.\"", "\"No, I guess not.\"", "\"Fair point.\""]],
+		"value": [[
+				"\"That's why most clients like a warranty for themselves.\"",
+				"\"It's a few dollars to cover your biggest bill.\"",
+				"\"It covers your payments if life gets in the way.\"",
+			], ["\"A warranty for me. Okay.\"", "\"That would help, I guess.\"",
+				"\"Hm. My biggest bill, sure.\""]],
+		"listen": [[
+				"\"If you lost your job, how would you make the payments?\"",
+				"\"If something did happen, how would you pay the car?\"",
+				"\"Say you got sick a while. How'd you cover payments?\"",
+			], [
+				["\"From my savings, I guess.\"", &"walkaway_savings"],
+				["\"My savings would cover it.\"", &"walkaway_savings"],
+				["\"I'd use my line of credit.\"", &"walkaway_line_of_credit"],
+				["\"I'd put it on my credit line.\"", &"walkaway_line_of_credit"],
+			]],
+		"close": [["\"Can you see how that might be of value to you, too?\"",
+			"\"Would a warranty for yourself be worth a few dollars?\"",
+			"\"Shall we cover you, not just the car?\""]],
 	},
 	{"id": &"walkaway_savings",
-		"empathize": ["\"It's great you're in a position to do that.\"", "\"I've worked hard for it.\""],
-		"listen": ["\"What are those savings for, ideally?\"", "\"A rainy day. Maybe a trip.\""],
-		"relate": ["\"Savings are for the fun stuff, not the car payment.\"", "\"...Fair point.\""],
-		"value": ["\"Most people like you protect their savings for something they want.\"", "\"Like a trip, or the kids' school.\""],
-		"close": ["\"Wouldn't you rather keep those savings for yourself?\""],
+		"empathize": [[
+				"\"It's great you're in a position to do that.\"",
+				"\"That's great planning on your part.\"",
+				"\"Good for you. Most people can't.\"",
+			], ["\"I've worked hard for it.\"", "\"It took a while.\"",
+				"\"Thanks. It wasn't easy.\""]],
+		"relate": [[
+				"\"Savings are for the fun stuff, not the car payment.\"",
+				"\"Your rainy-day fund shouldn't pay for the car.\"",
+				"\"Savings should go to things you enjoy.\"",
+			], ["\"...Fair point.\"", "\"Huh. True.\"", "\"I'd rather spend it on fun, sure.\""]],
+		"value": [[
+				"\"Most people like you protect their savings for something they want.\"",
+				"\"For a few dollars, your savings stay untouched.\"",
+				"\"This keeps your savings for what you really want.\"",
+			], ["\"Like a trip, or the kids' school.\"", "\"Untouched sounds nice.\"",
+				"\"That's a nice thought.\""]],
+		"listen": [[
+				"\"What are those savings for, ideally?\"",
+				"\"What would you rather use those savings for?\"",
+				"\"What are you saving up for?\"",
+			], ["\"A rainy day. Maybe a trip.\"", "\"A trip, honestly.\"", "\"Retirement, mostly.\""]],
+		"close": [["\"Wouldn't you rather keep those savings for yourself?\"",
+			"\"Keep the savings, cover the payments. Deal?\"",
+			"\"Shall we protect that nest egg?\""]],
 	},
 	{"id": &"walkaway_line_of_credit",
-		"empathize": ["\"Good to have that option.\"", "\"It's there for emergencies.\""],
-		"listen": ["\"What else is that line of credit there for?\"", "\"Emergencies, mostly.\""],
-		"relate": ["\"If something happened, you'd need that credit for other bills.\"", "\"Hm. I hadn't thought of that.\""],
-		"value": ["\"For a few dollars, your biggest bill is taken care of.\"", "\"That would take some stress off.\""],
-		"close": ["\"Can you see why most people protect that line of credit?\""],
+		"empathize": [[
+				"\"Good to have that option.\"",
+				"\"Smart to have one.\"",
+				"\"That's a good safety net.\"",
+			], ["\"It's there for emergencies.\"", "\"Yeah, just in case.\"",
+				"\"I've never really used it.\""]],
+		"relate": [[
+				"\"If something happened, you'd need that credit for other bills.\"",
+				"\"That credit line might need to cover other bills.\"",
+				"\"If money's tight, that credit gets used up fast.\"",
+			], ["\"Hm. I hadn't thought of that.\"", "\"Hm. Probably true.\"",
+				"\"Yeah, it would go fast.\""]],
+		"value": [[
+				"\"For a few dollars, your biggest bill is taken care of.\"",
+				"\"This keeps your credit line free for emergencies.\"",
+				"\"It takes your biggest bill off the table.\"",
+			], ["\"That would take some stress off.\"", "\"Off the table. I like that.\"",
+				"\"That's fair.\""]],
+		"listen": [[
+				"\"What else is that line of credit there for?\"",
+				"\"When did you last need that line of credit?\"",
+				"\"What else would that credit have to cover?\"",
+			], ["\"Emergencies, mostly.\"", "\"Car repairs, once.\"", "\"Bills, I guess.\""]],
+		"close": [["\"Can you see why most people protect that line of credit?\"",
+			"\"Shall we keep that credit for real emergencies?\"",
+			"\"Want your car payment covered instead?\""]],
 	},
 	{"id": &"walkaway_work_coverage",
 		"raise": [&"objection_walkaway", [
 			["\"I have great coverage through work.\""],
+			["\"My job has disability coverage.\""],
+			["\"Work already covers me.\""],
 			["\"My work benefits already cover all that.\"", [&"tech"]],
 		]],
-		"empathize": ["\"That's great. Employers who care make a big difference.\"", "\"Yeah, they're pretty good to us.\""],
-		"listen": ["\"What does your plan at work actually pay?\"", "\"Most of my salary, I think?\""],
-		"clarify": ["\"To be blunt, the best plans I know pay only 67% on disability.\"", "\"Wait, only 67 percent?\""],
-		"relate": ["\"I don't know about you, but I spend more than two thirds of my pay!\"", "\"Ha. Don't we all.\""],
-		"value": ["\"WALKAWAY tops that up, on top of any other benefit you get.\"", "\"On top of it? Okay.\""],
-		"close": ["\"Can you see how $15 for $25,000 of benefits could come in handy?\""],
+		"empathize": [[
+				"\"That's great. Employers who care make a big difference.\"",
+				"\"That's great. Not everybody gets that.\"",
+				"\"Good benefits are worth a lot.\"",
+			], ["\"Yeah, they're pretty good to us.\"", "\"Yeah, I'm lucky.\"",
+				"\"It's a good company.\""]],
+		"clarify": [[
+				"\"To be blunt, the best plans I know pay only 67% on disability.\"",
+				"\"Most plans only pay about two thirds of your pay.\"",
+				"\"Did you know most work plans stop at two thirds of pay?\"",
+			], ["\"Wait, only 67 percent?\"", "\"Only two thirds?\"", "\"I didn't, no.\""]],
+		"relate": [[
+				"\"I don't know about you, but I spend more than two thirds of my pay!\"",
+				"\"Could you live on two thirds of your income?\"",
+				"\"Two thirds of your pay, all your bills. Doable?\"",
+			], ["\"Ha. Don't we all.\"", "\"That'd be tight.\"", "\"Not easily.\""]],
+		"value": [[
+				"\"WALKAWAY tops that up, on top of any other benefit you get.\"",
+				"\"This sits on top of your work coverage.\"",
+				"\"It fills the gap your work plan leaves.\"",
+			], ["\"On top of it? Okay.\"", "\"So both would pay?\"", "\"Okay, that's helpful.\""]],
+		"listen": [[
+				"\"What does your plan at work actually pay?\"",
+				"\"Have you ever read the fine print on that plan?\"",
+				"\"How long does your work plan pay for?\"",
+			], ["\"Most of my salary, I think?\"", "\"I just know I have it.\"",
+				"\"I'm not actually sure.\""]],
+		"close": [["\"Can you see how $15 for $25,000 of benefits could come in handy?\"",
+			"\"Want to close that gap for about $15?\"",
+			"\"Shall we top up what work gives you?\""]],
 	},
 	{"id": &"walkaway_lots_of_insurance",
 		"raise": [&"objection_walkaway", [
 			["\"I already have lots of insurance.\""],
+			["\"I'm insured up to my eyeballs already.\""],
+			["\"I have life insurance already.\""],
 			["\"We already have life insurance for the kids.\"", [&"family"]],
 		]],
-		"empathize": ["\"That's great news! It's always great to be protected.\"", "\"I like to be careful.\""],
-		"listen": ["\"Who is that policy meant to look after?\"", "\"My family, of course.\""],
-		"clarify": ["\"Would that policy end up paying off the car?\"", "\"I mean... I guess it would.\""],
-		"value": ["\"This keeps your life insurance from paying off the car.\"", "\"Huh. I never thought of that.\""],
-		"relate": ["\"That way, your loved ones keep more of that money.\"", "\"That does matter to me.\""],
-		"close": ["\"Isn't a few dollars a solid way to protect that inheritance?\""],
+		"empathize": [[
+				"\"That's great news! It's always great to be protected.\"",
+				"\"Smart. You clearly care about your family.\"",
+				"\"Love that. You're well prepared.\"",
+			], ["\"I like to be careful.\"", "\"I try to be.\"", "\"Thanks. I think so.\""]],
+		"clarify": [[
+				"\"Would that policy end up paying off the car?\"",
+				"\"If something happened, would that policy pay the car?\"",
+				"\"Would your family want that money going to a car?\"",
+			], ["\"I mean... I guess it would.\"", "\"I suppose so.\"", "\"Not really, no.\""]],
+		"value": [[
+				"\"This keeps your life insurance from paying off the car.\"",
+				"\"This pays off the car, so your policy goes to family.\"",
+				"\"It keeps your life insurance for your loved ones.\"",
+			], ["\"Huh. I never thought of that.\"", "\"Oh. That makes sense.\"",
+				"\"So they keep it all?\""]],
+		"relate": [[
+				"\"That way, your loved ones keep more of that money.\"",
+				"\"Your policy is for your family, not your lender.\"",
+				"\"Leave your family money, not a car loan.\"",
+			], ["\"That does matter to me.\"", "\"That's true.\"", "\"Hm. Fair.\""]],
+		"listen": [[
+				"\"Who is that policy meant to look after?\"",
+				"\"What's that policy meant to cover?\"",
+				"\"Who did you take that policy out for?\"",
+			], ["\"My family, of course.\"", "\"The kids, mostly.\"", "\"My spouse.\""]],
+		"close": [["\"Isn't a few dollars a solid way to protect that inheritance?\"",
+			"\"Shall we keep that inheritance whole?\"",
+			"\"Protect the policy for a few dollars?\""]],
 	},
 	{"id": &"walkaway_wont_qualify",
 		"raise": [&"objection_walkaway", [
 			["\"I wouldn't qualify for that.\""],
+			["\"I'm too old for that kind of thing.\""],
+			["\"With my health? No chance.\""],
 			["\"I probably wouldn't even qualify.\"", [&"laydown"]],
 		]],
-		"empathize": ["\"I hear that a lot. You'd be surprised.\"", "\"Would I, though?\""],
-		"listen": ["\"What makes you think you wouldn't?\"", "\"My health isn't the best.\""],
-		"clarify": ["\"Everyone under 80 qualifies. No pre-existing condition clauses.\"", "\"Really? None at all?\""],
-		"value": ["\"No good health statements, and no medical checks.\"", "\"Well, that's easy enough.\""],
-		"guide": ["\"It's right here in the Program Guide: no medical checks.\""],
-		"close": ["\"So nothing's standing in your way. Shall we add it?\""],
+		"empathize": [[
+				"\"I hear that a lot. You'd be surprised.\"",
+				"\"A lot of people think that. Let me check.\"",
+				"\"I understand. Let's see, though.\"",
+			], ["\"Would I, though?\"", "\"Go ahead, check.\"", "\"Okay...\""]],
+		"clarify": [[
+				"\"Everyone under 80 qualifies. No pre-existing condition clauses.\"",
+				"\"Are you under 80? Then you qualify.\"",
+				"\"No medical checks, no health questions. Really.\"",
+			], ["\"Really? None at all?\"", "\"I'm under 80, yes.\"", "\"No checks at all?\""]],
+		"value": [[
+				"\"No good health statements, and no medical checks.\"",
+				"\"No health statements. Nothing to fill out.\"",
+				"\"It's built so nearly everyone can get it.\"",
+			], ["\"Well, that's easy enough.\"", "\"That's a relief.\"",
+				"\"Huh. Nearly everyone?\""]],
+		"listen": [[
+				"\"What makes you think you wouldn't?\"",
+				"\"What makes you say that?\"",
+				"\"Why do you think you wouldn't qualify?\"",
+			], ["\"My health isn't the best.\"", "\"I've had some health issues.\"",
+				"\"Just a hunch.\""]],
+		"guide": [["\"It's right here in the Program Guide: no medical checks.\"",
+			"\"The guide says it: under 80, and you're in.\"",
+			"\"Right here: no pre-existing condition clauses.\""]],
+		"close": [["\"So nothing's standing in your way. Shall we add it?\"",
+			"\"Since you qualify, shall we add it?\"",
+			"\"Nothing's stopping you. Want it?\""]],
 	},
 	{"id": &"walkaway_buy_outright",
 		"raise": [&"objection_walkaway", [
 			["\"I'd just buy the car outright.\""],
 			["\"If it came to that, I'd just pay it off.\""],
+			["\"I'd just use my savings if it came to it.\""],
 			["\"I'd just pay the thing off in cash.\"", [&"hawk"]],
 		]],
-		"empathize": ["\"That's a great position to be in. Fantastic flexibility.\"", "\"I've been saving a while.\""],
-		"listen": ["\"What would that do to your savings?\"", "\"Put a dent in them, sure.\""],
-		"clarify": ["\"Would you rather spend those savings, or keep them?\"", "\"Keep them, obviously.\""],
-		"value": ["\"Many in your spot keep their savings intact for hard times.\"", "\"I do like having a cushion.\""],
-		"close": ["\"Would that kind of flexibility be of value to you too?\""],
+		"empathize": [[
+				"\"That's a great position to be in. Fantastic flexibility.\"",
+				"\"That's great. Not many people can say that.\"",
+				"\"Love that kind of flexibility.\"",
+			], ["\"I've been saving a while.\"", "\"Thanks, it took work.\"",
+				"\"It's nice, yeah.\""]],
+		"clarify": [[
+				"\"Would you rather spend those savings, or keep them?\"",
+				"\"Would you want to drain your savings in a crisis?\"",
+				"\"Is that money you'd rather keep?\"",
+			], ["\"Keep them, obviously.\"", "\"Not really, no.\"", "\"I'd rather keep it.\""]],
+		"value": [[
+				"\"Many in your spot keep their savings intact for hard times.\"",
+				"\"This keeps your investments working for you.\"",
+				"\"Keep the cash, and let this cover the payments.\"",
+			], ["\"I do like having a cushion.\"", "\"That's a good point.\"",
+				"\"I like keeping my cash.\""]],
+		"listen": [[
+				"\"What would that do to your savings?\"",
+				"\"What would those savings be for otherwise?\"",
+				"\"How long did it take you to save that up?\"",
+			], ["\"Put a dent in them, sure.\"", "\"Retirement.\"", "\"Years, honestly.\""]],
+		"close": [["\"Would that kind of flexibility be of value to you too?\"",
+			"\"Shall we keep your savings safe?\"",
+			"\"Want that flexibility built in?\""]],
 	},
 
 	# ---- WALKAWAY GAP: the same method, paraphrased for the gap between the
@@ -526,55 +839,145 @@ const OBJECTIONS := [
 		"raise": [&"objection_walkaway_gap", [
 			["\"It's too expensive.\""],
 			["\"That's a lot just for a 'what if.'\""],
+			["\"Do I really need to pay for that?\""],
+			["\"That's too much on top of everything.\""],
 			["\"How much is THAT going to run me?\"", [&"hawk"]],
 		]],
-		"clarify": ["\"So you like the idea, it's just the price?\"", "\"Pretty much.\""],
-		"empathize": ["\"Totally fair. Nobody wants a bigger payment.\"", "\"No kidding.\""],
-		"relate": ["\"It's less than a tank of gas a month.\"", "\"Huh. Really?\""],
-		"value": ["\"Total the car, and you won't be paying for one you lost.\"", "\"That would be awful.\""],
-		"budget": ["\"Spread over the loan, it's a few dollars a payment.\"", "\"Okay, that's not bad.\""],
-		"listen": ["\"Where were you hoping to keep the payment?\"", "\"As low as it'll go.\""],
-		"close": ["\"Want that gap covered for a few dollars?\""],
+		"clarify": [[
+				"\"So you like the idea, it's just the price?\"",
+				"\"So you see the point, just not the price?\"",
+				"\"The coverage makes sense, the cost doesn't?\"",
+			], ["\"Pretty much.\"", "\"Basically.\"", "\"Yeah.\""]],
+		"empathize": [[
+				"\"Totally fair. Nobody wants a bigger payment.\"",
+				"\"I get it. Payments add up fast.\"",
+				"\"Fair. Nobody likes extra costs.\"",
+			], ["\"No kidding.\"", "\"They sure do.\"", "\"Exactly.\""]],
+		"relate": [[
+				"\"It's less than a tank of gas a month.\"",
+				"\"It's less than a takeout dinner each month.\"",
+				"\"About one coffee a week.\"",
+			], ["\"Huh. Really?\"", "\"Okay, that's not much.\"", "\"Huh. That's it?\""]],
+		"value": [[
+				"\"Total the car, and you won't be paying for one you lost.\"",
+				"\"A total loss could cost you thousands.\"",
+				"\"It saves you paying for a car you don't have.\"",
+			], ["\"That would be awful.\"", "\"Thousands? Yikes.\"", "\"Yeah, no thanks.\""]],
+		"budget": [[
+				"\"Spread over the loan, it's a few dollars a payment.\"",
+				"\"It's a few dollars a month, spread over the loan.\"",
+				"\"Spread out, it barely moves your payment.\"",
+			], ["\"Okay, that's not bad.\"", "\"Barely, huh?\"", "\"Okay, I can live with that.\""]],
+		"listen": [[
+				"\"Where were you hoping to keep the payment?\"",
+				"\"What payment were you aiming for?\"",
+			], ["\"As low as it'll go.\"", "\"Something reasonable.\""]],
+		"close": [["\"Want that gap covered for a few dollars?\"",
+			"\"Close that gap for a few dollars?\"",
+			"\"Shall we add it?\""]],
 	},
 	{"id": &"walkaway_gap_insured",
 		"raise": [&"objection_walkaway_gap", [
 			["\"My car insurance covers that.\""],
+			["\"That's what my insurance is for.\""],
+			["\"I already pay for full coverage.\""],
 			["\"Doesn't my insurance already cover that?\"", [&"tech"]],
 		]],
-		"empathize": ["\"Good, you should have that.\"", "\"Exactly.\""],
-		"clarify": ["\"Insurance pays what the car's worth, not what you owe.\"", "\"Wait, those aren't the same?\""],
-		"listen": ["\"And what would your insurance pay out, do you think?\"", "\"What it's worth, I guess.\""],
-		"relate": ["\"New cars lose value fast. Your loan doesn't.\"", "\"Huh. Good point.\""],
-		"value": ["\"This covers the difference, so you don't pay off a car you lost.\"", "\"Okay, that makes sense.\""],
-		"close": ["\"Shall we close that gap?\""],
+		"empathize": [[
+				"\"Good, you should have that.\"",
+				"\"Smart. Full coverage is great.\"",
+				"\"Good. You need that.\"",
+			], ["\"Exactly.\"", "\"Right.\"", "\"Thanks.\""]],
+		"clarify": [[
+				"\"Insurance pays what the car's worth, not what you owe.\"",
+				"\"Insurance pays the car's value, not your loan.\"",
+				"\"If you owe more than it's worth, who pays the rest?\"",
+			], ["\"Wait, those aren't the same?\"", "\"Wait, really?\"", "\"Hm. I would?\""]],
+		"relate": [[
+				"\"New cars lose value fast. Your loan doesn't.\"",
+				"\"A new car loses value the day you drive it.\"",
+				"\"Your loan shrinks slower than the car's value.\"",
+			], ["\"Huh. Good point.\"", "\"Ugh. True.\"", "\"That's a good point.\""]],
+		"value": [[
+				"\"This covers the difference, so you don't pay off a car you lost.\"",
+				"\"It covers what insurance won't.\"",
+				"\"So you're never paying for a car you lost.\"",
+			], ["\"Okay, that makes sense.\"", "\"That's worth having.\"", "\"Good to know.\""]],
+		"listen": [[
+				"\"And what would your insurance pay out, do you think?\"",
+				"\"Do you know what your policy would pay out?\"",
+				"\"Have you ever had a car written off before?\"",
+			], ["\"What it's worth, I guess.\"", "\"Not really.\"", "\"No, thankfully.\""]],
+		"close": [["\"Shall we close that gap?\"",
+			"\"Want the gap covered too?\"",
+			"\"Shall we cover what insurance won't?\""]],
 	},
 	{"id": &"walkaway_gap_dont_need",
 		"raise": [&"objection_walkaway_gap", [
 			["\"I'm not planning on wrecking it.\""],
 			["\"I'm a careful driver.\""],
+			["\"I've never been in an accident.\""],
+			["\"Nothing's going to happen to it.\""],
 		]],
-		"clarify": ["\"If it's ever totaled, how would you cover the rest of the loan?\"", "\"I... honestly don't know.\""],
-		"listen": ["\"What would you do if it was stolen tomorrow?\"", [
-			["\"Call my insurance, I guess?\"", &"walkaway_gap_insured"],
-		]],
-		"empathize": ["\"I'm sure you are. Hopefully you never need it.\"", "\"I hope not.\""],
-		"relate": ["\"Nobody plans it. That's why they call it an accident.\"", "\"Ha. Fair enough.\""],
-		"value": ["\"Fire, theft or accident, the gap is covered.\"", "\"Even theft? Huh.\""],
-		"close": ["\"Can you see how that might be worth a few dollars?\""],
+		"clarify": [[
+				"\"If it's ever totaled, how would you cover the rest of the loan?\"",
+				"\"If it's stolen, would the payout cover your loan?\"",
+				"\"What would you owe if it was written off?\"",
+			], ["\"I... honestly don't know.\"", "\"I'm not sure.\"", "\"No idea, honestly.\""]],
+		"listen": [[
+				"\"What would you do if it was stolen tomorrow?\"",
+				"\"And if it was written off, then what?\"",
+			], [
+				["\"Call my insurance, I guess?\"", &"walkaway_gap_insured"],
+				["\"My insurance would cover it?\"", &"walkaway_gap_insured"],
+			]],
+		"empathize": [[
+				"\"I'm sure you are. Hopefully you never need it.\"",
+				"\"Great record. Hopefully it stays that way.\"",
+				"\"I believe you. It's other drivers I worry about.\"",
+			], ["\"I hope not.\"", "\"Me too.\"", "\"Ha. Fair.\""]],
+		"relate": [[
+				"\"Nobody plans it. That's why they call it an accident.\"",
+				"\"You can be careful. The other guy might not be.\"",
+				"\"Accidents aren't planned. That's the point.\"",
+			], ["\"Ha. Fair enough.\"", "\"True enough.\"", "\"Okay, okay.\""]],
+		"value": [[
+				"\"Fire, theft or accident, the gap is covered.\"",
+				"\"Fire, theft, or a wreck, you're covered either way.\"",
+				"\"Even if it's not your fault, the gap is covered.\"",
+			], ["\"Even theft? Huh.\"", "\"Even theft?\"", "\"Good to know.\""]],
+		"close": [["\"Can you see how that might be worth a few dollars?\"",
+			"\"Shall we cover the what-ifs?\"",
+			"\"Want that protection?\""]],
 	},
 	{"id": &"walkaway_gap_no_thanks",
 		"raise": [&"objection_walkaway_gap", [
 			["\"No thanks.\""],
+			["\"Not interested.\""],
+			["\"I'll pass on that one.\""],
 			["\"No. Absolutely not.\"", [&"karen"]],
 		]],
-		"clarify": ["\"Is it the price, or you don't see yourself needing it?\"", [
-			["\"It's the price.\"", &"walkaway_gap_too_expensive"],
-			["\"I just don't think I'll need it.\"", &"walkaway_gap_dont_need"],
-		]],
-		"listen": ["\"No pressure. What's holding you back?\"", [
-			["\"It's the money, really.\"", &"walkaway_gap_too_expensive"],
-			["\"My insurance covers that, right?\"", &"walkaway_gap_insured"],
-		]],
+		"clarify": [[
+				"\"Is it the price, or you don't see yourself needing it?\"",
+				"\"Is it the cost, or you'd never need it?\"",
+			], [
+				["\"It's the price.\"", &"walkaway_gap_too_expensive"],
+				["\"The cost.\"", &"walkaway_gap_too_expensive"],
+				["\"I just don't think I'll need it.\"", &"walkaway_gap_dont_need"],
+				["\"I'd never need it.\"", &"walkaway_gap_dont_need"],
+			]],
+		"listen": [[
+				"\"No pressure. What's holding you back?\"",
+				"\"No problem. What's the hesitation?\"",
+			], [
+				["\"It's the money, really.\"", &"walkaway_gap_too_expensive"],
+				["\"My insurance covers that, right?\"", &"walkaway_gap_insured"],
+				["\"Isn't that what insurance is for?\"", &"walkaway_gap_insured"],
+			]],
+		"empathize": [[
+				"\"No worries. Can I ask why?\"",
+				"\"That's fine. Mind if I ask what's behind it?\"",
+			], ["\"Just seems unnecessary.\"", "\"Sure.\""]],
 	},
 
 	# ---- Everything else: generic, plus a joke per product. No value lines
@@ -583,19 +986,41 @@ const OBJECTIONS := [
 		"raise": [&"objection", [
 			["\"It's too expensive.\""],
 			["\"What's that going to cost me?\""],
+			["\"That's a lot of money.\""],
+			["\"Yikes. That's pricey.\""],
 			["\"Fine. What's the other guy charging for it?\"", [&"hawk"]],
 			["\"I'm not paying for that.\"", [&"karen"]],
 		]],
-		"clarify": ["\"So you like it, it's just the price?\"", "\"Pretty much.\""],
-		"empathize": ["\"Totally fair. Nobody wants a bigger payment.\"", "\"No kidding.\""],
-		"budget": ["\"Let me see what I can do on the price.\"", "\"Now we're talking.\""],
-		"relate": ["\"That's about three coffees a week.\"", "\"I do drink a lot of coffee.\""],
-		"close": ["\"If I can make the number work, are we good?\""],
+		"clarify": [[
+				"\"So you like it, it's just the price?\"",
+				"\"So the product's fine, it's the cost?\"",
+				"\"Is it the monthly, or the total?\"",
+			], ["\"Pretty much.\"", "\"Mostly the cost.\"", "\"The monthly, mostly.\""]],
+		"empathize": [[
+				"\"Totally fair. Nobody wants a bigger payment.\"",
+				"\"I get it. Money's tight for everyone.\"",
+				"\"Fair. It is an extra cost.\"",
+			], ["\"No kidding.\"", "\"Tell me about it.\"", "\"It really is.\""]],
+		"budget": [[
+				"\"Let me see what I can do on the price.\"",
+				"\"Let me see if there's a cheaper way.\"",
+				"\"I can probably do better on that.\"",
+			], ["\"Now we're talking.\"", "\"Okay, let's see it.\"", "\"Better how?\""]],
+		"relate": [[
+				"\"That's about three coffees a week.\"",
+				"\"It's less than a streaming subscription.\"",
+				"\"Think of it as a coffee a week.\"",
+			], ["\"I do drink a lot of coffee.\"", "\"Okay, that's not much.\"", "\"Ha. Fine.\""]],
+		"close": [["\"If I can make the number work, are we good?\"",
+			"\"If the price works, are we good?\"",
+			"\"Can I make this fit your budget?\""]],
 	},
 	{"id": &"dont_need",
 		"raise": [&"objection", [
 			["\"I don't think I need that.\""],
 			["\"Do I look like I need all that?\""],
+			["\"I'll take my chances.\""],
+			["\"Seems like overkill.\""],
 			["\"My cousin's a mechanic. Sort of.\"", [], [&"vsc"]],
 			["\"Who would steal THIS car?\"", [], [&"theft"]],
 			["\"I'll just wash it more. Probably.\"", [], [&"appearance"]],
@@ -606,26 +1031,54 @@ const OBJECTIONS := [
 			["\"I'm driving this until the wheels fall off.\"", [], [&"tvp"]],
 			["\"I'm a really good driver, though.\"", [], [&"gap"]],
 		]],
-		"clarify": ["\"What makes you feel you won't need it?\"", "\"It's just never come up.\""],
-		"empathize": ["\"Fair. A lot of people feel that way at first.\"", "\"Glad it's not just me.\""],
-		"relate": ["\"Nobody needs an umbrella until it rains.\"", "\"Ha. Okay, okay.\""],
-		"close": ["\"Can you see how it might be worth having?\""],
+		"clarify": [[
+				"\"What makes you feel you won't need it?\"",
+				"\"Have you ever been caught off guard by a bill?\"",
+				"\"What would you do if something did happen?\"",
+			], ["\"It's just never come up.\"", "\"Once or twice.\"", "\"Figure it out, I guess.\""]],
+		"empathize": [[
+				"\"Fair. A lot of people feel that way at first.\"",
+				"\"I get it. Feels like one more thing.\"",
+				"\"Fair. Not everyone wants extras.\"",
+			], ["\"Glad it's not just me.\"", "\"Exactly.\"", "\"Right.\""]],
+		"relate": [[
+				"\"Nobody needs an umbrella until it rains.\"",
+				"\"You insure your phone. Why not the car?\"",
+				"\"Like a spare tire. Forgettable, until you need it.\"",
+			], ["\"Ha. Okay, okay.\"", "\"Okay, fair.\"", "\"Ha. True.\""]],
+		"close": [["\"Can you see how it might be worth having?\"",
+			"\"Want it, just in case?\"",
+			"\"Shall we add it for peace of mind?\""]],
 	},
 	{"id": &"no_thanks",
 		"raise": [&"objection", [
 			["\"No thanks.\""],
 			["\"I'll pass.\""],
+			["\"Nah, I'm good.\""],
+			["\"Not today, thanks.\""],
 			["\"No thanks. Are we almost done?\"", [&"kicker"]],
 		]],
-		"clarify": ["\"Is it the price, or the product?\"", [
-			["\"It's the price.\"", &"too_expensive"],
-			["\"I don't think I need it.\"", &"dont_need"],
-		]],
-		"listen": ["\"No pressure. What's holding you back?\"", [
-			["\"It's the money, mostly.\"", &"too_expensive"],
-			["\"I just don't need it.\"", &"dont_need"],
-		]],
-		"empathize": ["\"No problem at all. Can I ask why?\"", "\"Just not sure it's worth it.\""],
+		"clarify": [[
+				"\"Is it the price, or the product?\"",
+				"\"Is it the cost, or you don't need it?\"",
+			], [
+				["\"It's the price.\"", &"too_expensive"],
+				["\"The cost.\"", &"too_expensive"],
+				["\"I don't think I need it.\"", &"dont_need"],
+				["\"I just don't need it.\"", &"dont_need"],
+			]],
+		"listen": [[
+				"\"No pressure. What's holding you back?\"",
+				"\"Okay. What's making you hesitate?\"",
+			], [
+				["\"It's the money, mostly.\"", &"too_expensive"],
+				["\"It's the price, honestly.\"", &"too_expensive"],
+				["\"I just don't need it.\"", &"dont_need"],
+			]],
+		"empathize": [[
+				"\"No problem at all. Can I ask why?\"",
+				"\"That's okay. Mind if I ask why?\"",
+			], ["\"Just not sure it's worth it.\"", "\"I just don't see the point.\""]],
 	},
 ]
 
@@ -669,7 +1122,7 @@ func _line(tags: Array, text: String, archetypes: Array = [], products: Array = 
 
 
 ## One OBJECTIONS entry, as lines: its raises, each opening it, then each
-## technique's line for it and their answer to that.
+## technique's lines for it and their answers to those.
 func _objection_lines(o: Dictionary) -> Array[DialogueLine]:
 	var id: StringName = o["id"]
 	var out: Array[DialogueLine] = []
@@ -684,14 +1137,13 @@ func _objection_lines(o: Dictionary) -> Array[DialogueLine]:
 		var said: Array = o[technique]
 		var yours: StringName = TECHNIQUES[technique][0]
 		var theirs: StringName = TECHNIQUES[technique][1]
-		if said[0] != "":
-			out.append(_line([yours], said[0], [], [], [], [id]))
+		for text in said[0]:
+			out.append(_line([yours], text, [], [], [], [id]))
 		if said.size() < 2 or theirs == &"":
 			continue
-		if said[1] is String:
-			if said[1] != "":
-				out.append(_line([theirs], said[1], [], [], [], [id]))
-			continue
-		for flush in said[1]:
-			out.append(_line([theirs], flush[0], [], [], [], [id], flush[1]))
+		for answer in said[1]:
+			if answer is Array:
+				out.append(_line([theirs], answer[0], [], [], [], [id], answer[1]))
+			else:
+				out.append(_line([theirs], answer, [], [], [], [id]))
 	return out

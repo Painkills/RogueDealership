@@ -60,6 +60,9 @@ var said_impatient: bool = false
 ## expensive" - while you work through it. &"" when nothing is: see
 ## Shift._object(), and DialogueLine.becomes for how a conversation moves it.
 var objection: StringName = &""
+## The last few things they said, newest last - what DialoguePool.pick_line()
+## steers them away from repeating. See Shift._heard().
+var recent_lines: Array[String] = []
 
 var _interests: InterestPool
 

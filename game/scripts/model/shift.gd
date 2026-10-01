@@ -795,11 +795,22 @@ func _speak(tags: Array[StringName], c: Customer, product_id: StringName,
 	if dialogue == null or tags.is_empty():
 		return
 	var l := dialogue.pick_line(voice_rng, tags, c.archetype.id, product_id, band,
-		_objection_of(c))
+		_objection_of(c), player_lines.slice(-RECENT_LINES))
 	if l == null:
 		return
 	player_lines.append(l.text)
 	_open(c, l)
+
+
+## How many of a speaker's latest lines a new one steers clear of repeating -
+## see DialoguePool.pick_line()'s `avoid`.
+const RECENT_LINES := 4
+
+## Remembers what `c` just said, so they do not say it again straight away.
+func _heard(c: Customer, said: String) -> void:
+	c.recent_lines.append(said)
+	if c.recent_lines.size() > RECENT_LINES:
+		c.recent_lines = c.recent_lines.slice(-RECENT_LINES)
 
 
 ## What they object to, while there is still something on the table to object
@@ -829,7 +840,7 @@ func _object(c: Customer, product: ProductCardDef) -> void:
 	if c.offer.appeal < c.line:
 		tags = product.objection_tags
 	var l := dialogue.pick_line(voice_rng, tags, c.archetype.id, product.id,
-		StringName(band_for(c.line - c.offer.appeal)))
+		StringName(band_for(c.line - c.offer.appeal)), &"", c.recent_lines)
 	if l == null:
 		return
 	_log_words(c, l.text)
@@ -888,9 +899,10 @@ func _support(c: Customer, index: int) -> Result:
 		var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
 			if c.offer else &""
 		var reply := dialogue.pick_line(rng, def.dialogue_tags, c.archetype.id,
-			product_id, band, _objection_of(c))
+			product_id, band, _objection_of(c), c.recent_lines)
 		if reply != null:
 			said = reply.text
+			_heard(c, said)
 			_open(c, reply)
 	# Appended even when nothing was said, and even when the card is untagged:
 	# until now playing a support card produced NO log line at all, while
@@ -1286,7 +1298,8 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 func _chatter(c: Customer, tags: Array[StringName], product_id: StringName = &"") -> void:
 	if dialogue == null:
 		return
-	var said := dialogue.pick(rng, tags, c.archetype.id, product_id, &"")
+	var said := dialogue.pick(rng, tags, c.archetype.id, product_id, &"", &"",
+		c.recent_lines)
 	if said == "":
 		return
 	_log_words(c, said)
@@ -1294,6 +1307,7 @@ func _chatter(c: Customer, tags: Array[StringName], product_id: StringName = &""
 
 ## Their words and nothing done - the entry _chatter() and _object() append.
 func _log_words(c: Customer, said: String) -> void:
+	_heard(c, said)
 	action_log.append({
 		"key": c.key,
 		"customer": c.display_name,

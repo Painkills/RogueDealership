@@ -29,6 +29,11 @@ const SIDE_SEAT_TICKS := 3
 ## laid out along the bottom of the screen (see build_shift_scene.gd). "The
 ## speech bubble should go away after a tick."
 const PLAYER_TICKS := 1
+## "Make conversation bubbles go away after 3 seconds if there's been no
+## ticks." The one wall-clock rule on top of the tick ones: the clock can sit
+## still while you think, and a line left up the whole time stops being news.
+## Whichever comes first - its ticks, or this - takes it down.
+const QUIET_SECONDS := 3.0
 
 @onready var _panel: PanelContainer = $Panel
 @onready var _label: Label = $Panel/Label
@@ -37,16 +42,23 @@ const PLAYER_TICKS := 1
 ## reads as "long expired" rather than "just started," if update_visibility()
 ## is ever called before the first say().
 var _shown_tick: int = -9999
+## When it was said, in Time.get_ticks_msec() - see QUIET_SECONDS.
+var _shown_msec: int = 0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	visible = false
+
+func _process(_delta: float) -> void:
+	if visible and Time.get_ticks_msec() - _shown_msec >= int(QUIET_SECONDS * 1000.0):
+		visible = false
 
 func say(text: String, tick: int) -> void:
 	if text == "":
 		return
 	_label.text = text
 	_shown_tick = tick
+	_shown_msec = Time.get_ticks_msec()
 	visible = true
 
 ## Called every render pass (customer_card_3d.gd's setup()) so the bubble can

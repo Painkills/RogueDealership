@@ -59,10 +59,23 @@ func weight_of(l: DialogueLine) -> int:
 
 func pick_line(rng: RandomNumberGenerator, tags: Array[StringName],
 		archetype_id: StringName, product_id: StringName,
-		band: StringName, objection: StringName = &"") -> DialogueLine:
+		band: StringName, objection: StringName = &"",
+		avoid: Array = []) -> DialogueLine:
 	## The line itself, for a caller that needs more than its words - what it
 	## becomes, say. null when nothing fits.
+	##
+	## `avoid` is what the speaker said lately: skipped while anything else
+	## fits, so playing the same card three times is three different sentences
+	## rather than one sentence three times. Never silence - with nothing else
+	## left, a repeat beats saying nothing.
 	var pool := candidates(tags, archetype_id, product_id, band, objection)
+	if not avoid.is_empty():
+		var fresh: Array[DialogueLine] = []
+		for l in pool:
+			if not avoid.has(l.text):
+				fresh.append(l)
+		if not fresh.is_empty():
+			pool = fresh
 	if pool.is_empty():
 		return null
 	var total := 0
@@ -78,9 +91,9 @@ func pick_line(rng: RandomNumberGenerator, tags: Array[StringName],
 
 func pick(rng: RandomNumberGenerator, tags: Array[StringName],
 		archetype_id: StringName, product_id: StringName,
-		band: StringName, objection: StringName = &"") -> String:
+		band: StringName, objection: StringName = &"", avoid: Array = []) -> String:
 	## Returns "" when nothing fits, which every caller already treats as
 	## "they said nothing" - SpeechBubble.say() no-ops on an empty string and
 	## _drain_log() skips the line.
-	var l := pick_line(rng, tags, archetype_id, product_id, band, objection)
+	var l := pick_line(rng, tags, archetype_id, product_id, band, objection, avoid)
 	return l.text if l != null else ""

@@ -632,6 +632,33 @@ func test_what_you_say_never_moves_the_games_own_dice() -> void:
 	h.eq("and the game's dice are where they would have been",
 		talking.rng.state, quiet.rng.state)
 
+func test_a_speaker_steers_clear_of_what_they_just_said() -> void:
+	var pool := _lines([["\"one\"", [&"t"]], ["\"two\"", [&"t"]], ["\"three\"", [&"t"]]])
+	var rng := RandomNumberGenerator.new()
+	for seed_value in range(1, 13):
+		rng.seed = seed_value
+		h.eq("seed %d says the one thing not said lately" % seed_value,
+			pool.pick(rng, [&"t"], &"", &"", &"", &"", ["\"one\"", "\"two\""]), "\"three\"")
+	h.check("and with nothing else left, a repeat beats silence",
+		pool.pick(rng, [&"t"], &"", &"", &"", &"", ["\"one\"", "\"two\"", "\"three\""]) != "")
+
+func test_playing_the_same_card_again_says_something_new() -> void:
+	var s := _voiced_shift(_lines([["\"one\"", [&"t_mine"]], ["\"two\"", [&"t_mine"]],
+		["\"three\"", [&"t_mine"]], ["\"ah\"", [&"t_back"]], ["\"oh\"", [&"t_back"]]]))
+	var card := _a_support_card(s, [&"t_mine"])
+	card.dialogue_tags = [&"t_back"]
+	var theirs: Array[String] = []
+	for _i in range(3):
+		var before := s.action_log.size()
+		_play(s, card)
+		s.pending_pull = null
+		theirs.append(s.action_log[before]["dialogue"])
+	var yours := s.player_lines.slice(-3)
+	h.check("three plays, three different lines from you (%s)" % str(yours),
+		yours[0] != yours[1] and yours[1] != yours[2] and yours[0] != yours[2])
+	h.check("and they never answer the same way twice running (%s)" % str(theirs),
+		theirs[0] != theirs[1] and theirs[1] != theirs[2])
+
 # -------------------------------------------------------------- objections
 # A product under their Line draws an objection, the method's techniques answer
 # it, and offering closes on it. The library's own rules are checked against

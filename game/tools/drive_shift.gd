@@ -118,11 +118,13 @@ func _physics_process(_delta: float) -> bool:
 	_check_the_windows_show_behind_the_customers()
 	_check_the_tablet_keeps_the_shifts_time()
 	_check_what_you_say_comes_up_from_the_bottom()
+	_check_they_answer_after_you_and_both_go_quiet()
 	_check_drop_zones_use_the_overridden_shape()
 	_check_the_clock_warns_when_time_is_short()
 	_check_table("after approaching chair A")
 
 	_check_the_floor_key_flips()
+	_check_a_folder_only_turns_for_a_pointer_that_moved()
 	_check_the_pull_picker_locks_input_until_resolved()
 	_check_what_a_customer_says_reaches_their_card()
 
@@ -225,6 +227,8 @@ func _settle() -> void:
 	# The HUD's tags follow their anchors every frame in _process(), and there
 	# is no next frame inside this one - place them against the settled table.
 	_controller._place_tags()
+	# Nor is there time for a customer's reply to wait out REPLY_DELAY.
+	_controller._release_pending_says(true)
 
 func _flush(node: Node3D) -> void:
 	# Each card also owns the tween that walks it to its place in the layout.
@@ -2194,6 +2198,67 @@ func _check_what_you_say_comes_up_from_the_bottom() -> void:
 	_press(KEY_F)
 	_settle()
 	_check("back at the desk, it stays down", s.at != null and not bubble.visible)
+
+## "Make the bubbles appear in order (so if the player speaks first, have it
+## appear a little before the response from the customer)" and "make
+## conversation bubbles go away after 3 seconds if there's been no ticks".
+## Timed off the view's own constants, never a remembered number.
+func _check_they_answer_after_you_and_both_go_quiet() -> void:
+	var s: Shift = _controller._shift
+	var at := _at()
+	var card: CustomerCard3D = _controller._customer_cards[at]
+	var yours: SpeechBubble = _controller._player_bubble
+	card.hush()
+	s.player_lines.append("\"Is it the payment, or the coverage?\"")
+	s.action_log.append({"key": s.chairs[at].key, "customer": "", "name": "",
+		"dialogue": "\"Honestly? The payment.\"", "descriptions": [],
+		"floor_wide": false, "chatter": true})
+	_controller._drain_log()
+	_check("you speak first", yours.visible)
+	_check("and they wait %.1fs to answer" % _controller.REPLY_DELAY, not card.is_speaking())
+	_controller._release_pending_says(true)
+	_check("then they answer", card.is_speaking())
+
+	var quiet := int(SpeechBubble.QUIET_SECONDS * 1000.0)
+	yours._shown_msec -= quiet - 50
+	yours._process(0.0)
+	_check("a moment short of %.0fs your line is still up" % SpeechBubble.QUIET_SECONDS,
+		yours.visible)
+	yours._shown_msec -= 100
+	card._bubble._shown_msec -= quiet
+	yours._process(0.0)
+	card._bubble._process(0.0)
+	_check("and %.0fs without a tick takes both down" % SpeechBubble.QUIET_SECONDS,
+		not yours.visible and not card.is_speaking())
+
+## "I'm often getting customers turned around as they appear or as I switch
+## chairs even if I'm not actually hovering." Physics picking fires a pad's
+## mouse_entered whenever the table turns one under a pointer that never
+## moved; only a pointer that really moves over it is a look.
+func _check_a_folder_only_turns_for_a_pointer_that_moved() -> void:
+	var at := _at()
+	var other := (at + 1) % 3
+	var flip = _controller._customer_flips[other]
+	_press(KEY_F)       # step back to the floor: the whole table moves
+	_settle()
+	_controller._on_pad_entered(other)   # what picking fires as it swings past
+	_settle()
+	_check("a folder swung under a still pointer is not turned over",
+		not flip.showing_back())
+	var pad: Node3D = _controller._hover_pads[other]
+	var over: Vector2 = _controller._camera.unproject_position(pad.global_position)
+	_controller._pointer = func(): return over
+	var move := InputEventMouseMotion.new()
+	move.relative = Vector2(12, 0)
+	_controller._input(move)
+	_settle()
+	_check("but moving the pointer on it turns it over", flip.showing_back())
+	_controller._on_customer_unhover(other)
+	_controller._pointer = Callable()
+	_settle()
+	_press(KEY_F)       # and back to the desk
+	_settle()
+	_check("back at the desk to carry on", _controller._shift.at != null)
 
 ## VENDORED.md's own patch: CardCollection3D's dropzone_collision_shape /
 ## dropzone_z_offset setters used to silently fail to persist through

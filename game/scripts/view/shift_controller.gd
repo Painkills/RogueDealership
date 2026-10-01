@@ -168,6 +168,14 @@ var _peeked: int = -1                ## touch's stand-in for hover: tap once to 
 ## finishing a drag onto a customer used to turn their folder over, burying the
 ## front you were dropping onto. It takes leaving and coming back to turn it.
 var _hover_held: int = -1
+## Whether the pointer has really moved since the table last moved under it - a
+## chair switch, or someone new sitting down. See _on_pad_entered().
+var _hover_armed := true
+## A pad the pointer came to be over without moving, waiting for it to move.
+var _entered_unarmed: int = -1
+## Who was in each chair at the last render - someone new sitting down under a
+## resting pointer must not count as being looked at.
+var _seated_seen: Array = []
 ## Injectable so a test can force the touch branch without a real touchscreen -
 ## production never overrides this, always the real platform check.
 var _touch_check: Callable = DisplayServer.is_touchscreen_available
@@ -177,6 +185,9 @@ var _pointer: Callable = Callable()
 var _events_seen: int = 0
 var _actions_seen: int = 0
 var _player_lines_seen: int = 0
+## A customer's line held back to answer yours - see _say_on_the_card().
+const REPLY_DELAY := 0.7
+var _pending_says: Array = []
 ## True once the tick counter has already pulsed for THIS stretch of low time -
 ## reset the moment time is no longer short, so a shift that somehow recovers
 ## (it never does today, but nothing here should assume that) pulses again.
@@ -250,7 +261,7 @@ func _ready() -> void:
 	for i in range(_customer_cards.size()):
 		_customer_cards[i].chair = i
 		var pad: StaticBody3D = _hover_pads[i]
-		pad.mouse_entered.connect(_on_customer_hover.bind(i))
+		pad.mouse_entered.connect(_on_pad_entered.bind(i))
 		pad.mouse_exited.connect(_on_customer_unhover.bind(i))
 		pad.input_event.connect(_on_pad_input.bind(i))
 
@@ -307,6 +318,13 @@ func _bind_key(action: StringName, keycode: Key, shift: bool = false,
 	ev.shift_pressed = shift
 	ev.ctrl_pressed = ctrl
 	InputMap.action_add_event(action, ev)
+
+## Only ever reads the pointer moving - it consumes nothing, so every click and
+## drag still reaches the table. See _hover_armed.
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion \
+			and (event as InputEventMouseMotion).relative.length_squared() > 4.0:
+		_arm_hover()
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Never handle mouse here: _unhandled_input runs BEFORE physics picking, so
@@ -402,6 +420,8 @@ func setup(shift: Shift, standing_before: int,
 	_actions_seen = 0
 	_player_lines_seen = 0
 	_player_bubble.hush()
+	_pending_says.clear()
+	_seated_seen = []
 	_event_log.clear()
 	_report_overlay.visible = false
 	# The button that ends this shift must not promise "Continue" on the shift
@@ -723,7 +743,41 @@ func _on_customer_hover(chair: int) -> void:
 		_customer_cards[chair].hush()
 	_render_hover_flip()
 
+## A pad's mouse_entered is not proof anybody is looking. Physics picking fires
+## it whenever a pad ends up under the cursor - the carousel turning one under a
+## mouse that never moved, a customer sitting down in the chair it was resting
+## over - and every one of those turned a folder over that nobody had pointed
+## at. So it only counts once the pointer has really moved since the last such
+## change (_hover_armed); until then it waits in _entered_unarmed for the first
+## move to confirm it.
+func _on_pad_entered(chair: int) -> void:
+	if _hover_armed:
+		_on_customer_hover(chair)
+	else:
+		_entered_unarmed = chair
+
+## The table moved under the pointer: what it is over now has not been looked
+## at yet. Whatever it was hovering waits for a real move to count again.
+func _disarm_hover() -> void:
+	_hover_armed = false
+	if _hovered >= 0:
+		_entered_unarmed = _hovered
+		_hovered = -1
+		_render_hover_flip()
+
+func _arm_hover() -> void:
+	if _hover_armed:
+		return
+	_hover_armed = true
+	var waiting := _entered_unarmed
+	_entered_unarmed = -1
+	# Still over it after moving: that one is a real look.
+	if waiting >= 0 and _pad_under(_pointer_at()) == waiting:
+		_on_customer_hover(waiting)
+
 func _on_customer_unhover(chair: int) -> void:
+	if _entered_unarmed == chair:
+		_entered_unarmed = -1
 	if _hovered == chair:
 		_hovered = -1
 	# Leaving is what makes the next arrival a real look.
@@ -811,6 +865,9 @@ func _apply_framing() -> void:
 	_hovered = -1
 	_peeked = -1
 	_hover_held = -1
+	# The carousel is about to turn pads under a pointer that has not moved.
+	_hover_armed = false
+	_entered_unarmed = -1
 	var seated: bool = _shift.at != null
 	var target: Node3D = _seat_cam if seated else _camera_floor
 	# Staying put on the floor keeps whoever you last dealt with at the front,
@@ -919,6 +976,14 @@ func _render() -> void:
 		_at_risk_label.remove_theme_color_override("font_color")
 
 	_apply_framing()
+	# Someone new in a chair the pointer was resting on is not someone it is
+	# looking at - see _on_pad_entered().
+	var now_seated: Array = _shift.chairs.duplicate()
+	if _hovered >= 0 and _hovered < now_seated.size() \
+			and _hovered < _seated_seen.size() \
+			and now_seated[_hovered] != _seated_seen[_hovered]:
+		_disarm_hover()
+	_seated_seen = now_seated
 
 	var seated: bool = _shift.at != null
 	for i in range(_customer_cards.size()):
@@ -998,6 +1063,7 @@ func _waiting_row_for(place: int, arch: CustomerArchetype) -> Control:
 ## than jump to where the card will end up.
 func _process(_delta: float) -> void:
 	_place_tags()
+	_release_pending_says()
 
 func _place_tags() -> void:
 	# The report and the deck viewer each cover the table, so its hints go with
@@ -1087,6 +1153,15 @@ func _drain_log() -> void:
 	for line in _shift.events.slice(_events_seen):
 		_event_log.append_text(line + "\n")
 	_events_seen = _shift.events.size()
+	# What you said yourself, playing a card: the newest of it, in your own
+	# bubble - FIRST. "If the player speaks first, have it appear a little
+	# before the response from the customer": whatever they say back in the
+	# same breath waits REPLY_DELAY to answer it. Like theirs, it is not for
+	# the log.
+	var you_spoke := _shift.player_lines.size() > _player_lines_seen
+	if you_spoke:
+		_player_bubble.say(_shift.player_lines[-1], _shift.tick)
+	_player_lines_seen = _shift.player_lines.size()
 	for entry in _shift.action_log.slice(_actions_seen):
 		# What a customer SAYS goes in a speech bubble over their own card, and
 		# not in here: "remove customer dialogue lines from the shift log." The
@@ -1095,7 +1170,7 @@ func _drain_log() -> void:
 		# just does it on their folder rather than in a column of text.
 		var said: String = str(entry.get("dialogue", ""))
 		if said != "":
-			_say_on_the_card(str(entry["key"]), said)
+			_say_on_the_card(str(entry["key"]), said, REPLY_DELAY if you_spoke else 0.0)
 		# Chatter is words and nothing else - taking a product, running short of
 		# patience (see Shift._chatter()) - so it leaves nothing here at all.
 		if bool(entry.get("chatter", false)):
@@ -1105,22 +1180,42 @@ func _drain_log() -> void:
 			% [color, entry["customer"], entry["key"], entry["name"],
 				", ".join(entry["descriptions"])])
 	_actions_seen = _shift.action_log.size()
-	# And what you said yourself, playing a card: the newest of it, in your own
-	# bubble. Like theirs, it is not for the log.
-	if _shift.player_lines.size() > _player_lines_seen:
-		_player_bubble.say(_shift.player_lines[-1], _shift.tick)
-	_player_lines_seen = _shift.player_lines.size()
 
 ## "All customer actions need to show on the screen, not just in the log" - a
 ## speech bubble on the card that said it, which is now the only place it
 ## shows. Keyed on the chair LETTER the entry itself carries: dialogue is only
 ## ever recorded the instant it is spoken, before anything could have vacated
 ## that chair since, so the letter still names the right card.
-func _say_on_the_card(key: String, text: String) -> void:
+##
+## `delay` holds it back to answer you rather than talk over you. A held line
+## remembers who said it, and is dropped if someone else has the chair by the
+## time it is due.
+func _say_on_the_card(key: String, text: String, delay: float = 0.0) -> void:
 	var chair: int = Shift.CHAIR_KEYS.find(key)
 	if chair < 0 or chair >= _customer_cards.size():
 		return
-	_customer_cards[chair].say(text, _shift.tick)
+	if delay <= 0.0:
+		_customer_cards[chair].say(text, _shift.tick)
+		return
+	_pending_says.append({"chair": chair, "text": text, "tick": _shift.tick,
+		"who": _shift.chairs[chair] if chair < _shift.chairs.size() else null,
+		"due": Time.get_ticks_msec() + int(delay * 1000.0)})
+
+## Says every held line that is due - all of them with `now`, for a driver that
+## has no time to wait.
+func _release_pending_says(now: bool = false) -> void:
+	if _pending_says.is_empty() or _shift == null:
+		return
+	var clock := Time.get_ticks_msec()
+	var still: Array = []
+	for p in _pending_says:
+		if not now and clock < int(p["due"]):
+			still.append(p)
+			continue
+		var chair: int = p["chair"]
+		if chair < _shift.chairs.size() and _shift.chairs[chair] == p["who"]:
+			_customer_cards[chair].say(p["text"], p["tick"])
+	_pending_says = still
 
 func _show_report() -> void:
 	_report_overlay.visible = true
