@@ -10,6 +10,6 @@ id = &"laydown"
 display_name = "Lay-Down Larry"
 pattern = "Offer everything you've got!"
 tell = "already nodding, and has not asked a single question"
-line = 20
+line = 16
 line_per_sale = 0
 combo_step = 0.05

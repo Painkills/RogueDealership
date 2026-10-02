@@ -30,6 +30,7 @@ effects = Array[ExtResource("2_q8rar")]([SubResource("Resource_r4edv")])
 
 [resource]
 script = ExtResource("7_7gpfm")
+line = 24
 id = &"family"
 display_name = "Family First"
 pattern = "Give them room. They will not be rushed, and the tick you spend hovering over them is the one that loses them."

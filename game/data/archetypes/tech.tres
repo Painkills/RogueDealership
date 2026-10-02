@@ -29,6 +29,8 @@ effects = Array[ExtResource("2_tbny2")]([SubResource("Resource_nc07q")])
 
 [resource]
 script = ExtResource("7_ms7hp")
+line_per_sale = 2
+line = 30
 id = &"tech"
 display_name = "Tech Enthusiast"
 pattern = "Hunt the bullseye. Do not grind a mediocre product upward when the right one pays a premium."

@@ -44,13 +44,13 @@ appeal_bands = Array[StringName]([&"COLD"])
 script = ExtResource("1_rmhas")
 text = "\"Okay, I can see how that would be helpful.\""
 tags = Array[StringName]([&"appeal"])
-appeal_bands = Array[StringName]([&"ALMOST"])
+appeal_bands = Array[StringName]([&"ALMOST", &"INTERESTED"])
 
 [sub_resource type="Resource" id="Resource_2y2sn"]
 script = ExtResource("1_rmhas")
 text = "\"Oh, that's pretty good.\""
 tags = Array[StringName]([&"appeal"])
-appeal_bands = Array[StringName]([&"ALMOST"])
+appeal_bands = Array[StringName]([&"ALMOST", &"INTERESTED"])
 
 [sub_resource type="Resource" id="Resource_d5jv2"]
 script = ExtResource("1_rmhas")
@@ -477,7 +477,7 @@ appeal_bands = Array[StringName]([&"COLD"])
 script = ExtResource("1_rmhas")
 text = "\"Oh, this one is right up your alley.\""
 tags = Array[StringName]([&"player_pitch"])
-appeal_bands = Array[StringName]([&"ALMOST"])
+appeal_bands = Array[StringName]([&"ALMOST", &"INTERESTED"])
 
 [sub_resource type="Resource" id="Resource_pnl8g"]
 script = ExtResource("1_rmhas")
@@ -843,7 +843,7 @@ tags = Array[StringName]([&"player_value"])
 script = ExtResource("1_rmhas")
 text = "\"And honestly? It pretty much sells itself.\""
 tags = Array[StringName]([&"player_value"])
-appeal_bands = Array[StringName]([&"ALMOST"])
+appeal_bands = Array[StringName]([&"ALMOST", &"INTERESTED"])
 
 [sub_resource type="Resource" id="Resource_rq4hg"]
 script = ExtResource("1_rmhas")

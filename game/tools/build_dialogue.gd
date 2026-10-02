@@ -1244,6 +1244,10 @@ func _line(tags: Array, text: String, archetypes: Array = [], products: Array = 
 	l.archetype_ids.assign(archetypes)
 	l.product_ids.assign(products)
 	l.appeal_bands.assign(bands)
+	# A line for nearly there is a line for already there: ALMOST used to cover
+	# both sides of the Line, until INTERESTED split the far side off.
+	if l.appeal_bands.has(&"ALMOST") and not l.appeal_bands.has(&"INTERESTED"):
+		l.appeal_bands.append(&"INTERESTED")
 	l.objection_ids.assign(objections)
 	l.becomes = becomes
 	return l

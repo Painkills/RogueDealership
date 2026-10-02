@@ -26,11 +26,12 @@ effects = Array[ExtResource("2_esk8w")]([SubResource("Resource_en01u")])
 
 [resource]
 script = ExtResource("6_f00xy")
+line = 24
 id = &"karen"
 display_name = "The Karen"
 pattern = "See to them FIRST, and give them what they actually came in for."
 tell = "has already asked who the manager is, twice"
-line_per_sale = 5
+line_per_sale = 4
 combo_step = 0.45
 demands_category = true
 min_shift = 4

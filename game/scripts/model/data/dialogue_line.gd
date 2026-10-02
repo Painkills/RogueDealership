@@ -18,7 +18,8 @@ class_name DialogueLine extends Resource
 @export var tags: Array[StringName] = []
 @export var archetype_ids: Array[StringName] = []
 @export var product_ids: Array[StringName] = []
-## One of whatever Shift.band_for() returns - ALMOST / WARM / COOL / COLD.
+## One of whatever Shift.band_for() returns - INTERESTED / ALMOST / WARM /
+## COOL / COLD.
 @export var appeal_bands: Array[StringName] = []
 ## The customer's open objection(s) this line answers - "It's too expensive"
 ## answered with the word track written for it. With no objection open, a line

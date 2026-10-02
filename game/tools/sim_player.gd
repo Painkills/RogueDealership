@@ -10,12 +10,12 @@ class_name SimPlayer extends RefCounted
 ## archetype's tastes (its favourites usually rank near the top, its dislikes
 ## near the bottom) but not this customer's ranks, and it guesses a typical
 ## Line until Read the Room shows the real one. After placing it sees only the
-## band, offers on ALMOST, pushes or drops on the rest, and learns the exact
+## band, offers on INTERESTED, pushes or drops on the rest, and learns the exact
 ## gap the way you do - by offering, or by Read the Room.
 
 static var fog := false
 ## What a fogged player guesses a Line is before anything has told it.
-const GUESSED_LINE := 35
+const GUESSED_LINE := 24
 ## Where an interest is guessed to rank: an archetype favourite, a dislike,
 ## or neither.
 const GUESS_TOP := 2
@@ -51,13 +51,14 @@ static func _est_appeal(c: Customer, iid: StringName) -> int:
 static func _gap_known(c: Customer) -> bool:
 	return not fog or c.known_line or (c.offer != null and c.offer.revealed)
 
-## How much appeal a band suggests is still missing - its middle.
+## How much appeal a band suggests is still missing - about its middle, in
+## rungs of appeal_step (4): ALMOST is within one, WARM within 2.5, COOL 4.5.
 static func _band_need(band: String) -> int:
 	match band:
 		"ALMOST": return 3
-		"WARM": return 9
-		"COOL": return 18
-	return 28
+		"WARM": return 7
+		"COOL": return 14
+	return 22
 
 ## With `track` on, every visit is written down as it is played: customer ->
 ## {"ticks", "banked"} - the ticks spent working them (cards cycled for them
@@ -178,7 +179,7 @@ static func _act(s: Shift, c: Customer) -> bool:
 		if read >= 0:
 			return s.play_card(read).ok
 		var band := s.band_for(c.line - c.offer.appeal)
-		if band == "ALMOST":
+		if band == "INTERESTED":
 			return s.offer().ok
 		var need := _band_need(band)
 		if _appeal_in_hand(s) >= need:

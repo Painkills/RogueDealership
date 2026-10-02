@@ -833,9 +833,8 @@ func _open(c: Customer, l: DialogueLine) -> void:
 ## What they say about the product you just put in front of them. Under their
 ## Line it is an objection from the product's objection_tags - "It's too
 ## expensive" - which stays open while you work through it; already over it,
-## something warm. Read against the Line itself rather than the band: ALMOST
-## covers both sides of it, and the bar's colour already says as much as a
-## warm word does. Drawn from voice_rng, like your own lines.
+## something warm - the INTERESTED band. Drawn from voice_rng, like your own
+## lines.
 func _object(c: Customer, product: ProductCardDef) -> void:
 	if dialogue == null or c.offer == null:
 		return
@@ -1345,12 +1344,18 @@ func _log_words(c: Customer, said: String) -> void:
 
 
 func band_for(gap: int) -> String:
-	## The fog. Placing shows only this; offering shows the number.
-	if gap <= 5:
+	## The fog. Placing shows only this; Read the Room shows the number.
+	## INTERESTED is at or over the Line - they would say yes. The rest step out
+	## in rungs of ShiftConfig.appeal_step: within one, within about two and a
+	## half, within about four and a half, and beyond.
+	if gap <= 0:
+		return "INTERESTED"
+	var step: int = maxi(1, cfg.appeal_step)
+	if gap <= step:
 		return "ALMOST"
-	if gap <= 12:
+	if gap <= roundi(step * 2.5):
 		return "WARM"
-	if gap <= 22:
+	if gap <= roundi(step * 4.5):
 		return "COOL"
 	return "COLD"
 

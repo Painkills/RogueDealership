@@ -1759,7 +1759,7 @@ func _put_a_product_on_the_table() -> void:
 
 ## The change the player asked for: the fill is your own appeal and it moves
 ## when you play an appeal card, but the Line stays hidden until you have earned
-## it. The colour is the guess in between - it is what replaced the word "COOL".
+## it. The colour is the guess in between, with the band's word under it.
 func _check_the_meter_shows_your_appeal_but_hides_their_line() -> void:
 	if _controller._shift.at == null:
 		_check("still seated for the meter checks", false)
@@ -1781,8 +1781,10 @@ func _check_the_meter_shows_your_appeal_but_hides_their_line() -> void:
 		bar._scale == _controller._shift.cfg.appeal_meter_scale)
 	_check("the Line marker is hidden until you know it (known=%s)" % c.known_line,
 		bar._line_known == c.known_line)
-	_check("nothing on this card says COOL or WARM any more",
-		not det._status.text.contains("COOL") and not det._status.text.contains("WARM"))
+	# The band in words, from the moment it is placed - the model's own band.
+	var band: String = _controller._shift.band_for(c.line - c.offer.appeal)
+	_check("the card names the band under the meter (%s)" % det._status.text,
+		det._status.text == band)
 	# Red far, amber close, green once cleared - the whole point of the colour.
 	var want: Color = Palette.color(&"patience_ok") if c.offer.appeal >= c.line \
 		else (Palette.color(&"patience_warn") \

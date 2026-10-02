@@ -45,14 +45,18 @@ var _pool: InterestPool = null
 var _known: Dictionary = {}          ## interest id -> rank, 1..9
 var _top_category = null             ## StringName, or null
 var _sold: Dictionary = {}           ## interest id -> true
+## Upgraded Read the Room's three - Customer.known_top_three. Highlighted in
+## yellow, unordered: which three, not which is first.
+var _top_three: Array = []
 ## Flankers are small enough that a rank numeral stops being readable before
 ## the CELL does. Colour and fill survive the downscale; digits do not.
 var _numerals: bool = true
 
 func set_state(pool: InterestPool, known_ranks: Dictionary, top_category,
-		sold: Dictionary, numerals: bool = true) -> void:
+		sold: Dictionary, numerals: bool = true, top_three: Array = []) -> void:
 	_pool = pool
 	_known = known_ranks
+	_top_three = top_three
 	_top_category = top_category
 	_sold = sold
 	_numerals = numerals
@@ -152,12 +156,15 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 		# Known but not yet taken - the same "still open" yellow the patience
 		# bar itself uses, so green only ever means "done."
 		draw_rect(cell, Palette.color(&"patience_warn"), true)
+	elif _top_three.has(interest.id):
+		# One of the three they want most, rank unknown - a highlighter's yellow.
+		draw_rect(cell, Palette.color(&"sticky"), true)
 
 	var edge: Color = Palette.color(&"grid_edge")
 	var thickness := 3.0
 	if rank == 1:
-		# Their number one, named outright - which only upgraded Read the Room
-		# can do. Worth its own mark rather than just being "the cell with a 1".
+		# Their number one, named outright. Worth its own mark rather than just
+		# being "the cell with a 1".
 		edge = Palette.color(&"accent")
 		thickness = 6.0
 	elif in_top_category:

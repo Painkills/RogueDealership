@@ -157,14 +157,12 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 ## Having offered still buys you something real - the band - but a band is a
 ## read and a number is a readout, and only one of those you have paid for.
 ##
-## Before you offer it says nothing. It used to nudge you - "read the room",
-## "clear the Line before you offer" - but the first was advice about one card
-## printed on every pitch, and the second the meter's own mark already says.
+## From the moment you place, it names the band in the meter's own colour -
+## INTERESTED once you are over their Line, then ALMOST, WARM, COOL, COLD - so
+## a player who has not read the room still knows roughly how far there is to
+## go. The exact number stays Read the Room's.
 func _read_the_offer(c, o, band: String) -> void:
-	if not o.revealed:
-		return
-	if not c.known_line:
-		# You asked and they said no. How far off you were is a feeling.
+	if not (o.revealed and c.known_line):
 		_status.text = band
 		_status.add_theme_color_override("font_color", _bar.fill_color())
 		return

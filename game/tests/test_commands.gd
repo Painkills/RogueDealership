@@ -139,6 +139,15 @@ func test_placing_a_product_records_what_its_effect_did_in_the_log() -> void:
 	h.check("not tagged floor-wide - this one only touches the offer",
 		not s.action_log[0]["floor_wide"])
 
+func test_interested_means_at_or_over_their_line() -> void:
+	## Green on the meter and "INTERESTED" under it say the same thing: an offer
+	## now would be a yes. Nothing short of the Line may wear it.
+	var s := _shift([&"easygoing"])
+	h.eq("at the Line", s.band_for(0), "INTERESTED")
+	h.eq("over it", s.band_for(-7), "INTERESTED")
+	h.check("one short is not", s.band_for(1) != "INTERESTED")
+	h.check("a long way short is not", s.band_for(40) != "INTERESTED")
+
 func test_the_returned_band_reflects_the_product_effect_not_just_the_base_appeal() -> void:
 	## _support()'s own comment states the rule this mirrors: the band is read
 	## AFTER effects land. COLD (the pre-effect gap) leaking through instead
@@ -154,8 +163,9 @@ func test_the_returned_band_reflects_the_product_effect_not_just_the_base_appeal
 	s.hand.clear()
 	s.hand.append(CardInstance.new(def, 999))
 	var r := s.place(0)
-	h.eq("the band reflects the LIFTED appeal (gap 5, ALMOST)",
-		r.data["band"], "ALMOST")
+	h.eq("the band reflects the LIFTED appeal (gap 5)",
+		r.data["band"], s.band_for(5))
+	h.check("not the gap before it landed", s.band_for(5) != s.band_for(25))
 
 func test_an_upgraded_product_uses_its_upgraded_effects() -> void:
 	## Mirrors test_the_upgraded_room_read_names_their_number_one's own point:
@@ -229,8 +239,10 @@ func test_read_the_room_is_the_only_thing_that_lifts_the_fog() -> void:
 	h.check("fogged to begin with", not c.known_line)
 	s.play_card(0)
 	h.check("the read lifts it", c.known_line)
-	h.check("and narrows nine interests to three", c.known_top_category != null)
-	h.check("without naming the one", not c.known_ranks.has(&"power"))
+	h.check("and names the category it is in", c.known_top_category != null)
+	h.eq("and their top unsold interest, with its rank",
+		int(c.known_ranks.get(&"power", 0)), 1)
+	h.check("but not their top three - that is the upgrade", c.known_top_three.is_empty())
 
 func test_the_upgraded_room_read_names_their_number_one() -> void:
 	## Until it did, upgrading Read the Room bought a second, identical copy of
@@ -243,6 +255,8 @@ func test_the_upgraded_room_read_names_their_number_one() -> void:
 	s.play_card(0)
 	h.check("it still hands you the Line", c.known_line)
 	h.eq("and names the one outright", int(c.known_ranks.get(&"power", 0)), 1)
+	h.eq("and marks their top three", c.known_top_three.size(), 3)
+	h.check("the one among them", c.known_top_three.has(&"power"))
 
 func test_a_short_offer_costs_one_patience_and_nothing_else() -> void:
 	var s := _shift([&"easygoing", &"easygoing"])
@@ -513,7 +527,8 @@ func test_the_karen_will_not_sign_without_what_she_came_for() -> void:
 	var c := _at(s)
 	_rank(c, [&"reliability"])
 	c.demands_category = &"vehicle"
-	c.line = 20
+	# Low enough that anything sells: this is about what she signs for, not appeal.
+	c.line = 0
 	h.check("she refuses to sign", not s.close().ok)
 	h.eq("nothing banked", s.margin_banked, 0)
 	h.eq("and she is still sitting there", s.chairs[0], c)

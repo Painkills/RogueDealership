@@ -27,11 +27,12 @@ effects = Array[ExtResource("2_4sgf7")]([SubResource("Resource_i7tpi")])
 
 [resource]
 script = ExtResource("6_r7mcl")
+line = 24
 id = &"kicker"
 display_name = "Tire Kicker"
 pattern = "Do not diagnose. Sell them SOMETHING, now."
 tell = "keeps glancing at the lot, half out of the chair already"
 patience = 9
-line_per_sale = 4
+line_per_sale = 2
 min_shift = 3
 actions = Array[ExtResource("1_apes3")]([SubResource("Resource_fjiux")])

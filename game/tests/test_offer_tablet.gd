@@ -237,7 +237,7 @@ func test_the_status_is_a_band_until_you_know_the_line_and_a_number_after() -> v
 	c.line = 40
 	c.offer = _offer(&"vsc", 30, 1600)
 	t.show_offer(c, "COOL", _meter_scale())
-	h.eq("before you offer, no verdict at all", t._status.text, "")
+	h.eq("from the moment you place, the band in words", t._status.text, "COOL")
 	## "Remove the Read the Room hint on the product detail box since it's
 	## specific to a single card" - and with it every other nudge: the panel is
 	## only its name, its meter and, once you have asked, the verdict.
@@ -246,7 +246,7 @@ func test_the_status_is_a_band_until_you_know_the_line_and_a_number_after() -> v
 	c.known_line = true
 	t.show_offer(c, "COOL", _meter_scale())
 	h.check("a Line you can already see is the mark on the meter", t._bar._line_known)
-	h.eq("not a line of words about it", t._status.text, "")
+	h.eq("still the band until you have asked", t._status.text, "COOL")
 	c.known_line = false
 
 	c.offer.revealed = true

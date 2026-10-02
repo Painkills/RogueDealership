@@ -24,6 +24,9 @@ var unsigned: Array[Dictionary] = []
 var known_ranks: Dictionary = {}
 var known_line: bool = false
 var known_top_category = null
+## Upgraded Read the Room's read: the three interests they want most that
+## are not sold yet, unordered. Empty until then.
+var known_top_three: Array[StringName] = []
 
 ## The Karen: they will not sign until they have bought from the category they
 ## came in for. Announced on arrival - a free read, and then they charge the
@@ -85,7 +88,7 @@ func _init(p_key: String, p_name: String, p_arch: CustomerArchetype,
 
 
 func appeal_for(interest_id: StringName) -> int:
-	## appeal_step x (interest_count - rank). Their number one opens at 40 and
+	## appeal_step x (interest_count - rank). Their number one opens at 32 and
 	## their last at 0 - not a refusal, just eight places of concession you
 	## will not want to pay for.
 	return int(cfg["appeal_step"]) * (ranks.size() - int(ranks[interest_id]))
@@ -115,6 +118,21 @@ func top_interest_id() -> StringName:
 ## next is the same promise the card makes ("their number one") kept once
 ## the literal number one is off the table. Falls back to top_interest_id()
 ## only in the unreachable case where every one of their interests is sold.
+## Their `n` highest-priority interests not yet sold, best first.
+func top_unsold_interest_ids(n: int) -> Array[StringName]:
+	var sold := {}
+	for u in unsigned:
+		sold[u["product"].interest.id] = true
+	var open: Array = []
+	for iid in ranks:
+		if not sold.has(iid):
+			open.append(iid)
+	open.sort_custom(func(a, b): return int(ranks[a]) < int(ranks[b]))
+	var out: Array[StringName] = []
+	for iid in open.slice(0, n):
+		out.append(StringName(iid))
+	return out
+
 func top_unsold_interest_id() -> StringName:
 	var sold := {}
 	for u in unsigned:
@@ -141,9 +159,10 @@ func interests() -> InterestPool:
 
 
 func reveal_room(exact: bool = false) -> void:
-	## The base read narrows nine interests to three and hands you the Line -
-	## which, since offering stopped teaching it, is the ONLY way to learn it.
-	## The upgrade narrows that last three to one.
+	## The base read hands you the Line - which, since offering stopped
+	## teaching it, is the ONLY way to learn it - and names their top unsold
+	## interest with its rank. The upgrade also marks the three they want most
+	## that are still open (known_top_three).
 	##
 	## Both name whichever of their interests is highest-priority and NOT
 	## already sold - top_unsold_interest_id(), not top_interest_id(). A read
@@ -153,11 +172,14 @@ func reveal_room(exact: bool = false) -> void:
 	var top := top_unsold_interest_id()
 	known_top_category = _interests.by_id(top).category.id
 	# Recorded as a known RANK rather than its own flag: everything that reads
-	# priorities already walks known_ranks, so the upgrade needs no new case
-	# anywhere downstream of here. The rank is whatever top's real rank is -
-	# 2nd, 3rd, whatever is left - not hardcoded to 1.
+	# priorities already walks known_ranks, so this needs no new case anywhere
+	# downstream of here. The rank is whatever top's real rank is - 2nd, 3rd,
+	# whatever is left - not hardcoded to 1.
+	known_ranks[top] = int(ranks[top])
+	# The upgrade marks the three they want most that are still open - which
+	# three, not in what order.
 	if exact:
-		known_ranks[top] = int(ranks[top])
+		known_top_three = top_unsold_interest_ids(3)
 
 
 func owns(product_id: StringName) -> bool:

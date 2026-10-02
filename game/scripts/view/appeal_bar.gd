@@ -8,8 +8,8 @@ class_name AppealBar extends Control
 ##          whole point. Before this, appeal cards changed nothing you could see
 ##          until you offered.
 ##   COLOUR how that compares with their Line. Red far, amber close, green once
-##          you have cleared it. This replaces the COOL / WARM / ALMOST words:
-##          the band was always a colour pretending to be a noun.
+##          you have cleared it. The tablet prints the band's word under it in
+##          the same colour - INTERESTED, ALMOST, WARM, COOL, COLD.
 ##   MARKER where the Line actually is: a rule across the bar at its height.
 ##          Drawn ONLY once you know it, which is after Read the Room. That is
 ##          the one number the fog is protecting, so it is the one thing gated.

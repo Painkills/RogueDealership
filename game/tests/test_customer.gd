@@ -24,14 +24,15 @@ func test_appeal_is_the_step_times_places_from_the_bottom() -> void:
 		h.eq("rank %d opens at %d" % [c.ranks[iid], expected],
 			c.appeal_for(iid), expected)
 
-func test_their_number_one_opens_at_forty_and_their_last_at_zero() -> void:
+func test_their_number_one_opens_a_full_ladder_up_and_their_last_at_zero() -> void:
 	var c := _cust(&"easygoing", 1)
 	var best := ""
 	var worst := ""
 	for iid in c.ranks:
 		if int(c.ranks[iid]) == 1: best = iid
 		if int(c.ranks[iid]) == 9: worst = iid
-	h.eq("number one opens at 40", c.appeal_for(best), 40)
+	h.eq("number one opens one rung per place below it",
+		c.appeal_for(best), int(c.cfg["appeal_step"]) * (c.ranks.size() - 1))
 	h.eq("last place opens at 0", c.appeal_for(worst), 0)
 
 func test_ranks_are_always_a_permutation_of_one_to_nine() -> void:
@@ -101,21 +102,42 @@ func test_reveal_room_skips_what_is_already_sold() -> void:
 	h.check("the rank recorded is not the hardcoded 1 the sold interest had",
 		int(c.ranks[second]) != 1)
 
-func test_the_budget_hawk_is_the_hardest_and_lay_down_the_easiest() -> void:
+func test_the_base_read_names_their_top_unsold_interest() -> void:
+	var c := _cust(&"easygoing", 1)
+	c.reveal_room()
+	var top := c.top_unsold_interest_id()
+	h.eq("their top unsold interest, with its real rank", c.known_ranks.get(top), c.ranks[top])
+	h.eq("and nothing else ranked", c.known_ranks.size(), 1)
+	h.check("no top three without the upgrade", c.known_top_three.is_empty())
+
+func test_the_upgraded_read_marks_their_three_most_wanted_still_open() -> void:
+	var c := _cust(&"easygoing", 1)
+	var first := c.top_interest_id()
+	var product := ProductCardDef.new()
+	product.interest = _interests().by_id(first)
+	c.unsigned.append({"product": product, "margin": 100, "bonus": 0})
+	c.reveal_room(true)
+	h.eq("three of them", c.known_top_three.size(), 3)
+	h.check("never one already sold", not c.known_top_three.has(first))
+	var worst_marked := 0
+	for iid in c.known_top_three:
+		worst_marked = maxi(worst_marked, int(c.ranks[iid]))
+	for iid in c.ranks:
+		if iid == first or c.known_top_three.has(iid):
+			continue
+		h.check("%s, unmarked, ranks below every marked one" % iid,
+			int(c.ranks[iid]) > worst_marked)
+
+func test_lay_down_is_the_easiest_sign() -> void:
 	## Relational, not pinned to today's exact numbers: whatever the pool's
-	## current tuning is, the Hawk should be the hardest sign and Lay-Down the
-	## easiest - that ordering is the actual design intent, not the literal
-	## line values.
+	## current tuning is, Lay-Down should be the easiest sign. (The Hawk used
+	## to have to be the hardest too; their difficulty is the concession they
+	## hold out for now, not their Line.)
 	var pool: ArchetypePool = load("res://data/archetype_pool.tres")
-	var hawk := pool.by_id(&"hawk")
 	var laydown := pool.by_id(&"laydown")
-	var max_line := -1
 	var min_line := 999999
 	for a in pool.archetypes:
-		max_line = maxi(max_line, a.line)
 		min_line = mini(min_line, a.line)
-	h.eq("the Hawk wants the highest Line in the pool (%d)" % hawk.line,
-		hawk.line, max_line)
 	h.eq("Lay-Down wants the lowest Line in the pool (%d)" % laydown.line,
 		laydown.line, min_line)
 
