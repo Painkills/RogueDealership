@@ -42,6 +42,10 @@ func _init() -> void:
 	AppWindow.label(rows, root, "StandingLabel", "", 26, &"text", false, true)
 	var walkouts := AppWindow.label(rows, root, "WalkoutsLabel", "", 22, &"text", false, true)
 	walkouts.autowrap_mode = TextServer.AUTOWRAP_WORD
+	# The boss's product quota, on a shift that had one.
+	var product_quota := AppWindow.label(rows, root, "ProductQuotaLabel", "", 22, &"text",
+		false, true)
+	product_quota.autowrap_mode = TextServer.AUTOWRAP_WORD
 	AppWindow.rule(rows, root, "DetailRule")
 	AppWindow.label(rows, root, "CustomersLabel", "", 21, &"text_dim", false, true)
 	AppWindow.label(rows, root, "OffersLabel", "", 21, &"text_dim", false, true)

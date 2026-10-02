@@ -1087,11 +1087,43 @@ func _check_the_week_report_comes_between_weeks() -> void:
 		_run.cfg.paycheck_raise_per_week <= 0
 			or (week_view._next.text.contains("base pay")
 				and week_view._next.text.contains(Format.money(next_pay))))
+	# "After week 1, there are product quotas... This should be explained in
+	# the end of week 1 email."
+	var memo := week_view.get_node(^"%Memo") as Control
+	var starts_now: bool = _run.cfg.category_quota_in_week(2) > 0 \
+		and _run.cfg.category_quota_in_week(1) <= 0
+	var memo_text: String = (week_view.get_node(^"%MemoLabel") as Label).text
+	_check("the email explains next week's product quotas (%s)" % memo_text.left(60),
+		memo.visible == starts_now and (not starts_now
+			or (memo_text.contains("product quota")
+				and memo_text.contains(str(_run.cfg.category_quota_in_week(2)))
+				and memo_text.contains("%d standing" % _run.cfg.category_quota_standing))))
 	var start := week_view.get_node(^"%StartButton") as Button
 	_check("and a way on into week 2 (%s)" % start.text, start.text.contains("2"))
 	start.pressed.emit()
 	_check("which opens week 2's calendar", _root._picker_view.visible and not week_view.visible)
+	_check_week_two_shows_the_product_quota()
 	_run.shift_number = was_day
+
+## Week 2's calendar names what the boss wants under every day's date but a
+## boss day's, and a shift worked under it carries it onto the floor's top bar.
+func _check_week_two_shows_the_product_quota() -> void:
+	var q: Dictionary = _run.category_quota(_run.shift_number)
+	var shown: Array = _root._picker_view.find_children("ProductQuota", "Label", true, false)
+	var expected: Dictionary = _root._week_product_quotas()
+	_check("the week's days name their product quotas (%d labels, %d days)"
+		% [shown.size(), expected.size()],
+		shown.size() == expected.size() and not expected.is_empty())
+	var offers := _run.todays_shifts()
+	if q.is_empty() or offers.is_empty() or offers[0].is_boss_day():
+		return
+	var s := _run.start_shift(offers[0])
+	_root._shift_view.setup(s, _run.standing)
+	var label := _root._shift_view.get_node(^"%ProductQuotaLabel") as Label
+	_check("the floor's top bar shows it (%s)" % label.text,
+		label.visible and label.text.contains((q["category"] as Category).display_name)
+			and label.text.contains("0/%d" % int(q["count"])))
+	_root._show_only(_root._picker_view)
 
 ## "At end of run it would show you all these categories and the points
 ## given and a high score" - the literal ask, end to end: force the run onto

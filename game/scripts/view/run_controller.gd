@@ -110,7 +110,23 @@ func _open_the_picker() -> void:
 	_show_only(_picker_view)
 	_picker_view.setup(_run.todays_shifts(), _run.shift_number, _run.cfg.shifts_in_run,
 		_run.quota_for(_run.shift_number), _history, _run.cfg.days_per_week,
-		_run.cfg.paycheck_in_week(_run.week_of(_run.shift_number)))
+		_run.cfg.paycheck_in_week(_run.week_of(_run.shift_number)),
+		_week_product_quotas())
+
+## The boss's product quota for every day of this week that has one - not a
+## boss day's, which is its own test.
+func _week_product_quotas() -> Dictionary:
+	var per_week: int = maxi(1, _run.cfg.days_per_week)
+	var first: int = (_run.shift_number - 1) / per_week * per_week + 1
+	var out := {}
+	for day in range(first, mini(first + per_week, _run.cfg.shifts_in_run + 1)):
+		var offers: Array[ShiftProfile] = _run.week.offers(day) if _run.week != null else []
+		if offers.size() == 1 and offers[0].is_boss_day():
+			continue
+		var q := _run.category_quota(day)
+		if not q.is_empty():
+			out[day] = q
+	return out
 
 func _on_profile_chosen(profile: ShiftProfile) -> void:
 	_chosen_profile = profile

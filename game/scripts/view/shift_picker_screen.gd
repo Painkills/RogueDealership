@@ -25,6 +25,9 @@ var _day_quota: int = 0
 ## This week's base salary, before any shift's pay_scale - 0 to leave pay off
 ## the events.
 var _week_pay: int = 0
+## The week's product quotas, by day (1-based) - RunState.category_quota()'s
+## {"category", "count"} for each day that has one. Not on a boss day.
+var _product_quotas: Dictionary = {}
 
 ## `offers` is what today has to pick from - the regular tiers, or a premade
 ## shift in one's place, or a boss day's one shift (see Week). `day` is the
@@ -32,9 +35,11 @@ var _week_pay: int = 0
 ## {"profile", "report"} per shift already worked, in order. `week_length` is
 ## how many days the calendar shows at once: the week `day` falls in.
 func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int = 0,
-		history: Array = [], week_length: int = 7, pay: int = 0) -> void:
+		history: Array = [], week_length: int = 7, pay: int = 0,
+		product_quotas: Dictionary = {}) -> void:
 	_day_quota = quota
 	_week_pay = pay
+	_product_quotas = product_quotas
 	var per_week: int = maxi(1, mini(week_length, days))
 	var week_index: int = (day - 1) / per_week
 	var weeks: int = (days + per_week - 1) / per_week
@@ -111,6 +116,25 @@ func _day_header(d: int, weekday: int, is_today: bool) -> Control:
 	number.add_theme_color_override("font_color",
 		Palette.color(&"paper") if is_today else Palette.color(&"text"))
 	disc.add_child(number)
+	# The boss's product quota for the day, under its date - the day's, not
+	# any one shift's, and known for the whole week ahead. The line is there
+	# on every day of a week that has any, blank where a day has none (a boss
+	# day), so every column's header stays the same height and the hours line
+	# up across the week.
+	var q: Dictionary = _product_quotas.get(d + 1, {})
+	if not _product_quotas.is_empty():
+		var orders := Label.new()
+		orders.theme_type_variation = &"Heading"
+		orders.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		orders.add_theme_font_size_override("font_size", 15)
+		orders.add_theme_color_override("font_color", Palette.color(&"accent"))
+		if not q.is_empty():
+			orders.name = "ProductQuota"
+			orders.text = "Sell %d %s" % [int(q["count"]), (q["category"] as Category).display_name]
+		else:
+			orders.name = "NoProductQuota"
+			orders.text = " "
+		head.add_child(orders)
 	return head
 
 ## Today's choice: an event you click to work that shift.

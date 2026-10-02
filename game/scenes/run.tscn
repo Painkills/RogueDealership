@@ -33,7 +33,7 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=945426491]
+[node name="Run" type="Node" unique_id=170833539]
 script = ExtResource("1_47ec3")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=973289863 instance=ExtResource("2_lc2vt")]
@@ -44,7 +44,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_14ick")
 script = ExtResource("3_53ha4")
 
-[node name="ShiftView" type="Node3D" parent="." unique_id=1869521345 instance=ExtResource("4_iuvi8")]
+[node name="ShiftView" type="Node3D" parent="." unique_id=1963658668 instance=ExtResource("4_iuvi8")]
 script = ExtResource("5_w0t45")
 
 [node name="ShopView" type="PanelContainer" parent="." unique_id=699821650 instance=ExtResource("6_072lk")]
@@ -63,7 +63,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_cuait")
 script = ExtResource("9_yh7fy")
 
-[node name="WeekReportView" type="PanelContainer" parent="." unique_id=2108427986 instance=ExtResource("10_0mn38")]
+[node name="WeekReportView" type="PanelContainer" parent="." unique_id=735844257 instance=ExtResource("10_0mn38")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -90,10 +90,10 @@ script = ExtResource("15_pffcw")
 layer = 50
 script = ExtResource("17_1561w")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1207228895]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=8085120]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=941347111]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=623620079]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -112,7 +112,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=814631723]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=419561541]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1

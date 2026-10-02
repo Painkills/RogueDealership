@@ -46,6 +46,19 @@ func _init() -> void:
 	var next := AppWindow.label(col, root, "NextLabel", "", 22, &"text", false, true)
 	next.autowrap_mode = TextServer.AUTOWRAP_WORD
 
+	# A new rule starting next week, from the GM - shown only when there is one.
+	var memo := AppWindow.box(col, root, "Memo", &"panel_hi", &"accent", 18, 12)
+	memo.unique_name_in_owner = true
+	memo.visible = false
+	var memo_col := VBoxContainer.new()
+	memo_col.name = "Column"
+	memo_col.add_theme_constant_override("separation", 6)
+	memo.add_child(memo_col)
+	memo_col.owner = root
+	AppWindow.label(memo_col, root, "MemoTitle", "", 18, &"accent", true, true)
+	var memo_body := AppWindow.label(memo_col, root, "MemoLabel", "", 21, &"text", false, true)
+	memo_body.autowrap_mode = TextServer.AUTOWRAP_WORD
+
 	var row := HBoxContainer.new()
 	row.name = "ButtonRow"
 	row.alignment = BoxContainer.ALIGNMENT_END

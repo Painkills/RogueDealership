@@ -70,6 +70,7 @@ signal deck_viewed
 @onready var _hud: Control = %HudRoot
 @onready var _tick_label: Label = %TickLabel
 @onready var _banked_label: Label = %BankedLabel
+@onready var _product_quota_label: Label = %ProductQuotaLabel
 @onready var _standing_label: Label = %StandingLabel
 @onready var _at_risk_label: Label = %AtRiskLabel
 @onready var _event_log: RichTextLabel = %EventLog
@@ -989,6 +990,18 @@ func _write_banked(v: int) -> void:
 	_banked_shown = v
 	_banked_label.text = "banked %s / %s" % [Format.money(v), Format.money(_shift.quota)]
 
+## The boss's product quota beside what you have banked: "Vehicle 1/2", amber
+## until it is met and green after. Hidden on a shift without one.
+func _write_product_quota() -> void:
+	var need: int = _shift.category_quota_count
+	_product_quota_label.visible = need > 0
+	if need <= 0:
+		return
+	var sold: int = _shift.category_sold
+	_product_quota_label.text = "%s %d/%d" % [_shift.category_quota_name, mini(sold, need), need]
+	_product_quota_label.add_theme_color_override("font_color",
+		Palette.color(&"patience_ok" if sold >= need else &"patience_warn"))
+
 func _write_standing(v: int) -> void:
 	_standing_shown = v
 	_standing_label.text = "standing %d/%d" % [v, _shift.cfg.standing_start]
@@ -1190,6 +1203,7 @@ func _render() -> void:
 	_notice_departures()
 	if not _banked_rolling:
 		_write_banked(_shift.margin_banked)
+	_write_product_quota()
 	# LIVE now, not the setup()-time snapshot it used to be enough to be - a
 	# walkout can move this mid-shift, and the whole point of costing standing
 	# immediately is for the player to be able to see it happen.

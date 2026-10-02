@@ -49,6 +49,20 @@ class_name ShiftConfig extends Resource
 ## Base salary in `week` (1-based).
 func paycheck_in_week(week: int) -> int:
 	return paycheck + paycheck_raise_per_week * maxi(0, week - 1)
+## Product quotas: from week 2, the boss names a category for each day and
+## wants this many of its products sold on every shift but a boss day's. One
+## entry per week of the run, weeks past the end using the last; 0 = none that
+## week.
+@export var category_quota_by_week: Array[int] = [0, 2]
+## ...and missing it costs this much standing at the end of the shift.
+@export var category_quota_standing: int = 10
+
+## The product quota for a day in `week` (1-based) - see category_quota_by_week.
+func category_quota_in_week(week: int) -> int:
+	if category_quota_by_week.is_empty():
+		return 0
+	return category_quota_by_week[clampi(week - 1, 0, category_quota_by_week.size() - 1)]
+
 ## Zeroed in the shipped data: an ordinary shift never heals. A shift can heal
 ## on its own terms instead - see ShiftProfile.heal_up_to, which the boss
 ## fights use.

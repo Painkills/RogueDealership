@@ -7,6 +7,7 @@ var _banked: Label
 var _bonus: Label
 var _standing: Label
 var _walkouts: Label
+var _product_quota: Label
 var _customers: Label
 var _offers: Label
 var _margin: Label
@@ -31,6 +32,7 @@ func _bind() -> void:
 	_bonus = %BonusLabel
 	_standing = %StandingLabel
 	_walkouts = %WalkoutsLabel
+	_product_quota = %ProductQuotaLabel
 	_customers = %CustomersLabel
 	_offers = %OffersLabel
 	_margin = %MarginMovedLabel
@@ -99,6 +101,22 @@ func setup(r: Dictionary) -> void:
 	else:
 		_walkouts.text = "Nobody walked out this shift."
 		_walkouts.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+
+	# The boss's product quota - its own line, like walkouts, so what it cost
+	# is legible as its own cause.
+	var need := int(r.get("category_quota_count", 0))
+	_product_quota.visible = need > 0
+	if need > 0:
+		var sold := int(r.get("category_sold", 0))
+		var what := "%d %s product%s" % [need, str(r.get("category_quota_name", "")),
+			"" if need == 1 else "s"]
+		if sold >= need:
+			_product_quota.text = "Product quota met: %d of %s sold." % [sold, what]
+			_product_quota.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
+		else:
+			_product_quota.text = "Product quota missed: %d of %s sold - cost you %d standing." \
+				% [sold, what, int(r.get("category_quota_cost", 0))]
+			_product_quota.add_theme_color_override("font_color", Palette.color(&"alert"))
 
 	# These four never got a Palette color at all before this - plain default
 	# Label text sitting on the engine's own default panel style, which is

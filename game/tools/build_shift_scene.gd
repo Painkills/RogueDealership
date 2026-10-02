@@ -960,6 +960,18 @@ func _build_hud(root: Node) -> void:
 	top.add_child(banked)
 	banked.owner = root
 
+	# The boss's product quota, when the shift has one - "Vehicle 1/2".
+	var product_quota := Label.new()
+	product_quota.name = "ProductQuotaLabel"
+	product_quota.text = ""
+	product_quota.visible = false
+	product_quota.add_theme_font_size_override("font_size", 30)
+	product_quota.theme_type_variation = &"Heading"
+	product_quota.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	product_quota.unique_name_in_owner = true
+	top.add_child(product_quota)
+	product_quota.owner = root
+
 	# Standing gets the same invisible-tap-target treatment as the tick counter
 	# above, for the same reason: a manual playtesting convenience, not a
 	# mechanic, so it can add standing to survive long enough to actually reach

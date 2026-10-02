@@ -13,6 +13,10 @@ var _headline: Label
 var _days: GridContainer
 var _totals: Label
 var _next: Label
+## A new rule starting next week, from the GM - see _write_memo().
+var _memo: Control
+var _memo_title: Label
+var _memo_body: Label
 var _start: Button
 var _bound := false
 
@@ -30,6 +34,9 @@ func _bind() -> void:
 	_days = %DaysGrid
 	_totals = %TotalsLabel
 	_next = %NextLabel
+	_memo = %Memo
+	_memo_title = %MemoTitle
+	_memo_body = %MemoLabel
 	_start = %StartButton
 	_start.pressed.connect(func(): continue_pressed.emit())
 
@@ -100,7 +107,28 @@ func setup(run: RunState, history: Array) -> void:
 		if finale.size() == 1 and finale[0].is_boss_day():
 			_next.text += " %s: %s - boss day." % [
 				_day_name(next_last - 1, per_week).capitalize(), finale[0].display_name]
+	_write_memo(run, week)
 	_start.text = "START WEEK %d" % (week + 1)
+
+## "After week 1, there are product quotas... This should be explained in the
+## end of week 1 email." Up only in the email for the week they start.
+func _write_memo(run: RunState, week: int) -> void:
+	var was := run.cfg.category_quota_in_week(week)
+	var need := run.cfg.category_quota_in_week(week + 1)
+	_memo.visible = need > 0 and was <= 0
+	if not _memo.visible:
+		return
+	var cats: Array[String] = []
+	for c in run.interests.categories:
+		cats.append(c.display_name)
+	var which: String = cats[0] if cats.size() == 1 \
+		else "%s or %s" % [", ".join(cats.slice(0, cats.size() - 1)), cats[cats.size() - 1]]
+	_memo_title.text = "FROM THE GM: PRODUCT QUOTAS START MONDAY"
+	_memo_body.text = ("Corporate wants more than a number now. Every shift except the boss's "
+		+ "comes with a product quota: sell at least %d products from the day's category - %s. "
+		+ "Each day's is on the calendar under its date, and next to your quota while you "
+		+ "work. Miss it and it costs you %d standing at the end of the shift.") \
+		% [need, which, run.cfg.category_quota_standing]
 
 func _day_name(d: int, per_week: int) -> String:
 	return ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY",

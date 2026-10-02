@@ -37,6 +37,14 @@ var pay_scale: float = 1.0
 var heal_up_to: float = 0.0
 ## The picked ShiftProfile's hard_weight_scale - see _pick_archetype().
 var hard_weight_scale: float = 1.0
+## The boss's product quota for this shift: sell `category_quota_count` products
+## from the `category_quota` category, or lose ShiftConfig.category_quota_standing
+## at the end. &"" / 0 when there is none. Set by RunState.start_shift().
+var category_quota: StringName = &""
+var category_quota_name: String = ""
+var category_quota_count: int = 0
+## Products from that category signed so far - counted as they are banked.
+var category_sold: int = 0
 ## Who never comes in on this shift - ShiftProfile.excluded_archetypes.
 var excluded_archetypes: Array[CustomerArchetype] = []
 ## A premade shift's own customers - see ShiftProfile.only_archetypes and
@@ -1221,6 +1229,10 @@ func close() -> Result:
 		c.offer = null
 	var banked: int = c.unsigned_margin()
 	margin_banked += banked
+	if category_quota != &"":
+		for sale in c.unsigned:
+			if sale["product"].interest.category.id == category_quota:
+				category_sold += 1
 	c.state = "signed"
 	stat["customers_signed"] = int(stat["customers_signed"]) + 1
 	sale_streak += 1
@@ -1502,6 +1514,11 @@ func report() -> Dictionary:
 		"standing_delta": _standing_delta(),
 		"standing_lost_to_walkouts": _standing_lost_to_walkouts,
 		"standing_healed": healed(),
+		"category_quota": category_quota,
+		"category_quota_name": category_quota_name,
+		"category_quota_count": category_quota_count,
+		"category_sold": category_sold,
+		"category_quota_cost": category_quota_cost(),
 		"ticks": tick,
 		"tick_budget": tick_budget,
 		"customers_seen": served,
@@ -1540,7 +1557,19 @@ func _standing_delta() -> int:
 	## term is added here because margin_banked is not final until report() is
 	## actually called - it cannot be evaluated any earlier than this. So is the
 	## shift's own heal, for the same reason.
-	return (standing - _initial_standing) + _standing_delta_from_quota() + healed()
+	return (standing - _initial_standing) + _standing_delta_from_quota() + healed() \
+		- category_quota_cost()
+
+
+## Whether this shift had a product quota and fell short of it.
+func category_quota_missed() -> bool:
+	return category_quota_count > 0 and category_sold < category_quota_count
+
+
+## What falling short of the product quota costs in standing - nothing if it
+## was met, or there was none.
+func category_quota_cost() -> int:
+	return cfg.category_quota_standing if category_quota_missed() else 0
 
 
 ## What this shift's own heal gives back - ShiftProfile.heal_up_to of the run's

@@ -87,7 +87,28 @@ func start_shift(profile: ShiftProfile) -> Shift:
 	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to
 	s.hard_weight_scale = profile.hard_weight_scale
+	# The boss's product quota - every shift of a week that has one, but a
+	# boss day's, which is its own test.
+	if not profile.is_boss_day():
+		var q := category_quota(shift_number)
+		if not q.is_empty():
+			s.category_quota = (q["category"] as Category).id
+			s.category_quota_name = (q["category"] as Category).display_name
+			s.category_quota_count = int(q["count"])
 	return s
+
+## The product quota on `day` (1-based): {"category": Category, "count": int},
+## or {} on a day without one. The category is the day's own, the same however
+## many times you ask - drawn from a generator of its own, seeded by the run's
+## seed and the day, so asking never moves the run's own dice.
+func category_quota(day: int) -> Dictionary:
+	var count := cfg.category_quota_in_week(week_of(day))
+	if count <= 0 or interests == null or interests.categories.is_empty():
+		return {}
+	var day_rng := RandomNumberGenerator.new()
+	day_rng.seed = hash([rng.seed, day, "category_quota"])
+	var cats := interests.categories
+	return {"category": cats[day_rng.randi_range(0, cats.size() - 1)], "count": count}
 
 func finish_shift(report: Dictionary) -> void:
 	## The quota is the house's cut and it comes out first. What you bank OVER it
