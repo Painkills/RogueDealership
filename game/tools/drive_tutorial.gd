@@ -43,6 +43,8 @@ func _drive() -> void:
 	_check_the_title_screen()
 	_check_the_name_popup()
 	await _frames(3)
+	_check("practice has no week, so no VIEW CALENDAR",
+		not (_root.get_node(^"BuildBadge/ViewCalendarCornerButton") as Control).visible)
 	_check("TUTORIAL opens the practice shift",
 		_coach.is_running() and not _root._picker_view.visible
 			and not _root._title_view.visible)

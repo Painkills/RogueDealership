@@ -33,10 +33,10 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=170833539]
+[node name="Run" type="Node" unique_id=98989785]
 script = ExtResource("1_47ec3")
 
-[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=973289863 instance=ExtResource("2_lc2vt")]
+[node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1460737143 instance=ExtResource("2_lc2vt")]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
@@ -90,10 +90,10 @@ script = ExtResource("15_pffcw")
 layer = 50
 script = ExtResource("17_1561w")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=8085120]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=829047867]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=623620079]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=691234186]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -112,7 +112,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=419561541]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=1405520679]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1
@@ -125,3 +125,18 @@ offset_bottom = 64.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
 text = "VIEW TOOLKIT"
+
+[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=245172478]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(240, 56)
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -512.0
+offset_top = 8.0
+offset_right = -272.0
+offset_bottom = 64.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 22
+text = "VIEW CALENDAR"

@@ -1118,12 +1118,41 @@ func _check_week_two_shows_the_product_quota() -> void:
 	if q.is_empty() or offers.is_empty() or offers[0].is_boss_day():
 		return
 	var s := _run.start_shift(offers[0])
+	_root._chosen_profile = offers[0]
+	_root._show_only(_root._shift_view)
 	_root._shift_view.setup(s, _run.standing)
 	var label := _root._shift_view.get_node(^"%ProductQuotaLabel") as Label
 	_check("the floor's top bar shows it (%s)" % label.text,
 		label.visible and label.text.contains((q["category"] as Category).display_name)
 			and label.text.contains("0/%d" % int(q["count"])))
+	_check_the_calendar_from_the_floor()
 	_root._show_only(_root._picker_view)
+
+## "Add a button to view calendar (view only) from the floor scene."
+func _check_the_calendar_from_the_floor() -> void:
+	var button := _root.get_node(^"BuildBadge/ViewCalendarCornerButton") as Button
+	var picker = _root._picker_view
+	_check("the floor has a VIEW CALENDAR button", button.visible)
+	button.pressed.emit()
+	_check("which lays the week over the floor", picker.visible)
+	_check("without leaving it", (_root._shift_view.get_node(^"HUD") as CanvasLayer) != null
+		and _root._shift_view.current_shift() != null)
+	var events: Array = picker.find_children("Event_*", "", true, false)
+	_check("today is the one shift you are on (%d events)" % events.size(), events.size() == 1)
+	var pickable := false
+	for e in events:
+		pickable = pickable or (e as Control).mouse_filter != Control.MOUSE_FILTER_IGNORE
+	_check("and nothing on it can be picked", not pickable)
+	_check("it says which (%s)" % picker._sub.text,
+		picker._sub.text.contains(_root._chosen_profile.display_name))
+	var close := picker.get_node(^"%CloseButton") as Button
+	_check("with a way back", close.visible)
+	close.pressed.emit()
+	_check("which puts it away, back to the floor", not picker.visible and button.visible)
+	_root._open_the_picker()
+	_check("the picker itself has no way back - it is where you start",
+		not (picker.get_node(^"%CloseButton") as Button).visible)
+	_check("and the button is the floor's alone", not button.visible)
 
 ## "At end of run it would show you all these categories and the points
 ## given and a high score" - the literal ask, end to end: force the run onto

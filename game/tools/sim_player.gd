@@ -241,6 +241,7 @@ static func _should_close(s: Shift, c: Customer) -> bool:
 ## `any_offer`: any product at all will do (a Kicker only wants to be asked).
 static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int:
 	var boost := _appeal_in_hand(s)
+	var short := _quota_short(s)
 	var best := -1
 	var best_key := -INF
 	for i in range(s.hand.size()):
@@ -252,10 +253,29 @@ static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int
 		if gap > boost and not any_offer:
 			continue
 		var key: float = (100000.0 if gap <= 0 else -1000.0 * gap) + inst.margin()
+		# The day's product quota first, until it is met - then play normally.
+		if short > 0 and _in_quota(s, inst):
+			key += 1000000.0
 		if key > best_key:
 			best_key = key
 			best = i
 	return best
+
+## How many more of the day's quota category the shift still needs, counting
+## sales agreed but not yet signed - 0 once met, or on a shift without one.
+static func _quota_short(s: Shift) -> int:
+	if s.category_quota_count <= 0:
+		return 0
+	var pending := 0
+	for c in s.seated():
+		for u in c.unsigned:
+			if u["product"].interest.category.id == s.category_quota:
+				pending += 1
+	return maxi(0, s.category_quota_count - s.category_sold - pending)
+
+static func _in_quota(s: Shift, inst: CardInstance) -> bool:
+	return inst.is_product() \
+		and (inst.card as ProductCardDef).interest.category.id == s.category_quota
 
 static func _top3_product(s: Shift, c: Customer) -> int:
 	var best := -1
@@ -411,6 +431,7 @@ static func _dig(s: Shift) -> bool:
 		return false
 	var worst := 0
 	var worst_value := INF
+	var short := _quota_short(s)
 	for i in range(s.hand.size()):
 		var inst: CardInstance = s.hand[i]
 		var value := 20.0
@@ -418,6 +439,9 @@ static func _dig(s: Shift) -> bool:
 			value = 0.0
 			for c in s.seated():
 				value = maxf(value, float(_est_appeal(c, (inst.card as ProductCardDef).interest.id)))
+			# Never throw away what the day's quota still needs.
+			if short > 0 and _in_quota(s, inst):
+				value += 100.0
 		if value < worst_value:
 			worst_value = value
 			worst = i

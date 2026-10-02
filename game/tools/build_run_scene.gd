@@ -133,6 +133,24 @@ func _init() -> void:
 	badge_layer.add_child(view_deck_btn)
 	view_deck_btn.owner = root
 
+	# Beside it, on the floor only: this week's calendar, to look at and not
+	# pick from - what the boss wants tomorrow, and when the boss day is.
+	var view_calendar_btn := Button.new()
+	view_calendar_btn.name = "ViewCalendarCornerButton"
+	view_calendar_btn.text = "VIEW CALENDAR"
+	view_calendar_btn.unique_name_in_owner = true
+	view_calendar_btn.visible = false
+	view_calendar_btn.custom_minimum_size = Vector2(240, 56)
+	view_calendar_btn.add_theme_font_size_override("font_size", 22)
+	view_calendar_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	view_calendar_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	view_calendar_btn.offset_left = -512
+	view_calendar_btn.offset_top = 8
+	view_calendar_btn.offset_right = -272
+	view_calendar_btn.offset_bottom = 64
+	badge_layer.add_child(view_calendar_btn)
+	view_calendar_btn.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/run.tscn")

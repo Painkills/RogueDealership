@@ -26,6 +26,10 @@ extends Node
 ## floor's draw pile, and the one least dependent on hitting a specific
 ## click target.
 @onready var _view_deck_btn: Button = $BuildBadge/ViewDeckCornerButton
+## On the floor only: this week's calendar to look at, not pick from.
+@onready var _view_calendar_btn: Button = $BuildBadge/ViewCalendarCornerButton
+## Whether the calendar is up over the floor - see _open_the_calendar_view().
+var _calendar_open := false
 ## The practice shift's teacher - see scripts/run/tutorial.gd for the shift
 ## and tutorial_coach.gd for the lesson.
 @onready var _coach: TutorialCoach = $TutorialCoach
@@ -56,13 +60,15 @@ func _ready() -> void:
 	_shop_view.done.connect(_on_shop_done)
 	_shop_view.view_deck_requested.connect(_on_view_deck_requested)
 	_view_deck_btn.pressed.connect(_on_view_deck_requested)
+	_view_calendar_btn.pressed.connect(_open_the_calendar_view)
+	_picker_view.closed.connect(_close_the_calendar_view)
 	# The deck viewer sits in front of the floor visually, but its own action
 	# column and shift log live in the floor's HUD CanvasLayer - drawn by
 	# layer, not tree order, so they would otherwise keep showing through
 	# regardless of which of the three entry points opened it, or how it
 	# gets closed. Control's own visibility_changed catches every path.
 	_deck_viewer.visibility_changed.connect(
-		func(): _shift_view.set_hud_dimmed(_deck_viewer.visible))
+		func(): _shift_view.set_hud_dimmed(_deck_viewer.visible or _calendar_open))
 	_summary_view.continue_pressed.connect(_on_summary_continue)
 	_week_view.continue_pressed.connect(_open_the_picker)
 	# NOT left to whatever build_run_scene.gd happened to bake into run.tscn
@@ -108,10 +114,30 @@ func _open_the_title(intro: bool = false) -> void:
 
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
+	_set_up_the_calendar(null)
+
+## The calendar for today - to pick from, or with `working`, to look at from
+## the floor while working that shift.
+func _set_up_the_calendar(working: ShiftProfile) -> void:
 	_picker_view.setup(_run.todays_shifts(), _run.shift_number, _run.cfg.shifts_in_run,
 		_run.quota_for(_run.shift_number), _history, _run.cfg.days_per_week,
 		_run.cfg.paycheck_in_week(_run.week_of(_run.shift_number)),
-		_week_product_quotas())
+		_week_product_quotas(), working)
+
+## VIEW CALENDAR, from the floor: the week laid over it, nothing to pick, and
+## the floor's own HUD put away until it closes - the deck viewer's trick.
+func _open_the_calendar_view() -> void:
+	_calendar_open = true
+	_set_up_the_calendar(_chosen_profile)
+	_picker_view.visible = true
+	_view_calendar_btn.visible = false
+	_shift_view.set_hud_dimmed(true)
+
+func _close_the_calendar_view() -> void:
+	_calendar_open = false
+	_picker_view.visible = false
+	_view_calendar_btn.visible = true
+	_shift_view.set_hud_dimmed(_deck_viewer.visible)
 
 ## The boss's product quota for every day of this week that has one - not a
 ## boss day's, which is its own test.
@@ -223,3 +249,6 @@ func _show_only(screen: Node) -> void:
 	_title_view.visible = screen == _title_view
 	# No toolkit to look at from the front door.
 	_view_deck_btn.visible = screen != _title_view
+	# The calendar from the floor - not in practice, which has no week.
+	_calendar_open = false
+	_view_calendar_btn.visible = screen == _shift_view and not _in_tutorial

@@ -12,12 +12,18 @@ extends PanelContainer
 ## disagreeing with the run.
 
 signal chosen(profile: ShiftProfile)
+## CLOSE, on the view from the floor - see setup()'s `working`.
+signal closed
 
 const DAY_NAMES := ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 const GUTTER_W := 84.0
 
 @onready var _week: HBoxContainer = %Week
 @onready var _sub: Label = %SubLabel
+@onready var _close: Button = %CloseButton
+
+func _ready() -> void:
+	_close.pressed.connect(func(): closed.emit())
 
 ## Today's own quota, before any shift's quota_scale - what an event compares
 ## its shift's quota against.
@@ -36,17 +42,22 @@ var _product_quotas: Dictionary = {}
 ## how many days the calendar shows at once: the week `day` falls in.
 func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int = 0,
 		history: Array = [], week_length: int = 7, pay: int = 0,
-		product_quotas: Dictionary = {}) -> void:
+		product_quotas: Dictionary = {}, working: ShiftProfile = null) -> void:
 	_day_quota = quota
 	_week_pay = pay
 	_product_quotas = product_quotas
+	# `working`: looked at from the floor, mid-shift - today is the shift you
+	# are on, nothing can be picked, and CLOSE takes you back.
+	var view_only := working != null
+	_close.visible = view_only
 	var per_week: int = maxi(1, mini(week_length, days))
 	var week_index: int = (day - 1) / per_week
 	var weeks: int = (days + per_week - 1) / per_week
 	var first: int = week_index * per_week
 	# Each shift shows its own quota now, so the header only says where you are.
-	_sub.text = "%sShift %d of %d - pick today's" % [
-		"Week %d of %d  |  " % [week_index + 1, weeks] if weeks > 1 else "", day, days]
+	_sub.text = "%sShift %d of %d - %s" % [
+		"Week %d of %d  |  " % [week_index + 1, weeks] if weeks > 1 else "", day, days,
+		"you're on the %s" % working.display_name if view_only else "pick today's"]
 	# The week to beat, once there is one - see PlayerProfile.
 	if PlayerProfile.has_best():
 		_sub.text += "  |  your best week: %s" % Format.number(PlayerProfile.best_score())
@@ -77,6 +88,8 @@ func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int 
 		col.add_child(body)
 		if d + 1 < day and d < history.size():
 			_worked(body, history[d])
+		elif d + 1 == day and view_only:
+			_offer(body, working, false)
 		elif d + 1 == day:
 			for profile in offers:
 				_offer(body, profile)
@@ -138,7 +151,8 @@ func _day_header(d: int, weekday: int, is_today: bool) -> Control:
 	return head
 
 ## Today's choice: an event you click to work that shift.
-func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
+## `pickable` false: shown, not offered - the view from the floor.
+func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> void:
 	var hue := _hue(profile)
 	var hours: Array = ShiftHours.of(profile.worked_at())
 	var event := Button.new()
@@ -185,7 +199,11 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 	terms.name = "Terms"
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
 	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))
-	event.pressed.connect(func(): chosen.emit(profile))
+	if pickable:
+		event.pressed.connect(func(): chosen.emit(profile))
+	else:
+		event.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		event.focus_mode = Control.FOCUS_NONE
 
 ## A day already worked: the shift you took, and how it went. Not a button -
 ## the past is not something to pick again.

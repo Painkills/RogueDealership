@@ -38,6 +38,24 @@ func _init() -> void:
 	sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	# The practice shift lives on the title screen's menu, not here.
 
+	# Back to the floor, when the calendar is looked at from it mid-shift -
+	# hidden when it is the picker.
+	var spacer := Control.new()
+	spacer.name = "Spacer"
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(spacer)
+	spacer.owner = root
+	var close := Button.new()
+	close.name = "CloseButton"
+	close.text = "BACK TO THE FLOOR"
+	close.visible = false
+	close.custom_minimum_size = Vector2(260, 52)
+	close.add_theme_font_size_override("font_size", 20)
+	ButtonStyle.filled(close, Palette.color(&"primary"))
+	close.unique_name_in_owner = true
+	header.add_child(close)
+	close.owner = root
+
 	# --- the week ----------------------------------------------------------
 	var calendar := PanelContainer.new()
 	calendar.name = "Calendar"

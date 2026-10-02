@@ -231,6 +231,46 @@ func test_the_line_marker_waits_until_you_have_earned_the_line() -> void:
 	h.eq("at the Line the model holds", t._bar._line, c.line)
 	t.free()
 
+func test_the_meter_prints_your_appeal_and_the_line_once_you_know_it() -> void:
+	## "Add the value on the appeal bar, showing what appeal value you are AT.
+	## If the line is visible, show its number too."
+	var t := _instance()
+	var c := _cust(&"easygoing", 1)
+	c.line = 40
+	c.offer = _offer(&"vsc", 30, 1600)
+	t.show_offer(c, "COOL", _meter_scale())
+	h.eq("the appeal you are at", t._bar.appeal_text(), "30")
+	h.eq("and no Line number while it is a guess", t._bar.line_text(), "")
+	c.reveal_room()
+	t.show_offer(c, "COOL", _meter_scale())
+	h.eq("the Line's number once you have read the room", t._bar.line_text(), str(c.line))
+	c.offer.appeal = 37
+	t.show_offer(c, "ALMOST", _meter_scale())
+	h.eq("the appeal moves with the offer", t._bar.appeal_text(), "37")
+	c.offer = null
+	t.show_offer(c, "", _meter_scale())
+	h.eq("nothing printed on an empty table", t._bar.appeal_text() + t._bar.line_text(), "")
+	t.free()
+
+func test_the_appeal_number_steps_clear_of_the_line_tag() -> void:
+	var t := _instance()
+	var c := _cust(&"easygoing", 1)
+	c.line = 30
+	c.offer = _offer(&"vsc", 30, 1600)
+	c.reveal_room()
+	t.show_offer(c, "INTERESTED", _meter_scale())
+	var bar: AppealBar = t._bar
+	bar.size = Vector2(OfferTablet.METER_WIDTH, 420)
+	var track := Rect2(4, 4, bar.size.x - 8, bar.size.y - 8)
+	var font := ThemeDB.fallback_font
+	# At the Line, the fill's top IS the marker - the two would sit on top of
+	# each other without the step.
+	var tag := bar.line_tag_rect(bar.marker_y(track), font)
+	var at := bar.appeal_label_rect(bar.fill_rect(track), tag, font)
+	h.check("the appeal number does not sit under the Line's tag (%s vs %s)" % [at, tag],
+		not at.intersects(tag))
+	t.free()
+
 func test_the_status_is_a_band_until_you_know_the_line_and_a_number_after() -> void:
 	var t := _instance()
 	var c := _cust(&"easygoing", 1)
