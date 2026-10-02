@@ -26,31 +26,41 @@ const BANNERS := {
 }
 @onready var _scores_list: VBoxContainer = %ScoresList
 @onready var _scores_empty: Label = %ScoresEmpty
-@onready var _name_field: LineEdit = %IntroName
+@onready var _popup: Control = %NamePopup
+@onready var _name_field: LineEdit = %NameField
+@onready var _intro_title: Label = %IntroTitle
 @onready var _scores_sub: Label = %ScoresSub
 @onready var _tabs: Control = %ScoresTabs
 @onready var _everyone_tab: Button = %EveryoneTab
 @onready var _yours_tab: Button = %YoursTab
 
 var _page := &""
+## What the name popup goes on to once it is answered - &"new_game" or
+## &"tutorial".
+var _after_name := &""
 ## Which board the high scores show - &"everyone" or &"yours".
 var _board := &""
 ## Everyone's scores, shared across players - see Leaderboard.
 var leaderboard: Leaderboard
 
 func _ready() -> void:
-	(%NewGameButton as Button).pressed.connect(show_intro)
-	(%TutorialButton as Button).pressed.connect(func(): tutorial_requested.emit())
+	(%NewGameButton as Button).pressed.connect(ask_name.bind(&"new_game"))
+	(%TutorialButton as Button).pressed.connect(ask_name.bind(&"tutorial"))
 	(%HighScoresButton as Button).pressed.connect(show_scores)
 	(%ScoresBackButton as Button).pressed.connect(show_menu)
 	(%IntroBackButton as Button).pressed.connect(show_menu)
-	(%StartDayButton as Button).pressed.connect(func():
-		_name_field.release_focus()
-		new_game_started.emit())
-	# Kept as you type, the way the tutorial's name tag keeps it.
-	_name_field.max_length = PlayerProfile.MAX_NAME
-	_name_field.text_changed.connect(PlayerProfile.set_player_name)
-	_name_field.text_submitted.connect(func(_t): _name_field.release_focus())
+	(%StartDayButton as Button).pressed.connect(func(): new_game_started.emit())
+	(%NameOkButton as Button).pressed.connect(confirm_name)
+	(%NameCancelButton as Button).pressed.connect(_close_popup)
+	_name_field.text_submitted.connect(func(_t): confirm_name())
+	if uses_native_prompt():
+		# A phone's keyboard does not reliably reach a Godot text box in a
+		# browser - it suggests words and nothing lands. The browser's own
+		# prompt always works, so a tap on the sticker asks through that.
+		_name_field.virtual_keyboard_enabled = false
+		_name_field.focus_entered.connect(func():
+			_name_field.release_focus()
+			_prompt_for_name.call_deferred())
 	leaderboard = Leaderboard.new()
 	leaderboard.name = "Leaderboard"
 	add_child(leaderboard)
@@ -94,10 +104,52 @@ func _on_board_fetched(rows: Array, ok: bool) -> void:
 	_list(rows, "No scores on the board yet. Be the first." if ok
 		else "Couldn't reach the board right now. Try again in a bit.")
 
-## "It's your first day": the welcome a new game opens on, with your name tag.
+## "It's your first day": the welcome a new game opens on, addressed to you.
 func show_intro() -> void:
-	_name_field.text = PlayerProfile.player_name()
+	var who := PlayerProfile.player_name()
+	_intro_title.text = "You got the job, %s!" % who if who != "" else "You got the job!"
 	_show(&"intro")
+
+## "What's your name?" - before a new game or the tutorial, filled in with the
+## name already on this device. `then` is where it goes once answered.
+func ask_name(then: StringName) -> void:
+	_after_name = then
+	_name_field.text = PlayerProfile.player_name()
+	_popup.visible = true
+	# Ready to type on a computer. On a phone, focus would open the prompt
+	# before anyone asked for it - a tap on the sticker does that.
+	if not uses_native_prompt():
+		_name_field.grab_focus()
+		_name_field.caret_column = _name_field.text.length()
+
+func name_popup_showing() -> bool:
+	return _popup.visible
+
+## Keeps the name and goes on to whatever asked for it.
+func confirm_name() -> void:
+	if not _popup.visible:
+		return
+	PlayerProfile.set_player_name(_name_field.text)
+	_close_popup()
+	match _after_name:
+		&"new_game":
+			show_intro()
+		&"tutorial":
+			tutorial_requested.emit()
+
+func _close_popup() -> void:
+	_name_field.release_focus()
+	_popup.visible = false
+
+## A browser on a touch screen - where typing goes through window.prompt().
+static func uses_native_prompt() -> bool:
+	return OS.has_feature("web") and DisplayServer.is_touchscreen_available()
+
+func _prompt_for_name() -> void:
+	var asked = JavaScriptBridge.eval("window.prompt('Name on your badge', %s)"
+		% JSON.stringify(_name_field.text), true)
+	if asked is String:
+		_name_field.text = (asked as String).strip_edges().left(PlayerProfile.MAX_NAME)
 
 ## Which page is up - &"menu", &"scores" or &"intro".
 func page() -> StringName:

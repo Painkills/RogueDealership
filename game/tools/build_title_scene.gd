@@ -25,6 +25,8 @@ func _init() -> void:
 	_menu(root)
 	_scores(root)
 	_intro(root)
+	# Last, so it draws over whichever card is up.
+	_name_popup(root)
 
 	var packed := PackedScene.new()
 	packed.pack(root)
@@ -91,7 +93,7 @@ func _scores(root: Control) -> void:
 func _intro(root: Control) -> void:
 	var col := _card(root, "IntroCard", 820)
 	AppWindow.label(col, root, "IntroEyebrow", "FIRST DAY ON THE JOB", 20, &"accent", true)
-	AppWindow.label(col, root, "IntroTitle", "You got the job!", 54, &"ink", true)
+	AppWindow.label(col, root, "IntroTitle", "You got the job!", 54, &"ink", true, true)
 	var body := AppWindow.label(col, root, "IntroBody",
 		"Congratulations - you're the new F&I Manager at Rogue Dealership.\n\n"
 		+ "Sales sells them the car. Then they sit down at YOUR desk, and "
@@ -100,22 +102,6 @@ func _intro(root: Control) -> void:
 		+ "your numbers. Pick today's shift from your calendar - and try not to "
 		+ "get fired.", 24, &"text", false, true)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
-	var tag_row := HBoxContainer.new()
-	tag_row.name = "NameRow"
-	tag_row.add_theme_constant_override("separation", 16)
-	col.add_child(tag_row)
-	tag_row.owner = root
-	var tag_label := AppWindow.label(tag_row, root, "NameLabel", "Name on your badge:", 24, &"text_dim")
-	tag_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var field := LineEdit.new()
-	field.name = "IntroName"
-	field.placeholder_text = "WRITE YOUR NAME"
-	field.custom_minimum_size = Vector2(380, 58)
-	field.add_theme_font_size_override("font_size", 26)
-	field.unique_name_in_owner = true
-	tag_row.add_child(field)
-	field.owner = root
 
 	_gap(col, root, 6)
 	var buttons := HBoxContainer.new()
@@ -133,11 +119,144 @@ func _intro(root: Control) -> void:
 	var start := _button(buttons, root, "StartDayButton", "START MY FIRST DAY", &"primary", true)
 	start.custom_minimum_size = Vector2(380, 64)
 
+# --- the name popup --------------------------------------------------------
+
+## Asked before NEW GAME or TUTORIAL: a "HELLO my name is" sticker to write
+## on. The name signs the boss's emails and every score you post.
+func _name_popup(root: Control) -> void:
+	var popup := Control.new()
+	popup.name = "NamePopup"
+	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	popup.visible = false
+	popup.unique_name_in_owner = true
+	root.add_child(popup)
+	popup.owner = root
+
+	var dim := Panel.new()
+	dim.name = "Dim"
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shade := StyleBoxFlat.new()
+	shade.bg_color = Color(0, 0, 0, 0.55)
+	dim.add_theme_stylebox_override("panel", shade)
+	popup.add_child(dim)
+	dim.owner = root
+
+	var centre := CenterContainer.new()
+	centre.name = "Centre"
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	popup.add_child(centre)
+	centre.owner = root
+
+	var col := _card(centre, "NameCard", 640, root)
+	AppWindow.label(col, root, "NameEyebrow", "BEFORE YOU CLOCK IN", 20, &"accent", true)
+	AppWindow.label(col, root, "NameTitle", "What's your name?", 46, &"ink", true)
+	var why := AppWindow.label(col, root, "NameWhy",
+		"It goes on your badge, the boss's emails and the high scores.", 22, &"text_dim")
+	why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_sticker(col, root)
+
+	var buttons := HBoxContainer.new()
+	buttons.name = "NameButtons"
+	buttons.add_theme_constant_override("separation", 16)
+	col.add_child(buttons)
+	buttons.owner = root
+	var cancel := _button(buttons, root, "NameCancelButton", "CANCEL", &"ink", false)
+	cancel.custom_minimum_size = Vector2(200, 64)
+	var spacer := Control.new()
+	spacer.name = "Spacer"
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buttons.add_child(spacer)
+	spacer.owner = root
+	var ok := _button(buttons, root, "NameOkButton", "THAT'S ME", &"primary", true)
+	ok.custom_minimum_size = Vector2(260, 64)
+
+## The sticker itself: a red HELLO / my name is band over a white space to
+## write in - the same tag the tutorial's welcome slaps on.
+func _sticker(col: Control, root: Control) -> void:
+	var holder := CenterContainer.new()
+	holder.name = "StickerHolder"
+	col.add_child(holder)
+	holder.owner = root
+
+	var tag := PanelContainer.new()
+	tag.name = "Sticker"
+	tag.custom_minimum_size = Vector2(420, 170)
+	var sticker := StyleBoxFlat.new()
+	sticker.bg_color = Palette.color(&"paper")
+	sticker.border_color = Palette.color(&"stamp")
+	sticker.set_border_width_all(4)
+	sticker.set_corner_radius_all(14)
+	tag.add_theme_stylebox_override("panel", sticker)
+	holder.add_child(tag)
+	tag.owner = root
+
+	var inner := VBoxContainer.new()
+	inner.name = "Column"
+	inner.add_theme_constant_override("separation", 0)
+	tag.add_child(inner)
+	inner.owner = root
+
+	var band := PanelContainer.new()
+	band.name = "Band"
+	var red := StyleBoxFlat.new()
+	red.bg_color = Palette.color(&"stamp")
+	red.corner_radius_top_left = 10
+	red.corner_radius_top_right = 10
+	red.content_margin_top = 4
+	red.content_margin_bottom = 6
+	band.add_theme_stylebox_override("panel", red)
+	inner.add_child(band)
+	band.owner = root
+	var band_col := VBoxContainer.new()
+	band_col.name = "Column"
+	band_col.add_theme_constant_override("separation", -6)
+	band.add_child(band_col)
+	band_col.owner = root
+	var hello := AppWindow.label(band_col, root, "Hello", "HELLO", 40, &"paper", true)
+	hello.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var is_ := AppWindow.label(band_col, root, "MyNameIs", "my name is", 20, &"paper")
+	is_.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	var field := LineEdit.new()
+	field.name = "NameField"
+	field.placeholder_text = "WRITE YOUR NAME"
+	field.max_length = PlayerProfile.MAX_NAME
+	field.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	field.flat = true
+	field.caret_blink = true
+	field.custom_minimum_size = Vector2(0, 76)
+	field.add_theme_font_override("font", _heading_font())
+	field.add_theme_font_size_override("font_size", 42)
+	field.add_theme_color_override("font_color", Palette.color(&"ink"))
+	field.add_theme_color_override("font_placeholder_color",
+		Color(Palette.color(&"text_dim"), 0.55))
+	field.add_theme_color_override("caret_color", Palette.color(&"stamp"))
+	for state in ["normal", "focus", "read_only"]:
+		field.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	field.unique_name_in_owner = true
+	inner.add_child(field)
+	field.owner = root
+
+## The heading face for a LineEdit, which cannot take the theme's Label-only
+## "Heading" variation - the same weight tools/build_theme.gd sets.
+func _heading_font() -> FontVariation:
+	var v := FontVariation.new()
+	v.base_font = load("res://theme/fonts/Oswald-Variable.ttf") as FontFile
+	var ts := TextServerManager.get_primary_interface()
+	v.variation_opentype = {ts.name_to_tag("wght"): 600}
+	return v
+
 # --- pieces ----------------------------------------------------------------
 
-## A white card on the left of the screen, centred top to bottom. Returns the
-## column to fill.
-func _card(root: Control, node_name: String, width: int) -> VBoxContainer:
+## A white card on the left of the screen, centred top to bottom - or, given an
+## `owner_root`, inside `parent` (a container placing it). Returns the column
+## to fill.
+func _card(parent: Control, node_name: String, width: int,
+		owner_root: Control = null) -> VBoxContainer:
+	var root: Control = parent if owner_root == null else owner_root
 	var card := PanelContainer.new()
 	card.name = node_name
 	card.unique_name_in_owner = true
@@ -159,7 +278,7 @@ func _card(root: Control, node_name: String, width: int) -> VBoxContainer:
 	style.shadow_offset = Vector2(0, 10)
 	style.set_content_margin_all(40)
 	card.add_theme_stylebox_override("panel", style)
-	root.add_child(card)
+	parent.add_child(card)
 	card.owner = root
 
 	var col := VBoxContainer.new()

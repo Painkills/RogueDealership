@@ -125,10 +125,13 @@ func _ready() -> void:
 	_start.pressed.connect(_on_next)
 	_splash_skip.pressed.connect(func(): _finish(false))
 	_exit.pressed.connect(func(): _finish(false))
-	# Kept as you type, so whichever way you leave the welcome, the name goes
-	# with you.
-	_name_field.text_changed.connect(PlayerProfile.set_player_name)
-	_name_field.text_submitted.connect(func(_t): _name_field.release_focus())
+	# Written on the title screen's name popup before the tutorial opens - the
+	# welcome only wears it. Never a text box here: on a phone a focused one
+	# pops a keyboard over the welcome.
+	_name_field.editable = false
+	_name_field.focus_mode = Control.FOCUS_NONE
+	_name_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_name_field.add_theme_color_override("font_uneditable_color", Palette.color(&"ink"))
 	_confetti.texture = _confetti_piece()
 
 func start(floor_view) -> void:
@@ -208,7 +211,7 @@ func _show_splash() -> void:
 	_exit.visible = false
 	_splash.visible = true
 	_dress_the_splash(TutorialProgress.is_done())
-	_name_field.text = PlayerProfile.player_name()
+	_name_field.text = PlayerProfile.display_name()
 
 	# In with a little bounce, and the name tag slapped on a beat later.
 	if _splash_tween != null and _splash_tween.is_valid():

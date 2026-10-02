@@ -41,7 +41,7 @@ func _drive() -> void:
 	_floor = _root._shift_view
 
 	_check_the_title_screen()
-	_title_button("TutorialButton").pressed.emit()
+	_check_the_name_popup()
 	await _frames(3)
 	_check("TUTORIAL opens the practice shift",
 		_coach.is_running() and not _root._picker_view.visible
@@ -155,12 +155,13 @@ func _drive() -> void:
 	_check("and the coach", not _coach.visible and not _coach.is_running())
 	_check("and is remembered", TutorialProgress.is_done())
 	_check("with the run still waiting on its first shift", run.shift_number == 1)
-	_check("the first day knows your name (%s)" % _root._title_view._name_field.text,
-		_root._title_view._name_field.text == "Dana")
+	_check("the first day knows your name (%s)" % _root._title_view._intro_title.text,
+		_root._title_view._intro_title.text.contains("Dana"))
 
 	# TUTORIAL replays it - welcoming you BACK, with the way out the loud
 	# button - and BACK TO MENU gets straight back out.
 	_title_button("TutorialButton").pressed.emit()
+	_title_button("NameOkButton").pressed.emit()
 	await _frames(2)
 	_check("TUTORIAL replays it", _coach.is_running() and _coach.step_id() == &"welcome")
 	_check("welcoming you back (%s)" % _coach._splash_title.text,
@@ -173,6 +174,7 @@ func _drive() -> void:
 
 	# The way out mid-lesson: EXIT TUTORIAL, from any memo.
 	_title_button("TutorialButton").pressed.emit()
+	_title_button("NameOkButton").pressed.emit()
 	await _frames(2)
 	await _next(&"customer")
 	_check_the_way_out_is_on_screen()
@@ -193,6 +195,9 @@ func _drive() -> void:
 	_check("every boot opens on the menu, even once the tutorial is done",
 		_on_the_menu() and not _coach.is_running())
 	_title_button("TutorialButton").pressed.emit()
+	_check("the name popup remembers you (%s)" % _root._title_view._name_field.text,
+		_root._title_view._name_field.text == "Dana")
+	_title_button("NameOkButton").pressed.emit()
 	await _frames(2)
 	_check_the_loud_button("a returning player", _coach._splash_skip, _coach._start)
 	_check("and your name is still on the tag (%s)" % _coach._name_field.text,
@@ -265,10 +270,37 @@ func _check_everyones_board() -> void:
 	_check("and a reply that arrives late does not overwrite it",
 		title._scores_list.get_child_count() == 0)
 
+## "Make the part where you enter your name a popup when you select new game
+## or tutorial": TUTORIAL asks first, and the answer is what the tag wears.
+func _check_the_name_popup() -> void:
+	var title = _root._title_view
+	_check("no popup until asked", not title.name_popup_showing())
+	_title_button("TutorialButton").pressed.emit()
+	_check("TUTORIAL asks your name first", title.name_popup_showing()
+		and not _coach.is_running())
+	_check("on a blank sticker for a first-timer (%s)" % title._name_field.placeholder_text,
+		title._name_field.text == "" and title._name_field.placeholder_text.contains("NAME"))
+	_check("ready to type into on a computer", title._name_field.has_focus())
+	title._name_field.text = "Dana"
+	_title_button("NameOkButton").pressed.emit()
+	_check("THAT'S ME keeps it (%s)" % PlayerProfile.player_name(),
+		PlayerProfile.player_name() == "Dana")
+	_check("and puts the popup away", not title.name_popup_showing())
+
 ## NEW GAME: the first-day welcome over the dealership, then the calendar.
 func _check_a_new_game() -> void:
 	var before: RunState = _root._run
 	_title_button("NewGameButton").pressed.emit()
+	_check("NEW GAME asks your name first", _root._title_view.name_popup_showing())
+	_title_button("NameCancelButton").pressed.emit()
+	_check("CANCEL puts it away, still on the menu",
+		_on_the_menu() and not _root._title_view.name_popup_showing())
+	_title_button("NewGameButton").pressed.emit()
+	_root._title_view._name_field.text = "Sam"
+	_root._title_view._name_field.text_submitted.emit("Sam")
+	_check("pressing Enter answers it", not _root._title_view.name_popup_showing())
+	_check("and the new name is kept (%s)" % PlayerProfile.player_name(),
+		PlayerProfile.player_name() == "Sam")
 	_check("NEW GAME opens on the first day's welcome",
 		_root._title_view.page() == &"intro" and not _root._picker_view.visible)
 	_check("which says it is your first day",
@@ -276,6 +308,7 @@ func _check_a_new_game() -> void:
 	_title_button("IntroBackButton").pressed.emit()
 	_check("BACK from it returns to the menu", _on_the_menu())
 	_title_button("NewGameButton").pressed.emit()
+	_title_button("NameOkButton").pressed.emit()
 	_title_button("StartDayButton").pressed.emit()
 	await _frames(2)
 	_check("starting the day opens the calendar",
@@ -302,15 +335,12 @@ func _check_the_first_day_welcome() -> void:
 		_floor._windows.time_of_day() == &"morning")
 	_check("it is day one (%s)" % _coach._eyebrow.text,
 		_coach._eyebrow.text == _coach.FIRST_DAY["eyebrow"])
-	# "Let players write their own name for themselves": the tag is blank for a
-	# first-timer, asking for one, and whatever is written on it is kept.
+	# The name was written in the popup before this; the tag only wears it -
+	# never a text box that would pop a phone's keyboard over the welcome.
 	var tag: LineEdit = _coach._name_field
-	_check("a name tag waiting for your name (%s)" % tag.placeholder_text,
-		tag.text == "" and tag.placeholder_text.contains("NAME") and tag.editable)
-	tag.text = "Dana"
-	tag.text_changed.emit("Dana")
-	_check("writing your name on it keeps it (%s)" % PlayerProfile.player_name(),
-		PlayerProfile.player_name() == "Dana")
+	_check("the name tag wears the name you gave (%s)" % tag.text, tag.text == "Dana")
+	_check("and is not something to type in",
+		not tag.editable and tag.focus_mode == Control.FOCUS_NONE)
 	_check("and the job spelled out (%s)" % _coach._splash_body.text.substr(0, 40),
 		_coach._splash_body.text.contains("warranties"))
 	_check("to confetti", _coach._confetti.emitting)
