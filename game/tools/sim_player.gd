@@ -59,6 +59,18 @@ static func _band_need(band: String) -> int:
 		"COOL": return 18
 	return 28
 
+## With `track` on, every visit is written down as it is played: customer ->
+## {"ticks", "banked"} - the ticks spent working them (cards cycled for them
+## included) and the margin banked when they signed. See probe_visits.gd.
+static var track := false
+static var visits := {}
+
+static func _note(c: Customer, ticks: int, banked: int) -> void:
+	if not visits.has(c):
+		visits[c] = {"ticks": 0, "banked": 0}
+	visits[c]["ticks"] += ticks
+	visits[c]["banked"] += banked
+
 static func play(s: Shift) -> void:
 	var guard := 0
 	while not s.is_over() and guard < 600:
@@ -78,11 +90,18 @@ static func play(s: Shift) -> void:
 			if not _dig(s):
 				break
 			continue
+		var who: Customer = s.chairs[target]
+		var tick_before := s.tick
+		var banked_before := s.margin_banked
 		if s.at == null or int(s.at) != target:
 			s.approach(target)
-		if not _act(s, s.chairs[target]):
-			if not _dig(s):
-				break
+		var stuck := false
+		if not _act(s, who):
+			stuck = not _dig(s)
+		if track:
+			_note(who, s.tick - tick_before, s.margin_banked - banked_before)
+		if stuck:
+			break
 
 ## Who to work next: whoever has a demand you can answer, soonest due; then
 ## anyone with a deal unsigned and about to walk; then who you are with, if
