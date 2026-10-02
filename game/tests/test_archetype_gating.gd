@@ -198,6 +198,46 @@ func test_but_two_of_an_easy_one_can_share_it() -> void:
 		doubled = doubled or n >= 2
 	h.check("a common, not-hard archetype sometimes sits at two desks at once", doubled)
 
+## A shift of `pool` opened with `arrivals` - the ShiftProfile knobs RunState
+## hands Shift.new().
+func _opened_with(pool: ArchetypePool, seed_value: int, arrivals: Dictionary) -> Shift:
+	return Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"), pool, seed_value, [], null, 0, 1, 0, 0,
+		null, 0, 1.0, 1.0, false, [], [], [], arrivals)
+
+func test_a_shift_can_let_two_of_a_hard_one_share_the_floor() -> void:
+	var tough := _pool().archetypes[0].id
+	var pool := _made_up(func(a):
+		a.hard = true
+		if a.id == tough: a.weight = 50.0)
+	var doubled := false
+	var doubled_anyway := false
+	for seed_value in range(40):
+		for allowed in [true, false]:
+			var n := 0
+			for c in _opened_with(pool, seed_value, {"allow_hard_duplicates": allowed}).seated():
+				if c.archetype.id == tough:
+					n += 1
+			if allowed:
+				doubled = doubled or n >= 2
+			else:
+				doubled_anyway = doubled_anyway or n >= 2
+	h.check("allowed, the common hard one sometimes sits at two desks", doubled)
+	h.check("not allowed, never", not doubled_anyway)
+
+func test_a_shift_can_scale_one_archetype_out_from_the_first_customer() -> void:
+	var gone := _pool().archetypes[0].id
+	var pool := _made_up(func(a): pass)
+	var came := false
+	for seed_value in range(30):
+		var s := _opened_with(pool, seed_value, {"archetype_weight_scales": {gone: 0.0}})
+		for c in s.seated():
+			came = came or c.archetype.id == gone
+		for _i in range(10):
+			came = came or s._pick_archetype().id == gone
+	h.check("scaled to nothing, they never come in - not even at opening", not came)
+
 func test_who_demands_a_category_wants_it_most() -> void:
 	## "Make her required category her favorites": every interest in the
 	## category they came in for ranks in their top three.

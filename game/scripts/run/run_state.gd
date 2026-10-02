@@ -82,11 +82,13 @@ func start_shift(profile: ShiftProfile) -> Shift:
 		standing, sale_streak, dialogue, profile.seats,
 		profile.patience_scale, profile.walk_up_scale,
 		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup,
-		profile.excluded_archetypes)
+		profile.excluded_archetypes, {
+			"hard_weight_scale": profile.hard_weight_scale,
+			"allow_hard_duplicates": profile.allow_hard_duplicates,
+			"archetype_weight_scales": profile.archetype_weight_scales})
 	s.commission = profile.commission
 	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to
-	s.hard_weight_scale = profile.hard_weight_scale
 	# The boss's product quota - every shift of a week that has one, but a
 	# boss day's, which is its own test.
 	if not profile.is_boss_day():

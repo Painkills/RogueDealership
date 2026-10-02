@@ -35,8 +35,11 @@ var commission: float = 0.25
 var pay_scale: float = 1.0
 ## The picked ShiftProfile's heal_up_to - see healed().
 var heal_up_to: float = 0.0
-## The picked ShiftProfile's hard_weight_scale - see _pick_archetype().
+## The picked ShiftProfile's hard_weight_scale, allow_hard_duplicates and
+## archetype_weight_scales - see _pick_archetype().
 var hard_weight_scale: float = 1.0
+var allow_hard_duplicates: bool = false
+var archetype_weight_scales: Dictionary = {}
 ## The boss's product quota for this shift: sell `category_quota_count` products
 ## from the `category_quota` category, or lose ShiftConfig.category_quota_standing
 ## at the end. &"" / 0 when there is none. Set by RunState.start_shift().
@@ -126,8 +129,14 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_patience_scale: float = 1.0, p_walk_up_scale: float = 1.0,
 		p_unlock_full_archetype_pool: bool = false,
 		p_only_archetypes: Array = [], p_lineup: Array = [],
-		p_excluded_archetypes: Array = []) -> void:
+		p_excluded_archetypes: Array = [], p_arrivals: Dictionary = {}) -> void:
 	cfg = p_cfg
+	# Who the door sends - ShiftProfile's hard_weight_scale,
+	# allow_hard_duplicates and archetype_weight_scales. Set before the floor
+	# opens, so the first customers are picked under them like everyone after.
+	hard_weight_scale = float(p_arrivals.get("hard_weight_scale", 1.0))
+	allow_hard_duplicates = bool(p_arrivals.get("allow_hard_duplicates", false))
+	archetype_weight_scales = (p_arrivals.get("archetype_weight_scales", {}) as Dictionary).duplicate()
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
@@ -460,7 +469,7 @@ func _pick_archetype() -> CustomerArchetype:
 		_lineup_next += 1
 		return lineup[_lineup_next - 1]
 	var pool := _archetypes_available_this_shift()
-	if cfg.unique_archetypes_on_floor:
+	if cfg.unique_archetypes_on_floor and not allow_hard_duplicates:
 		# The waiting list counts as the floor: they are who sits down next.
 		# Only the hard ones are kept to one at a time.
 		var taken := {}
@@ -494,7 +503,8 @@ func _weighted_archetype(pool: Array[CustomerArchetype]) -> CustomerArchetype:
 
 
 func _weight_of(a: CustomerArchetype) -> float:
-	return maxf(0.0, a.weight) * (hard_weight_scale if a.hard else 1.0)
+	return maxf(0.0, a.weight) * (hard_weight_scale if a.hard else 1.0) \
+		* maxf(0.0, float(archetype_weight_scales.get(a.id, 1.0)))
 
 
 func _archetypes_available_this_shift() -> Array[CustomerArchetype]:
