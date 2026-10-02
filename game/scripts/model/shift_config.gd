@@ -128,6 +128,9 @@ func paycheck_in_week(week: int) -> int:
 @export var action_cadence_jitter_ticks: int = 2
 
 @export var prior_slip: float = 0.2
+## Never two of the same HARD archetype (CustomerArchetype.hard) on the floor
+## or in the waiting room at once - two Lay-Downs can share a floor, two
+## Karens cannot. Gives way when the pool has nobody else to send.
 @export var unique_archetypes_on_floor: bool = true
 
 # --- the shop --------------------------------------------------------------

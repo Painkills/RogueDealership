@@ -424,14 +424,25 @@ func test_a_floor_wide_consequence_is_flagged_when_it_lands() -> void:
 	## false on the ask and true on the bill.
 	var s := _shift([&"karen", &"easygoing", &"easygoing"])
 	var c := _sat_a_while(s)
+	# Patient enough to sit out the fuse - set before she asks, since raising
+	# it after would answer her: this is about the bill, not a walkout.
+	c.max_patience = 99
+	c.patience = 99
 	_dig_until_demanded(s, c)
 	h.check("the ask is not itself floor-wide",
 		not bool(s.action_log[0]["floor_wide"]))
+	var asked: String = c.demand.display_name
 	var guard := 0
 	while c.demand != null and guard < 30:
 		s.dig(0)
 		guard += 1
-	var bill: Dictionary = s.action_log[-1]
+	# The bill is the last entry for her ask - whoever it drained may speak up
+	# after it.
+	var bill: Dictionary = {"name": "", "floor_wide": false, "descriptions": []}
+	for k in range(s.action_log.size() - 1, -1, -1):
+		if str(s.action_log[k]["name"]).begins_with(asked):
+			bill = s.action_log[k]
+			break
 	h.check("but ignoring it is (%s)" % bill["name"], bool(bill["floor_wide"]))
 	h.check("and it says so (%s)" % str(bill["descriptions"]),
 		str(bill["descriptions"]).to_lower().contains("everyone"))

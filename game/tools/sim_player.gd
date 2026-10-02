@@ -32,6 +32,10 @@ static func _est_line(c: Customer) -> int:
 static func _est_rank(c: Customer, iid: StringName) -> int:
 	if not fog or c.known_ranks.has(iid):
 		return int(c.ranks[iid])
+	# Someone who announces the category they came for wants it most.
+	if c.demands_category != null \
+			and c.interests().by_id(iid).category.id == c.demands_category:
+		return GUESS_TOP
 	for i in c.archetype.top_interests:
 		if i.id == iid:
 			return GUESS_TOP

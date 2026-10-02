@@ -35,6 +35,8 @@ var commission: float = 0.25
 var pay_scale: float = 1.0
 ## The picked ShiftProfile's heal_up_to - see healed().
 var heal_up_to: float = 0.0
+## The picked ShiftProfile's hard_weight_scale - see _pick_archetype().
+var hard_weight_scale: float = 1.0
 ## Who never comes in on this shift - ShiftProfile.excluded_archetypes.
 var excluded_archetypes: Array[CustomerArchetype] = []
 ## A premade shift's own customers - see ShiftProfile.only_archetypes and
@@ -404,8 +406,15 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		cfg.arrival_patience_min_fraction, 1.0)))
 	start = max(min(top, cfg.arrival_patience_floor), start)
 
+	# Someone who demands a category comes in for one at random, and its
+	# interests are their three favourites - what she wants is what she wants.
+	var wanted: Category = null
+	var favourites: Array[Interest] = []
+	if arch.demands_category and not interests.categories.is_empty():
+		wanted = interests.categories[rng.randi_range(0, interests.categories.size() - 1)]
+		favourites = interests.in_category(wanted)
 	var c := Customer.new(CHAIR_KEYS[chair], _next_name(), arch,
-		Customer.make_ranks(arch, interests, rng, cfg.prior_slip),
+		Customer.make_ranks(arch, interests, rng, cfg.prior_slip, favourites),
 		start, top, cfg.as_dict(), interests)
 
 	# Every-triggered actions start their cadence counter jittered, not at a
@@ -419,7 +428,8 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 				-cfg.action_cadence_jitter_ticks, cfg.action_cadence_jitter_ticks)
 
 	if arch.demands_category:
-		c.demands_category = interests.by_id(c.top_interest_id()).category.id
+		c.demands_category = wanted.id if wanted != null \
+			else interests.by_id(c.top_interest_id()).category.id
 		c.known_top_category = c.demands_category      # they say so, loudly
 
 	chairs[chair] = c
@@ -444,6 +454,7 @@ func _pick_archetype() -> CustomerArchetype:
 	var pool := _archetypes_available_this_shift()
 	if cfg.unique_archetypes_on_floor:
 		# The waiting list counts as the floor: they are who sits down next.
+		# Only the hard ones are kept to one at a time.
 		var taken := {}
 		for c in seated():
 			taken[c.archetype.id] = true
@@ -451,11 +462,31 @@ func _pick_archetype() -> CustomerArchetype:
 			taken[a.id] = true
 		var fresh: Array[CustomerArchetype] = []
 		for a in pool:
-			if not taken.has(a.id):
+			if not (a.hard and taken.has(a.id)):
 				fresh.append(a)
 		if not fresh.is_empty():
 			pool = fresh
-	return pool[rng.randi_range(0, pool.size() - 1)]
+	return _weighted_archetype(pool)
+
+
+## One of `pool`, by CustomerArchetype.weight - the hard ones scaled by this
+## shift's hard_weight_scale. Evenly, if every weight comes to nothing.
+func _weighted_archetype(pool: Array[CustomerArchetype]) -> CustomerArchetype:
+	var total := 0.0
+	for a in pool:
+		total += _weight_of(a)
+	if total <= 0.0:
+		return pool[rng.randi_range(0, pool.size() - 1)]
+	var roll := rng.randf() * total
+	for a in pool:
+		roll -= _weight_of(a)
+		if roll < 0.0:
+			return a
+	return pool[pool.size() - 1]
+
+
+func _weight_of(a: CustomerArchetype) -> float:
+	return maxf(0.0, a.weight) * (hard_weight_scale if a.hard else 1.0)
 
 
 func _archetypes_available_this_shift() -> Array[CustomerArchetype]:

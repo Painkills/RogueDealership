@@ -6,6 +6,9 @@
 
 [resource]
 script = ExtResource("3_e8nts")
+hard = false
+weight = 3.0
+min_shift = 1
 line = 20
 id = &"easygoing"
 display_name = "Easygoing"

@@ -24,6 +24,9 @@ class_name ShiftProfile extends Resource
 ## Never come in on this shift, whatever else lets them - "remove Lay-Down
 ## Larry and Easygoing from the night pool".
 @export var excluded_archetypes: Array[CustomerArchetype] = []
+## Multiplies the weight of every hard archetype (CustomerArchetype.hard) in
+## this shift's pool - night brings in more of the difficult ones.
+@export var hard_weight_scale: float = 1.0
 ## The first day of the run this shift is offered on - a regular tier only
 ## shows on the calendar from then. See Week.
 @export var from_day: int = 1

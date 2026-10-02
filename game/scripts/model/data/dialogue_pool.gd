@@ -66,16 +66,21 @@ func pick_line(rng: RandomNumberGenerator, tags: Array[StringName],
 	##
 	## `avoid` is what the speaker said lately: skipped while anything else
 	## fits, so playing the same card three times is three different sentences
-	## rather than one sentence three times. Never silence - with nothing else
-	## left, a repeat beats saying nothing.
+	## rather than one sentence three times. `avoid` runs oldest first: when
+	## everything that fits was said lately, the oldest of it is let back in
+	## first, so the line just said is the last to repeat. Never silence - with
+	## nothing else left, a repeat beats saying nothing.
 	var pool := candidates(tags, archetype_id, product_id, band, objection, answering)
-	if not avoid.is_empty():
+	var skip := avoid.duplicate()
+	while not skip.is_empty():
 		var fresh: Array[DialogueLine] = []
 		for l in pool:
-			if not avoid.has(l.text):
+			if not skip.has(l.text):
 				fresh.append(l)
 		if not fresh.is_empty():
 			pool = fresh
+			break
+		skip.pop_front()
 	if pool.is_empty():
 		return null
 	var total := 0

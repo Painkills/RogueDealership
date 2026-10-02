@@ -114,3 +114,108 @@ func test_an_empty_gated_pool_falls_back_rather_than_crashing() -> void:
 		load("res://data/card_pool.tres"), pool, 7, [], null, 0, 1)
 	h.eq("the floor still filled", s.seated().size(), s.cfg.floor_size)
 	h.eq("from the fallback pool", s.seated()[0].archetype.id, &"late")
+
+# ------------------------------------------------------------- the weights
+# A pool of copies of the real archetypes, every one open on day 1 at weight 1
+# and not hard, then `setup` - so these check the rule, not today's tuning.
+
+func _made_up(setup: Callable) -> ArchetypePool:
+	var real := _pool()
+	var typed: Array[CustomerArchetype] = []
+	for a in real.archetypes:
+		var copy := a.duplicate() as CustomerArchetype
+		copy.min_shift = 1
+		copy.weight = 1.0
+		copy.hard = false
+		setup.call(copy)
+		typed.append(copy)
+	var p := ArchetypePool.new()
+	p.design_rule = "test double"
+	p.names = real.names.duplicate()
+	p.archetypes = typed
+	return p
+
+func _on(pool: ArchetypePool, seed_value: int) -> Shift:
+	return Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"), pool, seed_value, [], null, 0, 1)
+
+## How many of `n` picks from the whole of `pool` were `id`.
+func _share(s: Shift, pool: ArchetypePool, id: StringName, n: int) -> float:
+	var hits := 0
+	for _i in range(n):
+		if s._weighted_archetype(pool.archetypes).id == id:
+			hits += 1
+	return float(hits) / float(n)
+
+func test_a_weight_of_nothing_never_comes_in() -> void:
+	var never := _pool().archetypes[0].id
+	var pool := _made_up(func(a): if a.id == never: a.weight = 0.0)
+	var came := false
+	for seed_value in range(30):
+		var s := _on(pool, seed_value)
+		for c in s.seated():
+			came = came or c.archetype.id == never
+		for _i in range(10):
+			came = came or s._pick_archetype().id == never
+	h.check("an archetype weighted 0 never walks in", not came)
+
+func test_the_heavier_an_archetype_the_more_often_it_comes() -> void:
+	var heavy := _pool().archetypes[0].id
+	var pool := _made_up(func(a): if a.id == heavy: a.weight = 20.0)
+	var share := _share(_on(pool, 3), pool, heavy, 600)
+	h.check("weighted twenty to everyone else's one, it is most of the door (%.2f)" % share,
+		share > 0.6)
+
+func test_a_shift_can_weight_the_hard_ones_up() -> void:
+	var tough := _pool().archetypes[0].id
+	var pool := _made_up(func(a): if a.id == tough: a.hard = true)
+	var s := _on(pool, 5)
+	var plain := _share(s, pool, tough, 600)
+	s.hard_weight_scale = 6.0
+	var scaled := _share(s, pool, tough, 600)
+	h.check("the hard one comes far more often at 6x (%.2f, was %.2f)" % [scaled, plain],
+		scaled > plain * 2.0)
+
+func test_never_two_of_the_same_hard_one_on_the_floor() -> void:
+	var pool := _made_up(func(a): a.hard = true)
+	for seed_value in range(40):
+		var ids := {}
+		for c in _on(pool, seed_value).seated():
+			h.check("seed %d seats %s only once" % [seed_value, c.archetype.id],
+				not ids.has(c.archetype.id))
+			ids[c.archetype.id] = true
+
+func test_but_two_of_an_easy_one_can_share_it() -> void:
+	var common := _pool().archetypes[0].id
+	var pool := _made_up(func(a): if a.id == common: a.weight = 50.0)
+	var doubled := false
+	for seed_value in range(40):
+		var n := 0
+		for c in _on(pool, seed_value).seated():
+			if c.archetype.id == common:
+				n += 1
+		doubled = doubled or n >= 2
+	h.check("a common, not-hard archetype sometimes sits at two desks at once", doubled)
+
+func test_who_demands_a_category_wants_it_most() -> void:
+	## "Make her required category her favorites": every interest in the
+	## category they came in for ranks in their top three.
+	var demanding: StringName = &""
+	for a in _pool().archetypes:
+		if a.demands_category:
+			demanding = a.id
+	if demanding == &"":
+		return    # nobody in the pool demands one today - nothing to check
+	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
+	for seed_value in range(30):
+		var s := Shift.new(load("res://data/shift_config.tres"), interests,
+			load("res://data/card_pool.tres"), _pool(), seed_value, [demanding], null, 0, 99)
+		for c in s.seated():
+			if c.demands_category == null:
+				continue
+			for iid in c.ranks:
+				var in_it: bool = interests.by_id(iid).category.id == c.demands_category
+				h.check("seed %d: %s ranks %d - %s her category" % [seed_value, iid,
+					c.ranks[iid], "in" if in_it else "outside"],
+					(int(c.ranks[iid]) <= 3) == in_it)

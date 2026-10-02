@@ -29,6 +29,8 @@ effects = Array[ExtResource("2_tbny2")]([SubResource("Resource_nc07q")])
 
 [resource]
 script = ExtResource("7_ms7hp")
+hard = false
+weight = 2.0
 line_per_sale = 2
 line = 24
 id = &"tech"
@@ -38,5 +40,5 @@ tell = "asked about the drivetrain before asking about the price"
 combo_step = 0.2
 top_interests = Array[ExtResource("5_ccba3")]([ExtResource("8_ojyvg"), ExtResource("9_bpiu1")])
 bottom_interests = Array[ExtResource("5_ccba3")]([ExtResource("6_ctt4j")])
-min_shift = 2
+min_shift = 3
 actions = Array[ExtResource("1_miwln")]([SubResource("Resource_a55j1")])

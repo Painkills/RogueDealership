@@ -40,9 +40,14 @@ func test_action_log_entries_carry_every_field_the_event_log_reads() -> void:
 	var s := _shift2_karen()
 	s.at = 0
 	s.last_customer = s.chairs[0]
-	for _i in range(5):
+	# Until her first ask, whatever her cadence is tuned to.
+	var guard := 0
+	while s.action_log.is_empty() and guard < 20:
 		s.dig(0)
+		guard += 1
 	h.check("something fired", s.action_log.size() >= 1)
+	if s.action_log.is_empty():
+		return
 	var entry: Dictionary = s.action_log[0]
 	for key in ["key", "customer", "name", "dialogue", "descriptions", "floor_wide"]:
 		h.check("action_log entry has %s" % key, entry.has(key))

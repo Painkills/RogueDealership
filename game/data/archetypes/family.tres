@@ -30,6 +30,8 @@ effects = Array[ExtResource("2_q8rar")]([SubResource("Resource_r4edv")])
 
 [resource]
 script = ExtResource("7_7gpfm")
+hard = false
+weight = 2.0
 line = 24
 id = &"family"
 display_name = "Family First"

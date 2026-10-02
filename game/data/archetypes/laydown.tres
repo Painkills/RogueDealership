@@ -6,10 +6,13 @@
 
 [resource]
 script = ExtResource("3_7vb75")
+hard = false
+weight = 3.0
+min_shift = 1
 id = &"laydown"
 display_name = "Lay-Down Larry"
 pattern = "Offer everything you've got!"
 tell = "already nodding, and has not asked a single question"
 line = 16
-line_per_sale = 0
+line_per_sale = 1
 combo_step = 0.05

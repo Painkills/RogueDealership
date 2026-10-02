@@ -208,15 +208,24 @@ func leaving_soon() -> bool:
 
 
 static func make_ranks(arch: CustomerArchetype, pool: InterestPool,
-		rng: RandomNumberGenerator, prior_slip: float) -> Dictionary:
+		rng: RandomNumberGenerator, prior_slip: float,
+		favourites: Array[Interest] = []) -> Dictionary:
 	## Seed the archetype's priors into the top and bottom thirds, shuffle the
 	## rest. prior_slip is what keeps a prior from being a lookup table: each
 	## seeded interest has that chance of being left to the shuffle instead,
 	## because a prior that is never wrong is a lookup table, not a read.
+	##
+	## `favourites`, when given, ARE the top three, no slip - the Karen's
+	## demanded category, which she wants most because it is what she came in
+	## for.
 	var top: Array = []
-	for i in arch.top_interests:
-		if rng.randf() >= prior_slip:
+	if not favourites.is_empty():
+		for i in favourites:
 			top.append(i.id)
+	else:
+		for i in arch.top_interests:
+			if rng.randf() >= prior_slip:
+				top.append(i.id)
 	var bottom: Array = []
 	for i in arch.bottom_interests:
 		if rng.randf() >= prior_slip:

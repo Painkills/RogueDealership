@@ -23,8 +23,14 @@ class_name CustomerArchetype extends Resource
 ## fuse and nothing swept away: the offer just falls short until you come
 ## down. 0 = takes anything that clears their Line.
 @export var needs_concession_past_rank: int = 0
-## The earliest shift this archetype may walk in on. Nine ticks of patience and
-## a floor-wide drain are the two hardest problems in the game, and a first-ever
-## run should open with neither. Defaults to 1, so a bare shift is unaffected.
+## The day of the run this archetype joins the pool. The run opens on the easy
+## ones and adds one more type a day, so each new problem arrives on its own.
+## Defaults to 1, so a bare shift is unaffected.
 @export var min_shift: int = 1
+## How often they come in, relative to everyone else in the pool - not a
+## percentage. 0 never.
+@export var weight: float = 1.0
+## One of the hard ones: never two of the same on the floor at once, and a
+## shift can weight them up (ShiftProfile.hard_weight_scale).
+@export var hard: bool = false
 @export var actions: Array[CustomerAction]

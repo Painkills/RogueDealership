@@ -86,6 +86,7 @@ func start_shift(profile: ShiftProfile) -> Shift:
 	s.commission = profile.commission
 	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to
+	s.hard_weight_scale = profile.hard_weight_scale
 	return s
 
 func finish_shift(report: Dictionary) -> void:
