@@ -343,10 +343,14 @@ func test_the_band_a_line_is_matched_against_is_the_one_after_the_card_lands() -
 		c.line = 100
 		_hand(s, [&"vsc", &"explain"])
 		s.place(0)
-		c.offer.appeal = 75   # gap 25 - COLD, before the card
+		# Just inside COLD before the card, out of it after the card's +4.
+		var cold_from := 1
+		while s.band_for(cold_from) != "COLD":
+			cold_from += 1
+		c.offer.appeal = c.line - cold_from
 		s.rng.seed = seed
 		var before := s.action_log.size()
-		s.play_card(_index_of(s, &"explain"))   # +4 appeal -> gap 21 - COOL, after
+		s.play_card(_index_of(s, &"explain"))
 		var said: String = s.action_log[before]["dialogue"]
 		h.check(("seed %d never drew a COLD-only line once the gap left COLD "
 				+ "(got: %s)") % [seed, said], not cold_texts.has(said))

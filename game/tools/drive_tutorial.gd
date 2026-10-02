@@ -126,10 +126,10 @@ func _drive() -> void:
 	_check("an offer that falls short does not", _coach.step_id() == &"offer")
 	# By the card's own name today, so a rename that leaves the memo behind is
 	# what fails here, not the rename itself.
-	var answer: String = shift.card_pool.by_id(&"explain").display_name
+	var answer: String = shift.card_pool.by_id(&"empathize").display_name
 	_check("but the memo says why, naming the card to play (%s)" % _coach._hint.text,
 		_coach._hint.visible and _coach._hint.text.contains(answer))
-	_floor._apply(shift.play_card(_index_of(shift, &"explain")))
+	_floor._apply(shift.play_card(_index_of(shift, &"empathize")))
 	_floor._on_offer()
 	await _settle()
 	_check("with Explain on it, the offer sells and moves it on",

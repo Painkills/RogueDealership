@@ -24,7 +24,7 @@ const CUSTOMER_NAME := "Dana Whitaker"
 const PATIENCE := 20
 ## Left to right: something to dig, two products, and two of the support card
 ## the coach asks for, so digging either one of those still leaves the other.
-const HAND := [&"smalltalk", &"vsc", &"explain", &"tvp", &"explain"]
+const HAND := [&"smalltalk", &"vsc", &"empathize", &"tvp", &"empathize"]
 ## Once a product is on the table, their Line sits this far above its Appeal.
 ## Short enough that the one support card the coach asks for next is exactly
 ## what tips it over - whichever product they happened to put down.
@@ -42,8 +42,23 @@ static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPo
 	# No quota to make in practice - "banked $0 / $3,600" on the top bar would
 	# be a target nobody is asking you to hit.
 	practice.quota = 0
+	# The starter deck, plus whatever the scripted hand names that it does not
+	# hold - the lesson answers an objection with Acknowledge & Empathize, a
+	# store card, before you have ever seen the store.
+	var deck := Deck.build_starting(cards)
+	var held := {}
+	for inst in deck.cards:
+		held[inst.card.id] = int(held.get(inst.card.id, 0)) + 1
+	var wanted := {}
+	for id in HAND:
+		wanted[id] = int(wanted.get(id, 0)) + 1
+	for id in wanted:
+		for _i in range(int(wanted[id]) - int(held.get(id, 0))):
+			var def := cards.by_id(id)
+			if def != null:
+				deck.add(def)
 	var s := Shift.new(practice, interests, cards, archetypes, SEED, [ARCHETYPE],
-		Deck.build_starting(cards), 0, 1, 0, 0, dialogue, 1)
+		deck, 0, 1, 0, 0, dialogue, 1)
 	var c: Customer = s.chairs[0]
 	# The floor has already logged them walking up under the name it dealt
 	# them. The log has to agree with the file on the table.

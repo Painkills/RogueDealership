@@ -180,6 +180,9 @@ static func _act(s: Shift, c: Customer) -> bool:
 			return s.play_card(read).ok
 		var band := s.band_for(c.line - c.offer.appeal)
 		if band == "INTERESTED":
+			var sweetener := _money_card_for(s, c)
+			if sweetener >= 0:
+				return s.play_card(sweetener).ok
 			return s.offer().ok
 		var need := _band_need(band)
 		if _appeal_in_hand(s) >= need:
@@ -254,7 +257,10 @@ static func _top3_product(s: Shift, c: Customer) -> int:
 static func _margin_of(s: Shift, i: int) -> int:
 	return (s.hand[i] as CardInstance).margin()
 
-static func _appeal_of(inst: CardInstance) -> int:
+## How far a card closes the gap: its appeal - Back to Value's grows with
+## `sales`, the products they have already taken - plus however far it lowers
+## the Line (WALKAWAY Complimentary), which comes to the same thing.
+static func _appeal_of(inst: CardInstance, sales: int = 0) -> int:
 	if inst.is_product():
 		return 0
 	var def := inst.card as SupportCardDef
@@ -264,25 +270,37 @@ static func _appeal_of(inst: CardInstance) -> int:
 	for e in effects:
 		if e is ChangeAppeal:
 			total += e.amount
+		elif e is ScaleBySales and e.inner is ChangeAppeal:
+			total += e.inner.amount * (1 + sales)
+		elif (e is ChangeLineFloorWide or e is ChangeLine) and e.amount < 0:
+			total -= e.amount
 	return total
+
+## Sales already made to whoever you are sitting with.
+static func _sales_here(s: Shift) -> int:
+	if s.at == null or s.chairs[int(s.at)] == null:
+		return 0
+	return (s.chairs[int(s.at)] as Customer).sales
 
 static func _appeal_in_hand(s: Shift) -> int:
 	var total := 0
+	var sales := _sales_here(s)
 	for inst in s.hand:
-		total += maxi(0, _appeal_of(inst))
+		total += maxi(0, _appeal_of(inst, sales))
 	return total
 
 ## The smallest appeal card that closes `gap` on its own, or else the biggest.
 static func _appeal_card_for(s: Shift, gap: int) -> int:
 	var covering := -1
 	var biggest := -1
+	var sales := _sales_here(s)
 	for i in range(s.hand.size()):
-		var a := _appeal_of(s.hand[i])
+		var a := _appeal_of(s.hand[i], sales)
 		if a <= 0:
 			continue
-		if a >= gap and (covering < 0 or a < _appeal_of(s.hand[covering])):
+		if a >= gap and (covering < 0 or a < _appeal_of(s.hand[covering], sales)):
 			covering = i
-		if biggest < 0 or a > _appeal_of(s.hand[biggest]):
+		if biggest < 0 or a > _appeal_of(s.hand[biggest], sales):
 			biggest = i
 	return covering if covering >= 0 else biggest
 
@@ -306,7 +324,14 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 				money += inner.amount
 			if inner is ChangeAppeal:
 				appeal += inner.amount
-		if money > 0 and c.offer.appeal + appeal >= c.line:
+		if money <= 0:
+			continue
+		if _gap_known(c):
+			if c.offer.appeal + appeal >= c.line:
+				return i
+		elif appeal >= 0 or _appeal_in_hand(s) >= -appeal:
+			# Only the band says they are over: a card that costs appeal is
+			# played only with enough appeal in hand to win it back.
 			return i
 	return -1
 
@@ -334,7 +359,7 @@ static func _best_pull(s: Shift) -> int:
 			if c != null and not c.owns(inst.card.id):
 				key = 1000.0 + float(_est_appeal(c, (inst.card as ProductCardDef).interest.id))
 		else:
-			key = float(_appeal_of(inst))
+			key = float(_appeal_of(inst, _sales_here(s)))
 		if key > best_key:
 			best_key = key
 			best = i

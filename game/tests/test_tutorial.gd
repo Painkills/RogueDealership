@@ -50,8 +50,19 @@ func test_the_hand_is_dealt_for_the_lesson() -> void:
 		uids[inst.uid] = true
 	h.eq("dealt from the deck, not conjured - no card twice",
 		uids.size(), s.hand.size() + s.draw.size())
-	h.eq("and none missing: it is exactly the starter deck",
-		uids.size(), Deck.build_starting(_cards()).cards.size())
+	# The starter deck, plus any scripted card it does not hold enough of.
+	var starter := Deck.build_starting(_cards())
+	var held := {}
+	for inst in starter.cards:
+		held[inst.card.id] = int(held.get(inst.card.id, 0)) + 1
+	var wanted := {}
+	for id in Tutorial.HAND:
+		wanted[id] = int(wanted.get(id, 0)) + 1
+	var extra := 0
+	for id in wanted:
+		extra += maxi(0, int(wanted[id]) - int(held.get(id, 0)))
+	h.eq("and none missing: the starter deck and the lesson's own cards",
+		uids.size(), starter.cards.size() + extra)
 
 func test_one_support_card_tips_whichever_product_they_put_down() -> void:
 	## The coach asks for ONE support card between placing and offering. That
@@ -64,7 +75,7 @@ func test_one_support_card_tips_whichever_product_they_put_down() -> void:
 		h.check("and the Line tunes to it", Tutorial.tune_line(c))
 		h.check("leaving %s just short of their Line (%d < %d)"
 			% [product, c.offer.appeal, c.line], c.offer.appeal < c.line)
-		h.check("Explain the Product plays", s.play_card(_index_of(s, &"explain")).ok)
+		h.check("Acknowledge & Empathize plays", s.play_card(_index_of(s, &"empathize")).ok)
 		h.check("and one Explain clears it (%d >= %d)" % [c.offer.appeal, c.line],
 			c.offer.appeal >= c.line)
 		var r := s.offer()

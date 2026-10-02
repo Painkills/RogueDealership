@@ -29,10 +29,10 @@ const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	&"wants_concession",
 	# Their answers to the method's techniques - the reskinned appeal cards.
 	&"reply_empathize", &"reply_clarify", &"reply_relate", &"reply_value",
-	&"reply_budget", &"reply_listen",
+	&"reply_budget", &"reply_listen", &"reply_explain",
 	# Yours - see CardDef.player_dialogue_tags. player_close is the trial
 	# close offer() says itself.
-	&"player_pitch", &"player_smalltalk", &"player_empathize",
+	&"player_pitch", &"player_smalltalk", &"player_empathize", &"player_explain",
 	&"player_budget", &"player_value", &"player_fearmonger",
 	&"player_relate", &"player_clarify", &"player_pad", &"player_listen",
 	&"player_guide", &"player_comp", &"player_justthething",
@@ -227,6 +227,37 @@ const LINES := [
 	[[&"player_empathize"], "\"I hear you. No pressure at all.\"", [&"easygoing"], [], []],
 	[[&"player_empathize"], "\"Don't worry, I'll walk you through all of it.\"", [&"laydown"], [], []],
 
+	# player_explain: Explain the Product - the starter's plain push. What it
+	# does, in plain English; each product has its own one-liner.
+	[[&"player_explain"], "\"Let me break down what this one actually does.\"", [], [], []],
+	[[&"player_explain"], "\"Plain English? Here's how it works.\"", [], [], []],
+	[[&"player_explain"], "\"Quick rundown, no jargon.\"", [], [], []],
+	[[&"player_explain"], "\"So here's what you're actually getting.\"", [], [], []],
+	[[&"player_explain"], "\"Think of it as a safety net for the car.\"", [], [], []],
+	[[&"player_explain"], "\"It's simpler than it sounds, I promise.\"", [], [], []],
+	[[&"player_explain"], "\"Here's the part nobody explains at other dealerships.\"", [], [], []],
+	[[&"player_explain"], "\"Three things to know about this one.\"", [], [], []],
+	[[&"player_explain"], "\"Let me show you what's covered.\"", [], [], []],
+	[[&"player_explain"], "\"Okay, the short version of how this works.\"", [], [], []],
+	[[&"player_explain"], "\"Spec sheet's right here. Limits, terms, all of it.\"", [&"tech"], [], []],
+	[[&"player_explain"], "\"Fifteen seconds, I promise. Here's what it does.\"", [&"kicker"], [], []],
+	[[&"player_explain"], "\"Here's what this means for you and the kids.\"", [&"family"], [], []],
+	[[&"player_explain"], "\"Let me show you exactly where the money goes.\"", [&"hawk"], [], []],
+	[[&"player_explain"], "\"Every detail's in writing. I'll walk you through it.\"", [&"karen"], [], []],
+	[[&"player_explain"], "\"No rush. Here's the gist of it.\"", [&"easygoing"], [], []],
+	[[&"player_explain"], "\"Easy one. Here's what it covers.\"", [&"laydown"], [], []],
+	[[&"player_explain"], "\"Engine, transmission, electrics: the big bills are on us.\"", [], [&"vsc"], []],
+	[[&"player_explain"], "\"Total the car, and GAP covers what you still owe.\"", [], [&"gap"], []],
+	[[&"player_explain"], "\"If it's stolen, this gets you back on the road fast.\"", [], [&"theft"], []],
+	[[&"player_explain"], "\"This protects what the car's worth at trade-in time.\"", [], [&"tvp"], []],
+	[[&"player_explain"], "\"Scratches, dings, stains inside: we fix them, free.\"", [], [&"appearance"], []],
+	[[&"player_explain"], "\"Lose your job or get sick, and your payments are covered.\"", [], [&"ppp"], []],
+	[[&"player_explain"], "\"Service without the waiting room. We come to you.\"", [], [&"concierge"], []],
+	[[&"player_explain"], "\"It lets you push a payment back when a month runs tight.\"", [], [&"flex"], []],
+	[[&"player_explain"], "\"Towing, traction, and the gear to actually use the truck.\"", [], [&"perf"], []],
+	[[&"player_explain"], "\"WALKAWAY makes your payments if a big 'what if' hits.\"", [], [&"wap"], []],
+	[[&"player_explain"], "\"It pays the gap between your loan and the insurance payout.\"", [], [&"tlp"], []],
+
 	# player_clarify: Ask Clarifying Questions (was Hard Close). Flush out
 	# whether it's the cost or the coverage.
 
@@ -389,6 +420,22 @@ const LINES := [
 
 	# reply_*: their answer to one of the method's techniques, where nothing
 	# was written for the objection they have open (or none is).
+	# reply_explain: their answer to Explain the Product.
+	[[&"reply_explain"], "\"Huh. Okay, that makes sense.\"", [], [], []],
+	[[&"reply_explain"], "\"Oh, I didn't know it covered that.\"", [], [], []],
+	[[&"reply_explain"], "\"Okay, that's clearer.\"", [], [], []],
+	[[&"reply_explain"], "\"Go on.\"", [], [], []],
+	[[&"reply_explain"], "\"Hm. That actually sounds useful.\"", [], [], []],
+	[[&"reply_explain"], "\"So that's what that is.\"", [], [], []],
+	[[&"reply_explain"], "\"Alright, I follow.\"", [], [], []],
+	[[&"reply_explain"], "\"Interesting. What are the coverage limits?\"", [&"tech"], [], []],
+	[[&"reply_explain"], "\"Okay. Keep it quick.\"", [&"kicker"], [], []],
+	[[&"reply_explain"], "\"And what's that going to cost me?\"", [&"hawk"], [], []],
+	[[&"reply_explain"], "\"Fine. I'll want that in writing.\"", [&"karen"], [], []],
+	[[&"reply_explain"], "\"Sounds good to me!\"", [&"laydown"], [], []],
+	[[&"reply_explain"], "\"Okay, that would actually help us.\"", [&"family"], [], []],
+	[[&"reply_explain"], "\"Oh nice, that's handy.\"", [&"easygoing"], [], []],
+
 	[[&"reply_empathize"], "\"Thanks. I appreciate that.\"", [], [], []],
 	[[&"reply_empathize"], "\"Okay. I'm listening.\"", [], [], []],
 	[[&"reply_empathize"], "\"That's fair, I guess.\"", [], [], []],
