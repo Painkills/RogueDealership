@@ -23,6 +23,10 @@ func _init() -> void:
 	_cfg = load("res://data/shift_config.tres")
 	_pool = load("res://data/shift_profile_pool.tres")
 	_cards = load("res://data/card_pool.tres")
+	# `-- fog`: play on what a person can see - see SimPlayer.fog.
+	SimPlayer.fog = OS.get_cmdline_user_args().has("fog")
+	if SimPlayer.fog:
+		print("Fog: playing on what a person can see.")
 	var base := _banked(null, false)
 	print("Starter deck banks %d a shift (midday day 4 and night day 6, %d shifts each)." % [base, SEEDS])
 	print("")

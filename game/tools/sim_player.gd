@@ -5,6 +5,59 @@ class_name SimPlayer extends RefCounted
 ## bands and Read the Room, at a cost this skips - so results run optimistic.
 ## It answers demands it can, signs anyone about to walk, and leaves Family
 ## First alone when asked.
+##
+## With `fog` on it plays on what a person can see instead: it knows each
+## archetype's tastes (its favourites usually rank near the top, its dislikes
+## near the bottom) but not this customer's ranks, and it guesses a typical
+## Line until Read the Room shows the real one. After placing it sees only the
+## band, offers on ALMOST, pushes or drops on the rest, and learns the exact
+## gap the way you do - by offering, or by Read the Room.
+
+static var fog := false
+## What a fogged player guesses a Line is before anything has told it.
+const GUESSED_LINE := 35
+## Where an interest is guessed to rank: an archetype favourite, a dislike,
+## or neither.
+const GUESS_TOP := 2
+const GUESS_BOTTOM := 8
+const GUESS_MIDDLE := 5
+
+## The Line as this player knows it.
+static func _est_line(c: Customer) -> int:
+	if not fog or c.known_line:
+		return c.line
+	return GUESSED_LINE + c.line_per_sale * c.sales
+
+## Where this player thinks `iid` ranks for `c`.
+static func _est_rank(c: Customer, iid: StringName) -> int:
+	if not fog or c.known_ranks.has(iid):
+		return int(c.ranks[iid])
+	for i in c.archetype.top_interests:
+		if i.id == iid:
+			return GUESS_TOP
+	for i in c.archetype.bottom_interests:
+		if i.id == iid:
+			return GUESS_BOTTOM
+	return GUESS_MIDDLE
+
+## The appeal this player expects `iid` to open at with `c`.
+static func _est_appeal(c: Customer, iid: StringName) -> int:
+	if not fog or c.known_ranks.has(iid):
+		return c.appeal_for(iid)
+	return int(c.cfg["appeal_step"]) * (c.ranks.size() - _est_rank(c, iid))
+
+## Whether this player knows the exact gap on the table: always without fog;
+## with it, once the Line is read or the offer has been made once.
+static func _gap_known(c: Customer) -> bool:
+	return not fog or c.known_line or (c.offer != null and c.offer.revealed)
+
+## How much appeal a band suggests is still missing - its middle.
+static func _band_need(band: String) -> int:
+	match band:
+		"ALMOST": return 3
+		"WARM": return 9
+		"COOL": return 18
+	return 28
 
 static func play(s: Shift) -> void:
 	var guard := 0
@@ -68,7 +121,7 @@ static func _can_answer(s: Shift, c: Customer) -> bool:
 	if r is MakeAnOffer:
 		return c.offer != null or _best_product(s, c, true) >= 0
 	if r is OfferSomethingGood:
-		return (c.offer != null and int(c.ranks[c.offer.product.interest.id]) <= 3) \
+		return (c.offer != null and _est_rank(c, c.offer.product.interest.id) <= 3) \
 			or _top3_product(s, c) >= 0
 	if r is PlayConcession:
 		return c.offer != null and _find(s, "concession") >= 0
@@ -87,7 +140,7 @@ static func _act(s: Shift, c: Customer) -> bool:
 				return s.place(_best_product(s, c, true)).ok
 			return s.offer().ok
 		if r is OfferSomethingGood:
-			if c.offer != null and int(c.ranks[c.offer.product.interest.id]) <= 3:
+			if c.offer != null and _est_rank(c, c.offer.product.interest.id) <= 3:
 				return s.offer().ok
 			if c.offer != null:
 				s.drop_offer()
@@ -99,7 +152,20 @@ static func _act(s: Shift, c: Customer) -> bool:
 	if not c.unsigned.is_empty() and _should_close(s, c):
 		if s.close().ok:
 			return true
-	if c.offer != null:
+	if c.offer != null and not _gap_known(c):
+		# Only the band to go on. Read the Room first if it is in hand - it
+		# turns the band into a number.
+		var read := _find(s, "read")
+		if read >= 0:
+			return s.play_card(read).ok
+		var band := s.band_for(c.line - c.offer.appeal)
+		if band == "ALMOST":
+			return s.offer().ok
+		var need := _band_need(band)
+		if _appeal_in_hand(s) >= need:
+			return s.play_card(_appeal_card_for(s, need)).ok
+		s.drop_offer()
+	elif c.offer != null:
 		var gap: int = c.line - c.offer.appeal
 		if gap <= 0:
 			# Over the Line already: sweeten the deal first if a card adds money
@@ -142,8 +208,8 @@ static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int
 		var inst: CardInstance = s.hand[i]
 		if not inst.is_product() or c.owns(inst.card.id):
 			continue
-		var appeal: int = c.appeal_for((inst.card as ProductCardDef).interest.id)
-		var gap: int = c.line - appeal
+		var appeal: int = _est_appeal(c, (inst.card as ProductCardDef).interest.id)
+		var gap: int = _est_line(c) - appeal
 		if gap > boost and not any_offer:
 			continue
 		var key: float = (100000.0 if gap <= 0 else -1000.0 * gap) + inst.margin()
@@ -159,7 +225,7 @@ static func _top3_product(s: Shift, c: Customer) -> int:
 		var inst: CardInstance = s.hand[i]
 		if not inst.is_product() or c.owns(inst.card.id):
 			continue
-		var rank: int = int(c.ranks[(inst.card as ProductCardDef).interest.id])
+		var rank: int = _est_rank(c, (inst.card as ProductCardDef).interest.id)
 		if rank <= 3 and rank < best_rank:
 			best_rank = rank
 			best = i
@@ -173,7 +239,9 @@ static func _appeal_of(inst: CardInstance) -> int:
 		return 0
 	var def := inst.card as SupportCardDef
 	var total := 0
-	for e in def.effects:
+	var effects: Array = def.upgraded_effects \
+		if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
+	for e in effects:
 		if e is ChangeAppeal:
 			total += e.amount
 	return total
@@ -244,7 +312,7 @@ static func _best_pull(s: Shift) -> int:
 		var key := 0.0
 		if inst.is_product():
 			if c != null and not c.owns(inst.card.id):
-				key = 1000.0 + float(c.appeal_for((inst.card as ProductCardDef).interest.id))
+				key = 1000.0 + float(_est_appeal(c, (inst.card as ProductCardDef).interest.id))
 		else:
 			key = float(_appeal_of(inst))
 		if key > best_key:
@@ -263,6 +331,8 @@ static func _find(s: Shift, what: String) -> int:
 					and e.amount > 0:
 				return i
 			if what == "concession" and e is ChangeMargin and e.amount < 0:
+				return i
+			if what == "read" and e is RevealRoom:
 				return i
 	return -1
 
@@ -286,7 +356,7 @@ static func _dig(s: Shift) -> bool:
 		if inst.is_product():
 			value = 0.0
 			for c in s.seated():
-				value = maxf(value, float(c.appeal_for((inst.card as ProductCardDef).interest.id)))
+				value = maxf(value, float(_est_appeal(c, (inst.card as ProductCardDef).interest.id)))
 		if value < worst_value:
 			worst_value = value
 			worst = i

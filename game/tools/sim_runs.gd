@@ -54,6 +54,10 @@ func _what_ifs() -> void:
 	for arg in OS.get_cmdline_user_args():
 		var parts: PackedStringArray = arg.split("=")
 		var path: PackedStringArray = parts[0].split(".")
+		if arg == "fog":
+			SimPlayer.fog = true
+			print("Fog: playing on what a person can see.")
+			continue
 		if parts.size() == 2 and parts[0] == "shop":
 			_shop_mode = parts[1]
 			print("shop policy: %s" % _shop_mode)

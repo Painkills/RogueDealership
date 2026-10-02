@@ -26,6 +26,10 @@ func _init() -> void:
 	_cfg = load("res://data/shift_config.tres")
 	_pool = load("res://data/shift_profile_pool.tres")
 	_cards = load("res://data/card_pool.tres")
+	# `-- fog`: play on what a person can see - see SimPlayer.fog.
+	SimPlayer.fog = OS.get_cmdline_user_args().has("fog")
+	if SimPlayer.fog:
+		print("Fog: playing on what a person can see.")
 	_base = _banked(null)
 	_base_walked = _last_walked
 	_base_standing = _last_standing
