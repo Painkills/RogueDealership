@@ -26,6 +26,8 @@ func _init() -> void:
 	TutorialProgress.reset()
 	PlayerProfile.path = PROFILE
 	PlayerProfile.reset()
+	# Nothing this plays ever goes on the real shared board.
+	Leaderboard.offline = true
 	_boot()
 	_drive.call_deferred()
 
@@ -237,8 +239,31 @@ func _check_the_title_screen() -> void:
 		_root._title_view._scores_list.get_child_count() == 1
 			and not _root._title_view._scores_empty.visible)
 	PlayerProfile.reset()
+	_check_everyones_board()
 	_title_button("ScoresBackButton").pressed.emit()
 	_check("BACK returns to the menu", _on_the_menu())
+
+## "High scores tracked for all players": the EVERYONE board, fed the way a
+## reply from the table would feed it - this driver never touches the network.
+func _check_everyones_board() -> void:
+	var title = _root._title_view
+	_check("with no board to reach, only this device's scores - no tabs",
+		title.board() == &"yours" and not title._tabs.visible)
+	title.show_board(&"everyone")
+	_check("a board that cannot be reached says so (%s)" % title._scores_empty.text,
+		title._scores_empty.visible and title._scores_empty.text.contains("reach"))
+	title._on_board_fetched([
+		{"name": "Dana", "score": 900, "banked": 50, "fired": false, "date": "2026-10-01"},
+		{"name": "Sam", "score": 700, "banked": 40, "fired": true, "date": "2026-10-01"}], true)
+	_check("a reply lists everyone's scores (%d)" % title._scores_list.get_child_count(),
+		title._scores_list.get_child_count() == 2 and not title._scores_empty.visible)
+	_title_button("YoursTab").pressed.emit()
+	_check("YOURS switches to this device's", title.board() == &"yours"
+		and title._yours_tab.button_pressed and not title._everyone_tab.button_pressed)
+	title._on_board_fetched([{"name": "Late", "score": 1, "banked": 0, "fired": false,
+		"date": ""}], true)
+	_check("and a reply that arrives late does not overwrite it",
+		title._scores_list.get_child_count() == 0)
 
 ## NEW GAME: the first-day welcome over the dealership, then the calendar.
 func _check_a_new_game() -> void:

@@ -34,6 +34,8 @@ func _init() -> void:
 	# player's personal bests.
 	PlayerProfile.path = PROFILE
 	PlayerProfile.reset()
+	# Nor ever posted to the real shared board.
+	Leaderboard.offline = true
 	get_root().add_child(_root)
 
 func _process(_delta: float) -> bool:

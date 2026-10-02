@@ -57,7 +57,20 @@ func _menu(root: Control) -> void:
 func _scores(root: Control) -> void:
 	var col := _card(root, "ScoresCard", 780)
 	AppWindow.label(col, root, "ScoresTitle", "HIGH SCORES", 48, &"ink", true)
-	AppWindow.label(col, root, "ScoresSub", "The best weeks worked on this device.", 22, &"text_dim")
+	AppWindow.label(col, root, "ScoresSub", "The best weeks worked on this device.", 22,
+		&"text_dim", false, true)
+	# Everyone's board, or this device's - see Leaderboard.
+	var tabs := HBoxContainer.new()
+	tabs.name = "ScoresTabs"
+	tabs.add_theme_constant_override("separation", 10)
+	tabs.unique_name_in_owner = true
+	col.add_child(tabs)
+	tabs.owner = root
+	for spec in [["EveryoneTab", "EVERYONE"], ["YoursTab", "YOURS"]]:
+		var tab := _button(tabs, root, spec[0], spec[1], &"primary", false)
+		tab.custom_minimum_size = Vector2(180, 48)
+		tab.add_theme_font_size_override("font_size", 20)
+		tab.toggle_mode = true
 	AppWindow.rule(col, root, "ScoresRule")
 	var list := VBoxContainer.new()
 	list.name = "ScoresList"

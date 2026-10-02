@@ -161,6 +161,9 @@ func _on_shift_finished(report: Dictionary) -> void:
 		var fired := _run.standing <= 0
 		var rank := PlayerProfile.record_run(int(tally["total"]),
 			int(tally["margin_banked"]), fired)
+		# And onto everyone's board, under the name on your badge.
+		_title_view.post_score(PlayerProfile.display_name(), int(tally["total"]),
+			int(tally["margin_banked"]), fired)
 		_summary_view.setup(tally, fired, rank)
 		_summary_view.visible = true
 		return
