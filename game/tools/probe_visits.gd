@@ -19,12 +19,24 @@ func _init() -> void:
 	var pool: ShiftProfilePool = load("res://data/shift_profile_pool.tres")
 	SimPlayer.fog = OS.get_cmdline_user_args().has("fog")
 	SimPlayer.track = true
+	# `-- only=midday`: one tier, at many more days, so who walked in is the
+	# only thing that differs between shifts.
+	var spots: Array = SPOTS
+	var seeds := SEEDS
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("only="):
+			var tier := StringName(arg.substr(5))
+			spots = [[tier, 3], [tier, 4], [tier, 5], [tier, 6]]
+			print("Only %s shifts, days 3-6." % tier)
 	var by_arch := {}
 	var shift_ticks := 0
 	var shift_banked := 0
-	for spot in SPOTS:
+	## How a shift went against how many of each archetype it saw: archetype
+	## -> count -> {"n", "banked", "made"}.
+	var by_count := {}
+	for spot in spots:
 		var profile: ShiftProfile = pool.by_id(spot[0])
-		for seed_value in range(SEEDS):
+		for seed_value in range(seeds):
 			var run := RunState.new(cfg, load("res://data/interests/interest_pool.tres"),
 				load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
 				seed_value * 7919 + int(spot[1]))
@@ -34,6 +46,22 @@ func _init() -> void:
 			SimPlayer.play(s)
 			shift_ticks += s.tick_budget
 			shift_banked += s.margin_banked
+			var seen := {}
+			for c: Customer in SimPlayer.visits:
+				var aname := c.archetype.display_name
+				seen[aname] = int(seen.get(aname, 0)) + 1
+			var made := s.margin_banked >= s.quota
+			for aname in _names(pool):
+				var k := mini(int(seen.get(aname, 0)), 3)
+				if not by_count.has(aname):
+					by_count[aname] = {}
+				var cell: Dictionary = by_count[aname].get(k, {"n": 0, "banked": 0, "made": 0,
+					"quota": 0})
+				cell["n"] += 1
+				cell["banked"] += s.margin_banked
+				cell["quota"] += s.quota
+				cell["made"] += 1 if made else 0
+				by_count[aname][k] = cell
 			for c: Customer in SimPlayer.visits:
 				var v: Dictionary = SimPlayer.visits[c]
 				var name := c.archetype.display_name
@@ -63,4 +91,23 @@ func _init() -> void:
 			h[0] / n * 100.0, h[1] / n * 100.0, h[2] / n * 100.0, h[3] / n * 100.0,
 			a["walked"] / n * 100.0, a["ticks"] / n, a["banked"] / n,
 			a["banked"] / maxf(1.0, float(a["ticks"]))])
+	print("")
+	print("How a shift went by how many of each came in (0 / 1 / 2 / 3+): banked, quota made")
+	for name in names:
+		var line := "%-18s" % name
+		for k in range(4):
+			var cell: Dictionary = by_count.get(name, {}).get(k, {})
+			if cell.is_empty() or int(cell["n"]) < 20:
+				line += "        -          "
+				continue
+			var n := float(cell["n"])
+			line += "  %5d %3.0f%% (n=%4d)" % [cell["banked"] / n, cell["made"] / n * 100.0, cell["n"]]
+		print(line)
 	quit(0)
+
+## Every archetype that can come in, by display name.
+func _names(_pool: ShiftProfilePool) -> Array:
+	var out := []
+	for a in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
+		out.append(a.display_name)
+	return out
