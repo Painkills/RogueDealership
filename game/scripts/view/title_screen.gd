@@ -57,10 +57,16 @@ func _ready() -> void:
 		# A phone's keyboard does not reliably reach a Godot text box in a
 		# browser - it suggests words and nothing lands. The browser's own
 		# prompt always works, so a tap on the sticker asks through that.
+		#
+		# Never focusable here, and asked on a RELEASE: the prompt blocks the
+		# page, and the touch that opened it is delivered again once it closes
+		# - asking on focus or on press re-opened it forever. A short quiet
+		# spell after it closes swallows that echo too.
 		_name_field.virtual_keyboard_enabled = false
-		_name_field.focus_entered.connect(func():
-			_name_field.release_focus()
-			_prompt_for_name.call_deferred())
+		_name_field.editable = false
+		_name_field.focus_mode = Control.FOCUS_NONE
+		_name_field.add_theme_color_override("font_uneditable_color", Palette.color(&"ink"))
+		_name_field.gui_input.connect(_on_name_tapped)
 	leaderboard = Leaderboard.new()
 	leaderboard.name = "Leaderboard"
 	add_child(leaderboard)
@@ -145,9 +151,30 @@ func _close_popup() -> void:
 static func uses_native_prompt() -> bool:
 	return OS.has_feature("web") and DisplayServer.is_touchscreen_available()
 
+## When the browser's prompt last closed, in msec - see _on_name_tapped().
+var _prompt_closed_at := -100000
+const PROMPT_QUIET_MS := 700
+
+func _on_name_tapped(event: InputEvent) -> void:
+	var released: bool = (event is InputEventMouseButton and not event.pressed
+			and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT) \
+		or (event is InputEventScreenTouch and not event.pressed)
+	if not released or not _popup.visible:
+		return
+	# A phone sends a touch AND the mouse click it emulates - one prompt for both.
+	if _prompt_queued or Time.get_ticks_msec() - _prompt_closed_at < PROMPT_QUIET_MS:
+		return
+	_name_field.accept_event()
+	_prompt_queued = true
+	_prompt_for_name.call_deferred()
+
+var _prompt_queued := false
+
 func _prompt_for_name() -> void:
 	var asked = JavaScriptBridge.eval("window.prompt('Name on your badge', %s)"
 		% JSON.stringify(_name_field.text), true)
+	_prompt_closed_at = Time.get_ticks_msec()
+	_prompt_queued = false
 	if asked is String:
 		_name_field.text = (asked as String).strip_edges().left(PlayerProfile.MAX_NAME)
 
