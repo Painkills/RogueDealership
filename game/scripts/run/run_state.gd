@@ -84,6 +84,7 @@ func start_shift(profile: ShiftProfile) -> Shift:
 		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup,
 		profile.excluded_archetypes)
 	s.commission = profile.commission
+	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to
 	return s
 

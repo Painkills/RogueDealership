@@ -4,6 +4,8 @@
 
 [resource]
 script = ExtResource("1_prf")
+free_pick_min_rarity = 2
+pay_scale = 1.2
 commission = 0.3
 id = &"midday"
 display_name = "Midday Shift"

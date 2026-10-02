@@ -6,7 +6,8 @@
 
 [resource]
 script = ExtResource("3_6pmpd")
-commission = 0.45
+pay_scale = 1.6
+commission = 0.6
 id = &"karen_convention"
 display_name = "Karen Convention"
 blurb = "Every desk open, and every one of them wants the manager."

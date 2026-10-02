@@ -7,7 +7,9 @@
 
 [resource]
 script = ExtResource("1_prf")
-commission = 0.35
+quota_scale = 0.8
+pay_scale = 1.6
+commission = 0.5
 id = &"night"
 display_name = "Night Shift"
 blurb = "Quiet floor. The ones who come in this late are trouble."

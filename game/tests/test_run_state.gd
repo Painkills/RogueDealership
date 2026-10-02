@@ -203,6 +203,21 @@ func test_a_shifts_commission_sets_what_beating_quota_pays() -> void:
 	r.finish_shift(report)
 	h.eq("and that is what goes in the pot", r.money, expected)
 
+func test_a_shifts_pay_scale_sets_its_base_salary() -> void:
+	## A night differential: a shift can pay more (or less) than the week's base,
+	## made quota or not.
+	var r := _run()
+	var p := ShiftProfile.new()
+	p.pay_scale = 1.5
+	var report := r.start_shift(p).report()
+	var base: int = roundi(r.cfg.paycheck_in_week(1) * 1.5)
+	h.eq("the report carries the scaled base salary", report["paycheck"], base)
+	report["margin_banked"] = 0
+	h.eq("and a miss still pays it", RunState.bonus_from(report), base)
+	var plain := r.start_shift(ShiftProfile.new()).report()
+	h.eq("a shift that sets none pays the week's base", plain["paycheck"],
+		r.cfg.paycheck_in_week(1))
+
 func test_a_shift_with_a_heal_restores_standing_only_for_passing() -> void:
 	## "You should only heal at the end of a boss fight if you pass quota."
 	var r := _run()

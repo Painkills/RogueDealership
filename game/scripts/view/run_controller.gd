@@ -109,7 +109,8 @@ func _open_the_title(intro: bool = false) -> void:
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
 	_picker_view.setup(_run.todays_shifts(), _run.shift_number, _run.cfg.shifts_in_run,
-		_run.quota_for(_run.shift_number), _history, _run.cfg.days_per_week)
+		_run.quota_for(_run.shift_number), _history, _run.cfg.days_per_week,
+		_run.cfg.paycheck_in_week(_run.week_of(_run.shift_number)))
 
 func _on_profile_chosen(profile: ShiftProfile) -> void:
 	_chosen_profile = profile

@@ -44,6 +44,10 @@ class_name ShiftProfile extends Resource
 ## store stocks (morning lowest, then midday, night, and the boss highest). See
 ## RunState.bonus_from().
 @export_range(0.0, 1.0, 0.01) var commission: float = 0.25
+## The base salary for working this shift, as a multiple of the week's
+## (ShiftConfig.paycheck_in_week) - a night differential. It is paid whether or
+## not quota is made, so it is the part of a shift's reward you can count on.
+@export_range(0.0, 3.0, 0.05) var pay_scale: float = 1.0
 
 @export_group("Premade shift")
 ## Ticks in the shift. 0 = ShiftConfig.shift_ticks.

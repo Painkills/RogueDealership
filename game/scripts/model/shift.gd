@@ -31,6 +31,8 @@ var unlock_full_archetype_pool: bool = false
 ## picked ShiftProfile's commission. Nothing here uses it but report(); see
 ## RunState.bonus_from().
 var commission: float = 0.25
+## The picked ShiftProfile's pay_scale - see paycheck().
+var pay_scale: float = 1.0
 ## The picked ShiftProfile's heal_up_to - see healed().
 var heal_up_to: float = 0.0
 ## Who never comes in on this shift - ShiftProfile.excluded_archetypes.
@@ -1536,9 +1538,9 @@ func week() -> int:
 
 
 ## This shift's base salary - ShiftConfig.paycheck, plus the raise for every
-## week after the first.
+## week after the first, times the shift's own pay_scale.
 func paycheck() -> int:
-	return cfg.paycheck_in_week(week())
+	return roundi(cfg.paycheck_in_week(week()) * pay_scale)
 
 
 ## The most missing quota can cost this shift - its week's entry in

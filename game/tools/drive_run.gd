@@ -160,9 +160,11 @@ func _phase_0_open_and_finish_shift() -> void:
 		_run.money == RunState.bonus_from(r0))
 	# This driver digs the clock away rather than selling anything, so it always
 	# lands on the missed-quota branch: the paycheck, and nothing on top.
-	_check("which after a shift that banked nothing is the paycheck alone",
-		not bool(r0["made_quota"]) and _run.money == _run.cfg.paycheck
-			and _run.last_bonus == _run.cfg.paycheck)
+	# The week's base salary, at the shift's own pay_scale.
+	var base_pay := roundi(_run.cfg.paycheck_in_week(1) * _root._chosen_profile.pay_scale)
+	_check("which after a shift that banked nothing is the paycheck alone (%d)" % base_pay,
+		not bool(r0["made_quota"]) and int(r0["paycheck"]) == base_pay
+			and _run.money == base_pay and _run.last_bonus == base_pay)
 	# The total wipeout costs standing too - but not all of it, so the run must
 	# have SURVIVED to reach shift 2 at all. This is also where a stale _run
 	# reference (the exact bug class this project has already caught once - a
@@ -188,7 +190,7 @@ func _phase_0_open_and_finish_shift() -> void:
 	# finish_shift() ran at all, so the two must agree.
 	var panel = _root._shift_view._report_overlay
 	_check("and the report panel's own pay line agrees (%s)" % panel._bonus.text,
-		panel._bonus.text.contains(Format.money(_run.cfg.paycheck))
+		panel._bonus.text.contains(Format.money(base_pay))
 			and panel._bonus.text.contains("short"))
 	# Missing quota is the only branch this driver's own play can reach, and the
 	# line that ANNOUNCES a bonus is the whole point of the feature. Drive it

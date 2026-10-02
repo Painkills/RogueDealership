@@ -22,6 +22,9 @@ const GUTTER_W := 84.0
 ## Today's own quota, before any shift's quota_scale - what an event compares
 ## its shift's quota against.
 var _day_quota: int = 0
+## This week's base salary, before any shift's pay_scale - 0 to leave pay off
+## the events.
+var _week_pay: int = 0
 
 ## `offers` is what today has to pick from - the regular tiers, or a premade
 ## shift in one's place, or a boss day's one shift (see Week). `day` is the
@@ -29,8 +32,9 @@ var _day_quota: int = 0
 ## {"profile", "report"} per shift already worked, in order. `week_length` is
 ## how many days the calendar shows at once: the week `day` falls in.
 func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int = 0,
-		history: Array = [], week_length: int = 7) -> void:
+		history: Array = [], week_length: int = 7, pay: int = 0) -> void:
 	_day_quota = quota
+	_week_pay = pay
 	var per_week: int = maxi(1, mini(week_length, days))
 	var week_index: int = (day - 1) / per_week
 	var weeks: int = (days + per_week - 1) / per_week
@@ -149,8 +153,10 @@ func _offer(body: CalendarDay, profile: ShiftProfile) -> void:
 	# Every shift's quota and commission, under its name, whether or not they
 	# differ from anyone else's - what the shift is worth is half of choosing it.
 	var quota := profile.quota_on(_day_quota)
-	var terms := _line(col, "quota %s  |  %d%% commission" % [
-		Format.money(quota) if quota > 0 else "-", roundi(profile.commission * 100.0)],
+	var pay := ("%s pay + " % Format.money(roundi(_week_pay * profile.pay_scale))) \
+		if _week_pay > 0 else ""
+	var terms := _line(col, "quota %s  |  %s%d%% commission" % [
+		Format.money(quota) if quota > 0 else "-", pay, roundi(profile.commission * 100.0)],
 		15, Palette.color(&"text"), true)
 	terms.name = "Terms"
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
