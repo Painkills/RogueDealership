@@ -66,11 +66,21 @@ static func _band_need(band: String) -> int:
 static var track := false
 static var visits := {}
 
-static func _note(c: Customer, ticks: int, banked: int) -> void:
+## What the last move in _act() was for - see _did().
+static var _last := ""
+
+## Tags the move _act() just made, for `track`, and passes its result through.
+static func _did(kind: String, ok: bool) -> bool:
+	_last = kind
+	return ok
+
+static func _note(c: Customer, ticks: int, banked: int, kind: String) -> void:
 	if not visits.has(c):
-		visits[c] = {"ticks": 0, "banked": 0}
+		visits[c] = {"ticks": 0, "banked": 0, "by": {}}
 	visits[c]["ticks"] += ticks
 	visits[c]["banked"] += banked
+	if ticks > 0:
+		visits[c]["by"][kind] = int(visits[c]["by"].get(kind, 0)) + ticks
 
 static func play(s: Shift) -> void:
 	var guard := 0
@@ -97,10 +107,12 @@ static func play(s: Shift) -> void:
 		if s.at == null or int(s.at) != target:
 			s.approach(target)
 		var stuck := false
+		_last = ""
 		if not _act(s, who):
+			_last = "cycle a card (nothing to sell)"
 			stuck = not _dig(s)
 		if track:
-			_note(who, s.tick - tick_before, s.margin_banked - banked_before)
+			_note(who, s.tick - tick_before, s.margin_banked - banked_before, _last)
 		if stuck:
 			break
 
@@ -154,39 +166,39 @@ static func _act(s: Shift, c: Customer) -> bool:
 	if c.demand != null and _can_answer(s, c):
 		var r := c.demand.resolve
 		if r is IncreasePatience:
-			return s.play_card(_find(s, "patience")).ok
+			return _did("answer a demand: raise patience", s.play_card(_find(s, "patience")).ok)
 		if r is MakeAnOffer:
 			if c.offer == null:
-				return s.place(_best_product(s, c, true)).ok
-			return s.offer().ok
+				return _did("answer a demand: make an offer", s.place(_best_product(s, c, true)).ok)
+			return _did("answer a demand: make an offer", s.offer().ok)
 		if r is OfferSomethingGood:
 			if c.offer != null and _est_rank(c, c.offer.product.interest.id) <= 3:
-				return s.offer().ok
+				return _did("answer a demand: offer a top-3", s.offer().ok)
 			if c.offer != null:
 				s.drop_offer()
-			return s.place(_top3_product(s, c)).ok
+			return _did("answer a demand: offer a top-3", s.place(_top3_product(s, c)).ok)
 		if r is PlayConcession:
-			return s.play_card(_find(s, "concession")).ok
+			return _did("answer a demand: concession", s.play_card(_find(s, "concession")).ok)
 		if r is PlayAnySupport:
-			return s.play_card(_any_support(s, c)).ok
+			return _did("answer a demand: any support card", s.play_card(_any_support(s, c)).ok)
 	if not c.unsigned.is_empty() and _should_close(s, c):
 		if s.close().ok:
-			return true
+			return _did("close", true)
 	if c.offer != null and not _gap_known(c):
 		# Only the band to go on. Read the Room first if it is in hand - it
 		# turns the band into a number.
 		var read := _find(s, "read")
 		if read >= 0:
-			return s.play_card(read).ok
+			return _did("read the room", s.play_card(read).ok)
 		var band := s.band_for(c.line - c.offer.appeal)
 		if band == "INTERESTED":
 			var sweetener := _money_card_for(s, c)
 			if sweetener >= 0:
-				return s.play_card(sweetener).ok
-			return s.offer().ok
+				return _did("money card", s.play_card(sweetener).ok)
+			return _did("offer", s.offer().ok)
 		var need := _band_need(band)
 		if _appeal_in_hand(s) >= need:
-			return s.play_card(_appeal_card_for(s, need)).ok
+			return _did("appeal card", s.play_card(_appeal_card_for(s, need)).ok)
 		s.drop_offer()
 	elif c.offer != null:
 		var gap: int = c.line - c.offer.appeal
@@ -195,25 +207,25 @@ static func _act(s: Shift, c: Customer) -> bool:
 			# without dropping them back under it, while the clock allows.
 			var sweetener := _money_card_for(s, c)
 			if sweetener >= 0:
-				return s.play_card(sweetener).ok
-			return s.offer().ok
+				return _did("money card", s.play_card(sweetener).ok)
+			return _did("offer", s.offer().ok)
 		var card := _appeal_card_for(s, gap)
 		if card >= 0:
-			return s.play_card(card).ok
+			return _did("appeal card", s.play_card(card).ok)
 		s.drop_offer()
 	var p := _best_product(s, c)
 	if p >= 0:
-		return s.place(p).ok
+		return _did("place a product", s.place(p).ok)
 	# Nothing in hand sells to them: a free draw card goes looking for it.
 	var draw := _free_draw(s)
 	if draw >= 0:
-		return s.play_card(draw).ok
+		return _did("draw card", s.play_card(draw).ok)
 	if c.patience <= 4:
 		var calm := _find(s, "patience")
 		if calm >= 0:
-			return s.play_card(calm).ok
+			return _did("patience card", s.play_card(calm).ok)
 	if not c.unsigned.is_empty():
-		return s.close().ok
+		return _did("close", s.close().ok)
 	return false
 
 static func _should_close(s: Shift, c: Customer) -> bool:

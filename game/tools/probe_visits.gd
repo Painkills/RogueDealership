@@ -75,6 +75,10 @@ func _init() -> void:
 				a["ticks"] += int(v["ticks"])
 				a["walked"] += 1 if c.state == "walked" else 0
 				a["hist"][mini(c.sales, 3)] += 1
+				if not a.has("by"):
+					a["by"] = {}
+				for kind in v.get("by", {}):
+					a["by"][kind] = int(a["by"].get(kind, 0)) + int(v["by"][kind])
 	print("%s - starter deck, morning d2 + midday d4 + night d6, %d shifts each."
 		% ["Fog (what a person sees)" if SimPlayer.fog else "Perfect reader", SEEDS])
 	print("On average a tick earns %d across the whole shift." % (shift_banked / maxi(1, shift_ticks)))
@@ -91,6 +95,17 @@ func _init() -> void:
 			h[0] / n * 100.0, h[1] / n * 100.0, h[2] / n * 100.0, h[3] / n * 100.0,
 			a["walked"] / n * 100.0, a["ticks"] / n, a["banked"] / n,
 			a["banked"] / maxf(1.0, float(a["ticks"]))])
+	print("")
+	print("Where a visit's ticks go, per visit:")
+	for name in names:
+		var a: Dictionary = by_arch[name]
+		var by: Dictionary = a.get("by", {})
+		var kinds := by.keys()
+		kinds.sort_custom(func(x, y): return int(by[x]) > int(by[y]))
+		var parts: Array[String] = []
+		for kind in kinds:
+			parts.append("%s %.1f" % [kind, float(by[kind]) / float(a["n"])])
+		print("%-18s %s" % [name, ", ".join(parts)])
 	print("")
 	print("How a shift went by how many of each came in (0 / 1 / 2 / 3+): banked, quota made")
 	for name in names:
