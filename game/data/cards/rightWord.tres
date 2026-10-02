@@ -21,6 +21,7 @@ player_dialogue_tags = Array[StringName]([&"player_rightword"])
 needs_offer = false
 id = &"rwrt"
 display_name = "Right Word, Right Time"
+ticks = 0
 text = "I know I have a word track for this..."
 rarity = 3
 effects = Array[ExtResource("1_1vllj")]([SubResource("Resource_jb4hs")])

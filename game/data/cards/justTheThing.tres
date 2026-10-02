@@ -21,6 +21,7 @@ player_dialogue_tags = Array[StringName]([&"player_justthething"])
 needs_offer = false
 id = &"jtt"
 display_name = "Just the Thing"
+ticks = 0
 text = "\"Oh, I have just the product for you!\""
 rarity = 3
 effects = Array[ExtResource("1_dyd8x")]([SubResource("Resource_jb4hs")])

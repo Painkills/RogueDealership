@@ -19,6 +19,7 @@ player_dialogue_tags = Array[StringName]([&"player_guide"])
 needs_offer = false
 id = &"checknotes"
 display_name = "The Program Guide"
+ticks = 0
 text = "\"Uh... let me just check the Program Guide...\""
 rarity = 2
 effects = Array[ExtResource("1_8h0vr")]([SubResource("Resource_5u756")])

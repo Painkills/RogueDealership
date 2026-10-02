@@ -11,7 +11,7 @@ static func play(s: Shift) -> void:
 	while not s.is_over() and guard < 600:
 		guard += 1
 		if s.pending_pull != null:
-			s.choose_pull(0)
+			s.choose_pull(_best_pull(s))
 			continue
 		if s.seated().is_empty():
 			if not s.wait().ok:
@@ -102,6 +102,11 @@ static func _act(s: Shift, c: Customer) -> bool:
 	if c.offer != null:
 		var gap: int = c.line - c.offer.appeal
 		if gap <= 0:
+			# Over the Line already: sweeten the deal first if a card adds money
+			# without dropping them back under it, while the clock allows.
+			var sweetener := _money_card_for(s, c)
+			if sweetener >= 0:
+				return s.play_card(sweetener).ok
 			return s.offer().ok
 		var card := _appeal_card_for(s, gap)
 		if card >= 0:
@@ -110,6 +115,10 @@ static func _act(s: Shift, c: Customer) -> bool:
 	var p := _best_product(s, c)
 	if p >= 0:
 		return s.place(p).ok
+	# Nothing in hand sells to them: a free draw card goes looking for it.
+	var draw := _free_draw(s)
+	if draw >= 0:
+		return s.play_card(draw).ok
 	if c.patience <= 4:
 		var calm := _find(s, "patience")
 		if calm >= 0:
@@ -188,6 +197,60 @@ static func _appeal_card_for(s: Shift, gap: int) -> int:
 		if biggest < 0 or a > _appeal_of(s.hand[biggest]):
 			biggest = i
 	return covering if covering >= 0 else biggest
+
+## A card in hand that adds margin to the offer and still leaves appeal at the
+## Line - or -1. Only with ticks to spare for it.
+static func _money_card_for(s: Shift, c: Customer) -> int:
+	if s.tick_budget - s.tick <= 3:
+		return -1
+	for i in range(s.hand.size()):
+		var inst: CardInstance = s.hand[i]
+		if inst.is_product():
+			continue
+		var def := inst.card as SupportCardDef
+		var effects: Array = def.upgraded_effects if inst.upgraded and not def.upgraded_effects.is_empty() \
+			else def.effects
+		var money := 0
+		var appeal := 0
+		for e in effects:
+			var inner = e.inner if e is ScaleBySales else e
+			if inner is ChangeMargin:
+				money += inner.amount
+			if inner is ChangeAppeal:
+				appeal += inner.amount
+		if money > 0 and c.offer.appeal + appeal >= c.line:
+			return i
+	return -1
+
+## A draw card in hand that costs no time - or -1.
+static func _free_draw(s: Shift) -> int:
+	for i in range(s.hand.size()):
+		var inst: CardInstance = s.hand[i]
+		if inst.is_product() or inst.card.ticks > 0:
+			continue
+		for e in (inst.card as SupportCardDef).effects:
+			if e is PullCards:
+				return i
+	return -1
+
+## From a draw card's choices: the product the customer you are with likes
+## best, or else the biggest appeal card, or else the first.
+static func _best_pull(s: Shift) -> int:
+	var c: Customer = s.chairs[int(s.at)] if s.at != null else null
+	var best := 0
+	var best_key := -INF
+	for i in range(s.pending_pull.revealed.size()):
+		var inst: CardInstance = s.pending_pull.revealed[i]
+		var key := 0.0
+		if inst.is_product():
+			if c != null and not c.owns(inst.card.id):
+				key = 1000.0 + float(c.appeal_for((inst.card as ProductCardDef).interest.id))
+		else:
+			key = float(_appeal_of(inst))
+		if key > best_key:
+			best_key = key
+			best = i
+	return best
 
 static func _find(s: Shift, what: String) -> int:
 	for i in range(s.hand.size()):
