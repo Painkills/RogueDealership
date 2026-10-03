@@ -33,6 +33,10 @@ func _init() -> void:
 	for tier in TIERS:
 		profiles[tier] = _pool.by_id(tier).duplicate()
 	for arg in OS.get_cmdline_user_args():
+		if arg == "fog":
+			SimPlayer.fog = true
+			print("Fog: playing on what a person can see.")
+			continue
 		var parts: PackedStringArray = arg.split("=")
 		var path: PackedStringArray = parts[0].split(".")
 		if parts.size() != 2 or path.size() != 2 or not profiles.has(StringName(path[0])):
@@ -54,7 +58,7 @@ func _init() -> void:
 func _cell(profile: ShiftProfile, day: int) -> Dictionary:
 	var sum := {"margin": 0.0, "made": 0.0, "walked": 0.0, "signed": 0.0, "seen": 0.0,
 		"standing": 0.0, "bonus": 0.0, "missed": 0.0, "met": 0.0, "lost_bell": 0.0,
-		"quota": 0.0}
+		"quota": 0.0, "st_quota": 0.0, "st_walk": 0.0, "st_product": 0.0, "st_heal": 0.0}
 	for seed_value in range(SEEDS):
 		var run := RunState.new(_cfg, load("res://data/interests/interest_pool.tres"),
 			load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
@@ -70,6 +74,15 @@ func _cell(profile: ShiftProfile, day: int) -> Dictionary:
 		sum["signed"] += r["customers_signed"]
 		sum["seen"] += r["customers_seen"]
 		sum["standing"] += r["standing_delta"]
+		# The same total, by cause: walkouts, the product quota, a heal, and
+		# whatever is left over - the quota itself.
+		var walk: int = -int(r["standing_lost_to_walkouts"])
+		var product: int = -int(r.get("category_quota_cost", 0))
+		var heal: int = int(r.get("standing_healed", 0))
+		sum["st_walk"] += walk
+		sum["st_product"] += product
+		sum["st_heal"] += heal
+		sum["st_quota"] += int(r["standing_delta"]) - walk - product - heal
 		sum["bonus"] += RunState.bonus_from(r)
 		sum["missed"] += r["demands_missed"]
 		sum["met"] += r["demands_met"]
@@ -105,3 +118,8 @@ func _print(rows: Array) -> void:
 			t[k] /= n
 		print("%-8s %6d  %4.0f%%  %5d  %+5.1f  %4.1f  %4.1f  %4.2f" % [tier, t["margin"],
 			t["made"] * 100.0, t["bonus"], t["standing"], t["seen"], t["signed"], t["walked"]])
+	print("")
+	print("standing by cause, per shift:  day  total   quota  walkouts  product-quota")
+	for r in rows:
+		print("%-8s                        %3d  %+5.1f  %+6.1f    %+5.1f      %+5.1f" % [
+			r["tier"], r["day"], r["standing"], r["st_quota"], r["st_walk"], r["st_product"]])
