@@ -266,12 +266,7 @@ static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int
 static func _quota_short(s: Shift) -> int:
 	if s.category_quota_count <= 0:
 		return 0
-	var pending := 0
-	for c in s.seated():
-		for u in c.unsigned:
-			if u["product"].interest.category.id == s.category_quota:
-				pending += 1
-	return maxi(0, s.category_quota_count - s.category_sold - pending)
+	return maxi(0, s.category_quota_count - s.category_sold - s.category_unsigned())
 
 static func _in_quota(s: Shift, inst: CardInstance) -> bool:
 	return inst.is_product() \

@@ -1001,7 +1001,11 @@ func _write_product_quota() -> void:
 	if need <= 0:
 		return
 	var sold: int = _shift.category_sold
-	_product_quota_label.text = "%s %d/%d" % [_shift.category_quota_name, mini(sold, need), need]
+	# Agreed but not signed yet: shown, because the player has sold it - but it
+	# only counts once they sign, so the count itself stays what is signed.
+	var pending: int = _shift.category_unsigned()
+	_product_quota_label.text = "%s %d/%d%s" % [_shift.category_quota_name,
+		mini(sold, need), need, "  (+%d unsigned)" % pending if pending > 0 and sold < need else ""]
 	_product_quota_label.add_theme_color_override("font_color",
 		Palette.color(&"patience_ok" if sold >= need else &"patience_warn"))
 

@@ -1571,6 +1571,19 @@ func _standing_delta() -> int:
 		- category_quota_cost()
 
 
+## Products from the quota category that customers have AGREED to but not yet
+## signed for - not counted until they sign (category_sold), and lost if the
+## bell comes first. What the top bar shows beside the count.
+func category_unsigned() -> int:
+	if category_quota == &"":
+		return 0
+	var n := 0
+	for c in seated():
+		for sale in c.unsigned:
+			if sale["product"].interest.category.id == category_quota:
+				n += 1
+	return n
+
 ## Whether this shift had a product quota and fell short of it.
 func category_quota_missed() -> bool:
 	return category_quota_count > 0 and category_sold < category_quota_count

@@ -79,6 +79,26 @@ func test_only_its_category_counts() -> void:
 	_sell(s, 1, _product(s, s.category_quota, true))
 	h.eq("one from the day's does", s.category_sold, 1)
 
+func test_a_product_agreed_to_shows_as_unsigned_and_counts_only_once_signed() -> void:
+	## "I sold WALKAWAY GAP, a Deal product, and had 0/2": agreeing to a product
+	## leaves it unsigned until the customer is closed. It must show, and not
+	## count - unsigned deals are lost at the bell.
+	var r := _run(_cfg([2]))
+	var s := r.start_shift(ShiftProfile.new())
+	var inside := _product(s, s.category_quota, true)
+	s.at = 0
+	var c: Customer = s.chairs[0]
+	c.line = 0
+	s.hand.clear()
+	s.hand.append(CardInstance.new(inside, 900))
+	s.place(0)
+	s.offer()
+	h.eq("agreed to: it shows as unsigned", s.category_unsigned(), 1)
+	h.eq("but is not counted yet", s.category_sold, 0)
+	s.close()
+	h.eq("signed: it counts", s.category_sold, 1)
+	h.eq("and is no longer unsigned", s.category_unsigned(), 0)
+
 func test_missing_it_costs_standing_and_meeting_it_does_not() -> void:
 	var r := _run(_cfg([2], 7))
 	var short := r.start_shift(ShiftProfile.new())

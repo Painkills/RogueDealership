@@ -1125,8 +1125,32 @@ func _check_week_two_shows_the_product_quota() -> void:
 	_check("the floor's top bar shows it (%s)" % label.text,
 		label.visible and label.text.contains((q["category"] as Category).display_name)
 			and label.text.contains("0/%d" % int(q["count"])))
+	_check_an_unsigned_product_shows_on_the_top_bar(s, label)
 	_check_the_calendar_from_the_floor()
 	_root._show_only(_root._picker_view)
+
+## A product agreed to but not signed for shows beside the count, and moves into
+## it once they sign.
+func _check_an_unsigned_product_shows_on_the_top_bar(s: Shift, label: Label) -> void:
+	var def: ProductCardDef = null
+	for c in s.card_pool.cards:
+		if c is ProductCardDef and (c as ProductCardDef).interest.category.id == s.category_quota:
+			def = c
+			break
+	s.at = 0
+	var customer: Customer = s.chairs[0]
+	customer.line = 0
+	s.hand.clear()
+	s.hand.append(CardInstance.new(def, 990))
+	s.place(0)
+	s.offer()
+	_root._shift_view._render()
+	_check("a product agreed to shows as unsigned (%s)" % label.text,
+		label.text.contains("0/") and label.text.contains("+1 unsigned"))
+	s.close()
+	_root._shift_view._render()
+	_check("and counts once signed (%s)" % label.text,
+		label.text.contains("1/") and not label.text.contains("unsigned"))
 
 ## "Add a button to view calendar (view only) from the floor scene."
 func _check_the_calendar_from_the_floor() -> void:
