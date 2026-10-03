@@ -252,23 +252,33 @@ func test_the_meter_prints_your_appeal_and_the_line_once_you_know_it() -> void:
 	h.eq("nothing printed on an empty table", t._bar.appeal_text() + t._bar.line_text(), "")
 	t.free()
 
-func test_the_appeal_number_steps_clear_of_the_line_tag() -> void:
+func test_the_appeal_badge_keeps_its_distance_from_the_line_tag() -> void:
+	## "Give it a bigger margin from the line itself, it sits too close,
+	## especially when it's inside the line." At every appeal - below the Line,
+	## at it, just over it, far over it - the badge keeps BADGE_GAP clear of the
+	## Line's tag and stays on the bar.
 	var t := _instance()
 	var c := _cust(&"easygoing", 1)
 	c.line = 30
-	c.offer = _offer(&"vsc", 30, 1600)
+	c.offer = _offer(&"vsc", 0, 1600)
 	c.reveal_room()
-	t.show_offer(c, "INTERESTED", _meter_scale())
+	t.show_offer(c, "COOL", _meter_scale())    # binds the tablet's nodes
 	var bar: AppealBar = t._bar
 	bar.size = Vector2(OfferTablet.METER_WIDTH, 420)
 	var track := Rect2(4, 4, bar.size.x - 8, bar.size.y - 8)
 	var font := ThemeDB.fallback_font
-	# At the Line, the fill's top IS the marker - the two would sit on top of
-	# each other without the step.
-	var tag := bar.line_tag_rect(bar.marker_y(track), font)
-	var at := bar.appeal_label_rect(bar.fill_rect(track), tag, font)
-	h.check("the appeal number does not sit under the Line's tag (%s vs %s)" % [at, tag],
-		not at.intersects(tag))
+	for appeal in range(0, _meter_scale() + 1):
+		c.offer.appeal = appeal
+		t.show_offer(c, "COOL", _meter_scale())
+		var tag := bar.line_tag_rect(bar.marker_y(track), font)
+		var at := bar.appeal_label_rect(bar.fill_rect(track), tag, font)
+		var clear: float = at.position.y - tag.end.y if at.position.y >= tag.end.y \
+			else tag.position.y - at.end.y
+		h.check("appeal %d: the badge is %.0f px clear of the Line's tag" % [appeal, clear],
+			clear >= AppealBar.BADGE_GAP - 0.01)
+		h.check("appeal %d: and on the bar (%s)" % [appeal, at],
+			at.position.y >= 0.0 and at.end.y <= bar.size.y
+				and at.position.x >= 0.0 and at.end.x <= bar.size.x)
 	t.free()
 
 func test_the_status_is_a_band_until_you_know_the_line_and_a_number_after() -> void:

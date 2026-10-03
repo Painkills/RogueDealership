@@ -26,9 +26,16 @@ const TRACK_INSET := 4.0
 const MARKER_WIDTH := 6.0
 const NUB := 8.0
 const RADIUS := 14
-## The numbers: the appeal you are at, and the Line's once you know it.
-const VALUE_FONT := 40
-const LINE_FONT := 30
+## The numbers: the appeal you are at, on a badge, and the Line's once you know
+## it, on a tag. Type sizes, then the badge's height and the least clear space
+## kept between it and the Line's tag.
+const BADGE_FONT := 34
+const BADGE_H := 50.0
+const BADGE_GAP := 14.0
+const LINE_FONT := 28
+const CAPTION_FONT := 14
+## Between the tag's caption and its number.
+const TAG_GAP := 8.0
 
 var _appeal: int = 0
 var _line: int = 0
@@ -107,16 +114,31 @@ func _draw() -> void:
 			tag = line_tag_rect(my, font)
 	if font == null:
 		return
-	# The appeal you are at, at the top of the fill - drawn before the Line's
-	# tag, which sits on top of everything.
+	var paper := Palette.color(&"paper")
+	# The appeal you are at: a badge in the fill's own colour, ringed in paper
+	# so it reads on the fill and on the empty track alike, with a soft shadow.
 	var text := appeal_text()
 	if text != "":
 		var at := appeal_label_rect(fill, tag, font)
-		var white := fill.size.y > 0.0 and fill.encloses(at)
-		_text_in(at, text, VALUE_FONT, Palette.color(&"paper") if white else ink, font)
+		var radius := int(at.size.y * 0.5)
+		draw_style_box(_rounded(Color(0, 0, 0, 0.28), radius), Rect2(at.position + Vector2(0, 3), at.size))
+		var badge := _rounded(fill_color().darkened(0.3), radius)
+		badge.border_color = paper
+		badge.set_border_width_all(3)
+		draw_style_box(badge, at)
+		_text_in(at, text, BADGE_FONT, paper, font)
+	# The Line's number: a dark tag with a small caption, so the two numbers
+	# cannot be mistaken for each other.
 	if tag.size.x > 0.0:
-		draw_style_box(_rounded(ink, 8), tag)
-		_text_in(tag, line_text(), LINE_FONT, Palette.color(&"paper"), font)
+		draw_style_box(_rounded(ink, int(tag.size.y * 0.5)), tag)
+		var caption_w: float = font.get_string_size("LINE", HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FONT).x
+		var number_w: float = font.get_string_size(line_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, LINE_FONT).x
+		var x: float = tag.position.x + (tag.size.x - caption_w - TAG_GAP - number_w) * 0.5
+		var mid: float = tag.position.y + tag.size.y * 0.5
+		draw_string(font, Vector2(x, mid + CAPTION_FONT * 0.35), "LINE",
+			HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FONT, Color(paper, 0.7))
+		draw_string(font, Vector2(x + caption_w + TAG_GAP, mid + LINE_FONT * 0.35), line_text(),
+			HORIZONTAL_ALIGNMENT_LEFT, -1, LINE_FONT, paper)
 
 # --- the numbers -----------------------------------------------------------
 
@@ -128,24 +150,46 @@ func appeal_text() -> String:
 func line_text() -> String:
 	return str(_line) if _line_known and _band != "" else ""
 
-## The Line's tag: a dark pill centred on the marker.
+## The Line's tag: a dark pill, "LINE" and its number, centred on the marker.
 func line_tag_rect(my: float, font: Font) -> Rect2:
-	var w: float = font.get_string_size(line_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, LINE_FONT).x + 16.0
-	var h: float = LINE_FONT + 10.0
+	var caption_w: float = font.get_string_size("LINE", HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FONT).x
+	var number_w: float = font.get_string_size(line_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, LINE_FONT).x
+	var w: float = minf(caption_w + TAG_GAP + number_w + 28.0, size.x - 2.0)
+	var h: float = LINE_FONT + 16.0
 	return Rect2(size.x * 0.5 - w * 0.5, my - h * 0.5, w, h)
 
-## Where your appeal's number goes: just inside the top of the fill, or just
-## above it when the fill is too short to hold it - and clear of the Line's
-## tag, stepping below it if the two would overlap.
+## Where the appeal badge goes: just inside the top of the fill, or just above
+## it when the fill is too short to hold it - and never closer than BADGE_GAP
+## to the Line's tag. Where the two would crowd (the appeal at, just over or
+## just under the Line) it moves to the nearer side of the tag, above or below,
+## and always stays on the bar.
 func appeal_label_rect(fill: Rect2, tag: Rect2, font: Font) -> Rect2:
-	var w: float = font.get_string_size(appeal_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, VALUE_FONT).x
-	var h: float = VALUE_FONT + 6.0
-	var top: float = fill.position.y + 6.0
-	if fill.size.y < h + 12.0:
-		top = fill.position.y - h - 4.0
+	var text_w: float = font.get_string_size(appeal_text(), HORIZONTAL_ALIGNMENT_LEFT, -1, BADGE_FONT).x
+	var w: float = minf(maxf(BADGE_H, text_w + 30.0), size.x - 2.0)
+	var h: float = BADGE_H
+	var lowest: float = size.y - TRACK_INSET - h - 2.0
+	var highest: float = TRACK_INSET + 2.0
+	var top: float = fill.position.y + 8.0
+	if fill.size.y < h + 16.0:
+		top = fill.position.y - h - 8.0
+	top = clampf(top, highest, lowest)
 	var r := Rect2(size.x * 0.5 - w * 0.5, top, w, h)
-	if tag.size.x > 0.0 and r.intersects(tag):
-		r.position.y = tag.end.y + 4.0
+	if tag.size.x <= 0.0:
+		return r
+	var zone := tag.grow(BADGE_GAP)
+	if not r.intersects(zone):
+		return r
+	var below: float = tag.end.y + BADGE_GAP
+	var above: float = tag.position.y - BADGE_GAP - h
+	var options: Array[float] = []
+	for y in [below, above]:
+		if y >= highest and y <= lowest:
+			options.append(y)
+	if options.is_empty():
+		# No room either side (a very short bar): the one with more space.
+		options.append(below if size.y - tag.end.y >= tag.position.y else above)
+	options.sort_custom(func(a, b): return absf(a - top) < absf(b - top))
+	r.position.y = options[0]
 	return r
 
 func _text_in(r: Rect2, text: String, px: int, color: Color, font: Font) -> void:
