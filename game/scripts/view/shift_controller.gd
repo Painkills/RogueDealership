@@ -61,7 +61,6 @@ signal shift_finished(report: Dictionary)
 signal deck_viewed
 
 @onready var _camera: Camera3D = $Camera3D
-@onready var _camera_floor: Marker3D = %CameraFloor
 @onready var _drag: DragController = $DragController
 @onready var _hand_zone: CardCollection3D = %Hand
 @onready var _draw_zone: CardCollection3D = %Draw
@@ -891,9 +890,13 @@ func _apply_framing() -> void:
 	_hover_armed = false
 	_entered_unarmed = -1
 	var seated: bool = _shift.at != null
-	var target: Node3D = _seat_cam if seated else _camera_floor
-	# Staying put on the floor keeps whoever you last dealt with at the front,
-	# which is the same person the mode button offers to take you back to.
+	# THERE IS NO FLOOR VIEW. Between customers - one just signed or walked, or
+	# you stood up - the camera stays where it was, at the seat you last had,
+	# and your hand, draw and discard stay up. Moving to the next customer is
+	# only the carousel turning, never the camera pulling out and back in, and
+	# the hand is never put away: it is what you dig with while the floor
+	# refills. Whoever you last dealt with stays at the front.
+	var target: Node3D = _seat_cam
 	var station := station_for(int(_shift.at) if seated else _last_station)
 	if seated:
 		_last_station = int(_shift.at)
@@ -926,12 +929,12 @@ func _apply_framing() -> void:
 	for seat in _seats:
 		_framing_tween.tween_property(seat, "rotation:y", -station, FRAMING_TWEEN)
 
-	# Camera-LOCAL, so this is purely "up into view" or "down out of it" - the
-	# piles are already travelling with the camera for free.
-	var delay: float = PILE_DELAY if seated else 0.0
-	_tween_pile(_hand_zone, HAND_UP if seated else HAND_STOWED, delay)
-	_tween_pile(_discard_zone, DISCARD_UP if seated else DISCARD_STOWED, delay)
-	_tween_pile(_draw_zone, DRAW_UP if seated else DRAW_STOWED, delay)
+	# Camera-LOCAL, so this is purely "up into view" - the piles are already
+	# travelling with the camera for free. They start the shift stowed and rise
+	# a beat after the camera settles; from then on they stay up.
+	_tween_pile(_hand_zone, HAND_UP, PILE_DELAY)
+	_tween_pile(_discard_zone, DISCARD_UP, PILE_DELAY)
+	_tween_pile(_draw_zone, DRAW_UP, PILE_DELAY)
 
 func _show_seat(index: int, shown: bool) -> void:
 	_seats[index].visible = shown

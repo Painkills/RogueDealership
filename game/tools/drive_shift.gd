@@ -103,6 +103,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_arriving_leaves_every_card_face_front()
 	_check_you_can_still_flip_a_customer_card_while_seated()
 	_check_seat_view_brings_your_things_up()
+	_check_your_things_stay_up_between_customers()
 	_check_the_hints_sit_flat_inside_their_cards()
 	_check_the_other_two_are_still_on_screen_while_you_work_one()
 	_check_the_tablet_shows_the_offer()
@@ -534,6 +535,9 @@ func _check_the_player_rides_the_camera() -> void:
 		_check("your %s is parented to the camera, so it travels with you" % pair[0],
 			(pair[1] as Node3D).get_parent() == cam)
 
+## Where every shift OPENS: nobody sat with yet and your things still stowed.
+## They come up with the first framing and stay up - see
+## _check_your_things_stay_up_between_customers().
 func _check_floor_view_is_bare() -> void:
 	var bottom := -_frame_half_height()
 	for pair in [["hand", _controller._hand_zone], ["draw", _controller._draw_zone],
@@ -785,7 +789,9 @@ func _check_the_floor_cards_are_big_enough_to_read() -> void:
 	var front: int = _controller._last_station
 	for i in range(3):
 		var r := _rect_of(_controller._customer_cards[i], CUSTOMER)
-		var floor_px: float = 360.0 if i == front else 240.0
+		# Whoever is fronted measures 358-360 depending on the framing; either
+		# is the same readable card.
+		var floor_px: float = 350.0 if i == front else 240.0
 		_check("floor card %d is %d px tall, past the %d it needs"
 			% [i, int(r.size.y), int(floor_px)], r.size.y >= floor_px)
 		_on_screen("floor card %d" % i, r)
@@ -904,8 +910,14 @@ func _check_tag_inside(what: String, tag: Control, card: Rect2) -> void:
 ## On the floor your piles are stowed below the frame and no product slot is
 ## showing, so nothing is there to be named.
 func _check_the_floor_shows_no_table_hints() -> void:
+	# The piles stay up between customers, so their own labels do too - what is
+	# hidden is everything about a product on a table nobody is sitting at.
+	var pile_labels := [_controller._draw_tag, _controller._discard_tag]
 	for tag in _controller._tags:
-		_check("on the floor, %s is hidden" % tag.name, not tag.visible)
+		if pile_labels.has(tag):
+			_check("between customers, %s still labels its pile" % tag.name, tag.visible)
+		else:
+			_check("between customers, %s is hidden" % tag.name, not tag.visible)
 
 func _all_under(node: Node) -> Array[Node]:
 	var out: Array[Node] = []
@@ -913,6 +925,30 @@ func _all_under(node: Node) -> Array[Node]:
 		out.append(child)
 		out.append_array(_all_under(child))
 	return out
+
+## "There's no longer a need to zoom out when picking a customer... There's not
+## much of a need to pull cards down and up at all ever." Standing up - which is
+## also where a customer who signs or walks leaves you - keeps the camera where
+## it was and your hand, draw and discard in view; the next customer is only the
+## carousel turning.
+func _check_your_things_stay_up_between_customers() -> void:
+	var shift = _controller._shift
+	var at: int = shift.at
+	var cam_before: Vector3 = _controller._camera.global_position
+	var bottom := -_frame_half_height()
+	_controller._apply(shift.leave())
+	_settle()
+	_check("standing up leaves nobody at a seat", shift.at == null)
+	_check("and the camera stays where it was (%s)" % _controller._camera.global_position,
+		_controller._camera.global_position.is_equal_approx(cam_before))
+	for pair in [["hand", _controller._hand_zone], ["discard", _controller._discard_zone],
+			["draw", _controller._draw_zone]]:
+		var z := pair[1] as Node3D
+		_check("and your %s stays in view (y %.1f)" % [pair[0], z.position.y],
+			z.position.y > bottom)
+	_check("the same customer stays at the front", _controller._last_station == at)
+	_controller._apply(shift.approach(at))
+	_settle()
 
 func _check_seat_view_brings_your_things_up() -> void:
 	var bottom := -_frame_half_height()
