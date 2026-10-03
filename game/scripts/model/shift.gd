@@ -192,6 +192,12 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		if arch == null:
 			break        # a lineup shorter than the floor leaves the rest empty
 		_spawn(i, arch)
+	# The shift opens with you sat at A - not out on a floor with nobody to
+	# work yet. Seated at whoever is there, or at an empty chair a short lineup
+	# left; either way the first customer to arrive there finds you.
+	if not chairs.is_empty():
+		at = 0
+		last_customer = chairs[0]
 	# The floor opens full, and nobody is waiting yet: the first to come in
 	# after opening does so on the same clock as everyone after them.
 	next_arrival = _arrival_gap()
@@ -398,8 +404,9 @@ func _walk(chair: int) -> void:
 
 func _vacate(chair: int) -> void:
 	chairs[chair] = null
-	if at == chair:
-		at = null
+	# You are NOT unseated: `at` stays on this chair, now empty, and whoever
+	# sits down next takes it with you already there. Nothing moves you off a
+	# seat but your own choice - approach() to another, or leave().
 	# Whoever is waiting takes the chair now, not a few ticks from now - that is
 	# what getting a difficult customer out for them buys.
 	_seat_the_waiting()

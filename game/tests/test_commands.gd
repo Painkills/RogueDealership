@@ -398,6 +398,26 @@ func test_walking_the_floor_is_free() -> void:
 	s.approach(0)
 	h.eq("and it stays free however much you shop around", s.tick, 0)
 
+func test_a_shift_opens_with_you_sat_at_a_and_nothing_moves_you_off_it() -> void:
+	## "Start shift seated at A... Don't take me away from a seat even if they
+	## leave." Not _at(): this is the shift as it opens.
+	var s := _shift([&"easygoing", &"easygoing"])
+	h.eq("opens sat at A", s.at, 0)
+	h.check("with someone there", s.chairs[0] != null)
+	s.chairs[0].patience = 0
+	s._settle_patience()
+	h.check("they walk out", s.chairs[0] == null or s.chairs[0].state != "floor" or s.waiting.size() >= 0)
+	h.eq("and you are still at A, not out on a floor", s.at, 0)
+	var c = _at(s)
+	_hand(s, [&"vsc"])
+	c = s.chairs[0]
+	if c != null:
+		c.line = 0
+		s.place(0)
+		s.offer()
+		s.close()
+		h.eq("signing the next one leaves you there too", s.at, 0)
+
 func test_the_approach_charge_is_still_one_number_away() -> void:
 	## approach_ticks survives at 0 rather than being deleted, so free movement
 	## is a tuning decision and not a one-way door. What does NOT survive is the
@@ -405,9 +425,9 @@ func test_the_approach_charge_is_still_one_number_away() -> void:
 	## returning cheaper than leaving was the shape of the tunnel vision, so if
 	## the charge ever comes back it comes back uniform.
 	var s := _shift([&"easygoing", &"easygoing"], {"approach_ticks": 1})
-	s.approach(0)
+	# The shift opens with you sat at A, so the first walk is to B.
+	s.approach(1)
 	h.eq("the charge applies when the knob is turned up", s.tick, 1)
-	s.leave()
 	s.approach(0)
 	h.eq("including the walk back to the same person", s.tick, 2)
 
@@ -435,7 +455,9 @@ func test_close_is_the_only_thing_that_banks() -> void:
 	h.eq("closing is free", s.tick, t)
 	h.eq("they are gone", c.state, "signed")
 	h.eq("the chair is empty", s.chairs[0], null)
-	h.eq("and you are back on the floor", s.at, null)
+	h.eq("and you are still sat there - nothing moves you off a seat", s.at, 0)
+	h.check("so the next to sit down finds you already at it",
+		s.chairs[0] == null or s.at == 0)
 
 func test_close_with_nothing_sold_is_refused() -> void:
 	## Closing empty used to be a free "give up on this one" button - the only

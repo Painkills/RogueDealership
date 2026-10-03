@@ -62,3 +62,27 @@ func test_their_archetype_is_written_big_enough_to_read_across_the_floor() -> vo
 	h.check("and the longest one still fits its tab (%s: %d of %d px)"
 		% [longest, int(wide), int(tab.size.x)], wide < tab.size.x - 20.0)
 	card.free()
+
+func test_a_rule_that_is_not_an_action_still_shows_on_the_cards_back() -> void:
+	## "Boss 1 says they are budget hawks, but their description and actions
+	## seem to be easygoing": a customer's back listed only their actions, and
+	## the Hawk's whole behaviour is a rule (needs_concession_past_rank), so it
+	## read "Nothing. They just sit and listen." like anyone. Checked on a copy
+	## with the rule set, so no tuning is pinned here.
+	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
+	var a := (load("res://data/archetype_pool.tres") as ArchetypePool).by_id(&"easygoing") \
+		.duplicate() as CustomerArchetype
+	a.actions = []
+	a.needs_concession_past_rank = 0
+	var rng := RandomNumberGenerator.new()
+	var plain := Customer.new("A", "Test Person", a, Customer.make_ranks(a, interests, rng, 0.0),
+		10, 10, CFG, interests)
+	h.eq("with no actions and no rule, nothing", CustomerCard3D.behaviour_text(plain),
+		"Nothing. They just sit and listen.")
+	a.needs_concession_past_rank = 5
+	var holds := Customer.new("A", "Test Person", a, Customer.make_ranks(a, interests, rng, 0.0),
+		10, 10, CFG, interests)
+	var text := CustomerCard3D.behaviour_text(holds)
+	h.check("with the rule, the card says so (%s)" % text,
+		text.contains("HOLDS OUT") and text.contains("top 5") and text.contains("concession"))
+	h.check("and no longer says they just sit there", not text.contains("just sit"))

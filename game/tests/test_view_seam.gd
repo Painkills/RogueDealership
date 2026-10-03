@@ -62,7 +62,9 @@ func test_dropping_on_a_different_customer_approaches_first() -> void:
 
 func test_dropping_on_a_customer_when_standing_nowhere_approaches_first() -> void:
 	var s := _shift()
-	h.eq("fixture starts on the floor", s.at, null)
+	h.eq("the fixture opens sat at A", s.at, 0)
+	s.leave()
+	h.eq("until you step away", s.at, null)
 	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.chair_zone(1))
 	h.eq("approach chair 1 first", plan["approach"], 1)
 

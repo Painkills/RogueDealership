@@ -901,9 +901,7 @@ func _check_the_deck_viewer_hides_the_floor_side_panels() -> void:
 	var side_panel := shift_view.get_node(^"%SidePanel") as Control
 	var waiting := shift_view.get_node(^"%WaitingPanel") as Control
 	var top_strip := shift_view.get_node(^"%TopStrip") as Control
-	var res: Result = shift_view._shift.approach(0)
-	_check("approaching chair A to seat someone (%s)" % res.msg, res.ok)
-	shift_view._apply(res)
+	_check("a shift opens with you sat at chair A", shift_view._shift.at == 0)
 	_check("seated, so the log is showing to start with", side_panel.visible)
 	_check("and the waiting list", waiting.visible)
 	_check("and the shift's top bar", top_strip.visible)
@@ -917,8 +915,6 @@ func _check_the_deck_viewer_hides_the_floor_side_panels() -> void:
 	_check("closing it brings the log back", side_panel.visible)
 	_check("and the waiting list", waiting.visible)
 	_check("and the top bar", top_strip.visible)
-
-	shift_view._apply(shift_view._shift.leave())
 
 ## "Click on your deck during the main game" - the floor's own trigger for
 ## the exact same overlay the shop's VIEW TOOLKIT button opens (RunController

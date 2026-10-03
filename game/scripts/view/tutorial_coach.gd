@@ -31,10 +31,6 @@ const STEPS := [
 		"body": "Hover over their card to turn it over - on a phone, tap it once. The back tells you how this kind of buyer behaves.",
 		"wait": &"flipped", "prompt": "Turn their card over to carry on.",
 		"targets": [&"customer"]},
-	{"id": &"sit", "title": "Sit down with them",
-		"body": "Click their card to sit at their desk - on a phone, tap it again. Walking between desks is free, and your cards come up when you sit.",
-		"wait": &"seated", "prompt": "Sit down with them to carry on.",
-		"targets": [&"customer"]},
 	{"id": &"hand", "title": "Your hand",
 		"body": "Products (orange) are what you sell. Support cards (purple) help you sell them. Almost every card you play costs a tick.",
 		"wait": &"next", "targets": [&"hand"]},
@@ -305,7 +301,6 @@ func _tune_the_line(shift: Shift) -> void:
 func _met(wait: StringName, shift: Shift) -> bool:
 	match wait:
 		&"flipped": return _floor.customer_showing_back(0)
-		&"seated": return shift.at != null and int(shift.at) == 0
 		&"dug": return _since_start(shift, "digs") > 0
 		&"placed": return _since_start(shift, "places") > 0
 		&"supported": return _since_start(shift, "cards_played") > 0

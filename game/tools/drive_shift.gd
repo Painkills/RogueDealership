@@ -535,32 +535,36 @@ func _check_the_player_rides_the_camera() -> void:
 		_check("your %s is parented to the camera, so it travels with you" % pair[0],
 			(pair[1] as Node3D).get_parent() == cam)
 
-## Where every shift OPENS: nobody sat with yet and your things still stowed.
-## They come up with the first framing and stay up - see
+## Where every shift OPENS: sat at A, with your things stowed for the instant
+## before the first framing raises them. They come up and stay up - see
 ## _check_your_things_stay_up_between_customers().
 func _check_floor_view_is_bare() -> void:
+	_check("the shift opens with you sat at A", _controller._shift.at == 0)
 	var bottom := -_frame_half_height()
 	for pair in [["hand", _controller._hand_zone], ["draw", _controller._draw_zone],
 			["discard", _controller._discard_zone]]:
 		var z := pair[1] as Node3D
-		_check("on the floor your %s is stowed below frame (top %.1f < %.1f)"
+		_check("at the very start your %s has not risen yet (top %.1f < %.1f)"
 			% [pair[0], z.position.y + CARD.y * 0.5, bottom],
 			z.position.y + CARD.y * 0.5 < bottom)
-	# The floor is customer cards and nothing else. The product slot, whatever is
-	# sitting in it and the tablet it stands on all belong to the negotiation.
+	# The product slot and the tablet it stands on belong to the seat you are
+	# at - A - and to nobody else's.
 	for i in range(3):
-		_check("the product slot at seat %d is out of sight on the floor" % i,
-			not _controller._chair_zones[i].visible)
-		_check("and so is seat %d's tablet" % i, not _controller._tablets[i].visible)
-		# One line on the floor card is what tells you a product is still sitting
-		# with someone, now that you cannot see the slot.
-		_check("but the floor card still says what you left with them",
-			_controller._customer_cards[i]._status.visible)
+		var mine: bool = i == 0
+		_check("the product slot at seat %d is %s" % [i, "showing" if mine else "out of sight"],
+			_controller._chair_zones[i].visible == mine)
+		_check("and so is seat %d's tablet" % i, _controller._tablets[i].visible == mine)
+		if not mine:
+			# One line on the card is what tells you a product is still sitting
+			# with someone, now that you cannot see their slot.
+			_check("but seat %d's card still says what you left with them" % i,
+				_controller._customer_cards[i]._status.visible)
 	for i in range(3):
-		_check("seat %d is visible on the floor" % i, _controller._seats[i].visible)
-		_check("seat %d's tablet is not drawing a screen nobody can see" % i,
-			(_controller._tablets[i].get_node(^"ScreenViewport") as SubViewport)
-				.render_target_update_mode == SubViewport.UPDATE_DISABLED)
+		_check("seat %d is visible" % i, _controller._seats[i].visible)
+		if i != 0:
+			_check("seat %d's tablet is not drawing a screen nobody can see" % i,
+				(_controller._tablets[i].get_node(^"ScreenViewport") as SubViewport)
+					.render_target_update_mode == SubViewport.UPDATE_DISABLED)
 
 ## The hover tooltip is gone; what a customer DOES is the back of their card.
 ## The pair has to turn as one, or you see the back of the front card and
@@ -610,9 +614,10 @@ func _check_tapping_a_seat_peeks_before_it_approaches() -> void:
 	_check("and the card is face-front, from the hover test above",
 		not _controller._customer_flips[CHAIR].showing_back())
 
+	var was_at = _controller._shift.at
 	_controller._on_pad_input(null, down, Vector3.ZERO, Vector3.ZERO, 0, CHAIR)
 	_check("a first tap only peeks - it has not approached",
-		_controller._shift.at == null)
+		_controller._shift.at == was_at and _controller._shift.at != CHAIR)
 	_check("and shows their back, the same as hovering would",
 		_controller._customer_flips[CHAIR].showing_back())
 
@@ -916,8 +921,10 @@ func _check_the_floor_shows_no_table_hints() -> void:
 	for tag in _controller._tags:
 		if pile_labels.has(tag):
 			_check("between customers, %s still labels its pile" % tag.name, tag.visible)
+		elif str(tag.name).ends_with("0"):
+			continue        # seat A's own: you are sat there, so it may show
 		else:
-			_check("between customers, %s is hidden" % tag.name, not tag.visible)
+			_check("%s, for a seat you are not at, is hidden" % tag.name, not tag.visible)
 
 func _all_under(node: Node) -> Array[Node]:
 	var out: Array[Node] = []
@@ -2277,11 +2284,13 @@ func _check_what_you_say_comes_up_from_the_bottom() -> void:
 	_check("the next thing you say puts it back up", bubble.visible)
 	_press(KEY_F)
 	_settle()
-	_check("and standing up takes it down (you are on the floor: %s)" % str(s.at == null),
-		s.at == null and not bubble.visible)
+	# Stepping away no longer puts your hand down, so what you said stays up
+	# for its tick - there is no floor to take it down for.
+	_check("and stepping away does not take it down (stepped away: %s)" % str(s.at == null),
+		s.at == null and bubble.visible)
 	_press(KEY_F)
 	_settle()
-	_check("back at the desk, it stays down", s.at != null and not bubble.visible)
+	_check("back at the desk, it is still up", s.at != null and bubble.visible)
 
 ## "Make the bubbles appear in order (so if the player speaks first, have it
 ## appear a little before the response from the customer)" and "make

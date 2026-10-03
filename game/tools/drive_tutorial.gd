@@ -69,7 +69,8 @@ func _drive() -> void:
 	click.pressed = true
 	for i in 2:
 		_floor._on_pad_input(null, click, Vector3.ZERO, Vector3.ZERO, 0, 1)
-	_check("clicking an empty desk goes nowhere", shift.at == null)
+	_check("clicking an empty desk goes nowhere - you stay where you started, at A",
+		shift.at == 0)
 	_check("and says nothing about it",
 		_floor._event_log.get_parsed_text().length() == logged)
 	_check("an empty desk's file has no photo clipped to it",
@@ -80,12 +81,11 @@ func _drive() -> void:
 	_check("the details memo waits for you - no NEXT to skip it", not _coach._next.visible)
 	_floor._on_customer_hover(0)
 	await _settle()
-	_check("turning their card over moves it on", _coach.step_id() == &"sit")
+	# There is no "sit down" lesson: the practice opens with you at their desk,
+	# hand up, so turning their card over goes straight to the hand.
+	_check("turning their card over moves it on to your hand", _coach.step_id() == &"hand")
 	_floor._on_customer_unhover(0)
-
-	_floor._apply(shift.approach(0))
 	await _settle()
-	_check("sitting down moves it on", _coach.step_id() == &"hand")
 	await _check_it_points_at_something("your hand")
 
 	await _next(&"dig")

@@ -304,7 +304,7 @@ func _register_keyboard_actions() -> void:
 	_bind_key(&"offer_key", KEY_O)
 	_bind_key(&"drop_key", KEY_D)
 	_bind_key(&"close_key", KEY_C, true)    # Shift+C, distinct from chair_c's bare C
-	_bind_key(&"floor_key", KEY_F)          # step back to the floor (Shift.leave())
+	_bind_key(&"floor_key", KEY_F)          # step away from them / back (Shift.leave())
 	_bind_key(&"debug_skip_shift", KEY_E, false, true)   # Ctrl+E: burn the clock
 
 func _bind_key(action: StringName, keycode: Key, shift: bool = false,
@@ -372,9 +372,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("chair_c"): _apply(_shift.approach(2))
 	elif event.is_action_pressed("offer_key"): _on_offer()
 	elif event.is_action_pressed("drop_key"): _on_drop()
-	# The on-screen mode button is gone, but the F key still does both of its
-	# jobs - step back to the floor, or return to whoever you were last with,
-	# for free - through the exact same handler it used to be wired to.
+	# F steps away from the customer you are with - what "give us a minute"
+	# asks for - or returns to whoever you were last with. Free either way, and
+	# the view never changes: you stay at your seat, with your hand.
 	elif event.is_action_pressed("floor_key"): _on_mode_pressed()
 	elif event.is_action_pressed("debug_skip_shift"): _debug_skip_shift()
 
@@ -541,7 +541,7 @@ func hud_dimmed() -> bool:
 func screen_rect_of(target: StringName) -> Rect2:
 	if _shift == null:
 		return Rect2()
-	var front: int = int(_shift.at) if _shift.at != null else _last_station
+	var front: int = _front()
 	var card := CardFace3D.CARD_SIZE
 	match target:
 		&"customer":
@@ -613,10 +613,9 @@ func _on_close() -> void:
 func _on_drop() -> void:
 	_apply(_shift.drop_offer())
 
-## The F key's two jobs, now that the on-screen mode button is gone. With
-## someone: step back to the floor. On the floor with someone to go back to:
-## return to them, free - Shift.leave()/approach() already make that free on
-## the model side, this just decides which of the two the key means right now.
+## The F key's two jobs. With someone: step away (Shift.leave()). Stepped away
+## with someone to go back to: return to them, free - leave()/approach() are
+## both free on the model side, this just decides which the key means now.
 func _on_mode_pressed() -> void:
 	if _shift.at != null:
 		_apply(_shift.leave())
@@ -907,7 +906,7 @@ func _apply_framing() -> void:
 	# are at is the NEGOTIATION: the product slot and what is sitting in it. The
 	# tablet it stands on follows the same rule, in _render_details().
 	for i in range(_seats.size()):
-		var here: bool = seated and i == int(_shift.at)
+		var here: bool = i == _front()
 		_show_seat(i, true)
 		_chair_zones[i].visible = here
 		_customer_zones[i].visible = here
@@ -935,6 +934,11 @@ func _apply_framing() -> void:
 	_tween_pile(_hand_zone, HAND_UP, PILE_DELAY)
 	_tween_pile(_discard_zone, DISCARD_UP, PILE_DELAY)
 	_tween_pile(_draw_zone, DRAW_UP, PILE_DELAY)
+
+## The seat in front: the one you are at, or - if you stepped away on purpose -
+## the one you last had. Your iPad, product slot and hand always belong to it.
+func _front() -> int:
+	return int(_shift.at) if _shift.at != null else _last_station
 
 func _show_seat(index: int, shown: bool) -> void:
 	_seats[index].visible = shown
@@ -1249,20 +1253,18 @@ func _render() -> void:
 		_disarm_hover()
 	_seated_seen = now_seated
 
-	var seated: bool = _shift.at != null
 	for i in range(_customer_cards.size()):
 		# Keyed on being FRONTED rather than on being seated: the carousel
 		# draws the two flankers small on the floor as well, and that is where
 		# rank numerals stop surviving the SubViewport's downscale.
-		var front: int = int(_shift.at) if seated else _last_station
+		var front: int = _front()
 		_customer_cards[i].compact = i != front
 		# A ShiftProfile (night) may run this shift with fewer chairs than the
 		# scene was built for - the same "no customer here" state
 		# CustomerCard3D.setup(null) already renders for a chair mid-refill,
 		# not a chair this shift never had at all.
 		var chair = _shown_in(i)
-		_customer_cards[i].setup(chair,
-			seated and i == int(_shift.at), _shift.tick)
+		_customer_cards[i].setup(chair, i == front, _shift.tick)
 
 	_render_details()
 	_render_hover_flip()
@@ -1273,10 +1275,10 @@ func _render() -> void:
 	(_draw_tag.get_node(^"Lines/Label") as Label).text = "DRAW  %d" % _shift.draw.size()
 	(_discard_tag.get_node(^"Lines/Label") as Label).text = \
 		"DISCARD  %d" % _shift.discard.size()
-	# What you said lasts a tick, and only while you are at a desk: stood up,
-	# your hand goes down and the floor's folders fill the space it talks into.
+	# What you said lasts a tick. Your hand is always up now, so there is always
+	# somewhere for it to talk from - it is only put away under an overlay.
 	_player_bubble.update_visibility(_shift.tick, SpeechBubble.PLAYER_TICKS)
-	if not seated or _hud_dimmed:
+	if _hud_dimmed:
 		_player_bubble.hush()
 	_reconcile()
 	_drain_log()
@@ -1380,7 +1382,7 @@ func _render_details() -> void:
 		# seat past the end is simply nobody.
 		var c: Customer = _shown_in(i)
 		_customer_details[i].show_customer(c)
-		var at_this_seat: bool = _shift.at != null and i == int(_shift.at)
+		var at_this_seat: bool = i == _front()
 
 		# The tablet is where you play a product, so it is on at the desk you
 		# are sitting at and nowhere else - like the slot standing on it.
