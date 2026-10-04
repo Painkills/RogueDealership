@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DealershipUpgrade" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/dealership_upgrade.gd" id="1_up"]
+
+[resource]
+script = ExtResource("1_up")
+id = &"walkaway_wednesday"
+display_name = "Walkaway Wednesday"
+blurb = "A midweek WALKAWAY promo keeps the pitches coming. +1 card in your hand, every shift."
+hand_size = 1

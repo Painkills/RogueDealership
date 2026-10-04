@@ -27,11 +27,19 @@ var sale_streak: int = 0             ## carried shift to shift - see Shift.sale_
 ## Which shifts each day offers, dealt when the run starts - see Week. Null for
 ## a run built without the pool, which then has no calendar of its own.
 var week: Week = null
+## Every dealership upgrade there is - what a night shift's store offers from.
+## Null for a run built without it: no store ever offers one.
+var upgrade_pool: DealershipUpgradePool = null
+## The dealership upgrades this run has picked, in the order it picked them -
+## every shift from here on is worked with all of them. See DealershipUpgrade.
+var dealership: Array[DealershipUpgrade] = []
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int,
-		p_dialogue: DialoguePool = null, p_shifts: ShiftProfilePool = null) -> void:
+		p_dialogue: DialoguePool = null, p_shifts: ShiftProfilePool = null,
+		p_upgrades: DealershipUpgradePool = null) -> void:
 	cfg = p_cfg
+	upgrade_pool = p_upgrades
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
@@ -85,7 +93,8 @@ func start_shift(profile: ShiftProfile) -> Shift:
 		profile.excluded_archetypes, {
 			"hard_weight_scale": profile.hard_weight_scale,
 			"allow_hard_duplicates": profile.allow_hard_duplicates,
-			"archetype_weight_scales": profile.archetype_weight_scales})
+			"archetype_weight_scales": profile.archetype_weight_scales},
+		dealership)
 	s.commission = profile.commission
 	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to

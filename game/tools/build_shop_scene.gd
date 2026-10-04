@@ -26,6 +26,7 @@ const WINDOW := Vector2(1680, 940)
 const SLOT_HEIGHT := 310
 ## The free pick's window: room for three card slots side by side.
 const FREE_PICK_WINDOW := Vector2(760, 0)
+const DEALERSHIP_PICK_WINDOW := Vector2(1040, 0)
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -80,7 +81,11 @@ func _init() -> void:
 	titles.add_child(shift_wrap)
 	shift_wrap.owner = root
 
-	AppWindow.label(shift_wrap, root, "ShiftLabel", "shift 1 of 5", 21, &"text_dim", false, true)
+	var shift_label := AppWindow.label(shift_wrap, root, "ShiftLabel", "shift 1 of 5", 21,
+		&"text_dim", false, true)
+	# Wraps rather than widening the whole store: the dealership's upgrades are
+	# listed here, and that line grows over a run.
+	shift_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	var shift_tap := Button.new()
 	shift_tap.name = "ShiftTapTarget"
@@ -136,6 +141,7 @@ func _init() -> void:
 	done.owner = root
 
 	_free_pick(root)
+	_dealership_pick(root)
 
 	# After the popup, so a card's details open over it rather than under it.
 	var detail: Control = (load(DETAIL_SCENE) as PackedScene).instantiate()
@@ -203,6 +209,41 @@ func _free_pick(root: Control) -> void:
 	skip.unique_name_in_owner = true
 	buttons.add_child(skip)
 	skip.owner = root
+
+## The night store's other popup, in front of the free pick: a few upgrades for
+## the dealership itself, to take ONE of for the rest of the run. Built after
+## FreePick so it draws over it; DealershipRow is filled at runtime by
+## shop_screen.gd, one button per upgrade on offer.
+func _dealership_pick(root: Control) -> void:
+	var popup := PanelContainer.new()
+	popup.name = "DealershipPick"
+	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	popup.unique_name_in_owner = true
+	popup.visible = false
+	AppWindow.desktop(popup, 0.6)
+	root.add_child(popup)
+	popup.owner = root
+
+	var made := AppWindow.build(popup, root, "DealershipPickWindow", "Dealership upgrade",
+		DEALERSHIP_PICK_WINDOW, "", 36)
+	var col: VBoxContainer = made["body"]
+	col.add_theme_constant_override("separation", 18)
+
+	var title := AppWindow.label(col, root, "DealershipPickTitle",
+		"The night paid off - upgrade the dealership", 32, &"text", true)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var sub := AppWindow.label(col, root, "DealershipPickSub",
+		"Pick one. It stays for the rest of the run.", 20, &"text_dim")
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	var row := HBoxContainer.new()
+	row.name = "DealershipRow"
+	row.unique_name_in_owner = true
+	row.add_theme_constant_override("separation", 20)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(row)
+	row.owner = root
 
 ## A titled aisle of cards: both are built from the exact same shape,
 ## since each is "some cards, click one" - only what a click DOES differs, and

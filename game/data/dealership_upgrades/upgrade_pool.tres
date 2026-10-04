@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DealershipUpgradePool" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/dealership_upgrade_pool.gd" id="1_pool"]
+[ext_resource type="Script" path="res://scripts/model/data/dealership_upgrade.gd" id="2_up"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/walkaway_wednesday.tres" id="3_a"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/comfy_chairs.tres" id="4_b"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/wacky_inflatable.tres" id="5_c"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/sales_seminar.tres" id="6_d"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/fancy_showroom.tres" id="7_e"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/loyalty_program.tres" id="8_f"]
+
+[resource]
+script = ExtResource("1_pool")
+upgrades = Array[ExtResource("2_up")]([ExtResource("3_a"), ExtResource("4_b"), ExtResource("5_c"), ExtResource("6_d"), ExtResource("7_e"), ExtResource("8_f")])

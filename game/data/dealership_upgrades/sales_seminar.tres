@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DealershipUpgrade" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/dealership_upgrade.gd" id="1_up"]
+
+[resource]
+script = ExtResource("1_up")
+id = &"sales_seminar"
+display_name = "Sales Training Seminar"
+blurb = "A weekend of word tracks. Every card that adds appeal adds 1 more."
+appeal_per_card = 1

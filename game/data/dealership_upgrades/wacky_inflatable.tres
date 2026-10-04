@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DealershipUpgrade" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/dealership_upgrade.gd" id="1_up"]
+
+[resource]
+script = ExtResource("1_up")
+id = &"wacky_inflatable"
+display_name = "Wacky Inflatable Tube Man"
+blurb = "Flailing out front, putting everyone in a buying mood. Every customer's Line is 5 lower."
+line = -5

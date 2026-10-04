@@ -85,6 +85,10 @@ class_name ShiftProfile extends Resource
 @export var upgrades: int = 0                ## of your cards offered for an upgrade
 ## The lowest rarity the free pick after this shift offers - a boss's reward.
 @export_enum("Basic", "Economy", "Value", "Preferred") var free_pick_min_rarity: int = 0
+## How many dealership upgrades the store after this shift offers, to pick ONE
+## from for the rest of the run - night's reward. 0 = none. See
+## DealershipUpgrade.
+@export var dealership_upgrades: int = 0
 
 ## Set on the copy Week deals onto the calendar, never authored: the slot it
 ## took, and the category that dealt it. A regular tier has neither.

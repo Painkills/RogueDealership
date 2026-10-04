@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DealershipUpgrade" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/dealership_upgrade.gd" id="1_up"]
+
+[resource]
+script = ExtResource("1_up")
+id = &"loyalty_program"
+display_name = "Loyalty Program"
+blurb = "Points on everything. Each further sale to the same customer pays an extra 10% combo."
+combo_step = 0.1

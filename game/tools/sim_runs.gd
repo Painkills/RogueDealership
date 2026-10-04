@@ -23,6 +23,8 @@ var _pool: ShiftProfilePool
 var _interests: InterestPool
 var _cards: CardPool
 var _arch: ArchetypePool
+## The dealership upgrades a night store offers - `-- no_upgrades` runs without.
+var _upgrades: DealershipUpgradePool = load("res://data/dealership_upgrades/upgrade_pool.tres")
 ## shop=greedy (default): free pick, buy, upgrade. shop=upgrades: free pick and
 ## upgrades only. shop=none: nothing at all - the starter deck all run.
 var _shop_mode := "greedy"
@@ -57,6 +59,10 @@ func _what_ifs() -> void:
 		if arg == "fog":
 			SimPlayer.fog = true
 			print("Fog: playing on what a person can see.")
+			continue
+		if arg == "no_upgrades":
+			_upgrades = null
+			print("No dealership upgrades.")
 			continue
 		if parts.size() == 2 and parts[0] == "shop":
 			_shop_mode = parts[1]
@@ -93,7 +99,8 @@ func _runs(strategy: Callable) -> Array:
 	return out
 
 func _one_run(strategy: Callable, seed_value: int) -> Dictionary:
-	var run := RunState.new(_cfg, _interests, _cards, _arch, seed_value, null, _pool)
+	var run := RunState.new(_cfg, _interests, _cards, _arch, seed_value, null, _pool,
+		_upgrades)
 	var r := {"days": 0, "earned": 0, "bought": 0, "upgraded": 0, "standing": {},
 		"banked_on": {}, "quota_on": {}}
 	while not run.is_over():
@@ -130,6 +137,10 @@ func _choose(offers: Array[ShiftProfile], wants: Array) -> ShiftProfile:
 func _shop(shop: Shop, r: Dictionary) -> void:
 	if _shop_mode == "none":
 		return
+	# The dealership upgrade, whenever one is on offer - the first of them,
+	# which the store already drew at random.
+	if not shop.dealership_offers.is_empty():
+		shop.take_dealership_upgrade(shop.dealership_offers[0])
 	if not shop.free_cards.is_empty():
 		var best: CardDef = shop.free_cards[0]
 		for c in shop.free_cards:

@@ -35,6 +35,12 @@ var upgrade_offers: Array[int] = []
 ## visit. `offers` is what is still left on the shelf.
 var cards_for_sale: int = 0
 var upgrades: int = 0
+## The dealership upgrades on offer this visit - ShiftProfile.dealership_upgrades
+## of them, none the run already owns - to pick ONE from, free. Empty after
+## any shift that offers none.
+var dealership_offers: Array[DealershipUpgrade] = []
+var dealership_picks_left: int = 0
+var dealership_taken: DealershipUpgrade = null
 
 ## How often each rarity turns up, relative to the others - not a percentage,
 ## just a ratio consumed by _weighted_pick(). Flat on purpose: the pool is still
@@ -61,6 +67,35 @@ func _init(p_run: RunState, p_profile: ShiftProfile = null) -> void:
 		free_pick_min_rarity = p_profile.free_pick_min_rarity
 	_roll_cards()
 	_roll_upgrade_offers()
+	# Last, so adding it changed nothing about what any earlier roll offers.
+	if p_profile != null:
+		_roll_dealership_offers(p_profile.dealership_upgrades)
+
+## A few of the upgrades the run does not own yet, drawn without replacement
+## from the RUN's rng - and never touching it at all on a visit that offers
+## none, so a morning or midday store rolls exactly what it always did.
+func _roll_dealership_offers(count: int) -> void:
+	if count <= 0 or run.upgrade_pool == null:
+		return
+	var pool: Array[DealershipUpgrade] = []
+	for u in run.upgrade_pool.upgrades:
+		if u != null and not run.dealership.has(u):
+			pool.append(u)
+	for _i in range(mini(count, pool.size())):
+		dealership_offers.append(pool.pop_at(run.rng.randi_range(0, pool.size() - 1)))
+	dealership_picks_left = 1 if not dealership_offers.is_empty() else 0
+
+## Picks one of this visit's dealership upgrades - the run keeps it for good.
+func take_dealership_upgrade(u: DealershipUpgrade) -> Result:
+	if dealership_picks_left <= 0:
+		return Result.new(false, "The dealership has had its upgrade this visit.")
+	if u == null or not dealership_offers.has(u):
+		return Result.new(false, "That upgrade is not on offer.")
+	run.dealership.append(u)
+	dealership_picks_left = 0
+	dealership_taken = u
+	return Result.new(true, "The dealership gets %s." % u.display_name,
+		"dealership", {"price": 0})
 
 func _roll_cards() -> void:
 	## Drawn from the RUN's seeded rng, never the global one: two runs from the

@@ -50,6 +50,9 @@ var category_quota_name: String = ""
 var category_quota_count: int = 0
 ## Products from that category signed so far - counted as they are banked.
 var category_sold: int = 0
+## The run's dealership upgrades - see DealershipUpgrade and perk(). Read as
+## the floor opens, so set through the constructor, never afterwards.
+var dealership: Array[DealershipUpgrade] = []
 ## Who never comes in on this shift - ShiftProfile.excluded_archetypes.
 var excluded_archetypes: Array[CustomerArchetype] = []
 ## A premade shift's own customers - see ShiftProfile.only_archetypes and
@@ -131,8 +134,16 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_patience_scale: float = 1.0, p_walk_up_scale: float = 1.0,
 		p_unlock_full_archetype_pool: bool = false,
 		p_only_archetypes: Array = [], p_lineup: Array = [],
-		p_excluded_archetypes: Array = [], p_arrivals: Dictionary = {}) -> void:
+		p_excluded_archetypes: Array = [], p_arrivals: Dictionary = {},
+		p_dealership: Array = []) -> void:
 	cfg = p_cfg
+	dealership.assign(p_dealership)
+	# A bigger hand is the config's own number, so everything that deals to it
+	# reads one figure - on a copy, never the run's.
+	var hand_bonus := int(perk(&"hand_size"))
+	if hand_bonus != 0:
+		cfg = cfg.duplicate() as ShiftConfig
+		cfg.hand_size = maxi(1, cfg.hand_size + hand_bonus)
 	# Who the door sends - ShiftProfile's hard_weight_scale,
 	# allow_hard_duplicates and archetype_weight_scales. Set before the floor
 	# opens, so the first customers are picked under them like everyone after.
@@ -203,6 +214,11 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	# The floor opens full, and nobody is waiting yet: the first to come in
 	# after opening does so on the same clock as everyone after them.
 	next_arrival = _arrival_gap()
+
+
+## One of DealershipUpgrade's bonuses, summed over every upgrade the run owns.
+func perk(field: StringName) -> float:
+	return DealershipUpgrade.total(dealership, field)
 
 
 func seated() -> Array:
@@ -426,6 +442,11 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	var start: int = int(round(top * rng.randf_range(
 		cfg.arrival_patience_min_fraction, 1.0)))
 	start = max(min(top, cfg.arrival_patience_floor), start)
+	# The dealership's own comfort on top of all that - more to work with, and
+	# more of it to start from.
+	var comfort := int(perk(&"patience"))
+	top = maxi(1, top + comfort)
+	start = clampi(start + comfort, 1, top)
 
 	# Someone who demands a category comes in for one at random, and its
 	# interests are their three favourites - what she wants is what she wants.
@@ -437,6 +458,11 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	var c := Customer.new(CHAIR_KEYS[chair], _next_name(), arch,
 		Customer.make_ranks(arch, interests, rng, cfg.prior_slip, favourites),
 		start, top, cfg.as_dict(), interests)
+	var easier := int(perk(&"line"))
+	if easier != 0:
+		c.line = maxi(0, c.line + easier)
+		c.start_line = c.line
+	c.combo_step += perk(&"combo_step")
 
 	# Every-triggered actions start their cadence counter jittered, not at a
 	# clean 0, so this customer's first demand does not land on the exact same
@@ -781,7 +807,8 @@ func place(index: int) -> Result:
 	var product := inst.card as ProductCardDef
 	var iid: StringName = product.interest.id
 	var rank: int = int(c.ranks[iid])
-	c.offer = Offer.new(inst, c.appeal_for(iid), inst.margin())
+	c.offer = Offer.new(inst, c.appeal_for(iid),
+		roundi(inst.margin() * (1.0 + perk(&"margin"))))
 	# A new product is a new conversation: whatever they objected to about the
 	# last one went with it.
 	c.objection = &""
@@ -796,7 +823,7 @@ func place(index: int) -> Result:
 	var effects: Array[Effect] = product.upgraded_effects \
 		if inst.upgraded and not product.upgraded_effects.is_empty() else product.effects
 	if not effects.is_empty():
-		var ctx := _context(c)
+		var ctx := _yours(c)
 		var descriptions: Array[String] = []
 		var floor_wide := false
 		for e in effects:
@@ -922,7 +949,7 @@ func _support(c: Customer, index: int) -> Result:
 	var yours := _speak(def.player_dialogue_tags, c, c.offer.product.id if c.offer else &"",
 		StringName(band_for(c.line - c.offer.appeal)) if c.offer else &"")
 
-	var ctx := _context(c)
+	var ctx := _yours(c)
 	var effects: Array[Effect] = def.upgraded_effects \
 		if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
 	var before_margin: int = c.offer.margin if c.offer else 0
@@ -1268,6 +1295,15 @@ func close() -> Result:
 	_vacate(chair)
 	return Result.new(true, "%s signs for $%d." % [c.display_name, banked],
 		"close", {"margin": banked})
+
+
+## The context for one of YOUR cards or products - the same as _context(), plus
+## what the dealership adds to every bit of appeal you add. A customer's own
+## actions and demands never get it.
+func _yours(c: Customer) -> EffectContext:
+	var ctx := _context(c)
+	ctx.appeal_bonus = int(perk(&"appeal_per_card"))
+	return ctx
 
 
 func _context(c: Customer) -> EffectContext:

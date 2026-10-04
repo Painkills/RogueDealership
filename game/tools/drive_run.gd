@@ -726,6 +726,7 @@ func _check_passing_on_the_free_pick_opens_the_store() -> void:
 	var shop_view = _root._shop_view
 	var shop: Shop = shop_view._shop
 	var popup := shop_view.get_node(^"%FreePick") as Control
+	_take_any_dealership_upgrade()
 	_check("the free pick pops up again after the next shift",
 		popup.visible and shop.free_picks_left == 1)
 	var before := _run.deck.cards.size()
@@ -942,6 +943,26 @@ func _check_the_corner_button_opens_the_deck_viewer() -> void:
 	(deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
 	_check("closing it again leaves the corner button available",
 		not deck_viewer.visible and _root._view_deck_btn.visible)
+
+## A night store opens on the dealership upgrade, in front of the free pick:
+## one tile per upgrade on offer, and clicking one keeps it for the run and
+## lets the free pick through. Does nothing after a shift that offers none.
+func _take_any_dealership_upgrade() -> void:
+	var shop_view = _root._shop_view
+	var shop: Shop = shop_view._shop
+	var popup := shop_view.get_node(^"%DealershipPick") as Control
+	if shop.dealership_offers.is_empty():
+		_check("no dealership upgrade, no popup for one", not popup.visible)
+		return
+	var row := shop_view.get_node(^"%DealershipRow") as Control
+	_check("the dealership upgrade pops up first, one tile per upgrade (%d)"
+		% row.get_child_count(),
+		popup.visible and row.get_child_count() == shop.dealership_offers.size()
+			and not (shop_view.get_node(^"%FreePick") as Control).visible)
+	var first: DealershipUpgrade = shop.dealership_offers[0]
+	(row.get_child(0) as Button).pressed.emit()
+	_check("clicking one keeps %s for the run and closes the popup" % first.display_name,
+		_run.dealership.has(first) and not popup.visible)
 
 func _finish_the_shift() -> void:
 	## Burn the clock the way test_deck_persistence does, then press the report's

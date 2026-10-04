@@ -101,7 +101,8 @@ func _new_run() -> void:
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), randi(),
-		load("res://data/dialogue/dialogue_pool.tres"), _profiles)
+		load("res://data/dialogue/dialogue_pool.tres"), _profiles,
+		load("res://data/dealership_upgrades/upgrade_pool.tres"))
 	_history = []
 
 ## The title screen, on its menu - or, `intro`, on a new game's first day.

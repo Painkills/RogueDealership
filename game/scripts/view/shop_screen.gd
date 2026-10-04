@@ -28,6 +28,10 @@ signal view_deck_requested
 @onready var _free_pick: Control = %FreePick
 @onready var _free_pick_row: HBoxContainer = %FreePickRow
 @onready var _skip_free: Button = %SkipFreeButton
+## A night store's dealership upgrade - see build_shop_scene.gd's
+## _dealership_pick(). Up before the free pick, until one is taken.
+@onready var _dealership_pick: Control = %DealershipPick
+@onready var _dealership_row: HBoxContainer = %DealershipRow
 @onready var _shelf_row: HBoxContainer = %ShelfRow
 @onready var _deck_row: HBoxContainer = %DeckRow
 @onready var _log: Label = %LogLabel
@@ -98,6 +102,20 @@ func _render() -> void:
 	# what is on offer below, not a number that needs the same weight as the
 	# budget you actually have to spend.
 	_shift_label.text += "\n" + _shop.perk_text()
+	if not run.dealership.is_empty():
+		var names: Array[String] = []
+		for u in run.dealership:
+			names.append(u.display_name)
+		_shift_label.text += "\nYour dealership: " + ", ".join(names)
+
+	# A night's dealership upgrade comes first, over everything - the free card
+	# waits behind it.
+	_clear(_dealership_row)
+	var upgrading: bool = _shop.dealership_picks_left > 0
+	_dealership_pick.visible = upgrading
+	if upgrading:
+		for u in _shop.dealership_offers:
+			_dealership_row.add_child(_upgrade_button(u))
 
 	# "First, you get a popup with the one out of three" - up until the pick is
 	# made or passed on, over everything else here. Not in your toolkit yet - a
@@ -106,7 +124,8 @@ func _render() -> void:
 	# SAME card face the deck uses, so a card on offer looks exactly like what
 	# it will look like once yours.
 	_clear(_free_pick_row)
-	var picking: bool = _shop.free_picks_left > 0 and not _shop.free_cards.is_empty()
+	var picking: bool = _shop.free_picks_left > 0 and not _shop.free_cards.is_empty() \
+		and not upgrading
 	_free_pick.visible = picking
 	if picking:
 		for free in _shop.free_cards:
@@ -134,6 +153,38 @@ func _render() -> void:
 	if _deck_row.get_child_count() == 0:
 		_note(_deck_row, "Nothing of yours left to upgrade." if _shop.upgrades > 0
 			else "No upgrades after that shift.")
+
+## One dealership upgrade on offer: its name and what it does, the whole tile a
+## button that takes it.
+func _upgrade_button(u: DealershipUpgrade) -> Button:
+	var b := Button.new()
+	b.name = "Upgrade_%s" % u.id
+	b.custom_minimum_size = Vector2(300, 290)
+	ButtonStyle.outlined(b, Palette.color(&"primary"))
+	var col := VBoxContainer.new()
+	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 18)
+	col.add_theme_constant_override("separation", 12)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(col)
+	var title := Label.new()
+	title.text = u.display_name
+	title.theme_type_variation = &"Heading"
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Palette.color(&"text"))
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(title)
+	var blurb := Label.new()
+	blurb.text = u.blurb
+	blurb.add_theme_font_size_override("font_size", 19)
+	blurb.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD
+	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	blurb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(blurb)
+	b.pressed.connect(func(): _apply(_shop.take_dealership_upgrade(u)))
+	return b
 
 ## What sits under one of your cards: what upgrading it costs, or that it is
 ## done. An upgraded card stays on show, so you can still see what you chose.

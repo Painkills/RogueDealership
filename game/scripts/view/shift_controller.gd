@@ -293,11 +293,13 @@ func _register_keyboard_actions() -> void:
 	_bind_key(&"card_3", KEY_3)
 	_bind_key(&"card_4", KEY_4)
 	_bind_key(&"card_5", KEY_5)
+	_bind_key(&"card_6", KEY_6)             # a bigger hand - see DealershipUpgrade
 	_bind_key(&"dig_1", KEY_1, true)        # Shift+1..5: dig, distinct from playing
 	_bind_key(&"dig_2", KEY_2, true)
 	_bind_key(&"dig_3", KEY_3, true)
 	_bind_key(&"dig_4", KEY_4, true)
 	_bind_key(&"dig_5", KEY_5, true)
+	_bind_key(&"dig_6", KEY_6, true)
 	_bind_key(&"chair_a", KEY_A)
 	_bind_key(&"chair_b", KEY_B)
 	_bind_key(&"chair_c", KEY_C)
@@ -356,7 +358,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	# while a mouse player could not.
 	if _shift.pending_pull != null:
 		return
-	if event.is_action_pressed("dig_5"): _try_dig(4)
+	if event.is_action_pressed("dig_6"): _try_dig(5)
+	elif event.is_action_pressed("dig_5"): _try_dig(4)
 	elif event.is_action_pressed("dig_1"): _try_dig(0)
 	elif event.is_action_pressed("dig_2"): _try_dig(1)
 	elif event.is_action_pressed("dig_3"): _try_dig(2)
@@ -366,6 +369,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("card_3"): _try_card(2)
 	elif event.is_action_pressed("card_4"): _try_card(3)
 	elif event.is_action_pressed("card_5"): _try_card(4)
+	elif event.is_action_pressed("card_6"): _try_card(5)
 	elif event.is_action_pressed("chair_a"): _apply(_shift.approach(0))
 	elif event.is_action_pressed("chair_b"): _apply(_shift.approach(1))
 	elif event.is_action_pressed("close_key"): _on_close()
