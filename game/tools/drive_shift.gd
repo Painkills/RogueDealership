@@ -153,7 +153,10 @@ func _physics_process(_delta: float) -> bool:
 	# the point of this sequence, only a convenient way to vacate the chair.
 	_press(KEY_O);             _settle(); _check_table("after offering again")
 	_check_their_yes_replaced_it()
+	var digs_before: int = int(_controller._shift.stat["digs"])
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
+	_check("Shift+2 digs, sent the way a browser sends it ('@' on the 2 key)",
+		int(_controller._shift.stat["digs"]) == digs_before + 1)
 	var banked_before: int = _controller._banked_shown
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
 	_check_a_signing_flies_its_money_to_the_top(banked_before)
@@ -194,9 +197,16 @@ func _physics_process(_delta: float) -> bool:
 		quit(1)
 	return true
 
+## As a real keyboard sends it: the key's place AND what it prints - which, for
+## a digit with Shift held, is the symbol over it, the way a browser reports it.
+## That is what broke Shift+number digging on the web build, so it is what
+## this sends.
 func _press(keycode: Key, shift: bool = false, ctrl: bool = false) -> void:
 	var ev := InputEventKey.new()
-	ev.keycode = keycode
+	ev.physical_keycode = keycode
+	var shifted := {KEY_1: KEY_EXCLAM, KEY_2: KEY_AT, KEY_3: KEY_NUMBERSIGN,
+		KEY_4: KEY_DOLLAR, KEY_5: KEY_PERCENT, KEY_6: KEY_ASCIICIRCUM}
+	ev.keycode = shifted[keycode] if shift and shifted.has(keycode) else keycode
 	ev.shift_pressed = shift
 	ev.ctrl_pressed = ctrl
 	ev.pressed = true

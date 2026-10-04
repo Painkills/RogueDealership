@@ -1,10 +1,12 @@
 [gd_resource type="Resource" script_class="DealershipUpgrade" format=3]
 
 [ext_resource type="Script" path="res://scripts/model/data/dealership_upgrade.gd" id="1_up"]
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="2_arch"]
+[ext_resource type="Resource" uid="uid://dtcn6g3ha03qq" path="res://data/archetypes/easygoing.tres" id="3_easy"]
 
 [resource]
 script = ExtResource("1_up")
 id = &"wacky_inflatable"
 display_name = "Wacky Inflatable Tube Man"
-blurb = "Flailing out front, putting everyone in a buying mood. Every customer's Line is 5 lower."
-line = -5
+blurb = "Flailing out front, it waves them in. Every shift opens with one extra easygoing customer already waiting."
+waiting_at_open = Array[ExtResource("2_arch")]([ExtResource("3_easy")])

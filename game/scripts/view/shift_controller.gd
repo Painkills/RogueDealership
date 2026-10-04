@@ -287,19 +287,17 @@ func _ready() -> void:
 
 # --- input -----------------------------------------------------------------
 
+## The number keys go by WHERE they are, not what they print. A browser reports
+## Shift+1 as "!" - so a dig bound to "Shift + the 1 key's label" never fired on
+## the web build - and on layouts like AZERTY the digits need Shift to begin
+## with. The key's physical place is the same on every keyboard and with every
+## modifier held.
 func _register_keyboard_actions() -> void:
-	_bind_key(&"card_1", KEY_1)
-	_bind_key(&"card_2", KEY_2)
-	_bind_key(&"card_3", KEY_3)
-	_bind_key(&"card_4", KEY_4)
-	_bind_key(&"card_5", KEY_5)
-	_bind_key(&"card_6", KEY_6)             # a bigger hand - see DealershipUpgrade
-	_bind_key(&"dig_1", KEY_1, true)        # Shift+1..5: dig, distinct from playing
-	_bind_key(&"dig_2", KEY_2, true)
-	_bind_key(&"dig_3", KEY_3, true)
-	_bind_key(&"dig_4", KEY_4, true)
-	_bind_key(&"dig_5", KEY_5, true)
-	_bind_key(&"dig_6", KEY_6, true)
+	var digits: Array[Key] = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6]
+	for i in range(digits.size()):
+		_bind_key(StringName("card_%d" % (i + 1)), digits[i], false, false, true)
+		# Shift+number: dig that card, distinct from playing it.
+		_bind_key(StringName("dig_%d" % (i + 1)), digits[i], true, false, true)
 	_bind_key(&"chair_a", KEY_A)
 	_bind_key(&"chair_b", KEY_B)
 	_bind_key(&"chair_c", KEY_C)
@@ -310,13 +308,16 @@ func _register_keyboard_actions() -> void:
 	_bind_key(&"debug_skip_shift", KEY_E, false, true)   # Ctrl+E: burn the clock
 
 func _bind_key(action: StringName, keycode: Key, shift: bool = false,
-		ctrl: bool = false) -> void:
+		ctrl: bool = false, physical: bool = false) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action)
 	if not InputMap.action_get_events(action).is_empty():
 		return
 	var ev := InputEventKey.new()
-	ev.keycode = keycode
+	if physical:
+		ev.physical_keycode = keycode
+	else:
+		ev.keycode = keycode
 	ev.shift_pressed = shift
 	ev.ctrl_pressed = ctrl
 	InputMap.action_add_event(action, ev)

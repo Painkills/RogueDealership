@@ -25,9 +25,15 @@ func test_every_bonus_reaches_the_floor() -> void:
 	u.appeal_per_card = 2
 	u.margin = 0.5
 	u.combo_step = 0.1
+	var early: CustomerArchetype = (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes[0]
+	u.waiting_at_open.append(early)
+	u.line_drop_brand = &"made_up_brand"
+	u.line_drop_extra = 1.0
 	var plain := _shift([])
 	var upgraded := _shift([u])
 	h.eq("one more card in hand", upgraded.hand.size(), plain.hand.size() + 1)
+	h.check("someone already waiting at opening",
+		upgraded.waiting.size() == plain.waiting.size() + 1 and upgraded.waiting.has(early))
 	var a: Customer = plain.chairs[0]
 	var b: Customer = upgraded.chairs[0]
 	h.check("the same customer either way", a.archetype == b.archetype)
@@ -57,12 +63,27 @@ func test_every_bonus_reaches_the_floor() -> void:
 		bump.apply(s._context(c))
 		s.set_meta(&"theirs", c.offer.appeal - before)
 		s.set_meta(&"margin", c.offer.margin)
+		# A Line drop from a card of the brand, and from one of no brand.
+		var drop := ChangeLine.new()
+		drop.amount = -2
+		var branded := SupportCardDef.new()
+		branded.brand = &"made_up_brand"
+		var line_before: int = c.line
+		drop.apply(s._yours(c, branded))
+		s.set_meta(&"brand_drop", line_before - c.line)
+		line_before = c.line
+		drop.apply(s._yours(c, SupportCardDef.new()))
+		s.set_meta(&"other_drop", line_before - c.line)
 	h.eq("the product earns its margin share more",
 		upgraded.get_meta(&"margin"), roundi(plain.get_meta(&"margin") * 1.5))
 	h.eq("your appeal adds the bonus", upgraded.get_meta(&"added"), plain.get_meta(&"added") + 2)
 	h.eq("appeal taken away gets no bonus", upgraded.get_meta(&"taken"), plain.get_meta(&"taken"))
 	h.eq("and a customer's own appeal effects get none", upgraded.get_meta(&"theirs"),
 		plain.get_meta(&"theirs"))
+	h.eq("the brand's Line drop doubles", upgraded.get_meta(&"brand_drop"),
+		plain.get_meta(&"brand_drop") * 2)
+	h.eq("another card's does not", upgraded.get_meta(&"other_drop"),
+		plain.get_meta(&"other_drop"))
 
 func test_a_store_offers_upgrades_the_run_does_not_own_and_keeps_the_one_taken() -> void:
 	var pool := DealershipUpgradePool.new()

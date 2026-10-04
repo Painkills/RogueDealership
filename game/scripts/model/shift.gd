@@ -211,7 +211,18 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	if not chairs.is_empty():
 		at = 0
 		last_customer = chairs[0]
-	# The floor opens full, and nobody is waiting yet: the first to come in
+	# Whoever the dealership's upgrades have already waiting at opening - in
+	# the queue, or straight into a chair a short lineup left empty.
+	for u in dealership:
+		if u == null:
+			continue
+		for arch in u.waiting_at_open:
+			if arch != null and waiting.size() < cfg.waiting_max:
+				waiting.append(arch)
+	_seat_the_waiting()
+	if not chairs.is_empty() and last_customer == null:
+		last_customer = chairs[0]
+	# The floor opens full, and nobody the door sent is waiting yet: the first to come in
 	# after opening does so on the same clock as everyone after them.
 	next_arrival = _arrival_gap()
 
@@ -823,7 +834,7 @@ func place(index: int) -> Result:
 	var effects: Array[Effect] = product.upgraded_effects \
 		if inst.upgraded and not product.upgraded_effects.is_empty() else product.effects
 	if not effects.is_empty():
-		var ctx := _yours(c)
+		var ctx := _yours(c, product)
 		var descriptions: Array[String] = []
 		var floor_wide := false
 		for e in effects:
@@ -949,7 +960,7 @@ func _support(c: Customer, index: int) -> Result:
 	var yours := _speak(def.player_dialogue_tags, c, c.offer.product.id if c.offer else &"",
 		StringName(band_for(c.line - c.offer.appeal)) if c.offer else &"")
 
-	var ctx := _yours(c)
+	var ctx := _yours(c, def)
 	var effects: Array[Effect] = def.upgraded_effects \
 		if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
 	var before_margin: int = c.offer.margin if c.offer else 0
@@ -1300,9 +1311,17 @@ func close() -> Result:
 ## The context for one of YOUR cards or products - the same as _context(), plus
 ## what the dealership adds to every bit of appeal you add. A customer's own
 ## actions and demands never get it.
-func _yours(c: Customer) -> EffectContext:
+func _yours(c: Customer, card: CardDef = null) -> EffectContext:
 	var ctx := _context(c)
 	ctx.appeal_bonus = int(perk(&"appeal_per_card"))
+	# Bigger Line drops for the card's own brand, from every upgrade that
+	# singles it out (or every card, with no brand named).
+	var extra := 0.0
+	for u in dealership:
+		if u != null and u.line_drop_extra != 0.0 and (u.line_drop_brand == &"" \
+				or (card != null and card.brand == u.line_drop_brand)):
+			extra += u.line_drop_extra
+	ctx.line_drop_scale = 1.0 + extra
 	return ctx
 
 

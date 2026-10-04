@@ -11,6 +11,10 @@ class_name CardDef extends Resource
 @export_multiline var text: String
 @export var ticks: int = 1
 @export var copies: int = 1
+## The product line it belongs to - &"walkaway" for the WALKAWAY family. Only
+## a dealership upgrade reads it (DealershipUpgrade.line_drop_brand), so an
+## upgrade can single out a family of cards without naming each one.
+@export var brand: StringName = &""
 @export var starter: bool = false
 ## No price of its own: what the shop charges for a card is its rarity's rung
 ## on ShiftConfig.card_prices, so every card of a rarity costs the same and

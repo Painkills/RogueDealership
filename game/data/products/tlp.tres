@@ -23,6 +23,7 @@ interest = ExtResource("3_08iy6")
 margin = 2100
 upgraded_margin = 2625
 id = &"tlp"
+brand = &"walkaway"
 display_name = "WALKAWAY GAP"
 text = "Fire, theft or accident, covers the gap between loan and payout."
 rarity = 3

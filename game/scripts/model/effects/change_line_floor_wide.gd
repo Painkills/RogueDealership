@@ -4,7 +4,7 @@ class_name ChangeLineFloorWide extends Effect
 func apply(ctx: EffectContext) -> void:
 	if ctx.shift:
 		for c in ctx.shift.seated():
-			c.line += amount
+			c.line += ChangeLine.lowered(amount, ctx)
 
 func describe() -> String:
 	return "everyone's Line moves %+d" % amount
