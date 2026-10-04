@@ -7,12 +7,13 @@ func test_the_model_never_reaches_into_the_view() -> void:
 	## The one line that keeps the headless suite able to drive the real game.
 	## Covers scripts/run too: a new sibling directory is otherwise silently
 	## outside the rules this project treats as non-negotiable.
+	var offenders: Array[String] = []
 	for path in _scripts_under("res://scripts/model") + _scripts_under("res://scripts/run"):
 		var src := FileAccess.get_file_as_string(path)
-		h.check("%s does not import the view" % path.get_file(),
-			not src.contains("scripts/view"))
-		h.check("%s does not extend Node" % path.get_file(),
-			not src.contains("extends Node"))
+		if src.contains("scripts/view") or src.contains("extends Node"):
+			offenders.append(path.get_file())
+	h.check("nothing in the model or run layers imports the view or extends Node (%s)"
+		% ", ".join(offenders), offenders.is_empty())
 
 func test_nothing_in_the_model_calls_the_global_rng() -> void:
 	## Bare randi()/randf()/shuffle() use Godot's GLOBAL rng and would silently

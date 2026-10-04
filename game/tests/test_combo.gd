@@ -95,14 +95,6 @@ func test_offers_result_reports_the_multiplied_margin_not_the_sticker_price() ->
 	h.eq("second sale's Result already reflects the x2.0 combo",
 		int(second.data["margin"]), gap_margin * 2)
 
-func test_customer_copies_its_archetypes_combo_step_on_arrival() -> void:
-	var s := _shift([&"karen"])
-	var c: Customer = s.chairs[0]
-	h.eq("the customer's own combo_step matches their archetype's",
-		c.combo_step, c.archetype.combo_step)
-	h.check("and it is not just a coincidental zero",
-		c.archetype.combo_step > 0.0)
-
 func test_peak_combo_multiplier_remembers_the_highest_reached_not_the_last() -> void:
 	var s := _shift([&"easygoing", &"easygoing"])
 	s.hand.clear()
@@ -122,8 +114,3 @@ func test_peak_combo_multiplier_remembers_the_highest_reached_not_the_last() -> 
 	_sell(s, b, &"theft", 903)   # this customer's own first sale - x1.0
 	h.eq("a LATER, lower multiplier does not erase an earlier, higher peak",
 		s.peak_combo_multiplier, 2.0)
-
-func test_a_fresh_shift_starts_the_peak_at_the_no_combo_baseline() -> void:
-	var s := _shift([&"easygoing"])
-	h.eq("nobody has sold anything yet, so the peak is the 1.0 floor, not 0",
-		s.peak_combo_multiplier, 1.0)

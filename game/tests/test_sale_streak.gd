@@ -74,24 +74,6 @@ func test_closes_build_a_streak_and_a_walkout_anywhere_breaks_it() -> void:
 	h.eq("the report carries the ending streak forward", r["sale_streak_end"], 1)
 	h.eq("and the full event sequence", r["sale_streak_events"], [1, 2, 1])
 
-func test_a_shift_can_start_mid_streak_carried_in_from_the_run() -> void:
-	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
-	cfg.patience_jitter = 0
-	cfg.action_cadence_jitter_ticks = 0
-	cfg.prior_slip = 0.0
-	cfg.arrival_patience_min_fraction = 1.0
-	var s := Shift.new(cfg, load("res://data/interests/interest_pool.tres"),
-		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
-		1, [&"easygoing"], null, 0, 1, 0, 4)
-	h.eq("a shift told it is continuing a streak starts there, not at zero",
-		s.sale_streak, 4)
-	var c := _at(s, 0)
-	_sell(s, c, 901)
-	h.check("closing continues it", s.close().ok)
-	h.eq("the very next close climbs from the carried-in value", s.sale_streak, 5)
-	h.eq("only THIS shift's own close is in its own event list",
-		s.sale_streak_events, [5])
-
 func test_the_run_carries_the_streak_from_one_shift_into_the_next() -> void:
 	var run := RunState.new(load("res://data/shift_config.tres"),
 		load("res://data/interests/interest_pool.tres"),

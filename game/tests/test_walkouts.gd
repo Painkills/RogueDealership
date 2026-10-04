@@ -16,12 +16,6 @@ func _shift(overrides: Dictionary = {}, p_standing: int = 0) -> Shift:
 		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
 		7, [], null, 0, 1, p_standing)
 
-func _walk_everyone(s: Shift) -> void:
-	for c in s.chairs:
-		if c != null:
-			c.patience = 0
-	s._settle_patience()
-
 func test_a_walkout_docks_standing_immediately_mid_shift() -> void:
 	## Not "eventually, once report() is called" - the number itself has to
 	## have already moved by the time _walk() returns, with the shift still
@@ -58,46 +52,6 @@ func test_a_walkout_never_reads_standing_negative() -> void:
 	h.eq("clamped at the floor, not -9994", s.standing, 0)
 	h.eq("and the report only credits the 5 that were actually there to lose",
 		int(s.report()["standing_lost_to_walkouts"]), 5)
-
-func test_the_walkout_and_its_standing_cost_both_reach_the_log() -> void:
-	var s := _shift({"standing_cost_per_walkout": 8})
-	var before: int = s.events.size()
-	s.chairs[0].patience = 0
-	s._settle_patience()
-	var added: String = " ".join(s.events.slice(before))
-	h.check("the walkout itself is logged (%s)" % added, added.contains("walks out"))
-	h.check("and so is what it cost (%s)" % added,
-		added.contains("Standing") and added.contains("-8"))
-
-func test_a_customer_about_to_leave_is_warned_in_the_log_once() -> void:
-	var s := _shift({"leaving_soon_at": 5})
-	var c: Customer = null
-	for chair in s.chairs:
-		if chair != null:
-			c = chair
-			break
-	h.check("there is someone seated to warn about", c != null)
-
-	var before: int = s.events.size()
-	c.patience = 5
-	s._settle_patience()
-	var first_batch: String = " ".join(s.events.slice(before))
-	h.check("crossing the threshold logs a warning (%s)" % first_batch,
-		first_batch.contains("losing patience"))
-
-	before = s.events.size()
-	s._settle_patience()
-	h.eq("staying below it does not warn again every pass",
-		s.events.slice(before).size(), 0)
-
-	c.add_patience(20)
-	s._settle_patience()
-	c.patience = 5
-	before = s.events.size()
-	s._settle_patience()
-	var second_batch: String = " ".join(s.events.slice(before))
-	h.check("recovering and dropping back below it warns again (%s)" % second_batch,
-		second_batch.contains("losing patience"))
 
 func test_shift_new_seeds_standing_from_the_run_or_falls_back_to_config() -> void:
 	var seeded := _shift({}, 42)

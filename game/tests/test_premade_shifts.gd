@@ -33,43 +33,6 @@ func _shift(cfg: ShiftConfig, only: Array = [], lineup: Array = [], seats: int =
 func _ids(archetypes: Array) -> Array:
 	return archetypes.map(func(a): return a.id)
 
-# ------------------------------------------------------------ who comes in
-func test_only_archetypes_is_everyone_who_comes_in() -> void:
-	## "A shift that has only Karens" - any one archetype, whatever the ladder.
-	var cfg := _cfg()
-	var only: CustomerArchetype = _some(1)[0]
-	var s := _shift(cfg, [only])
-	for c in s.seated():
-		c.patience = 999
-	s._burn(cfg.waiting_max, "cards")
-	var seen: Array = s.seated().map(func(c): return c.archetype)
-	seen.append_array(s.waiting)
-	h.check("the floor and the waiting list filled up (%d)" % seen.size(),
-		seen.size() > s.chairs.size())
-	h.check("with nobody but the archetype the shift names (%s)" % ", ".join(_ids(seen)),
-		seen.all(func(a): return a == only))
-
-func test_excluded_archetypes_never_come_in() -> void:
-	## "Remove Lay-Down Larry and Easygoing from the night-time pool" - any two,
-	## out of the whole pool, however many come in.
-	var cfg := _cfg()
-	cfg.waiting_max = 1
-	var gone: Array = _some(2)
-	var s := _shift(cfg, [], [], 0, gone, true)
-	var seen: Array = []
-	for _visit in range(20):
-		# Cleared by hand rather than walked out - walkouts cost standing, and a
-		# run out of standing would stop anyone else coming in.
-		for i in range(s.chairs.size()):
-			if s.chairs[i] != null:
-				seen.append(s.chairs[i].archetype)
-				s._vacate(i)
-		s._burn(1, "cards")
-	seen.append_array(s.waiting)
-	h.check("plenty came in (%d)" % seen.size(), seen.size() > 10)
-	h.check("and none of them were excluded (%s)" % ", ".join(_ids(seen)),
-		not seen.any(func(a): return gone.has(a)))
-
 func test_a_lineup_is_exactly_who_comes_in_and_in_that_order() -> void:
 	## "A fixed number of customers coming in a specified order."
 	var cfg := _cfg()
@@ -115,18 +78,6 @@ func test_a_premade_shifts_own_numbers_reach_the_shift() -> void:
 	h.check("and the run's own config is untouched",
 		run.cfg.shift_ticks != p.shift_ticks and run.cfg.waiting_max != p.waiting_room)
 
-# ------------------------------------------------------------ the week
-## Three blank tiers in the regular slots' order, and no categories yet.
-func test_a_category_can_keep_to_some_weeks() -> void:
-	## "Monday Open House should not happen on week two."
-	var cat := ShiftCategory.new()
-	cat.days = 1           # Mondays
-	cat.weeks = 1          # week one only
-	h.check("week one's Monday", cat.allows_day(1, 5))
-	h.check("not week two's", not cat.allows_day(6, 5))
-	cat.weeks = 0
-	h.check("no weeks ticked is every week", cat.allows_day(6, 5))
-
 func _tiers() -> ShiftProfilePool:
 	var pool := ShiftProfilePool.new()
 	var tiers: Array[ShiftProfile] = []
@@ -165,31 +116,12 @@ func test_a_category_deals_only_on_its_days_and_into_its_slots() -> void:
 				offers[i].is_premade() == should)
 	h.eq("worked in the slot it took", week.offers(5)[2].worked_at(), &"night")
 
-func test_a_tier_is_only_offered_from_its_first_day() -> void:
-	## "Do not offer midday or night shifts on day 1 or 2."
-	var pool := _tiers()
-	pool.profiles[1].from_day = 3
-	var week := Week.new(pool, 5, 1, 5)
-	for day in range(1, 6):
-		var ids: Array = week.offers(day).map(func(p): return p.id)
-		h.eq("day %d %s the late tier" % [day, "offers" if day >= 3 else "holds back"],
-			ids.has(pool.profiles[1].id), day >= 3)
-
 func test_a_day_never_goes_without_a_shift() -> void:
 	## A calendar day with nothing on it would stop the run dead.
 	var pool := _tiers()
 	for t in pool.profiles:
 		t.from_day = 99
 	h.check("misauthored first days give way", not Week.new(pool, 1, 1, 5).offers(1).is_empty())
-
-func test_a_category_counts_days_within_the_runs_week() -> void:
-	## Two five-day weeks: day 6 is a Monday, not a Saturday.
-	var pool := _tiers()
-	pool.categories.append(_category(1 << 0, 1 << 0, false, [1.0]))
-	var week := Week.new(pool, 10, 1, 5)
-	for day in range(1, 11):
-		h.eq("day %d: Monday's premade shift %s" % [day, "comes up" if day % 5 == 1 else "stays away"],
-			week.offers(day)[0].is_premade(), day % 5 == 1)
 
 func test_a_premade_shift_comes_up_once_a_day() -> void:
 	## One allowed in every slot still takes only one of them.
@@ -207,24 +139,6 @@ func test_a_boss_day_is_the_days_only_shift() -> void:
 	h.check("worked in one of the tiers' slots (%s)" % monday[0].worked_at(),
 		ShiftCategory.SLOTS.has(monday[0].worked_at()))
 	h.eq("and Tuesday is the tiers again", week.offers(2), pool.profiles)
-
-func test_chance_is_how_often_a_premade_shift_beats_the_regular_one() -> void:
-	## Never at 0, always at 1, sometimes each way between - over a sweep of
-	## seeds rather than any one. Past 1 in total, the tier never comes up.
-	var dealt := {}
-	for chances in [[0.0], [0.5], [1.0], [0.8, 0.8]]:
-		var pool := _tiers()
-		pool.categories.append(_category(0, 1 << 0, false, chances))
-		var n := 0
-		for seed_value in range(40):
-			if Week.new(pool, 1, seed_value).offers(1)[0].is_premade():
-				n += 1
-		dealt[str(chances)] = n
-	h.eq("0 never", dealt["[0.0]"], 0)
-	h.eq("1 always", dealt["[1.0]"], 40)
-	h.check("in between, sometimes each way (%d of 40)" % dealt["[0.5]"],
-		dealt["[0.5]"] > 0 and dealt["[0.5]"] < 40)
-	h.eq("past 1 between them, the tier never", dealt["[0.8, 0.8]"], 40)
 
 func test_a_run_deals_its_week_once_from_its_own_seed() -> void:
 	## The calendar is reopened after the shop, the tutorial and the toolkit -

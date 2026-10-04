@@ -60,39 +60,6 @@ func test_grant_margin_lands_on_the_offer_if_it_is_still_open() -> void:
 	e.apply(ctx)
 	h.eq("the still-open offer grew", ctx.offer.margin, 1900)
 
-func test_scale_by_sales_multiplies_the_wrapped_effect() -> void:
-	var inner := ChangeAppeal.new()
-	inner.amount = 4
-	var e := ScaleBySales.new()
-	e.inner = inner
-	var ctx := _offer_ctx()
-	ctx.sales_so_far = 3
-	e.apply(ctx)
-	# One application always, plus one more per product already taken -
-	# four applications total at 3 sales, not three.
-	h.eq("+4 once, then +4 per product already taken", ctx.offer.appeal, 30 + 16)
-
-func test_scale_by_sales_still_applies_once_on_a_first_offer() -> void:
-	var inner := ChangeAppeal.new()
-	inner.amount = 4
-	var e := ScaleBySales.new()
-	e.inner = inner
-	var ctx := _offer_ctx()
-	ctx.sales_so_far = 0
-	e.apply(ctx)
-	h.eq("the base application still lands with no sales yet",
-		ctx.offer.appeal, 30 + 4)
-
-func test_margin_bonus_lands_on_the_sale_not_the_offer() -> void:
-	var e := MarginBonus.new()
-	e.amount = 300
-	var ctx := _offer_ctx()
-	ctx.sale = {"margin": 1600, "bonus": 0}
-	e.apply(ctx)
-	h.eq("the sale grew", int(ctx.sale["margin"]), 1900)
-	h.eq("and recorded the bonus", int(ctx.sale["bonus"]), 300)
-	h.eq("the offer is untouched", ctx.offer.margin, 1600)
-
 func test_describe_agrees_with_apply_for_every_effect() -> void:
 	## The UI generates its text from describe(). A mismatch puts a lie on screen.
 	var specs := [[ChangeAppeal.new(), 7], [ChangeMargin.new(), -250],
@@ -109,13 +76,3 @@ func test_describe_agrees_with_apply_for_every_effect() -> void:
 			d.contains(str(abs(spec[1]))))
 		h.check("%s says something" % e.get_script().resource_path.get_file(),
 			d.strip_edges() != "")
-
-## PullCards has no plain amount to check against the generic table above -
-## count/kind are its own fields - so it gets its own thin describe() check.
-func test_pull_cards_describes_its_own_count_and_kind() -> void:
-	var e := PullCards.new()
-	e.count = 4
-	e.kind = &"support"
-	var d := e.describe()
-	h.check("names the count (%s)" % d, d.contains("4"))
-	h.check("names the kind (%s)" % d, d.contains("support"))

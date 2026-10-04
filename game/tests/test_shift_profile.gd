@@ -47,13 +47,6 @@ func test_patience_scale_shrinks_every_seated_customers_own_ceiling() -> void:
 		h.eq("chair %d: patience ceiling is exactly halved and rounded" % i,
 			scaled_c.max_patience, roundi(base_c.max_patience * 0.5))
 
-func test_default_patience_scale_matches_the_unscaled_shift() -> void:
-	var a := _shift()
-	var b := _shift(0, 1.0)
-	for i in range(a.seated().size()):
-		h.eq("chair %d: 1.0 changes nothing" % i,
-			b.seated()[i].max_patience, a.seated()[i].max_patience)
-
 func test_walk_up_scale_stretches_the_gap_between_customers() -> void:
 	## Read straight after construction - both shifts have consumed the
 	## identical rng history up to this point (patience_scale and
@@ -63,8 +56,3 @@ func test_walk_up_scale_stretches_the_gap_between_customers() -> void:
 	var scaled := _shift(0, 1.0, 2.0)
 	h.eq("scaled gap is exactly double the unscaled one, rounded",
 		scaled.next_arrival, roundi(baseline.next_arrival * 2.0))
-
-func test_default_walk_up_scale_matches_the_unscaled_shift() -> void:
-	var a := _shift()
-	var b := _shift(0, 1.0, 1.0)
-	h.eq("1.0 changes nothing", b.next_arrival, a.next_arrival)

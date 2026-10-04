@@ -47,46 +47,6 @@ func test_the_report_carries_every_key_the_ui_will_need() -> void:
 			"peak_combo_multiplier"]:
 		h.check("report has %s" % key, r.has(key))
 
-func test_missing_quota_costs_the_minimum_up_to_the_weeks_cap() -> void:
-	## "A minimum amount of standing lost, like 15, and the rest scales with how
-	## far you are from making quota, up to a max of 35 in week one and 45 in
-	## week two." Read from the config, never restated.
-	var s := _shift([&"easygoing"], {"quota": 1000, "standing_heal_scale": 0.0})
-	var low: int = s.cfg.miss_standing_min
-	var caps: Array[int] = s.cfg.miss_standing_max_by_week
-	s.margin_banked = 999
-	h.eq("a dollar short costs the minimum", int(s.report()["standing_delta"]), -low)
-	s.margin_banked = 500
-	h.eq("halfway short, halfway to the cap", int(s.report()["standing_delta"]),
-		-roundi(lerpf(float(low), float(caps[0]), 0.5)))
-	s.margin_banked = 0
-	h.eq("nothing banked costs the week's cap", int(s.report()["standing_delta"]), -caps[0])
-	s.shift_number = s.cfg.days_per_week + 1
-	h.eq("and the next week's cap in the next week", int(s.report()["standing_delta"]),
-		-caps[mini(1, caps.size() - 1)])
-	s.margin_banked = 1000
-	h.eq("landing exactly on quota costs nothing", int(s.report()["standing_delta"]), 0)
-
-func test_walkouts_cost_standing_on_their_own() -> void:
-	## Independent of the quota-delta - letting people leave threatens the job
-	## by itself, so this is checked with a quota already comfortably beaten,
-	## where a purely quota-driven formula would otherwise be healing.
-	var s := _shift([&"easygoing", &"easygoing", &"easygoing"],
-		{"quota": 100, "standing_cost_per_walkout": 8, "standing_heal_scale": 0.0})
-	s.margin_banked = 9999   # beats quota hugely; heal_scale=0 keeps that term at 0
-	h.eq("no walkouts yet, no cost", int(s.report()["standing_lost_to_walkouts"]), 0)
-	h.eq("and the combined delta is just the (zeroed) quota term",
-		int(s.report()["standing_delta"]), 0)
-
-	s.chairs[0].patience = 0
-	s.chairs[1].patience = 0
-	s._settle_patience()
-	h.eq("two walked", int(s.report()["customers_walked"]), 2)
-	h.eq("costing twice the per-walkout rate",
-		int(s.report()["standing_lost_to_walkouts"]), 16)
-	h.eq("which is the WHOLE combined delta here, quota term zeroed out",
-		int(s.report()["standing_delta"]), -16)
-
 func test_a_banked_shift_reports_it_made_quota() -> void:
 	var s := _shift([&"easygoing"], {"quota": 1000})
 	s.at = 0

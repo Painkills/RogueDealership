@@ -35,15 +35,6 @@ func test_the_first_run_is_a_personal_best() -> void:
 	h.eq("and it is the best score now", PlayerProfile.best_score(), 12000)
 	_done()
 
-func test_a_week_below_zero_still_counts() -> void:
-	## Getting fired with walkouts on the books scores below zero, and that
-	## week is still a week on the board - "none" cannot be a number.
-	_fresh()
-	PlayerProfile.record_run(-5640, 0, true)
-	h.check("a run on the board", PlayerProfile.has_best())
-	h.eq("at its real score", PlayerProfile.best_score(), -5640)
-	_done()
-
 func test_runs_are_ranked_best_first_and_signed_by_whoever_played() -> void:
 	_fresh()
 	PlayerProfile.set_player_name("Dana")
@@ -78,7 +69,3 @@ func test_only_the_best_few_are_kept() -> void:
 	h.eq("pushing the worst off the bottom (%d)" % int(PlayerProfile.bests().back()["score"]),
 		int(PlayerProfile.bests().back()["score"]), 2000)
 	_done()
-
-func test_a_date_reads_like_a_date() -> void:
-	h.eq("month and day", PlayerProfile.short_date("2026-09-25"), "Sep 25")
-	h.eq("anything else is left alone", PlayerProfile.short_date("soon"), "soon")

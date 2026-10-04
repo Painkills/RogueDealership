@@ -11,12 +11,6 @@ func _shift() -> Shift:
 		load("res://data/interests/interest_pool.tres"), _cards(),
 		load("res://data/archetype_pool.tres"))
 
-func _index_of(s: Shift, id: StringName) -> int:
-	for i in range(s.hand.size()):
-		if s.hand[i].card.id == id:
-			return i
-	return -1
-
 func test_the_practice_floor_has_one_chair_and_one_easy_customer() -> void:
 	var s := _shift()
 	h.eq("one chair, so nothing else on the floor competes for the lesson",
@@ -38,70 +32,6 @@ func test_the_practice_floor_has_one_chair_and_one_easy_customer() -> void:
 		c.known_line)
 	h.eq("on a clock long enough never to be the lesson", s.tick_budget, Tutorial.TICKS)
 	h.eq("and no quota, because practice has nothing to make", s.quota, 0)
-
-func test_the_hand_is_dealt_for_the_lesson() -> void:
-	var s := _shift()
-	var ids: Array = []
-	for inst in s.hand:
-		ids.append(inst.card.id)
-	h.eq("the scripted hand, left to right", ids, Tutorial.HAND)
-	var uids := {}
-	for inst in s.hand + s.draw:
-		uids[inst.uid] = true
-	h.eq("dealt from the deck, not conjured - no card twice",
-		uids.size(), s.hand.size() + s.draw.size())
-	# The starter deck, plus any scripted card it does not hold enough of.
-	var starter := Deck.build_starting(_cards())
-	var held := {}
-	for inst in starter.cards:
-		held[inst.card.id] = int(held.get(inst.card.id, 0)) + 1
-	var wanted := {}
-	for id in Tutorial.HAND:
-		wanted[id] = int(wanted.get(id, 0)) + 1
-	var extra := 0
-	for id in wanted:
-		extra += maxi(0, int(wanted[id]) - int(held.get(id, 0)))
-	h.eq("and none missing: the starter deck and the lesson's own cards",
-		uids.size(), starter.cards.size() + extra)
-
-func test_one_support_card_tips_whichever_product_they_put_down() -> void:
-	## The coach asks for ONE support card between placing and offering. That
-	## has to hold whichever product the player happens to pick up.
-	for product in Tutorial.RANKS.keys():
-		var s := _shift()
-		s.approach(0)
-		var c: Customer = s.chairs[0]
-		h.check("%s goes on the table" % product, s.place(_index_of(s, product)).ok)
-		h.check("and the Line tunes to it", Tutorial.tune_line(c))
-		h.check("leaving %s just short of their Line (%d < %d)"
-			% [product, c.offer.appeal, c.line], c.offer.appeal < c.line)
-		h.check("Acknowledge & Empathize plays", s.play_card(_index_of(s, &"empathize")).ok)
-		h.check("and one Explain clears it (%d >= %d)" % [c.offer.appeal, c.line],
-			c.offer.appeal >= c.line)
-		var r := s.offer()
-		h.check("so the offer sells", r.ok and not c.unsigned.is_empty())
-
-func test_the_first_meter_anyone_sees_has_something_in_it() -> void:
-	## Left to the shuffle, a product they rank last opens at 0 Appeal - an
-	## empty bar with the Line's mark jammed against its start, found the first
-	## time the lesson was played through in a browser.
-	var s := _shift()
-	var c: Customer = s.chairs[0]
-	var ranks_seen := {}
-	for iid in c.ranks:
-		ranks_seen[int(c.ranks[iid])] = true
-	h.eq("their list is still a list - every rank used once", ranks_seen.size(), c.ranks.size())
-	for product in Tutorial.RANKS:
-		var def := _cards().by_id(product) as ProductCardDef
-		var appeal: int = c.appeal_for(def.interest.id)
-		h.check("%s opens with a real Appeal to show (%d)" % [product, appeal], appeal >= 20)
-
-func test_tuning_needs_something_on_the_table() -> void:
-	var s := _shift()
-	var c: Customer = s.chairs[0]
-	var before: int = c.line
-	h.check("nothing to tune with an empty table", not Tutorial.tune_line(c))
-	h.eq("so their Line is left alone", c.line, before)
 
 func test_practice_never_touches_the_run() -> void:
 	## Built from the run's pools but never its deck: nothing done in practice

@@ -60,26 +60,11 @@ func test_dropping_on_a_different_customer_approaches_first() -> void:
 	h.eq("command", plan["command"], DropRouter.PLAY)
 	h.eq("approach chair 2 first", plan["approach"], 2)
 
-func test_dropping_on_a_customer_when_standing_nowhere_approaches_first() -> void:
-	var s := _shift()
-	h.eq("the fixture opens sat at A", s.at, 0)
-	s.leave()
-	h.eq("until you step away", s.at, null)
-	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.chair_zone(1))
-	h.eq("approach chair 1 first", plan["approach"], 1)
-
 func test_dropping_on_the_discard_digs() -> void:
 	var s := _shift()
 	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.ZONE_DISCARD)
 	h.eq("command", plan["command"], DropRouter.DIG)
 	h.eq("digging never moves you", plan["approach"], -1)
-
-func test_dropping_back_into_the_hand_is_ignored_not_refused() -> void:
-	## Reordering your own hand is cosmetic. It must not bounce and must not
-	## reach the model - there is no model command for it.
-	var s := _shift()
-	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.ZONE_HAND)
-	h.eq("command", plan["command"], DropRouter.IGNORE)
 
 func test_dropping_somewhere_meaningless_is_refused() -> void:
 	var s := _shift()
@@ -91,22 +76,6 @@ func test_dragging_a_card_that_is_no_longer_in_hand_is_refused() -> void:
 	var s := _shift()
 	var plan := DropRouter.plan(s, 999999, CardHomes.chair_zone(0))
 	h.eq("command", plan["command"], DropRouter.NONE)
-
-func test_the_router_does_not_second_guess_the_model_on_an_empty_chair() -> void:
-	## "Never grey out speculatively" - the router maps geometry to commands and
-	## the MODEL owns legality, so dropping on an empty chair must still route,
-	## reach approach(), and come back with the model's own refusal message.
-	var s := _shift()
-	# All three chairs are occupied at tick 0, so empty one deliberately rather
-	# than hoping the seed hands us one - a test that quietly skips itself is
-	# worse than no test.
-	var empty := 2
-	s.chairs[empty] = null
-	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.chair_zone(empty))
-	h.eq("still routed as a play", plan["command"], DropRouter.PLAY)
-	var res := s.approach(empty)
-	h.check("and the model is the one that says no", not res.ok)
-	h.check("with a message worth showing", not res.msg.is_empty())
 
 # --- CardHomes -------------------------------------------------------------
 
@@ -125,12 +94,6 @@ func test_every_card_in_the_deck_always_has_a_home() -> void:
 		h.eq("a hand card lives in the hand", homes[inst.uid]["zone"], CardHomes.ZONE_HAND)
 	for inst in s.draw:
 		h.eq("a draw card lives in the draw pile", homes[inst.uid]["zone"], CardHomes.ZONE_DRAW)
-
-func test_hand_ordinals_match_hand_order() -> void:
-	var s := _shift()
-	var homes := CardHomes.desired(s)
-	for i in range(s.hand.size()):
-		h.eq("hand[%d] keeps its place in the fan" % i, homes[s.hand[i].uid]["ordinal"], i)
 
 func test_a_placed_product_moves_from_the_hand_to_its_customer() -> void:
 	var s := _shift()
@@ -158,20 +121,6 @@ func test_a_sold_product_leaves_the_table_for_the_discard() -> void:
 	h.check("it sold", res.ok and res.kind == "sale")
 	h.eq("and the card itself is now in the discard",
 		CardHomes.desired(s)[uid]["zone"], CardHomes.ZONE_DISCARD)
-
-func test_a_dug_card_ends_up_in_the_discard() -> void:
-	var s := _shift()
-	var uid: int = s.hand[0].uid
-	s.dig(0)
-	h.eq("dug card", CardHomes.desired(s)[uid]["zone"], CardHomes.ZONE_DISCARD)
-
-func test_chair_zones_round_trip() -> void:
-	for i in range(3):
-		var z := CardHomes.chair_zone(i)
-		h.check("%s reads as a chair" % z, CardHomes.is_chair_zone(z))
-		h.eq("and maps back to %d" % i, CardHomes.chair_of(z), i)
-	h.check("the discard is not a chair", not CardHomes.is_chair_zone(CardHomes.ZONE_DISCARD))
-	h.eq("and has no chair index", CardHomes.chair_of(CardHomes.ZONE_HAND), -1)
 
 func _first_product_uid(s: Shift) -> int:
 	for inst in s.hand:

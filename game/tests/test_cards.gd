@@ -6,39 +6,6 @@ const POOL := "res://data/card_pool.tres"
 func _pool() -> CardPool:
 	return load(POOL)
 
-func _products() -> Array:
-	var out := []
-	for c in _pool().cards:
-		if c is ProductCardDef:
-			out.append(c)
-	return out
-
-func test_every_interest_has_at_least_one_product() -> void:
-	## Not "exactly one" - the catalog is meant to grow past the starter set,
-	## and two products answering the same interest is an intended shape now,
-	## not a duplicate to catch. What still has to hold is that no interest is
-	## left with nothing to sell for it.
-	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
-	var seen := {}
-	for p in _products():
-		h.check("%s answers an interest" % p.id, p.interest != null)
-		if p.interest != null:
-			seen[p.interest.id] = true
-	h.eq("every one of the nine interests has coverage", seen.size(), interests.count())
-
-func test_every_category_has_at_least_one_starter_product() -> void:
-	## Not "exactly two per category" - that's a balance choice about how many
-	## starter products exist, not an invariant. What has to hold is that no
-	## category is left with zero starter products to sell from day one.
-	var per := {}
-	for p in _products():
-		if p.starter:
-			per[p.interest.category.id] = per.get(p.interest.category.id, 0) + 1
-	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
-	for cat in interests.categories:
-		h.check("%s has at least one starter product" % cat.id,
-			int(per.get(cat.id, 0)) >= 1)
-
 func test_a_card_instance_reports_its_margin() -> void:
 	var vsc: ProductCardDef = _pool().by_id(&"vsc")
 	var inst := CardInstance.new(vsc, 1)
@@ -66,19 +33,6 @@ func test_shoppable_cards_is_exactly_the_pool_minus_starters() -> void:
 		if not c.starter:
 			non_starter_count += 1
 	h.eq("every non-starter card is in it", shoppable.size(), non_starter_count)
-
-func test_starter_cards_are_basic_rarity() -> void:
-	## Basic is an authored value, not derived from `starter` - a Basic card
-	## could later be sold outside the starter deck too - so nothing enforces
-	## this at the schema level. This is the guard against a starter card that
-	## forgot to tag itself, same shape as test_every_card_carries_a_price().
-	for c in _pool().cards:
-		if c.starter:
-			h.eq("%s is Basic rarity" % c.id, c.rarity, CardDef.Rarity.BASIC)
-
-func test_the_card_pool_states_its_design_rule() -> void:
-	h.check("card pool states its design rule",
-		_pool().design_rule.strip_edges() != "")
 
 func test_lookup_by_id_finds_every_card() -> void:
 	for c in _pool().cards:

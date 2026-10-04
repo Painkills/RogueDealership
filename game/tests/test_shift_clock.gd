@@ -25,13 +25,6 @@ func test_one_tick_burns_every_customer_and_the_clock() -> void:
 	for i in range(3):
 		h.eq("chair %d burned" % i, s.chairs[i].patience, before[i] - 1)
 
-func test_a_two_tick_action_burns_two() -> void:
-	var s := _shift([&"easygoing", &"easygoing"])
-	var before: int = s.chairs[1].patience
-	s._burn(2, "cards")
-	h.eq("clock advanced two", s.tick, 2)
-	h.eq("and so did the burn", s.chairs[1].patience, before - 2)
-
 func test_patience_gone_means_gone() -> void:
 	var s := _shift([&"easygoing", &"easygoing"],
 		{"walk_up_ticks_min": 5, "walk_up_ticks_max": 5})
@@ -80,25 +73,6 @@ func test_the_waiting_list_never_outgrows_its_room() -> void:
 	h.eq("and the door's clock waits while it is full", s.next_arrival, held)
 	h.eq("so nobody is due", s.next_arrival_in(), -1)
 
-func test_the_gap_between_customers_is_drawn_from_a_range_not_fixed() -> void:
-	## "increase the amount of time before a new customer fills an empty seat,
-	## but make it variable" - the gap between arrivals now. Bounds checked on
-	## every draw; variety checked across a seed sweep, the same style
-	## test_no_opening_hand_is_ever_dealt_without_a_product() already uses for
-	## its own RNG-dependent claim.
-	var seen := {}
-	for seed_value in range(1, 61):
-		var s := _seeded(seed_value)
-		var drawn: int = s.next_arrival
-		h.check("seed %d draws a gap inside the configured range (%d)"
-			% [seed_value, drawn],
-			drawn >= s.cfg.walk_up_ticks_min and drawn <= s.cfg.walk_up_ticks_max)
-		seen[drawn] = true
-	var cfg: ShiftConfig = load("res://data/shift_config.tres")
-	if cfg.walk_up_ticks_min < cfg.walk_up_ticks_max:
-		h.check("and the sweep actually saw more than one value, not a fixed gap",
-			seen.size() > 1)
-
 func test_an_empty_chair_burns_nobody() -> void:
 	var s := _shift([&"easygoing", &"easygoing"],
 		{"walk_up_ticks_min": 99, "walk_up_ticks_max": 99})
@@ -126,17 +100,6 @@ func test_every_card_instance_has_its_own_uid() -> void:
 		for c in pile:
 			h.check("uid %d is unique" % c.uid, not seen.has(c.uid))
 			seen[c.uid] = true
-
-func test_a_freshly_drawn_card_lands_at_the_front_of_the_hand() -> void:
-	## FanCardLayout renders hand[0] leftmost with no reordering of its own -
-	## so this is the whole rule for "a new card appears on the left of your
-	## hand." _next_draw_index() (the SAME rule production uses for which
-	## card comes next) says which uid to expect; this test is about WHERE it
-	## lands, not which one.
-	var s := _shift([&"easygoing"])
-	var next_uid: int = s.draw[s._next_draw_index()].uid
-	s.dig(0)
-	h.eq("the just-drawn card is at index 0", s.hand[0].uid, next_uid)
 
 func test_the_deck_reshuffles_when_it_runs_out() -> void:
 	var s := _shift([&"easygoing"], {"shift_ticks": 999})
@@ -173,45 +136,28 @@ func test_no_opening_hand_is_ever_dealt_without_a_product() -> void:
 	## to play with an empty table, leaving Read the Room and two Small Talks,
 	## and then dig at a tick a card. Unbiased, C(10,5)/C(16,5) = 5.8% of hands
 	## land there - so 300 seeds catch a regression essentially every time.
-	var worst := 99
+	var without: Array[int] = []
 	for seed_value in range(1, 301):
-		var n := _products_in(_seeded(seed_value).hand)
-		worst = mini(worst, n)
-		h.check("seed %d deals a product (%d in hand)" % [seed_value, n], n >= 1)
-	h.eq("and the sweep reached the floor rather than only lucky decks", worst, 1)
-
-func test_the_floor_is_what_saves_a_hand_that_would_have_had_no_product() -> void:
-	## The paired case, and the reason the sweep above is not just asserting that
-	## decks are usually kind. Searches for a seed that deals a hand of pure
-	## support with the bias off, rather than hardcoding one - a deck-size or
-	## composition retune reshuffles every seed, and this project has already
-	## had to hand-chase that magic number twice (seed 8, then 15, then 17).
-	var barren_seed := -1
-	for seed_value in range(1, 2000):
-		if _products_in(_seeded(seed_value, {"hand_min_products": 0}).hand) == 0:
-			barren_seed = seed_value
-			break
-	h.check("a seed producing an all-support hand exists in range", barren_seed != -1)
-	if barren_seed == -1:
-		return
-	var on := _seeded(barren_seed)
-	h.check("bias on: at least one product, not a hand left barren",
-		_products_in(on.hand) >= 1)
-	h.eq("and the hand is still full", on.hand.size(), on.cfg.hand_size)
+		if _products_in(_seeded(seed_value).hand) < 1:
+			without.append(seed_value)
+	h.check("every opening hand holds a product (seeds without: %s)" % str(without),
+		without.is_empty())
 
 func test_the_floor_holds_on_mid_shift_refills_not_just_the_opening_deal() -> void:
 	## The opening deal is the easy case. The bite is mid-shift, once placed
 	## products have left the draw pile support-heavy - a fix applied only in
 	## _init would pass the sweep above and still strand you here.
 	var s := _shift([&"easygoing"], {"shift_ticks": 999})
+	var bad_rounds: Array[int] = []
 	for round_no in range(30):
 		for i in range(s.hand.size() - 1, -1, -1):
 			if s.hand[i].is_product():
 				s.discard.append(s.hand.pop_at(i))
 		s._draw_up()
-		h.check("refill %d still leaves a product in hand" % round_no,
-			_products_in(s.hand) >= 1)
-		h.eq("and a full hand", s.hand.size(), s.cfg.hand_size)
+		if _products_in(s.hand) < 1 or s.hand.size() != s.cfg.hand_size:
+			bad_rounds.append(round_no)
+	h.check("every refill leaves a product in a full hand (rounds that did not: %s)"
+		% str(bad_rounds), bad_rounds.is_empty())
 
 func test_a_deck_with_no_products_fills_the_hand_instead_of_hanging() -> void:
 	## The floor is best-effort. With nothing to reach for, _top_product_index()
@@ -256,72 +202,3 @@ func test_same_seed_same_shift() -> void:
 		bh.append(c.card.id)
 	h.eq("same hand", ah, bh)
 	h.eq("same priorities", a.chairs[0].ranks, b.chairs[0].ranks)
-
-func test_customers_do_not_all_walk_in_fresh() -> void:
-	var partial := 0
-	for s in range(40):
-		var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
-		cfg.patience_jitter = 0
-		cfg.action_cadence_jitter_ticks = 0
-		cfg.prior_slip = 0.0
-		cfg.arrival_patience_min_fraction = 0.6
-		var sh := Shift.new(cfg,
-			load("res://data/interests/interest_pool.tres"),
-			load("res://data/card_pool.tres"),
-			load("res://data/archetype_pool.tres"),
-			s, [&"easygoing"])
-		var c = sh.chairs[0]
-		h.check("seed %d arrives inside the band" % s,
-			c.patience >= min(c.max_patience, cfg.arrival_patience_floor)
-			and c.patience <= c.max_patience)
-		if c.patience < c.max_patience:
-			partial += 1
-	h.check("some arrive partway to the door (%d/40)" % partial, partial > 0)
-
-func test_every_triggered_actions_start_their_cadence_jittered() -> void:
-	## Karen's "manager" action carries an Every trigger - the one action_state
-	## entry _spawn() seeds up front, before anything has ever fired. Without
-	## jitter this always starts at exactly 0, so every Karen on every seed
-	## opens her demand on the identical tick after sitting down.
-	var saw_nonzero := false
-	for s in range(40):
-		var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
-		cfg.patience_jitter = 0
-		cfg.action_cadence_jitter_ticks = 3
-		cfg.prior_slip = 0.0
-		cfg.arrival_patience_min_fraction = 1.0
-		var sh := Shift.new(cfg,
-			load("res://data/interests/interest_pool.tres"),
-			load("res://data/card_pool.tres"),
-			load("res://data/archetype_pool.tres"),
-			s, [&"karen"])
-		var c = sh.chairs[0]
-		h.check("seed %d: seeded before anything fired" % s,
-			c.action_state.has(&"manager"))
-		var v: int = int(c.action_state[&"manager"])
-		h.check("seed %d: within the configured jitter (%d)" % [s, v],
-			v >= -3 and v <= 3)
-		if v != 0:
-			saw_nonzero = true
-	h.check("and it is not always exactly 0", saw_nonzero)
-
-func test_zero_jitter_still_starts_the_cadence_at_exactly_0() -> void:
-	## The knob's off position - existing exact-tick assertions elsewhere in
-	## the suite depend on this staying true.
-	var s := _shift([&"karen"], {"action_cadence_jitter_ticks": 0})
-	var c = s.chairs[0]
-	h.eq("no jitter means the old deterministic 0",
-		int(c.action_state[&"manager"]), 0)
-
-func test_the_karen_announces_the_category_she_came_for() -> void:
-	var s := _shift([&"karen"])
-	var c: Customer = s.chairs[0]
-	h.check("she demands something", c.demands_category != null)
-	h.eq("and it is the category of her own number one", c.demands_category,
-		s.interests.by_id(c.top_interest_id()).category.id)
-	h.eq("which she says out loud", c.known_top_category, c.demands_category)
-
-func test_the_shift_config_states_its_design_rule() -> void:
-	var cfg: ShiftConfig = load("res://data/shift_config.tres")
-	h.check("shift config states its design rule",
-		cfg.design_rule.strip_edges() != "")

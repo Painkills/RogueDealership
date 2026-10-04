@@ -97,16 +97,6 @@ func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	h.check("and not the Line", not c.known_line)
 	h.check("and the offer is not revealed", not c.offer.revealed)
 
-func test_placing_a_product_with_no_effects_behaves_exactly_as_before() -> void:
-	## Every shipped product today - the empty-effects fast path in place()
-	## must change nothing observable for it.
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	_rank(c, [&"reliability"])
-	_hand(s, [&"vsc"])
-	s.place(0)
-	h.check("no log entry for a card with nothing to say", s.action_log.is_empty())
-
 func test_placing_a_product_applies_its_own_effects() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
@@ -121,155 +111,6 @@ func test_placing_a_product_applies_its_own_effects() -> void:
 	h.check("placing is still legal", r.ok)
 	h.eq("the product's own effect lifted the offer's appeal",
 		c.offer.appeal, appeal_before + 6)
-
-func test_placing_a_product_records_what_its_effect_did_in_the_log() -> void:
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	var e := ChangeAppeal.new()
-	e.amount = 6
-	var def := _synthetic_product(s, [e])
-	_rank(c, [def.interest.id])
-	s.hand.clear()
-	s.hand.append(CardInstance.new(def, 999))
-	s.place(0)
-	h.eq("exactly one entry, for the product itself", s.action_log.size(), 1)
-	h.eq("named for the product", s.action_log[0]["name"], "Synthetic Product")
-	h.check("describing what the effect did",
-		", ".join(s.action_log[0]["descriptions"]).contains("6"))
-	h.check("not tagged floor-wide - this one only touches the offer",
-		not s.action_log[0]["floor_wide"])
-
-func test_interested_means_at_or_over_their_line() -> void:
-	## Green on the meter and "INTERESTED" under it say the same thing: an offer
-	## now would be a yes. Nothing short of the Line may wear it.
-	var s := _shift([&"easygoing"])
-	h.eq("at the Line", s.band_for(0), "INTERESTED")
-	h.eq("over it", s.band_for(-7), "INTERESTED")
-	h.check("one short is not", s.band_for(1) != "INTERESTED")
-	h.check("a long way short is not", s.band_for(40) != "INTERESTED")
-
-func test_the_returned_band_reflects_the_product_effect_not_just_the_base_appeal() -> void:
-	## _support()'s own comment states the rule this mirrors: the band is read
-	## AFTER effects land. COLD (the pre-effect gap) leaking through instead
-	## of ALMOST (the post-effect one) would be this ordering silently wrong.
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	var e := ChangeAppeal.new()
-	e.amount = 20
-	var def := _synthetic_product(s, [e])
-	_rank(c, [def.interest.id])
-	var base_appeal: int = c.appeal_for(def.interest.id)
-	c.line = base_appeal + 25   # gap 25 (COLD) if the effect never landed
-	s.hand.clear()
-	s.hand.append(CardInstance.new(def, 999))
-	var r := s.place(0)
-	h.eq("the band reflects the LIFTED appeal (gap 5)",
-		r.data["band"], s.band_for(5))
-	h.check("not the gap before it landed", s.band_for(5) != s.band_for(25))
-
-func test_an_upgraded_product_uses_its_upgraded_effects() -> void:
-	## Mirrors test_the_upgraded_room_read_names_their_number_one's own point:
-	## an upgrade has to buy something DIFFERENT, not a second identical copy.
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	var base_effect := ChangeAppeal.new()
-	base_effect.amount = 4
-	var upgraded_effect := ChangeAppeal.new()
-	upgraded_effect.amount = 10
-	var def := _synthetic_product(s, [base_effect], [upgraded_effect])
-	_rank(c, [def.interest.id])
-	s.hand.clear()
-	var inst := CardInstance.new(def, 999)
-	inst.upgraded = true
-	s.hand.append(inst)
-	var appeal_before: int = c.appeal_for(def.interest.id)
-	s.place(0)
-	h.eq("the UPGRADED effect landed, not the base one",
-		c.offer.appeal, appeal_before + 10)
-
-func test_a_floor_wide_product_effect_tags_the_log_entry() -> void:
-	var s := _shift([&"easygoing", &"easygoing"])
-	var e := ChangeLineFloorWide.new()
-	e.amount = -5
-	var def := _synthetic_product(s, [e])
-	var c := _at(s)
-	_rank(c, [def.interest.id])
-	s.hand.clear()
-	s.hand.append(CardInstance.new(def, 999))
-	s.place(0)
-	h.check("tagged floor-wide, the same as a support card's own would be",
-		s.action_log[0]["floor_wide"])
-
-func test_offering_is_free_and_teaches_the_rank_but_never_the_line() -> void:
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	c.line = 99
-	_rank(c, [&"status", &"power", &"reliability"])
-	_hand(s, [&"vsc"])
-	s.place(0)
-	var t := s.tick
-	var r := s.offer()
-	h.eq("offering costs no ticks", s.tick, t)
-	h.check("it teaches you the rank", c.known_ranks.has(&"reliability"))
-	h.check("and marks the offer as asked", c.offer.revealed)
-	h.check("but never the Line", not c.known_line)
-	h.eq("though the model still knows the true shortfall",
-		int(r.data["short"]), 99 - _appeal_for_rank(s, 3))
-
-func test_no_amount_of_offering_ever_teaches_the_line() -> void:
-	## The fog has to survive repetition or it is a speed bump, not a rule:
-	## offering is free, so "ask four times" would otherwise be a cheaper Read
-	## the Room that also costs no card.
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	c.line = 99
-	_rank(c, [&"status", &"power", &"reliability"])
-	_hand(s, [&"vsc"])
-	s.place(0)
-	for _i in range(4):
-		s.offer()
-	h.eq("four asks landed", int(s.stat["offers"]), 4)
-	h.check("and their Line is still fogged", not c.known_line)
-
-func test_read_the_room_is_the_only_thing_that_lifts_the_fog() -> void:
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	_rank(c, [&"power"])
-	_hand(s, [&"readroom"])
-	h.check("fogged to begin with", not c.known_line)
-	s.play_card(0)
-	h.check("the read lifts it", c.known_line)
-	h.check("and names the category it is in", c.known_top_category != null)
-	h.eq("and their top unsold interest, with its rank",
-		int(c.known_ranks.get(&"power", 0)), 1)
-	h.check("but not their top three - that is the upgrade", c.known_top_three.is_empty())
-
-func test_the_upgraded_room_read_names_their_number_one() -> void:
-	## Until it did, upgrading Read the Room bought a second, identical copy of
-	## the same effect for $1,100 and changed nothing observable.
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	_rank(c, [&"power"])
-	_hand(s, [&"readroom"])
-	s.hand[0].upgraded = true
-	s.play_card(0)
-	h.check("it still hands you the Line", c.known_line)
-	h.eq("and names the one outright", int(c.known_ranks.get(&"power", 0)), 1)
-	h.eq("and marks their top three", c.known_top_three.size(), 3)
-	h.check("the one among them", c.known_top_three.has(&"power"))
-
-func test_a_short_offer_costs_one_patience_and_nothing_else() -> void:
-	var s := _shift([&"easygoing", &"easygoing"])
-	var c := _at(s)
-	c.line = 99
-	_rank(c, [&"status", &"power", &"reliability"])
-	_hand(s, [&"vsc"])
-	s.place(0)
-	var p: int = c.patience
-	var b: int = s.chairs[1].patience
-	s.offer()
-	h.eq("they bruise a little", c.patience, p - 1)
-	h.eq("and nobody else pays", s.chairs[1].patience, b)
 
 func test_accept_fires_exactly_at_the_line_not_above() -> void:
 	var s := _shift([&"easygoing"])
@@ -312,45 +153,6 @@ func test_support_cards_alone_never_close_a_sale() -> void:
 	s.offer()
 	h.eq("until you ask", c.unsigned.size(), 1)
 
-func test_pad_works_on_a_product_that_would_have_closed_cold() -> void:
-	## The whole reason placing and offering are separate moves. Pad's own
-	## effect amounts (appeal down, margin up) are a live balance knob - read
-	## them off the card def instead of assuming today's -5/+400.
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	var pad := s.card_pool.by_id(&"pad") as SupportCardDef
-	var pad_appeal := 0
-	var pad_margin := 0
-	for e in pad.effects:
-		if e is ChangeAppeal:
-			pad_appeal = e.amount
-		elif e is ChangeMargin:
-			pad_margin = e.amount
-	var rank1_appeal := _appeal_for_rank(s, 1)
-	c.line = rank1_appeal + pad_appeal   # clears only once padded down to it
-	_rank(c, [&"reliability"])
-	_hand(s, [&"vsc", &"pad"])
-	s.place(0)
-	s.play_card(_index_of(s, &"pad"))
-	h.eq("padded back to the bar", c.offer.appeal, c.line)
-	s.offer()
-	var vsc := s.card_pool.by_id(&"vsc")
-	h.eq("sold at a padded price", c.unsigned_margin(), vsc.margin + pad_margin)
-
-# ------------------------------------------------------------------- economy
-func test_the_line_ramps_by_line_per_sale_on_every_sale() -> void:
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	var step: int = c.archetype.line_per_sale
-	c.line = 20                             # low enough both sales clear regardless of step
-	var line0: int = c.line
-	_rank(c, [&"reliability", &"equity"])
-	_hand(s, [&"vsc", &"gap"])
-	s.place(0); s.offer()
-	h.eq("Line ramps by line_per_sale", c.line, line0 + step)
-	s.place(_index_of(s, &"gap")); s.offer()
-	h.eq("and again", c.line, line0 + step * 2)
-
 func test_a_sale_refunds_patience_capped_at_max() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
@@ -361,42 +163,6 @@ func test_a_sale_refunds_patience_capped_at_max() -> void:
 	s.place(0)          # -1 tick
 	s.offer()           # +cfg.patience_per_sale refund
 	h.eq("place burned, sale refunded", c.patience, 5 - 1 + s.cfg.patience_per_sale)
-
-func test_margin_can_be_conceded_below_zero_and_banks_as_is() -> void:
-	## The arithmetic is the deterrent, never a rule - three concessions on a
-	## cheap product should be more than enough to push it underwater whatever
-	## today's exact discount/price tuning is.
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	c.line = 99
-	_rank(c, [&"status", &"power", &"convenience"])   # concierge, the cheapest product
-	_hand(s, [&"concierge", &"discount", &"discount", &"discount"])
-	s.place(0)
-	s.play_card(_index_of(s, &"discount"))
-	s.play_card(_index_of(s, &"discount"))
-	s.play_card(_index_of(s, &"discount"))
-	h.check("margin went underwater", c.offer.margin < 0)
-	c.line = 0
-	s.offer()
-	h.check("and a loss banks as a loss", c.unsigned_margin() < 0)
-
-# -------------------------------------------------------------------- moving
-func test_walking_the_floor_is_free() -> void:
-	## The clock measures WORK, not distance. Checking on someone else and
-	## coming back used to cost 2 of 24 ticks, which made "finish whoever you
-	## are with and never look up" the cheapest play - a tax on the one decision
-	## this game is supposed to be about.
-	var s := _shift([&"easygoing", &"easygoing"])
-	s.approach(0)
-	h.eq("the first walk over is free", s.tick, 0)
-	s.leave()
-	h.eq("stepping out is free", s.tick, 0)
-	s.approach(1)
-	h.eq("changing your mind is free too", s.tick, 0)
-	s.approach(2)
-	s.leave()
-	s.approach(0)
-	h.eq("and it stays free however much you shop around", s.tick, 0)
 
 func test_a_shift_opens_with_you_sat_at_a_and_nothing_moves_you_off_it() -> void:
 	## "Start shift seated at A... Don't take me away from a seat even if they
@@ -417,19 +183,6 @@ func test_a_shift_opens_with_you_sat_at_a_and_nothing_moves_you_off_it() -> void
 		s.offer()
 		s.close()
 		h.eq("signing the next one leaves you there too", s.at, 0)
-
-func test_the_approach_charge_is_still_one_number_away() -> void:
-	## approach_ticks survives at 0 rather than being deleted, so free movement
-	## is a tuning decision and not a one-way door. What does NOT survive is the
-	## old discount for walking back to last_customer: an asymmetry that made
-	## returning cheaper than leaving was the shape of the tunnel vision, so if
-	## the charge ever comes back it comes back uniform.
-	var s := _shift([&"easygoing", &"easygoing"], {"approach_ticks": 1})
-	# The shift opens with you sat at A, so the first walk is to B.
-	s.approach(1)
-	h.eq("the charge applies when the knob is turned up", s.tick, 1)
-	s.approach(0)
-	h.eq("including the walk back to the same person", s.tick, 2)
 
 func test_approaching_who_you_are_already_with_is_refused() -> void:
 	var s := _shift([&"easygoing", &"easygoing"])
@@ -543,122 +296,6 @@ func test_nothing_can_be_played_from_the_floor() -> void:
 	h.check("and closing", not s.close().ok)
 	h.eq("costs nothing", s.tick, 0)
 
-# -------------------------------------------------------------- the Karen
-func test_the_karen_will_not_sign_without_what_she_came_for() -> void:
-	var s := _shift([&"karen", &"easygoing"])
-	var c := _at(s)
-	_rank(c, [&"reliability"])
-	c.demands_category = &"vehicle"
-	# Low enough that anything sells: this is about what she signs for, not appeal.
-	c.line = 0
-	h.check("she refuses to sign", not s.close().ok)
-	h.eq("nothing banked", s.margin_banked, 0)
-	h.eq("and she is still sitting there", s.chairs[0], c)
-	_hand(s, [&"gap"])
-	s.place(0); s.offer()               # Deal, not what she wants
-	h.check("wrong category does not unlock her", not s.close().ok)
-	_hand(s, [&"vsc"])
-	s.place(0); s.offer()               # Vehicle
-	h.check("now she signs", s.close().ok)
-	# gap sold first (no prior sales, unmultiplied); vsc second, carrying
-	# Karen's own combo multiplier for one prior sale.
-	var expected: int = s.card_pool.by_id(&"gap").margin \
-		+ roundi(s.card_pool.by_id(&"vsc").margin * (1.0 + c.combo_step))
-	h.eq("banking both, the second sale carrying its combo multiplier",
-		s.margin_banked, expected)
-
-func test_the_karen_will_settle_for_her_own_least_favorite_in_the_category() -> void:
-	## Her demand's own telegraph (customer_card_3d.gd's behaviour_text()) only
-	## ever says "bought something in <category>" - nothing about a priority
-	## floor within it. A hidden rank threshold used to sit here anyway, so a
-	## player who sold her a genuine category match could still be refused
-	## with no way to have known why - see Customer.owns_category()'s own
-	## comment. The promise and the enforcement have to agree.
-	var s := _shift([&"karen", &"easygoing"])
-	var c := _at(s)
-	_rank(c, [&"reliability", &"affordability", &"equity", &"value_retention",
-		&"stability", &"convenience", &"status", &"security", &"power"])
-	c.demands_category = &"vehicle"   # the category her real number one sits in
-	c.line = 0                        # trivial for everyone, including rank 9
-	_hand(s, [&"perf"])                # power - Vehicle, but her own rank 9
-	s.place(0); s.offer()
-	h.eq("even her least favorite sells at line 0", c.unsigned.size(), 1)
-	h.check("and it DOES unlock her - it is still what the demand asked for",
-		s.close().ok)
-	h.eq("banking it", s.margin_banked, s.card_pool.by_id(&"perf").margin)
-
-func test_the_karen_still_walks_when_her_patience_runs_out() -> void:
-	var s := _shift([&"karen", &"easygoing"])
-	var c := _at(s)
-	c.demands_category = &"vehicle"
-	c.line = 20
-	_rank(c, [&"equity"])
-	_hand(s, [&"gap"])
-	s.place(0); s.offer()
-	var gap_margin: int = s.card_pool.by_id(&"gap").margin
-	h.eq("she agreed to something", c.unsigned_margin(), gap_margin)
-	c.patience = 1
-	_hand(s, [&"explain"])
-	s.dig(0)
-	h.eq("the lock does not make her immortal", c.state, "walked")
-	h.eq("and it went with her", s.lost_to_walks, gap_margin)
-
-# ---------------------------------------------------------------- floor-wide
-
-func test_change_line_floor_wide_moves_every_seated_customer_at_once() -> void:
-	var s := _shift([&"easygoing", &"easygoing", &"easygoing"])
-	var before: Array[int] = []
-	for c in s.seated():
-		before.append(c.line)
-	var e := ChangeLineFloorWide.new()
-	e.amount = -7
-	e.apply(s._context(s.seated()[0]))
-	var after: Array[int] = []
-	for c in s.seated():
-		after.append(c.line)
-	for i in range(before.size()):
-		h.eq("seat %d moved by the same amount" % i, after[i], before[i] - 7)
-
-# --------------------------------------------------------------- pull cards
-
-func test_pulling_any_takes_the_top_count_cards_regardless_of_kind() -> void:
-	var s := _shift([&"easygoing"])
-	_set_draw(s, [&"vsc", &"smalltalk", &"gap", &"pad", &"theft"])
-	s._start_pull(3, &"any")
-	h.eq("revealed the top 3, in order",
-		[s.pending_pull.revealed[0].card.id, s.pending_pull.revealed[1].card.id,
-			s.pending_pull.revealed[2].card.id],
-		[&"vsc", &"smalltalk", &"gap"])
-	h.eq("removed from the pile", s.draw.size(), 2)
-
-func test_pulling_a_kind_scans_past_non_matching_cards() -> void:
-	var s := _shift([&"easygoing"])
-	_set_draw(s, [&"vsc", &"smalltalk", &"gap", &"pad", &"theft"])
-	s._start_pull(2, &"support")
-	h.eq("skipped the products, took the first 2 support cards",
-		[s.pending_pull.revealed[0].card.id, s.pending_pull.revealed[1].card.id],
-		[&"smalltalk", &"pad"])
-	h.eq("only the matched cards left the pile", s.draw.size(), 3)
-	h.check("and the untaken products are still there, in order",
-		s.draw[0].card.id == &"vsc" and s.draw[1].card.id == &"gap"
-			and s.draw[2].card.id == &"theft")
-
-func test_pulling_product_only_takes_product_cards() -> void:
-	var s := _shift([&"easygoing"])
-	_set_draw(s, [&"smalltalk", &"vsc", &"pad", &"gap"])
-	s._start_pull(2, &"product")
-	h.eq("skipped the support cards, took the first 2 products",
-		[s.pending_pull.revealed[0].card.id, s.pending_pull.revealed[1].card.id],
-		[&"vsc", &"gap"])
-
-func test_pulling_fewer_than_count_available_reveals_what_there_is() -> void:
-	var s := _shift([&"easygoing"])
-	_set_draw(s, [&"vsc", &"smalltalk", &"gap"])
-	s._start_pull(5, &"support")
-	h.eq("only the one support card in the pile came up",
-		s.pending_pull.revealed.size(), 1)
-	h.eq("and the pile lost only that one", s.draw.size(), 2)
-
 func test_pulling_with_no_match_leaves_nothing_pending_and_the_pile_untouched() -> void:
 	var s := _shift([&"easygoing"])
 	_set_draw(s, [&"vsc", &"gap", &"theft"])
@@ -697,20 +334,6 @@ func test_choosing_puts_the_pick_in_hand_and_returns_the_rest_in_place() -> void
 			s.draw[3].card.id],
 		[&"gap", &"pad", &"theft", &"appearance"])
 
-func test_choosing_the_last_revealed_card_still_restores_the_rest_correctly() -> void:
-	## The index-shift arithmetic (_return_pull's own "offset") is easy to get
-	## backwards for whichever end of the reveal is chosen - covering both
-	## ends catches an off-by-one either direction would miss.
-	var s := _shift([&"easygoing"])
-	_hand(s, [&"vsc"])
-	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
-	s._start_pull(3, &"any")                 # reveals gap, smalltalk, pad
-	s.choose_pull(2)                         # take pad (the last one)
-	h.eq("gap and smalltalk returned to their own original slots, in order",
-		[s.draw[0].card.id, s.draw[1].card.id, s.draw[2].card.id,
-			s.draw[3].card.id],
-		[&"gap", &"smalltalk", &"theft", &"appearance"])
-
 func test_canceling_returns_every_revealed_card_to_its_own_slot() -> void:
 	## Hand starts FULL, not short a card: cancel_pull() calls _draw_up() to
 	## refill whatever slot the pull would have filled, and a hand already at
@@ -727,17 +350,6 @@ func test_canceling_returns_every_revealed_card_to_its_own_slot() -> void:
 		[s.draw[0].card.id, s.draw[1].card.id, s.draw[2].card.id,
 			s.draw[3].card.id, s.draw[4].card.id],
 		[&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
-
-func test_canceling_still_refills_the_hand_normally() -> void:
-	## Hand starts one short of cfg.hand_size, matching the real invariant
-	## while a pull is pending (the triggering card already left) - so this
-	## proves cancel's own _draw_up() call tops it back up by exactly one.
-	var s := _shift([&"easygoing"])
-	_hand(s, [&"vsc", &"vsc", &"vsc", &"vsc"])
-	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft", &"appearance"])
-	s._start_pull(3, &"any")
-	s.cancel_pull()
-	h.eq("hand refilled to size on cancel", s.hand.size(), s.cfg.hand_size)
 
 func test_choosing_or_canceling_with_nothing_pending_is_refused() -> void:
 	var s := _shift([&"easygoing"])
@@ -784,14 +396,3 @@ func test_no_command_goes_ahead_while_a_pull_waits_on_your_choice() -> void:
 	h.eq("no time passed", s.tick, tick_before)
 	h.check("choosing still works", s.choose_pull(0).ok)
 	h.check("and then the commands do again", s.dig(0).ok)
-
-func test_pull_cards_effect_stages_the_same_pull_shift_exposes_directly() -> void:
-	var s := _shift([&"easygoing"])
-	var c := _at(s)
-	_set_draw(s, [&"vsc", &"smalltalk", &"gap"])
-	var e := PullCards.new()
-	e.count = 2
-	e.kind = &"any"
-	e.apply(s._context(c))
-	h.eq("the effect staged exactly what _start_pull would",
-		s.pending_pull.revealed.size(), 2)

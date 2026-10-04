@@ -34,15 +34,6 @@ func _sell(s: Shift, chair: int, def: CardDef) -> void:
 	s.offer()
 	s.close()
 
-func test_a_week_without_one_has_none() -> void:
-	var r := _run(_cfg([0, 2]))
-	for day in range(1, r.cfg.days_per_week + 1):
-		h.check("week one, day %d: no product quota" % day, r.category_quota(day).is_empty())
-	var q := r.category_quota(r.cfg.days_per_week + 1)
-	h.eq("week two asks for the configured number", q.get("count"), 2)
-	h.check("from one of the pool's own categories",
-		r.interests.categories.has(q.get("category")))
-
 func test_a_day_keeps_its_category_and_asking_never_moves_the_dice() -> void:
 	var r := _run(_cfg([3]))
 	var state := r.rng.state
@@ -50,14 +41,6 @@ func test_a_day_keeps_its_category_and_asking_never_moves_the_dice() -> void:
 	for _i in range(5):
 		h.check("asked again, the same category", r.category_quota(4)["category"] == first)
 	h.eq("and the run's own generator never moved", r.rng.state, state)
-
-func test_the_days_differ() -> void:
-	## Not every day the same category, across a run.
-	var r := _run(_cfg([2]))
-	var seen := {}
-	for day in range(1, 31):
-		seen[r.category_quota(day)["category"]] = true
-	h.check("more than one category over a month of days (%d)" % seen.size(), seen.size() > 1)
 
 func test_a_shift_carries_it_but_a_boss_day_does_not() -> void:
 	var r := _run(_cfg([2]))

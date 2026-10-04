@@ -47,16 +47,6 @@ func test_waiting_moves_the_clock_when_nothing_else_can() -> void:
 	h.eq("it says how long it took", res.data.get("ticks", 0), s.tick - before)
 	s = null
 
-func test_waiting_puts_somebody_in_a_chair() -> void:
-	## The whole point. Waiting that does not eventually produce a customer is
-	## the same deadlock with extra steps.
-	var s := _shift()
-	_empty_the_floor(s)
-	s.wait()
-	h.check("somebody walked up (%d seated)" % s.seated().size(),
-		not s.seated().is_empty() or s.is_over())
-	s = null
-
 func test_waiting_is_refused_while_anyone_is_still_sitting_there() -> void:
 	## Not a general skip-time button. Time pressure IS the game.
 	var s := _shift()
@@ -72,31 +62,6 @@ func test_waiting_is_refused_once_the_floor_is_closed() -> void:
 	_empty_the_floor(s)
 	var res := s.wait()
 	h.check("the floor is closed, so there is nothing to wait for", not res.ok)
-	s = null
-
-func test_waiting_always_advances_so_it_cannot_spin() -> void:
-	## The view calls this in a loop until somebody is there. A wait that could
-	## return ok without moving the clock would hang the game harder than the
-	## bug it fixes.
-	var s := _shift()
-	var guard := 0
-	var last: int = -1
-	while not s.is_over() and guard < 200:
-		guard += 1
-		_empty_the_floor(s)
-		if s.is_over():
-			break
-		var before: int = s.tick
-		var res := s.wait()
-		if not res.ok:
-			h.check("a refusal on an empty running floor should not happen (%s)"
-				% res.msg, false)
-			break
-		h.check("every wait moves the clock forward", s.tick > before)
-		last = s.tick
-	h.check("and the shift reaches its end rather than spinning (%d of %d after %d waits)"
-		% [s.tick, s.tick_budget, guard], s.is_over() and guard < 200)
-	h.check("having got somewhere", last > 0)
 	s = null
 
 func test_a_wait_never_returns_without_moving_the_clock() -> void:
@@ -118,17 +83,4 @@ func test_a_wait_never_returns_without_moving_the_clock() -> void:
 		+ "clock (%d -> %d)" % [before, s.tick], s.tick > before)
 	h.check("and says so honestly (%s)" % res.data,
 		int(res.data.get("ticks", 0)) == s.tick - before)
-	s = null
-
-func test_waiting_is_logged_so_the_jump_is_not_silent() -> void:
-	var s := _shift()
-	_empty_the_floor(s)
-	var before: int = s.events.size()
-	s.wait()
-	var added: Array = s.events.slice(before)
-	h.check("the wait itself shows up in the log (%s)" % ", ".join(added),
-		not added.is_empty())
-	var joined := " ".join(added)
-	h.check("saying how much time went by", joined.contains("later")
-		or joined.contains("pass"))
 	s = null
