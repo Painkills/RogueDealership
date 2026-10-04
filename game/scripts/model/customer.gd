@@ -112,12 +112,6 @@ func top_interest_id() -> StringName:
 	return &""
 
 
-## Their highest-priority interest that is not already sold - what Read the
-## Room should actually point at. Naming their number one after you have
-## already closed it is a read that tells you nothing; naming whatever is
-## next is the same promise the card makes ("their number one") kept once
-## the literal number one is off the table. Falls back to top_interest_id()
-## only in the unreachable case where every one of their interests is sold.
 ## Their `n` highest-priority interests not yet sold, best first.
 func top_unsold_interest_ids(n: int) -> Array[StringName]:
 	var sold := {}
@@ -133,6 +127,12 @@ func top_unsold_interest_ids(n: int) -> Array[StringName]:
 		out.append(StringName(iid))
 	return out
 
+## Their highest-priority interest that is not already sold - what Read the
+## Room should actually point at. Naming their number one after you have
+## already closed it is a read that tells you nothing; naming whatever is
+## next is the same promise the card makes ("their number one") kept once
+## the literal number one is off the table. Falls back to top_interest_id()
+## only in the unreachable case where every one of their interests is sold.
 func top_unsold_interest_id() -> StringName:
 	var sold := {}
 	for u in unsigned:

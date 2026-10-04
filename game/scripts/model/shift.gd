@@ -11,9 +11,11 @@ var card_pool: CardPool
 var archetypes: ArchetypePool
 var dialogue: DialoguePool          ## may be null - a shift with no lines is silent
 var rng := RandomNumberGenerator.new()
-## What YOU say is picked from its own stream, seeded from the shift's, so a
-## card that talks draws nothing from `rng`: adding lines, or giving a card
-## something to say, never changes who walks in next or what they want.
+## Everything anybody SAYS - your lines, their replies, their chatter, what an
+## action or a demand makes them say - is picked from its own stream, seeded
+## from the shift's, so speaking draws nothing from `rng`: adding lines, or
+## giving a card or a customer something to say, never changes who walks in
+## next or what they want.
 var voice_rng := RandomNumberGenerator.new()
 
 var tick: int = 0
@@ -389,11 +391,6 @@ func _walk(chair: int) -> void:
 	# a surprise on a screen five minutes later. maxi() rather than a bare
 	# subtraction so a walkout can never be the thing that makes standing READ
 	# negative, only the thing that makes is_over() true.
-	# Immediate, not deferred to report() - the whole point of costing standing
-	# per walkout is that it should sting the moment it happens, not show up as
-	# a surprise on a screen five minutes later. maxi() rather than a bare
-	# subtraction so a walkout can never be the thing that makes standing READ
-	# negative, only the thing that makes is_over() true.
 	var before := standing
 	standing = maxi(0, standing - cfg.standing_cost_per_walkout)
 	_standing_lost_to_walkouts += before - standing
@@ -663,6 +660,12 @@ func _here() -> Array:
 	## [customer, refusal]. Every action with a customer starts here.
 	if is_over():
 		return [null, Result.new(false, "The floor is closed.")]
+	# A pull is a choice you owe: a second card played over it would stage a
+	# second pull on top and the first one's revealed cards would be gone from
+	# the deck for good. The view locks its own input for the same reason; this
+	# is the rule itself, so nothing that reaches the model can get round it.
+	if pending_pull != null:
+		return [null, Result.new(false, PULL_FIRST)]
 	if at == null:
 		return [null, Result.new(false,
 			"You have to go stand with someone first.")]
@@ -861,6 +864,9 @@ func _speak(tags: Array[StringName], c: Customer, product_id: StringName,
 	return l
 
 
+## What every command says while a pull is waiting on your choice.
+const PULL_FIRST := "Choose one of the revealed cards first, or put them back."
+
 ## How many of a speaker's latest lines a new one steers clear of repeating -
 ## see DialoguePool.pick_line()'s `avoid`.
 const RECENT_LINES := 4
@@ -960,7 +966,7 @@ func _support(c: Customer, index: int) -> Result:
 			if c.offer else &""
 		# An answer to what you just said, where you said something with a key
 		# - or silence, never a non sequitur (DialogueLine.key).
-		var reply := dialogue.pick_line(rng, def.dialogue_tags, c.archetype.id,
+		var reply := dialogue.pick_line(voice_rng, def.dialogue_tags, c.archetype.id,
 			product_id, band, _objection_of(c), c.recent_lines,
 			yours.key if yours != null else &"")
 		if reply != null:
@@ -1120,6 +1126,8 @@ func dig(index: int) -> Result:
 	## Rummage for the right pitch. The floor pays for it either way.
 	if is_over():
 		return Result.new(false, "The floor is closed.")
+	if pending_pull != null:
+		return Result.new(false, PULL_FIRST)
 	if index < 0 or index >= hand.size():
 		return Result.new(false, "No such card.")
 	var inst: CardInstance = hand.pop_at(index)
@@ -1359,7 +1367,7 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 			var product_id: StringName = c.offer.product.id if c.offer else &""
 			var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
 				if c.offer else &""
-			said = dialogue.pick(rng, tags, c.archetype.id, product_id, band)
+			said = dialogue.pick(voice_rng, tags, c.archetype.id, product_id, band)
 
 	# Same shape fire() appends, so _drain_log() renders it without knowing a
 	# demand from an ordinary action.
@@ -1382,7 +1390,7 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 func _chatter(c: Customer, tags: Array[StringName], product_id: StringName = &"") -> void:
 	if dialogue == null:
 		return
-	var said := dialogue.pick(rng, tags, c.archetype.id, product_id, &"", &"",
+	var said := dialogue.pick(voice_rng, tags, c.archetype.id, product_id, &"", &"",
 		c.recent_lines)
 	if said == "":
 		return
@@ -1486,7 +1494,7 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 			var product_id: StringName = c.offer.product.id if c.offer else &""
 			var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
 				if c.offer else &""
-			said = dialogue.pick(rng, act.dialogue_tags, c.archetype.id,
+			said = dialogue.pick(voice_rng, act.dialogue_tags, c.archetype.id,
 				product_id, band)
 
 		stat["actions_fired"] = int(stat["actions_fired"]) + 1

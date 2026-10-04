@@ -752,6 +752,39 @@ func test_choosing_an_out_of_range_index_is_refused_and_leaves_the_pull_intact()
 	h.check("refused", not r.ok)
 	h.check("the pull is still pending", s.pending_pull != null)
 
+func test_no_command_goes_ahead_while_a_pull_waits_on_your_choice() -> void:
+	# A second card played over a pending pull would stage another on top of it
+	# and the first one's revealed cards would be gone from the deck for good -
+	# so the rule is the model's, not just the view's input lock.
+	var s := _shift([&"easygoing"])
+	_at(s)
+	# Something on the table and a support card to play on it, so that each
+	# command below WOULD go ahead were it not for the pull.
+	_hand(s, [&"smalltalk", &"vsc"])
+	h.check("a product goes on the table", s.place(1).ok)
+	var support := -1
+	for i in range(s.hand.size()):
+		if not s.hand[i].is_product():
+			support = i
+	h.check("and there is a support card to play on it", support >= 0)
+	_set_draw(s, [&"vsc", &"gap", &"theft"])
+	s._start_pull(2, &"any")
+	var staged: PendingPull = s.pending_pull
+	var held: int = staged.revealed.size()
+	var hand_before: int = s.hand.size()
+	var tick_before: int = s.tick
+	h.check("playing a card is refused", not s.play_card(support).ok)
+	h.check("digging is refused", not s.dig(0).ok)
+	h.check("offering is refused", not s.offer().ok)
+	h.check("closing is refused", not s.close().ok)
+	h.check("dropping is refused", not s.drop_offer().ok)
+	h.check("the same pull is still the one waiting", s.pending_pull == staged)
+	h.eq("none of what it revealed went anywhere", staged.revealed.size(), held)
+	h.eq("nothing left the hand", s.hand.size(), hand_before)
+	h.eq("no time passed", s.tick, tick_before)
+	h.check("choosing still works", s.choose_pull(0).ok)
+	h.check("and then the commands do again", s.dig(0).ok)
+
 func test_pull_cards_effect_stages_the_same_pull_shift_exposes_directly() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)

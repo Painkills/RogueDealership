@@ -329,6 +329,40 @@ func test_a_shift_with_no_dialogue_pool_still_logs_every_card() -> void:
 	h.eq("still logged", s.action_log.size(), 1)
 	h.eq("but silent - no pool to draw from", s.action_log[0]["dialogue"], "")
 
+func test_speaking_never_moves_the_games_own_random_stream() -> void:
+	# Everybody's words come from the voice's own stream. So the same shift
+	# played the same way, with a library to speak from and without one, must
+	# leave the game's dice in exactly the same place - adding lines (or a
+	# library at all) never changes who walks in next or what they want.
+	var talking := _shift([&"karen", &"hawk", &"easygoing"])
+	var quiet := _shift([&"karen", &"hawk", &"easygoing"])
+	quiet.dialogue = null
+	var spoke := 0
+	for s in [talking, quiet]:
+		for step in range(60):
+			if s.is_over():
+				break
+			s.approach(step % s.chairs.size())
+			for i in range(s.hand.size()):
+				if s.hand[i].is_product():
+					s.place(i)
+					break
+			for i in range(s.hand.size()):
+				if not s.hand[i].is_product():
+					s.play_card(i)
+					break
+			s.offer()
+			if step % 3 == 0:
+				s.drop_offer()
+		if s == talking:
+			for entry in s.action_log:
+				if str(entry.get("dialogue", "")) != "":
+					spoke += 1
+	h.check("they did speak, so the comparison means something", spoke > 0)
+	h.eq("the same clock", talking.tick, quiet.tick)
+	h.eq("the game's dice are where they were without any speech",
+		talking.rng.state, quiet.rng.state)
+
 func test_the_band_a_line_is_matched_against_is_the_one_after_the_card_lands() -> void:
 	var cold_texts: Array[String] = []
 	for l in _pool().lines:
