@@ -16,7 +16,7 @@ amount = -4
 
 [sub_resource type="Resource" id="Sub_calm"]
 script = ExtResource("2_pat")
-amount = 5
+amount = 4
 
 [sub_resource type="Resource" id="Sub_rsv"]
 script = ExtResource("3_rsv")
@@ -28,7 +28,7 @@ display_name = "Needs a minute to talk it over"
 telegraph = "THINKING"
 dialogue_tags_met = Array[StringName]([&"relief"])
 dialogue_tags_missed = Array[StringName]([&"ignored"])
-ticks = 5
+ticks = 3
 resolve = SubResource("Sub_rsv")
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_push")])
 relief = Array[ExtResource("1_eff")]([SubResource("Sub_room"), SubResource("Sub_calm")])
