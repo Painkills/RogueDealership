@@ -35,6 +35,6 @@ tell = "brought a printout, and keeps saying 'out the door'"
 line = 28
 line_per_sale = 2
 combo_step = 0.25
-min_shift = 4
+min_shift = 3
 needs_concession_past_rank = 5
 actions = Array[ExtResource("1_act")]([SubResource("Sub_price_check")])

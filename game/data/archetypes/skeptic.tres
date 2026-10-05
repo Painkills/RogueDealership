@@ -13,5 +13,5 @@ tell = "arms folded, and has already said 'I've read about this stuff' twice"
 line = 20
 line_per_sale = 0
 combo_step = 0.35
-min_shift = 8
+min_shift = 5
 rejects_every_nth_card = 3

@@ -55,5 +55,5 @@ pattern = "Do not diagnose. Sell them SOMETHING, now."
 tell = "keeps glancing at the lot, half out of the chair already"
 patience = 9
 line_per_sale = 2
-min_shift = 6
+min_shift = 4
 actions = Array[ExtResource("1_apes3")]([SubResource("Resource_fjiux"), SubResource("Sub_be_back")])

@@ -35,5 +35,5 @@ display_name = "Tech Enthusiast"
 pattern = "Answer his questions when he asks them: an appeal card on the spot pays $300 on the product."
 tell = "asked about the drivetrain before asking about the price"
 combo_step = 0.2
-min_shift = 3
+min_shift = 2
 actions = Array[ExtResource("1_miwln")]([SubResource("Resource_a55j1")])

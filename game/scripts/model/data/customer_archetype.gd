@@ -42,7 +42,7 @@ class_name CustomerArchetype extends Resource
 @export var premium_interests: Array[Interest] = []
 @export var premium_margin_scale: float = 1.0
 ## The day of the run this archetype joins the pool. The run opens on the easy
-## ones and adds one more type a day, so each new problem arrives on its own.
+## ones and adds two more types a day.
 ## Defaults to 1, so a bare shift is unaffected.
 @export var min_shift: int = 1
 ## How often they come in, relative to everyone else in the pool - not a
