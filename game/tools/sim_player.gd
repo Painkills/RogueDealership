@@ -32,6 +32,8 @@ static func _est_line(c: Customer) -> int:
 static func _est_rank(c: Customer, iid: StringName) -> int:
 	if not fog or c.known_ranks.has(iid):
 		return int(c.ranks[iid])
+	if bool(c.cfg.get("ranks_by_category", false)):
+		return _est_rank_by_category(c, iid)
 	# Someone who announces the category they came for wants it most.
 	if c.demands_category != null \
 			and c.interests().by_id(iid).category.id == c.demands_category:
@@ -43,6 +45,57 @@ static func _est_rank(c: Customer, iid: StringName) -> int:
 		if i.id == iid:
 			return GUESS_BOTTOM
 	return GUESS_MIDDLE
+
+## Ranks dealt a category at a time (ShiftConfig.ranks_by_category): one rank
+## known places its whole category, so this reasons by block - the ranks a
+## category's interests share. A category is in the block a known rank puts it
+## in; failing that, the first block still free if it is the one Active
+## Listening named, the one they announced (the Karen) or the one their
+## archetype leans to, the last free block if they lean away from it, and
+## otherwise any free block. The guess is the middle of the ranks still open
+## there.
+static func _est_rank_by_category(c: Customer, iid: StringName) -> int:
+	var pool := c.interests()
+	var cat: Category = pool.by_id(iid).category
+	var size: int = maxi(1, pool.in_category(cat).size())
+	var blocks := {}            # category id -> block, from ranks already known
+	for known in c.known_ranks:
+		var known_cat: Category = pool.by_id(known).category
+		blocks[known_cat.id] = (int(c.known_ranks[known]) - 1) / size
+	var free: Array[int] = []
+	for b in range(pool.categories.size()):
+		if not blocks.values().has(b):
+			free.append(b)
+	var where: Array[int] = []
+	if blocks.has(cat.id):
+		where = [int(blocks[cat.id])]
+	elif not free.is_empty():
+		if c.known_top_category == cat.id or c.demands_category == cat.id \
+				or _leans(c.archetype.top_categories, cat):
+			where = [free[0]]
+		elif _leans(c.archetype.bottom_categories, cat):
+			where = [free[-1]]
+		else:
+			where = free
+	var open: Array[int] = []
+	for b in where:
+		for r in range(b * size + 1, b * size + size + 1):
+			open.append(r)
+	for other in pool.in_category(cat):
+		if c.known_ranks.has(other.id):
+			open.erase(int(c.known_ranks[other.id]))
+	if open.is_empty():
+		return GUESS_MIDDLE
+	var total := 0
+	for r in open:
+		total += r
+	return roundi(float(total) / open.size())
+
+static func _leans(cats: Array, cat: Category) -> bool:
+	for x in cats:
+		if x != null and x.id == cat.id:
+			return true
+	return false
 
 ## The appeal this player expects `iid` to open at with `c`.
 static func _est_appeal(c: Customer, iid: StringName) -> int:

@@ -10,6 +10,9 @@
 [ext_resource type="Resource" path="res://data/interests/security.tres" id="8_ojyvg"]
 [ext_resource type="Resource" path="res://data/interests/power.tres" id="9_bpiu1"]
 [ext_resource type="Resource" uid="uid://cr34f0lqds7wo" path="res://data/demands/show_me.tres" id="10_dmd"]
+[ext_resource type="Script" path="res://scripts/model/data/category.gd" id="20_cat"]
+[ext_resource type="Resource" path="res://data/interests/vehicle.tres" id="21_vehicle"]
+[ext_resource type="Resource" path="res://data/interests/deal.tres" id="22_deal"]
 
 [sub_resource type="Resource" id="Resource_nc07q"]
 script = ExtResource("3_o067f")
@@ -40,5 +43,7 @@ tell = "asked about the drivetrain before asking about the price"
 combo_step = 0.2
 top_interests = Array[ExtResource("5_ccba3")]([ExtResource("8_ojyvg"), ExtResource("9_bpiu1")])
 bottom_interests = Array[ExtResource("5_ccba3")]([ExtResource("6_ctt4j")])
+top_categories = Array[ExtResource("20_cat")]([ExtResource("21_vehicle")])
+bottom_categories = Array[ExtResource("20_cat")]([ExtResource("22_deal")])
 min_shift = 3
 actions = Array[ExtResource("1_miwln")]([SubResource("Resource_a55j1")])

@@ -28,6 +28,9 @@ var _upgrades: DealershipUpgradePool = load("res://data/dealership_upgrades/upgr
 ## shop=greedy (default): free pick, buy, upgrade. shop=upgrades: free pick and
 ## upgrades only. shop=none: nothing at all - the starter deck all run.
 var _shop_mode := "greedy"
+## boss=take (default): work a boss whenever one is on the calendar. boss=skip:
+## never - the regular shift the strategy wants instead.
+var _boss_mode := "take"
 
 ## Each strategy: which tiers it would rather work on `day`, best first.
 var _strategies := {
@@ -63,6 +66,10 @@ func _what_ifs() -> void:
 		if arg == "no_upgrades":
 			_upgrades = null
 			print("No dealership upgrades.")
+			continue
+		if parts.size() == 2 and parts[0] == "boss":
+			_boss_mode = parts[1]
+			print("boss policy: %s" % _boss_mode)
 			continue
 		if parts.size() == 2 and parts[0] == "shop":
 			_shop_mode = parts[1]
@@ -125,9 +132,13 @@ func _one_run(strategy: Callable, seed_value: int) -> Dictionary:
 	r["score"] = int(Score.tally(run)["total"])
 	return r
 
-## The first tier the strategy wants that today offers; a day with nothing
-## else (a boss) gets what it has.
+## A boss when one is offered (boss=take, the default) - or never (boss=skip);
+## then the first tier the strategy wants that today offers.
 func _choose(offers: Array[ShiftProfile], wants: Array) -> ShiftProfile:
+	if _boss_mode == "take":
+		for p in offers:
+			if p.is_boss_day():
+				return p
 	for id in wants:
 		for p in offers:
 			if p.id == id:

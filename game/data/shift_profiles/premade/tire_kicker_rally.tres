@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
+[ext_resource type="Resource" uid="uid://dm5nvbm30td1p" path="res://data/archetypes/kicker.tres" id="2_kicker"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="3_prof"]
+
+[resource]
+script = ExtResource("3_prof")
+pay_scale = 1.0
+commission = 0.6
+id = &"tire_kicker_rally"
+display_name = "Tire Kicker Rally"
+blurb = "Every desk is half out of the chair."
+only_archetypes = Array[ExtResource("1_arch")]([ExtResource("2_kicker")])
+chance = 1.0
+heal_up_to = 0.25
+upgrades = 0
+free_pick_min_rarity = 2
+dealership_upgrades = 3

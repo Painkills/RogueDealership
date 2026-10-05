@@ -849,11 +849,14 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1, _run.cfg.days_per_week)
 	_root._open_the_picker()
 	events = _todays_events()
-	var tag: Label = (events[0] as Node).find_child("PremadeTag", true, false) as Label \
-		if events.size() == 1 else null
-	_check("a boss day is today's only shift, and says so (%s)"
-		% (tag.text if tag != null else "%d shifts" % events.size()),
-		events.size() == 1 and tag != null and tag.text.begins_with("BOSS DAY"))
+	var boss_tags: Array = []
+	for e in events:
+		var t := (e as Node).find_child("PremadeTag", true, false) as Label
+		if t != null and t.text.begins_with("BOSS"):
+			boss_tags.append(t)
+	_check("a boss takes one of today's shifts' places, and says so (%d shifts, %d bosses)"
+		% [events.size(), boss_tags.size()],
+		events.size() == _run.todays_shifts().size() and boss_tags.size() == 1)
 
 	_run.week = was
 	_root._open_the_picker()
@@ -1145,11 +1148,12 @@ func _check_week_two_shows_the_product_quota() -> void:
 	_check("the week's days name their product quotas (%d labels, %d days)"
 		% [shown.size(), expected.size()],
 		shown.size() == expected.size() and not expected.is_empty())
-	var offers := _run.todays_shifts()
-	if q.is_empty() or offers.is_empty() or offers[0].is_boss_day():
+	# A boss carries no product quota, so the first of today's regular shifts.
+	var regular := _run.todays_shifts().filter(func(p): return not p.is_boss_day())
+	if q.is_empty() or regular.is_empty():
 		return
-	var s := _run.start_shift(offers[0])
-	_root._chosen_profile = offers[0]
+	var s := _run.start_shift(regular[0])
+	_root._chosen_profile = regular[0]
 	_root._show_only(_root._shift_view)
 	_root._shift_view.setup(s, _run.standing)
 	var label := _root._shift_view.get_node(^"%ProductQuotaLabel") as Label

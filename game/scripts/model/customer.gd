@@ -159,27 +159,44 @@ func interests() -> InterestPool:
 
 
 func reveal_room(exact: bool = false) -> void:
-	## The base read hands you the Line - which, since offering stopped
-	## teaching it, is the ONLY way to learn it - and names their top unsold
-	## interest with its rank. The upgrade also marks the three they want most
-	## that are still open (known_top_three).
+	## Active Listening. The Line, always - since offering stopped teaching it,
+	## this is the ONLY way to learn it - and what they want most that is still
+	## open. The upgrade gives you that in order.
 	##
-	## Both name whichever of their interests is highest-priority and NOT
-	## already sold - top_unsold_interest_id(), not top_interest_id(). A read
-	## that keeps naming an interest you already closed would be a read that
-	## stops telling you anything the moment you are doing well.
+	## Ranked by category (ShiftConfig.ranks_by_category), what they want most
+	## is their favourite category with anything left in it: its unsold
+	## interests are marked (known_top_three) and the category named; the
+	## upgrade adds each one's rank. Otherwise it is their top unsold interest,
+	## with its rank, and the upgrade marks the three they want most still open,
+	## each with its rank.
+	##
+	## Both read whatever is highest-priority and NOT already sold. A read that
+	## keeps naming what you already closed would stop telling you anything the
+	## moment you are doing well.
 	known_line = true
 	var top := top_unsold_interest_id()
-	known_top_category = _interests.by_id(top).category.id
+	var cat: Category = _interests.by_id(top).category
+	known_top_category = cat.id if cat != null else null
+	if bool(cfg.get("ranks_by_category", false)) and cat != null:
+		var open: Array[StringName] = []
+		for iid in top_unsold_interest_ids(ranks.size()):
+			var i := _interests.by_id(iid)
+			if i.category != null and i.category.id == cat.id:
+				open.append(iid)
+		known_top_three = open
+		if exact:
+			for iid in open:
+				known_ranks[iid] = int(ranks[iid])
+		return
 	# Recorded as a known RANK rather than its own flag: everything that reads
 	# priorities already walks known_ranks, so this needs no new case anywhere
 	# downstream of here. The rank is whatever top's real rank is - 2nd, 3rd,
 	# whatever is left - not hardcoded to 1.
 	known_ranks[top] = int(ranks[top])
-	# The upgrade marks the three they want most that are still open - which
-	# three, not in what order.
 	if exact:
 		known_top_three = top_unsold_interest_ids(3)
+		for iid in known_top_three:
+			known_ranks[iid] = int(ranks[iid])
 
 
 func owns(product_id: StringName) -> bool:
@@ -209,7 +226,7 @@ func leaving_soon() -> bool:
 
 static func make_ranks(arch: CustomerArchetype, pool: InterestPool,
 		rng: RandomNumberGenerator, prior_slip: float,
-		favourites: Array[Interest] = []) -> Dictionary:
+		favourites: Array[Interest] = [], by_category: bool = false) -> Dictionary:
 	## Seed the archetype's priors into the top and bottom thirds, shuffle the
 	## rest. prior_slip is what keeps a prior from being a lookup table: each
 	## seeded interest has that chance of being left to the shuffle instead,
@@ -218,6 +235,11 @@ static func make_ranks(arch: CustomerArchetype, pool: InterestPool,
 	## `favourites`, when given, ARE the top three, no slip - the Karen's
 	## demanded category, which she wants most because it is what she came in
 	## for.
+	##
+	## `by_category`: dealt a category at a time instead - see
+	## ShiftConfig.ranks_by_category and _ranks_by_category().
+	if by_category:
+		return _ranks_by_category(arch, pool, rng, prior_slip, favourites)
 	var top: Array = []
 	if not favourites.is_empty():
 		for i in favourites:
@@ -260,6 +282,56 @@ static func make_ranks(arch: CustomerArchetype, pool: InterestPool,
 	var out := {}
 	for idx in range(n):
 		out[slots[idx]] = idx + 1
+	return out
+
+
+## Ranks a category at a time: their favourite category takes the first block
+## of ranks, the next category the block after it, and so on, shuffled within
+## each block. The favourite is the category of `favourites` when given (the
+## Karen's, no slip), or one of the archetype's top_categories unless the read
+## slips; the least favourite, one of its bottom_categories the same way. Every
+## other category's place is shuffled.
+static func _ranks_by_category(arch: CustomerArchetype, pool: InterestPool,
+		rng: RandomNumberGenerator, prior_slip: float,
+		favourites: Array[Interest]) -> Dictionary:
+	var top: Category = null
+	if not favourites.is_empty():
+		top = favourites[0].category
+	elif not arch.top_categories.is_empty() and rng.randf() >= prior_slip:
+		top = arch.top_categories[rng.randi_range(0, arch.top_categories.size() - 1)]
+	var bottom: Category = null
+	if not arch.bottom_categories.is_empty() and rng.randf() >= prior_slip:
+		bottom = arch.bottom_categories[rng.randi_range(0, arch.bottom_categories.size() - 1)]
+	if top != null and bottom != null and bottom.id == top.id:
+		bottom = null
+	var middle: Array = []
+	for cat in pool.categories:
+		if (top == null or cat.id != top.id) and (bottom == null or cat.id != bottom.id):
+			middle.append(cat)
+	_shuffle(middle, rng)
+	var order: Array = []
+	if top != null:
+		order.append(top)
+	order.append_array(middle)
+	if bottom != null:
+		order.append(bottom)
+
+	var out := {}
+	var rank := 1
+	for cat in order:
+		var block: Array = []
+		for i in pool.interests:
+			if i.category != null and i.category.id == cat.id:
+				block.append(i.id)
+		_shuffle(block, rng)
+		for iid in block:
+			out[iid] = rank
+			rank += 1
+	# An interest in no category the pool lists still needs a rank: last.
+	for i in pool.interests:
+		if not out.has(i.id):
+			out[i.id] = rank
+			rank += 1
 	return out
 
 

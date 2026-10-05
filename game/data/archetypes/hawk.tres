@@ -6,6 +6,8 @@
 [ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="8_ut76j"]
 [ext_resource type="Resource" path="res://data/interests/affordability.tres" id="9_5fsrg"]
 [ext_resource type="Resource" path="res://data/interests/equity.tres" id="10_r357r"]
+[ext_resource type="Script" path="res://scripts/model/data/category.gd" id="20_cat"]
+[ext_resource type="Resource" path="res://data/interests/deal.tres" id="21_deal"]
 
 [resource]
 script = ExtResource("8_ut76j")
@@ -20,5 +22,6 @@ line_per_sale = 2
 combo_step = 0.25
 top_interests = Array[ExtResource("5_jnbft")]([ExtResource("9_5fsrg"), ExtResource("10_r357r")])
 bottom_interests = Array[ExtResource("5_jnbft")]([ExtResource("6_pq1hs"), ExtResource("7_bj5p4")])
+top_categories = Array[ExtResource("20_cat")]([ExtResource("21_deal")])
 min_shift = 4
 needs_concession_past_rank = 5

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ShiftCategory" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_category.gd" id="1_4wy7u"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="2_ojuxv"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/tech_expo.tres" id="3_tech"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/tire_kicker_rally.tres" id="4_kicker"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/karen_convention.tres" id="5_karen"]
+
+[resource]
+script = ExtResource("1_4wy7u")
+display_name = "Boss shifts, Wednesdays and Fridays"
+days = 20
+boss_day = true
+shifts = Array[ExtResource("2_ojuxv")]([ExtResource("3_tech"), ExtResource("4_kicker"), ExtResource("5_karen")])

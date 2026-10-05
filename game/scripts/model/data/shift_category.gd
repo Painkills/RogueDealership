@@ -13,7 +13,9 @@ const SLOTS: Array[StringName] = [&"morning", &"midday", &"night"]
 @export_flags("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun") var days: int = 0
 ## The regular shifts' slots its shifts may take. None ticked = any of them.
 @export_flags("Morning", "Midday", "Night") var slots: int = 0
-## One of these coming up is the day's only shift - nothing else to pick.
+## Bosses: one of these coming up takes the place of one of the day's shifts,
+## at random (see Week) - a choice on the calendar, marked as a boss. A boss
+## shift carries no product quota; it is its own test.
 @export var boss_day: bool = false
 ## Weeks of the run its shifts may be dealt in. None ticked = any week - a
 ## shift tuned for week one (a fixed quota, say) ticks only Week 1.

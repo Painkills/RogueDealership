@@ -102,11 +102,16 @@ func setup(run: RunState, history: Array) -> void:
 	if new_pay > was_pay:
 		_next.text += " Good news: your base pay goes up %s, to %s a shift." \
 			% [Format.money(new_pay - was_pay), Format.money(new_pay)]
+	# Every boss on next week's calendar, by day.
 	if run.week != null:
-		var finale := run.week.offers(next_last)
-		if finale.size() == 1 and finale[0].is_boss_day():
-			_next.text += " %s: %s - boss day." % [
-				_day_name(next_last - 1, per_week).capitalize(), finale[0].display_name]
+		var bosses: Array[String] = []
+		for day in range(next_first, next_last + 1):
+			for p in run.week.offers(day):
+				if p.is_boss_day():
+					bosses.append("%s %s" % [_day_name(day - 1, per_week).capitalize(),
+						p.display_name])
+		if not bosses.is_empty():
+			_next.text += " Boss shifts: %s." % ", ".join(bosses)
 	_write_memo(run, week)
 	_start.text = "START WEEK %d" % (week + 1)
 

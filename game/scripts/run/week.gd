@@ -3,11 +3,13 @@ class_name Week extends RefCounted
 ## starts - so opening the calendar again never deals a day differently.
 ##
 ## Mostly the regular tiers. A premade shift from one of the pool's categories
-## takes a tier's slot on a day it comes up; a boss day's takes the whole day:
+## takes a tier's slot on a day it comes up, and so does a boss:
 ##
 ## 1. Boss categories that allow the day roll first. If one of their shifts
-##    comes up, it is the day's only shift.
-## 2. Otherwise each tier offered that day - from its own from_day on - rolls
+##    comes up, it takes the place of one of the day's shifts, at random -
+##    a regular one where it can, and only in a slot its category allows - so
+##    it is a choice on the calendar, not the whole day.
+## 2. Each tier offered that day - from its own from_day on - rolls
 ##    its slot between the premade shifts allowed in it and the tier itself.
 ##    Each premade shift comes up with its own chance and the tier with
 ##    whatever is left - three night shifts at 0.2, 0.1 and 0.3 leave the
@@ -41,9 +43,6 @@ static func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator,
 		week_length: int) -> Array[ShiftProfile]:
 	var out: Array[ShiftProfile] = []
 	var boss := _roll(_candidates(pool, day, true, &"", week_length), rng)
-	if not boss.is_empty():
-		out.append(_dealt(boss))
-		return out
 	var tiers: Array[ShiftProfile] = []
 	tiers.assign(pool.profiles.filter(func(t): return day >= t.from_day))
 	# A day with nothing to pick would stop the run dead - misauthored from_days
@@ -61,7 +60,29 @@ static func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator,
 		else:
 			dealt_today[premade["shift"]] = true
 			out.append(_dealt(premade))
+	if not boss.is_empty():
+		_seat_the_boss(out, boss, rng)
 	return out
+
+## Puts `boss` in the place of one of `out`'s shifts, at random: one its
+## category allows the slot of, and a regular tier's where there is one - a
+## special shift already dealt that day keeps its place if it can.
+static func _seat_the_boss(out: Array[ShiftProfile], boss: Dictionary,
+		rng: RandomNumberGenerator) -> void:
+	var category: ShiftCategory = boss["category"]
+	var places: Array[int] = []
+	for i in range(out.size()):
+		if not out[i].is_premade() and category.allows_slot(out[i].worked_at()):
+			places.append(i)
+	if places.is_empty():
+		for i in range(out.size()):
+			if category.allows_slot(out[i].worked_at()):
+				places.append(i)
+	if places.is_empty():
+		return
+	var at: int = places[rng.randi_range(0, places.size() - 1)]
+	boss["slot"] = out[at].worked_at()
+	out[at] = _dealt(boss)
 
 ## Every premade shift that may be dealt on `day` - boss days' or the rest's -
 ## as {shift, category, slot}. A boss day takes a slot of its own category's

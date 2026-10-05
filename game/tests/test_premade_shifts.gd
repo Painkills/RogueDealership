@@ -130,15 +130,28 @@ func test_a_premade_shift_comes_up_once_a_day() -> void:
 	var dealt := Week.new(pool, 1, 1, 5).offers(1).filter(func(p): return p.is_premade())
 	h.eq("once, not in every slot", dealt.size(), 1)
 
-func test_a_boss_day_is_the_days_only_shift() -> void:
+func test_a_boss_takes_the_place_of_one_of_the_days_shifts() -> void:
+	## A choice on the calendar, not the whole day.
 	var pool := _tiers()
 	pool.categories.append(_category(1 << 0, 0, true, [1.0]))
 	var week := Week.new(pool, 5, 1)
 	var monday := week.offers(1)
-	h.check("Monday is the boss's alone", monday.size() == 1 and monday[0].is_boss_day())
-	h.check("worked in one of the tiers' slots (%s)" % monday[0].worked_at(),
-		ShiftCategory.SLOTS.has(monday[0].worked_at()))
+	h.eq("Monday still offers a shift per tier", monday.size(), pool.profiles.size())
+	var bosses := monday.filter(func(p): return p.is_boss_day())
+	h.eq("one of them the boss", bosses.size(), 1)
+	var at := monday.find(bosses[0])
+	h.eq("worked in the slot of the shift it took the place of",
+		bosses[0].worked_at(), pool.profiles[at].worked_at())
 	h.eq("and Tuesday is the tiers again", week.offers(2), pool.profiles)
+	# Only ever into a slot its category allows - nights, here.
+	var nights := _tiers()
+	nights.categories.append(_category(0, 1 << 2, true, [1.0]))
+	var placed := {}
+	for seed_value in range(12):
+		for p in Week.new(nights, 1, seed_value).offers(1):
+			if p.is_boss_day():
+				placed[p.worked_at()] = true
+	h.eq("a boss allowed only at night is only ever dealt at night", placed.keys(), [&"night"])
 
 func test_a_run_deals_its_week_once_from_its_own_seed() -> void:
 	## The calendar is reopened after the shop, the tutorial and the toolkit -

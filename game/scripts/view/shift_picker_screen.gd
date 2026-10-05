@@ -171,7 +171,7 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	var col := _event_text(event)
 	# A premade shift says so before anything else: this is not the usual day.
 	if profile.is_premade():
-		var tag := _line(col, "BOSS DAY - TODAY'S ONLY SHIFT" if profile.is_boss_day()
+		var tag := _line(col, "BOSS SHIFT" if profile.is_boss_day()
 			else "SPECIAL SHIFT", 14, hue, true)
 		tag.name = "PremadeTag"
 	# The title row: the shift's name, and its hours at the far right.

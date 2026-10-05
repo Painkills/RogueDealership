@@ -474,7 +474,8 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		wanted = interests.categories[rng.randi_range(0, interests.categories.size() - 1)]
 		favourites = interests.in_category(wanted)
 	var c := Customer.new(CHAIR_KEYS[chair], _next_name(), arch,
-		Customer.make_ranks(arch, interests, rng, cfg.prior_slip, favourites),
+		Customer.make_ranks(arch, interests, rng, cfg.prior_slip, favourites,
+			cfg.ranks_by_category),
 		start, top, cfg.as_dict(), interests)
 	var easier := int(perk(&"line"))
 	if easier != 0:
