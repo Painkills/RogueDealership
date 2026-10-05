@@ -213,18 +213,25 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		last_customer = chairs[0]
 	# Whoever the dealership's upgrades have already waiting at opening - in
 	# the queue, or straight into a chair a short lineup left empty.
+	var brought_forward := 0
 	for u in dealership:
 		if u == null:
 			continue
 		for arch in u.waiting_at_open:
 			if arch != null and waiting.size() < cfg.waiting_max:
 				waiting.append(arch)
+				if u.counts_against_door:
+					brought_forward += 1
 	_seat_the_waiting()
 	if not chairs.is_empty() and last_customer == null:
 		last_customer = chairs[0]
 	# The floor opens full, and nobody the door sent is waiting yet: the first to come in
 	# after opening does so on the same clock as everyone after them.
 	next_arrival = _arrival_gap()
+	# Each customer already waiting who stands in for the door's next one puts
+	# its next arrival back by a gap of its own - DealershipUpgrade.counts_against_door.
+	for _i in range(brought_forward):
+		next_arrival += _arrival_gap()
 
 
 ## One of DealershipUpgrade's bonuses, summed over every upgrade the run owns.

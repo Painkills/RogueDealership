@@ -34,6 +34,13 @@ func test_every_bonus_reaches_the_floor() -> void:
 	h.eq("one more card in hand", upgraded.hand.size(), plain.hand.size() + 1)
 	h.check("someone already waiting at opening",
 		upgraded.waiting.size() == plain.waiting.size() + 1 and upgraded.waiting.has(early))
+	h.eq("an extra customer leaves the door's clock alone",
+		upgraded.next_arrival, plain.next_arrival)
+	var early_door := DealershipUpgrade.new()
+	early_door.waiting_at_open.append(early)
+	early_door.counts_against_door = true
+	h.check("one brought forward puts the door's next arrival back a gap",
+		_shift([early_door]).next_arrival > plain.next_arrival)
 	var a: Customer = plain.chairs[0]
 	var b: Customer = upgraded.chairs[0]
 	h.check("the same customer either way", a.archetype == b.archetype)

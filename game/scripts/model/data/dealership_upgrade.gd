@@ -31,6 +31,10 @@ class_name DealershipUpgrade extends Resource
 ## Who is already waiting for a chair when every shift opens - on top of
 ## whoever the door sends. Never more than the waiting room holds.
 @export var waiting_at_open: Array[CustomerArchetype] = []
+## On: each of them is the door's next customer brought forward rather than an
+## extra one - the door's first arrival comes one gap later for each. Someone
+## to work from the first tick, without more customers over the whole shift.
+@export var counts_against_door: bool = false
 ## Makes the Line drop of one brand of cards bigger: line_drop_extra 1.0 on
 ## brand &"walkaway" doubles every Line a WALKAWAY card lowers. Empty brand =
 ## every card. Raising a Line is never touched.
