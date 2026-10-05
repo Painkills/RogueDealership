@@ -100,8 +100,9 @@ func _init() -> void:
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 	# --- the two aisles -----------------------------------------------------------
-	# Either can hold a few cards, depending on the shift, so they share the
-	# width evenly.
+	# Either can hold a few cards, depending on the shift. shop_screen.gd shows
+	# only the ones the shift stocks and widens each by how much it holds; with
+	# neither, StoreEmptyNote stands in their place.
 	var aisles := HBoxContainer.new()
 	aisles.name = "Aisles"
 	aisles.add_theme_constant_override("separation", 28)
@@ -110,6 +111,13 @@ func _init() -> void:
 	_card_section(aisles, root, "ShelfSection", "OnShelfTitle", "FOR SALE", "ShelfRow", 1.0)
 	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADE YOUR CARDS",
 		"DeckRow", 1.0)
+	var empty := AppWindow.label(aisles, root, "StoreEmptyNote",
+		"Nothing on the shelves after this shift.", 24, &"text_dim", false, true)
+	empty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	empty.custom_minimum_size = Vector2(0, SLOT_HEIGHT)
+	empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	empty.visible = false
 
 	AppWindow.label(col, root, "LogLabel", "", 22, &"alert", false, true)
 
@@ -231,7 +239,7 @@ func _dealership_pick(root: Control) -> void:
 	col.add_theme_constant_override("separation", 18)
 
 	var title := AppWindow.label(col, root, "DealershipPickTitle",
-		"The night paid off - upgrade the dealership", 32, &"text", true)
+		"You made quota - upgrade the dealership", 32, &"text", true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sub := AppWindow.label(col, root, "DealershipPickSub",
 		"Pick one. It stays for the rest of the run.", 20, &"text_dim")
@@ -254,6 +262,7 @@ func _card_section(parent: Node, root: Node, section_name: String,
 	var section := AppWindow.box(parent, root, section_name, &"panel_hi", &"neutral_2", 20, 14)
 	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	section.size_flags_stretch_ratio = share
+	section.unique_name_in_owner = true
 	var col := VBoxContainer.new()
 	col.name = "Column"
 	col.add_theme_constant_override("separation", 10)

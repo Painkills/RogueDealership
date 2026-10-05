@@ -34,6 +34,11 @@ signal view_deck_requested
 @onready var _dealership_row: HBoxContainer = %DealershipRow
 @onready var _shelf_row: HBoxContainer = %ShelfRow
 @onready var _deck_row: HBoxContainer = %DeckRow
+## The aisles around those rows, and what stands in for both when the shift
+## stocks neither - see _lay_out_the_aisles().
+@onready var _shelf_section: Control = %ShelfSection
+@onready var _deck_section: Control = %DeckSection
+@onready var _store_empty: Control = %StoreEmptyNote
 @onready var _log: Label = %LogLabel
 @onready var _done: Button = %DoneButton
 @onready var _view_deck: Button = %ViewDeckButton
@@ -132,6 +137,7 @@ func _render() -> void:
 			_build_slot(_free_pick_row, CardInstance.new(free, -1), "FREE").pressed.connect(
 				func(): _detail.show_free_card(_shop, free))
 
+	_lay_out_the_aisles()
 	_clear(_shelf_row)
 	for def in _shop.offers:
 		_build_slot(_shelf_row, CardInstance.new(def, -1),
@@ -154,12 +160,26 @@ func _render() -> void:
 		_note(_deck_row, "Nothing of yours left to upgrade." if _shop.upgrades > 0
 			else "No upgrades after that shift.")
 
+## Only the aisles this shift stocks, each as wide as what it holds: five cards
+## for sale take the whole store, two and two share it evenly. A shift that
+## stocks neither (a boss, whose reward is the dealership) shows a note instead
+## of two empty boxes. Sized by what the shift STOCKS, not what is left, so
+## buying the shelf out does not shuffle the page under the pointer.
+func _lay_out_the_aisles() -> void:
+	var shelf_on := _shop.cards_for_sale > 0
+	var deck_on := _shop.upgrades > 0
+	_shelf_section.visible = shelf_on
+	_deck_section.visible = deck_on
+	_shelf_section.size_flags_stretch_ratio = maxf(1.0, float(_shop.cards_for_sale))
+	_deck_section.size_flags_stretch_ratio = maxf(1.0, float(_shop.upgrades))
+	_store_empty.visible = not shelf_on and not deck_on
+
 ## One dealership upgrade on offer: its name and what it does, the whole tile a
 ## button that takes it.
 func _upgrade_button(u: DealershipUpgrade) -> Button:
 	var b := Button.new()
 	b.name = "Upgrade_%s" % u.id
-	b.custom_minimum_size = Vector2(300, 290)
+	b.custom_minimum_size = Vector2(300, 310)
 	ButtonStyle.outlined(b, Palette.color(&"primary"))
 	var col := VBoxContainer.new()
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 18)

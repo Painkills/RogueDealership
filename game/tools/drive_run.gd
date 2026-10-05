@@ -255,6 +255,10 @@ func _check_shop_layout_fits_on_screen() -> void:
 		"shelf row": _root._shop_view.get_node(^"%ShelfRow") as Control,
 		"deck row": _root._shop_view.get_node(^"%DeckRow") as Control,
 	}
+	# Only the aisles this shift stocks are on the page at all.
+	for row_name in rows.keys():
+		if not (rows[row_name] as Control).is_visible_in_tree():
+			rows.erase(row_name)
 	_check("the shop has a deck to show (%d cards)" % _run.deck.cards.size(),
 		_run.deck.cards.size() > 0)
 	_on_screen("the shop's Done button",
@@ -267,7 +271,7 @@ func _check_shop_layout_fits_on_screen() -> void:
 	# An aisle with nothing in it says so, rather than standing empty.
 	for pair in [["shelf row", shop.offers.is_empty()],
 			["deck row", shop.upgrade_offers.is_empty()]]:
-		if pair[1]:
+		if pair[1] and rows.has(pair[0]):
 			var row: Node = rows[pair[0]]
 			_check("an empty aisle says so (%s: %s)" % [pair[0],
 				(row.get_child(0) as Label).text if row.get_child_count() == 1
@@ -472,6 +476,16 @@ func _check_the_store_holds_what_the_shift_stocks() -> void:
 		shelf == shop.offers.size())
 	_check("and one of yours for each upgrade on offer (%d of %d)"
 		% [deck, shop.upgrade_offers.size()], deck == shop.upgrade_offers.size())
+	# An aisle is on the page only when the shift stocks it, and a shift that
+	# stocks neither says so in their place.
+	var shelf_on := (_root._shop_view.get_node(^"%ShelfSection") as Control).visible
+	var deck_on := (_root._shop_view.get_node(^"%DeckSection") as Control).visible
+	var empty_on := (_root._shop_view.get_node(^"%StoreEmptyNote") as Control).visible
+	_check("each aisle shows only when the shift stocks it (for sale %s, upgrades %s)"
+		% [shelf_on, deck_on],
+		shelf_on == (shop.cards_for_sale > 0) and deck_on == (shop.upgrades > 0))
+	_check("and a shift that stocks neither says so instead",
+		empty_on == (shop.cards_for_sale == 0 and shop.upgrades == 0))
 
 ## The words an empty aisle shows instead of cards, or "" when it is not one.
 func _note_in(row: Node) -> String:

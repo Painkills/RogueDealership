@@ -4,13 +4,12 @@
 
 [resource]
 script = ExtResource("1_prf")
-free_pick_min_rarity = 2
-pay_scale = 1.2
-commission = 0.3
+pay_scale = 1.0
+commission = 0.35
 id = &"midday"
 display_name = "Midday Shift"
 blurb = "Busy. Everyone's on a shorter fuse."
 patience_scale = 0.8
 from_day = 3
-cards_for_sale = 3
-upgrades = 1
+cards_for_sale = 5
+upgrades = 0

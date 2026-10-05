@@ -6,13 +6,14 @@
 
 [resource]
 script = ExtResource("3_prof")
-pay_scale = 1.6
+pay_scale = 1.0
 commission = 0.6
 id = &"haggle_friday"
 display_name = "Haggle Friday"
-blurb = "Every desk open, and every one of them wants a better price."
+blurb = "Every desk wants a better price. Make quota: heal, and upgrade the dealership."
 only_archetypes = Array[ExtResource("1_arch")]([ExtResource("2_hawk")])
 chance = 1.0
 heal_up_to = 0.25
-upgrades = 3
+upgrades = 0
 free_pick_min_rarity = 2
+dealership_upgrades = 3
