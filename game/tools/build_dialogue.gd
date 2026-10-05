@@ -153,6 +153,8 @@ const LINES := [
 	[[&"relief"], "\"Now we are getting somewhere.\"", [], [], []],
 	[[&"relief"], "\"Okay, that actually makes sense. Good answer.\"", [&"tech"], [], []],
 	[[&"relief"], "\"See, that's what I wanted to know.\"", [&"tech"], [], []],
+	[[&"relief"], "\"Okay, we talked it over. We can stretch a little.\"", [&"family"], [], []],
+	[[&"relief"], "\"Alright, we're on the same page now.\"", [&"family"], [], []],
 	[[&"ignored"], "\"Fine. Forget it.\"", [], [], []],
 	[[&"ignored"], "\"Whatever you say.\"", [], [], []],
 	[[&"ignored"], "\"That's not nice.\"", [], [], []],

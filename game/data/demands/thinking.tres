@@ -4,12 +4,17 @@
 [ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
 [ext_resource type="Script" uid="uid://vkeiiie4jtbm" path="res://scripts/model/demands/leave_them_alone.gd" id="3_rsv"]
 [ext_resource type="Script" uid="uid://cohmuwwcvcdsa" path="res://scripts/model/data/demand.gd" id="4_dmd"]
+[ext_resource type="Script" uid="uid://bu5uqojkpf1vo" path="res://scripts/model/effects/change_line.gd" id="5_line"]
 
 [sub_resource type="Resource" id="Sub_push"]
 script = ExtResource("2_pat")
 amount = -5
 
 [sub_resource type="Resource" id="Sub_room"]
+script = ExtResource("5_line")
+amount = -4
+
+[sub_resource type="Resource" id="Sub_calm"]
 script = ExtResource("2_pat")
 amount = 5
 
@@ -26,4 +31,4 @@ dialogue_tags_missed = Array[StringName]([&"ignored"])
 ticks = 5
 resolve = SubResource("Sub_rsv")
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_push")])
-relief = Array[ExtResource("1_eff")]([SubResource("Sub_room")])
+relief = Array[ExtResource("1_eff")]([SubResource("Sub_room"), SubResource("Sub_calm")])
