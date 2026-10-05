@@ -6,5 +6,5 @@
 script = ExtResource("1_up")
 id = &"fancy_showroom"
 display_name = "Fancy Showroom"
-blurb = "Marble floors and a chandelier. Every product earns 10% more margin."
-margin = 0.1
+blurb = "Marble floors and a chandelier. Every product earns 5% more margin."
+margin = 0.05
