@@ -4,14 +4,13 @@
 [ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="2_arch"]
 [ext_resource type="Resource" uid="uid://dtcn6g3ha03qq" path="res://data/archetypes/easygoing.tres" id="3_easy"]
 [ext_resource type="Resource" uid="uid://bv87ljrw3a71l" path="res://data/archetypes/laydown.tres" id="4_lay"]
+[ext_resource type="Resource" uid="uid://ctxx7t2f30fw7" path="res://data/archetypes/family.tres" id="5_family"]
+[ext_resource type="Resource" path="res://data/archetypes/speedster.tres" id="6_speedster"]
 
 [resource]
 script = ExtResource("1_prf")
 hard_weight_scale = 2.0
 allow_hard_duplicates = true
-archetype_weight_scales = Dictionary[StringName, float]({
-&"family": 0.5
-})
 quota_scale = 0.8
 pay_scale = 1.0
 commission = 0.35
@@ -20,7 +19,7 @@ display_name = "Night Shift"
 blurb = "Quiet floor, trouble walks in. After it, upgrade your cards."
 walk_up_scale = 1.8
 unlock_full_archetype_pool = true
-excluded_archetypes = Array[ExtResource("2_arch")]([ExtResource("3_easy"), ExtResource("4_lay")])
+excluded_archetypes = Array[ExtResource("2_arch")]([ExtResource("3_easy"), ExtResource("4_lay"), ExtResource("5_family"), ExtResource("6_speedster")])
 from_day = 2
 cards_for_sale = 0
 upgrades = 5
