@@ -35,8 +35,11 @@ var _controller: Node3D
 var _done := false
 var _failures: Array[String] = []
 var _checks := 0
+## Every error the engine reports while the shift is driven - see ErrorTrap.
+var _trap := ErrorTrap.new()
 
 func _init() -> void:
+	OS.add_logger(_trap)
 	# The controller seeds its shift from randi(), so without pinning the global
 	# RNG this plays a DIFFERENT game every run and its failures wander. Found
 	# the hard way: a run reporting "all passed" had simply been dealt a kind
@@ -170,12 +173,15 @@ func _physics_process(_delta: float) -> bool:
 	_check_double_tapping_the_empty_table_closes()
 	_check_double_tapping_the_empty_table_closes_on_touch_too()
 	_check_refused_drop_comes_home()
+	_check_a_skeptic_warns_before_waving_a_card_off()
 	_check_a_walkout_is_hard_to_miss()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
 	_check_tick_tap_target_ends_the_shift_too()      # replaces _shift entirely
 	_check_standing_tap_target_adds_standing()       # replaces _shift entirely
+	_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
+		_trap.errors.is_empty())
 
 	print("")
 	# Guards against the failure mode that has now bitten three times: a runtime
@@ -2393,6 +2399,51 @@ func _check_a_signing_flies_its_money_to_the_top(before: int) -> void:
 	_check("then rolls up to the new one (%s)" % label.text,
 		label.text.begins_with("banked %s " % Format.money(s.margin_banked)))
 	_check("and the effects clean up after themselves", _fx_texts().is_empty())
+
+## "This needs to be clearly telegraphed (NEXT CARD REJECTED)." Imposed on
+## whoever you are with: a copy of their archetype that waves off every 2nd
+## card, with one already played on them - what is checked is the telegraph,
+## not who the seed dealt.
+func _check_a_skeptic_warns_before_waving_a_card_off() -> void:
+	var s: Shift = _controller._shift
+	if s.at == null or s.chairs[_at()] == null:
+		for i in range(s.chairs.size()):
+			if s.chairs[i] != null:
+				s.approach(i)
+				break
+	if s.at == null or s.chairs[_at()] == null:
+		_check("someone to stand with, to wave a card off", false)
+		return
+	var who: Customer = s.chairs[_at()]
+	var was: CustomerArchetype = who.archetype
+	var skeptic := was.duplicate() as CustomerArchetype
+	skeptic.rejects_every_nth_card = 2
+	who.archetype = skeptic
+	who.cards_since_rejection = 1
+	# A card that goes on anyone, table or not, so the deal cannot leave this
+	# with nothing to play.
+	var def := SupportCardDef.new()
+	def.id = &"made_up_word"
+	def.display_name = "Made-up word"
+	def.needs_offer = false
+	var played := CardInstance.new(def, 99001)
+	s.hand.append(played)
+	_controller._render()
+	var front: Label = _controller._customer_cards[_at()]._demand
+	_check("their folder warns the next card will be waved off (%s)" % front.text,
+		front.text.contains(CustomerCard3D.NEXT_CARD_REJECTED))
+	_check("and the back of it says why",
+		_controller._customer_details[_at()]._does.text.contains("SKEPTICAL"))
+	_controller._apply(s.play_card(s.hand.find(played)))
+	_settle()
+	_check("the card is waved off, into the discard", s.discard.has(played))
+	_check("stamped on them (%s)" % str(_fx_texts()), _fx_texts().has("REJECTED!"))
+	_check("and the warning is down until the next one (%s)" % front.text,
+		not front.text.contains(CustomerCard3D.NEXT_CARD_REJECTED))
+	_finish_fx()
+	who.archetype = was
+	who.cards_since_rejection = 0
+	_controller._render()
 
 ## "Same for walkouts. There needs to be some sort of animation or something
 ## that helps you understand what happened."

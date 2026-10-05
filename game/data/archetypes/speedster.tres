@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
+[ext_resource type="Resource" path="res://data/interests/vehicle.tres" id="2_vehicle"]
+
+[resource]
+script = ExtResource("1_arch")
+hard = false
+weight = 2.0
+id = &"speedster"
+display_name = "Speedster"
+pattern = "Sell fast, sign fast: every point of patience they still have when they sign pays $100."
+tell = "keys already in hand, and checking the time"
+line = 24
+line_per_sale = 2
+combo_step = 0.2
+min_shift = 9
+only_category = ExtResource("2_vehicle")
+arrival_patience_share = 0.5
+pays_per_patience_left = 100

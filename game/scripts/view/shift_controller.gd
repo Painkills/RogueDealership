@@ -497,7 +497,10 @@ func set_hud_dimmed(dimmed: bool) -> void:
 	# folder lying across the top of someone else's screen.
 	(%TopStrip as Control).visible = not dimmed
 	(%TopBar as Control).visible = not dimmed
-	_render()
+	# A new game's toolkit opens over its first calendar, before the floor has
+	# ever held a shift to draw - setup() renders it once one arrives.
+	if _shift != null:
+		_render()
 
 ## "Make the shift log collapsible." Folded, it is its heading row and the
 ## button to open it again - the rest of the rail is the table's. Everything
@@ -1228,10 +1231,14 @@ func _show_what_they_did(entry: Dictionary) -> void:
 		_fly("%+d standing" % standing, role, at, _standing_label, func():
 			_roll(_standing_label, from, _write_standing,
 				func(): _standing_rolling = false, role, standing < 0))
-	var swept := int(fx.get("swept", -1))
-	if swept >= 0:
-		_stamp("SWEPT OFF!", &"alert", chair, -6.0)
-		var node: CardFace3D = _nodes.get(swept)
+	# A product they sweep off the table, or a card of yours they wave off -
+	# stamped on them, and the card popped on its way to the discard.
+	for kind in [["swept", "SWEPT OFF!"], ["rejected", "REJECTED!"]]:
+		var uid := int(fx.get(kind[0], -1))
+		if uid < 0:
+			continue
+		_stamp(kind[1], &"alert", chair, -6.0)
+		var node: CardFace3D = _nodes.get(uid)
 		if node != null:
 			var tw := _fx_tween()
 			tw.tween_property(node, "scale", Vector3.ONE * 1.35, 0.15) \

@@ -25,7 +25,17 @@ func _sat_a_while(s: Shift, chair: int = 0) -> Customer:
 	s.at = chair
 	s.last_customer = s.chairs[chair]
 	s.chairs[chair].ticks_on_floor = s.cfg.demand_grace_ticks
-	return s.chairs[chair]
+	var none: Array[CustomerAction] = []
+	return _asks_for(s.chairs[chair], none)
+
+## `c` with `actions` and nothing else of their own - these tests are about the
+## demand engine, never about what any shipped archetype asks for. A copy:
+## the loaded archetype is shared project-wide.
+func _asks_for(c: Customer, actions: Array[CustomerAction]) -> Customer:
+	c.archetype = c.archetype.duplicate()
+	c.archetype.actions = actions
+	c.action_state.clear()
+	return c
 
 func _made_up(ticks: int, resolve: DemandResolve, effects: Array[Effect],
 		relief: Array[Effect] = []) -> Demand:
@@ -113,7 +123,20 @@ func test_a_throttled_customer_never_announces_an_ask_they_did_not_make() -> voi
 	## fire() skips a demand-raising action wholesale rather than firing it and
 	## quietly doing nothing, or the log would narrate an ask that never
 	## happened and burn the action's own cadence doing it.
-	var s := _shift([&"kicker", &"easygoing"], {"demand_grace_ticks": 99})
+	var s := _shift([&"easygoing"], {"demand_grace_ticks": 99})
+	var every := Every.new()
+	every.ticks = 1
+	var raise := RaiseDemand.new()
+	raise.demand = _made_up(3, MakeAnOffer.new(), _patience(-1))
+	var asks := CustomerAction.new()
+	asks.id = &"asks_all_the_time"
+	asks.display_name = "Asks all the time"
+	asks.trigger = every
+	var effects: Array[Effect] = [raise]
+	asks.effects = effects
+	var only: Array[CustomerAction] = [asks]
+	for c in s.seated():
+		_asks_for(c, only)
 	s.at = 0
 	s.last_customer = s.chairs[0]
 	# Deliberately NOT _sat_a_while: it seats them exactly ON the grace line,

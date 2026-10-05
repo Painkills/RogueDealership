@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
+[ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="2_int"]
+[ext_resource type="Resource" path="res://data/interests/status.tres" id="3_status"]
+[ext_resource type="Resource" path="res://data/interests/power.tres" id="4_power"]
+
+[resource]
+script = ExtResource("1_arch")
+hard = false
+weight = 2.0
+id = &"influencer"
+display_name = "Influencer"
+pattern = "Chase Status and Power: those pay double, and their bar never comes down."
+tell = "filming the showroom for their followers"
+line = 32
+line_per_sale = 0
+combo_step = 0.15
+min_shift = 5
+premium_interests = Array[ExtResource("2_int")]([ExtResource("3_status"), ExtResource("4_power")])
+premium_margin_scale = 2.0

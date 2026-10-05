@@ -130,7 +130,10 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 	_knobs.text = knobs_text(c) if c != null else ""
 
 	var o = c.offer if c != null else null
-	_worth.visible = o != null and mult > 1.0
+	# And on top of the combo, whatever they pay over the odds for a product
+	# they prize (CustomerArchetype.premium_interests).
+	var prized: float = c.margin_scale_for(o.product) if o != null else 1.0
+	_worth.visible = o != null and (mult > 1.0 or prized != 1.0)
 	_status.text = ""
 	if o == null:
 		# An empty meter, not no meter: the panel says what it measures before
@@ -143,7 +146,8 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 		# What this offer books if they say yes, combo and all - rounded exactly
 		# the way _settle() rounds it, so the tablet never promises a dollar the
 		# sale will not pay.
-		_worth.text = "%s if they buy" % Format.money(roundi(o.margin * mult))
+		var combo := roundi(o.margin * mult)
+		_worth.text = "%s if they buy" % Format.money(combo + roundi(combo * (prized - 1.0)))
 		_read_the_offer(c, o, band)
 
 ## The verdict under the meter: nothing yet, a band, or the exact gap.

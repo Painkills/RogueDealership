@@ -8,7 +8,8 @@
 
 [resource]
 script = ExtResource("1_4wy7u")
-display_name = "Boss shifts, Wednesdays"
-days = 4
+display_name = "Boss shifts, the first Friday"
+days = 16
+weeks = 1
 boss_day = true
 shifts = Array[ExtResource("2_ojuxv")]([ExtResource("3_tech"), ExtResource("4_kicker"), ExtResource("5_karen")])

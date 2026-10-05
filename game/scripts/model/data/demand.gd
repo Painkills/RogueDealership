@@ -29,6 +29,11 @@ class_name Demand extends Resource
 @export var dialogue_tags_met: Array[StringName] = []
 @export var dialogue_tags_missed: Array[StringName] = []
 @export var ticks: int = 3                ## a. the fuse
+## Raised the moment its action fires, even inside the grace period after they
+## sit down or the cooldown after their last ask - only a demand already live
+## holds it back. For the ask that is a last chance: "I'll think about it" on
+## the way out cannot wait its turn.
+@export var urgent: bool = false
 @export var resolve: DemandResolve        ## b. what answers it
 @export var effects: Array[Effect]        ## c. what ignoring it costs
 ## Optional. What meeting it EARNS, over and above not paying the consequence.

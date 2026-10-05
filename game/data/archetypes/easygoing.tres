@@ -3,6 +3,27 @@
 [ext_resource type="Script" uid="uid://cp8pd650f65g2" path="res://scripts/model/data/customer_action.gd" id="1_1cw48"]
 [ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="2_g3f4g"]
 [ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="3_e8nts"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="4_eff"]
+[ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="5_raise"]
+[ext_resource type="Script" uid="uid://b766306iy15gl" path="res://scripts/model/triggers/every.gd" id="6_every"]
+[ext_resource type="Resource" path="res://data/demands/tell_me_more.tres" id="7_dmd"]
+
+[sub_resource type="Resource" id="Sub_raise"]
+script = ExtResource("5_raise")
+demand = ExtResource("7_dmd")
+
+[sub_resource type="Resource" id="Sub_every"]
+script = ExtResource("6_every")
+ticks = 6
+
+[sub_resource type="Resource" id="Sub_opens_up"]
+script = ExtResource("1_1cw48")
+id = &"opens_up"
+display_name = "Wants to hear more"
+tell = "about every 6 ticks they want to hear more. Play them any card within 4 ticks and they tell you what they want most, or their Line rises 1"
+dialogue_tags = Array[StringName]([&"demand_tell_me_more"])
+trigger = SubResource("Sub_every")
+effects = Array[ExtResource("4_eff")]([SubResource("Sub_raise")])
 
 [resource]
 script = ExtResource("3_e8nts")
@@ -16,3 +37,4 @@ pattern = "Basic increase of line as sales increase."
 tell = "Pleasant, unhurried, no strong opinions about anything."
 line_per_sale = 1
 combo_step = 0.15
+actions = Array[ExtResource("1_1cw48")]([SubResource("Sub_opens_up")])

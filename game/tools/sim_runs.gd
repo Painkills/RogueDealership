@@ -10,6 +10,9 @@ extends SceneTree
 ##
 ##     ... --script res://tools/sim_runs.gd -- night.commission=0.5 cfg.quota_growth=0.12
 ##
+## card.<id>.<field>=value and arch.<id>.<field>=value do the same for one card
+## or archetype - arch.<id>.actions=none takes away everything it does.
+##
 ## The player is SimPlayer - optimistic, it reads every customer perfectly - so
 ## "how many runs make it" is an upper bound for a sharp human, not a forecast.
 ## The shop policy: the free pick is the rarest card on offer; then buy the
@@ -74,6 +77,19 @@ func _what_ifs() -> void:
 		if parts.size() == 2 and parts[0] == "shop":
 			_shop_mode = parts[1]
 			print("shop policy: %s" % _shop_mode)
+			continue
+		# arch.<id>.<field>=value - an archetype's own numbers, e.g. min_shift=99
+		# to keep one off the regular floor; actions=none takes away what it does.
+		if parts.size() == 2 and path.size() == 3 and path[0] == "arch":
+			var a := _arch.by_id(StringName(path[1]))
+			if a == null:
+				print("ignoring %s - no such archetype" % arg)
+				continue
+			if path[2] == "actions" and parts[1] == "none":
+				a.actions.clear()
+			else:
+				a.set(path[2], str_to_var(parts[1]))
+			print("what-if: %s.%s = %s" % [path[1], path[2], a.get(path[2])])
 			continue
 		# card.<id>.<field>=value - a card's own numbers, e.g. a product's margin.
 		if parts.size() == 2 and path.size() == 3 and path[0] == "card":

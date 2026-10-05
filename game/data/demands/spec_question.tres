@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="Demand" format=3]
+
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
+[ext_resource type="Script" uid="uid://lfdotk6jbaeu" path="res://scripts/model/effects/grant_margin.gd" id="3_pay"]
+[ext_resource type="Script" path="res://scripts/model/demands/play_appeal_card.gd" id="4_rsv"]
+[ext_resource type="Script" uid="uid://cohmuwwcvcdsa" path="res://scripts/model/data/demand.gd" id="5_dmd"]
+
+[sub_resource type="Resource" id="Sub_cost"]
+script = ExtResource("2_pat")
+amount = -3
+
+[sub_resource type="Resource" id="Sub_pay"]
+script = ExtResource("3_pay")
+amount = 300
+
+[sub_resource type="Resource" id="Sub_rsv"]
+script = ExtResource("4_rsv")
+
+[resource]
+script = ExtResource("5_dmd")
+id = &"spec_question"
+display_name = "Asks how it actually works"
+telegraph = "SPEC QUESTION"
+dialogue_tags_met = Array[StringName]([&"relief"])
+dialogue_tags_missed = Array[StringName]([&"ignored"])
+ticks = 4
+resolve = SubResource("Sub_rsv")
+effects = Array[ExtResource("1_eff")]([SubResource("Sub_cost")])
+relief = Array[ExtResource("1_eff")]([SubResource("Sub_pay")])

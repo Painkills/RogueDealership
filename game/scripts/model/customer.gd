@@ -68,6 +68,9 @@ var objection: StringName = &""
 ## The last few things they said, newest last - what DialoguePool.pick_line()
 ## steers them away from repeating. See Shift._heard().
 var recent_lines: Array[String] = []
+## Cards played on them since they last waved one off - see
+## CustomerArchetype.rejects_every_nth_card.
+var cards_since_rejection: int = 0
 
 var _interests: InterestPool
 
@@ -160,7 +163,7 @@ func interests() -> InterestPool:
 	return _interests
 
 
-func reveal_room(exact: bool = false) -> void:
+func reveal_room(exact: bool = false, with_line: bool = true) -> void:
 	## Active Listening. The Line, always - since offering stopped teaching it,
 	## this is the ONLY way to learn it - and what they want most that is still
 	## open. The upgrade gives you that in order.
@@ -175,7 +178,11 @@ func reveal_room(exact: bool = false) -> void:
 	## Both read whatever is highest-priority and NOT already sold. A read that
 	## keeps naming what you already closed would stop telling you anything the
 	## moment you are doing well.
-	known_line = true
+	##
+	## `with_line` false tells you only what they want - a customer opening up
+	## (RevealRoom.line), not you reading them.
+	if with_line:
+		known_line = true
 	var top := top_unsold_interest_id()
 	var cat: Category = _interests.by_id(top).category
 	known_top_category = cat.id if cat != null else null
@@ -224,6 +231,31 @@ func owns_category(cat_id: StringName) -> bool:
 
 func leaving_soon() -> bool:
 	return patience <= int(cfg.get("leaving_soon_at", 4))
+
+
+## Whether the next card played on them gets waved off - the telegraph for
+## CustomerArchetype.rejects_every_nth_card.
+func next_card_rejected() -> bool:
+	var n: int = archetype.rejects_every_nth_card
+	return n > 0 and cards_since_rejection >= n - 1
+
+
+## Whether they will look at `product` at all - CustomerArchetype.only_category.
+func accepts(product: ProductCardDef) -> bool:
+	var only: Category = archetype.only_category
+	if only == null:
+		return true
+	var cat: Category = product.interest.category
+	return cat != null and cat.id == only.id
+
+
+## What a sale of `product` pays them, as a multiple of its margin -
+## CustomerArchetype.premium_interests.
+func margin_scale_for(product: ProductCardDef) -> float:
+	for i in archetype.premium_interests:
+		if i != null and i.id == product.interest.id:
+			return archetype.premium_margin_scale
+	return 1.0
 
 
 static func make_ranks(pool: InterestPool, rng: RandomNumberGenerator,

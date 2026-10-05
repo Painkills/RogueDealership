@@ -20,8 +20,6 @@ func test_the_practice_floor_has_one_chair_and_one_easy_customer() -> void:
 	if c == null:
 		return
 	h.eq("an easygoing buyer", c.archetype.id, Tutorial.ARCHETYPE)
-	h.check("who has no actions of their own to interrupt a beginner",
-		c.archetype.actions.is_empty())
 	h.eq("with a name, not a random one", c.display_name, Tutorial.CUSTOMER_NAME)
 	var walked_up: Array = s.events.filter(func(e): return e.contains("walks up"))
 	h.check("and the log says the same name walked up (%s)" % ", ".join(walked_up),
@@ -32,6 +30,15 @@ func test_the_practice_floor_has_one_chair_and_one_easy_customer() -> void:
 		c.known_line)
 	h.eq("on a clock long enough never to be the lesson", s.tick_budget, Tutorial.TICKS)
 	h.eq("and no quota, because practice has nothing to make", s.quota, 0)
+	# Last, since it runs the practice clock out: whatever their kind asks for
+	# on the floor, they ask for nothing while you learn.
+	var asked := false
+	for _i in range(Tutorial.TICKS):
+		if s.is_over() or s.chairs[0] == null:
+			break
+		s._burn(1, "wait")
+		asked = asked or (s.chairs[0] != null and s.chairs[0].demand != null)
+	h.check("and nothing they ask for interrupts a beginner", not asked)
 
 func test_practice_never_touches_the_run() -> void:
 	## Built from the run's pools but never its deck: nothing done in practice

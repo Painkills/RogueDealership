@@ -459,6 +459,10 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	# an arrival is never dead on arrival.
 	var start: int = int(round(top * rng.randf_range(
 		cfg.arrival_patience_min_fraction, 1.0)))
+	# Or exactly their archetype's share of it, for someone who walks in
+	# already in a hurry.
+	if arch.arrival_patience_share > 0.0:
+		start = roundi(top * arch.arrival_patience_share)
 	start = max(min(top, cfg.arrival_patience_floor), start)
 	# The dealership's own comfort on top of all that - more to work with, and
 	# more of it to start from.
@@ -473,6 +477,10 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	if arch.demands_category and not interests.categories.is_empty():
 		wanted = interests.categories[rng.randi_range(0, interests.categories.size() - 1)]
 		favourites = interests.in_category(wanted)
+	# The same for someone who will only look at the one category: it is the
+	# one they want.
+	elif arch.only_category != null:
+		favourites = interests.in_category(arch.only_category)
 	var c := Customer.new(CHAIR_KEYS[chair], _next_name(), arch,
 		Customer.make_ranks(interests, rng, favourites,
 			cfg.ranks_by_category),
@@ -497,6 +505,8 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		c.demands_category = wanted.id if wanted != null \
 			else interests.by_id(c.top_interest_id()).category.id
 		c.known_top_category = c.demands_category      # they say so, loudly
+	elif arch.only_category != null:
+		c.known_top_category = arch.only_category.id   # and so does this one
 
 	chairs[chair] = c
 	served += 1
@@ -822,6 +832,12 @@ func place(index: int) -> Result:
 	if c.owns(inst.card.id):
 		return Result.new(false, "%s already took the %s."
 			% [c.display_name, inst.card.display_name])
+	if not c.accepts(inst.card as ProductCardDef):
+		return Result.new(false, "%s will only look at %s products."
+			% [c.display_name, c.archetype.only_category.display_name])
+	if c.next_card_rejected():
+		return _reject(c, index, cfg.place_ticks)
+	c.cards_since_rejection += 1
 
 	var product := inst.card as ProductCardDef
 	var iid: StringName = product.interest.id
@@ -957,12 +973,55 @@ func _object(c: Customer, product: ProductCardDef) -> void:
 	_open(c, l)
 
 
+## The card at `index`, played at someone who waves it off - see
+## CustomerArchetype.rejects_every_nth_card. It is spent all the same: out of
+## your hand to the discard, its ticks burned, and nothing it does happens.
+## Their count starts over.
+func _reject(c: Customer, index: int, ticks: int) -> Result:
+	var inst: CardInstance = hand[index]
+	var before := _snapshot(c)
+	c.cards_since_rejection = 0
+	hand.remove_at(index)
+	discard.append(inst)
+	stat["cards_rejected"] = int(stat.get("cards_rejected", 0)) + 1
+	_draw_up()
+	var said := ""
+	if dialogue != null:
+		said = dialogue.pick(voice_rng, [&"rejects_card"], c.archetype.id,
+			c.offer.product.id if c.offer else &"", &"", &"", c.recent_lines)
+		if said != "":
+			_heard(c, said)
+	var fx := _fx_since(before, c)
+	fx["rejected"] = inst.uid
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": "Waves off the %s" % inst.card.display_name,
+		"dialogue": said,
+		"descriptions": ["the card is spent, and does nothing"],
+		"floor_wide": false,
+		"fx": fx,
+	})
+	# You still did something to them - a demand that wanted you to leave them
+	# be is broken by it - but nothing they could take as an answer: none of
+	# the card's effects ran.
+	_demand_saw(c, DemandResolve.PLACE if inst.is_product() else DemandResolve.SUPPORT,
+		{"card": inst.card, "effects": [], "patience_before": c.patience})
+	_settle_patience()
+	_burn(ticks, "cards")
+	return Result.new(true, "%s waves off the %s."
+		% [c.display_name, inst.card.display_name], "rejected")
+
+
 func _support(c: Customer, index: int) -> Result:
 	var inst: CardInstance = hand[index]
 	var def := inst.card as SupportCardDef
 	if def.needs_offer and c.offer == null:
 		return Result.new(false, "%s needs something on the table."
 			% def.display_name)
+	if c.next_card_rejected():
+		return _reject(c, index, inst.ticks())
+	c.cards_since_rejection += 1
 	# Yours is read off the table as you reach for the card, before its effects
 	# land; their reply below reads it after.
 	var yours := _speak(def.player_dialogue_tags, c, c.offer.product.id if c.offer else &"",
@@ -1123,9 +1182,12 @@ func _settle(c: Customer) -> Dictionary:
 	# for this one yet, so the first sale always multiplies by exactly 1.0.
 	var multiplier: float = 1.0 + c.combo_step * c.sales
 	peak_combo_multiplier = maxf(peak_combo_multiplier, multiplier)
-	var margin := roundi(o.margin * multiplier)
+	var combo := roundi(o.margin * multiplier)
+	# What they pay over the odds for a product they prize, on top of it all.
+	var premium := roundi(combo * (c.margin_scale_for(o.product) - 1.0))
+	var margin := combo + premium
 	var sale := {"product": o.product, "margin": margin, "bonus": 0,
-		"combo_margin": margin - o.margin}
+		"combo_margin": combo - o.margin, "premium": premium}
 	c.unsigned.append(sale)
 	c.sales += 1
 	c.line += c.line_per_sale
@@ -1134,9 +1196,10 @@ func _settle(c: Customer) -> Dictionary:
 	c.offer = null
 	c.objection = &""
 	stat["sales"] = int(stat["sales"]) + 1
-	events.append("[%s] agrees to %s - unsigned%s."
+	events.append("[%s] agrees to %s - unsigned%s%s."
 		% [c.key, sale["product"].display_name,
-			" (×%.1f combo)" % multiplier if multiplier > 1.0 else ""])
+			" (×%.1f combo)" % multiplier if multiplier > 1.0 else "",
+			" (+$%d, a product they prize)" % premium if premium > 0 else ""])
 	return sale
 
 
@@ -1299,6 +1362,13 @@ func close() -> Result:
 		discard.append(c.offer.instance)
 		c.offer = null
 	var banked: int = c.unsigned_margin()
+	# Someone in a hurry pays for the patience you did not use up.
+	var hurry: int = maxi(0, c.patience) * c.archetype.pays_per_patience_left
+	if hurry > 0:
+		banked += hurry
+		stat["margin_bonus"] = int(stat["margin_bonus"]) + hurry
+		events.append("[%s] +$%d for the %d patience they had left."
+			% [c.key, hurry, c.patience])
 	margin_banked += banked
 	if category_quota != &"":
 		for sale in c.unsigned:
@@ -1378,12 +1448,15 @@ func _context(c: Customer) -> EffectContext:
 
 
 # --------------------------------------------------------------------- demands
-func can_take_a_demand(c: Customer) -> bool:
+func can_take_a_demand(c: Customer, d: Demand = null) -> bool:
 	## One at a time, not the instant they sit down, and not back to back.
 	## Three customers each free to open a fresh fuse every few ticks is not a
-	## floor you triage, it is a floor you lose.
+	## floor you triage, it is a floor you lose. An urgent `d` is held back only
+	## by a demand already live (Demand.urgent).
 	if c == null or c.demand != null:
 		return false
+	if d != null and d.urgent:
+		return true
 	if c.ticks_on_floor < cfg.demand_grace_ticks:
 		return false
 	if c.demand_settled_tick >= 0 \
@@ -1393,7 +1466,7 @@ func can_take_a_demand(c: Customer) -> bool:
 
 
 func raise_demand(c: Customer, d: Demand) -> bool:
-	if d == null or not can_take_a_demand(c):
+	if d == null or not can_take_a_demand(c, d):
 		return false
 	c.demand = d
 	# Absolute, and at least one tick away, so a demand raised during a burn
@@ -1403,9 +1476,11 @@ func raise_demand(c: Customer, d: Demand) -> bool:
 	return true
 
 
-func _asks_for_something(act: CustomerAction) -> bool:
+## Whether `act` asks `c` for something they cannot be asked for right now - see
+## can_take_a_demand(). Any one of its demands held back holds the action.
+func _held_back(c: Customer, act: CustomerAction) -> bool:
 	for e in act.effects:
-		if e is RaiseDemand:
+		if e is RaiseDemand and not can_take_a_demand(c, (e as RaiseDemand).demand):
 			return true
 	return false
 
@@ -1542,7 +1617,7 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 		# the log would otherwise announce an ask that never happened. Checked
 		# before the cadence bookkeeping below, so a throttled customer keeps
 		# their place in the rhythm and asks the moment they are allowed to.
-		if not can_take_a_demand(c) and _asks_for_something(act):
+		if _held_back(c, act):
 			continue
 
 		if trigger_type == &"every":

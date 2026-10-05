@@ -19,8 +19,9 @@ const DIR := "res://data/dialogue"
 
 const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	&"padding", &"demand_thinking", &"demand_restless", &"demand_manager",
-	&"demand_show_me", &"demand_better_quote", &"relief", &"ignored",
-	&"accepted", &"impatient",
+	&"demand_spec_question", &"demand_price_check", &"demand_tell_me_more",
+	&"demand_be_back", &"relief", &"ignored", &"opens_up", &"sits_back_down",
+	&"rejects_card", &"accepted", &"impatient",
 	# Objections - see ProductCardDef.objection_tags and Shift._object(). The
 	# warm word instead, when a product already clears their Line.
 	&"objection", &"objection_walkaway", &"objection_walkaway_gap", &"interested",
@@ -68,6 +69,9 @@ const LINES := [
 
 	[[&"appeal"], "\"And is that in writing, or just you saying it?\"", [&"karen"], [], []],
 	[[&"appeal"], "\"Fine. What is the other guy charging for that?\"", [&"hawk"], [], []],
+	[[&"appeal"], "\"Hm. I'll check that against the reviews.\"", [&"skeptic"], [], []],
+	[[&"appeal"], "\"Cool, cool. Can we keep this moving?\"", [&"speedster"], [], []],
+	[[&"appeal"], "\"Ooh, my followers would love that.\"", [&"influencer"], [], []],
 	[[&"appeal"], "\"Do you have the actual spec sheet on that?\"", [&"tech"], [], []],
 	[[&"appeal"], "\"Sure, sure. How much longer is this going to be?\"", [&"kicker"], [], []],
 	[[&"appeal"], "\"Let me run that past my partner before I say anything.\"", [&"family"], [], []],
@@ -104,12 +108,37 @@ const LINES := [
 	[[&"demand_thinking"], "\"Could we have a moment?\"", [], [], []],
 	[[&"demand_restless"], "\"How long is this going to take?\"", [], [], []],
 	[[&"demand_manager"], "\"Is there someone else I can speak to?\"", [], [], []],
-	[[&"demand_show_me"], "\"What have you got that is actually worth having?\"", [], [], []],
-	[[&"demand_better_quote"], "\"I had another dealer at less than that.\"", [], [], []],
-	# Demand.dialogue's own text was never actually spoken anywhere before
-	# this migration (dead data - _settle_demand() hardcoded "" always), so
-	# it is not "the" line for this tag - it becomes a second, free variant.
-	[[&"demand_better_quote"], "\"The place down the street does this for less.\"", [], [], []],
+	[[&"demand_price_check"], "\"I had another dealer at less than that.\"", [], [], []],
+	[[&"demand_price_check"], "\"The place down the street does this for less.\"", [], [], []],
+	[[&"demand_price_check"], "\"I've got a quote right here that says otherwise.\"", [], [], []],
+	[[&"demand_price_check"], "\"Found it cheaper online. Your move.\"", [], [], []],
+	[[&"demand_spec_question"], "\"Quick question: what's actually covered under this?\"", [], [], []],
+	[[&"demand_spec_question"], "\"Walk me through how a claim works, step by step.\"", [], [], []],
+	[[&"demand_spec_question"], "\"Is that per incident, or for the life of the plan?\"", [], [], []],
+	[[&"demand_spec_question"], "\"What's the deductible on that, exactly?\"", [], [], []],
+	[[&"demand_tell_me_more"], "\"Oh, that's interesting. Tell me more?\"", [], [], []],
+	[[&"demand_tell_me_more"], "\"Huh. What else does it do?\"", [], [], []],
+	[[&"demand_tell_me_more"], "\"Go on, I'm listening.\"", [], [], []],
+	[[&"demand_be_back"], "\"You know what, I'll think about it.\"", [], [], []],
+	[[&"demand_be_back"], "\"I'm gonna go walk the lot. Maybe I'll be back.\"", [], [], []],
+	[[&"demand_be_back"], "\"Let me sleep on it.\"", [], [], []],
+
+	# Someone answering a demand in their own way, rather than the all-purpose
+	# relief: a customer who has warmed up enough to say what they are after,
+	# and one who had one foot out of the door sitting back down.
+	[[&"opens_up"], "\"You know what? Here's what I actually care about.\"", [], [], []],
+	[[&"opens_up"], "\"Okay, between us, this is what matters to me.\"", [], [], []],
+	[[&"opens_up"], "\"Since you asked, here's what I'm really after.\"", [], [], []],
+	[[&"sits_back_down"], "\"...Fine. What's the number?\"", [], [], []],
+	[[&"sits_back_down"], "\"Alright, alright. I'm sitting.\"", [], [], []],
+	[[&"sits_back_down"], "\"Okay. One more minute.\"", [], [], []],
+
+	# A card waved off - see CustomerArchetype.rejects_every_nth_card.
+	[[&"rejects_card"], "\"Oh, I know that trick.\"", [], [], []],
+	[[&"rejects_card"], "\"I've read about that, and I'm not falling for it.\"", [], [], []],
+	[[&"rejects_card"], "\"Nice try. Next.\"", [], [], []],
+	[[&"rejects_card"], "\"Saw that one on a consumer forum.\"", [], [], []],
+	[[&"rejects_card"], "\"My brother-in-law warned me about this one.\"", [], [], []],
 
 	# New: demand settlement never spoke at all before this migration
 	# (_settle_demand() hardcoded dialogue to "" unconditionally). Generic
@@ -118,6 +147,8 @@ const LINES := [
 	[[&"relief"], "\"Alright, that works.\"", [], [], []],
 	[[&"relief"], "\"Good. That is all I wanted.\"", [], [], []],
 	[[&"relief"], "\"Now we are getting somewhere.\"", [], [], []],
+	[[&"relief"], "\"Okay, that actually makes sense. Good answer.\"", [&"tech"], [], []],
+	[[&"relief"], "\"See, that's what I wanted to know.\"", [&"tech"], [], []],
 	[[&"ignored"], "\"Fine. Forget it.\"", [], [], []],
 	[[&"ignored"], "\"Whatever you say.\"", [], [], []],
 	[[&"ignored"], "\"That's not nice.\"", [], [], []],
@@ -137,6 +168,9 @@ const LINES := [
 	[[&"accepted"], "\"Sure, sure. Throw it on. Are we done?\"", [&"kicker"], [], []],
 	[[&"accepted"], "\"Sounds good to me!\"", [&"easygoing"], [], []],
 	[[&"accepted"], "\"Yep. Whatever you think is best.\"", [&"laydown"], [], []],
+	[[&"accepted"], "\"Fine. But I'm reading every word of this.\"", [&"skeptic"], [], []],
+	[[&"accepted"], "\"Done. Where do I sign?\"", [&"speedster"], [], []],
+	[[&"accepted"], "\"Perfect. Smile for the camera!\"", [&"influencer"], [], []],
 	[[&"accepted"], "\"Good. I am not paying off a car I do not have.\"", [], [&"gap"], []],
 	[[&"accepted"], "\"No more surprise repair bills. I like that.\"", [], [&"vsc"], []],
 	[[&"accepted"], "\"Given my street? Yes, please.\"", [], [&"theft"], []],
@@ -163,6 +197,9 @@ const LINES := [
 	[[&"impatient"], "\"Yeah, I think I am just going to go.\"", [&"kicker"], [], []],
 	[[&"impatient"], "\"Not to rush you, but I have somewhere to be.\"", [&"easygoing"], [], []],
 	[[&"impatient"], "\"Just tell me where to sign, okay?\"", [&"laydown"], [], []],
+	[[&"impatient"], "\"I know when I'm being worked.\"", [&"skeptic"], [], []],
+	[[&"impatient"], "\"I've got somewhere to be. Like, now.\"", [&"speedster"], [], []],
+	[[&"impatient"], "\"My battery is dying here.\"", [&"influencer"], [], []],
 
 	# ------------------------------------------------------------- YOURS
 	# What you say as you play a card - see CardDef.player_dialogue_tags. An

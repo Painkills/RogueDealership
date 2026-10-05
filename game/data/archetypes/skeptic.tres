@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
+
+[resource]
+script = ExtResource("1_arch")
+hard = true
+weight = 2.0
+id = &"skeptic"
+display_name = "The Skeptic"
+pattern = "Feed him the card you can spare: every third one you play on him gets waved off."
+tell = "arms folded, and has already said 'I've read about this stuff' twice"
+line = 20
+line_per_sale = 0
+combo_step = 0.35
+min_shift = 8
+rejects_every_nth_card = 3

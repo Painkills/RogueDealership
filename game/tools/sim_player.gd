@@ -32,11 +32,16 @@ static func _est_rank(c: Customer, iid: StringName) -> int:
 		return int(c.ranks[iid])
 	if bool(c.cfg.get("ranks_by_category", false)):
 		return _est_rank_by_category(c, iid)
-	# Someone who announces the category they came for wants it most.
-	if c.demands_category != null \
-			and c.interests().by_id(iid).category.id == c.demands_category:
+	# Someone who announces the category they came for wants it most - and so
+	# does someone who will look at nothing else.
+	var cat_id: StringName = c.interests().by_id(iid).category.id
+	if (c.demands_category != null and cat_id == c.demands_category) or cat_id == _only(c):
 		return GUESS_TOP
 	return GUESS_MIDDLE
+
+## The one category they will look at, which is the one they want - or &"".
+static func _only(c: Customer) -> StringName:
+	return c.archetype.only_category.id if c.archetype.only_category != null else &""
 
 ## Ranks dealt a category at a time (ShiftConfig.ranks_by_category): one rank
 ## known places its whole category, so this reasons by block - the ranks a
@@ -60,7 +65,8 @@ static func _est_rank_by_category(c: Customer, iid: StringName) -> int:
 	if blocks.has(cat.id):
 		where = [int(blocks[cat.id])]
 	elif not free.is_empty():
-		if c.known_top_category == cat.id or c.demands_category == cat.id:
+		if c.known_top_category == cat.id or c.demands_category == cat.id \
+				or _only(c) == cat.id:
 			where = [free[0]]
 		else:
 			where = free
@@ -186,6 +192,10 @@ static func _pick_target(s: Shift) -> int:
 
 static func _can_answer(s: Shift, c: Customer) -> bool:
 	var r := c.demand.resolve
+	# An ask whose only reward is being told what they want is worth a card and
+	# a tick only to someone who does not know it yet - ignoring it costs less.
+	if _only_tells(c.demand) and (not fog or c.known_top_category != null):
+		return false
 	if r is IncreasePatience:
 		return _find(s, "patience") >= 0
 	if r is MakeAnOffer:
@@ -197,7 +207,13 @@ static func _can_answer(s: Shift, c: Customer) -> bool:
 		return c.offer != null and _find(s, "concession") >= 0
 	if r is PlayAnySupport:
 		return _any_support(s, c) >= 0
+	if r is PlayAppealCard:
+		return c.offer != null and _appeal_answer(s, c) >= 0
 	return false
+
+## Whether meeting `d` earns nothing but a read on them.
+static func _only_tells(d: Demand) -> bool:
+	return not d.relief.is_empty() and d.relief.all(func(e): return e is RevealRoom)
 
 ## One move with customer `c`. False when there was nothing worth doing.
 static func _act(s: Shift, c: Customer) -> bool:
@@ -219,9 +235,18 @@ static func _act(s: Shift, c: Customer) -> bool:
 			return _did("answer a demand: concession", s.play_card(_find(s, "concession")).ok)
 		if r is PlayAnySupport:
 			return _did("answer a demand: any support card", s.play_card(_any_support(s, c)).ok)
+		if r is PlayAppealCard:
+			return _did("answer a demand: appeal card", s.play_card(_appeal_answer(s, c)).ok)
 	if not c.unsigned.is_empty() and _should_close(s, c):
 		if s.close().ok:
 			return _did("close", true)
+	# Whatever goes on them next is waved off: give them the card you can spare,
+	# or go and cycle one rather than waste a good one.
+	if c.next_card_rejected():
+		var spare := _spare_card(s, c)
+		if spare < 0:
+			return false
+		return _did("a card to be waved off", s.play_card(spare).ok)
 	if c.offer != null and not _gap_known(c):
 		# Only the band to go on. Read the Room first if it is in hand - it
 		# turns the band into a number.
@@ -280,13 +305,15 @@ static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int
 	var best_key := -INF
 	for i in range(s.hand.size()):
 		var inst: CardInstance = s.hand[i]
-		if not inst.is_product() or c.owns(inst.card.id):
+		if not inst.is_product() or c.owns(inst.card.id) \
+				or not c.accepts(inst.card as ProductCardDef):
 			continue
 		var appeal: int = _est_appeal(c, (inst.card as ProductCardDef).interest.id)
 		var gap: int = _est_line(c) - appeal
 		if gap > boost and not any_offer:
 			continue
-		var key: float = (100000.0 if gap <= 0 else -1000.0 * gap) + inst.margin()
+		var key: float = (100000.0 if gap <= 0 else -1000.0 * gap) \
+			+ inst.margin() * c.margin_scale_for(inst.card as ProductCardDef)
 		# The day's product quota first, until it is met - then play normally.
 		if short > 0 and _in_quota(s, inst):
 			key += 1000000.0
@@ -311,7 +338,8 @@ static func _top3_product(s: Shift, c: Customer) -> int:
 	var best_rank := 99
 	for i in range(s.hand.size()):
 		var inst: CardInstance = s.hand[i]
-		if not inst.is_product() or c.owns(inst.card.id):
+		if not inst.is_product() or c.owns(inst.card.id) \
+				or not c.accepts(inst.card as ProductCardDef):
 			continue
 		var rank: int = _est_rank(c, (inst.card as ProductCardDef).interest.id)
 		if rank <= 3 and rank < best_rank:
@@ -445,6 +473,46 @@ static func _find(s: Shift, what: String) -> int:
 			if what == "read" and e is RevealRoom:
 				return i
 	return -1
+
+## A card in hand that answers "explain it to me" (PlayAppealCard): the
+## smallest that closes the gap as far as this player knows it, or else the
+## biggest - or -1.
+static func _appeal_answer(s: Shift, c: Customer) -> int:
+	var gap: int = maxi(1, _est_line(c) - c.offer.appeal) if c.offer != null else 1
+	var covering := -1
+	var biggest := -1
+	for i in range(s.hand.size()):
+		var inst: CardInstance = s.hand[i]
+		if inst.is_product():
+			continue
+		var def := inst.card as SupportCardDef
+		var effects: Array = def.upgraded_effects \
+			if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
+		if not effects.any(func(e): return PlayAppealCard.adds_appeal(e)):
+			continue
+		var a := _appeal_of(inst, c.sales)
+		if a >= gap and (covering < 0 or a < _appeal_of(s.hand[covering], c.sales)):
+			covering = i
+		if biggest < 0 or a > _appeal_of(s.hand[biggest], c.sales):
+			biggest = i
+	return covering if covering >= 0 else biggest
+
+## The support card you would miss least - the quickest, then the weakest -
+## that can go on `c` right now, or -1.
+static func _spare_card(s: Shift, c: Customer) -> int:
+	var best := -1
+	var best_key := INF
+	for i in range(s.hand.size()):
+		var inst: CardInstance = s.hand[i]
+		if inst.is_product():
+			continue
+		if (inst.card as SupportCardDef).needs_offer and c.offer == null:
+			continue
+		var key := float(inst.ticks()) * 100.0 + float(_appeal_of(inst, c.sales))
+		if key < best_key:
+			best_key = key
+			best = i
+	return best
 
 static func _any_support(s: Shift, c: Customer) -> int:
 	for i in range(s.hand.size()):

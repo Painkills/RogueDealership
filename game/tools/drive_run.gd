@@ -24,7 +24,11 @@ var _bought_uid: int = -1
 
 const PROFILE := "user://drive_run_profile.cfg"
 
+## Every error the engine reports while the run is driven - see ErrorTrap.
+var _trap := ErrorTrap.new()
+
 func _init() -> void:
+	OS.add_logger(_trap)
 	seed(20260905)
 	_root = (load("res://scenes/run.tscn") as PackedScene).instantiate()
 	# This driver tests the run, not the title screen in front of it (that is
@@ -82,6 +86,8 @@ func _process(_delta: float) -> bool:
 		_check_run_summary_screen_appears_at_the_end_of_a_run()
 		_check_the_fired_title_is_distinct_from_a_completed_run()
 		PlayerProfile.reset()
+		_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
+			_trap.errors.is_empty())
 
 		print("")
 		const EXPECTED_MIN := 20
@@ -123,6 +129,7 @@ func _phase_0_open_and_finish_shift() -> void:
 	_run = _root._run
 	_check("a run started", _run != null)
 	_check("on shift 1", _run.shift_number == 1)
+	_check_the_toolkit_opens_from_a_new_games_calendar()
 	# The tier with the most for sale, for the store checks after it.
 	var first := _pick_tier_by(func(p): return p.cards_for_sale)
 	_check("with the floor showing, not the shop", not _root._shop_view.visible)
@@ -947,6 +954,19 @@ func _check_clicking_the_draw_pile_opens_the_deck_viewer() -> void:
 	(deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
 	_check("closing it returns to the floor, not the shop",
 		not deck_viewer.visible and not _root._shop_view.visible)
+
+## Before a single shift is worked: the corner button over a new game's first
+## calendar, with no shift on the floor behind it yet. Anything it trips over
+## lands in the error trap.
+func _check_the_toolkit_opens_from_a_new_games_calendar() -> void:
+	var deck_viewer = _root._deck_viewer
+	_check("the corner button is there on the first calendar",
+		_root._picker_view.visible and _root._view_deck_btn.visible)
+	_root._view_deck_btn.pressed.emit()
+	_check("and opens the toolkit", deck_viewer.visible)
+	(deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
+	_check("which closes back onto the calendar",
+		not deck_viewer.visible and _root._picker_view.visible)
 
 ## The third way in - a plain 2D button, always on screen top-right,
 ## reachable no matter which of the four screens is showing, for whenever

@@ -188,6 +188,25 @@ static func behaviour_text(c) -> String:
 	var past: int = c.archetype.needs_concession_past_rank
 	if past > 0:
 		tells.append("HOLDS OUT - won't take anything outside their top %d without a concession first." % past)
+	# The rest of the rules nothing fires for, said here for the same reason.
+	var nth: int = c.archetype.rejects_every_nth_card
+	if nth > 0:
+		tells.append("SKEPTICAL - waves off every %s card you play on them: it is spent, and does nothing."
+			% ordinal(nth))
+	if c.archetype.only_category != null:
+		tells.append("%s ONLY - will not even look at anything else."
+			% c.archetype.only_category.display_name.to_upper())
+	if c.archetype.pays_per_patience_left > 0:
+		tells.append("IN A HURRY - pays %s for every point of patience they have left when they sign."
+			% Format.money(c.archetype.pays_per_patience_left))
+	var prized: Array[String] = []
+	for i in c.archetype.premium_interests:
+		if i != null:
+			prized.append(i.display_name)
+	if not prized.is_empty() and c.archetype.premium_margin_scale > 1.0:
+		var times: String = "DOUBLE" if is_equal_approx(c.archetype.premium_margin_scale, 2.0) \
+			else "x%s" % str(c.archetype.premium_margin_scale)
+		tells.append("PAYS %s for %s." % [times, " and ".join(prized)])
 	for act in c.archetype.actions:
 		tells.append("%s - %s" % [act.display_name, act.tell])
 	if tells.is_empty():
@@ -206,10 +225,27 @@ static func unsigned_text(c) -> String:
 ## authored SHORT for exactly this - it has to fit one line on a card that may
 ## be 179 px wide - and the countdown is what turns an event into a decision.
 static func demand_text(c, tick: int) -> String:
-	if c.demand == null:
-		return ""
-	var left: int = maxi(0, c.demand_due_tick - tick)
-	return "%s  %dt" % [c.demand.telegraph, left]
+	var parts: Array[String] = []
+	if c.demand != null:
+		var left: int = maxi(0, c.demand_due_tick - tick)
+		parts.append("%s  %dt" % [c.demand.telegraph, left])
+	# Not an ask but a warning, in the same place: whatever you play on them
+	# next is wasted (CustomerArchetype.rejects_every_nth_card).
+	if c.next_card_rejected():
+		parts.append(NEXT_CARD_REJECTED)
+	return "\n".join(parts)
+
+const NEXT_CARD_REJECTED := "NEXT CARD REJECTED"
+
+## 3 -> "3rd".
+static func ordinal(n: int) -> String:
+	var suffix := "th"
+	if n % 100 < 11 or n % 100 > 13:
+		match n % 10:
+			1: suffix = "st"
+			2: suffix = "nd"
+			3: suffix = "rd"
+	return "%d%s" % [n, suffix]
 
 ## Which of their interests they have already bought into. The grid lights these
 ## rather than the status line listing them, because a list grows and a grid

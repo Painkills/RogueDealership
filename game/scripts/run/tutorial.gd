@@ -42,6 +42,9 @@ static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPo
 	# No quota to make in practice - "banked $0 / $3,600" on the top bar would
 	# be a target nobody is asking you to hit.
 	practice.quota = 0
+	# Nobody asks for anything in practice: their own asks would talk over the
+	# coach, who is teaching the table, not the customers.
+	practice.demand_grace_ticks = TICKS
 	# The starter deck, plus whatever the scripted hand names that it does not
 	# hold - the lesson answers an objection with Acknowledge & Empathize, a
 	# store card, before you have ever seen the store.

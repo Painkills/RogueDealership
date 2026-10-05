@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="3_o067f"]
 [ext_resource type="Script" uid="uid://b766306iy15gl" path="res://scripts/model/triggers/every.gd" id="4_fwu7y"]
 [ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="7_ms7hp"]
-[ext_resource type="Resource" uid="uid://cr34f0lqds7wo" path="res://data/demands/show_me.tres" id="10_dmd"]
+[ext_resource type="Resource" path="res://data/demands/spec_question.tres" id="10_dmd"]
 
 [sub_resource type="Resource" id="Resource_nc07q"]
 script = ExtResource("3_o067f")
@@ -13,13 +13,14 @@ demand = ExtResource("10_dmd")
 
 [sub_resource type="Resource" id="Resource_dv2g6"]
 script = ExtResource("4_fwu7y")
+ticks = 6
 
 [sub_resource type="Resource" id="Resource_a55j1"]
 script = ExtResource("1_miwln")
-id = &"show_me"
-display_name = "Asks to see the good stuff"
-tell = "about every 5 ticks, wants a top-3 pick. Offer one within 5 ticks for a bonus, or lose 2 patience"
-dialogue_tags = Array[StringName]([&"demand_show_me"])
+id = &"spec_question"
+display_name = "Asks how it actually works"
+tell = "about every 6 ticks he asks a spec question. Answer it with any appeal card within 4 ticks for +$300 on the product on the table, or he loses 3 patience"
+dialogue_tags = Array[StringName]([&"demand_spec_question"])
 trigger = SubResource("Resource_dv2g6")
 effects = Array[ExtResource("2_tbny2")]([SubResource("Resource_nc07q")])
 
@@ -31,7 +32,7 @@ line_per_sale = 2
 line = 24
 id = &"tech"
 display_name = "Tech Enthusiast"
-pattern = "Hunt the bullseye. Do not grind a mediocre product upward when the right one pays a premium."
+pattern = "Answer his questions when he asks them: an appeal card on the spot pays $300 on the product."
 tell = "asked about the drivetrain before asking about the price"
 combo_step = 0.2
 min_shift = 3

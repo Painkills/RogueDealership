@@ -1,6 +1,28 @@
 [gd_resource type="Resource" script_class="CustomerArchetype" format=3 uid="uid://dynue3eltx0nd"]
 
 [ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="8_ut76j"]
+[ext_resource type="Script" uid="uid://cp8pd650f65g2" path="res://scripts/model/data/customer_action.gd" id="1_act"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="2_eff"]
+[ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="3_raise"]
+[ext_resource type="Script" uid="uid://b766306iy15gl" path="res://scripts/model/triggers/every.gd" id="4_every"]
+[ext_resource type="Resource" uid="uid://cd2b46g70skpf" path="res://data/demands/price_check.tres" id="5_dmd"]
+
+[sub_resource type="Resource" id="Sub_raise"]
+script = ExtResource("3_raise")
+demand = ExtResource("5_dmd")
+
+[sub_resource type="Resource" id="Sub_every"]
+script = ExtResource("4_every")
+ticks = 6
+
+[sub_resource type="Resource" id="Sub_price_check"]
+script = ExtResource("1_act")
+id = &"price_check"
+display_name = "Waves a competitor's quote"
+tell = "about every 6 ticks he waves a competitor's quote. Give him a concession within 5 ticks or his Line rises 3"
+dialogue_tags = Array[StringName]([&"demand_price_check"])
+trigger = SubResource("Sub_every")
+effects = Array[ExtResource("2_eff")]([SubResource("Sub_raise")])
 
 [resource]
 script = ExtResource("8_ut76j")
@@ -15,3 +37,4 @@ line_per_sale = 2
 combo_step = 0.25
 min_shift = 4
 needs_concession_past_rank = 5
+actions = Array[ExtResource("1_act")]([SubResource("Sub_price_check")])

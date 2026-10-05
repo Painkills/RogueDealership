@@ -23,6 +23,24 @@ class_name CustomerArchetype extends Resource
 ## fuse and nothing swept away: the offer just falls short until you come
 ## down. 0 = takes anything that clears their Line.
 @export var needs_concession_past_rank: int = 0
+## Waves off every this-many-th card played on them - products and support
+## cards alike: the card is spent, its ticks are gone, and nothing it does
+## happens (Shift._reject()). Telegraphed the card before. 0 = never.
+@export var rejects_every_nth_card: int = 0
+## Will only look at products in this category - nothing else can even be put
+## in front of them (Shift.place()). Its interests rank first, the way the
+## category a Karen came in for does. Empty = anything.
+@export var only_category: Category = null
+## Sits down with this share of their patience - 0.5 is half. 0 = the usual
+## arrival roll (ShiftConfig.arrival_patience_min_fraction).
+@export var arrival_patience_share: float = 0.0
+## Paid on signing for every point of patience they still have (Shift.close()).
+## 0 = nothing.
+@export var pays_per_patience_left: int = 0
+## A sale of a product for one of these interests pays premium_margin_scale
+## times its margin (Shift._settle()).
+@export var premium_interests: Array[Interest] = []
+@export var premium_margin_scale: float = 1.0
 ## The day of the run this archetype joins the pool. The run opens on the easy
 ## ones and adds one more type a day, so each new problem arrives on its own.
 ## Defaults to 1, so a bare shift is unaffected.
