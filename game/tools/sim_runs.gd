@@ -11,7 +11,9 @@ extends SceneTree
 ##     ... --script res://tools/sim_runs.gd -- night.commission=0.5 cfg.quota_growth=0.12
 ##
 ## card.<id>.<field>=value and arch.<id>.<field>=value do the same for one card
-## or archetype - arch.<id>.actions=none takes away everything it does.
+## or archetype - arch.<id>.actions=none takes away everything it does, and
+## weight=0 keeps it off every floor. category.<n>.<field>=value is the pool's
+## n-th calendar category, counted from 0.
 ##
 ## The player is SimPlayer - optimistic, it reads every customer perfectly - so
 ## "how many runs make it" is an upper bound for a sharp human, not a forecast.
@@ -90,6 +92,19 @@ func _what_ifs() -> void:
 			else:
 				a.set(path[2], str_to_var(parts[1]))
 			print("what-if: %s.%s = %s" % [path[1], path[2], a.get(path[2])])
+			continue
+		# category.<n>.<field>=value - the pool's n-th ShiftCategory, counted from 0
+		# in shift_profile_pool.tres order, e.g. weeks=4 to keep it off a two-week
+		# run.
+		if parts.size() == 2 and path.size() == 3 and path[0] == "category":
+			var n := int(path[1])
+			if n < 0 or n >= _pool.categories.size():
+				print("ignoring %s - no such category" % arg)
+				continue
+			var cat: ShiftCategory = _pool.categories[n]
+			cat.set(path[2], str_to_var(parts[1]))
+			print("what-if: category %d (%s).%s = %s"
+				% [n, cat.display_name, path[2], cat.get(path[2])])
 			continue
 		# card.<id>.<field>=value - a card's own numbers, e.g. a product's margin.
 		if parts.size() == 2 and path.size() == 3 and path[0] == "card":

@@ -1,10 +1,12 @@
 class_name Demand extends Resource
 ## Something a customer wants, on a fuse, with a consequence for ignoring it.
 ##
-## The three parts a Demand must state, and none of them is optional:
+## The three parts a Demand must state:
 ##   a. how long you have        -> ticks
 ##   b. what answers it          -> resolve
 ##   c. what it costs to ignore  -> effects
+## c may be nothing, where what meeting it earns (relief) is the whole point -
+## an offer you let pass, and all it costs you is missing out.
 ##
 ## Raised by the RaiseDemand effect hung on an ordinary CustomerAction, so the
 ## existing trigger vocabulary (Every, PatienceBelow, OnOffer, OnPlace, OnSale) decides

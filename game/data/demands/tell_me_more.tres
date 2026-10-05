@@ -1,14 +1,9 @@
 [gd_resource type="Resource" script_class="Demand" format=3]
 
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eff"]
-[ext_resource type="Script" uid="uid://bu5uqojkpf1vo" path="res://scripts/model/effects/change_line.gd" id="2_line"]
 [ext_resource type="Script" uid="uid://cgjl21wcy3iqp" path="res://scripts/model/effects/reveal_room.gd" id="3_tell"]
 [ext_resource type="Script" uid="uid://nbf03hevy4lm" path="res://scripts/model/demands/play_any_support.gd" id="4_rsv"]
 [ext_resource type="Script" uid="uid://cohmuwwcvcdsa" path="res://scripts/model/data/demand.gd" id="5_dmd"]
-
-[sub_resource type="Resource" id="Sub_cost"]
-script = ExtResource("2_line")
-amount = 1
 
 [sub_resource type="Resource" id="Sub_tell"]
 script = ExtResource("3_tell")
@@ -23,8 +18,8 @@ id = &"tell_me_more"
 display_name = "Wants to hear more"
 telegraph = "TELL ME MORE"
 dialogue_tags_met = Array[StringName]([&"opens_up"])
-dialogue_tags_missed = Array[StringName]([&"ignored"])
+dialogue_tags_missed = Array[StringName]([&"lets_it_go"])
 ticks = 4
 resolve = SubResource("Sub_rsv")
-effects = Array[ExtResource("1_eff")]([SubResource("Sub_cost")])
+effects = Array[ExtResource("1_eff")]([])
 relief = Array[ExtResource("1_eff")]([SubResource("Sub_tell")])

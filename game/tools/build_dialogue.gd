@@ -21,7 +21,7 @@ const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	&"padding", &"demand_thinking", &"demand_restless", &"demand_manager",
 	&"demand_spec_question", &"demand_price_check", &"demand_tell_me_more",
 	&"demand_be_back", &"relief", &"ignored", &"opens_up", &"sits_back_down",
-	&"rejects_card", &"accepted", &"impatient",
+	&"lets_it_go", &"rejects_card", &"accepted", &"impatient",
 	# Objections - see ProductCardDef.objection_tags and Shift._object(). The
 	# warm word instead, when a product already clears their Line.
 	&"objection", &"objection_walkaway", &"objection_walkaway_gap", &"interested",
@@ -132,6 +132,10 @@ const LINES := [
 	[[&"sits_back_down"], "\"...Fine. What's the number?\"", [], [], []],
 	[[&"sits_back_down"], "\"Alright, alright. I'm sitting.\"", [], [], []],
 	[[&"sits_back_down"], "\"Okay. One more minute.\"", [], [], []],
+	# An offer to tell you more, let pass - no harm done, just a read missed.
+	[[&"lets_it_go"], "\"Oh well. Never mind.\"", [], [], []],
+	[[&"lets_it_go"], "\"Ah, you're busy. Another time.\"", [], [], []],
+	[[&"lets_it_go"], "\"No worries, it'll keep.\"", [], [], []],
 
 	# A card waved off - see CustomerArchetype.rejects_every_nth_card.
 	[[&"rejects_card"], "\"Oh, I know that trick.\"", [], [], []],
