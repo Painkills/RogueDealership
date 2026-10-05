@@ -49,6 +49,28 @@ func _init() -> void:
 	heading.add_child(close)
 	close.owner = root
 
+	# The dealership's upgrades, as badges - filled at runtime by
+	# deck_viewer.gd, and hidden while the run has none.
+	var strip := HBoxContainer.new()
+	strip.name = "DealershipStrip"
+	strip.unique_name_in_owner = true
+	strip.add_theme_constant_override("separation", 12)
+	col.add_child(strip)
+	strip.owner = root
+	var strip_title := AppWindow.label(strip, root, "DealershipStripTitle", "MY DEALERSHIP", 20,
+		&"text_dim", true)
+	strip_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var badges := HBoxContainer.new()
+	badges.name = "DealershipBadges"
+	badges.unique_name_in_owner = true
+	badges.add_theme_constant_override("separation", 10)
+	strip.add_child(badges)
+	badges.owner = root
+	var note := AppWindow.label(strip, root, "DealershipNote", "", 19, &"text_dim", false, true)
+	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
 	var scroll := ScrollContainer.new()
 	scroll.name = "Scroll"
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL

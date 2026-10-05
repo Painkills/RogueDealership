@@ -114,6 +114,16 @@ func test_a_store_offers_upgrades_the_run_does_not_own_and_keeps_the_one_taken()
 	h.eq("every shift after it is worked with it",
 		run.start_shift(ShiftProfile.new()).hand.size(), run.cfg.hand_size + 1)
 
+	# Only a shift that made its quota earns one.
+	var missed := _run(pool)
+	missed.reports.append({"made_quota": false})
+	var no_pick := Shop.new(missed, offering)
+	h.check("a shift that missed quota offers no upgrade, and says so",
+		no_pick.dealership_offers.is_empty() and no_pick.dealership_missed)
+	var made := _run(pool)
+	made.reports.append({"made_quota": true})
+	h.eq("one that made it does", Shop.new(made, offering).dealership_offers.size(), 3)
+
 	# A store that offers none rolls nothing for them: the run's dice end up
 	# where a run with no upgrades at all would leave them.
 	var plain := _run(null)

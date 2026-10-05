@@ -1119,6 +1119,10 @@ func _fly(text: String, role: StringName, from: Vector2, target: Control,
 ## back to the floor, and a stamp left where the folder WAS floats off it.
 func _follow_stamps() -> void:
 	for n in _fx:
+		# Over the floor, never over what is laid on top of it - the toolkit,
+		# the calendar, the report.
+		if is_instance_valid(n):
+			(n as CanvasItem).visible = not _hud_dimmed and not _report_overlay.visible
 		if is_instance_valid(n) and (n as Node).has_meta(&"chair"):
 			var l := n as Label
 			l.position = _chair_on_screen(int(l.get_meta(&"chair"))) - l.size * 0.5
@@ -1196,6 +1200,84 @@ func _mourn_walkout(chair: int, lost: int) -> void:
 	_fly("-%d standing" % cost, &"alert", at, _standing_label, func():
 		_roll(_standing_label, from, _write_standing,
 			func(): _standing_rolling = false, &"alert", true))
+
+## "When a customer does a thing, there needs to be a notification about it."
+## Whatever an action or a demand of theirs did (Shift._fx_since(), the entry's
+## "fx") happens on screen, the way a signing does: money they add or cost you
+## flies to what is unsigned on the floor, standing flies to the standing
+## counter and rolls, a product they sweep is stamped and pops on its way to
+## the discard, and their patience or Line moving rises off their folder.
+func _show_what_they_did(entry: Dictionary) -> void:
+	var fx: Dictionary = entry.get("fx", {})
+	if fx.is_empty():
+		return
+	var chair: int = Shift.CHAIR_KEYS.find(str(entry.get("key", "")))
+	if chair < 0 or chair >= _customer_cards.size():
+		return
+	var at := _chair_on_screen(chair)
+	var money := int(fx.get("margin", 0))
+	if money != 0:
+		var role: StringName = &"margin" if money > 0 else &"alert"
+		_fly(("+" if money > 0 else "") + Format.money(money), role, at + Vector2(0, 90),
+			_at_risk_label, func(): _pulse(_at_risk_label, role, money < 0))
+	var standing := int(fx.get("standing", 0))
+	if standing != 0:
+		var role: StringName = &"margin" if standing > 0 else &"alert"
+		_standing_rolling = true
+		var from := _standing_shown
+		_fly("%+d standing" % standing, role, at, _standing_label, func():
+			_roll(_standing_label, from, _write_standing,
+				func(): _standing_rolling = false, role, standing < 0))
+	var swept := int(fx.get("swept", -1))
+	if swept >= 0:
+		_stamp("SWEPT OFF!", &"alert", chair, -6.0)
+		var node: CardFace3D = _nodes.get(swept)
+		if node != null:
+			var tw := _fx_tween()
+			tw.tween_property(node, "scale", Vector3.ONE * 1.35, 0.15) \
+				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw.tween_property(node, "scale", Vector3.ONE, 0.45)
+	var notes: Array[String] = []
+	var patience := int(fx.get("patience", 0))
+	if patience != 0:
+		notes.append("%+d patience" % patience)
+	var line := int(fx.get("line", 0))
+	if line != 0:
+		notes.append("Line %+d" % line)
+	if bool(entry.get("floor_wide", false)):
+		notes.append("WHOLE FLOOR: " + ", ".join(entry.get("descriptions", [])))
+	if not notes.is_empty():
+		_rise("\n".join(notes), &"alert" if patience < 0 or line > 0 \
+			or bool(entry.get("floor_wide", false)) else &"margin", chair)
+
+## Text that rises off a customer's folder and fades - something that happened
+## to them, said where it happened.
+func _rise(text: String, role: StringName, chair: int) -> void:
+	var l := _fx_label(text, role, 34, _chair_on_screen(chair) + Vector2(0, -40))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var tw := _fx_tween()
+	tw.tween_interval(0.2)
+	tw.set_parallel(true)
+	tw.tween_property(l, "position:y", l.position.y - 110.0, 1.8) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(l, "modulate:a", 0.0, 1.8).set_ease(Tween.EASE_IN)
+	tw.set_parallel(false)
+	tw.tween_callback(func(): _fx_done(l))
+
+## The landing of an amount on a label that is not rolled - what is unsigned on
+## the floor is rewritten every render - just a pulse in its colour.
+func _pulse(label: Control, role: StringName, shake: bool) -> void:
+	label.pivot_offset = label.size * 0.5
+	label.add_theme_color_override("font_color", Palette.color(role))
+	var tw := _fx_tween()
+	tw.tween_property(label, "scale", Vector2(1.25, 1.25), 0.15)
+	if shake:
+		var x := label.position.x
+		for k in range(4):
+			tw.tween_property(label, "position:x", x + (8.0 if k % 2 == 0 else -8.0), 0.05)
+		tw.tween_property(label, "position:x", x, 0.05)
+	tw.tween_property(label, "scale", Vector2.ONE, 0.45)
+	tw.tween_callback(func(): label.remove_theme_color_override("font_color"))
 
 ## Ends every effect now - a new shift, or a driver with no time to watch.
 func _clear_fx() -> void:
@@ -1448,6 +1530,7 @@ func _drain_log() -> void:
 		# patience (see Shift._chatter()) - so it leaves nothing here at all.
 		if bool(entry.get("chatter", false)):
 			continue
+		_show_what_they_did(entry)
 		var color := Palette.hex(&"alert") if entry["floor_wide"] else Palette.hex(&"action")
 		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
 			% [color, entry["customer"], entry["key"], entry["name"],

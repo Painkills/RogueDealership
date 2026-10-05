@@ -41,6 +41,8 @@ var upgrades: int = 0
 var dealership_offers: Array[DealershipUpgrade] = []
 var dealership_picks_left: int = 0
 var dealership_taken: DealershipUpgrade = null
+## True when the shift would have upgraded the dealership but missed quota.
+var dealership_missed: bool = false
 
 ## How often each rarity turns up, relative to the others - not a percentage,
 ## just a ratio consumed by _weighted_pick(). Flat on purpose: the pool is still
@@ -76,6 +78,12 @@ func _init(p_run: RunState, p_profile: ShiftProfile = null) -> void:
 ## none, so a morning or midday store rolls exactly what it always did.
 func _roll_dealership_offers(count: int) -> void:
 	if count <= 0 or run.upgrade_pool == null:
+		return
+	# Earned, not handed out: only a shift that made its quota upgrades the
+	# dealership. A run with no shift behind it yet (a store opened straight
+	# from a test, say) has nothing to have missed.
+	if not run.reports.is_empty() and not bool(run.reports[-1].get("made_quota", true)):
+		dealership_missed = true
 		return
 	var pool: Array[DealershipUpgrade] = []
 	for u in run.upgrade_pool.upgrades:
@@ -216,10 +224,11 @@ func perk_text() -> String:
 		extras.append("%d card%s for sale" % [cards_for_sale, "" if cards_for_sale == 1 else "s"])
 	if upgrades > 0:
 		extras.append("%d of your cards to upgrade" % upgrades)
+	var missed := " No dealership upgrade - that shift missed quota." if dealership_missed else ""
 	if extras.is_empty():
-		return "Just your free card this visit - your bonus carries over."
-	return "On top of your free card: %s. Buy as many as your bonus covers." \
-		% " and ".join(extras)
+		return "Just your free card this visit - your bonus carries over." + missed
+	return "On top of your free card: %s. Buy as many as your bonus covers.%s" \
+		% [" and ".join(extras), missed]
 
 # --- the verbs ---------------------------------------------------------------
 

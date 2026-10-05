@@ -1315,6 +1315,40 @@ func close() -> Result:
 		"close", {"margin": banked})
 
 
+## What a customer's action or demand can move, read before it lands - see
+## _fx_since().
+func _snapshot(c: Customer) -> Dictionary:
+	return {"unsigned": c.unsigned_margin(),
+		"offer_margin": c.offer.margin if c.offer else 0,
+		"standing": standing, "patience": c.patience, "line": c.line,
+		"offer": c.offer.instance.uid if c.offer else -1}
+
+
+## What it actually did, for the view to show happening rather than only say:
+## money gained or lost on their deal, standing, their patience and Line, and
+## the uid of a product it swept off the table (-1 if none). Logged as the
+## entry's "fx".
+func _fx_since(before: Dictionary, c: Customer) -> Dictionary:
+	var now := _snapshot(c)
+	var swept: int = int(before["offer"]) if int(before["offer"]) >= 0 \
+		and int(now["offer"]) < 0 else -1
+	# A sale that happened since takes the product off the table too - that is
+	# not a sweep. Only a product that left for the discard counts.
+	if swept >= 0 and not discard.any(func(i): return i.uid == swept):
+		swept = -1
+	# Money: what they agreed to, plus what moved on a product still sitting on
+	# the table. A product leaving the table - swept, or sold into `unsigned` -
+	# is not money gained or lost by itself.
+	var money: int = int(now["unsigned"]) - int(before["unsigned"])
+	if int(before["offer"]) >= 0 and int(before["offer"]) == int(now["offer"]):
+		money += int(now["offer_margin"]) - int(before["offer_margin"])
+	return {"margin": money,
+		"standing": standing - int(before["standing"]),
+		"patience": int(now["patience"]) - int(before["patience"]),
+		"line": int(now["line"]) - int(before["line"]),
+		"swept": swept}
+
+
 ## The context for one of YOUR cards or products - the same as _context(), plus
 ## what the dealership adds to every bit of appeal you add. A customer's own
 ## actions and demands never get it.
@@ -1404,6 +1438,7 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 
 	var ctx := _context(c)
 	ctx.sale = sale
+	var before := _snapshot(c)
 	var effects: Array[Effect] = d.relief if met else d.effects
 	var descriptions: Array[String] = []
 	var floor_wide := false
@@ -1440,6 +1475,7 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 		"dialogue": said,
 		"descriptions": descriptions,
 		"floor_wide": floor_wide,
+		"fx": _fx_since(before, c),
 	})
 
 
@@ -1536,6 +1572,7 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 		# the very entry already sitting in the customer's unsigned deal.
 		ctx.sale = extra.get("sale", {})
 		var bonus_before: int = int(ctx.sale.get("bonus", 0))
+		var before := _snapshot(c)
 
 		var descriptions: Array[String] = []
 		var floor_wide := false
@@ -1567,6 +1604,7 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 			"dialogue": said,
 			"descriptions": descriptions,
 			"floor_wide": floor_wide,
+			"fx": _fx_since(before, c),
 		})
 		fired.append(act)
 	return fired

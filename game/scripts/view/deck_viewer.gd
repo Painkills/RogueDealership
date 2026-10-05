@@ -30,12 +30,20 @@ const CHIP_SIZE := Vector2(260, 364)
 @onready var _products_col: GridContainer = %ProductsColumn
 @onready var _support_col: GridContainer = %SupportColumn
 @onready var _close: Button = %DeckCloseButton
+## The dealership's upgrades across the top - see _show_dealership().
+@onready var _dealership_strip: Control = %DealershipStrip
+@onready var _dealership_badges: HBoxContainer = %DealershipBadges
+@onready var _dealership_note: Label = %DealershipNote
+
+const BADGE := Vector2(60, 60)
+const NOTE_HINT := "Hover or tap a badge to see what it does."
 
 func _ready() -> void:
 	_close.pressed.connect(func(): visible = false)
 
 func show_deck(run: RunState) -> void:
 	_title.text = "MY TOOLKIT  -  %d cards" % run.deck.cards.size()
+	_show_dealership(run.dealership)
 
 	var by_interest: Dictionary = {}   # interest id -> Array[CardInstance]
 	var support_insts: Array = []      # every support CardInstance, deck order
@@ -62,6 +70,43 @@ func show_deck(run: RunState) -> void:
 			_support_col.add_child(_chip(inst))
 
 	visible = true
+
+## One badge per dealership upgrade the run owns, its icon or its initials:
+## hovering one (tooltip on a mouse) or tapping it (a touchscreen has no hover)
+## writes its name and what it does beside them. Hidden with none to show.
+func _show_dealership(owned: Array) -> void:
+	_clear(_dealership_badges)
+	_dealership_strip.visible = not owned.is_empty()
+	_dealership_note.text = NOTE_HINT
+	for u in owned:
+		if u == null:
+			continue
+		var b := Button.new()
+		b.name = "Badge_%s" % u.id
+		b.custom_minimum_size = BADGE
+		b.tooltip_text = "%s\n%s" % [u.display_name, u.blurb]
+		ButtonStyle.filled(b, Palette.color(&"primary"))
+		if u.icon != null:
+			b.icon = u.icon
+			b.expand_icon = true
+			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		else:
+			b.text = initials(u.display_name)
+			b.add_theme_font_size_override("font_size", 22)
+		var say := func(): _dealership_note.text = "%s - %s" % [u.display_name, u.blurb]
+		b.mouse_entered.connect(say)
+		b.pressed.connect(say)
+		b.mouse_exited.connect(func(): _dealership_note.text = NOTE_HINT)
+		_dealership_badges.add_child(b)
+
+## "Walkaway Wednesday" -> "WW": the first letter of its first two words.
+static func initials(display_name: String) -> String:
+	var out := ""
+	for word in display_name.split(" ", false):
+		out += word.left(1).to_upper()
+		if out.length() == 2:
+			break
+	return out
 
 func _clear(container: Control) -> void:
 	for child in container.get_children():

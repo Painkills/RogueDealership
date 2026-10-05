@@ -11,6 +11,9 @@ class_name DealershipUpgrade extends Resource
 @export var id: StringName
 @export var display_name: String
 @export_multiline var blurb: String          ## what it does, in the store
+## Its badge on the toolkit page. Optional: without one the badge shows the
+## name's initials.
+@export var icon: Texture2D
 
 @export_group("What it does")
 ## Cards in your hand.
