@@ -75,7 +75,7 @@ const NAMES := [
 	"Dmitri Sokolov", "Carmen Ruiz", "Ellis Tran", "Maureen Doyle",
 ]
 
-const DESIGN_RULE := "Every archetype exists to teach exactly ONE play pattern, and its numbers and actions are chosen to force that pattern rather than to decorate it. State the pattern before writing any numbers; if you cannot say it in one sentence, the archetype is not designed yet. A RESOURCE archetype moves one number off base so you can always tell which resource you are failing at; a READ archetype leaves the numbers alone and differs only in priors. Priors must be reliable but not certain - prior_slip means each seeding can fail, because a prior that is never wrong is a lookup table, not a read. Actions are TELEGRAPHED on arrival: you play around known behaviour, and stepping in the trap is on you. Keep at least two archetypes in the player's favour, or the system reads as punishment instead of personality - a favour can be an action (Tech pays a premium) or a property (Family First never gets harder, Lay-Down starts low)."
+const DESIGN_RULE := "Every archetype exists to teach exactly ONE play pattern, and its numbers and actions are chosen to force that pattern rather than to decorate it. State the pattern before writing any numbers; if you cannot say it in one sentence, the archetype is not designed yet. A RESOURCE archetype moves one number off base so you can always tell which resource you are failing at. No archetype says what a customer wants: interests are ranked at random for everyone, so reading them is always on the player. Actions are TELEGRAPHED on arrival: you play around known behaviour, and stepping in the trap is on you. Keep at least two archetypes in the player's favour, or the system reads as punishment instead of personality - a favour can be an action (Tech pays a premium) or a property (Family First never gets harder, Lay-Down starts low)."
 
 
 func _init() -> void:
@@ -92,8 +92,6 @@ func _init() -> void:
 		a.line = row[4]
 		a.patience = row[5]
 		a.line_per_sale = row[6]
-		a.top_interests = _interests_from(interests, row[7])
-		a.bottom_interests = _interests_from(interests, row[8])
 		a.demands_category = row[9]
 		a.actions = _actions_for(row[0])
 		var path := "%s/%s.tres" % [DIR, row[0]]

@@ -1,7 +1,7 @@
 extends RefCounted
-## ShiftConfig.ranks_by_category: ranks dealt a category at a time, archetypes
-## leaning by category, and Active Listening reading a category. Made-up
-## archetypes and an explicit config, so none of it rides on the shipped data.
+## ShiftConfig.ranks_by_category: ranks dealt a category at a time, in an order
+## nobody's archetype decides, and Active Listening reading a category. An
+## explicit config, so none of it rides on the shipped data.
 var h: Harness
 
 func _pool() -> InterestPool:
@@ -10,7 +10,6 @@ func _pool() -> InterestPool:
 func _cfg() -> ShiftConfig:
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.ranks_by_category = true
-	cfg.prior_slip = 0.0
 	return cfg
 
 func _block_of(ranks: Dictionary, pool: InterestPool, cat: Category) -> Array:
@@ -20,50 +19,36 @@ func _block_of(ranks: Dictionary, pool: InterestPool, cat: Category) -> Array:
 	out.sort()
 	return out
 
-func test_ranks_come_a_category_at_a_time() -> void:
+func test_ranks_come_a_category_at_a_time_in_a_random_order() -> void:
 	var pool := _pool()
-	var arch := CustomerArchetype.new()
 	var broken := 0
+	var firsts := {}
 	for seed_value in range(40):
 		var rng := RandomNumberGenerator.new()
 		rng.seed = seed_value
-		var ranks := Customer.make_ranks(arch, pool, rng, 0.0, [], true)
+		var ranks := Customer.make_ranks(pool, rng, [], true)
 		for cat in pool.categories:
 			var block := _block_of(ranks, pool, cat)
 			if block[-1] - block[0] != block.size() - 1:
 				broken += 1
-	h.eq("every category's interests hold one unbroken run of ranks", broken, 0)
-
-func test_an_archetype_leaning_on_a_category_ranks_it_first_and_its_dislike_last() -> void:
-	var pool := _pool()
-	var arch := CustomerArchetype.new()
-	var liked: Category = pool.categories[1]
-	var disliked: Category = pool.categories[0]
-	arch.top_categories = [liked]
-	arch.bottom_categories = [disliked]
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	var ranks := Customer.make_ranks(arch, pool, rng, 0.0, [], true)
-	var top := _block_of(ranks, pool, liked)
-	var bottom := _block_of(ranks, pool, disliked)
-	h.eq("the category they lean to takes the first ranks", top[0], 1)
-	h.eq("and the one they dislike the last", bottom[-1], pool.count())
-
-func test_each_category_an_archetype_leans_to_does_come_first() -> void:
-	var pool := _pool()
-	var arch := CustomerArchetype.new()
-	arch.top_categories = [pool.categories[0], pool.categories[2]]
-	var firsts := {}
-	for seed_value in range(60):
-		var rng := RandomNumberGenerator.new()
-		rng.seed = seed_value
-		var ranks := Customer.make_ranks(arch, pool, rng, 0.0, [], true)
-		for cat in pool.categories:
-			if _block_of(ranks, pool, cat)[0] == 1:
+			if block[0] == 1:
 				firsts[cat.id] = true
-	h.check("both of them come first sometimes, and nothing else does (%s)" % str(firsts.keys()),
-		firsts.has(pool.categories[0].id) and firsts.has(pool.categories[2].id)
-			and not firsts.has(pool.categories[1].id))
+	h.eq("every category's interests hold one unbroken run of ranks", broken, 0)
+	h.eq("and every category is somebody's favourite (%s)" % str(firsts.keys()),
+		firsts.size(), pool.categories.size())
+
+func test_a_category_they_came_in_for_ranks_first() -> void:
+	var pool := _pool()
+	var missed := 0
+	for by_category in [true, false]:
+		for cat in pool.categories:
+			var rng := RandomNumberGenerator.new()
+			rng.seed = 3
+			var ranks := Customer.make_ranks(pool, rng, pool.in_category(cat), by_category)
+			var block := _block_of(ranks, pool, cat)
+			if block[-1] != block.size():
+				missed += 1
+	h.eq("its interests take the top ranks, dealt either way", missed, 0)
 
 func test_active_listening_reads_their_favourite_category_and_the_upgrade_its_order() -> void:
 	var s := Shift.new(_cfg(), _pool(), load("res://data/card_pool.tres"),

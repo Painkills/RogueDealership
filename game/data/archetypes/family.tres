@@ -4,15 +4,8 @@
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="2_q8rar"]
 [ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="3_oj240"]
 [ext_resource type="Script" uid="uid://b766306iy15gl" path="res://scripts/model/triggers/every.gd" id="4_m1acs"]
-[ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="5_kagv6"]
-[ext_resource type="Resource" path="res://data/interests/status.tres" id="6_xystn"]
 [ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="7_7gpfm"]
-[ext_resource type="Resource" path="res://data/interests/stability.tres" id="8_i77n1"]
-[ext_resource type="Resource" path="res://data/interests/reliability.tres" id="9_d0jgs"]
 [ext_resource type="Resource" uid="uid://de03rn2bd0d14" path="res://data/demands/thinking.tres" id="10_dmd"]
-[ext_resource type="Script" path="res://scripts/model/data/category.gd" id="20_cat"]
-[ext_resource type="Resource" path="res://data/interests/vehicle.tres" id="21_vehicle"]
-[ext_resource type="Resource" path="res://data/interests/person.tres" id="22_person"]
 
 [sub_resource type="Resource" id="Resource_r4edv"]
 script = ExtResource("3_oj240")
@@ -41,8 +34,5 @@ display_name = "Family First"
 pattern = "Give them room. They will not be rushed, and the tick you spend hovering over them is the one that loses them."
 tell = "there are two car seats in the trade-in"
 line_per_sale = 2
-top_interests = Array[ExtResource("5_kagv6")]([ExtResource("8_i77n1"), ExtResource("9_d0jgs")])
-bottom_interests = Array[ExtResource("5_kagv6")]([ExtResource("6_xystn")])
-top_categories = Array[ExtResource("20_cat")]([ExtResource("21_vehicle"), ExtResource("22_person")])
 min_shift = 2
 actions = Array[ExtResource("1_syiqa")]([SubResource("Resource_idwwe")])

@@ -66,7 +66,6 @@ func test_two_shifts_built_back_to_back_share_no_state() -> void:
 	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
 	cfg.patience_jitter = 0
 	cfg.action_cadence_jitter_ticks = 0
-	cfg.prior_slip = 0.0
 	var interests := load("res://data/interests/interest_pool.tres")
 	var cards := load("res://data/card_pool.tres")
 	var arch := load("res://data/archetype_pool.tres")

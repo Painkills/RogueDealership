@@ -6,20 +6,18 @@ class_name SimPlayer extends RefCounted
 ## It answers demands it can, signs anyone about to walk, and leaves Family
 ## First alone when asked.
 ##
-## With `fog` on it plays on what a person can see instead: it knows each
-## archetype's tastes (its favourites usually rank near the top, its dislikes
-## near the bottom) but not this customer's ranks, and it guesses a typical
-## Line until Read the Room shows the real one. After placing it sees only the
-## band, offers on INTERESTED, pushes or drops on the rest, and learns the exact
-## gap the way you do - by offering, or by Read the Room.
+## With `fog` on it plays on what a person can see instead: it does not know
+## this customer's ranks - nobody's archetype says what they want - and it
+## guesses a typical Line until Read the Room shows the real one. After placing
+## it sees only the band, offers on INTERESTED, pushes or drops on the rest, and
+## learns the exact gap the way you do - by offering, or by Read the Room.
 
 static var fog := false
 ## What a fogged player guesses a Line is before anything has told it.
 const GUESSED_LINE := 24
-## Where an interest is guessed to rank: an archetype favourite, a dislike,
-## or neither.
+## Where an interest is guessed to rank: in the category they announced they
+## came for (the Karen), or anything else.
 const GUESS_TOP := 2
-const GUESS_BOTTOM := 8
 const GUESS_MIDDLE := 5
 
 ## The Line as this player knows it.
@@ -38,22 +36,14 @@ static func _est_rank(c: Customer, iid: StringName) -> int:
 	if c.demands_category != null \
 			and c.interests().by_id(iid).category.id == c.demands_category:
 		return GUESS_TOP
-	for i in c.archetype.top_interests:
-		if i.id == iid:
-			return GUESS_TOP
-	for i in c.archetype.bottom_interests:
-		if i.id == iid:
-			return GUESS_BOTTOM
 	return GUESS_MIDDLE
 
 ## Ranks dealt a category at a time (ShiftConfig.ranks_by_category): one rank
 ## known places its whole category, so this reasons by block - the ranks a
 ## category's interests share. A category is in the block a known rank puts it
 ## in; failing that, the first block still free if it is the one Active
-## Listening named, the one they announced (the Karen) or the one their
-## archetype leans to, the last free block if they lean away from it, and
-## otherwise any free block. The guess is the middle of the ranks still open
-## there.
+## Listening named or the one they announced (the Karen), and otherwise any
+## free block. The guess is the middle of the ranks still open there.
 static func _est_rank_by_category(c: Customer, iid: StringName) -> int:
 	var pool := c.interests()
 	var cat: Category = pool.by_id(iid).category
@@ -70,11 +60,8 @@ static func _est_rank_by_category(c: Customer, iid: StringName) -> int:
 	if blocks.has(cat.id):
 		where = [int(blocks[cat.id])]
 	elif not free.is_empty():
-		if c.known_top_category == cat.id or c.demands_category == cat.id \
-				or _leans(c.archetype.top_categories, cat):
+		if c.known_top_category == cat.id or c.demands_category == cat.id:
 			where = [free[0]]
-		elif _leans(c.archetype.bottom_categories, cat):
-			where = [free[-1]]
 		else:
 			where = free
 	var open: Array[int] = []
@@ -90,12 +77,6 @@ static func _est_rank_by_category(c: Customer, iid: StringName) -> int:
 	for r in open:
 		total += r
 	return roundi(float(total) / open.size())
-
-static func _leans(cats: Array, cat: Category) -> bool:
-	for x in cats:
-		if x != null and x.id == cat.id:
-			return true
-	return false
 
 ## The appeal this player expects `iid` to open at with `c`.
 static func _est_appeal(c: Customer, iid: StringName) -> int:

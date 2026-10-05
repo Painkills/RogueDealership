@@ -140,12 +140,11 @@ func category_quota_in_week(week: int) -> int:
 ## nobody's asks arrive like clockwork. Never sooner than one tick on.
 @export var action_cadence_jitter_ticks: int = 2
 
-@export var prior_slip: float = 0.2
 ## Customers rank interests a category at a time: their favourite category
 ## takes the top ranks, the next category the ranks after it, and so on -
-## shuffled within each. One rank you learn then places its whole category,
-## and archetypes lean by category (CustomerArchetype.top_categories). Off:
-## ranks are dealt interest by interest, the old way.
+## shuffled within each. One rank you learn then places its whole category.
+## The favourite category is random for everyone. Off: ranks are dealt
+## interest by interest, the old way.
 @export var ranks_by_category: bool = false
 ## Never two of the same HARD archetype (CustomerArchetype.hard) on the floor
 ## or in the waiting room at once - two Lay-Downs can share a floor, two

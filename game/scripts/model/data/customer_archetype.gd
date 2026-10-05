@@ -1,6 +1,8 @@
 class_name CustomerArchetype extends Resource
 ## Every archetype exists to teach exactly ONE play pattern, and its numbers
-## and actions are chosen to force that pattern rather than decorate it.
+## and actions are chosen to force that pattern rather than decorate it. What
+## they want is not part of it: everyone's interests are ranked at random
+## (Customer.make_ranks).
 
 @export var id: StringName
 @export var display_name: String
@@ -15,15 +17,6 @@ class_name CustomerArchetype extends Resource
 ## seated. Every archetype sets this explicitly; nothing should rely on this
 ## default. Unrelated to Shift.sale_streak, a separate floor-wide streak.
 @export var combo_step: float = 0.15
-@export var top_interests: Array[Interest]
-@export var bottom_interests: Array[Interest]
-## What they lean towards when ShiftConfig.ranks_by_category is on: their
-## favourite category is one of top_categories (picked at random when there
-## are several - two listed is "half the time each"), their least favourite
-## one of bottom_categories. Either can slip, at ShiftConfig.prior_slip, like
-## the interest priors above.
-@export var top_categories: Array[Category] = []
-@export var bottom_categories: Array[Category] = []
 @export var demands_category: bool = false
 ## Will not take a product they rank worse than this unless something was
 ## conceded on it first - a card that gave margin away (Offer.conceded). No

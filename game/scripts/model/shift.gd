@@ -467,14 +467,14 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	start = clampi(start + comfort, 1, top)
 
 	# Someone who demands a category comes in for one at random, and its
-	# interests are their three favourites - what she wants is what she wants.
+	# interests are their favourites - what she wants is what she wants.
 	var wanted: Category = null
 	var favourites: Array[Interest] = []
 	if arch.demands_category and not interests.categories.is_empty():
 		wanted = interests.categories[rng.randi_range(0, interests.categories.size() - 1)]
 		favourites = interests.in_category(wanted)
 	var c := Customer.new(CHAIR_KEYS[chair], _next_name(), arch,
-		Customer.make_ranks(arch, interests, rng, cfg.prior_slip, favourites,
+		Customer.make_ranks(interests, rng, favourites,
 			cfg.ranks_by_category),
 		start, top, cfg.as_dict(), interests)
 	var easier := int(perk(&"line"))

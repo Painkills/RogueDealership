@@ -10,7 +10,7 @@ extends SceneTree
 ##
 ## The distinction is the same one build_*_scene.gd already draws. Interests,
 ## cards and archetypes are STRUCTURED data with cross-references a designer
-## genuinely tunes in the Inspector - dragging an Interest into top_interests.
+## genuinely tunes in the Inspector - dragging an Interest onto a product.
 ## Dialogue is PROSE: nothing to drag, the payload is a sentence, and the file
 ## will run to hundreds of them. A 200-element array of collapsed sub-resources
 ## is a bad text editor and a worse diff.

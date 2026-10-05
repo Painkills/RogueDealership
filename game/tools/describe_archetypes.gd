@@ -44,8 +44,6 @@ func _print_archetype(a: CustomerArchetype) -> void:
 	print("tell: %s" % a.tell)
 	print("line=%d patience=%d line_per_sale=%d combo_step=%s demands_category=%s min_shift=%d"
 		% [a.line, a.patience, a.line_per_sale, a.combo_step, a.demands_category, a.min_shift])
-	print("top interests: %s" % _interest_names(a.top_interests))
-	print("bottom interests: %s" % _interest_names(a.bottom_interests))
 
 	if a.actions.is_empty():
 		print("actions: (none)")
@@ -54,14 +52,6 @@ func _print_archetype(a: CustomerArchetype) -> void:
 	print("actions:")
 	for act in a.actions:
 		_print_action(act)
-
-func _interest_names(interests: Array[Interest]) -> String:
-	if interests.is_empty():
-		return "(none)"
-	var names: Array[String] = []
-	for i in interests:
-		names.append(i.display_name)
-	return ", ".join(names)
 
 func _print_action(act: CustomerAction) -> void:
 	print("  [%s] %s (cooldown %d)" % [act.id, act.display_name, act.cooldown])

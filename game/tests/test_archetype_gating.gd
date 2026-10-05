@@ -36,8 +36,6 @@ func test_an_empty_gated_pool_falls_back_rather_than_crashing() -> void:
 	late.line = real.line
 	late.patience = real.patience
 	late.line_per_sale = real.line_per_sale
-	late.top_interests = real.top_interests
-	late.bottom_interests = real.bottom_interests
 	late.min_shift = 99
 
 	var only_late: Array[CustomerArchetype] = [late]

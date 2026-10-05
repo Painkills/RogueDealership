@@ -13,7 +13,7 @@ func _cust(id: StringName, seed_value: int) -> Customer:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var a := _arch(id)
-	var ranks := Customer.make_ranks(a, _interests(), rng, 0.0)
+	var ranks := Customer.make_ranks(_interests(), rng)
 	return Customer.new("A", "Test Person", a, ranks, a.patience, a.patience,
 		CFG, _interests())
 

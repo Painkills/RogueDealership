@@ -226,97 +226,52 @@ func leaving_soon() -> bool:
 	return patience <= int(cfg.get("leaving_soon_at", 4))
 
 
-static func make_ranks(arch: CustomerArchetype, pool: InterestPool,
-		rng: RandomNumberGenerator, prior_slip: float,
+static func make_ranks(pool: InterestPool, rng: RandomNumberGenerator,
 		favourites: Array[Interest] = [], by_category: bool = false) -> Dictionary:
-	## Seed the archetype's priors into the top and bottom thirds, shuffle the
-	## rest. prior_slip is what keeps a prior from being a lookup table: each
-	## seeded interest has that chance of being left to the shuffle instead,
-	## because a prior that is never wrong is a lookup table, not a read.
+	## Dealt at random, for everyone - nothing about an archetype says what
+	## they want.
 	##
-	## `favourites`, when given, ARE the top three, no slip - the Karen's
-	## demanded category, which she wants most because it is what she came in
-	## for.
+	## `favourites`, when given, take the top ranks - the Karen's demanded
+	## category, which she wants most because it is what she came in for.
 	##
 	## `by_category`: dealt a category at a time instead - see
 	## ShiftConfig.ranks_by_category and _ranks_by_category().
 	if by_category:
-		return _ranks_by_category(arch, pool, rng, prior_slip, favourites)
+		return _ranks_by_category(pool, rng, favourites)
 	var top: Array = []
-	if not favourites.is_empty():
-		for i in favourites:
-			top.append(i.id)
-	else:
-		for i in arch.top_interests:
-			if rng.randf() >= prior_slip:
-				top.append(i.id)
-	var bottom: Array = []
-	for i in arch.bottom_interests:
-		if rng.randf() >= prior_slip:
-			bottom.append(i.id)
-	top = top.slice(0, 3)
-	bottom = bottom.slice(0, 3)
-
+	for i in favourites:
+		top.append(i.id)
+	_shuffle(top, rng)
 	var rest: Array = []
 	for i in pool.interests:
-		if not top.has(i.id) and not bottom.has(i.id):
+		if not top.has(i.id):
 			rest.append(i.id)
 	_shuffle(rest, rng)
 
-	var n := pool.count()
-	var slots: Array = []
-	slots.resize(n)
-
-	var head: Array = [0, 1, 2]
-	_shuffle(head, rng)
-	for k in range(top.size()):
-		slots[head[k]] = top[k]
-
-	var tail: Array = [n - 3, n - 2, n - 1]
-	_shuffle(tail, rng)
-	for k in range(bottom.size()):
-		slots[tail[k]] = bottom[k]
-
-	for idx in range(n):
-		if slots[idx] == null:
-			slots[idx] = rest.pop_back()
-
 	var out := {}
-	for idx in range(n):
-		out[slots[idx]] = idx + 1
+	var rank := 1
+	for iid in top + rest:
+		out[iid] = rank
+		rank += 1
 	return out
 
 
 ## Ranks a category at a time: their favourite category takes the first block
 ## of ranks, the next category the block after it, and so on, shuffled within
-## each block. The favourite is the category of `favourites` when given (the
-## Karen's, no slip), or one of the archetype's top_categories unless the read
-## slips; the least favourite, one of its bottom_categories the same way. Every
-## other category's place is shuffled.
-static func _ranks_by_category(arch: CustomerArchetype, pool: InterestPool,
-		rng: RandomNumberGenerator, prior_slip: float,
+## each block. The order of the categories is random - but the Karen's
+## demanded one (`favourites`) comes first.
+static func _ranks_by_category(pool: InterestPool, rng: RandomNumberGenerator,
 		favourites: Array[Interest]) -> Dictionary:
 	var top: Category = null
 	if not favourites.is_empty():
 		top = favourites[0].category
-	elif not arch.top_categories.is_empty() and rng.randf() >= prior_slip:
-		top = arch.top_categories[rng.randi_range(0, arch.top_categories.size() - 1)]
-	var bottom: Category = null
-	if not arch.bottom_categories.is_empty() and rng.randf() >= prior_slip:
-		bottom = arch.bottom_categories[rng.randi_range(0, arch.bottom_categories.size() - 1)]
-	if top != null and bottom != null and bottom.id == top.id:
-		bottom = null
-	var middle: Array = []
-	for cat in pool.categories:
-		if (top == null or cat.id != top.id) and (bottom == null or cat.id != bottom.id):
-			middle.append(cat)
-	_shuffle(middle, rng)
 	var order: Array = []
+	for cat in pool.categories:
+		if top == null or cat.id != top.id:
+			order.append(cat)
+	_shuffle(order, rng)
 	if top != null:
-		order.append(top)
-	order.append_array(middle)
-	if bottom != null:
-		order.append(bottom)
+		order.push_front(top)
 
 	var out := {}
 	var rank := 1
