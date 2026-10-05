@@ -10,6 +10,9 @@ class_name CardDef extends Resource
 ## Effect.describe(), so what is printed can never drift from what executes.
 @export_multiline var text: String
 @export var ticks: int = 1
+## What it costs once upgraded - -1 is "the same as ticks". See
+## CardInstance.ticks(), the one place a played card's cost is read.
+@export var upgraded_ticks: int = -1
 @export var copies: int = 1
 ## The product line it belongs to - &"walkaway" for the WALKAWAY family. Only
 ## a dealership upgrade reads it (DealershipUpgrade.line_drop_brand), so an

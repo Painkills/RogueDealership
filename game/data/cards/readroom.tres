@@ -18,6 +18,7 @@ dialogue_tags = Array[StringName]([&"reply_listen"])
 needs_offer = false
 id = &"readroom"
 display_name = "Active Listening"
+upgraded_ticks = 0
 text = "Stay calm and curious. Let them talk, and they'll tell you what matters."
 effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])
 upgraded_effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_a4ajm")])

@@ -17,6 +17,11 @@ func _init(p_card: CardDef, p_uid: int) -> void:
 func is_product() -> bool:
 	return card is ProductCardDef
 
+## What playing this copy costs in ticks - its upgraded cost once upgraded,
+## where the card has one (CardDef.upgraded_ticks).
+func ticks() -> int:
+	return card.upgraded_ticks if upgraded and card.upgraded_ticks >= 0 else card.ticks
+
 func margin() -> int:
 	var p := card as ProductCardDef
 	return p.upgraded_margin if upgraded and p.upgraded_margin > 0 else p.margin

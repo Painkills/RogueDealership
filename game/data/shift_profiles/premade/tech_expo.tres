@@ -13,7 +13,6 @@ display_name = "Tech Expo"
 blurb = "Every desk wants to see the good stuff."
 only_archetypes = Array[ExtResource("1_arch")]([ExtResource("2_tech")])
 chance = 1.0
-heal_up_to = 0.25
 upgrades = 0
 free_pick_min_rarity = 2
 dealership_upgrades = 3

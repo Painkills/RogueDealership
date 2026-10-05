@@ -38,3 +38,28 @@ func test_lookup_by_id_finds_every_card() -> void:
 	for c in _pool().cards:
 		h.eq("by_id round-trips %s" % c.id, _pool().by_id(c.id), c)
 	h.eq("and returns null for a stranger", _pool().by_id(&"nonsense"), null)
+
+func test_an_upgraded_copy_costs_its_upgraded_ticks_and_playing_it_burns_that() -> void:
+	var def := SupportCardDef.new()
+	def.display_name = "Made-up quick card"
+	def.ticks = 2
+	def.upgraded_ticks = 0
+	def.needs_offer = false
+	var plain := CardInstance.new(def, 901)
+	var better := CardInstance.new(def, 902)
+	better.upgraded = true
+	h.eq("a plain copy costs the card's ticks", plain.ticks(), 2)
+	h.eq("an upgraded one its upgraded ticks", better.ticks(), 0)
+	var unchanged := SupportCardDef.new()
+	unchanged.ticks = 1
+	var up := CardInstance.new(unchanged, 903)
+	up.upgraded = true
+	h.eq("and a card with no upgraded cost keeps its own", up.ticks(), 1)
+
+	var s := Shift.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"), _pool(),
+		load("res://data/archetype_pool.tres"), 4)
+	s.hand[0] = better
+	var tick_before := s.tick
+	h.check("the upgraded copy plays", s.play_card(0).ok)
+	h.eq("and costs no time", s.tick, tick_before)

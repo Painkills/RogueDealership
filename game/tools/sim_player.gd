@@ -423,7 +423,7 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 static func _free_draw(s: Shift) -> int:
 	for i in range(s.hand.size()):
 		var inst: CardInstance = s.hand[i]
-		if inst.is_product() or inst.card.ticks > 0:
+		if inst.is_product() or inst.ticks() > 0:
 			continue
 		for e in (inst.card as SupportCardDef).effects:
 			if e is PullCards:

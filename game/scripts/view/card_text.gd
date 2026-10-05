@@ -12,7 +12,7 @@ static func title(inst: CardInstance) -> String:
 	return inst.card.display_name
 
 static func cost(inst: CardInstance) -> String:
-	return "%dt" % inst.card.ticks
+	return "%dt" % inst.ticks()
 
 static func kind(inst: CardInstance) -> String:
 	return "PRODUCT" if inst.is_product() else "SUPPORT"

@@ -13,7 +13,6 @@ display_name = "Karen Convention"
 blurb = "Every desk wants the manager."
 only_archetypes = Array[ExtResource("1_qg0wf")]([ExtResource("2_hw1oe")])
 chance = 1.0
-heal_up_to = 0.25
 upgrades = 0
 free_pick_min_rarity = 2
 dealership_upgrades = 3

@@ -133,12 +133,11 @@ func category_quota_in_week(week: int) -> int:
 ## lose. Guesses, and the first numbers to reach for if the floor feels frantic
 ## rather than busy.
 @export var demand_cooldown_ticks: int = 4
-## An Every-triggered action's cadence counter starts jittered by up to this
-## many ticks either way instead of always at 0, so two customers of the same
-## archetype do not both open their first demand on the exact same tick after
-## sitting down - only the FIRST firing shifts; every one after it keeps the
-## action's own exact cadence, the same self-correcting jitter patience_jitter
-## already uses below.
+## An Every-triggered action comes round up to this many ticks either side of
+## its cadence, every time - its counter starts jittered when the customer sits
+## down, and each interval after that is rolled again (Shift.fire()) - so two
+## customers of the same archetype do not open demands on the same tick, and
+## nobody's asks arrive like clockwork. Never sooner than one tick on.
 @export var action_cadence_jitter_ticks: int = 2
 
 @export var prior_slip: float = 0.2

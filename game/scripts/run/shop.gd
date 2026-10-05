@@ -204,7 +204,9 @@ func upgrade_gain(inst: CardInstance) -> int:
 		# The support-card equivalent is an empty upgraded_effects - shift.gd and
 		# card_text.gd both treat that as "no upgrade" too. Charging for either
 		# here would be a purchase that changes nothing at all.
-		if s.upgraded_effects.is_empty():
+		# A cheaper upgraded cost (CardDef.upgraded_ticks) is an upgrade too.
+		var cheaper: bool = s.upgraded_ticks >= 0 and s.upgraded_ticks != s.ticks
+		if s.upgraded_effects.is_empty() and not cheaper:
 			return 0
 		return int(round(float(buy_price(inst.card)) * 0.25))
 	var p := inst.card as ProductCardDef

@@ -1046,7 +1046,7 @@ func _support(c: Customer, index: int) -> Result:
 	_demand_saw(c, DemandResolve.SUPPORT, {"card": def, "effects": effects,
 		"patience_before": patience_before})
 	_settle_patience()
-	_burn(def.ticks, "cards")
+	_burn(inst.ticks(), "cards")
 	return Result.new(true, def.display_name + ".", "support")
 
 
@@ -1547,10 +1547,14 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 
 		if trigger_type == &"every":
 			# Cadence is the caller's job: the trigger itself has no memory.
+			var cadence: int = (act.trigger as Every).ticks
 			var last: int = int(c.action_state.get(act.id, 0))
-			if c.ticks_on_floor - last < (act.trigger as Every).ticks:
+			if c.ticks_on_floor - last < cadence:
 				continue
-			c.action_state[act.id] = c.ticks_on_floor
+			# About that often, never like clockwork: the next one is rolled up
+			# to action_cadence_jitter_ticks either side of the cadence - and
+			# never sooner than the next tick.
+			c.action_state[act.id] = c.ticks_on_floor + _cadence_jitter(cadence)
 		else:
 			var probe := _context(c)
 			probe.rank = int(extra.get("rank", 0))
@@ -1609,6 +1613,16 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 		})
 		fired.append(act)
 	return fired
+
+
+## How far off its cadence an Every action's next firing lands - up to
+## ShiftConfig.action_cadence_jitter_ticks either way, never bringing it round
+## sooner than one tick on.
+func _cadence_jitter(cadence: int) -> int:
+	var j: int = maxi(0, cfg.action_cadence_jitter_ticks)
+	if j == 0:
+		return 0
+	return rng.randi_range(maxi(-j, 1 - cadence), j)
 
 
 func _trigger_name(t: Trigger) -> StringName:

@@ -52,7 +52,9 @@ var demand_patience_at_raise: int = 0
 var state: String = "floor"        ## floor | signed | walked
 var sales: int = 0
 var ticks_on_floor: int = 0
-var action_state: Dictionary = {}  ## action id -> when it last fired
+## action id -> when it last fired. An Every action's is set off by the jitter
+## rolled for its next interval - see Shift.fire().
+var action_state: Dictionary = {}
 ## One log line per entry into the danger zone, not one per tick spent in it -
 ## re-arms the moment patience climbs back out, so a genuine second scare still
 ## warns.
