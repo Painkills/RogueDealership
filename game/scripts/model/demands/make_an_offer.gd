@@ -8,4 +8,4 @@ func satisfied(kind: StringName, _data: Dictionary) -> bool:
 	return kind == OFFER
 
 func describe() -> String:
-	return "ask them for the business"
+	return "make them an offer"

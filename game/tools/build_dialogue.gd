@@ -20,8 +20,8 @@ const DIR := "res://data/dialogue"
 const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	&"padding", &"demand_thinking", &"demand_restless", &"demand_manager",
 	&"demand_spec_question", &"demand_price_check", &"demand_tell_me_more",
-	&"demand_be_back", &"relief", &"ignored", &"opens_up", &"sits_back_down",
-	&"lets_it_go", &"rejects_card", &"accepted", &"impatient",
+	&"relief", &"ignored", &"opens_up", &"lets_it_go", &"rejects_card",
+	&"accepted", &"impatient",
 	# Objections - see ProductCardDef.objection_tags and Shift._object(). The
 	# warm word instead, when a product already clears their Line.
 	&"objection", &"objection_walkaway", &"objection_walkaway_gap", &"interested",
@@ -119,19 +119,12 @@ const LINES := [
 	[[&"demand_tell_me_more"], "\"Oh, that's interesting. Tell me more?\"", [], [], []],
 	[[&"demand_tell_me_more"], "\"Huh. What else does it do?\"", [], [], []],
 	[[&"demand_tell_me_more"], "\"Go on, I'm listening.\"", [], [], []],
-	[[&"demand_be_back"], "\"You know what, I'll think about it.\"", [], [], []],
-	[[&"demand_be_back"], "\"I'm gonna go walk the lot. Maybe I'll be back.\"", [], [], []],
-	[[&"demand_be_back"], "\"Let me sleep on it.\"", [], [], []],
 
 	# Someone answering a demand in their own way, rather than the all-purpose
-	# relief: a customer who has warmed up enough to say what they are after,
-	# and one who had one foot out of the door sitting back down.
+	# relief: a customer who has warmed up enough to say what they are after.
 	[[&"opens_up"], "\"You know what? Here's what I actually care about.\"", [], [], []],
 	[[&"opens_up"], "\"Okay, between us, this is what matters to me.\"", [], [], []],
 	[[&"opens_up"], "\"Since you asked, here's what I'm really after.\"", [], [], []],
-	[[&"sits_back_down"], "\"...Fine. What's the number?\"", [], [], []],
-	[[&"sits_back_down"], "\"Alright, alright. I'm sitting.\"", [], [], []],
-	[[&"sits_back_down"], "\"Okay. One more minute.\"", [], [], []],
 	# An offer to tell you more, let pass - no harm done, just a read missed.
 	[[&"lets_it_go"], "\"Oh well. Never mind.\"", [], [], []],
 	[[&"lets_it_go"], "\"Ah, you're busy. Another time.\"", [], [], []],

@@ -184,7 +184,7 @@ static func behaviour_text(c) -> String:
 		tells.append("WILL NOT SIGN until they have bought something in %s."
 			% str(c.demands_category).capitalize())
 	# The Budget Hawk's whole behaviour is a rule rather than an action, so it
-	# has to be said here or his card reads as nobody in particular.
+	# has to be said here or their card reads as nobody in particular.
 	var past: int = c.archetype.needs_concession_past_rank
 	if past > 0:
 		tells.append("HOLDS OUT - won't take anything outside their top %d without a concession first." % past)

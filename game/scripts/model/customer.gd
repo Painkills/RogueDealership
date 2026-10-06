@@ -219,7 +219,7 @@ func owns(product_id: StringName) -> bool:
 ## in shift.gd) tells the player only "bought something in <category>", never
 ## a priority threshold within it, so the check has to mean exactly that
 ## promise and nothing stricter. A rank-based version of this used to require
-## one of her own better-ranked interests, which the player has no way to
+## one of their own better-ranked interests, which the player has no way to
 ## know without already having placed the product - a trap the demand's own
 ## telegraph never mentioned.
 func owns_category(cat_id: StringName) -> bool:
@@ -264,7 +264,7 @@ static func make_ranks(pool: InterestPool, rng: RandomNumberGenerator,
 	## they want.
 	##
 	## `favourites`, when given, take the top ranks - the Karen's demanded
-	## category, which she wants most because it is what she came in for.
+	## category, which they want most because it is what they came in for.
 	##
 	## `by_category`: dealt a category at a time instead - see
 	## ShiftConfig.ranks_by_category and _ranks_by_category().

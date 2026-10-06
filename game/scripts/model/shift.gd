@@ -471,7 +471,7 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	start = clampi(start + comfort, 1, top)
 
 	# Someone who demands a category comes in for one at random, and its
-	# interests are their favourites - what she wants is what she wants.
+	# interests are their favourites - what they want is what they want.
 	var wanted: Category = null
 	var favourites: Array[Interest] = []
 	if arch.demands_category and not interests.categories.is_empty():
@@ -779,7 +779,7 @@ func wait() -> Result:
 	##
 	## Refused while anybody is still seated, deliberately. Being able to skip
 	## time at will is a different game - the pressure a Karen puts on the whole
-	## floor only means anything if you cannot simply wait her out.
+	## floor only means anything if you cannot simply wait them out.
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if not seated().is_empty():
@@ -1346,7 +1346,7 @@ func close() -> Result:
 	# Exactly the promise the demand's own telegraph makes - "bought something
 	# in <category>" - and nothing stricter. See Customer.owns_category()'s
 	# own comment: a hidden priority-within-category threshold used to sit
-	# here, and a player who sold her a real category match still got
+	# here, and a player who sold them a real category match still got
 	# refused with no way to have known why.
 	if c.demands_category != null \
 			and not c.owns_category(c.demands_category):

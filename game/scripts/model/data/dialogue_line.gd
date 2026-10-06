@@ -4,8 +4,8 @@ class_name DialogueLine extends Resource
 ## `tags` is which library it belongs to and is the only REQUIRED match - a
 ## line with no tags can never be drawn. The other four are FILTERS, and an
 ## empty one means "any": a line with no archetype_ids fits every archetype,
-## while a line naming karen fits only her and is excluded outright for
-## anybody else. Narrowing is therefore additive and a line can never widen
+## while a line naming karen fits only that archetype and is excluded outright
+## for anybody else. Narrowing is therefore additive and a line can never widen
 ## itself by accident.
 ##
 ## Every extra filter a line carries makes it more SPECIFIC, and DialoguePool

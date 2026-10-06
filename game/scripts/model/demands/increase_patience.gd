@@ -8,9 +8,9 @@ class_name IncreasePatience extends DemandResolve
 ## whether the number actually moved.
 
 ##
-## Also answered by whatever you just did RAISING it, wherever it started: her
-## patience keeps draining while she waits, so after three ticks a sale's +3
-## only got her back to where she asked - and "the increase of patience caused
+## Also answered by whatever you just did RAISING it, wherever it started: their
+## patience keeps draining while they wait, so after three ticks a sale's +3
+## only got them back to where they asked - and "the increase of patience caused
 ## by an accepted offer is NOT clearing the karen's request for a manager."
 func satisfied(_kind: StringName, data: Dictionary) -> bool:
 	var now := int(data.get("patience", 0))
