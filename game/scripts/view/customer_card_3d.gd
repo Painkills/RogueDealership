@@ -265,9 +265,6 @@ static func status_text(c) -> String:
 		parts.append("on the table: %s" % c.offer.product.display_name)
 	if not c.unsigned.is_empty():
 		parts.append("%s unsigned" % Format.money(c.unsigned_margin()))
-	# On a budget shift, how much they still have to spend.
-	if c.has_budget():
-		parts.append("budget left %s" % Format.money(c.budget_left()))
 	return "\n".join(parts)
 
 func _redraw() -> void:

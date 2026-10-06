@@ -41,11 +41,6 @@ class_name CustomerArchetype extends Resource
 ## times its margin (Shift._settle()).
 @export var premium_interests: Array[Interest] = []
 @export var premium_margin_scale: float = 1.0
-## What they will spend on a budget shift (ShiftProfile.budget_scale): dollars of
-## what you sell them, the same dollars as a product's margin. A sale spends from
-## it, and they will not take a product that costs more than they have left.
-## 0 = no budget - they take whatever they are shown.
-@export var budget: int = 0
 ## The day of the run this archetype joins the pool. The run opens on the easy
 ## ones and adds two more types a day.
 ## Defaults to 1, so a bare shift is unaffected.
@@ -57,10 +52,3 @@ class_name CustomerArchetype extends Resource
 ## shift can weight them up (ShiftProfile.hard_weight_scale).
 @export var hard: bool = false
 @export var actions: Array[CustomerAction]
-
-## Their budget on a shift whose budgets are scaled by `scale`, to the nearest
-## $50 - 0 for someone without one, or on a shift without budgets.
-func budget_at(scale: float) -> int:
-	if budget <= 0 or scale <= 0.0:
-		return 0
-	return roundi(budget * scale / 50.0) * 50

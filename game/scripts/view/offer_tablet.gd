@@ -166,16 +166,8 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 ## a player who has not read the room still knows roughly how far there is to
 ## go. The exact number stays Read the Room's.
 func _read_the_offer(c, o, band: String) -> void:
-	# Over what they have to spend, and nothing else matters once they are
-	# interested: they cannot take it however warm they are. Under their Line
-	# it is said alongside the band, since the band is still the way to the Line.
-	var over: int = o.margin - c.budget_left() if c.over_budget(o.margin) else 0
-	if over > 0 and band == "INTERESTED":
-		_status.text = "OVER BUDGET by %s" % Format.money(over)
-		_status.add_theme_color_override("font_color", Palette.color(&"alert"))
-		return
 	if not (o.revealed and c.known_line):
-		_status.text = band if over <= 0 else "%s - over budget" % band
+		_status.text = band
 		_status.add_theme_color_override("font_color", _bar.fill_color())
 		return
 
@@ -193,12 +185,8 @@ func _read_the_offer(c, o, band: String) -> void:
 ## The two per-archetype combo knobs, read straight off their own data so this
 ## text can never drift from what Shift._settle() actually does with them.
 static func knobs_text(c) -> String:
-	var text := "Each sale: combo +%d%%, Line +%d" \
+	return "Each sale: combo +%d%%, Line +%d" \
 		% [roundi(c.archetype.combo_step * 100), c.archetype.line_per_sale]
-	# On a budget shift: what they have left of what they will spend.
-	if c.has_budget():
-		text += "\nBudget left: %s" % Format.money(c.budget_left())
-	return text
 
 ## Where the product stands on this tablet, from the tablet's own middle - the
 ## desk places the tablet this far off its slot, the other way, so the product

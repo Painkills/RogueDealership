@@ -37,5 +37,4 @@ tell = "keeps glancing at the lot, half out of the chair already"
 patience = 9
 line_per_sale = 2
 min_shift = 5
-budget = 1400
 actions = Array[ExtResource("1_apes3")]([SubResource("Resource_fjiux")])

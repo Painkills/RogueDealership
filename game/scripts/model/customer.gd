@@ -71,9 +71,6 @@ var recent_lines: Array[String] = []
 ## Cards played on them since they last waved one off - see
 ## CustomerArchetype.rejects_every_nth_card.
 var cards_since_rejection: int = 0
-## What they will spend this visit - dollars of what you sell them, the same
-## dollars as a product's margin (CustomerArchetype.budget). 0 = no budget.
-var budget: int = 0
 
 var _interests: InterestPool
 
@@ -234,25 +231,6 @@ func owns_category(cat_id: StringName) -> bool:
 
 func leaving_soon() -> bool:
 	return patience <= int(cfg.get("leaving_soon_at", 4))
-
-
-func has_budget() -> bool:
-	return budget > 0
-
-
-## What is left of their budget: all of it, less the price of every product they
-## have agreed to so far.
-func budget_left() -> int:
-	var left := budget
-	for u in unsigned:
-		left -= int(u.get("price", 0))
-	return left
-
-
-## Whether `price` is more than they have left - never, for someone without a
-## budget.
-func over_budget(price: int) -> bool:
-	return has_budget() and price > budget_left()
 
 
 ## Whether the next card played on them gets waved off - the telegraph for

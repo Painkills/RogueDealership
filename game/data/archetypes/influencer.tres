@@ -17,6 +17,5 @@ line = 32
 line_per_sale = 0
 combo_step = 0.15
 min_shift = 3
-budget = 4000
 premium_interests = Array[ExtResource("2_int")]([ExtResource("3_status"), ExtResource("4_power")])
 premium_margin_scale = 2.0

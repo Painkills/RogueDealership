@@ -180,7 +180,6 @@ func _physics_process(_delta: float) -> bool:
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
 	_check_tick_tap_target_ends_the_shift_too()      # replaces _shift entirely
 	_check_standing_tap_target_adds_standing()       # replaces _shift entirely
-	_check_a_budget_shift_shows_what_they_can_spend() # replaces _shift entirely
 	_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
 		_trap.errors.is_empty())
 
@@ -2400,47 +2399,6 @@ func _check_a_signing_flies_its_money_to_the_top(before: int) -> void:
 	_check("then rolls up to the new one (%s)" % label.text,
 		label.text.begins_with("banked %s " % Format.money(s.margin_banked)))
 	_check("and the effects clean up after themselves", _fx_texts().is_empty())
-
-## A budget shift: no limit to count towards in the top bar, what each customer
-## has left to spend on their folder and the tablet, and OVER BUDGET said once a
-## product costs more than they have. A made-up customer, so none of it rides
-## on who ships or what they are tuned to.
-func _check_a_budget_shift_shows_what_they_can_spend() -> void:
-	var arch := (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes[0] \
-		.duplicate() as CustomerArchetype
-	arch.budget = 1500
-	var lineup: Array = [arch, arch, arch]
-	_controller.setup(Shift.new(load("res://data/shift_config.tres"),
-		load("res://data/interests/interest_pool.tres"), load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), 5, [], null, 0, 1, 0, 0, null, 0,
-		1.0, 1.0, false, [], lineup, [], {}, [], 1.0), 100)
-	_settle()
-	var s: Shift = _controller._shift
-	_check("a budget shift counts ticks with no limit (%s)" % _controller._tick_label.text,
-		_controller._tick_label.text.begins_with("tick ")
-			and not _controller._tick_label.text.contains("/"))
-	var folder: Label = _controller._customer_cards[1]._status
-	_check("a customer you are not with shows what they have left (%s)" % folder.text,
-		folder.text.contains("budget left $1,500"))
-	var tablet = _controller._tablets[_at()]
-	_check("and the tablet does for the one you are (%s)" % tablet._knobs.text,
-		tablet._knobs.text.contains("Budget left: $1,500"))
-	var c: Customer = s.chairs[_at()]
-	c.budget = 100
-	var product := -1
-	for i in range(s.hand.size()):
-		if s.hand[i].is_product():
-			product = i
-			break
-	if product < 0:
-		_check("a product in hand to put in front of them", false)
-		return
-	_controller._apply(s.play_card(product))
-	_settle()
-	c.offer.appeal = c.line + 5
-	_controller._render()
-	_check("a product over their budget says so on the tablet (%s)" % tablet._status.text,
-		tablet._status.text.begins_with("OVER BUDGET"))
 
 ## "This needs to be clearly telegraphed (NEXT CARD REJECTED)." Imposed on
 ## whoever you are with: a copy of their archetype that waves off every 2nd

@@ -36,6 +36,5 @@ line = 28
 line_per_sale = 2
 combo_step = 0.25
 min_shift = 3
-budget = 1800
 needs_concession_past_rank = 5
 actions = Array[ExtResource("1_act")]([SubResource("Sub_price_check")])

@@ -14,5 +14,4 @@ line = 20
 line_per_sale = 0
 combo_step = 0.35
 min_shift = 4
-budget = 2800
 rejects_every_nth_card = 3

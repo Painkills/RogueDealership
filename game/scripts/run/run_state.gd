@@ -94,7 +94,7 @@ func start_shift(profile: ShiftProfile) -> Shift:
 			"hard_weight_scale": profile.hard_weight_scale,
 			"allow_hard_duplicates": profile.allow_hard_duplicates,
 			"archetype_weight_scales": profile.archetype_weight_scales},
-		dealership, profile.budget_scale)
+		dealership)
 	s.commission = profile.commission
 	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to

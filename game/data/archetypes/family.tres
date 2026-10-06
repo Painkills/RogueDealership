@@ -35,5 +35,4 @@ pattern = "Give them room. They will not be rushed, and the tick you spend hover
 tell = "there are two car seats in the trade-in"
 line_per_sale = 2
 min_shift = 2
-budget = 2600
 actions = Array[ExtResource("1_syiqa")]([SubResource("Resource_idwwe")])
