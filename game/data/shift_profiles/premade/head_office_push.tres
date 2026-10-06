@@ -7,7 +7,7 @@
 script = ExtResource("1_prof")
 id = &"head_office_push"
 display_name = "Head Office Push"
-blurb = "Head office wants Person products moved. Three, today."
+blurb = "Head office wants Person moved."
 difficulty = 6
 product_quota_category = ExtResource("2_person")
 product_quota_count = 3

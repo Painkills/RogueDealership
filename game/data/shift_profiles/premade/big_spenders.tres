@@ -6,7 +6,7 @@
 script = ExtResource("1_prof")
 id = &"big_spenders"
 display_name = "Big Spenders"
-blurb = "Nobody's buying. The ones who do, buy big."
+blurb = "Tough sells. The yeses buy big."
 difficulty = 5
 line_offset = 4
 combo_scale = 1.5

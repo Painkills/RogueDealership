@@ -9,7 +9,7 @@
 script = ExtResource("1_prof")
 id = &"family_reunion"
 display_name = "Family Reunion"
-blurb = "They all came. They all need to talk it over."
+blurb = "They all need to talk it over."
 difficulty = 9
 waiting_room = 1
 lineup = Array[ExtResource("2_arch")]([ExtResource("3_family"), ExtResource("3_family"), ExtResource("4_easy"), ExtResource("3_family"), ExtResource("3_family")])

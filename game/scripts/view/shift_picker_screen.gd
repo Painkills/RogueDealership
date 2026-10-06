@@ -170,10 +170,26 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	body.place(event, hours[0], hours[1])
 	var col := _event_text(event)
 	# A premade shift says so before anything else: this is not the usual day.
+	# What it does differently - a smaller hand, a tougher crowd - rides on the
+	# same line, because you are about to play under it and an event's hours
+	# leave no room for a line of its own.
+	var rules := profile.rules_preview()
 	if profile.is_premade():
-		var tag := _line(col, "BOSS SHIFT" if profile.is_boss_day()
+		var tag_row := HBoxContainer.new()
+		tag_row.name = "TagRow"
+		tag_row.add_theme_constant_override("separation", 8)
+		tag_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(tag_row)
+		var tag := _line(tag_row, "BOSS SHIFT" if profile.is_boss_day()
 			else "SPECIAL SHIFT", 14, hue, true)
 		tag.name = "PremadeTag"
+		tag.autowrap_mode = TextServer.AUTOWRAP_OFF
+		tag.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		if rules != "":
+			var rules_line := _line(tag_row, rules, 14, Palette.color(&"accent"), true)
+			rules_line.name = "Rules"
+			rules_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			rules_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	# The title row: the shift's name, and its hours at the far right.
 	var title_row := HBoxContainer.new()
 	title_row.name = "TitleRow"
@@ -198,12 +214,6 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 		15, Palette.color(&"text"), true)
 	terms.name = "Terms"
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
-	# What a premade shift does differently - a smaller hand, a tougher crowd -
-	# because you are about to play under it.
-	var rules := profile.rules_preview()
-	if rules != "":
-		var rules_line := _line(col, rules, 15, Palette.color(&"accent"), true)
-		rules_line.name = "Rules"
 	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))
 	if pickable:
 		event.pressed.connect(func(): chosen.emit(profile))
