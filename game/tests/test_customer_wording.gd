@@ -63,3 +63,24 @@ func test_customers_are_always_described_as_they_and_them() -> void:
 	h.check("nobody is a he or a she (%s)" % "; ".join(offenders), offenders.is_empty())
 	h.check("and the lint reads every archetype, not nothing (%d texts)" % described.size(),
 		described.size() >= (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes.size())
+
+func test_an_action_is_called_what_its_warning_says() -> void:
+	## The back of the folder names an action; when it goes off, the front shouts
+	## its demand's telegraph. "Waves a competitor's quote" on one side and PRICE
+	## CHECK on the other read as two different things - one name, the short one,
+	## on both sides and in the floor's log.
+	var mismatched: Array[String] = []
+	var checked := 0
+	for a in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
+		for act in a.actions:
+			for e in act.effects:
+				if not (e is RaiseDemand) or e.demand == null:
+					continue
+				checked += 1
+				var d: Demand = e.demand
+				if act.display_name.to_upper() != d.telegraph or d.display_name != act.display_name:
+					mismatched.append("%s / %s: \"%s\", demand \"%s\", warning %s"
+						% [a.id, act.id, act.display_name, d.display_name, d.telegraph])
+	h.check("every action and its demand go by their warning (%s)" % "; ".join(mismatched),
+		mismatched.is_empty())
+	h.check("and the check reads some actions, not none (%d)" % checked, checked > 0)

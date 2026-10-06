@@ -168,8 +168,9 @@ func category_quota_in_week(week: int) -> int:
 ## its rarity's, so retuning the economy is four numbers. Cards you start with
 ## are never for sale, but their upgrades are priced off the same ladder.
 @export var card_prices: Array[int] = [600, 900, 1200, 1500]
-## An upgrade costs this share of what buying that card does - "upgrades should
-## cost half of a purchase."
+## An upgrade costs this share of what buying that card does. Half was too
+## cheap for what an upgrade does - "upgrading in the store is really good, and
+## should be more expensive" - so the shipped data has it at the full price.
 @export var upgrade_price_share: float = 0.5
 @export var remove_price: int = 500
 ## Thinning below a full hand would leave _draw_up unable to fill one: nothing

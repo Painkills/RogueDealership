@@ -18,7 +18,7 @@ ticks = 6
 [sub_resource type="Resource" id="Sub_price_check"]
 script = ExtResource("1_act")
 id = &"price_check"
-display_name = "Waves a competitor's quote"
+display_name = "Price Check"
 tell = "about every 6 ticks they wave a competitor's quote. Give them a concession within 5 ticks or their Line rises 3"
 dialogue_tags = Array[StringName]([&"demand_price_check"])
 trigger = SubResource("Sub_every")

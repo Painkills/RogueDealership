@@ -181,7 +181,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "WILL NOT SIGN until they have bought something in Reliability.
-Needs a minute to talk it over - every 6 ticks. Work someone else for 3 and they come back easier, or lose 5 patience"
+Thinking - about every 6 ticks they need a minute to talk it over. Leave them alone for 3 and they come back easier - their Line 4 lower and 4 more patience - or crowd them and they lose 5 patience"
 autowrap_mode = 2
 
 [node name="TableTitle" type="Control" parent="Margin/Column/CustomerBody" unique_id=1071797710]

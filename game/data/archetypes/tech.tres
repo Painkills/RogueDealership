@@ -18,7 +18,7 @@ ticks = 6
 [sub_resource type="Resource" id="Resource_a55j1"]
 script = ExtResource("1_miwln")
 id = &"spec_question"
-display_name = "Asks how it actually works"
+display_name = "Spec Question"
 tell = "about every 6 ticks they ask a spec question. Answer it with any appeal card within 4 ticks for +$300 on the product on the table, or they lose 3 patience"
 dialogue_tags = Array[StringName]([&"demand_spec_question"])
 trigger = SubResource("Resource_dv2g6")

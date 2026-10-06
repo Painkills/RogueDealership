@@ -18,8 +18,8 @@ ticks = 6
 [sub_resource type="Resource" id="Resource_idwwe"]
 script = ExtResource("1_syiqa")
 id = &"thinking"
-display_name = "Needs a minute to talk it over"
-tell = "about every 6 ticks. Leave them alone for 3 and they come back easier - their Line 4 lower and 4 more patience - or crowd them and they lose 5 patience"
+display_name = "Thinking"
+tell = "about every 6 ticks they need a minute to talk it over. Leave them alone for 3 and they come back easier - their Line 4 lower and 4 more patience - or crowd them and they lose 5 patience"
 dialogue_tags = Array[StringName]([&"demand_thinking"])
 trigger = SubResource("Resource_5stk6")
 effects = Array[ExtResource("2_q8rar")]([SubResource("Resource_r4edv")])

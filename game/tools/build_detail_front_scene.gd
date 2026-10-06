@@ -147,7 +147,7 @@ func _init() -> void:
 	# overflow check, which this same worst case has to survive.
 	_section(who, root, "DoesTitle", "WHAT THEY DO", &"sticky", &"ink", -1.5,
 		"DoesLabel", "WILL NOT SIGN until they have bought something in Reliability.\n" +
-			"Needs a minute to talk it over - every 6 ticks. Work someone else for 3 and they come back easier, or lose 5 patience",
+			"Thinking - about every 6 ticks they need a minute to talk it over. Leave them alone for 3 and they come back easier - their Line 4 lower and 4 more patience - or crowd them and they lose 5 patience",
 		&"text")
 	_section(who, root, "TableTitle", "UNSIGNED", &"money", &"paper", 1.2,
 		"TableLabel", "Anti-Theft & Key Protection $800\nAppearance & Wheel Package $900\n($1,700 at risk)",

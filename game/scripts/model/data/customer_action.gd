@@ -3,7 +3,9 @@ class_name CustomerAction extends Resource
 ## known behaviour, and stepping in the trap is on you.
 
 @export var id: StringName
-@export var display_name: String         ## "Asks for the manager, loudly"
+## "Manager?" - an action that raises a demand goes by that demand's warning,
+## so the back of the folder and the shout on the front agree.
+@export var display_name: String
 @export_multiline var tell: String       ## shown before it ever fires
 ## Which DialoguePool tag(s) this draws a spoken line from when it fires.
 ## Empty means silent - not every action needs a line of its own.

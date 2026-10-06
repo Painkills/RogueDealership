@@ -16,7 +16,7 @@ func apply(ctx: EffectContext) -> void:
 func describe() -> String:
 	if demand == null:
 		return ""
-	# The fuse belongs in the log line. "Asks for the manager" without "3 ticks"
+	# The fuse belongs in the log line. "MANAGER?" without "3 ticks"
 	# is an event; with it, it is a decision.
 	return "%s - %d ticks to %s" \
 		% [demand.telegraph, demand.ticks,

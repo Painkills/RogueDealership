@@ -169,27 +169,6 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	event.clip_contents = true
 	body.place(event, hours[0], hours[1])
 	var col := _event_text(event)
-	# A premade shift says so before anything else: this is not the usual day.
-	# What it does differently - a smaller hand, a tougher crowd - rides on the
-	# same line, because you are about to play under it and an event's hours
-	# leave no room for a line of its own.
-	var rules := profile.rules_preview()
-	if profile.is_premade():
-		var tag_row := HBoxContainer.new()
-		tag_row.name = "TagRow"
-		tag_row.add_theme_constant_override("separation", 8)
-		tag_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		col.add_child(tag_row)
-		var tag := _line(tag_row, "BOSS SHIFT" if profile.is_boss_day()
-			else "SPECIAL SHIFT", 14, hue, true)
-		tag.name = "PremadeTag"
-		tag.autowrap_mode = TextServer.AUTOWRAP_OFF
-		tag.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		if rules != "":
-			var rules_line := _line(tag_row, rules, 14, Palette.color(&"accent"), true)
-			rules_line.name = "Rules"
-			rules_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			rules_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	# The title row: the shift's name, and its hours at the far right.
 	var title_row := HBoxContainer.new()
 	title_row.name = "TitleRow"
@@ -214,7 +193,21 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 		15, Palette.color(&"text"), true)
 	terms.name = "Terms"
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
-	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))
+	# What a premade shift does differently - a smaller hand, a tougher crowd -
+	# because you are about to play under it.
+	var rules := profile.rules_preview()
+	if rules != "":
+		var rules_line := _line(col, rules, 15, hue, true)
+		rules_line.name = "Rules"
+	var rewards := profile.reward_preview()
+	if rewards != "":
+		_line(col, rewards, 15, hue.darkened(0.35))
+	# A premade shift says so with a sticker slapped across its hours: when in
+	# the day it runs is the calendar's business, not the choice's, and the
+	# space is worth more to the lines above.
+	if profile.is_premade():
+		when.modulate.a = 0.0
+		_sticker(event, "BOSS SHIFT" if profile.is_boss_day() else "SPECIAL SHIFT", hue)
 	if pickable:
 		event.pressed.connect(func(): chosen.emit(profile))
 	else:
@@ -270,6 +263,43 @@ func _line(col: Container, text: String, size: int, color: Color,
 		l.theme_type_variation = &"Heading"
 	col.add_child(l)
 	return l
+
+## A sticker in the event's top-right corner, over where its hours would be:
+## the shift's colour, white capitals, tilted the way a sticker slapped on by
+## hand lands.
+const STICKER_TILT_DEGREES := -8.0
+
+func _sticker(event: Button, text: String, hue: Color) -> Label:
+	var sticker := Label.new()
+	sticker.name = "PremadeTag"
+	sticker.text = text
+	sticker.theme_type_variation = &"Heading"
+	sticker.add_theme_font_size_override("font_size", 15)
+	sticker.add_theme_color_override("font_color", Palette.color(&"paper"))
+	var box := StyleBoxFlat.new()
+	box.bg_color = hue
+	box.set_corner_radius_all(4)
+	box.content_margin_left = 10
+	box.content_margin_right = 10
+	box.content_margin_top = 2
+	box.content_margin_bottom = 2
+	box.shadow_color = Color(0, 0, 0, 0.18)
+	box.shadow_size = 2
+	box.shadow_offset = Vector2(1, 2)
+	sticker.add_theme_stylebox_override("normal", box)
+	sticker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Pinned to the top-right corner and grown leftwards to fit its words.
+	sticker.anchor_left = 1.0
+	sticker.anchor_right = 1.0
+	sticker.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	sticker.offset_left = -12
+	sticker.offset_right = -12
+	sticker.offset_top = 14
+	sticker.offset_bottom = 14
+	sticker.rotation_degrees = STICKER_TILT_DEGREES
+	sticker.resized.connect(func(): sticker.pivot_offset = sticker.size / 2.0)
+	event.add_child(sticker)
+	return sticker
 
 ## A calendar event: the shift's colour washed over white, with a solid bar of
 ## it down the leading edge.

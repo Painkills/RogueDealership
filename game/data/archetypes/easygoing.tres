@@ -19,7 +19,7 @@ ticks = 6
 [sub_resource type="Resource" id="Sub_opens_up"]
 script = ExtResource("1_1cw48")
 id = &"opens_up"
-display_name = "Wants to hear more"
+display_name = "Tell Me More"
 tell = "about every 6 ticks they want to hear more. Play them any card within 4 ticks and they tell you what they want most - let it pass and you just miss out"
 dialogue_tags = Array[StringName]([&"demand_tell_me_more"])
 trigger = SubResource("Sub_every")

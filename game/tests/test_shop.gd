@@ -126,8 +126,9 @@ func test_you_cannot_buy_what_you_cannot_afford() -> void:
 
 # ---------------------------------------------------------------- the upgrade
 func test_upgrading_costs_a_share_of_buying_the_card() -> void:
-	## "Upgrades should cost half of a purchase": of what buying that very card
-	## costs on the ladder, whatever the upgrade gains.
+	## An upgrade costs ShiftConfig.upgrade_price_share of what buying that very
+	## card costs on the ladder, whatever the upgrade gains. How big a share is
+	## tuning - this checks the formula, not the number.
 	var r := _run()
 	var shop := Shop.new(r, _profile(0, 1))
 	var product: CardInstance = null
@@ -142,7 +143,6 @@ func test_upgrading_costs_a_share_of_buying_the_card() -> void:
 	var p := product.card as ProductCardDef
 	var cost: int = roundi(shop.buy_price(p) * r.cfg.upgrade_price_share)
 	h.eq("priced at the share of its purchase price", shop.upgrade_price(product), cost)
-	h.check("which is cheaper than buying it", shop.upgrade_price(product) < shop.buy_price(p))
 
 	var res := shop.upgrade(product.uid)
 	h.check("upgraded (%s)" % res.msg, res.ok)

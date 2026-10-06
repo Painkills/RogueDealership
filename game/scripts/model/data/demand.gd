@@ -19,7 +19,9 @@ class_name Demand extends Resource
 ## something you spend attention against rather than something you wait out.
 
 @export var id: StringName
-@export var display_name: String          ## "Asks for the manager"
+## What the log and the back of their folder call it - its telegraph, in title
+## case ("Manager?"), so both sides of the card name the same thing.
+@export var display_name: String
 ## SHORT. This goes above their head on a card that may be 180px wide, so it
 ## is a shout and not a sentence: "MANAGER?", "BETTER QUOTE", "THINKING".
 @export var telegraph: String

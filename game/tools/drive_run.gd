@@ -856,6 +856,19 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 			and tagged[0].name == "Event_drive_special")
 	_check("and a shift that bends no rules has no rules line",
 		events.all(func(e): return e.find_child("Rules", true, false) == null))
+	var sticker := tagged[0].find_child("PremadeTag", true, false) as Label
+	_check("its tag is a tilted sticker over its hours, which are hidden",
+		sticker.get_parent() == tagged[0] and not is_zero_approx(sticker.rotation)
+			and is_zero_approx((tagged[0].find_child("Hours", true, false) as Label).modulate.a))
+	_check("while a regular shift still shows its hours",
+		events.filter(func(e): return e != tagged[0]).all(
+			func(e): return (e.find_child("Hours", true, false) as Label).modulate.a == 1.0))
+	var shop_line := ""
+	for label in tagged[0].find_children("*", "Label", true, false):
+		if (label as Label).text.begins_with("Shop"):
+			shop_line = (label as Label).text
+	_check("and the shop line leaves out the free card every shift ends with (%s)" % shop_line,
+		not shop_line.to_lower().contains("free card"))
 
 	# One that bends a rule, dealt to today's difficulty with a made-up
 	# complicator on top - every spare point spent on complicators, so it

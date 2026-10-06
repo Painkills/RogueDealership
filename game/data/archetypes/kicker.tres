@@ -19,7 +19,7 @@ ticks = 4
 [sub_resource type="Resource" id="Resource_fjiux"]
 script = ExtResource("1_apes3")
 id = &"antsy"
-display_name = "Half out of the chair already"
+display_name = "Restless"
 tell = "about every 4 ticks they want an offer. Make them an offer within 5 ticks or they WALK"
 dialogue_tags = Array[StringName]([&"demand_restless"])
 trigger = SubResource("Resource_fxv8q")

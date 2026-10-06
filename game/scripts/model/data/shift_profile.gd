@@ -249,22 +249,27 @@ func is_boss_day() -> bool:
 
 ## A static preview of the shop that follows, for the picker screen, BEFORE any
 ## of it exists - Shop.perk_text() says the same thing from the live visit.
+## The free card every shift ends with goes without saying; only what this
+## shift's store adds is listed - a better free card, cards to buy or upgrade -
+## and what making quota earns on top. Empty when it adds nothing.
 func reward_preview() -> String:
-	var free := "a free card"
+	var stocked: Array[String] = []
 	if free_pick_min_rarity > 0:
-		free += " (%s or better)" % String(CardDef.Rarity.keys()[free_pick_min_rarity]).capitalize()
-	var extras: Array[String] = []
+		stocked.append("%s+ free card"
+			% String(CardDef.Rarity.keys()[free_pick_min_rarity]).capitalize())
 	if cards_for_sale > 0:
-		extras.append("%d to buy" % cards_for_sale)
+		stocked.append("%d to buy" % cards_for_sale)
 	if upgrades > 0:
-		extras.append("%d to upgrade" % upgrades)
+		stocked.append("%d to upgrade" % upgrades)
 	# What only making quota earns - a boss's.
 	var earned: Array[String] = []
 	if heal_up_to > 0.0:
 		earned.append("heal")
 	if dealership_upgrades > 0:
 		earned.append("dealership upgrade")
-	var tail := " Make quota: %s." % " + ".join(earned) if not earned.is_empty() else ""
-	if extras.is_empty():
-		return "Shop: pick %s.%s" % [free, tail]
-	return "Shop: pick %s, then a store with %s.%s" % [free, " and ".join(extras), tail]
+	var parts: Array[String] = []
+	if not stocked.is_empty():
+		parts.append("Shop: %s." % " and ".join(stocked))
+	if not earned.is_empty():
+		parts.append("Make quota: %s." % " + ".join(earned))
+	return " ".join(parts)

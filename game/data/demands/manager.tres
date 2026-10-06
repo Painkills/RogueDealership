@@ -20,7 +20,7 @@ script = ExtResource("4_rsv")
 [resource]
 script = ExtResource("5_dmd")
 id = &"manager"
-display_name = "Asks for the manager"
+display_name = "Manager?"
 telegraph = "MANAGER?"
 dialogue_tags_met = Array[StringName]([&"relief"])
 dialogue_tags_missed = Array[StringName]([&"ignored"])

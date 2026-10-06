@@ -55,3 +55,22 @@ func test_walk_up_scale_stretches_the_gap_between_customers() -> void:
 	var scaled := _shift(0, 1.0, 2.0)
 	h.eq("scaled gap is exactly double the unscaled one, rounded",
 		scaled.next_arrival, roundi(baseline.next_arrival * 2.0))
+
+func test_the_shop_preview_lists_only_what_this_shifts_store_adds() -> void:
+	## Every shift ends with a free card - the calendar has no room to say so
+	## on every event.
+	var p := ShiftProfile.new()
+	h.eq("a store that adds nothing says nothing", p.reward_preview(), "")
+	p.cards_for_sale = 2
+	p.upgrades = 3
+	var stocked := p.reward_preview()
+	h.check("cards to buy and to upgrade (%s)" % stocked,
+		stocked.contains("2 to buy") and stocked.contains("3 to upgrade"))
+	h.check("and never the free card itself", not stocked.to_lower().contains("free card"))
+	var boss := ShiftProfile.new()
+	boss.free_pick_min_rarity = 2
+	boss.dealership_upgrades = 1
+	var better := boss.reward_preview()
+	h.check("a better free card is worth saying (%s)" % better,
+		better.contains(String(CardDef.Rarity.keys()[2]).capitalize()))
+	h.check("and so is what making quota earns", better.contains("Make quota"))
