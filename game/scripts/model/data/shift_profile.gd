@@ -73,6 +73,12 @@ class_name ShiftProfile extends Resource
 ## come in the door one after another, and nobody comes after the last - the
 ## shift is over once they are all dealt with. Empty = the door as usual.
 @export var lineup: Array[CustomerArchetype] = []
+## A budget shift: every customer comes in with their archetype's budget
+## (CustomerArchetype.budget) times this, and there is no clock - it is over
+## when the whole lineup has been dealt with, and what presses you is their
+## patience, which every card you play still wears down. Needs a lineup, or
+## nothing would ever end it. 0 = an ordinary shift, on the clock.
+@export var budget_scale: float = 0.0
 ## How likely this shift is to be dealt in place of the regular one, on a day
 ## and in a slot its category allows - see Week. Only a premade shift uses it.
 @export_range(0.0, 1.0, 0.05) var chance: float = 1.0

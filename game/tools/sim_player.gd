@@ -247,6 +247,13 @@ static func _act(s: Shift, c: Customer) -> bool:
 		if spare < 0:
 			return false
 		return _did("a card to be waved off", s.play_card(spare).ok)
+	# On the table and more than they can spend: bring the price down if a card
+	# in hand can, or take it back and try something that fits.
+	if c.offer != null and c.over_budget(c.offer.margin):
+		var cut := _find(s, "concession")
+		if cut >= 0:
+			return _did("concession to fit the budget", s.play_card(cut).ok)
+		s.drop_offer()
 	if c.offer != null and not _gap_known(c):
 		# Only the band to go on. Read the Room first if it is in hand - it
 		# turns the band into a number.
@@ -306,7 +313,7 @@ static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int
 	for i in range(s.hand.size()):
 		var inst: CardInstance = s.hand[i]
 		if not inst.is_product() or c.owns(inst.card.id) \
-				or not c.accepts(inst.card as ProductCardDef):
+				or not c.accepts(inst.card as ProductCardDef) or c.over_budget(inst.margin()):
 			continue
 		var appeal: int = _est_appeal(c, (inst.card as ProductCardDef).interest.id)
 		var gap: int = _est_line(c) - appeal
@@ -339,7 +346,7 @@ static func _top3_product(s: Shift, c: Customer) -> int:
 	for i in range(s.hand.size()):
 		var inst: CardInstance = s.hand[i]
 		if not inst.is_product() or c.owns(inst.card.id) \
-				or not c.accepts(inst.card as ProductCardDef):
+				or not c.accepts(inst.card as ProductCardDef) or c.over_budget(inst.margin()):
 			continue
 		var rank: int = _est_rank(c, (inst.card as ProductCardDef).interest.id)
 		if rank <= 3 and rank < best_rank:

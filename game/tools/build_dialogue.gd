@@ -21,7 +21,7 @@ const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	&"padding", &"demand_thinking", &"demand_restless", &"demand_manager",
 	&"demand_spec_question", &"demand_price_check", &"demand_tell_me_more",
 	&"relief", &"ignored", &"opens_up", &"lets_it_go", &"rejects_card",
-	&"accepted", &"impatient",
+	&"over_budget", &"accepted", &"impatient",
 	# Objections - see ProductCardDef.objection_tags and Shift._object(). The
 	# warm word instead, when a product already clears their Line.
 	&"objection", &"objection_walkaway", &"objection_walkaway_gap", &"interested",
@@ -129,6 +129,18 @@ const LINES := [
 	[[&"lets_it_go"], "\"Oh well. Never mind.\"", [], [], []],
 	[[&"lets_it_go"], "\"Ah, you're busy. Another time.\"", [], [], []],
 	[[&"lets_it_go"], "\"No worries, it'll keep.\"", [], [], []],
+
+	# A product that costs more than they have left to spend - see
+	# CustomerArchetype.budget. Said when it goes on the table and again when
+	# they are asked for it.
+	[[&"over_budget"], "\"That's more than I planned to spend.\"", [], [], []],
+	[[&"over_budget"], "\"I only set aside so much for this.\"", [], [], []],
+	[[&"over_budget"], "\"Hm. That's over what I had in mind.\"", [], [], []],
+	[[&"over_budget"], "\"I can't stretch that far today.\"", [], [], []],
+	[[&"over_budget"], "\"I love it, but it's not in the budget.\"", [], [], []],
+	[[&"over_budget"], "\"That's over my number, and my number is not moving.\"", [&"hawk"], [], []],
+	[[&"over_budget"], "\"I read the price. It doesn't add up for me.\"", [&"skeptic"], [], []],
+	[[&"over_budget"], "\"Cool, but that's more than I've got on me.\"", [&"influencer"], [], []],
 
 	# A card waved off - see CustomerArchetype.rejects_every_nth_card.
 	[[&"rejects_card"], "\"Oh, I know that trick.\"", [], [], []],

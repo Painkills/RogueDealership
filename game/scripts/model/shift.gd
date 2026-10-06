@@ -60,6 +60,12 @@ var excluded_archetypes: Array[CustomerArchetype] = []
 var only_archetypes: Array[CustomerArchetype] = []
 var lineup: Array[CustomerArchetype] = []
 var _lineup_next: int = 0
+## A budget shift - see ShiftProfile.budget_scale: each customer comes in with
+## their archetype's budget times this, there is no tick limit, and it is over
+## when the lineup is. 0 = an ordinary shift, on the clock.
+var budget_scale: float = 0.0
+## What a budget shift's tick_budget is: more than anyone will ever play.
+const BUDGET_TICK_LIMIT := 9999
 var margin_banked: int = 0
 ## The run's HP, LIVE during this shift - seeded from RunState.standing at
 ## construction (0 means "use cfg's own start", the run is never legitimately
@@ -135,9 +141,10 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_unlock_full_archetype_pool: bool = false,
 		p_only_archetypes: Array = [], p_lineup: Array = [],
 		p_excluded_archetypes: Array = [], p_arrivals: Dictionary = {},
-		p_dealership: Array = []) -> void:
+		p_dealership: Array = [], p_budget_scale: float = 0.0) -> void:
 	cfg = p_cfg
 	dealership.assign(p_dealership)
+	budget_scale = p_budget_scale
 	# A bigger hand is the config's own number, so everything that deals to it
 	# reads one figure - on a copy, never the run's.
 	var hand_bonus := int(perk(&"hand_size"))
@@ -169,7 +176,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	lineup.assign(p_lineup)
 	excluded_archetypes.assign(p_excluded_archetypes)
 
-	tick_budget = cfg.shift_ticks
+	tick_budget = BUDGET_TICK_LIMIT if budget_mode() else cfg.shift_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
 	quota = p_quota if p_quota > 0 else cfg.quota
 	standing = p_standing if p_standing > 0 else cfg.standing_start
@@ -179,6 +186,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 			"sales", "places", "digs", "approaches", "actions_fired",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
 			"margin_conceded", "margin_padded", "margin_bonus",
+			"budget_seen", "budget_captured",
 			"customers_signed", "customers_walked",
 			"demands_met", "demands_missed"]:
 		stat[key] = 0
@@ -252,7 +260,22 @@ func is_over() -> bool:
 	## of ticks - checked here rather than only at report() time so the very
 	## next _apply() (already checking is_over() after every command) shows the
 	## report the instant the walkout that did it finishes resolving.
-	return tick >= tick_budget or standing <= 0
+	##
+	## A budget shift has no ticks to run out of: it is over the moment its
+	## lineup has all been dealt with and the floor is empty.
+	return tick >= tick_budget or standing <= 0 \
+		or (budget_mode() and door_closed() and seated().is_empty())
+
+
+## A budget shift - see ShiftProfile.budget_scale.
+func budget_mode() -> bool:
+	return budget_scale > 0.0
+
+
+## What the tablet's clock runs the shift's hours against: the shift's own
+## length, or - with no length - what a shift would nominally be.
+func clock_ticks() -> int:
+	return cfg.shift_ticks if budget_mode() else tick_budget
 
 
 func margin_at_risk() -> int:
@@ -490,6 +513,10 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		c.line = maxi(0, c.line + easier)
 		c.start_line = c.line
 	c.combo_step += perk(&"combo_step")
+	# What they have to spend, on a budget shift - counted as they sit down, so
+	# the report can say how much of the room's money you got.
+	c.budget = arch.budget_at(budget_scale)
+	stat["budget_seen"] = int(stat["budget_seen"]) + c.budget
 
 	# Every-triggered actions start their cadence counter jittered, not at a
 	# clean 0, so this customer's first demand does not land on the exact same
@@ -963,7 +990,11 @@ func _object(c: Customer, product: ProductCardDef) -> void:
 	if dialogue == null or c.offer == null:
 		return
 	var tags: Array[StringName] = [&"interested"]
-	if c.offer.appeal < c.line:
+	# What they cannot pay comes before what they would not: over their budget it
+	# does not matter how warm they are.
+	if c.over_budget(c.offer.margin):
+		tags = [&"over_budget"]
+	elif c.offer.appeal < c.line:
 		tags = product.objection_tags
 	var l := dialogue.pick_line(voice_rng, tags, c.archetype.id, product.id,
 		StringName(band_for(c.line - c.offer.appeal)), &"", c.recent_lines)
@@ -1139,6 +1170,7 @@ func offer() -> Result:
 	# They evaluate at the Line they had when you ASKED. A Hawk's reaction to
 	# being asked cannot retroactively sink an offer that already cleared.
 	var patience_before: int = c.patience
+	var over_budget_by := 0
 	var sale := _settle(c)
 	if not sale.is_empty():
 		# They say yes out loud, about the product they just took where a line
@@ -1149,9 +1181,18 @@ func offer() -> Result:
 	else:
 		stat["failed_offers"] = int(stat["failed_offers"]) + 1
 		c.patience -= cfg.failed_offer_patience
-		# Turned down for want of a concession, not for appeal: say so, or
-		# nothing on screen tells the player what would have worked.
-		if o.appeal >= c.line and holds_out_for_a_concession(c):
+		# Turned down for want of money, not for appeal: it clears their Line and
+		# they cannot pay it. Said first - whatever concession they are holding
+		# out for has to bring the price down as well.
+		if o.appeal >= c.line and c.over_budget(o.margin):
+			over_budget_by = o.margin - c.budget_left()
+			_chatter(c, [&"over_budget"], o.product.id)
+			events.append("[%s] %s cannot afford the %s: $%d against $%d left."
+				% [c.key, c.display_name, o.product.display_name, o.margin,
+					c.budget_left()])
+		# Or for want of a concession, not for appeal: say so, or nothing on
+		# screen tells the player what would have worked.
+		elif o.appeal >= c.line and holds_out_for_a_concession(c):
 			_chatter(c, [&"wants_concession"], o.product.id)
 
 	fire(&"on_offer", c, {"rank": rank, "short": gap, "sale": sale})
@@ -1164,6 +1205,10 @@ func offer() -> Result:
 			% [c.display_name, sale["product"].display_name, sale["margin"]],
 			"sale", {"rank": rank, "margin": sale["margin"],
 				"bonus": sale.get("bonus", 0)})
+	# Cleared their Line, but not their budget - how far over it is, exactly.
+	if over_budget_by > 0:
+		return Result.new(true, "OVER BUDGET by $%d." % over_budget_by, "over_budget",
+			{"over": over_budget_by, "rank": rank})
 	# Exact on purpose, and NOT player-facing: _apply() logs a Result's message
 	# only when it is a refusal. The model always knows the true gap; the fog
 	# lives in the view, which is the only place that can decide how much of it
@@ -1176,7 +1221,8 @@ func _settle(c: Customer) -> Dictionary:
 	## Accept the moment appeal reaches the Line - never above it, so a card
 	## that overshoots is margin you threw away.
 	var o = c.offer
-	if o == null or o.appeal < c.line or holds_out_for_a_concession(c):
+	if o == null or o.appeal < c.line or holds_out_for_a_concession(c) \
+			or c.over_budget(o.margin):
 		return {}
 	# c.sales is PRIOR sales this visit only - it has not been incremented
 	# for this one yet, so the first sale always multiplies by exactly 1.0.
@@ -1186,8 +1232,10 @@ func _settle(c: Customer) -> Dictionary:
 	# What they pay over the odds for a product they prize, on top of it all.
 	var premium := roundi(combo * (c.margin_scale_for(o.product) - 1.0))
 	var margin := combo + premium
+	# "price" is what it costs THEM - the offer's margin as it stood, before the
+	# combo and anything the customer pays on top - and what their budget spends.
 	var sale := {"product": o.product, "margin": margin, "bonus": 0,
-		"combo_margin": combo - o.margin, "premium": premium}
+		"combo_margin": combo - o.margin, "premium": premium, "price": o.margin}
 	c.unsigned.append(sale)
 	c.sales += 1
 	c.line += c.line_per_sale
@@ -1370,6 +1418,10 @@ func close() -> Result:
 		events.append("[%s] +$%d for the %d patience they had left."
 			% [c.key, hurry, c.patience])
 	margin_banked += banked
+	# How much of their budget this visit captured: what the products they signed
+	# for cost them.
+	for sale in c.unsigned:
+		stat["budget_captured"] = int(stat["budget_captured"]) + int(sale.get("price", 0))
 	if category_quota != &"":
 		for sale in c.unsigned:
 			if sale["product"].interest.category.id == category_quota:
@@ -1746,6 +1798,9 @@ func report() -> Dictionary:
 		"margin_conceded": int(stat["margin_conceded"]),
 		"margin_padded": int(stat["margin_padded"]),
 		"margin_bonus": int(stat["margin_bonus"]),
+		"budget_mode": budget_mode(),
+		"budget_seen": int(stat["budget_seen"]),
+		"budget_captured": int(stat["budget_captured"]),
 		"margin_lost_to_walks": lost_to_walks,
 		"margin_lost_to_closing": lost_at_bell,
 		"actions_fired": int(stat["actions_fired"]),

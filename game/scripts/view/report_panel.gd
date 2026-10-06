@@ -118,6 +118,17 @@ func setup(r: Dictionary) -> void:
 				% [sold, what, int(r.get("category_quota_cost", 0))]
 			_product_quota.add_theme_color_override("font_color", Palette.color(&"alert"))
 
+	# A budget shift's own measure - how much of the room's money you got - in the
+	# line a boss's product quota would use: no shift has both.
+	if bool(r.get("budget_mode", false)):
+		var seen := int(r.get("budget_seen", 0))
+		var got := int(r.get("budget_captured", 0))
+		_product_quota.visible = true
+		_product_quota.text = "Budget captured: %s of the %s they came in with (%d%%)." \
+			% [Format.money(got), Format.money(seen),
+				roundi(100.0 * got / maxf(1.0, float(seen)))]
+		_product_quota.add_theme_color_override("font_color", Palette.color(&"text"))
+
 	# These four never got a Palette color at all before this - plain default
 	# Label text sitting on the engine's own default panel style, which is
 	# roughly the same hue by luck rather than by design. All four are

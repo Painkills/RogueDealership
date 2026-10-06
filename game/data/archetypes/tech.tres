@@ -36,4 +36,5 @@ pattern = "Answer their questions when they ask them: an appeal card on the spot
 tell = "asked about the drivetrain before asking about the price"
 combo_step = 0.2
 min_shift = 2
+budget = 3600
 actions = Array[ExtResource("1_miwln")]([SubResource("Resource_a55j1")])

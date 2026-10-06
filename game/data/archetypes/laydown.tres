@@ -9,6 +9,7 @@ script = ExtResource("3_7vb75")
 hard = false
 weight = 3.0
 min_shift = 1
+budget = 3200
 id = &"laydown"
 display_name = "Lay-Down Larry"
 pattern = "Offer everything you've got!"

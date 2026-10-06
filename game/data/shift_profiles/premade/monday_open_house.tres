@@ -10,11 +10,12 @@
 script = ExtResource("6_6gsr1")
 id = &"monday_open_house"
 display_name = "Monday Open House"
-blurb = "Five appointments, booked in order. Once they're done, so is your day."
+blurb = "Five appointments, in order, each with a budget. No clock, only their patience."
 seats = 1
-quota = 2000
+quota = 4800
 pay_scale = 1.0
 commission = 0.2
 cards_for_sale = 2
 upgrades = 2
 lineup = Array[ExtResource("1_0be1k")]([ExtResource("3_cki16"), ExtResource("2_dlx8y"), ExtResource("3_cki16"), ExtResource("2_dlx8y"), ExtResource("4_plcxo")])
+budget_scale = 1.0

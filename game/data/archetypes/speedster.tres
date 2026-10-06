@@ -15,6 +15,7 @@ line = 24
 line_per_sale = 2
 combo_step = 0.2
 min_shift = 4
+budget = 2200
 only_category = ExtResource("2_vehicle")
 arrival_patience_share = 0.5
 pays_per_patience_left = 20
