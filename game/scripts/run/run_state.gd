@@ -48,7 +48,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	deck = Deck.build_starting(card_pool)
 	standing = cfg.standing_start
 	if p_shifts != null:
-		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi(), cfg.days_per_week)
+		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi(), cfg.days_per_week,
+			archetypes, cfg)
 
 ## What today - the shift about to be played - offers to pick from.
 func todays_shifts() -> Array[ShiftProfile]:
@@ -62,7 +63,7 @@ func is_over() -> bool:
 
 ## Which week of the run `day` (1-based) falls in, from 1.
 func week_of(day: int) -> int:
-	return (day - 1) / maxi(1, cfg.days_per_week) + 1
+	return Shift.week_of(day, cfg.days_per_week)
 
 ## The shift about to be played opens a new week - the one before it is done.
 func week_starts_today() -> bool:
@@ -76,31 +77,41 @@ func quota_for(n: int) -> int:
 	return roundi(q)
 
 func start_shift(profile: ShiftProfile) -> Shift:
-	# A premade shift's own numbers ride in on a copy of the config, the way
-	# the practice shift's do - the run's own is never touched.
+	# A premade shift's own numbers - and its complicators' - ride in on a copy
+	# of the config, the way the practice shift's do; the run's own is never
+	# touched.
 	var shift_cfg := cfg
-	if profile.shift_ticks > 0 or profile.waiting_room > 0:
+	var ticks := profile.ticks_on(cfg.shift_ticks)
+	var hand := profile.hand_on(cfg.hand_size)
+	if ticks != cfg.shift_ticks or hand != cfg.hand_size or profile.waiting_room > 0:
 		shift_cfg = cfg.duplicate() as ShiftConfig
-		if profile.shift_ticks > 0:
-			shift_cfg.shift_ticks = profile.shift_ticks
+		shift_cfg.shift_ticks = ticks
+		shift_cfg.hand_size = hand
 		if profile.waiting_room > 0:
 			shift_cfg.waiting_max = profile.waiting_room
 	var s := Shift.new(shift_cfg, interests, card_pool, archetypes,
 		rng.randi(), [], deck, profile.quota_on(quota_for(shift_number)), shift_number,
 		standing, sale_streak, dialogue, profile.seats,
-		profile.patience_scale, profile.walk_up_scale,
-		profile.unlock_full_archetype_pool, profile.only_archetypes, profile.lineup,
+		profile.total_patience_scale(), profile.walk_up_scale,
+		profile.only_archetypes, profile.lineup,
 		profile.excluded_archetypes, {
 			"hard_weight_scale": profile.hard_weight_scale,
 			"allow_hard_duplicates": profile.allow_hard_duplicates,
-			"archetype_weight_scales": profile.archetype_weight_scales},
+			"archetype_weight_scales": profile.archetype_weight_scales,
+			"line_offset": profile.total_line_offset(),
+			"combo_scale": profile.total_combo_scale()},
 		dealership)
 	s.commission = profile.commission
 	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to
-	# The boss's product quota - every shift of a week that has one, but a
+	# The shift's own product quota, on any shift that names one - a boss's
+	# included. Otherwise the day's: every shift of a week that has one, but a
 	# boss day's, which is its own test.
-	if not profile.is_boss_day():
+	if profile.product_quota_count > 0 and profile.product_quota_category != null:
+		s.category_quota = profile.product_quota_category.id
+		s.category_quota_name = profile.product_quota_category.display_name
+		s.category_quota_count = profile.product_quota_count
+	elif not profile.is_boss_day():
 		var q := category_quota(shift_number)
 		if not q.is_empty():
 			s.category_quota = (q["category"] as Category).id

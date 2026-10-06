@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShiftCategory" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_category.gd" id="1_cat"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="2_prof"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/short_staffed.tres" id="3_short"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/big_spenders.tres" id="4_big"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/head_office_push.tres" id="5_push"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/one_and_done.tres" id="6_once"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/express_lane.tres" id="7_express"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/family_reunion.tres" id="8_family"]
+
+[resource]
+script = ExtResource("1_cat")
+display_name = "Specific shifts, Tuesday to Friday, wherever their difficulty fits"
+days = 30
+shifts = Array[ExtResource("2_prof")]([ExtResource("3_short"), ExtResource("4_big"), ExtResource("5_push"), ExtResource("6_once"), ExtResource("7_express"), ExtResource("8_family")])

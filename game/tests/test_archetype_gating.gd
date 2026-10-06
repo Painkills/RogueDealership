@@ -1,86 +1,103 @@
 extends RefCounted
-## Who is allowed to walk in, and when.
-##
-## The Tire Kicker has nine ticks of patience against a default sixteen, and the
-## Karen demands a category AND drains the whole floor. They are the two hardest
-## problems in the game and both could open a first-ever run.
+## Who is allowed to walk in, and when: the hardest archetypes wait for a later
+## week of the run (CustomerArchetype.from_week), and within its week anyone
+## unlocked may come in on any day. Made-up archetypes only - which of the real
+## ones wait, and for how long, is David's to tune.
 var h: Harness
 
 func _pool() -> ArchetypePool:
 	return load("res://data/archetype_pool.tres")
 
-func _shift(shift_number: int, seed_value: int) -> Shift:
-	return Shift.new(load("res://data/shift_config.tres"),
-		load("res://data/interests/interest_pool.tres"),
-		load("res://data/card_pool.tres"), _pool(),
-		seed_value, [], null, 0, shift_number)
+## A made-up archetype, copied off a real one so it can sit down.
+func _made(id: StringName, from_week: int) -> CustomerArchetype:
+	var a := _pool().archetypes[0].duplicate() as CustomerArchetype
+	a.id = id
+	a.display_name = String(id)
+	a.from_week = from_week
+	a.weight = 1.0
+	a.hard = false
+	return a
 
-func test_a_floor_still_fills_when_the_gate_leaves_too_few() -> void:
-	## Shift 1 offers only the archetypes gentle enough to open a run - fewer
-	## than a full floor. The unique-archetype filter is already guarded by
-	## "if not fresh.is_empty()", so the extra chairs simply repeat one rather
-	## than sitting empty.
-	var s := _shift(1, 11)
-	h.eq("every chair is filled", s.seated().size(), s.cfg.floor_size)
-
-func test_an_empty_gated_pool_falls_back_rather_than_crashing() -> void:
-	## Misauthored data - every min_shift set past the end of the run - would
-	## otherwise index an empty array and take the game down on spawn. Built from
-	## a fresh archetype rather than by mutating a loaded one: Resources are
-	## cached project-wide and editing one here would corrupt every later test.
-	var real: CustomerArchetype = _pool().archetypes[0]
-	var late := CustomerArchetype.new()
-	late.id = &"late"
-	late.display_name = "Late Bloomer"
-	late.pattern = "test double"
-	late.line = real.line
-	late.patience = real.patience
-	late.line_per_sale = real.line_per_sale
-	late.min_shift = 99
-
-	var only_late: Array[CustomerArchetype] = [late]
-	var pool := ArchetypePool.new()
-	pool.design_rule = "test double"
-	pool.names = _pool().names.duplicate()
-	pool.archetypes = only_late
-
-	var s := Shift.new(load("res://data/shift_config.tres"),
-		load("res://data/interests/interest_pool.tres"),
-		load("res://data/card_pool.tres"), pool, 7, [], null, 0, 1)
-	h.eq("the floor still filled", s.seated().size(), s.cfg.floor_size)
-	h.eq("from the fallback pool", s.seated()[0].archetype.id, &"late")
-
-# ------------------------------------------------------------- the weights
-# A pool of copies of the real archetypes, every one open on day 1 at weight 1
-# and not hard, then `setup` - so these check the rule, not today's tuning.
-
-func _made_up(setup: Callable) -> ArchetypePool:
-	var real := _pool()
+func _pool_of(archetypes: Array) -> ArchetypePool:
 	var typed: Array[CustomerArchetype] = []
-	for a in real.archetypes:
-		var copy := a.duplicate() as CustomerArchetype
-		copy.min_shift = 1
-		copy.weight = 1.0
-		copy.hard = false
-		setup.call(copy)
-		typed.append(copy)
+	typed.assign(archetypes)
 	var p := ArchetypePool.new()
 	p.design_rule = "test double"
-	p.names = real.names.duplicate()
+	p.names = _pool().names.duplicate()
 	p.archetypes = typed
 	return p
 
-func _on(pool: ArchetypePool, seed_value: int) -> Shift:
-	return Shift.new(load("res://data/shift_config.tres"),
-		load("res://data/interests/interest_pool.tres"),
-		load("res://data/card_pool.tres"), pool, seed_value, [], null, 0, 1)
+func _cfg() -> ShiftConfig:
+	return load("res://data/shift_config.tres")
+
+func _on(pool: ArchetypePool, day: int, seed_value: int) -> Shift:
+	return Shift.new(_cfg(), load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"), pool, seed_value, [], null, 0, day)
+
+func _ids(archetypes: Array) -> Array:
+	return archetypes.map(func(a): return a.id)
+
+func test_nobody_comes_in_before_their_week() -> void:
+	var pool := _pool_of([_made(&"early", 1), _made(&"late", 2)])
+	var week := _cfg().days_per_week
+	h.eq("week 1 is only who has unlocked",
+		_ids(Shift.eligible_archetypes(pool, 1)), [&"early"])
+	h.eq("week 2 brings in the rest",
+		_ids(Shift.eligible_archetypes(pool, 2)), [&"early", &"late"])
+	var seen := {}
+	for day in range(1, week + 1):
+		for seed_value in range(6):
+			for c in _on(pool, day, seed_value).seated():
+				seen[c.archetype.id] = true
+	h.eq("and no floor in week 1 seats the late one", seen.keys(), [&"early"])
+	h.eq("the week a day falls in counts from 1",
+		[Shift.week_of(1, week), Shift.week_of(week, week), Shift.week_of(week + 1, week)],
+		[1, 1, 2])
+
+func test_everyone_unlocked_can_come_in_on_any_day_of_the_week() -> void:
+	## No more two new archetypes a day - the first day of a week is as open as
+	## the last.
+	var pool := _pool_of([_made(&"a", 1), _made(&"b", 1), _made(&"c", 1)])
+	var seen := {}
+	for seed_value in range(30):
+		for c in _on(pool, 1, seed_value).seated():
+			seen[c.archetype.id] = true
+	h.check("all three turn up on day 1 (%s)" % str(seen.keys()),
+		seen.size() == 3 and seen.has(&"a") and seen.has(&"b") and seen.has(&"c"))
+
+func test_misauthored_weeks_give_way_rather_than_leave_nobody() -> void:
+	## Every from_week past the end of the run would otherwise index an empty
+	## array and take the game down on spawn.
+	var pool := _pool_of([_made(&"late", 99)])
+	var s := _on(pool, 1, 7)
+	h.eq("the floor still filled", s.seated().size(), s.cfg.floor_size)
+	h.eq("from the fallback pool", s.seated()[0].archetype.id, &"late")
+
+func test_a_shift_that_names_its_customers_ignores_the_week() -> void:
+	var late := _made(&"late", 2)
+	var pool := _pool_of([_made(&"early", 1), late])
+	h.eq("only = exactly them, whatever the week",
+		_ids(Shift.eligible_archetypes(pool, 1, [late])), [&"late"])
+
+func test_an_exclusion_takes_them_out_unless_that_leaves_nobody() -> void:
+	var a := _made(&"a", 1)
+	var b := _made(&"b", 1)
+	var pool := _pool_of([a, b])
+	h.eq("excluded are taken out", _ids(Shift.eligible_archetypes(pool, 1, [], [a])), [&"b"])
+	h.eq("but never down to nobody",
+		_ids(Shift.eligible_archetypes(pool, 1, [], [a, b])), [&"a", &"b"])
 
 func test_never_two_of_the_same_hard_one_on_the_floor() -> void:
-	var pool := _made_up(func(a): a.hard = true)
+	var made: Array = []
+	for i in range(_pool().archetypes.size()):
+		var a := _made(StringName("hard_%d" % i), 1)
+		a.hard = true
+		made.append(a)
+	var pool := _pool_of(made)
 	var doubled: Array[int] = []
 	for seed_value in range(40):
 		var ids := {}
-		for c in _on(pool, seed_value).seated():
+		for c in _on(pool, 1, seed_value).seated():
 			if ids.has(c.archetype.id):
 				doubled.append(seed_value)
 			ids[c.archetype.id] = true

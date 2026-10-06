@@ -4,10 +4,10 @@ extends RefCounted
 ## no-op value (0, 1.0, 1.0), so every pre-existing Shift.new() call site is
 ## unaffected - that is what the "falls back" tests below pin down.
 ##
-## The archetype-pool unlock has its own coverage, alongside the rest of the
-## min_shift ladder it overrides, in test_archetype_gating.gd. RunState
-## actually threading a ShiftProfile's fields through start_shift() has its
-## own coverage in test_run_state.gd.
+## Who may come in, and from which week, has its own coverage in
+## test_archetype_gating.gd. RunState actually threading a ShiftProfile's
+## fields through start_shift() has its own coverage in test_run_state.gd,
+## and a premade shift's own rules in test_shift_limits.gd.
 var h: Harness
 
 func _cfg() -> ShiftConfig:

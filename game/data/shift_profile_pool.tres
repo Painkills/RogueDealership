@@ -7,12 +7,20 @@
 [ext_resource type="Resource" path="res://data/shift_categories/boss_shifts.tres" id="3_boss"]
 [ext_resource type="Resource" path="res://data/shift_categories/boss_shifts_first_friday.tres" id="6_boss_fri"]
 [ext_resource type="Resource" path="res://data/shift_categories/final_boss.tres" id="7_final"]
+[ext_resource type="Resource" path="res://data/shift_categories/specific_shifts.tres" id="8_specific"]
 [ext_resource type="Resource" uid="uid://btlybt0nusv2t" path="res://data/shift_profiles/midday.tres" id="3_mid"]
 [ext_resource type="Resource" uid="uid://bv374liyonhj2" path="res://data/shift_profiles/night.tres" id="4_night"]
 [ext_resource type="Script" uid="uid://cs1q4tn5ujuwx" path="res://scripts/model/data/shift_profile_pool.gd" id="5_pool"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_complicator.gd" id="9_comp"]
+[ext_resource type="Resource" path="res://data/shift_complicators/tough_crowd.tres" id="10_crowd"]
+[ext_resource type="Resource" path="res://data/shift_complicators/running_late.tres" id="11_late"]
+[ext_resource type="Resource" path="res://data/shift_complicators/short_fuse.tres" id="12_fuse"]
+[ext_resource type="Resource" path="res://data/shift_complicators/cluttered_desk.tres" id="13_desk"]
+[ext_resource type="Resource" path="res://data/shift_complicators/one_at_a_time.tres" id="14_once"]
 
 [resource]
 script = ExtResource("5_pool")
-design_rule = "Three tiers, always exactly three, and every one of them ends with a free card in the shop: morning (today's baseline - the free card and nothing more), midday (a floor-difficulty knob - shorter patience - paid for with a card put up for sale on top of the free one), and night (a roster-difficulty knob - the whole archetype pool unlocked regardless of the real shift number, fewer walk-ups to offset it - paid for with the chance to upgrade one of your cards on top of the free one). A new tier is a fourth .tres and one more line in profiles below; it is never a branch in Shift.gd or Shop.gd keyed on an id string - every difference a tier makes has to be one of ShiftProfile's own fields. Premade shifts are ShiftProfiles too, dealt onto the calendar by the categories below (see Week): a category says which days and which tier's slot its shifts may take, and whether they are bosses - one takes the place of one of the day's shifts, at random. Each shift's own chance is how likely it is to come up instead of the regular tier there."
+design_rule = "Three tiers, always exactly three, and every one of them ends with a free card in the shop: morning (the easiest slot), midday (a floor-difficulty knob - shorter patience - paid for with cards put up for sale), and night (the hardest slot - fewer, tougher customers - paid for with upgrades). Each tier has a difficulty target that climbs over the run (difficulty_start, difficulty_per_day), and every shift dealt in its slot is built to it: a lineup of the tier's `customers`, picked from whoever the week allows until their points add up (see ShiftGenerator). A new tier is a fourth .tres and one more line in profiles below; it is never a branch in Shift.gd or Shop.gd keyed on an id string - every difference a tier makes has to be one of ShiftProfile's own fields. Premade shifts are ShiftProfiles too, dealt onto the calendar by the categories below (see Week): a category says which days and which tier's slot its shifts may take, and whether they are bosses - one takes the place of one of the day's shifts, at random. A premade shift that is not a boss only comes up where its difficulty fits the slot, at most once a week, and is paid like the slot it took. Each shift's own chance is how likely it is to come up instead of the regular one there. The complicators below are the twists a premade shift that scales can be dealt with, to make a harder slot's target."
 profiles = Array[ExtResource("1_prf")]([ExtResource("2_morn"), ExtResource("3_mid"), ExtResource("4_night")])
-categories = Array[ExtResource("1_1vyqb")]([ExtResource("2_v286r"), ExtResource("3_boss"), ExtResource("6_boss_fri"), ExtResource("7_final")])
+categories = Array[ExtResource("1_1vyqb")]([ExtResource("2_v286r"), ExtResource("3_boss"), ExtResource("6_boss_fri"), ExtResource("7_final"), ExtResource("8_specific")])
+complicators = Array[ExtResource("9_comp")]([ExtResource("10_crowd"), ExtResource("11_late"), ExtResource("12_fuse"), ExtResource("13_desk"), ExtResource("14_once")])

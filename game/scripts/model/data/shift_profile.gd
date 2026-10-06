@@ -20,7 +20,6 @@ class_name ShiftProfile extends Resource
 ## multiplied by this, so fewer distinct customers get served across the same
 ## tick budget while every chair still starts, and stays, physically real.
 @export var walk_up_scale: float = 1.0
-@export var unlock_full_archetype_pool: bool = false
 ## Never come in on this shift, whatever else lets them - "remove Lay-Down
 ## Larry and Easygoing from the night pool".
 @export var excluded_archetypes: Array[CustomerArchetype] = []
@@ -59,6 +58,28 @@ class_name ShiftProfile extends Resource
 ## not quota is made, so it is the part of a shift's reward you can count on.
 @export_range(0.0, 3.0, 0.05) var pay_scale: float = 1.0
 
+@export_group("Difficulty")
+## How hard this shift is, in CustomerArchetype.difficulty points - see
+## tools/rate_shifts.gd for measuring it.
+## - A premade shift with a lineup is FIXED: this is its rating, and the
+##   calendar only deals it into a slot whose target is within
+##   ShiftConfig.difficulty_tolerance of it. 0 = unrated: dealt by chance alone,
+##   whatever the target - the way Monday Open House is.
+## - One without a lineup SCALES: this is what its own rules add, and whatever
+##   the slot's target leaves is filled with customers and complicators (see
+##   ShiftGenerator) - so it can come back, harder, in week 2.
+## Every copy the calendar deals carries the total it came to.
+@export var difficulty: int = 0
+## A regular tier's lineup length: every shift dealt in its slot brings exactly
+## this many customers, picked to the slot's difficulty target (ShiftGenerator).
+## 0 = the door as it used to be, random and open all shift. On a premade shift
+## that scales, its own length in place of the slot's.
+@export var customers: int = 0
+## A regular tier's difficulty target on day 1 of the run, and how much it
+## climbs each day after - see difficulty_on().
+@export var difficulty_start: int = 0
+@export var difficulty_per_day: float = 0.0
+
 @export_group("Premade shift")
 ## Ticks in the shift. 0 = ShiftConfig.shift_ticks.
 @export var shift_ticks: int = 0
@@ -66,8 +87,9 @@ class_name ShiftProfile extends Resource
 @export var quota: int = 0
 ## How many customers can wait for a chair. 0 = ShiftConfig.waiting_max.
 @export var waiting_room: int = 0
-## Only these come in - "a shift that has only Karens". The shift ladder and
-## unlock_full_archetype_pool no longer apply. Empty = the usual customers.
+## Only these come in - "a shift that has only Karens". The week each archetype
+## joins the run (CustomerArchetype.from_week) no longer applies. Empty = the
+## usual customers.
 @export var only_archetypes: Array[CustomerArchetype] = []
 ## Exactly these customers, in this order: the first fill the seats, the rest
 ## come in the door one after another, and nobody comes after the last - the
@@ -76,6 +98,19 @@ class_name ShiftProfile extends Resource
 ## How likely this shift is to be dealt in place of the regular one, on a day
 ## and in a slot its category allows - see Week. Only a premade shift uses it.
 @export_range(0.0, 1.0, 0.05) var chance: float = 1.0
+## The hand you draw to. 0 = ShiftConfig.hand_size. A dealership upgrade's
+## bigger hand still adds to it.
+@export var hand_size: int = 0
+## Added to every customer's Line as they sit down - a tough crowd, or an easy
+## one. Never below 0.
+@export var line_offset: int = 0
+## Multiplies every customer's combo step (CustomerArchetype.combo_step): 0 is
+## no combos, 2 double. A dealership upgrade's combo bonus is added after.
+@export var combo_scale: float = 1.0
+## The shift's own product quota - sell this many from this category - in place
+## of the day's (ShiftConfig.category_quota_by_week). A count of 0 = the day's.
+@export var product_quota_category: Category = null
+@export var product_quota_count: int = 0
 @export_group("")
 
 ## The store that follows it. Every visit starts with one card free, picked
@@ -94,11 +129,109 @@ class_name ShiftProfile extends Resource
 ## took, and the category that dealt it. A regular tier has neither.
 var time_of_day: StringName = &""
 var dealt_by: ShiftCategory = null
+## Set on a dealt copy of a premade shift that scales: the twists it came with
+## to make the slot's difficulty (see ShiftGenerator). Never authored.
+var complicators: Array[ShiftComplicator] = []
 
 ## This shift's quota on a day whose own is `base` - the one number RunState
 ## runs it to and the calendar shows.
 func quota_on(base: int) -> int:
 	return quota if quota > 0 else roundi(base * quota_scale) + quota_offset
+
+## A regular tier's difficulty target on `day` (1-based) of the run.
+func difficulty_on(day: int) -> int:
+	return roundi(difficulty_start + difficulty_per_day * (day - 1))
+
+## A premade shift without a lineup of its own: it is filled to whatever
+## difficulty the slot it is dealt into wants - see `difficulty`.
+func scales() -> bool:
+	return lineup.is_empty()
+
+## Which of the rules a complicator can change this shift sets itself - see
+## ShiftComplicator.touches().
+func touches() -> Array[StringName]:
+	var out: Array[StringName] = []
+	if line_offset != 0:
+		out.append(&"line")
+	if shift_ticks > 0:
+		out.append(&"ticks")
+	if patience_scale != 1.0:
+		out.append(&"patience")
+	if hand_size > 0:
+		out.append(&"hand")
+	if combo_scale != 1.0:
+		out.append(&"combo")
+	return out
+
+## The rules the shift is played under - its own, and its complicators' on top.
+## `base` is the config's number, for a shift that does not set its own.
+func ticks_on(base: int) -> int:
+	var ticks := shift_ticks if shift_ticks > 0 else base
+	for c in complicators:
+		ticks += c.ticks_delta
+	return maxi(1, ticks)
+
+func hand_on(base: int) -> int:
+	var hand := hand_size if hand_size > 0 else base
+	for c in complicators:
+		hand += c.hand_size_delta
+	return maxi(1, hand)
+
+func total_line_offset() -> int:
+	var offset := line_offset
+	for c in complicators:
+		offset += c.line_offset
+	return offset
+
+func total_patience_scale() -> float:
+	var scale := patience_scale
+	for c in complicators:
+		scale *= c.patience_scale
+	return scale
+
+func total_combo_scale() -> float:
+	var scale := combo_scale
+	for c in complicators:
+		scale *= c.combo_scale
+	return scale
+
+## What a premade shift does differently, for the calendar - its own rules, then
+## the complicators it came with. Empty for a regular tier: what sets those
+## apart is in their blurbs.
+func rules_preview() -> String:
+	var parts: Array[String] = []
+	if hand_size > 0:
+		parts.append("Hand of %d" % hand_size)
+	if line_offset != 0:
+		parts.append("Line %+d" % line_offset)
+	if combo_scale != 1.0:
+		parts.append("No combos" if combo_scale <= 0.0 else "Combos x%s" % String.num(combo_scale, 2))
+	if product_quota_count > 0 and product_quota_category != null:
+		parts.append("Sell %d %s" % [product_quota_count, product_quota_category.display_name])
+	if shift_ticks > 0:
+		parts.append("%d ticks" % shift_ticks)
+	if seats > 0:
+		parts.append("1 seat" if seats == 1 else "%d seats" % seats)
+	if waiting_room > 0:
+		parts.append("%d waiting" % waiting_room)
+	if is_premade() and patience_scale != 1.0:
+		parts.append("Patience %d%%" % roundi(patience_scale * 100.0))
+	for c in complicators:
+		if c != null:
+			parts.append(c.display_text)
+	return ", ".join(parts)
+
+## A non-boss premade shift dealt into `tier`'s slot is paid like that slot:
+## the commission, the base pay and the store after it are the tier's, so a
+## morning stays a morning's money whatever happens on its floor.
+func take_rewards_from(tier: ShiftProfile) -> void:
+	commission = tier.commission
+	pay_scale = tier.pay_scale
+	heal_up_to = tier.heal_up_to
+	cards_for_sale = tier.cards_for_sale
+	upgrades = tier.upgrades
+	free_pick_min_rarity = tier.free_pick_min_rarity
+	dealership_upgrades = tier.dealership_upgrades
 
 ## Which part of the day it is worked in - &"morning", &"midday" or &"night":
 ## its hours on the calendar and the tablet's clock, and what the office

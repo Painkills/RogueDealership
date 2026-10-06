@@ -9,6 +9,9 @@
 script = ExtResource("1_prf")
 pay_scale = 1.0
 commission = 0.35
+customers = 5
+difficulty_start = 10
+difficulty_per_day = 0.7
 id = &"midday"
 display_name = "Midday Shift"
 blurb = "Busy. Everyone's on a shorter fuse."

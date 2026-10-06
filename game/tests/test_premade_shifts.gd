@@ -25,10 +25,10 @@ func _some(n: int) -> Array:
 	return out
 
 func _shift(cfg: ShiftConfig, only: Array = [], lineup: Array = [], seats: int = 0,
-		excluded: Array = [], unlock_all: bool = false) -> Shift:
+		excluded: Array = []) -> Shift:
 	return Shift.new(cfg, load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
-		7, [], null, 0, 1, 0, 0, null, seats, 1.0, 1.0, unlock_all, only, lineup, excluded)
+		7, [], null, 0, 1, 0, 0, null, seats, 1.0, 1.0, only, lineup, excluded)
 
 func _ids(archetypes: Array) -> Array:
 	return archetypes.map(func(a): return a.id)
@@ -152,6 +152,168 @@ func test_a_boss_takes_the_place_of_one_of_the_days_shifts() -> void:
 			if p.is_boss_day():
 				placed[p.worked_at()] = true
 	h.eq("a boss allowed only at night is only ever dealt at night", placed.keys(), [&"night"])
+
+# ------------------------------------------------------- dealt by difficulty
+## Made-up archetypes worth 1, 2 and 3 points, open from week 1.
+func _points_pool() -> ArchetypePool:
+	var typed: Array[CustomerArchetype] = []
+	for points in [1, 2, 3]:
+		var a := CustomerArchetype.new()
+		a.id = StringName("made_up_%d" % points)
+		a.difficulty = points
+		a.weight = 1.0
+		typed.append(a)
+	var p := ArchetypePool.new()
+	p.design_rule = "test double"
+	p.archetypes = typed
+	return p
+
+## Tiers that build their shifts: `customers` each, to a target of `start`
+## climbing `per_day`.
+func _built_tiers(start: int, per_day: float = 0.0, customers: int = 5) -> ShiftProfilePool:
+	var pool := _tiers()
+	for t in pool.profiles:
+		t.customers = customers
+		t.difficulty_start = start
+		t.difficulty_per_day = per_day
+	return pool
+
+func _deal_cfg(tolerance: int = 1) -> ShiftConfig:
+	var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
+	cfg.difficulty_tolerance = tolerance
+	cfg.complicator_share = 0.0
+	return cfg
+
+## A premade shift for the category below: fixed (a lineup) when `fixed`.
+func _premade(id: StringName, rating: int, fixed: bool) -> ShiftProfile:
+	var p := ShiftProfile.new()
+	p.id = id
+	p.difficulty = rating
+	if fixed:
+		p.lineup.assign(_points_pool().archetypes)
+	return p
+
+func _offered(week: Week, days: int) -> Array:
+	var out := []
+	for day in range(1, days + 1):
+		out.append_array(week.offers(day))
+	return out
+
+func test_a_tier_follows_its_own_difficulty_climb() -> void:
+	var t := ShiftProfile.new()
+	t.difficulty_start = 6
+	t.difficulty_per_day = 0.5
+	h.eq("day 1 is where it starts", t.difficulty_on(1), 6)
+	h.eq("and it climbs from there", t.difficulty_on(5), 8)
+
+func test_a_tier_that_builds_deals_a_lineup_to_the_days_target() -> void:
+	var pool := _built_tiers(7, 1.0)
+	var week := Week.new(pool, 3, 1, 5, _points_pool(), _deal_cfg())
+	for day in range(1, 4):
+		for p in week.offers(day):
+			h.eq("day %d %s: five customers" % [day, p.id], p.lineup.size(), 5)
+			h.eq("day %d %s: to that day's target" % [day, p.id], p.difficulty, 6 + day)
+			h.check("day %d %s: still the regular shift" % [day, p.id], not p.is_premade())
+	var plain := _tiers()
+	h.eq("a tier with no customers set is the old door",
+		Week.new(plain, 1, 1, 5, _points_pool(), _deal_cfg()).offers(1), plain.profiles)
+
+func test_a_fixed_shift_is_dealt_only_near_its_rating() -> void:
+	var pool := _built_tiers(9)
+	var category := ShiftCategory.new()
+	category.shifts.append(_premade(&"near", 10, true))
+	category.shifts.append(_premade(&"far", 12, true))
+	for p in category.shifts:
+		p.chance = 0.5
+	pool.categories.append(category)
+	var seen := {}
+	for seed_value in range(20):
+		for p in _offered(Week.new(pool, 5, seed_value, 5, _points_pool(), _deal_cfg(1)), 5):
+			seen[p.id] = true
+	h.check("within the tolerance, it comes up", seen.has(&"near"))
+	h.check("outside it, never", not seen.has(&"far"))
+	var unrated := _built_tiers(9)
+	var anywhere := ShiftCategory.new()
+	anywhere.shifts.append(_premade(&"unrated", 0, true))
+	unrated.categories.append(anywhere)
+	var dealt := _offered(Week.new(unrated, 1, 1, 5, _points_pool(), _deal_cfg(1)), 1)
+	h.check("unrated, it comes up by chance alone",
+		dealt.any(func(p): return p.id == &"unrated"))
+
+func test_a_scaling_shift_comes_back_each_week_built_to_that_weeks_target() -> void:
+	## "Short Staffed in week 1, and again in week 2 - harder."
+	var pool := _built_tiers(6, 1.0)
+	var category := ShiftCategory.new()
+	category.slots = 1 << 0
+	category.shifts.append(_premade(&"scales", 0, false))
+	pool.categories.append(category)
+	var week := Week.new(pool, 10, 1, 5, _points_pool(), _deal_cfg())
+	var dealt := []
+	for day in range(1, 11):
+		for p in week.offers(day):
+			if p.id == &"scales":
+				dealt.append([day, p])
+	h.eq("once a week, every week (%s)" % str(dealt.map(func(d): return d[0])), dealt.size(), 2)
+	for d in dealt:
+		var p: ShiftProfile = d[1]
+		h.eq("day %d: built to that day's target" % d[0], p.difficulty, 5 + d[0])
+		h.eq("day %d: with the slot's customers" % d[0], p.lineup.size(), 5)
+	h.check("and a harder one the second time",
+		(dealt[1][1] as ShiftProfile).difficulty > (dealt[0][1] as ShiftProfile).difficulty)
+
+func test_a_scaling_shift_waits_for_a_slot_that_leaves_its_customers_enough() -> void:
+	## Its rules take 8 of a 9-point slot: one point left for five customers who
+	## cost at least one each is no shift at all.
+	var pool := _built_tiers(9)
+	var category := ShiftCategory.new()
+	category.shifts.append(_premade(&"too_much", 8, false))
+	pool.categories.append(category)
+	var seen := _offered(Week.new(pool, 5, 1, 5, _points_pool(), _deal_cfg(1)), 5)
+	h.check("never dealt", not seen.any(func(p): return p.id == &"too_much"))
+
+func test_a_slot_never_takes_a_premade_shift_bringing_someone_it_keeps_out() -> void:
+	## "Speedster and Family First never show at night" - a premade lineup, or a
+	## shift that names its customers, included. A target five of them could
+	## make, so the exclusion is the only thing keeping either out.
+	var pool := _built_tiers(5)
+	var kept_out: CustomerArchetype = _points_pool().archetypes[0]
+	for t in pool.profiles:
+		t.excluded_archetypes.assign([kept_out])
+	var category := ShiftCategory.new()
+	var lineup := _premade(&"brings_them", 0, true)
+	lineup.lineup.assign([kept_out])
+	var named := _premade(&"names_them", 0, false)
+	named.only_archetypes.assign([kept_out])
+	category.shifts.append_array([lineup, named])
+	pool.categories.append(category)
+	var seen := _offered(Week.new(pool, 5, 1, 5, _points_pool(), _deal_cfg()), 5)
+	h.check("neither is ever dealt (%s)" % str(seen.map(func(p): return p.id)),
+		not seen.any(func(p): return p.id == &"brings_them" or p.id == &"names_them"))
+
+func test_a_premade_shift_is_paid_like_its_slot_and_a_boss_like_itself() -> void:
+	var pool := _built_tiers(9)
+	for t in pool.profiles:
+		t.commission = 0.9
+		t.cards_for_sale = 7
+	var category := ShiftCategory.new()
+	category.days = 1 << 0
+	var special := _premade(&"special", 0, true)
+	special.commission = 0.1
+	category.shifts.append(special)
+	var bosses := ShiftCategory.new()
+	bosses.days = 1 << 1
+	bosses.boss_day = true
+	var boss := _premade(&"boss", 0, true)
+	boss.commission = 0.2
+	bosses.shifts.append(boss)
+	pool.categories.append_array([category, bosses])
+	var week := Week.new(pool, 2, 1, 5, _points_pool(), _deal_cfg())
+	var dealt: ShiftProfile = week.offers(1).filter(func(p): return p.id == &"special")[0]
+	h.eq("the special one takes its slot's commission", dealt.commission, 0.9)
+	h.eq("and its slot's store", dealt.cards_for_sale, 7)
+	h.eq("the authored one is untouched", special.commission, 0.1)
+	var dealt_boss: ShiftProfile = week.offers(2).filter(func(p): return p.is_boss_day())[0]
+	h.eq("a boss keeps its own", dealt_boss.commission, 0.2)
 
 func test_a_run_deals_its_week_once_from_its_own_seed() -> void:
 	## The calendar is reopened after the shop, the tutorial and the toolkit -

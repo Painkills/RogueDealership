@@ -628,16 +628,19 @@ pre-shift standing and this shift's own delta, since `Shift` has never held a
 `RunState` reference and `standing_before` travels in through `setup()`
 alongside it instead.
 
-**The archetype ladder is the run's difficulty curve.** Every
-`CustomerArchetype` declares `min_shift`, and `Shift` only deals customers
-whose `min_shift` has come due - `shift.gd`'s comment on that filter is blunt
-about why: a misauthored `min_shift` must never index an empty array, because
-an empty floor is a stalled game, not a graceful skip. `archetype_pool.tres`'s
-own `design_rule` states the ladder in full: easiest first, an archetype with
-no actions opens the run, a gift comes next, a resource working against you
-after that, and the archetype that punishes the whole floor comes last. G2
-does not add to that ladder; it is what finally plays it end to end, five
-shifts deep, instead of stopping after one.
+**Difficulty budgets are the run's difficulty curve.** Every
+`CustomerArchetype` declares `difficulty` (points) and `from_week`: the
+hardest wait for week 2, and `Shift.eligible_archetypes()` only lets in
+customers whose week has come - falling back to the whole pool rather than
+index an empty array, because an empty floor is a stalled game, not a graceful
+skip. Each tier (morning, midday, night) has a difficulty target that climbs
+over the run, and `Week` builds every shift in its slot to it with
+`ShiftGenerator`: a lineup whose points add up to the target, so the budget
+decides how many of the difficult ones a shift can afford. Premade shifts
+carry a rating (`ShiftProfile.difficulty`) and are only dealt where it fits;
+one without a lineup scales, coming back harder each week with tougher
+customers and `ShiftComplicator`s. `tools/rate_shifts.gd` measures all of it
+in the same points.
 
 **Two guards keep the shop from being able to build a run it cannot win.**
 `min_deck_size` (from G1.5) floors the deck's raw SIZE: below a full hand,

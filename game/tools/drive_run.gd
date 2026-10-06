@@ -840,6 +840,9 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	var slot: StringName = was.offers(_run.shift_number)[0].worked_at()
 	var category := ShiftCategory.new()
 	category.slots = 1 << ShiftCategory.SLOTS.find(slot)
+	# Only on today's weekday: a premade shift comes up once a week, and one
+	# allowed every day would have been dealt on the week's first.
+	category.days = 1 << ((_run.shift_number - 1) % maxi(1, _run.cfg.days_per_week))
 	category.shifts.append(special)
 	pool.categories.append(category)
 
@@ -851,6 +854,35 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 		% [events.size(), tagged.size()],
 		events.size() == _run.todays_shifts().size() and tagged.size() == 1
 			and tagged[0].name == "Event_drive_special")
+	_check("and a shift that bends no rules has no rules line",
+		events.all(func(e): return e.find_child("Rules", true, false) == null))
+
+	# One that bends a rule, dealt to today's difficulty with a made-up
+	# complicator on top - every spare point spent on complicators, so it
+	# comes with one whatever today's target is.
+	special.hand_size = 4
+	var twist := ShiftComplicator.new()
+	twist.id = &"drive_twist"
+	twist.display_text = "Drive Twist"
+	twist.line_offset = 1
+	pool.complicators.append(twist)
+	var deal_cfg := _run.cfg.duplicate() as ShiftConfig
+	deal_cfg.complicator_share = 1.0
+	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1, _run.cfg.days_per_week,
+		_run.archetypes, deal_cfg)
+	_root._open_the_picker()
+	var dealt: ShiftProfile = _run.todays_shifts().filter(func(p): return p.id == &"drive_special")[0]
+	var rules := _todays_events().filter(func(e): return e.name == "Event_drive_special")[0] \
+		.find_child("Rules", true, false) as Label
+	_check("a shift that bends a rule says how on the calendar (%s)"
+		% (rules.text if rules != null else "no rules line"),
+		rules != null and rules.text == dealt.rules_preview() and rules.text.contains("Hand of 4"))
+	_check("built to today's difficulty, with the complicator it came with (%s)"
+		% str(dealt.complicators.map(func(c): return c.id)),
+		dealt.lineup.size() > 0 and dealt.complicators.size() == 1
+			and dealt.complicators[0] == twist
+			and rules != null and rules.text.contains(twist.display_text))
+	special.hand_size = 0
 
 	category.boss_day = true
 	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1, _run.cfg.days_per_week)
@@ -885,7 +917,7 @@ func _phase_2_leave_and_work_a_night() -> void:
 	var shift: Shift = _root._shift_view._shift
 	_check("on a shift that knows which one it is", shift.shift_number == 2)
 	_check("carrying its tier's own archetype rules",
-		shift.unlock_full_archetype_pool == second.unlock_full_archetype_pool
+		shift.lineup == second.lineup
 			and shift.excluded_archetypes == second.excluded_archetypes)
 	_check("and the windows show its time of day (%s)"
 		% _root._shift_view._windows.time_of_day(),

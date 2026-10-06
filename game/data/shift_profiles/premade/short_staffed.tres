@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prof"]
+
+[resource]
+script = ExtResource("1_prof")
+id = &"short_staffed"
+display_name = "Short Staffed"
+blurb = "Half the binder's at the printer."
+difficulty = 4
+hand_size = 4
+chance = 0.35

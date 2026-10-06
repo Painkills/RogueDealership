@@ -80,7 +80,7 @@ func _what_ifs() -> void:
 			_shop_mode = parts[1]
 			print("shop policy: %s" % _shop_mode)
 			continue
-		# arch.<id>.<field>=value - an archetype's own numbers, e.g. min_shift=99
+		# arch.<id>.<field>=value - an archetype's own numbers, e.g. from_week=99
 		# to keep one off the regular floor; actions=none takes away what it does.
 		if parts.size() == 2 and path.size() == 3 and path[0] == "arch":
 			var a := _arch.by_id(StringName(path[1]))

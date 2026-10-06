@@ -198,6 +198,12 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 		15, Palette.color(&"text"), true)
 	terms.name = "Terms"
 	_line(col, profile.blurb, 16, Palette.color(&"text"))
+	# What a premade shift does differently - a smaller hand, a tougher crowd -
+	# because you are about to play under it.
+	var rules := profile.rules_preview()
+	if rules != "":
+		var rules_line := _line(col, rules, 15, Palette.color(&"accent"), true)
+		rules_line.name = "Rules"
 	_line(col, profile.reward_preview(), 15, hue.darkened(0.35))
 	if pickable:
 		event.pressed.connect(func(): chosen.emit(profile))

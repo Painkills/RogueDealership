@@ -41,10 +41,16 @@ class_name CustomerArchetype extends Resource
 ## times its margin (Shift._settle()).
 @export var premium_interests: Array[Interest] = []
 @export var premium_margin_scale: float = 1.0
-## The day of the run this archetype joins the pool. The run opens on the easy
-## ones and adds two more types a day.
-## Defaults to 1, so a bare shift is unaffected.
-@export var min_shift: int = 1
+## The week of the run this archetype starts coming in: the hardest are held
+## back for week 2. Within its week anyone unlocked may come in on any day -
+## how many of the difficult ones a shift brings is its difficulty budget's
+## business (see `difficulty` and ShiftGenerator). Defaults to 1, so a bare
+## shift is unaffected.
+@export var from_week: int = 1
+## How much harder this customer makes a shift, in points: a shift's difficulty
+## is what its customers add up to (plus its own rules - see
+## ShiftProfile.difficulty). Measured with tools/rate_shifts.gd -- archetypes.
+@export var difficulty: int = 1
 ## How often they come in, relative to everyone else in the pool - not a
 ## percentage. 0 never.
 @export var weight: float = 1.0

@@ -37,5 +37,6 @@ tell = "has already asked who the manager is, twice"
 line_per_sale = 3
 combo_step = 0.45
 demands_category = true
-min_shift = 5
+difficulty = 5
+from_week = 2
 actions = Array[ExtResource("1_fi3b8")]([SubResource("Resource_jts1c")])

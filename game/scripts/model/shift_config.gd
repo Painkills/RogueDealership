@@ -29,6 +29,13 @@ class_name ShiftConfig extends Resource
 ## The quota climbs this fraction each shift, so the run keeps pace with a deck
 ## that is getting stronger in the shop between them.
 @export var quota_growth: float = 0.15
+## How far a premade shift's rating (ShiftProfile.difficulty) may sit from a
+## slot's difficulty target and still be dealt there - see Week.
+@export var difficulty_tolerance: int = 1
+## How much of a scaling premade shift's spare difficulty - what its slot's
+## target leaves over the cheapest lineup it could bring - goes to complicators
+## rather than tougher customers (ShiftGenerator). 0 = customers only.
+@export_range(0.0, 1.0, 0.05) var complicator_share: float = 0.3
 ## The run's HP. Standing hits 0 and the run ends, same as running out of
 ## shifts - a scorecard with no stakes was the whole problem this fixes.
 @export var standing_start: int = 100

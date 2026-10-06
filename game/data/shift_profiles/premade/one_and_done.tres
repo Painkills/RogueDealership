@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prof"]
+
+[resource]
+script = ExtResource("1_prof")
+id = &"one_and_done"
+display_name = "One and Done"
+blurb = "Easy yeses. Nobody buys twice."
+line_offset = -4
+combo_scale = 0.0
+chance = 0.35
+difficulty = -2

@@ -13,3 +13,5 @@ standing_heal_scale = 0.0
 card_prices = Array[int]([600, 900, 1200, 1500])
 upgrade_price_share = 0.5
 paycheck_raise_per_week = 100
+complicator_share = 0.5
+difficulty_tolerance = 1

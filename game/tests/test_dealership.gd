@@ -10,7 +10,7 @@ func _cfg() -> ShiftConfig:
 func _shift(owned: Array) -> Shift:
 	return Shift.new(_cfg(), load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
-		11, [], null, 0, 1, 0, 0, null, 0, 1.0, 1.0, false, [], [], [], {}, owned)
+		11, [], null, 0, 1, 0, 0, null, 0, 1.0, 1.0, [], [], [], {}, owned)
 
 func _run(pool: DealershipUpgradePool) -> RunState:
 	return RunState.new(_cfg(), load("res://data/interests/interest_pool.tres"),

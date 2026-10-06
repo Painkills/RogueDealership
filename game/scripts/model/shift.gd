@@ -21,14 +21,16 @@ var voice_rng := RandomNumberGenerator.new()
 var tick: int = 0
 var tick_budget: int
 var quota: int
-var shift_number: int = 1          ## which shift of the run; gates archetypes
-## All three set from a picked ShiftProfile, see RunState.start_shift() -
-## none of them changes anything about a Shift built without one (1.0, 1.0
-## and false are the no-op values), so every existing call site is
-## unaffected.
+var shift_number: int = 1          ## which shift of the run; its week gates archetypes
+## Both set from a picked ShiftProfile, see RunState.start_shift() - neither
+## changes anything about a Shift built without one (1.0 is the no-op value),
+## so every existing call site is unaffected.
 var patience_scale: float = 1.0
 var walk_up_scale: float = 1.0
-var unlock_full_archetype_pool: bool = false
+## The picked ShiftProfile's Line shift and combo scale, its complicators'
+## folded in - see _spawn(). 0 and 1.0 change nothing.
+var line_offset: int = 0
+var combo_scale: float = 1.0
 ## The share of what you bank over quota paid on top of base salary - the
 ## picked ShiftProfile's commission. Nothing here uses it but report(); see
 ## RunState.bonus_from().
@@ -132,7 +134,6 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_standing: int = 0, p_sale_streak: int = 0,
 		p_dialogue: DialoguePool = null, p_floor_size: int = 0,
 		p_patience_scale: float = 1.0, p_walk_up_scale: float = 1.0,
-		p_unlock_full_archetype_pool: bool = false,
 		p_only_archetypes: Array = [], p_lineup: Array = [],
 		p_excluded_archetypes: Array = [], p_arrivals: Dictionary = {},
 		p_dealership: Array = []) -> void:
@@ -145,11 +146,14 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		cfg = cfg.duplicate() as ShiftConfig
 		cfg.hand_size = maxi(1, cfg.hand_size + hand_bonus)
 	# Who the door sends - ShiftProfile's hard_weight_scale,
-	# allow_hard_duplicates and archetype_weight_scales. Set before the floor
+	# allow_hard_duplicates and archetype_weight_scales - and what they are like
+	# when they sit down: its Line shift and combo scale. Set before the floor
 	# opens, so the first customers are picked under them like everyone after.
 	hard_weight_scale = float(p_arrivals.get("hard_weight_scale", 1.0))
 	allow_hard_duplicates = bool(p_arrivals.get("allow_hard_duplicates", false))
 	archetype_weight_scales = (p_arrivals.get("archetype_weight_scales", {}) as Dictionary).duplicate()
+	line_offset = int(p_arrivals.get("line_offset", 0))
+	combo_scale = float(p_arrivals.get("combo_scale", 1.0))
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
@@ -164,7 +168,6 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	shift_number = p_shift_number
 	patience_scale = p_patience_scale
 	walk_up_scale = p_walk_up_scale
-	unlock_full_archetype_pool = p_unlock_full_archetype_pool
 	only_archetypes.assign(p_only_archetypes)
 	lineup.assign(p_lineup)
 	excluded_archetypes.assign(p_excluded_archetypes)
@@ -485,11 +488,13 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		Customer.make_ranks(interests, rng, favourites,
 			cfg.ranks_by_category),
 		start, top, cfg.as_dict(), interests)
-	var easier := int(perk(&"line"))
+	# The shift's own crowd - a Line shift up or down - and the dealership's on
+	# top of it.
+	var easier := int(perk(&"line")) + line_offset
 	if easier != 0:
 		c.line = maxi(0, c.line + easier)
 		c.start_line = c.line
-	c.combo_step += perk(&"combo_step")
+	c.combo_step = c.combo_step * combo_scale + perk(&"combo_step")
 
 	# Every-triggered actions start their cadence counter jittered, not at a
 	# clean 0, so this customer's first demand does not land on the exact same
@@ -567,36 +572,39 @@ func _weight_of(a: CustomerArchetype) -> float:
 
 
 func _archetypes_available_this_shift() -> Array[CustomerArchetype]:
-	## The difficulty ladder. Falls back to the whole pool rather than returning
-	## nothing: misauthored min_shift values would otherwise index an empty array
-	## and take the game down, and a floor that is too hard beats no floor at all.
-	##
-	## A night ShiftProfile skips the ladder entirely - the whole pool is fair
-	## game regardless of which real shift number this is, which is the actual
-	## point of picking night rather than a side effect of it.
-	##
-	## A premade shift that names its customers skips it too: they are who comes,
-	## whatever the day.
-	##
-	## Whoever the shift excludes is taken out of whichever pool that is - unless
-	## that would leave nobody, when the exclusion gives way the way the ladder
-	## does.
-	var pool: Array[CustomerArchetype] = []
-	if not only_archetypes.is_empty():
-		pool = only_archetypes.duplicate()
-	elif unlock_full_archetype_pool:
-		pool = archetypes.archetypes.duplicate()
+	return eligible_archetypes(archetypes, week_of(shift_number, cfg.days_per_week),
+		only_archetypes, excluded_archetypes)
+
+
+## Which week of the run `day` (1-based) falls in, from 1.
+static func week_of(day: int, days_per_week: int) -> int:
+	return (day - 1) / maxi(1, days_per_week) + 1
+
+
+## Who may come in during `week` - the door's pool, and the one ShiftGenerator
+## fills a lineup from. Everyone whose week has come (CustomerArchetype.from_week);
+## or exactly `only`, when a shift names its customers - they are who comes,
+## whatever the week. Whoever `excluded` names is then taken out.
+##
+## Gives way rather than return nobody: misauthored weeks, or an exclusion
+## that leaves no one, would otherwise index an empty array and take the game
+## down - and a floor that is too hard beats no floor at all.
+static func eligible_archetypes(pool: ArchetypePool, week: int, only: Array = [],
+		excluded: Array = []) -> Array[CustomerArchetype]:
+	var out: Array[CustomerArchetype] = []
+	if not only.is_empty():
+		out.assign(only)
 	else:
-		for a in archetypes.archetypes:
-			if a.min_shift <= shift_number:
-				pool.append(a)
-		if pool.is_empty():
-			pool = archetypes.archetypes.duplicate()
-	if excluded_archetypes.is_empty():
-		return pool
+		for a in pool.archetypes:
+			if a.from_week <= week:
+				out.append(a)
+		if out.is_empty():
+			out = pool.archetypes.duplicate()
+	if excluded.is_empty():
+		return out
 	var kept: Array[CustomerArchetype] = []
-	kept.assign(pool.filter(func(a): return not excluded_archetypes.has(a)))
-	return kept if not kept.is_empty() else pool
+	kept.assign(out.filter(func(a): return not excluded.has(a)))
+	return kept if not kept.is_empty() else out
 
 
 func _next_name() -> String:

@@ -107,13 +107,14 @@ func test_start_shift_threads_the_picked_profiles_fields_through() -> void:
 	profile.seats = 2
 	profile.patience_scale = 0.5
 	profile.walk_up_scale = 2.0
-	profile.unlock_full_archetype_pool = true
+	profile.line_offset = 3
+	profile.combo_scale = 2.0
 	var s := r.start_shift(profile)
 	h.eq("seats reached the shift", s.chairs.size(), 2)
 	h.eq("patience_scale reached the shift", s.patience_scale, 0.5)
 	h.eq("walk_up_scale reached the shift", s.walk_up_scale, 2.0)
-	h.check("unlock_full_archetype_pool reached the shift",
-		s.unlock_full_archetype_pool)
+	h.eq("line_offset reached the shift", s.line_offset, 3)
+	h.eq("combo_scale reached the shift", s.combo_scale, 2.0)
 
 func test_two_runs_from_one_seed_are_identical() -> void:
 	## The whole reason the run owns a seeded rng instead of calling randi().

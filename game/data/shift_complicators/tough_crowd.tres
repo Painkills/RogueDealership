@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ShiftComplicator" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_complicator.gd" id="1_comp"]
+
+[resource]
+script = ExtResource("1_comp")
+id = &"tough_crowd"
+display_text = "Line +2"
+points = 5
+line_offset = 2

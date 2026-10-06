@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ShiftProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prof"]
+
+[resource]
+script = ExtResource("1_prof")
+id = &"big_spenders"
+display_name = "Big Spenders"
+blurb = "Nobody's buying. The ones who do, buy big."
+difficulty = 5
+line_offset = 4
+combo_scale = 1.5
+chance = 0.35

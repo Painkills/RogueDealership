@@ -34,5 +34,5 @@ display_name = "Family First"
 pattern = "Give them room. They will not be rushed, and the tick you spend hovering over them is the one that loses them."
 tell = "there are two car seats in the trade-in"
 line_per_sale = 2
-min_shift = 2
+difficulty = 2
 actions = Array[ExtResource("1_syiqa")]([SubResource("Resource_idwwe")])
