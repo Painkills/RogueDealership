@@ -29,7 +29,13 @@ func _move(id: StringName, hit: int, fuse: int, resolve: DemandResolve = null,
 		d.effects.append(l)
 	return d
 
-func _boss_with(moves: Array, budget_moves: Array = []) -> Customer:
+func _timed(every: int, d: Demand) -> TimedMove:
+	var t := TimedMove.new()
+	t.every_ticks = every
+	t.move = d
+	return t
+
+func _boss_with(moves: Array, timed_moves: Array = []) -> Customer:
 	var a := CustomerArchetype.new()
 	a.id = &"made_up_boss"
 	a.display_name = "Made-up Boss"
@@ -37,13 +43,14 @@ func _boss_with(moves: Array, budget_moves: Array = []) -> Customer:
 	a.patience_is_shield = true
 	a.budget_share = 1.0
 	a.moves.assign(moves)
-	a.budget_moves.assign(budget_moves)
+	a.timed_moves.assign(timed_moves)
 	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1
 	var c := Customer.new("A", "Test Boss", a, Customer.make_ranks(interests, rng), 20, 20,
 		{"appeal_step": 4, "line_per_sale": 3, "leaving_soon_at": 4}, interests)
 	c.budget = 7000
+	c.start_timed_moves(0)
 	return c
 
 func _all_text(note: Dictionary) -> String:
@@ -67,21 +74,26 @@ func test_the_budget_is_on_the_left_and_the_move_on_the_right_of_whoever_is_in_f
 
 # ---------------------------------------------------------------- the budget
 func test_the_budget_folder_says_what_is_left_and_what_is_coming() -> void:
-	var truck := _move(&"truck", 20, 2, ClearTheTable.new(), true)
-	var bm := BudgetMove.new()
-	bm.at_share = 0.75
-	bm.move = truck
-	var c := _boss_with([], [bm])
-	var note := BossPanels.budget_note(c)
+	var truck := _move(&"truck", 20, 2, ClearTheTable.new())
+	var c := _boss_with([], [_timed(9, truck)])
+	var note := BossPanels.budget_note(c, 0)
 	h.eq("the title is what is left", note["title"], "$7,000 left")
 	h.eq("the bar is full", [note["bar_value"], note["bar_max"]], [7000, 7000])
-	h.check("it says they will not sign yet (%s)" % note["body"],
-		note["body"].contains("will not sign until it is all spent"))
-	h.check("and when the big move comes, and what it hits for (%s)" % note["body"],
-		note["body"].contains("TRUCK") and note["body"].contains("$5,250")
-			and note["body"].contains("hits for 20"))
+	h.check("it says they sign when it is all spent (%s)" % note["body"],
+		note["body"].contains("Spend it all to sign them"))
+	h.check("and what the big move hits for, and how often (%s)" % note["body"],
+		note["body"].contains("TRUCK hits for 20, every 9 ticks"))
+	h.eq("and in red, how long until the next", note["headline"], "TRUCK IN 9 TICKS")
+	h.eq("a tick before it is due it is one tick, not ticks",
+		BossPanels.budget_note(c, 8)["headline"], "TRUCK IN 1 TICK")
+	h.check("and when it is due, that it waits for a product (%s)"
+		% BossPanels.budget_note(c, 9)["headline"],
+		BossPanels.budget_note(c, 9)["headline"].contains("NEXT PRODUCT DOWN"))
+	c.archetype.sold_products_leave_deck = true
+	h.check("it says what they buy leaves your deck",
+		BossPanels.budget_note(c, 0)["body"].contains("leaves your deck"))
 	c.unsigned.append({"product": null, "margin": 7000})
-	var done := BossPanels.budget_note(c)
+	var done := BossPanels.budget_note(c, 0)
 	h.check("spent out, it says to sign them (%s)" % done["body"],
 		done["body"].begins_with("All spent. Sign them."))
 	h.eq("and the bar is empty", done["bar_value"], 0)
@@ -112,6 +124,19 @@ func test_a_hit_that_goes_through_patience_says_so_instead() -> void:
 	h.check("it cannot be soaked up (%s)" % note["body"],
 		note["body"].contains("cannot soften it") and not note["body"].contains("comes off their patience"))
 	h.eq("and a tick left is a tick", note["bar_text"], "1 tick to answer")
+
+func test_a_hit_with_nothing_to_answer_it_says_when_it_lands_and_where() -> void:
+	var impatient := _move(&"impatient", 6, 3)
+	var c := _boss_with([impatient])
+	c.demand = impatient
+	c.demand_due_tick = 3
+	var note := BossPanels.move_note(c, 1)
+	h.eq("it lands in the ticks left", note["bar_text"], "lands in 2 ticks")
+	h.eq("and a tick left is a tick", BossPanels.move_note(c, 2)["bar_text"], "lands in 1 tick")
+	h.check("nothing stops it (%s)" % note["body"], note["body"].contains("Nothing stops this one"))
+	h.check("and it says where it comes from, with no 'if not' about it (%s)" % note["body"],
+		note["body"].contains("It comes off their patience first (20)")
+			and not note["body"].contains("If not"))
 
 func test_harder_rounds_show_their_harder_numbers() -> void:
 	var m := _move(&"m", 6, 4, IncreasePatience.new())
@@ -144,12 +169,9 @@ func test_with_nothing_live_it_says_when_the_next_comes_and_warns_of_a_waiting_o
 	h.eq("and when", quiet["bar_text"], "next move in 2 ticks")
 	var truck := _move(&"truck", 20, 2, ClearTheTable.new(), true)
 	truck.needs_offer_on_table = true
-	var bm := BudgetMove.new()
-	bm.at_share = 1.0
-	bm.move = truck
-	var waiting := _boss_with([], [bm])
-	var note := BossPanels.move_note(waiting, 0)
-	h.eq("a due budget move is named before it comes", note["title"], truck.display_name)
+	var waiting := _boss_with([], [_timed(1, truck)])
+	var note := BossPanels.move_note(waiting, 1)
+	h.eq("a due timed move is named before it comes", note["title"], truck.display_name)
 	h.check("with what it hits for (%s)" % note["headline"], note["headline"] == "HITS FOR 20")
 	h.check("and that it waits for a product on the table (%s)" % note["body"],
 		note["body"].contains("the moment a product is on the table"))
@@ -158,12 +180,9 @@ func test_with_nothing_live_it_says_when_the_next_comes_and_warns_of_a_waiting_o
 func test_nothing_the_player_reads_calls_patience_a_shield() -> void:
 	var truck := _move(&"truck", 20, 2, ClearTheTable.new(), true)
 	var hit := _move(&"hit", 6, 3, IncreasePatience.new())
-	var bm := BudgetMove.new()
-	bm.at_share = 0.75
-	bm.move = truck
-	var c := _boss_with([hit], [bm])
+	var c := _boss_with([hit], [_timed(9, truck)])
 	var seen: Array[String] = [BossPanels.fight_text(c), CustomerCard3D.behaviour_text(c),
-		_all_text(BossPanels.budget_note(c)), _all_text(BossPanels.move_note(c, 0))]
+		_all_text(BossPanels.budget_note(c, 0)), _all_text(BossPanels.move_note(c, 0))]
 	c.demand = hit
 	c.demand_due_tick = 3
 	seen.append(_all_text(BossPanels.move_note(c, 0)))

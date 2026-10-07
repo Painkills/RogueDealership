@@ -2,19 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
 [ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="2_dmd"]
-[ext_resource type="Script" path="res://scripts/model/data/budget_move.gd" id="3_bm"]
+[ext_resource type="Script" path="res://scripts/model/data/timed_move.gd" id="3_tm"]
 [ext_resource type="Resource" path="res://data/demands/whale_getting_impatient.tres" id="4_imp"]
 [ext_resource type="Resource" path="res://data/demands/whale_raise_the_stakes.tres" id="5_stk"]
 [ext_resource type="Resource" path="res://data/demands/whale_off_my_desk.tres" id="6_desk"]
 
-[sub_resource type="Resource" id="Budget_75"]
-script = ExtResource("3_bm")
-at_share = 0.75
-move = ExtResource("6_desk")
-
-[sub_resource type="Resource" id="Budget_25"]
-script = ExtResource("3_bm")
-at_share = 0.25
+[sub_resource type="Resource" id="Timed_desk"]
+script = ExtResource("3_tm")
+every_ticks = 9
 move = ExtResource("6_desk")
 
 [resource]
@@ -34,8 +29,9 @@ arrival_patience_share = 1.0
 budget_share = 1.0
 patience_is_shield = true
 moves = Array[ExtResource("2_dmd")]([ExtResource("4_imp"), ExtResource("5_stk")])
-budget_moves = Array[ExtResource("3_bm")]([SubResource("Budget_75"), SubResource("Budget_25")])
-move_gap_ticks = 4
-escalate_damage = 2
-escalate_fuse = 1
+timed_moves = Array[ExtResource("3_tm")]([SubResource("Timed_desk")])
+move_gap_ticks = 0
+sold_products_leave_deck = true
+escalate_damage = 1
+escalate_fuse = 0
 min_move_fuse = 1

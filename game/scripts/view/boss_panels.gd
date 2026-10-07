@@ -12,7 +12,7 @@ class_name BossPanels extends RefCounted
 ## The back of the boss's folder. Short on purpose: the fight explains itself,
 ## move by move, on the folders either side.
 static func fight_text(_c = null) -> String:
-	return "A FIGHT, NOT A SALE\nLeft folder: their budget. Spend it all and they sign.\nRight folder: their next move. Answer it in time, or it hits your standing."
+	return "A FIGHT, NOT A SALE\nLeft folder: their budget. Spend it all and they sign.\nRight folder: what is coming, and what stops it. Whatever it hits comes off their patience first, then your standing."
 
 ## The notes for a floor with `front` at the front: seat -> note, for each of the
 ## two seats either side of it that nobody sits in. Empty when nobody on the
@@ -23,21 +23,30 @@ static func side_notes(boss, front: int, tick: int) -> Dictionary:
 	# Seat (i+1)%3 is on the right of the front seat, (i+2)%3 on the left - see
 	# ShiftController.station_for().
 	return {
-		(front + 2) % 3: budget_note(boss),
+		(front + 2) % 3: budget_note(boss, tick),
 		(front + 1) % 3: move_note(boss, tick),
 	}
 
-## The left folder: how much they have left to spend, and the big move to come.
-static func budget_note(c) -> Dictionary:
+## The left folder: how much they have left to spend, and the big move on its
+## clock.
+static func budget_note(c, tick: int = 0) -> Dictionary:
 	var lines: Array[String] = []
-	lines.append("All spent. Sign them." if c.spent_out()
-		else "They will not sign until it is all spent.")
-	var next: BudgetMove = c.next_budget_move()
-	if next != null:
-		var hit: int = c.move_damage(next.move)
-		lines.append("%s comes when %s is left%s." % [next.move.display_name.to_upper(),
-			Format.money(next.dollars_left(c.budget)),
-			", and hits for %d" % hit if hit > 0 else ""])
+	lines.append("All spent. Sign them." if c.spent_out() else "Spend it all to sign them.")
+	if c.archetype.sold_products_leave_deck and not c.spent_out():
+		lines.append("Every product you sell leaves your deck.")
+	# The big move on its clock goes in the red line under the bar: when it is
+	# next, and the rest of what it is below.
+	var headline := ""
+	var soonest: int = c.soonest_timed_move()
+	if soonest != -1 and not c.spent_out():
+		var timed: TimedMove = c.archetype.timed_moves[soonest]
+		var hit: int = c.move_damage(timed.move)
+		var shout := timed.move.display_name.to_upper()
+		lines.append("%s %s, every %d ticks." % [shout,
+			"hits for %d" % hit if hit > 0 else "comes", timed.every_ticks])
+		var wait: int = c.timed_move_due[soonest] - tick
+		headline = "%s: NEXT PRODUCT DOWN" % shout if wait <= 0 \
+			else "%s IN %d TICK%s" % [shout, wait, "" if wait == 1 else "S"]
 	return {
 		"tab": "BUDGET",
 		"title": "%s left" % Format.money(c.budget_left()),
@@ -45,7 +54,7 @@ static func budget_note(c) -> Dictionary:
 		"bar_max": maxi(1, c.budget),
 		"bar_color": Palette.color(&"money"),
 		"bar_text": "of %s" % Format.money(c.budget),
-		"headline": "",
+		"headline": headline,
 		"body": "\n".join(lines),
 	}
 
@@ -55,19 +64,20 @@ static func move_note(c, tick: int) -> Dictionary:
 	var d: Demand = c.demand
 	if d != null and c.is_a_move(d):
 		return _live_move(c, d, tick)
-	var due: BudgetMove = c.due_budget_move()
-	if due != null:
-		var hit: int = c.move_damage(due.move)
+	var due: int = c.due_timed_move(tick)
+	if due != -1:
+		var move: Demand = c.archetype.timed_moves[due].move
+		var hit: int = c.move_damage(move)
 		return {
 			"tab": "NEXT MOVE",
-			"title": due.move.display_name,
+			"title": move.display_name,
 			"bar_value": 0,
 			"bar_max": 1,
 			"bar_color": Palette.color(&"alert"),
 			"bar_text": "waiting for a product on the table",
 			"headline": "HITS FOR %d" % hit if hit > 0 else "",
 			"body": "It comes the moment a product is on the table. %s" % \
-				(due.move.resolve.how_to_answer() if due.move.resolve != null else ""),
+				(move.resolve.how_to_answer() if move.resolve != null else ""),
 		}
 	var wait: int = maxi(0, c.next_move_tick - tick)
 	return {
@@ -95,8 +105,11 @@ static func _live_move(c, d: Demand, tick: int) -> Dictionary:
 	if hits > 0:
 		if d.pierces_patience():
 			lines.append("Their patience cannot soften it.")
-		else:
+		elif d.resolve != null:
 			lines.append("If not, it comes off their patience first (%d), then your standing."
+				% c.patience)
+		else:
+			lines.append("It comes off their patience first (%d), then your standing."
 				% c.patience)
 	var headline := "HITS FOR %d" % hits if hits > 0 else ""
 	if hits <= 0:
@@ -110,7 +123,8 @@ static func _live_move(c, d: Demand, tick: int) -> Dictionary:
 		"bar_value": left,
 		"bar_max": maxi(1, c.move_fuse(d)),
 		"bar_color": Palette.color(&"alert"),
-		"bar_text": "%d tick%s to answer" % [left, "" if left == 1 else "s"],
+		"bar_text": "%d tick%s to answer" % [left, "" if left == 1 else "s"] if d.resolve != null
+			else "lands in %d tick%s" % [left, "" if left == 1 else "s"],
 		"headline": headline,
 		"body": "\n".join(lines),
 	}

@@ -6,7 +6,7 @@
 
 [sub_resource type="Resource" id="Sub_0"]
 script = ExtResource("3_fx")
-amount = 3
+amount = 1
 
 [resource]
 script = ExtResource("2_dmd")

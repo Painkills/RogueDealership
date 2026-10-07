@@ -52,9 +52,9 @@ func _described() -> Dictionary:
 		for d in a.moves:
 			if d != null:
 				_demand_texts(d, out)
-		for b in a.budget_moves:
-			if b != null and b.move != null:
-				_demand_texts(b.move, out)
+		for t in a.timed_moves:
+			if t != null and t.move != null:
+				_demand_texts(t.move, out)
 		# The back of their folder, which is built from all of the above and the
 		# standing rules nothing fires for.
 		var c := Customer.new("A", "Test Person", a,
@@ -65,12 +65,13 @@ func _described() -> Dictionary:
 			c.budget = 1000
 		# What a boss's two side folders say - the budget, and each move live.
 		if a.is_boss():
-			out["%s budget folder" % a.id] = str(BossPanels.budget_note(c))
+			c.start_timed_moves(0)
+			out["%s budget folder" % a.id] = str(BossPanels.budget_note(c, 0))
 			out["%s quiet folder" % a.id] = str(BossPanels.move_note(c, 0))
 			var all_moves: Array = a.moves.duplicate()
-			for b in a.budget_moves:
-				if b != null and b.move != null:
-					all_moves.append(b.move)
+			for t in a.timed_moves:
+				if t != null and t.move != null:
+					all_moves.append(t.move)
 			for d in all_moves:
 				c.demand = d
 				c.demand_due_tick = 3
@@ -116,9 +117,9 @@ func test_an_action_is_called_what_its_warning_says() -> void:
 		# A boss's move has no action: it goes by its own warning - in the
 		# rotation, or at a budget.
 		var moves: Array = a.moves.duplicate()
-		for b in a.budget_moves:
-			if b != null and b.move != null:
-				moves.append(b.move)
+		for t in a.timed_moves:
+			if t != null and t.move != null:
+				moves.append(t.move)
 		for d in moves:
 			checked += 1
 			if d != null and d.display_name.to_upper() != d.telegraph:

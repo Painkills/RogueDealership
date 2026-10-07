@@ -209,8 +209,8 @@ static func _can_answer(s: Shift, c: Customer) -> bool:
 		return _any_support(s, c) >= 0
 	if r is PlayAppealCard:
 		return c.offer != null and _appeal_answer(s, c) >= 0
-	# "Get that off my desk": taking it back is free - always worth it, since
-	# the hit it threatens goes straight past their patience.
+	# "Get that off my desk": taking it back is free - worth it unless their
+	# patience would soak the whole hit anyway.
 	if r is ClearTheTable:
 		return c.offer != null and not _shield_covers(s, c)
 	return false

@@ -558,6 +558,7 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		% [c.key, c.display_name, arch.display_name])
 	# A boss shows their hand from the moment they sit down.
 	c.next_move_tick = tick
+	c.start_timed_moves(tick)
 	_next_move(c)
 
 
@@ -1250,7 +1251,9 @@ func _settle(c: Customer) -> Dictionary:
 	c.sales += 1
 	c.line += c.line_per_sale
 	c.add_patience(cfg.patience_per_sale)
-	discard.append(o.instance)
+	# Not into the discard, to come round again, when they will never take it twice.
+	if not c.archetype.sold_products_leave_deck:
+		discard.append(o.instance)
 	c.offer = null
 	c.objection = &""
 	stat["sales"] = int(stat["sales"]) + 1
@@ -1609,10 +1612,18 @@ func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
 	# answers "did it go up since the demand was raised" no matter which
 	# action asked, rather than being wired to one specific card or effect.
 	data.merge(_state_of(c), true)
+	var settled := false
 	if c.demand.resolve.satisfied(kind, data):
 		_settle_demand(c, true, sale)
+		settled = true
 	elif c.demand.resolve.broken_by(kind, data):
 		_settle_demand(c, false, sale)
+		settled = true
+	# A boss with no gap between moves is never quiet: the next one is up the
+	# moment this one is settled, not on the next tick. Not when they are being
+	# signed.
+	if settled and kind != DemandResolve.CLOSE:
+		_next_move(c)
 
 
 ## How a customer stands right now, for a DemandResolve to read whatever the
@@ -1623,9 +1634,9 @@ func _state_of(c: Customer) -> Dictionary:
 
 
 ## A boss's next move, if they are due one: telegraphed on their card with its
-## fuse, as a Demand like any other. A budget move (CustomerArchetype.budget_moves)
-## whose turn has come goes first, once each, as soon as it can apply - it does
-## not wait out the rotation's gap, or a fight could end without it ever coming;
+## fuse, as a Demand like any other. A timed move (CustomerArchetype.timed_moves)
+## that has come due goes first, as soon as it can apply - it does not wait out
+## the rotation's gap, and its clock starts over from when it comes up;
 ## otherwise the rotation (CustomerArchetype.moves): a round deals every move
 ## once, in an order drawn fresh, and each round after the first their hits land
 ## harder and their fuses run shorter (Customer.move_damage(), move_fuse()). A
@@ -1636,10 +1647,10 @@ func _next_move(c: Customer) -> void:
 	if not a.is_boss() or c.demand != null or is_over():
 		return
 	var picked: Demand = null
-	var due := c.due_budget_move()
-	if due != null and _move_applies(c, due.move):
-		picked = due.move
-		c.budget_moves_done.append(a.budget_moves.find(due))
+	var due := c.due_timed_move(tick)
+	if due != -1 and _move_applies(c, a.timed_moves[due].move):
+		picked = a.timed_moves[due].move
+		c.timed_move_due[due] = tick + a.timed_moves[due].every_ticks
 	if picked == null and tick >= c.next_move_tick and not a.moves.is_empty():
 		picked = _pop_move(c)
 		# This round has nothing left that can apply: a fresh one - every move

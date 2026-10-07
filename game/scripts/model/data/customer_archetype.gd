@@ -81,11 +81,14 @@ class_name CustomerArchetype extends Resource
 ## round deals every move once, in an order drawn fresh each round; skipped is
 ## any move that cannot apply yet (Demand.needs_offer_on_table).
 @export var moves: Array[Demand] = []
-## Moves that come up once their budget is down to a share of what it was, once
-## each, ahead of the rotation - see BudgetMove.
-@export var budget_moves: Array[BudgetMove] = []
-## Ticks between one move landing or being answered and the next appearing.
+## Moves that come on a clock of their own, ahead of the rotation - see TimedMove.
+@export var timed_moves: Array[TimedMove] = []
+## Ticks between one move landing or being answered and the next appearing. 0
+## and a boss is never quiet: something is always on its way.
 @export var move_gap_ticks: int = 1
+## Every product they buy leaves your deck for the rest of the fight - they will
+## not take it twice, so it would only clog the draw pile.
+@export var sold_products_leave_deck: bool = false
 ## The time limit: every round after the first, each Hit lands this much
 ## harder...
 @export var escalate_damage: int = 2
@@ -98,4 +101,4 @@ class_name CustomerArchetype extends Resource
 ## Whether this is a boss fight rather than a customer: they come in with a
 ## budget to drain or moves to make.
 func is_boss() -> bool:
-	return budget_share > 0.0 or not moves.is_empty() or not budget_moves.is_empty()
+	return budget_share > 0.0 or not moves.is_empty() or not timed_moves.is_empty()

@@ -79,8 +79,9 @@ var budget: int = 0
 ## each makes their hits harder and their fuses shorter - what is left of this
 ## round, and the soonest the next may be raised.
 var move_round: int = 0
-## Which of CustomerArchetype.budget_moves have already come up, by index.
-var budget_moves_done: Array[int] = []
+## The tick each of CustomerArchetype.timed_moves next comes due, by index - set
+## when they sit down (start_timed_moves()), and again each time one comes up.
+var timed_move_due: Array[int] = []
 var move_rounds_dealt: int = 0
 var moves_left: Array[Demand] = []
 var next_move_tick: int = 0
@@ -250,39 +251,45 @@ func spent_out() -> bool:
 	return has_budget() and budget_left() <= 0
 
 
-## The budget move whose turn has come and has not come up yet - their budget is
-## down to its share - or null. The first such, if two are due at once.
-func due_budget_move() -> BudgetMove:
-	if not has_budget():
-		return null
-	for i in range(archetype.budget_moves.size()):
-		var b: BudgetMove = archetype.budget_moves[i]
-		if b != null and b.move != null and not budget_moves_done.has(i) \
-				and budget_left() <= b.dollars_left(budget):
-			return b
-	return null
+## Starts the clock of every timed move: each comes due its own `every_ticks`
+## after `tick`.
+func start_timed_moves(tick: int) -> void:
+	timed_move_due.clear()
+	for t in archetype.timed_moves:
+		timed_move_due.append(tick + (t.every_ticks if t != null else 0))
 
 
-## The budget move still to come soonest - the one that comes up at the most
-## money left - or null when none is.
-func next_budget_move() -> BudgetMove:
-	var next: BudgetMove = null
-	for i in range(archetype.budget_moves.size()):
-		var b: BudgetMove = archetype.budget_moves[i]
-		if b != null and b.move != null and not budget_moves_done.has(i) \
-				and (next == null or b.dollars_left(budget) > next.dollars_left(budget)):
-			next = b
-	return next
+## The timed move that is due at `tick` and has not come up yet, as an index into
+## CustomerArchetype.timed_moves - the one due longest ago if two are - or -1.
+func due_timed_move(tick: int) -> int:
+	var due := -1
+	for i in range(timed_move_due.size()):
+		var t: TimedMove = archetype.timed_moves[i]
+		if t != null and t.move != null and tick >= timed_move_due[i] \
+				and (due == -1 or timed_move_due[i] < timed_move_due[due]):
+			due = i
+	return due
 
 
-## Whether `d` is one of this boss's moves - in the rotation, or at a budget.
+## The timed move that comes due soonest, or -1 when there are none.
+func soonest_timed_move() -> int:
+	var soonest := -1
+	for i in range(timed_move_due.size()):
+		var t: TimedMove = archetype.timed_moves[i]
+		if t != null and t.move != null \
+				and (soonest == -1 or timed_move_due[i] < timed_move_due[soonest]):
+			soonest = i
+	return soonest
+
+
+## Whether `d` is one of this boss's moves - in the rotation, or on a clock.
 func is_a_move(d: Demand) -> bool:
 	if d == null:
 		return false
 	if archetype.moves.has(d):
 		return true
-	for b in archetype.budget_moves:
-		if b != null and b.move == d:
+	for t in archetype.timed_moves:
+		if t != null and t.move == d:
 			return true
 	return false
 

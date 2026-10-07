@@ -1029,7 +1029,8 @@ func _check_the_boss_fights_folders_say_what_is_happening(floor_view) -> void:
 	if boss.demand != null:
 		_check("telegraphed with how to stop it (%s)" % move_card._note.text,
 			move_card._name.text == boss.demand.display_name and move_card._note.text != ""
-				and move_card._patience.text.contains("to answer"))
+				and (move_card._patience.text.contains("to answer")
+					or move_card._patience.text.contains("lands in")))
 	var all_text: String = (budget_card._name.text + budget_card._note.text
 		+ move_card._name.text + move_card._note.text + move_card._demand.text
 		+ boss.archetype.pattern).to_lower()
