@@ -202,12 +202,13 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	var rewards := profile.reward_preview()
 	if rewards != "":
 		_line(col, rewards, 15, hue.darkened(0.35))
-	# A premade shift says so with a sticker slapped across its hours: when in
-	# the day it runs is the calendar's business, not the choice's, and the
-	# space is worth more to the lines above.
-	if profile.is_premade():
+	# A boss says so with a sticker slapped across its hours: when in the day it
+	# runs is the calendar's business, not the choice's. Any other premade shift
+	# is just another shift to the player - its name, blurb and rules line are
+	# what set it apart.
+	if profile.is_boss_day():
 		when.modulate.a = 0.0
-		_sticker(event, "BOSS SHIFT" if profile.is_boss_day() else "SPECIAL SHIFT", hue)
+		_sticker(event, "BOSS SHIFT", hue)
 	if pickable:
 		event.pressed.connect(func(): chosen.emit(profile))
 	else:
@@ -314,12 +315,11 @@ func _event_style(hue: Color, mix: float) -> StyleBoxFlat:
 	s.shadow_offset = Vector2(0, 1)
 	return s
 
-## Each tier in its own colour; a premade shift in the accent, and a boss day
-## in the colour the game keeps for danger.
+## Each slot in its own colour - a premade shift in the colour of the slot it
+## took, like any other shift there - and a boss day in the colour the game
+## keeps for danger.
 func _hue(profile: ShiftProfile) -> Color:
 	if profile.is_boss_day():
 		return Palette.color(&"stamp")
-	if profile.is_premade():
-		return Palette.color(&"accent")
-	var role := StringName("shift_%s" % profile.id)
+	var role := StringName("shift_%s" % profile.worked_at())
 	return Palette.color(role) if Palette.ROLES.has(role) else Palette.color(&"primary")

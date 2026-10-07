@@ -849,22 +849,25 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1, _run.cfg.days_per_week)
 	_root._open_the_picker()
 	var events := _todays_events()
-	var tagged := events.filter(func(e): return e.find_child("PremadeTag", true, false) != null)
-	_check("a premade shift takes a tier's place, and says so (%d shifts, %d tagged)"
-		% [events.size(), tagged.size()],
-		events.size() == _run.todays_shifts().size() and tagged.size() == 1
-			and tagged[0].name == "Event_drive_special")
+	var specials := events.filter(func(e): return e.name == "Event_drive_special")
+	_check("a premade shift takes a tier's place (%d shifts, %d of it)"
+		% [events.size(), specials.size()],
+		events.size() == _run.todays_shifts().size() and specials.size() == 1)
+	# "They're just another shift to the player. Only bosses should have a
+	# differentiator."
+	var special_event: Button = specials[0]
+	_check("and looks like any other shift: no sticker, its hours showing",
+		events.all(func(e): return e.find_child("PremadeTag", true, false) == null \
+			and (e.find_child("Hours", true, false) as Label).modulate.a == 1.0))
+	var slot_role := StringName("shift_%s" % slot)
+	var slot_hue := Palette.color(slot_role) if Palette.ROLES.has(slot_role) \
+		else Palette.color(&"primary")
+	_check("in the colour of the slot it took",
+		(special_event.get_theme_stylebox("normal") as StyleBoxFlat).border_color == slot_hue)
 	_check("and a shift that bends no rules has no rules line",
 		events.all(func(e): return e.find_child("Rules", true, false) == null))
-	var sticker := tagged[0].find_child("PremadeTag", true, false) as Label
-	_check("its tag is a tilted sticker over its hours, which are hidden",
-		sticker.get_parent() == tagged[0] and not is_zero_approx(sticker.rotation)
-			and is_zero_approx((tagged[0].find_child("Hours", true, false) as Label).modulate.a))
-	_check("while a regular shift still shows its hours",
-		events.filter(func(e): return e != tagged[0]).all(
-			func(e): return (e.find_child("Hours", true, false) as Label).modulate.a == 1.0))
 	var shop_line := ""
-	for label in tagged[0].find_children("*", "Label", true, false):
+	for label in special_event.find_children("*", "Label", true, false):
 		if (label as Label).text.begins_with("Shop"):
 			shop_line = (label as Label).text
 	_check("and the shop line leaves out the free card every shift ends with (%s)" % shop_line,
@@ -909,6 +912,15 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	_check("a boss takes one of today's shifts' places, and says so (%d shifts, %d bosses)"
 		% [events.size(), boss_tags.size()],
 		events.size() == _run.todays_shifts().size() and boss_tags.size() == 1)
+	if boss_tags.size() == 1:
+		var sticker: Label = boss_tags[0]
+		var boss_event: Node = sticker.get_parent()
+		_check("with a tilted sticker over its hours, which are hidden",
+			boss_event is Button and not is_zero_approx(sticker.rotation)
+				and is_zero_approx((boss_event.find_child("Hours", true, false) as Label).modulate.a))
+		_check("while every other shift still shows its hours",
+			events.filter(func(e): return e != boss_event).all(
+				func(e): return (e.find_child("Hours", true, false) as Label).modulate.a == 1.0))
 
 	_run.week = was
 	_root._open_the_picker()
