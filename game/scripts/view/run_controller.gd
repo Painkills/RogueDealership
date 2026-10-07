@@ -45,6 +45,9 @@ var _calendar_open := false
 ## offers to upgrade - see _debug_last_fight().
 const LAST_FIGHT_PURCHASES := 5
 const LAST_FIGHT_UPGRADES := 5
+## How many dealership upgrades it offers, to pick ONE from - in place of the
+## free card.
+const LAST_FIGHT_DEALERSHIP_UPGRADES := 3
 
 ## Open the game on the title screen's menu. A driver that is testing the run
 ## itself turns this off BEFORE adding the run to the tree, so it boots
@@ -129,11 +132,12 @@ func _unhandled_input(event: InputEvent) -> void:
 ## without the nine days before it - a manual testing convenience, not a
 ## mechanic, like Ctrl+E and Ctrl+M.
 ##
-## It stops in the store first, on the last day, with LAST_FIGHT_PURCHASES cards
-## for sale and LAST_FIGHT_UPGRADES of yours to upgrade, and enough money that
-## none of it is out of reach: build the deck to test the fight with. Leaving
-## the store goes straight to the final boss. Nothing of it is filed among the
-## scores - after the fight, it is back to the menu.
+## It stops in the store first, on the last day, with a dealership upgrade to
+## pick (no free card), LAST_FIGHT_PURCHASES cards for sale and
+## LAST_FIGHT_UPGRADES of yours to upgrade, and enough money that none of it is
+## out of reach: build the deck to test the fight with. Leaving the store goes
+## straight to the final boss. Nothing of it is filed among the scores - after
+## the fight, it is back to the menu.
 func _debug_last_fight() -> void:
 	_new_run()
 	_practice_run = true
@@ -142,7 +146,11 @@ func _debug_last_fight() -> void:
 	var store := ShiftProfile.new()
 	store.cards_for_sale = LAST_FIGHT_PURCHASES
 	store.upgrades = LAST_FIGHT_UPGRADES
+	store.dealership_upgrades = LAST_FIGHT_DEALERSHIP_UPGRADES
 	var shop := Shop.new(_run, store)
+	# A dealership upgrade instead of the free card.
+	shop.free_cards.clear()
+	shop.free_picks_left = 0
 	_run.money = shop.cost_of_everything()
 	_show_only(_shop_view)
 	_shop_view.setup(shop)

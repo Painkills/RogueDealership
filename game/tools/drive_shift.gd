@@ -174,7 +174,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_double_tapping_the_empty_table_closes_on_touch_too()
 	_check_refused_drop_comes_home()
 	_check_a_skeptic_warns_before_waving_a_card_off()
-	_check_a_boss_shows_their_hit_your_shield_and_their_budget()
+	_check_a_boss_fight_shows_its_move_its_budget_and_what_lands()
 	_check_a_walkout_is_hard_to_miss()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
@@ -1258,11 +1258,15 @@ func _check_the_customer_card_carries_its_triage_row() -> void:
 	# last section off the bottom of the card, which is how the detail card
 	# nearly shipped with its own tell cut in half.
 	var wanted: float = 0.0
+	var shown := 0
 	for child in col.get_children():
-		if child is Control:
+		# Only what is showing: a note's label waits hidden until a folder has a
+		# note to carry, and takes no room on a customer's.
+		if child is Control and (child as Control).visible:
+			shown += 1
 			wanted += maxf((child as Control).custom_minimum_size.y,
 				(child as Control).get_combined_minimum_size().y)
-	wanted += col.get_theme_constant("separation") * (col.get_child_count() - 1)
+	wanted += col.get_theme_constant("separation") * maxi(0, shown - 1)
 	# Measured against the margins the face really has - the folder's tab and
 	# the sheet inside it take more off the top than the old flat card did.
 	var margin := card.get_node(^"FrontViewport/CustomerFront/Margin") as MarginContainer
@@ -1393,11 +1397,10 @@ func _check_the_detail_card_shows_what_they_do() -> void:
 	_check_the_detail_card_is_not_overflowing(det)
 	_check_read_the_room_shows_you_something(who)
 
-## The reported bug: "sometimes I play Read the Room and no priority category is
-## revealed." The card's own promise is "reveals their Line and the category
-## of their number one". The back of the folder used to spell the category out
-## in a "what you know" line; that section is gone - the front's interest grid
-## lights the category's whole row - so this is checked on the grid itself.
+## Active Listening: "reveal top 3 in order and line", and no row lit - that is
+## for someone who came in for a category. The card's own promise is that it
+## reveals their Line and their top three, in order; the front's interest grid
+## is where that shows, as the ranks on their three interests.
 ##
 ## Driven through the model's own reveal_room(), which is exactly what the
 ## RevealRoom effect calls, rather than through whatever happens to be in hand.
@@ -1406,20 +1409,30 @@ func _check_read_the_room_shows_you_something(who) -> void:
 		^"FrontViewport/CustomerFront/Margin/Column/InterestGrid") as InterestGrid
 	var was_cat = who.known_top_category
 	var was_line: bool = who.known_line
+	var was_ranks: Dictionary = who.known_ranks.duplicate()
+	var was_three: Array[StringName] = who.known_top_three.duplicate()
 	who.known_top_category = null
 	who.known_line = false
+	who.known_ranks.clear()
+	who.known_top_three.clear()
 	_controller._render()
-	_check("before reading the room, no row of their grid is lit",
-		grid._top_category == null)
+	_check("before reading the room, no row of their grid is lit and no rank is known",
+		grid._top_category == null and grid._known.is_empty())
 
-	who.reveal_room()
+	who.reveal_room(true)
 	_controller._render()
-	_check("reading the room lights the row of their number one's category (%s)"
-		% grid._top_category, grid._top_category != null
-			and grid._top_category == who.known_top_category)
+	_check("reading the room puts their top three on the grid, ranked (%s)" % str(grid._known),
+		grid._known.size() == 3 and grid._top_three.size() == 3
+			and grid._known == who.known_ranks)
+	var in_order: Array = who.known_top_three.map(func(iid): return int(who.known_ranks[iid]))
+	_check("in order (%s)" % str(in_order),
+		in_order[0] < in_order[1] and in_order[1] < in_order[2])
+	_check("and lights no row (%s)" % grid._top_category, grid._top_category == null)
 
 	who.known_top_category = was_cat
 	who.known_line = was_line
+	who.known_ranks = was_ranks
+	who.known_top_three = was_three
 	_controller._render()
 
 ## Bigger type is only an improvement while it still fits. A VBoxContainer whose
@@ -2460,10 +2473,12 @@ func _check_a_skeptic_warns_before_waving_a_card_off() -> void:
 	_controller._render()
 
 ## A boss fight on screen - made up, so it is the display being checked and not
-## the Whale's tuning: the move telegraphed with what it hits for, their
-## patience named as your shield, the budget, no clock - and a hit landing
-## through the shield onto your standing.
-func _check_a_boss_shows_their_hit_your_shield_and_their_budget() -> void:
+## the Whale's tuning: the move telegraphed on their folder with its countdown,
+## their patience named as patience, the back of the folder short, the budget on
+## the tablet, no clock - and a hit landing through their patience onto your
+## standing. The side folders that explain it are checked on the real floor, in
+## drive_run.gd's last-fight check: this floor has someone in every chair.
+func _check_a_boss_fight_shows_its_move_its_budget_and_what_lands() -> void:
 	var s: Shift = _controller._shift
 	if s.at == null or s.chairs[_at()] == null:
 		for i in range(s.chairs.size()):
@@ -2497,13 +2512,14 @@ func _check_a_boss_shows_their_hit_your_shield_and_their_budget() -> void:
 	s.has_clock = false
 	_controller._render()
 	var front: Label = _controller._customer_cards[_at()]._demand
-	_check("their card telegraphs the move and what it hits for (%s)" % front.text,
-		front.text.contains("MADE-UP MOVE") and front.text.contains("HITS 9"))
-	_check("their patience reads as your shield (%s)" % _controller._customer_cards[_at()]._patience.text,
-		_controller._customer_cards[_at()]._patience.text.begins_with("shield"))
+	_check("their folder telegraphs the move and its countdown (%s)" % front.text,
+		front.text.contains("MADE-UP MOVE") and front.text.contains("2t"))
+	_check("their patience reads as patience (%s)" % _controller._customer_cards[_at()]._patience.text,
+		_controller._customer_cards[_at()]._patience.text.begins_with("patience"))
 	var does: String = _controller._customer_details[_at()]._does.text
-	_check("the back of their folder says how the fight works",
-		does.contains("DEEP POCKETS") and does.contains("SHIELD") and does.contains("Made-up Move 9"))
+	_check("the back of their folder is the short note, pointing at the side folders",
+		does == BossPanels.fight_text(who) and does.contains("Left folder")
+			and not does.to_lower().contains("shield"))
 	_check("the tablet says what is left of the budget",
 		OfferTablet.knobs_text(who).contains(Format.money(4321)))
 	_check("and the top bar there is no clock (%s)" % _controller._tick_label.text,
@@ -2540,9 +2556,9 @@ func _check_a_boss_shows_their_hit_your_shield_and_their_budget() -> void:
 	# Read off the hit's own line: anyone else on the floor may move standing
 	# in the same two ticks.
 	var said := s.events.slice(logged).filter(func(e): return e.contains("hits for 9"))
-	_check("it lands: the shield takes 4, your standing the other 5 (%s)" % str(said),
-		said.size() == 1 and said[0].contains("4 blocked") and said[0].contains("5 off your standing")
-			and who.patience == 0)
+	_check("it lands: their patience takes 4, your standing the other 5 (%s)" % str(said),
+		said.size() == 1 and said[0].contains("4 off their patience")
+			and said[0].contains("5 off your standing") and who.patience == 0)
 	_check("and the log says it landed",
 		s.action_log.any(func(e): return str(e.get("name", "")) == "Made-up Move - lands"))
 	who.archetype = was

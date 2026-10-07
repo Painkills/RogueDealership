@@ -204,5 +204,6 @@ func test_a_customer_who_opens_up_says_what_they_want_but_not_their_line() -> vo
 	var ctx := EffectContext.new()
 	ctx.customer = c
 	tell.apply(ctx)
-	h.check("what they want most is known", c.known_top_category != null)
+	h.eq("what they want most is known, with its rank",
+		c.known_ranks.get(c.top_interest_id(), -1), int(c.ranks[c.top_interest_id()]))
 	h.check("their Line is not", not c.known_line)

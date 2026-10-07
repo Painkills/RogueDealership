@@ -20,8 +20,9 @@ func _gendered(text: String) -> Array[String]:
 ## A demand, as the player reads it: its name, its shout above their head, what
 ## answers it, and what meeting or ignoring it does.
 func _demand_texts(d: Demand, out: Dictionary) -> void:
-	out["demand %s" % d.id] = "%s | %s | %s" % [d.display_name, d.telegraph,
-		d.resolve.describe() if d.resolve != null else ""]
+	out["demand %s" % d.id] = "%s | %s | %s | %s" % [d.display_name, d.telegraph,
+		d.resolve.describe() if d.resolve != null else "",
+		d.resolve.how_to_answer() if d.resolve != null else ""]
 	for e in d.effects + d.relief:
 		out["demand %s effect" % d.id] = out.get("demand %s effect" % d.id, "") + e.describe() + " | "
 
@@ -51,6 +52,9 @@ func _described() -> Dictionary:
 		for d in a.moves:
 			if d != null:
 				_demand_texts(d, out)
+		for b in a.budget_moves:
+			if b != null and b.move != null:
+				_demand_texts(b.move, out)
 		# The back of their folder, which is built from all of the above and the
 		# standing rules nothing fires for.
 		var c := Customer.new("A", "Test Person", a,
@@ -59,6 +63,19 @@ func _described() -> Dictionary:
 			c.demands_category = interests.categories[0].id
 		if a.budget_share > 0.0:
 			c.budget = 1000
+		# What a boss's two side folders say - the budget, and each move live.
+		if a.is_boss():
+			out["%s budget folder" % a.id] = str(BossPanels.budget_note(c))
+			out["%s quiet folder" % a.id] = str(BossPanels.move_note(c, 0))
+			var all_moves: Array = a.moves.duplicate()
+			for b in a.budget_moves:
+				if b != null and b.move != null:
+					all_moves.append(b.move)
+			for d in all_moves:
+				c.demand = d
+				c.demand_due_tick = 3
+				out["%s folder, %s" % [a.id, d.id]] = str(BossPanels.move_note(c, 0))
+			c.demand = null
 		out["%s folder" % a.id] = CustomerCard3D.behaviour_text(c)
 	var profiles: ShiftProfilePool = load("res://data/shift_profile_pool.tres")
 	var shifts: Array[ShiftProfile] = profiles.profiles.duplicate()
@@ -96,8 +113,13 @@ func test_an_action_is_called_what_its_warning_says() -> void:
 				if act.display_name.to_upper() != d.telegraph or d.display_name != act.display_name:
 					mismatched.append("%s / %s: \"%s\", demand \"%s\", warning %s"
 						% [a.id, act.id, act.display_name, d.display_name, d.telegraph])
-		# A boss's move has no action: it goes by its own warning.
-		for d in a.moves:
+		# A boss's move has no action: it goes by its own warning - in the
+		# rotation, or at a budget.
+		var moves: Array = a.moves.duplicate()
+		for b in a.budget_moves:
+			if b != null and b.move != null:
+				moves.append(b.move)
+		for d in moves:
 			checked += 1
 			if d != null and d.display_name.to_upper() != d.telegraph:
 				mismatched.append("%s / move %s: \"%s\", warning %s"

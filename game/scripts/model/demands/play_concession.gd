@@ -17,3 +17,6 @@ func satisfied(kind: StringName, data: Dictionary) -> bool:
 
 func describe() -> String:
 	return "give them something off the price"
+
+func how_to_answer() -> String:
+	return "Play a card that gives something off the price."

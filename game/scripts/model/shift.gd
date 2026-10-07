@@ -1316,11 +1316,36 @@ func dig(index: int) -> Result:
 ## draw from changing out from under the indices recorded here, not
 ## anything in this function itself.
 ##
-## Reveals fewer than `count` if that is all there is, and simply leaves
-## nothing pending if there is no match at all - the triggering card still
-## resolves normally either way (see _support()'s own unconditional
+## If the draw pile cannot supply `count` of them, the discard is shuffled back
+## in first and the scan starts again - a pull should show you what the deck
+## has, not what is left of this lap of it.
+##
+## Reveals fewer than `count` only if that is all there is even then, and
+## simply leaves nothing pending if there is no match at all - the triggering
+## card still resolves normally either way (see _support()'s own unconditional
 ## discard), so a whiffed pull costs nothing extra.
 func _start_pull(count: int, kind: StringName) -> void:
+	var scan := _scan_for_pull(count, kind)
+	if scan["found"].size() < count and not discard.is_empty():
+		_recycle_discard()
+		scan = _scan_for_pull(count, kind)
+	var found: Array[CardInstance] = scan["found"]
+	var indices: Array[int] = scan["indices"]
+	# Highest original index first, so removing one never shifts an index
+	# still queued to be removed.
+	for j in range(indices.size() - 1, -1, -1):
+		draw.remove_at(indices[j])
+	if found.is_empty():
+		return
+	var p := PendingPull.new()
+	p.revealed = found
+	p.original_indices = indices
+	pending_pull = p
+
+
+## The first `count` cards of the draw pile that match `kind`, in order, and
+## where each sits - see _start_pull().
+func _scan_for_pull(count: int, kind: StringName) -> Dictionary:
 	var found: Array[CardInstance] = []
 	var indices: Array[int] = []
 	var i := 0
@@ -1335,16 +1360,7 @@ func _start_pull(count: int, kind: StringName) -> void:
 			found.append(inst)
 			indices.append(i)
 		i += 1
-	# Highest original index first, so removing one never shifts an index
-	# still queued to be removed.
-	for j in range(indices.size() - 1, -1, -1):
-		draw.remove_at(indices[j])
-	if found.is_empty():
-		return
-	var p := PendingPull.new()
-	p.revealed = found
-	p.original_indices = indices
-	pending_pull = p
+	return {"found": found, "indices": indices}
 
 
 ## Reinserts every revealed card the pull did NOT keep, each at the exact
@@ -1606,26 +1622,36 @@ func _state_of(c: Customer) -> Dictionary:
 		"table_empty": c.offer == null}
 
 
-## A boss's next move (CustomerArchetype.moves), if they are due one: telegraphed
-## on their card with its fuse, as a Demand like any other. A round deals every
-## move once, in an order drawn fresh; each round after the first, their hits
-## land harder and their fuses run shorter (Customer.move_damage(),
-## move_fuse()). A move that cannot apply yet - Demand.needs_offer_on_table
-## with nothing on it - is passed over this round.
+## A boss's next move, if they are due one: telegraphed on their card with its
+## fuse, as a Demand like any other. A budget move (CustomerArchetype.budget_moves)
+## whose turn has come goes first, once each, as soon as it can apply - it does
+## not wait out the rotation's gap, or a fight could end without it ever coming;
+## otherwise the rotation (CustomerArchetype.moves): a round deals every move
+## once, in an order drawn fresh, and each round after the first their hits land
+## harder and their fuses run shorter (Customer.move_damage(), move_fuse()). A
+## move that cannot apply yet - Demand.needs_offer_on_table with nothing on it -
+## waits, or is passed over this round.
 func _next_move(c: Customer) -> void:
-	var moves: Array[Demand] = c.archetype.moves
-	if moves.is_empty() or c.demand != null or tick < c.next_move_tick or is_over():
+	var a := c.archetype
+	if not a.is_boss() or c.demand != null or is_over():
 		return
-	var picked := _pop_move(c)
-	# This round has nothing left that can apply: a fresh one - every move again,
-	# in a new order, and after the first, harder and faster. Only while some
-	# move can apply at all, or an empty table would deal round after round.
-	if picked == null and moves.any(func(d): return _move_applies(c, d)):
-		c.move_rounds_dealt += 1
-		c.move_round = c.move_rounds_dealt - 1
-		c.moves_left.assign(moves)
-		_shuffle(c.moves_left)
+	var picked: Demand = null
+	var due := c.due_budget_move()
+	if due != null and _move_applies(c, due.move):
+		picked = due.move
+		c.budget_moves_done.append(a.budget_moves.find(due))
+	if picked == null and tick >= c.next_move_tick and not a.moves.is_empty():
 		picked = _pop_move(c)
+		# This round has nothing left that can apply: a fresh one - every move
+		# again, in a new order, and after the first, harder and faster. Only
+		# while some move can apply at all, or an empty table would deal round
+		# after round.
+		if picked == null and a.moves.any(func(d): return _move_applies(c, d)):
+			c.move_rounds_dealt += 1
+			c.move_round = c.move_rounds_dealt - 1
+			c.moves_left.assign(a.moves)
+			_shuffle(c.moves_left)
+			picked = _pop_move(c)
 	if picked == null:
 		return
 	c.demand = picked
@@ -1680,7 +1706,7 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 	c.demand_due_tick = 0
 	c.demand_settled_tick = tick
 	# A boss's next move comes after a gap, whichever way this one went.
-	var is_move: bool = c.archetype.moves.has(d)
+	var is_move: bool = c.is_a_move(d)
 	if is_move:
 		c.next_move_tick = tick + maxi(0, c.archetype.move_gap_ticks)
 

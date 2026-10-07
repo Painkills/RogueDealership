@@ -3,25 +3,23 @@
 [ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
 [ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="2_dmd"]
 [ext_resource type="Script" path="res://scripts/model/effects/hit.gd" id="3_fx"]
-[ext_resource type="Script" path="res://scripts/model/demands/clear_the_table.gd" id="9_rsv"]
+[ext_resource type="Script" path="res://scripts/model/demands/increase_patience.gd" id="9_rsv"]
 
 [sub_resource type="Resource" id="Sub_0"]
 script = ExtResource("3_fx")
-amount = 20
-through_patience = true
+amount = 6
 
 [sub_resource type="Resource" id="Sub_rsv"]
 script = ExtResource("9_rsv")
 
 [resource]
 script = ExtResource("2_dmd")
-id = &"whale_off_my_desk"
-display_name = "Off My Desk"
-telegraph = "OFF MY DESK"
+id = &"whale_getting_impatient"
+display_name = "Getting Impatient"
+telegraph = "GETTING IMPATIENT"
 dialogue_tags_met = Array[StringName]([&"whale_dodged"])
 dialogue_tags_missed = Array[StringName]([&"whale_hit"])
-ticks = 2
+ticks = 3
 resolve = SubResource("Sub_rsv")
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_0")])
-dialogue_tags_raised = Array[StringName]([&"whale_off_my_desk"])
-needs_offer_on_table = true
+dialogue_tags_raised = Array[StringName]([&"whale_getting_impatient"])

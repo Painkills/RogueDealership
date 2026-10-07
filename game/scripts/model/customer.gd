@@ -79,6 +79,8 @@ var budget: int = 0
 ## each makes their hits harder and their fuses shorter - what is left of this
 ## round, and the soonest the next may be raised.
 var move_round: int = 0
+## Which of CustomerArchetype.budget_moves have already come up, by index.
+var budget_moves_done: Array[int] = []
 var move_rounds_dealt: int = 0
 var moves_left: Array[Demand] = []
 var next_move_tick: int = 0
@@ -176,42 +178,27 @@ func interests() -> InterestPool:
 
 func reveal_room(exact: bool = false, with_line: bool = true) -> void:
 	## Active Listening. The Line, always - since offering stopped teaching it,
-	## this is the ONLY way to learn it - and what they want most that is still
-	## open. The upgrade gives you that in order.
+	## this is the ONLY way to learn it - and what they want. `exact` is the three
+	## they want most that are still open, each with its rank, so in order; not
+	## exact, only the one they want most.
 	##
-	## Ranked by category (CustomerArchetype.ranks_by_category), what they want most
-	## is their favourite category with anything left in it: its unsold
-	## interests are marked (known_top_three) and the category named; the
-	## upgrade adds each one's rank. Otherwise it is their top unsold interest,
-	## with its rank, and the upgrade marks the three they want most still open,
-	## each with its rank.
+	## Whatever is highest-priority and NOT already sold. A read that keeps
+	## naming what you already closed would stop telling you anything the moment
+	## you are doing well.
 	##
-	## Both read whatever is highest-priority and NOT already sold. A read that
-	## keeps naming what you already closed would stop telling you anything the
-	## moment you are doing well.
+	## Nothing is lit on their interest grid beyond the ranks themselves: a row
+	## is only lit for someone who ranks by category and came in for one (the
+	## Karen), and they announce it on arrival (Shift._spawn()).
 	##
 	## `with_line` false tells you only what they want - a customer opening up
 	## (RevealRoom.line), not you reading them.
 	if with_line:
 		known_line = true
-	var top := top_unsold_interest_id()
-	var cat: Category = _interests.by_id(top).category
-	known_top_category = cat.id if cat != null else null
-	if archetype.ranks_by_category and cat != null:
-		var open: Array[StringName] = []
-		for iid in top_unsold_interest_ids(ranks.size()):
-			var i := _interests.by_id(iid)
-			if i.category != null and i.category.id == cat.id:
-				open.append(iid)
-		known_top_three = open
-		if exact:
-			for iid in open:
-				known_ranks[iid] = int(ranks[iid])
-		return
 	# Recorded as a known RANK rather than its own flag: everything that reads
 	# priorities already walks known_ranks, so this needs no new case anywhere
 	# downstream of here. The rank is whatever top's real rank is - 2nd, 3rd,
 	# whatever is left - not hardcoded to 1.
+	var top := top_unsold_interest_id()
 	known_ranks[top] = int(ranks[top])
 	if exact:
 		known_top_three = top_unsold_interest_ids(3)
@@ -263,10 +250,47 @@ func spent_out() -> bool:
 	return has_budget() and budget_left() <= 0
 
 
+## The budget move whose turn has come and has not come up yet - their budget is
+## down to its share - or null. The first such, if two are due at once.
+func due_budget_move() -> BudgetMove:
+	if not has_budget():
+		return null
+	for i in range(archetype.budget_moves.size()):
+		var b: BudgetMove = archetype.budget_moves[i]
+		if b != null and b.move != null and not budget_moves_done.has(i) \
+				and budget_left() <= b.dollars_left(budget):
+			return b
+	return null
+
+
+## The budget move still to come soonest - the one that comes up at the most
+## money left - or null when none is.
+func next_budget_move() -> BudgetMove:
+	var next: BudgetMove = null
+	for i in range(archetype.budget_moves.size()):
+		var b: BudgetMove = archetype.budget_moves[i]
+		if b != null and b.move != null and not budget_moves_done.has(i) \
+				and (next == null or b.dollars_left(budget) > next.dollars_left(budget)):
+			next = b
+	return next
+
+
+## Whether `d` is one of this boss's moves - in the rotation, or at a budget.
+func is_a_move(d: Demand) -> bool:
+	if d == null:
+		return false
+	if archetype.moves.has(d):
+		return true
+	for b in archetype.budget_moves:
+		if b != null and b.move == d:
+			return true
+	return false
+
+
 ## How much harder a boss's hits land than they say on paper: their escalation
 ## times every round of moves already done.
 func move_damage_bonus() -> int:
-	return archetype.escalate_damage * move_round if not archetype.moves.is_empty() else 0
+	return archetype.escalate_damage * move_round if archetype.is_boss() else 0
 
 
 ## What move `d` would hit for if it landed now.

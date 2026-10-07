@@ -63,3 +63,10 @@ func hit_damage() -> int:
 		if e is Hit:
 			total += e.amount
 	return total
+
+## Whether what ignoring it costs includes a hit their patience cannot soften.
+func pierces_patience() -> bool:
+	for e in effects:
+		if e is Hit and e.through_patience:
+			return true
+	return false

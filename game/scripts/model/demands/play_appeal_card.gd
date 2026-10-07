@@ -24,3 +24,6 @@ static func adds_appeal(e: Effect) -> bool:
 
 func describe() -> String:
 	return "play them an appeal card"
+
+func how_to_answer() -> String:
+	return "Play an appeal card."

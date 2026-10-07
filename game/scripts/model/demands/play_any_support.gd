@@ -8,3 +8,6 @@ func satisfied(kind: StringName, _data: Dictionary) -> bool:
 
 func describe() -> String:
 	return "play them any support card"
+
+func how_to_answer() -> String:
+	return "Play any support card on them."

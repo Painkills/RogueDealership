@@ -9,3 +9,6 @@ func satisfied(kind: StringName, _data: Dictionary) -> bool:
 
 func describe() -> String:
 	return "make them an offer"
+
+func how_to_answer() -> String:
+	return "Offer them a product: drag it onto them, or press O."

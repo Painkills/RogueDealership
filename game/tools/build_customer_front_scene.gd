@@ -205,6 +205,18 @@ func _init() -> void:
 	col.add_child(demand_label)
 	demand_label.owner = root
 
+	# A folder with nobody in it can carry a note instead of an interest grid -
+	# a boss fight's budget and next move, on the seats either side of the boss
+	# (CustomerCard3D.setup_note()). Hidden unless it does. Big type: those two
+	# folders are seen from the side, small.
+	var note_label := _label("NoteLabel", 42, Palette.color(&"text"))
+	note_label.text = "Take the product off the table: drag it to the discard pile, or press D. Selling it works too.\nTheir patience cannot soften it."
+	note_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	note_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	note_label.visible = false
+	col.add_child(note_label)
+	note_label.owner = root
+
 	var grid := Control.new()
 	grid.name = "InterestGrid"
 	grid.set_script(load("res://scripts/view/interest_grid.gd"))

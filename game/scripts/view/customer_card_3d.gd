@@ -39,6 +39,8 @@ var _patience: Label
 var _demand: Label
 var _grid: InterestGrid
 var _status: Label
+## The body of a note - see setup_note().
+var _note: Label
 var _bubble: SpeechBubble
 ## Numerals in the interest grid stop being readable before the cells do, so a
 ## card that is going to be drawn small says so once rather than guessing from
@@ -71,6 +73,7 @@ func _bind() -> void:
 	_demand = col.get_node(^"DemandLabel")
 	_grid = col.get_node(^"InterestGrid")
 	_status = col.get_node(^"StatusLabel")
+	_note = col.get_node(^"NoteLabel")
 	_bubble = $FrontViewport/CustomerFront/SpeechBubble
 	# Rounded to sit inside the frame's own corners.
 	_patience_fill.set_corner_radius_all(7)
@@ -113,6 +116,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	if c != customer and _bubble != null:
 		_bubble.visible = false
 	customer = c
+	_note.visible = false
 	if _bubble != null:
 		# Quick to clear at the desk you are sitting at, where the grid under it
 		# is what you are working from; slower at the others, where the bubble
@@ -144,10 +148,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	# its empty trough too, which on paper turned the part of the patience you
 	# have already lost the same muddy green as the part you still have.
 	_patience_fill.bg_color = Format.patience_color(c.patience, c.max_patience)
-	# A boss's patience is your shield against their hits - named for what it
-	# does for you (CustomerArchetype.patience_is_shield).
-	_patience.text = ("shield %d/%d" if c.archetype.patience_is_shield
-		else "patience %d/%d") % [c.patience, c.max_patience]
+	_patience.text = "patience %d/%d" % [c.patience, c.max_patience]
 	_patience.add_theme_color_override("font_color",
 		Palette.color(&"alert") if c.leaving_soon() else Palette.color(&"text"))
 	_demand.text = demand_text(c, tick)
@@ -155,6 +156,33 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_grid.set_state(c.interests(), c.known_ranks, c.known_top_category,
 		sold_interests(c), not compact, c.known_top_three)
 	_status.text = status_text(c)
+	_redraw()
+
+## A folder with nobody in it, carrying a note instead: a boss fight's budget or
+## next move, on the seats either side of the boss (see BossPanels). `note` is
+## BossPanels' Dictionary. The same face as a customer's - a title where their
+## name goes, a bar and its words where their patience goes, a red line where
+## their countdown goes - with the explanation where their interests would be,
+## and nobody's photo.
+func setup_note(note: Dictionary) -> void:
+	_bind()
+	customer = null
+	if _bubble != null:
+		_bubble.visible = false
+	_status.visible = false
+	_photo.visible = false
+	_archetype.text = str(note.get("tab", ""))
+	_name.text = str(note.get("title", ""))
+	_patience_frame.visible = true
+	_patience_bar.max_value = maxf(1.0, float(note.get("bar_max", 1)))
+	_patience_bar.value = float(note.get("bar_value", 0))
+	_patience_fill.bg_color = note.get("bar_color", Palette.color(&"money"))
+	_patience.text = str(note.get("bar_text", ""))
+	_patience.add_theme_color_override("font_color", Palette.color(&"text"))
+	_demand.text = str(note.get("headline", ""))
+	_grid.visible = false
+	_note.text = str(note.get("body", ""))
+	_note.visible = true
 	_redraw()
 
 ## "All customer actions need to show on the screen, not just in the log" -
@@ -183,22 +211,10 @@ func is_speaking() -> bool:
 ## reason anywhere on screen.
 static func behaviour_text(c) -> String:
 	var tells: Array[String] = []
-	# A boss's rules first: they are the fight. Short - the folder is half
-	# hidden behind the tablet, and how to answer a move is in its name.
-	if c.has_budget():
-		tells.append("DEEP POCKETS - %s to spend. They will not sign until it is all spent."
-			% Format.money(c.budget))
-	if c.archetype.patience_is_shield:
-		tells.append("PATIENCE IS YOUR SHIELD - hits come off it first, then off your standing. They never walk out.")
-	if not c.archetype.moves.is_empty():
-		var moves: Array[String] = []
-		for d in c.archetype.moves:
-			if d == null:
-				continue
-			var hits: int = c.move_damage(d)
-			moves.append("%s %d" % [d.display_name, hits] if hits > 0 else d.display_name)
-		tells.append("MOVES - %s. Each round: hits +%d, a tick faster."
-			% [", ".join(moves), c.archetype.escalate_damage])
+	# A boss is a fight, not a sale: three short lines, and the rest is said
+	# move by move on the folders either side (BossPanels).
+	if c.archetype.is_boss():
+		return BossPanels.fight_text(c)
 	if c.demands_category != null:
 		tells.append("WILL NOT SIGN until they have bought something in %s."
 			% str(c.demands_category).capitalize())
@@ -247,14 +263,7 @@ static func demand_text(c, tick: int) -> String:
 	var parts: Array[String] = []
 	if c.demand != null:
 		var left: int = maxi(0, c.demand_due_tick - tick)
-		# A boss's move says what it will hit for - the number you shield up
-		# against, escalation included - on the same line: what they SAY as
-		# they telegraph it pops a bubble right over the line below.
-		var hits: int = c.move_damage(c.demand) if c.archetype.moves.has(c.demand) else 0
-		if hits > 0:
-			parts.append("%s  %dt - HITS %d" % [c.demand.telegraph, left, hits])
-		else:
-			parts.append("%s  %dt" % [c.demand.telegraph, left])
+		parts.append("%s  %dt" % [c.demand.telegraph, left])
 	# Not an ask but a warning, in the same place: whatever you play on them
 	# next is wasted (CustomerArchetype.rejects_every_nth_card).
 	if c.next_card_rejected():

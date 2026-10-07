@@ -928,9 +928,9 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	_check("and the run's own week comes back", _todays_events().size() == _run.todays_shifts().size())
 
 ## "Add a shortcut to last fight, which stops me in the store with 5 upgrades and
-## 5 purchases to pick from": Ctrl+B or a tap over the badge on the title screen,
-## then the store, then straight to the final boss - and nothing of it filed among
-## the scores. Run last: it replaces the run the rest of this driver has been
+## 5 purchases to pick from" - and "instead of free card, give me a dealership
+## upgrade": Ctrl+B or a tap over the badge on the title screen, then the store,
+## then straight to the final boss - and nothing of it filed among the scores. Run last: it replaces the run the rest of this driver has been
 ## following.
 func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() -> void:
 	var filed_before := PlayerProfile.bests().size()
@@ -950,6 +950,15 @@ func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() ->
 			shop.upgrade_offers.size()],
 		shop.offers.size() == _root.LAST_FIGHT_PURCHASES
 			and shop.upgrade_offers.size() == _root.LAST_FIGHT_UPGRADES)
+	_check("a dealership upgrade to pick, in place of the free card (%d offered, %d free cards)"
+		% [shop.dealership_offers.size(), shop.free_cards.size()],
+		shop.dealership_offers.size() == _root.LAST_FIGHT_DEALERSHIP_UPGRADES
+			and shop.dealership_picks_left == 1 and shop.free_cards.is_empty()
+			and shop.free_picks_left == 0)
+	_check("the store puts the upgrade first and no free card behind it",
+		_root._shop_view._dealership_pick.visible and not _root._shop_view._free_pick.visible)
+	_check("and picking one takes it", shop.take_dealership_upgrade(shop.dealership_offers[0]).ok
+		and run.dealership.size() == 1)
 	_check("and the money for every one of them (%d of %d)"
 		% [run.money, shop.cost_of_everything()], run.money >= shop.cost_of_everything())
 	var bought := 0
@@ -966,6 +975,7 @@ func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() ->
 		profile != null and profile.is_boss_day() and run.todays_shifts().has(profile)
 			and not _root._picker_view.visible and _root._shift_view._shift != null)
 	_check("and nothing leaves the store open behind it", not _root._shop_view.visible)
+	_check_the_boss_fights_folders_say_what_is_happening(_root._shift_view)
 	_root._on_shift_finished(_root._shift_view._shift.report())
 	_check("after the fight it is back to the menu, on a fresh run",
 		_root._title_view.visible and _root._run.shift_number == 1
@@ -991,6 +1001,44 @@ func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() ->
 	_check("the tap target is back up on the front door", tap.visible)
 	_root._show_only(_root._picker_view)
 	_check("and gone from every other screen", not tap.visible)
+
+## "You could use the side chairs / folders to provide additional information. I
+## shouldn't be able to rotate to them": on the real boss floor the budget is on
+## the folder to the left and what is coming on the right, and neither is a seat.
+func _check_the_boss_fights_folders_say_what_is_happening(floor_view) -> void:
+	var shift: Shift = floor_view._shift
+	var front: int = floor_view._front()
+	var boss: Customer = shift.chairs[front]
+	var left: int = (front + 2) % 3
+	var right: int = (front + 1) % 3
+	var budget_card: CustomerCard3D = floor_view._customer_cards[left]
+	var move_card: CustomerCard3D = floor_view._customer_cards[right]
+	_check("the boss is a boss, with a budget to drain", boss != null
+		and boss.archetype.is_boss() and boss.has_budget())
+	_check("the folder on the left is their budget (%s, %s)"
+		% [budget_card._archetype.text, budget_card._name.text],
+		budget_card._archetype.text == "BUDGET" and budget_card._note.visible
+			and budget_card._name.text.contains(Format.money(boss.budget_left())))
+	_check("its bar is how much is left of how much they came with",
+		budget_card._patience_bar.value == boss.budget_left()
+			and budget_card._patience_bar.max_value == boss.budget)
+	_check("the folder on the right is what they are about to do (%s: %s)"
+		% [move_card._archetype.text, move_card._name.text],
+		move_card._note.visible and (move_card._archetype.text == "INCOMING"
+			or move_card._archetype.text == "NEXT MOVE"))
+	if boss.demand != null:
+		_check("telegraphed with how to stop it (%s)" % move_card._note.text,
+			move_card._name.text == boss.demand.display_name and move_card._note.text != ""
+				and move_card._patience.text.contains("to answer"))
+	var all_text: String = (budget_card._name.text + budget_card._note.text
+		+ move_card._name.text + move_card._note.text + move_card._demand.text
+		+ boss.archetype.pattern).to_lower()
+	_check("and nothing on any of it calls their patience a shield",
+		not all_text.contains("shield"))
+	_check("the boss's own folder says patience", floor_view._customer_cards[front]._patience.text.begins_with("patience"))
+	_check("neither folder is a seat to turn to",
+		shift.chairs.size() <= mini(left, right) and not shift.approach(left).ok
+			and not shift.approach(right).ok)
 
 func _phase_2_leave_and_work_a_night() -> void:
 	_root._shop_view.done.emit()

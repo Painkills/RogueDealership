@@ -32,7 +32,14 @@ func _move(id: StringName, hit: int, fuse: int, resolve: DemandResolve = null,
 		d.effects.append(l)
 	return d
 
-func _boss(moves: Array = [], shield: bool = true, budget_share: float = 0.0) -> CustomerArchetype:
+func _budget_move(share: float, d: Demand) -> BudgetMove:
+	var b := BudgetMove.new()
+	b.at_share = share
+	b.move = d
+	return b
+
+func _boss(moves: Array = [], shield: bool = true, budget_share: float = 0.0,
+		budget_moves: Array = []) -> CustomerArchetype:
 	var a := CustomerArchetype.new()
 	a.id = &"made_up_boss"
 	a.display_name = "Made-up Boss"
@@ -44,6 +51,7 @@ func _boss(moves: Array = [], shield: bool = true, budget_share: float = 0.0) ->
 	a.patience_is_shield = shield
 	a.budget_share = budget_share
 	a.moves.assign(moves)
+	a.budget_moves.assign(budget_moves)
 	a.move_gap_ticks = 1
 	a.escalate_damage = 2
 	a.escalate_fuse = 1
@@ -386,3 +394,120 @@ func test_a_picked_profile_with_no_clock_reaches_the_shift() -> void:
 	h.check("no clock on the floor", not run.start_shift(p).has_clock)
 	h.check("and the calendar says so", p.rules_preview().contains("No clock"))
 	h.check("so a shorter-day complicator never joins it", p.touches().has(&"ticks"))
+
+# --------------------------------------------------------------- the big hit
+func test_a_hit_that_goes_through_patience_lands_on_you_whole() -> void:
+	var pair := _fight(_boss())
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	var ctx := EffectContext.new()
+	ctx.shift = s
+	ctx.customer = c
+	var truck := Hit.new()
+	truck.amount = 20
+	truck.through_patience = true
+	c.patience = 22
+	var standing := s.standing
+	truck.apply(ctx)
+	h.eq("all of it off your standing", s.standing, standing - 20)
+	h.eq("their patience untouched", c.patience, 22)
+	var soft := Hit.new()
+	soft.amount = 20
+	soft.apply(ctx)
+	h.eq("a plain hit of the same size is soaked up by it", c.patience, 2)
+
+func test_a_move_knows_whether_it_pierces_patience() -> void:
+	var plain := _move(&"plain", 6, 3)
+	h.check("a plain hit does not", not plain.pierces_patience())
+	var truck := _move(&"truck", 0, 2)
+	var hit := Hit.new()
+	hit.amount = 20
+	hit.through_patience = true
+	truck.effects.append(hit)
+	h.check("a hit marked to go through does", truck.pierces_patience())
+	h.eq("and says what it hits for", truck.hit_damage(), 20)
+
+# ---------------------------------------------------------- moves at a budget
+func test_a_budget_move_comes_once_the_budget_is_down_and_waits_for_a_product() -> void:
+	var truck := _move(&"truck", 20, 2, ClearTheTable.new(), true)
+	var products := _products()
+	products.sort_custom(func(a, b): return a.margin < b.margin)
+	var quota: int = products[0].margin + products[1].margin + products[2].margin
+	var boss := _boss([], true, 1.0, [_budget_move(0.8, truck)])
+	var pair := _fight(boss, quota)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	h.check("not due while the budget is whole", c.due_budget_move() == null)
+	h.eq("and it is the next thing to come", c.next_budget_move().move, truck)
+	s.place(_hand(s, products[0], 901))
+	s.offer()
+	h.check("down by the first sale, it is due", c.due_budget_move() != null)
+	s._burn(3, "cards")
+	h.check("but with nothing on the table there is nothing to take off it", c.demand == null)
+	s.place(_hand(s, products[1], 902))
+	h.eq("the moment a product is on the table, it comes", c.demand, truck)
+	h.eq("and is marked as done", c.budget_moves_done, [0])
+	h.check("it is one of their moves", c.is_a_move(truck))
+	h.check("and nothing is due after it", c.due_budget_move() == null
+		and c.next_budget_move() == null)
+
+func test_budget_moves_come_due_one_by_one_as_the_budget_runs_down() -> void:
+	var first := _move(&"first", 10, 2)
+	var second := _move(&"second", 10, 2)
+	var boss := _boss([], true, 1.0, [_budget_move(0.25, second), _budget_move(0.75, first)])
+	var c: Customer = _fight(boss, 1000)[1]
+	var some_product: CardDef = _products()[0]
+	h.eq("they come in with all of it", c.budget_left(), 1000)
+	h.check("nothing due yet", c.due_budget_move() == null)
+	h.eq("the one at 75% is next, whatever order they are listed in",
+		c.next_budget_move().move, first)
+	c.unsigned.append({"product": some_product, "margin": 300})
+	h.eq("700 left is under 75%: the first is due", c.due_budget_move().move, first)
+	c.budget_moves_done.append(boss.budget_moves.find(c.due_budget_move()))
+	h.check("and not due again once it has come", c.due_budget_move() == null)
+	h.eq("the one at 25% is next", c.next_budget_move().move, second)
+	c.unsigned.append({"product": some_product, "margin": 500})
+	h.eq("200 left is under 25%: the second is due", c.due_budget_move().move, second)
+	c.budget_moves_done.append(boss.budget_moves.find(c.due_budget_move()))
+	h.check("and then there is nothing left to come",
+		c.due_budget_move() == null and c.next_budget_move() == null)
+
+func test_the_rotation_goes_on_while_a_budget_move_waits_for_a_product() -> void:
+	var truck := _move(&"truck", 20, 2, ClearTheTable.new(), true)
+	var plain := _move(&"plain", 6, 3)
+	var products := _products()
+	products.sort_custom(func(a, b): return a.margin < b.margin)
+	var boss := _boss([plain], true, 1.0, [_budget_move(1.0, truck)])
+	var pair := _fight(boss, products[0].margin + products[1].margin)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	h.eq("due from the start, but nothing on the table: the rotation goes on", c.demand, plain)
+
+func test_a_budget_move_does_not_wait_out_the_rotations_gap() -> void:
+	## However long the quiet after an ordinary move, the big one comes the moment
+	## it can - or a fight could end without it ever coming.
+	var truck := _move(&"truck", 20, 2, ClearTheTable.new(), true)
+	var plain := _move(&"plain", 6, 3)
+	var products := _products()
+	products.sort_custom(func(a, b): return a.margin < b.margin)
+	var boss := _boss([plain], true, 1.0, [_budget_move(1.0, truck)])
+	boss.move_gap_ticks = 40
+	var pair := _fight(boss, products[0].margin + products[1].margin)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s._burn(4, "cards")
+	h.check("the ordinary move ran out", c.demand == null)
+	h.check("and the quiet after it is a long one", c.next_move_tick > s.tick + 20)
+	s.place(_hand(s, products[0], 911))
+	h.eq("a product on the table brings the big one at once", c.demand, truck)
+
+# ------------------------------------------------------------------ the words
+func test_every_way_of_answering_says_how() -> void:
+	for resolve in [MakeAnOffer.new(), PlayConcession.new(), PlayAppealCard.new(),
+			PlayAnySupport.new(), IncreasePatience.new(), OfferSomethingGood.new(),
+			LeaveThemAlone.new(), ClearTheTable.new()]:
+		var how: String = resolve.how_to_answer()
+		h.check("%s says how (%s)" % [resolve.get_script().get_global_name(), how], how != "")
+	h.check("taking it off the table names the key and the pile",
+		ClearTheTable.new().how_to_answer().contains("press D")
+			and ClearTheTable.new().how_to_answer().contains("discard"))

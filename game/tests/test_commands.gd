@@ -303,6 +303,60 @@ func test_pulling_with_no_match_leaves_nothing_pending_and_the_pile_untouched() 
 		s.pending_pull == null)
 	h.eq("the pile is exactly as it was", s.draw.size(), 3)
 
+func _give_discard(s: Shift, ids: Array) -> void:
+	s.discard.clear()
+	var uid := 700
+	for id in ids:
+		s.discard.append(CardInstance.new(s.card_pool.by_id(id), uid))
+		uid += 1
+
+func test_a_pull_the_draw_pile_cannot_fill_shuffles_the_discard_in_first() -> void:
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc"])
+	_set_draw(s, [&"gap"])
+	_give_discard(s, [&"smalltalk", &"pad", &"theft", &"appearance"])
+	var laps: int = s.reshuffles
+	s._start_pull(3, &"any")
+	h.eq("the discard was shuffled back in", s.reshuffles, laps + 1)
+	h.check("so there are three to choose from", s.pending_pull != null
+		and s.pending_pull.revealed.size() == 3)
+	h.check("and the discard is empty", s.discard.is_empty())
+	h.eq("no card was lost: three revealed, the rest still to draw",
+		s.pending_pull.revealed.size() + s.draw.size(), 5)
+
+func test_a_pull_the_draw_pile_can_fill_leaves_the_discard_alone() -> void:
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk", &"pad", &"theft"])
+	_give_discard(s, [&"appearance", &"flex"])
+	var laps: int = s.reshuffles
+	s._start_pull(3, &"any")
+	h.eq("no shuffle", s.reshuffles, laps)
+	h.eq("the discard stays where it is", s.discard.size(), 2)
+	h.eq("the top three, as they lay", s.pending_pull.revealed.map(func(i): return i.card.id),
+		[&"gap", &"smalltalk", &"pad"])
+
+func test_a_short_pull_with_nothing_to_shuffle_shows_what_there_is() -> void:
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk"])
+	s.discard.clear()
+	var laps: int = s.reshuffles
+	s._start_pull(3, &"any")
+	h.eq("nothing to shuffle, so none", s.reshuffles, laps)
+	h.eq("two is all there is", s.pending_pull.revealed.size(), 2)
+
+func test_a_pull_for_one_kind_shuffles_when_the_pile_has_too_few_of_it() -> void:
+	var s := _shift([&"easygoing"])
+	_hand(s, [&"vsc"])
+	_set_draw(s, [&"gap", &"smalltalk", &"pad"])
+	_give_discard(s, [&"theft", &"appearance", &"flex"])
+	var laps: int = s.reshuffles
+	s._start_pull(3, &"product")
+	h.eq("one product was not three: the discard went in", s.reshuffles, laps + 1)
+	h.check("and every card revealed is a product",
+		s.pending_pull != null and s.pending_pull.revealed.all(func(i): return i.is_product()))
+
 func test_hand_does_not_refill_while_a_pull_is_pending() -> void:
 	var s := _shift([&"easygoing"])
 	_hand(s, [&"vsc"])

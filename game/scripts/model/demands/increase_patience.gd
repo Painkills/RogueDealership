@@ -20,3 +20,6 @@ func satisfied(_kind: StringName, data: Dictionary) -> bool:
 
 func describe() -> String:
 	return "raise their patience"
+
+func how_to_answer() -> String:
+	return "Raise their patience: play a patience card, or close a sale."

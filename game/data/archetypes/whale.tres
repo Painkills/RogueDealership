@@ -2,12 +2,20 @@
 
 [ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
 [ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="2_dmd"]
-[ext_resource type="Resource" path="res://data/demands/whale_lowball.tres" id="3_mv"]
-[ext_resource type="Resource" path="res://data/demands/whale_off_my_desk.tres" id="4_mv"]
-[ext_resource type="Resource" path="res://data/demands/whale_come_down.tres" id="5_mv"]
-[ext_resource type="Resource" path="res://data/demands/whale_make_an_offer.tres" id="6_mv"]
-[ext_resource type="Resource" path="res://data/demands/whale_impress_me.tres" id="7_mv"]
-[ext_resource type="Resource" path="res://data/demands/whale_raises_stakes.tres" id="8_mv"]
+[ext_resource type="Script" path="res://scripts/model/data/budget_move.gd" id="3_bm"]
+[ext_resource type="Resource" path="res://data/demands/whale_getting_impatient.tres" id="4_imp"]
+[ext_resource type="Resource" path="res://data/demands/whale_raise_the_stakes.tres" id="5_stk"]
+[ext_resource type="Resource" path="res://data/demands/whale_off_my_desk.tres" id="6_desk"]
+
+[sub_resource type="Resource" id="Budget_75"]
+script = ExtResource("3_bm")
+at_share = 0.75
+move = ExtResource("6_desk")
+
+[sub_resource type="Resource" id="Budget_25"]
+script = ExtResource("3_bm")
+at_share = 0.25
+move = ExtResource("6_desk")
 
 [resource]
 script = ExtResource("1_arch")
@@ -16,7 +24,7 @@ weight = 0.0
 difficulty = 0
 id = &"whale"
 display_name = "The Whale"
-pattern = "A fight, not a sale: shield up against their telegraphed hits while you sell their budget down to nothing."
+pattern = "A fight, not a sale: keep their patience up, take the truck off the desk, and sell their budget down to nothing."
 tell = "a black card already on the desk, and a list of conditions"
 line = 26
 patience = 20
@@ -25,8 +33,9 @@ combo_step = 0.25
 arrival_patience_share = 1.0
 budget_share = 1.0
 patience_is_shield = true
-moves = Array[ExtResource("2_dmd")]([ExtResource("3_mv"), ExtResource("4_mv"), ExtResource("5_mv"), ExtResource("6_mv"), ExtResource("7_mv"), ExtResource("8_mv")])
-move_gap_ticks = 1
+moves = Array[ExtResource("2_dmd")]([ExtResource("4_imp"), ExtResource("5_stk")])
+budget_moves = Array[ExtResource("3_bm")]([SubResource("Budget_75"), SubResource("Budget_25")])
+move_gap_ticks = 4
 escalate_damage = 2
 escalate_fuse = 1
 min_move_fuse = 1

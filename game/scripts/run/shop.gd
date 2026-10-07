@@ -242,8 +242,10 @@ func perk_text() -> String:
 	var missed := " No dealership upgrade - that shift missed quota." if dealership_missed else ""
 	if extras.is_empty():
 		return "Just your free card this visit - your bonus carries over." + missed
-	return "On top of your free card: %s. Buy as many as your bonus covers.%s" \
-		% [" and ".join(extras), missed]
+	# A store opened with no free card (the last-fight shortcut) has none to be
+	# on top of.
+	var lead := "On top of your free card: " if not free_cards.is_empty() else "In the store: "
+	return "%s%s. Buy as many as your bonus covers.%s" % [lead, " and ".join(extras), missed]
 
 # --- the verbs ---------------------------------------------------------------
 

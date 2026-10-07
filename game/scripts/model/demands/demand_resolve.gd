@@ -42,3 +42,9 @@ func met_on_expiry(_data: Dictionary) -> bool:
 
 func describe() -> String:
 	return ""
+
+## How a player does it, in the words the game uses for the controls - what a
+## boss's folder tells you to do. `describe()` is for the log; this is for
+## someone deciding what to do with the next tick.
+func how_to_answer() -> String:
+	return describe()

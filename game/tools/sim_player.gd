@@ -209,23 +209,24 @@ static func _can_answer(s: Shift, c: Customer) -> bool:
 		return _any_support(s, c) >= 0
 	if r is PlayAppealCard:
 		return c.offer != null and _appeal_answer(s, c) >= 0
-	# "Get that off my desk": taking it back is free - worth it unless their
-	# shield takes the whole hit anyway.
+	# "Get that off my desk": taking it back is free - always worth it, since
+	# the hit it threatens goes straight past their patience.
 	if r is ClearTheTable:
 		return c.offer != null and not _shield_covers(s, c)
 	return false
 
-## Whether a boss's live move would land entirely on their shield - patience
-## left when it comes due at least what it hits for.
+## Whether a boss's live move would land entirely on their patience - what is
+## left of it when the move comes due at least what it hits for, and the hit is
+## not one that goes straight past it.
 static func _shield_covers(s: Shift, c: Customer) -> bool:
-	if c.demand == null or not c.archetype.patience_is_shield:
+	if c.demand == null or not c.archetype.patience_is_shield or c.demand.pierces_patience():
 		return false
 	var left: int = c.demand_due_tick - s.tick
 	return c.patience - left >= c.move_damage(c.demand)
 
 ## What a boss's live move will hit for if it lands - 0 for anything else.
 static func _incoming(c: Customer) -> int:
-	if c.demand == null or not c.archetype.moves.has(c.demand):
+	if c.demand == null or not c.is_a_move(c.demand):
 		return 0
 	return c.move_damage(c.demand)
 

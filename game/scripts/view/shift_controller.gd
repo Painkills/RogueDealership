@@ -1350,6 +1350,15 @@ func _render() -> void:
 		_disarm_hover()
 	_seated_seen = now_seated
 
+	# In a boss fight the seats nobody sits in carry the fight's own folders - the
+	# budget on the left, what is coming on the right - for the player to read,
+	# never to turn to: the chairs they hang on do not exist (see _on_pad_input).
+	var boss = null
+	for who in _shift.seated():
+		if who.archetype.is_boss():
+			boss = who
+			break
+	var notes := BossPanels.side_notes(boss, _front(), _shift.tick)
 	for i in range(_customer_cards.size()):
 		# Keyed on being FRONTED rather than on being seated: the carousel
 		# draws the two flankers small on the floor as well, and that is where
@@ -1361,7 +1370,10 @@ func _render() -> void:
 		# CustomerCard3D.setup(null) already renders for a chair mid-refill,
 		# not a chair this shift never had at all.
 		var chair = _shown_in(i)
-		_customer_cards[i].setup(chair, i == front, _shift.tick)
+		if chair == null and notes.has(i):
+			_customer_cards[i].setup_note(notes[i])
+		else:
+			_customer_cards[i].setup(chair, i == front, _shift.tick)
 
 	_render_details()
 	_render_hover_flip()

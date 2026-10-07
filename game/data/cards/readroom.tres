@@ -6,9 +6,6 @@
 
 [sub_resource type="Resource" id="Resource_ej50r"]
 script = ExtResource("2_mxwf3")
-
-[sub_resource type="Resource" id="Resource_a4ajm"]
-script = ExtResource("2_mxwf3")
 exact = true
 
 [resource]
@@ -21,4 +18,3 @@ display_name = "Active Listening"
 upgraded_ticks = 0
 text = "Stay calm and curious. Let them talk, and they'll tell you what matters."
 effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])
-upgraded_effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_a4ajm")])

@@ -81,26 +81,20 @@ func test_a_category_they_came_in_for_ranks_first() -> void:
 				missed += 1
 	h.eq("its interests take the top ranks, dealt either way", missed, 0)
 
-func test_active_listening_reads_their_favourite_category_and_the_upgrade_its_order() -> void:
+func test_active_listening_reads_the_top_three_in_order_for_them_too() -> void:
+	## Someone who ranks by category is read the way everyone is: their Line and
+	## the three they want most, in order - no category named, no row lit.
 	var c := _seated(_made_up(true), 5)
-	var favourite: Category = c.interests().by_id(c.top_interest_id()).category
-	var theirs: Array = []
-	for i in c.interests().in_category(favourite):
-		theirs.append(i.id)
-	c.reveal_room(false)
-	h.check("the read gives the Line", c.known_line)
-	h.eq("and names the category they want most", c.known_top_category, favourite.id)
-	var marked: Array = Array(c.known_top_three)
-	marked.sort()
-	theirs.sort()
-	h.eq("marking everything in it", marked, theirs)
-	h.check("but not in what order",
-		theirs.all(func(iid): return not c.known_ranks.has(iid)))
 	c.reveal_room(true)
-	h.check("the upgraded read gives each one's rank",
-		theirs.all(func(iid): return int(c.known_ranks.get(iid, -1)) == int(c.ranks[iid])))
+	h.check("the Line", c.known_line)
+	var three := c.top_unsold_interest_ids(3)
+	h.eq("their three", c.known_top_three, three)
+	for k in range(3):
+		h.eq("number %d, with its rank" % (k + 1), int(c.known_ranks.get(three[k], -1)), k + 1)
+	h.check("and the read names no category",
+		c.known_top_category == null)
 
-func test_for_everyone_else_active_listening_reads_one_interest() -> void:
+func test_a_plain_read_gives_just_the_one_they_want_most() -> void:
 	var c := _seated(_made_up(false), 5)
 	var top := c.top_interest_id()
 	c.reveal_room(false)

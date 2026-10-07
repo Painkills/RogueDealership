@@ -72,15 +72,18 @@ class_name CustomerArchetype extends Resource
 ## (Shift._settle()); once it is gone they have nothing more to buy. 0 = they
 ## spend freely.
 @export var budget_share: float = 0.0
-## Their patience is your shield: a Hit comes out of it first, and only what it
+## Their patience soaks up hits: a Hit comes out of it first, and only what it
 ## cannot cover reaches your standing. At 0 they do not walk out - the next hit
-## just lands on you in full.
+## just lands on you in full. (The words on screen only ever call it patience.)
 @export var patience_is_shield: bool = false
 ## A boss's moves: one at a time, telegraphed with its fuse on their card, each
 ## raised as a Demand (what answers it, and what ignoring it costs - a Hit). A
 ## round deals every move once, in an order drawn fresh each round; skipped is
 ## any move that cannot apply yet (Demand.needs_offer_on_table).
 @export var moves: Array[Demand] = []
+## Moves that come up once their budget is down to a share of what it was, once
+## each, ahead of the rotation - see BudgetMove.
+@export var budget_moves: Array[BudgetMove] = []
 ## Ticks between one move landing or being answered and the next appearing.
 @export var move_gap_ticks: int = 1
 ## The time limit: every round after the first, each Hit lands this much
@@ -91,3 +94,8 @@ class_name CustomerArchetype extends Resource
 @export var escalate_fuse: int = 1
 @export var min_move_fuse: int = 1
 @export_group("")
+
+## Whether this is a boss fight rather than a customer: they come in with a
+## budget to drain or moves to make.
+func is_boss() -> bool:
+	return budget_share > 0.0 or not moves.is_empty() or not budget_moves.is_empty()

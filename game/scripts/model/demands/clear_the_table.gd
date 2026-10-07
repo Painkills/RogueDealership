@@ -15,3 +15,6 @@ func met_on_expiry(data: Dictionary) -> bool:
 
 func describe() -> String:
 	return "take the product off their table"
+
+func how_to_answer() -> String:
+	return "Take the product off the table: drag it to the discard pile, or press D. Selling it works too."

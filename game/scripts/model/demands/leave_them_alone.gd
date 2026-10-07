@@ -20,3 +20,6 @@ func succeeds_on_expiry() -> bool:
 
 func describe() -> String:
 	return "go and work someone else until they are ready"
+
+func how_to_answer() -> String:
+	return "Leave them alone: go and work someone else."

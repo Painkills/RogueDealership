@@ -19,3 +19,6 @@ func satisfied(kind: StringName, data: Dictionary) -> bool:
 
 func describe() -> String:
 	return "offer them something in their top %d" % rank_better_than
+
+func how_to_answer() -> String:
+	return "Offer them something from their top %d." % rank_better_than
