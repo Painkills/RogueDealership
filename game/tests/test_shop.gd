@@ -125,6 +125,25 @@ func test_you_cannot_buy_what_you_cannot_afford() -> void:
 	h.eq("nor added", r.deck.cards.size(), before)
 
 # ---------------------------------------------------------------- the upgrade
+func test_the_cost_of_everything_is_the_shelf_and_every_upgrade_offered() -> void:
+	var r := _run()
+	var shop := Shop.new(r, _profile(3, 3))
+	var want := 0
+	for def in shop.offers:
+		want += shop.buy_price(def)
+	for uid in shop.upgrade_offers:
+		for inst in r.deck.cards:
+			if inst.uid == uid:
+				want += shop.upgrade_price(inst)
+	h.check("something is on offer to cost", want > 0)
+	h.eq("the shelf, plus every upgrade offered", shop.cost_of_everything(), want)
+	r.money = shop.cost_of_everything()
+	for def in shop.offers.duplicate():
+		h.check("%s is affordable" % def.display_name, shop.buy(def).ok)
+	for uid in shop.upgrade_offers.duplicate():
+		h.check("so is upgrading card %d" % uid, shop.upgrade(uid).ok)
+	h.eq("and that is exactly the money it took", r.money, 0)
+
 func test_upgrading_costs_a_share_of_buying_the_card() -> void:
 	## An upgrade costs ShiftConfig.upgrade_price_share of what buying that very
 	## card costs on the ladder, whatever the upgrade gains. How big a share is

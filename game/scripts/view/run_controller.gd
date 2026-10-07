@@ -37,6 +37,14 @@ var _calendar_open := false
 ## The front door: the menu (NEW GAME, TUTORIAL, HIGH SCORES), and a new
 ## game's first-day welcome - see title_screen.gd.
 @onready var _title_view = $TitleView
+## Over the build badge on the title screen: the touch way to the last fight,
+## as Ctrl+B is the keyboard's - see _debug_last_fight().
+@onready var _last_fight_tap: Button = $BuildBadge/LastFightTapTarget
+
+## What the last fight's store puts up for sale, and how many of your cards it
+## offers to upgrade - see _debug_last_fight().
+const LAST_FIGHT_PURCHASES := 5
+const LAST_FIGHT_UPGRADES := 5
 
 ## Open the game on the title screen's menu. A driver that is testing the run
 ## itself turns this off BEFORE adding the run to the tree, so it boots
@@ -52,6 +60,12 @@ var _in_tutorial := false
 ## One {"profile", "report"} per shift worked this run, in order - the picker's
 ## calendar shows each past day as the shift you took and how it went.
 var _history: Array = []
+## True for a run begun with the last-fight shortcut: nothing of it is filed
+## among the scores - see _debug_last_fight().
+var _practice_run := false
+## True between that shortcut's store and its fight - leaving the store goes
+## straight to the boss rather than to a calendar to pick from.
+var _straight_to_the_boss := false
 
 func _ready() -> void:
 	_picker_view.chosen.connect(_on_profile_chosen)
@@ -82,6 +96,8 @@ func _ready() -> void:
 	_coach.finished.connect(_on_tutorial_finished)
 	_title_view.tutorial_requested.connect(_open_the_tutorial)
 	_title_view.new_game_started.connect(_start_run)
+	_bind_key(&"debug_last_fight", KEY_B, true)   # Ctrl+B, on the title screen
+	_last_fight_tap.pressed.connect(_debug_last_fight)
 	if title_at_boot:
 		_new_run()
 		_open_the_title()
@@ -92,6 +108,44 @@ func _ready() -> void:
 func _start_run() -> void:
 	_new_run()
 	_open_the_picker()
+
+func _bind_key(action: StringName, keycode: Key, ctrl: bool = false) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	if not InputMap.action_get_events(action).is_empty():
+		return
+	var ev := InputEventKey.new()
+	ev.keycode = keycode
+	ev.ctrl_pressed = ctrl
+	InputMap.action_add_event(action, ev)
+
+func _unhandled_input(event: InputEvent) -> void:
+	# On the title screen, but not while the name tag is being written.
+	if event.is_action_pressed("debug_last_fight") and _title_view.visible \
+			and not _title_view.name_popup_showing():
+		_debug_last_fight()
+
+## Ctrl+B on the title screen, or a tap over the build badge: the last fight,
+## without the nine days before it - a manual testing convenience, not a
+## mechanic, like Ctrl+E and Ctrl+M.
+##
+## It stops in the store first, on the last day, with LAST_FIGHT_PURCHASES cards
+## for sale and LAST_FIGHT_UPGRADES of yours to upgrade, and enough money that
+## none of it is out of reach: build the deck to test the fight with. Leaving
+## the store goes straight to the final boss. Nothing of it is filed among the
+## scores - after the fight, it is back to the menu.
+func _debug_last_fight() -> void:
+	_new_run()
+	_practice_run = true
+	_straight_to_the_boss = true
+	_run.shift_number = _run.cfg.shifts_in_run
+	var store := ShiftProfile.new()
+	store.cards_for_sale = LAST_FIGHT_PURCHASES
+	store.upgrades = LAST_FIGHT_UPGRADES
+	var shop := Shop.new(_run, store)
+	_run.money = shop.cost_of_everything()
+	_show_only(_shop_view)
+	_shop_view.setup(shop)
 
 ## A fresh RunState with nothing worked yet - built behind the title screen
 ## too, since the practice shift borrows its config and pools.
@@ -104,6 +158,8 @@ func _new_run() -> void:
 		load("res://data/dialogue/dialogue_pool.tres"), _profiles,
 		load("res://data/dealership_upgrades/upgrade_pool.tres"))
 	_history = []
+	_practice_run = false
+	_straight_to_the_boss = false
 
 ## The title screen, on its menu - or, `intro`, on a new game's first day.
 func _open_the_title(intro: bool = false) -> void:
@@ -191,6 +247,13 @@ func _on_shift_finished(report: Dictionary) -> void:
 	if _in_tutorial:
 		_on_tutorial_finished(false)
 		return
+	# A last-fight shortcut: the report was the point. Nothing of it is the run's
+	# to keep - not a week for the summary, not a line on the high scores.
+	if _practice_run:
+		_shift_view.set_active(false)
+		_new_run()
+		_open_the_title()
+		return
 	_history.append({"profile": _chosen_profile, "report": report})
 	_run.finish_shift(report)
 	if _run.is_over():
@@ -228,6 +291,14 @@ func _on_summary_continue() -> void:
 ## The store closes on the next day's calendar - unless that day starts a new
 ## week, when the week just worked gets its report first.
 func _on_shop_done() -> void:
+	# The last-fight shortcut: from the store to the boss, no calendar between.
+	if _straight_to_the_boss:
+		_straight_to_the_boss = false
+		for p in _run.todays_shifts():
+			if p.is_boss_day():
+				_chosen_profile = p
+				_open_the_floor()
+				return
 	if _run.week_starts_today():
 		_show_only(_week_view)
 		_week_view.setup(_run, _history)
@@ -253,3 +324,5 @@ func _show_only(screen: Node) -> void:
 	# The calendar from the floor - not in practice, which has no week.
 	_calendar_open = false
 	_view_calendar_btn.visible = screen == _shift_view and not _in_tutorial
+	# The shortcut to the last fight: from the front door only.
+	_last_fight_tap.visible = screen == _title_view

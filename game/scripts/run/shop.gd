@@ -191,6 +191,19 @@ func upgrade_price(inst: CardInstance) -> int:
 		return 0
 	return roundi(buy_price(inst.card) * run.cfg.upgrade_price_share)
 
+## What it would cost to buy everything on the shelf and upgrade everything
+## offered - the money that leaves nothing out of reach, for a store opened to
+## test with (RunController._debug_last_fight()).
+func cost_of_everything() -> int:
+	var total := 0
+	for def in offers:
+		total += buy_price(def)
+	for uid in upgrade_offers:
+		for inst in run.deck.cards:
+			if inst.uid == uid:
+				total += upgrade_price(inst)
+	return total
+
 ## Whether (and, for a product, by how much) a card improves. It no longer sets
 ## the price - see upgrade_price() - only whether there is an upgrade to buy.
 func upgrade_gain(inst: CardInstance) -> int:

@@ -322,10 +322,10 @@ static func _act(s: Shift, c: Customer) -> bool:
 	return false
 
 static func _should_close(s: Shift, c: Customer) -> bool:
-	# A budget: sign once it is all spent - or bail out with what you have
-	# before a hit could finish the run.
+	# A budget: sign once close() lets you - it is all spent, or there is
+	# nothing left to sell them. There is no bailing out of the fight.
 	if c.has_budget():
-		return c.spent_out() or s.standing <= _incoming(c) + 5
+		return not s.budget_blocks_closing(c)
 	return c.patience <= 3 or (s.tick_budget - s.tick) <= 2 \
 		or (c.offer == null and _best_product(s, c) < 0)
 

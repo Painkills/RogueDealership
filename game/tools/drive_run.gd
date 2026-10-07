@@ -85,6 +85,7 @@ func _process(_delta: float) -> bool:
 		_check_the_week_report_comes_between_weeks()
 		_check_run_summary_screen_appears_at_the_end_of_a_run()
 		_check_the_fired_title_is_distinct_from_a_completed_run()
+		_check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss()
 		PlayerProfile.reset()
 		_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
 			_trap.errors.is_empty())
@@ -925,6 +926,71 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	_run.week = was
 	_root._open_the_picker()
 	_check("and the run's own week comes back", _todays_events().size() == _run.todays_shifts().size())
+
+## "Add a shortcut to last fight, which stops me in the store with 5 upgrades and
+## 5 purchases to pick from": Ctrl+B or a tap over the badge on the title screen,
+## then the store, then straight to the final boss - and nothing of it filed among
+## the scores. Run last: it replaces the run the rest of this driver has been
+## following.
+func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() -> void:
+	var filed_before := PlayerProfile.bests().size()
+	_root._new_run()
+	_root._open_the_title()
+	var tap := _root.get_node(^"%LastFightTapTarget") as Button
+	_check("the title screen has a tap target for it, with nothing to see",
+		tap.visible and tap.flat and (tap.text == ""))
+	tap.pressed.emit()
+	var run: RunState = _root._run
+	_check("it opens the store, on the last day",
+		_root._shop_view.visible and not _root._title_view.visible
+			and run.shift_number == run.cfg.shifts_in_run)
+	var shop: Shop = _root._shop_view._shop
+	_check("with %d cards for sale and %d of yours to upgrade (%d, %d)"
+		% [_root.LAST_FIGHT_PURCHASES, _root.LAST_FIGHT_UPGRADES, shop.offers.size(),
+			shop.upgrade_offers.size()],
+		shop.offers.size() == _root.LAST_FIGHT_PURCHASES
+			and shop.upgrade_offers.size() == _root.LAST_FIGHT_UPGRADES)
+	_check("and the money for every one of them (%d of %d)"
+		% [run.money, shop.cost_of_everything()], run.money >= shop.cost_of_everything())
+	var bought := 0
+	for def in shop.offers.duplicate():
+		bought += 1 if shop.buy(def).ok else 0
+	var upgraded := 0
+	for uid in shop.upgrade_offers.duplicate():
+		upgraded += 1 if shop.upgrade(uid).ok else 0
+	_check("buying all of them and upgrading all of them works (%d, %d)" % [bought, upgraded],
+		bought == _root.LAST_FIGHT_PURCHASES and upgraded == _root.LAST_FIGHT_UPGRADES)
+	_root._shop_view.done.emit()
+	var profile: ShiftProfile = _root._chosen_profile
+	_check("leaving it goes straight to the last day's boss, no calendar between",
+		profile != null and profile.is_boss_day() and run.todays_shifts().has(profile)
+			and not _root._picker_view.visible and _root._shift_view._shift != null)
+	_check("and nothing leaves the store open behind it", not _root._shop_view.visible)
+	_root._on_shift_finished(_root._shift_view._shift.report())
+	_check("after the fight it is back to the menu, on a fresh run",
+		_root._title_view.visible and _root._run.shift_number == 1
+			and not _root._summary_view.visible)
+	_check("and none of it was filed among the scores",
+		PlayerProfile.bests().size() == filed_before)
+
+	# The keyboard's way in: Ctrl+B on the title screen - but not while the name
+	# tag is being written.
+	var key := InputEventKey.new()
+	key.keycode = KEY_B
+	key.ctrl_pressed = true
+	key.pressed = true
+	_root._title_view.ask_name(&"new_game")
+	_root._unhandled_input(key)
+	_check("Ctrl+B does nothing while the name tag is up", not _root._shop_view.visible)
+	_root._title_view._close_popup()
+	_root._unhandled_input(key)
+	_check("and opens the store once it is not", _root._shop_view.visible
+		and _root._run.shift_number == _root._run.cfg.shifts_in_run)
+	_root._new_run()
+	_root._open_the_title()
+	_check("the tap target is back up on the front door", tap.visible)
+	_root._show_only(_root._picker_view)
+	_check("and gone from every other screen", not tap.visible)
 
 func _phase_2_leave_and_work_a_night() -> void:
 	_root._shop_view.done.emit()

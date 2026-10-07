@@ -2508,6 +2508,31 @@ func _check_a_boss_shows_their_hit_your_shield_and_their_budget() -> void:
 		OfferTablet.knobs_text(who).contains(Format.money(4321)))
 	_check("and the top bar there is no clock (%s)" % _controller._tick_label.text,
 		_controller._tick_label.text.contains("no clock"))
+	# With a deal agreed to and the table empty, "double-click to close" is
+	# offered only once there is no budget left to spend.
+	var held: Array[Dictionary] = who.unsigned.duplicate()
+	var sold: ProductCardDef = null
+	for def in s.card_pool.cards:
+		if def is ProductCardDef:
+			sold = def
+			break
+	who.demand = null
+	who.unsigned.assign([{"product": sold, "margin": 500}])
+	who.offer = null
+	who.budget = 4321
+	_controller._render()
+	_check("a budget with money left offers no way to close",
+		not _controller._close_hints[_at()].visible)
+	_check("and closing is refused, saying why",
+		not s.close().ok and s.chairs[_at()] == who)
+	who.budget = 500
+	_controller._render()
+	_check("spent out, the way to close is offered",
+		_controller._close_hints[_at()].visible)
+	who.unsigned.assign(held)
+	who.budget = 4321
+	who.demand = move
+	_controller._render()
 	var standing := s.standing
 	var logged := s.events.size()
 	s._burn(2, "cards")

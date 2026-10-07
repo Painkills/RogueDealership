@@ -300,6 +300,72 @@ func test_a_budget_is_the_quota_and_selling_it_down_ends_the_fight() -> void:
 	h.check("which banks the quota exactly", s.margin_banked == quota and s.report()["made_quota"])
 	h.check("and with nobody else coming, the fight is over", s.is_over())
 
+func test_nobody_with_a_budget_can_be_signed_until_it_is_all_spent() -> void:
+	var products := _products()
+	products.sort_custom(func(a, b): return a.margin < b.margin)
+	var quota: int = products[0].margin + products[1].margin
+	var pair := _fight(_boss([], true, 1.0), quota)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s.place(_hand(s, products[0], 901))
+	s.offer()
+	h.check("agreed to one, with budget left", not c.unsigned.is_empty() and not c.spent_out())
+	var refused := s.close()
+	h.check("you cannot sign them yet (%s)" % refused.msg, not refused.ok)
+	h.check("and it says how much they still have to spend",
+		refused.msg.contains("$%d" % c.budget_left()))
+	h.check("they are still there, and so is the deal",
+		s.chairs[0] == c and not c.unsigned.is_empty())
+	s.place(_hand(s, products[1], 902))
+	s.offer()
+	h.check("spent out", c.spent_out())
+	h.check("and now you can", s.close().ok)
+
+func test_a_budget_that_cannot_be_spent_does_not_trap_you_on_the_floor() -> void:
+	## Nothing left to sell them: the way out of a deck that cannot drain the
+	## budget, or the fight would have no end but closing time.
+	var products := _products()
+	products.sort_custom(func(a, b): return a.margin < b.margin)
+	var pair := _fight(_boss([], true, 1.0), products[0].margin + 5000)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s.hand.clear()
+	s.draw.clear()
+	s.discard.clear()
+	s.place(_hand(s, products[0], 901))
+	h.check("a product on the table is something left to sell", s.has_something_left_to_sell(c))
+	s.offer()
+	h.check("sold, with most of the budget still to spend", not c.spent_out())
+	h.check("and nothing left to sell them", not s.has_something_left_to_sell(c))
+	h.check("so signing them is allowed", s.close().ok)
+
+func test_a_product_in_the_draw_pile_or_discard_is_still_something_to_sell() -> void:
+	var products := _products()
+	var pair := _fight(_boss([], true, 1.0), 99999)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s.hand.clear()
+	s.draw.clear()
+	s.discard.clear()
+	h.check("an empty deck has nothing", not s.has_something_left_to_sell(c))
+	s.draw.append(CardInstance.new(products[0], 901))
+	h.check("a product in the draw pile counts", s.has_something_left_to_sell(c))
+	s.draw.clear()
+	s.discard.append(CardInstance.new(products[0], 902))
+	h.check("and one in the discard", s.has_something_left_to_sell(c))
+	c.unsigned.append({"product": products[0], "margin": 100})
+	h.check("but not one they already took", not s.has_something_left_to_sell(c))
+
+func test_someone_without_a_budget_is_signed_as_ever() -> void:
+	var products := _products()
+	var pair := _fight(_boss([], true, 0.0))
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	h.check("no budget, nothing to hold them back", not s.budget_blocks_closing(c))
+	s.place(_hand(s, products[0], 901))
+	s.offer()
+	h.check("so they sign when you like", s.close().ok)
+
 func test_with_no_clock_the_shift_runs_until_the_boss_is_dealt_with() -> void:
 	var pair := _fight(_boss([], true, 1.0))
 	var s: Shift = pair[0]

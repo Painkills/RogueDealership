@@ -739,7 +739,8 @@ func _on_chair_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: 
 	if _shift == null or _shift.at == null or int(_shift.at) != chair:
 		return
 	var c = _shift.chairs[chair]
-	if c == null or c.offer != null or c.unsigned.is_empty():
+	if c == null or c.offer != null or c.unsigned.is_empty() \
+			or _shift.budget_blocks_closing(c):
 		return
 	_on_close()
 
@@ -1497,7 +1498,8 @@ func _render_details() -> void:
 		# close()'s own refusal condition, so the gesture can never do
 		# anything close() itself would refuse.
 		var can_close_empty: bool = at_this_seat and c != null \
-			and c.offer == null and not c.unsigned.is_empty()
+			and c.offer == null and not c.unsigned.is_empty() \
+			and not _shift.budget_blocks_closing(c)
 		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
 			= not can_close_empty
 		_close_hints[i].visible = can_close_empty

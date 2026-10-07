@@ -186,7 +186,7 @@ static func behaviour_text(c) -> String:
 	# A boss's rules first: they are the fight. Short - the folder is half
 	# hidden behind the tablet, and how to answer a move is in its name.
 	if c.has_budget():
-		tells.append("DEEP POCKETS - %s to spend. Sell it all and you win."
+		tells.append("DEEP POCKETS - %s to spend. They will not sign until it is all spent."
 			% Format.money(c.budget))
 	if c.archetype.patience_is_shield:
 		tells.append("PATIENCE IS YOUR SHIELD - hits come off it first, then off your standing. They never walk out.")

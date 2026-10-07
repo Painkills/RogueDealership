@@ -33,7 +33,7 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=1318237538]
+[node name="Run" type="Node" unique_id=582778495]
 script = ExtResource("1_47ec3")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1460737143 instance=ExtResource("2_lc2vt")]
@@ -90,10 +90,10 @@ script = ExtResource("15_pffcw")
 layer = 50
 script = ExtResource("17_1561w")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=639653990]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=913028233]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=12322151]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=896382679]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -112,7 +112,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=942626923]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=2089059799]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1
@@ -126,7 +126,7 @@ grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
 text = "VIEW TOOLKIT"
 
-[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=1222251387]
+[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=1364781188]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(240, 56)
@@ -140,3 +140,20 @@ offset_bottom = 64.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
 text = "VIEW CALENDAR"
+
+[node name="LastFightTapTarget" type="Button" parent="BuildBadge" unique_id=44051594]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -44.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 0
+grow_vertical = 0
+focus_mode = 0
+flat = true

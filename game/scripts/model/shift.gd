@@ -1389,6 +1389,31 @@ func cancel_pull() -> Result:
 	return Result.new(true, "You put them back.", "cancel_pull")
 
 
+## Whether `c` cannot be signed yet for want of their budget being spent - they
+## came in with one, there is some left, and you still hold something to sell
+## them. Never the case for anyone without a budget.
+##
+## The last clause is the way out of an unwinnable fight: a deck that has run
+## out of products they have not taken cannot spend the rest of the budget, and
+## would otherwise be stuck on the floor until closing time with nothing to do.
+func budget_blocks_closing(c: Customer) -> bool:
+	return c != null and c.has_budget() and not c.spent_out() \
+		and has_something_left_to_sell(c)
+
+
+## Whether any product you hold - in hand, in either pile, or on their table - is
+## one `c` has not taken and will look at.
+func has_something_left_to_sell(c: Customer) -> bool:
+	if c.offer != null:
+		return true
+	for pile in [hand, draw, discard]:
+		for inst in pile:
+			if inst.is_product() and not c.owns(inst.card.id) \
+					and c.accepts(inst.card as ProductCardDef):
+				return true
+	return false
+
+
 func close() -> Result:
 	## Sign it. The only thing in the game that banks margin.
 	var pair := _here()
@@ -1403,6 +1428,12 @@ func close() -> Result:
 		return Result.new(false,
 			"%s hasn't agreed to anything yet - sell them something first."
 			% c.display_name)
+	# Someone who came in to spend a budget is signed when it is spent, not
+	# before: closing early is how a fight would be walked away from.
+	if budget_blocks_closing(c):
+		return Result.new(false,
+			"%s still has $%d to spend - keep selling until it is all gone."
+			% [c.display_name, c.budget_left()])
 	# Exactly the promise the demand's own telegraph makes - "bought something
 	# in <category>" - and nothing stricter. See Customer.owns_category()'s
 	# own comment: a hidden priority-within-category threshold used to sit

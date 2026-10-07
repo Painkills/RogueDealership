@@ -151,6 +151,26 @@ func _init() -> void:
 	badge_layer.add_child(view_calendar_btn)
 	view_calendar_btn.owner = root
 
+	# Over the build badge, on the title screen only: the touch equivalent of
+	# Ctrl+B, a shortcut to the last fight (run_controller.gd's
+	# _debug_last_fight()). No visible chrome at all - it is a testing
+	# convenience, like the tick and standing counters' own.
+	var last_fight_tap := Button.new()
+	last_fight_tap.name = "LastFightTapTarget"
+	last_fight_tap.flat = true
+	last_fight_tap.visible = false
+	last_fight_tap.unique_name_in_owner = true
+	last_fight_tap.focus_mode = Control.FOCUS_NONE
+	last_fight_tap.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	last_fight_tap.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	last_fight_tap.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	last_fight_tap.offset_left = -300
+	last_fight_tap.offset_top = -44
+	last_fight_tap.offset_right = -4
+	last_fight_tap.offset_bottom = -4
+	badge_layer.add_child(last_fight_tap)
+	last_fight_tap.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/run.tscn")
