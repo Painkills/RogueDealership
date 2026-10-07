@@ -266,8 +266,8 @@ func _line(col: Container, text: String, size: int, color: Color,
 
 ## A sticker in the event's top-right corner, over where its hours would be:
 ## the shift's colour, white capitals, tilted the way a sticker slapped on by
-## hand lands.
-const STICKER_TILT_DEGREES := -8.0
+## hand lands - clockwise, so its top leans out toward the event's corner.
+const STICKER_TILT_DEGREES := 8.0
 
 func _sticker(event: Button, text: String, hue: Color) -> Label:
 	var sticker := Label.new()
