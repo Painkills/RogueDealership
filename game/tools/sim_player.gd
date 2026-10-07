@@ -30,7 +30,7 @@ static func _est_line(c: Customer) -> int:
 static func _est_rank(c: Customer, iid: StringName) -> int:
 	if not fog or c.known_ranks.has(iid):
 		return int(c.ranks[iid])
-	if bool(c.cfg.get("ranks_by_category", false)):
+	if c.archetype.ranks_by_category:
 		return _est_rank_by_category(c, iid)
 	# Someone who announces the category they came for wants it most - and so
 	# does someone who will look at nothing else.
@@ -43,7 +43,7 @@ static func _est_rank(c: Customer, iid: StringName) -> int:
 static func _only(c: Customer) -> StringName:
 	return c.archetype.only_category.id if c.archetype.only_category != null else &""
 
-## Ranks dealt a category at a time (ShiftConfig.ranks_by_category): one rank
+## Ranks dealt a category at a time (CustomerArchetype.ranks_by_category): one rank
 ## known places its whole category, so this reasons by block - the ranks a
 ## category's interests share. A category is in the block a known rank puts it
 ## in; failing that, the first block still free if it is the one Active

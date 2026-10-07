@@ -486,7 +486,7 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 		favourites = interests.in_category(arch.only_category)
 	var c := Customer.new(CHAIR_KEYS[chair], _next_name(), arch,
 		Customer.make_ranks(interests, rng, favourites,
-			cfg.ranks_by_category),
+			arch.ranks_by_category),
 		start, top, cfg.as_dict(), interests)
 	# The shift's own crowd - a Line shift up or down - and the dealership's on
 	# top of it.

@@ -31,6 +31,13 @@ class_name CustomerArchetype extends Resource
 ## in front of them (Shift.place()). Its interests rank first, the way the
 ## category a Karen came in for does. Empty = anything.
 @export var only_category: Category = null
+## Ranks their interests a category at a time: their favourite category takes
+## the top ranks, the next category the ranks after it, and so on - shuffled
+## within each. One rank you learn then places its whole category, and Active
+## Listening names the category they want most rather than one interest (see
+## Customer.reveal_room()). The Karen's - they came in for a category. Off:
+## ranked interest by interest, at random.
+@export var ranks_by_category: bool = false
 ## Sits down with this share of their patience - 0.5 is half. 0 = the usual
 ## arrival roll (ShiftConfig.arrival_patience_min_fraction).
 @export var arrival_patience_share: float = 0.0

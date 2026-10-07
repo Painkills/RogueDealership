@@ -168,7 +168,7 @@ func reveal_room(exact: bool = false, with_line: bool = true) -> void:
 	## this is the ONLY way to learn it - and what they want most that is still
 	## open. The upgrade gives you that in order.
 	##
-	## Ranked by category (ShiftConfig.ranks_by_category), what they want most
+	## Ranked by category (CustomerArchetype.ranks_by_category), what they want most
 	## is their favourite category with anything left in it: its unsold
 	## interests are marked (known_top_three) and the category named; the
 	## upgrade adds each one's rank. Otherwise it is their top unsold interest,
@@ -186,7 +186,7 @@ func reveal_room(exact: bool = false, with_line: bool = true) -> void:
 	var top := top_unsold_interest_id()
 	var cat: Category = _interests.by_id(top).category
 	known_top_category = cat.id if cat != null else null
-	if bool(cfg.get("ranks_by_category", false)) and cat != null:
+	if archetype.ranks_by_category and cat != null:
 		var open: Array[StringName] = []
 		for iid in top_unsold_interest_ids(ranks.size()):
 			var i := _interests.by_id(iid)
@@ -267,7 +267,7 @@ static func make_ranks(pool: InterestPool, rng: RandomNumberGenerator,
 	## category, which they want most because it is what they came in for.
 	##
 	## `by_category`: dealt a category at a time instead - see
-	## ShiftConfig.ranks_by_category and _ranks_by_category().
+	## CustomerArchetype.ranks_by_category and _ranks_by_category().
 	if by_category:
 		return _ranks_by_category(pool, rng, favourites)
 	var top: Array = []

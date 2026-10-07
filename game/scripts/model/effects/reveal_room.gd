@@ -12,7 +12,7 @@ func apply(ctx: EffectContext) -> void:
 	if ctx.customer:
 		ctx.customer.reveal_room(exact, line)
 
-## Worded to hold whichever way ranks are dealt (ShiftConfig.ranks_by_category):
+## Worded to hold whichever way ranks are dealt (CustomerArchetype.ranks_by_category):
 ## "what they want most" is their favourite category with anything left in it,
 ## or their top unsold interest.
 func describe() -> String:

@@ -1237,6 +1237,14 @@ func _check_an_unsigned_product_shows_on_the_top_bar(s: Shift, label: Label) -> 
 		if c is ProductCardDef and (c as ProductCardDef).interest.category.id == s.category_quota:
 			def = c
 			break
+	# A plain buyer in chair A - whoever the day dealt there might hold out for a
+	# concession, want another category first or wave the card off, and none of
+	# that is what this checks.
+	var plain := CustomerArchetype.new()
+	plain.id = &"drive_plain_buyer"
+	plain.display_name = "Plain Buyer"
+	s.chairs[0] = null
+	s._spawn(0, plain)
 	s.at = 0
 	var customer: Customer = s.chairs[0]
 	customer.line = 0
