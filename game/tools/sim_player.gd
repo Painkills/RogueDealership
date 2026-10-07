@@ -209,7 +209,25 @@ static func _can_answer(s: Shift, c: Customer) -> bool:
 		return _any_support(s, c) >= 0
 	if r is PlayAppealCard:
 		return c.offer != null and _appeal_answer(s, c) >= 0
+	# "Get that off my desk": taking it back is free - worth it unless their
+	# shield takes the whole hit anyway.
+	if r is ClearTheTable:
+		return c.offer != null and not _shield_covers(s, c)
 	return false
+
+## Whether a boss's live move would land entirely on their shield - patience
+## left when it comes due at least what it hits for.
+static func _shield_covers(s: Shift, c: Customer) -> bool:
+	if c.demand == null or not c.archetype.patience_is_shield:
+		return false
+	var left: int = c.demand_due_tick - s.tick
+	return c.patience - left >= c.move_damage(c.demand)
+
+## What a boss's live move will hit for if it lands - 0 for anything else.
+static func _incoming(c: Customer) -> int:
+	if c.demand == null or not c.archetype.moves.has(c.demand):
+		return 0
+	return c.move_damage(c.demand)
 
 ## Whether meeting `d` earns nothing but a read on them.
 static func _only_tells(d: Demand) -> bool:
@@ -217,8 +235,18 @@ static func _only_tells(d: Demand) -> bool:
 
 ## One move with customer `c`. False when there was nothing worth doing.
 static func _act(s: Shift, c: Customer) -> bool:
+	# A boss's hit nothing in hand answers, coming due: shield up first.
+	if c.archetype.patience_is_shield and _incoming(c) > 0 and not _can_answer(s, c) \
+			and c.demand_due_tick - s.tick <= 2 and not _shield_covers(s, c):
+		var calm := _find(s, "patience")
+		if calm >= 0:
+			return _did("shield up", s.play_card(calm).ok)
 	if c.demand != null and _can_answer(s, c):
 		var r := c.demand.resolve
+		if r is ClearTheTable:
+			if c.offer != null and c.line - c.offer.appeal <= 0 and _gap_known(c):
+				return _did("answer a move: sell what is on the table", s.offer().ok)
+			return _did("answer a move: take it off the table", s.drop_offer().ok)
 		if r is IncreasePatience:
 			return _did("answer a demand: raise patience", s.play_card(_find(s, "patience")).ok)
 		if r is MakeAnOffer:
@@ -287,11 +315,17 @@ static func _act(s: Shift, c: Customer) -> bool:
 		var calm := _find(s, "patience")
 		if calm >= 0:
 			return _did("patience card", s.play_card(calm).ok)
-	if not c.unsigned.is_empty():
+	# Someone on a budget is a fight to finish, not a deal to bank when the
+	# hand runs dry: cycle a card instead (the caller digs).
+	if not c.unsigned.is_empty() and not c.has_budget():
 		return _did("close", s.close().ok)
 	return false
 
 static func _should_close(s: Shift, c: Customer) -> bool:
+	# A budget: sign once it is all spent - or bail out with what you have
+	# before a hit could finish the run.
+	if c.has_budget():
+		return c.spent_out() or s.standing <= _incoming(c) + 5
 	return c.patience <= 3 or (s.tick_budget - s.tick) <= 2 \
 		or (c.offer == null and _best_product(s, c) < 0)
 

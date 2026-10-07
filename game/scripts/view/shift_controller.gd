@@ -1302,7 +1302,9 @@ func _clear_fx() -> void:
 # --- rendering -------------------------------------------------------------
 
 func _render() -> void:
-	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget]
+	# A shift with no clock has no limit to count towards.
+	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget] if _shift.has_clock \
+		else "tick %d - no clock" % _shift.tick
 	# Before the numbers are written: a deal signed or a customer lost since
 	# the last render holds its number at the old value while it plays out.
 	_notice_departures()
@@ -1488,7 +1490,7 @@ func _render_details() -> void:
 		_tablets[i].switch_on(at_this_seat)
 		_tablets[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
 		_tablets[i].show_clock(ShiftHours.clock(_time_of_day, _shift.tick,
-			_shift.tick_budget))
+			_shift.clock_ticks()))
 
 		# Double-tap-to-close: only the seat you are AT, only an empty table,
 		# only when there is something unsigned still to close - exactly

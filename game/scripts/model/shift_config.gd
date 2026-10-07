@@ -5,6 +5,10 @@ class_name ShiftConfig extends Resource
 @export_multiline var design_rule: String
 
 @export var shift_ticks: int = 24
+## A shift with no clock (ShiftProfile.no_clock) still closes eventually: the
+## dealership locks up after this many ticks, whatever is left on the floor. A
+## backstop against a fight that never ends, never meant to be reached.
+@export var no_clock_closing_ticks: int = 150
 @export var quota: int = 3600
 @export var floor_size: int = 3
 ## Ticks between one customer coming in the door and the next, rolled fresh

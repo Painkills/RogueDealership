@@ -99,7 +99,8 @@ func start_shift(profile: ShiftProfile) -> Shift:
 			"allow_hard_duplicates": profile.allow_hard_duplicates,
 			"archetype_weight_scales": profile.archetype_weight_scales,
 			"line_offset": profile.total_line_offset(),
-			"combo_scale": profile.total_combo_scale()},
+			"combo_scale": profile.total_combo_scale(),
+			"no_clock": profile.no_clock},
 		dealership)
 	s.commission = profile.commission
 	s.pay_scale = profile.pay_scale

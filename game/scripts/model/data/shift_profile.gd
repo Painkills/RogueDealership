@@ -111,6 +111,11 @@ class_name ShiftProfile extends Resource
 ## of the day's (ShiftConfig.category_quota_by_week). A count of 0 = the day's.
 @export var product_quota_category: Category = null
 @export var product_quota_count: int = 0
+## No clock: the shift is over when its lineup has been dealt with - the
+## Whale signed, say - however long that takes, or when your standing is gone.
+## ShiftConfig.no_clock_closing_ticks is only a backstop. Whatever pressure
+## there is comes from the customers themselves (CustomerArchetype.moves).
+@export var no_clock: bool = false
 @export_group("")
 
 ## The store that follows it. Every visit starts with one card free, picked
@@ -158,7 +163,7 @@ func touches() -> Array[StringName]:
 	var out: Array[StringName] = []
 	if line_offset != 0:
 		out.append(&"line")
-	if shift_ticks > 0:
+	if shift_ticks > 0 or no_clock:
 		out.append(&"ticks")
 	if patience_scale != 1.0:
 		out.append(&"patience")
@@ -207,6 +212,8 @@ func total_combo_scale() -> float:
 ## apart is in their blurbs.
 func rules_preview() -> String:
 	var parts: Array[String] = []
+	if no_clock:
+		parts.append("No clock")
 	if hand_size > 0:
 		parts.append("Hand of %d" % hand_size)
 	if line_offset != 0:

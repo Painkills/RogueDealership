@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="Demand" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="2_dmd"]
+[ext_resource type="Script" path="res://scripts/model/effects/hit.gd" id="3_hit"]
+[ext_resource type="Script" path="res://scripts/model/demands/play_appeal_card.gd" id="5_rsv"]
+
+[sub_resource type="Resource" id="Sub_hit"]
+script = ExtResource("3_hit")
+amount = 6
+
+[sub_resource type="Resource" id="Sub_rsv"]
+script = ExtResource("5_rsv")
+
+[resource]
+script = ExtResource("2_dmd")
+id = &"whale_impress_me"
+display_name = "Impress Me"
+telegraph = "IMPRESS ME"
+dialogue_tags_met = Array[StringName]([&"whale_dodged"])
+dialogue_tags_missed = Array[StringName]([&"whale_hit"])
+ticks = 3
+resolve = SubResource("Sub_rsv")
+effects = Array[ExtResource("1_eff")]([SubResource("Sub_hit")])
+dialogue_tags_raised = Array[StringName]([&"whale_impress_me"])

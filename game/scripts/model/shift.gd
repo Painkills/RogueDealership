@@ -4,6 +4,8 @@ class_name Shift extends RefCounted
 ## drift.
 
 const CHAIR_KEYS := "ABCDEFGH"
+## What a customer with a budget says once it is all spent (Customer.spent_out()).
+const SPENT_OUT := "%s has spent everything they came in with - sign them."
 
 var cfg: ShiftConfig
 var interests: InterestPool
@@ -31,6 +33,10 @@ var walk_up_scale: float = 1.0
 ## folded in - see _spawn(). 0 and 1.0 change nothing.
 var line_offset: int = 0
 var combo_scale: float = 1.0
+## False on a shift with no clock (ShiftProfile.no_clock): it ends when its
+## lineup has been dealt with, and tick_budget is only the closing-time
+## backstop (ShiftConfig.no_clock_closing_ticks).
+var has_clock: bool = true
 ## The share of what you bank over quota paid on top of base salary - the
 ## picked ShiftProfile's commission. Nothing here uses it but report(); see
 ## RunState.bonus_from().
@@ -149,11 +155,14 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	# allow_hard_duplicates and archetype_weight_scales - and what they are like
 	# when they sit down: its Line shift and combo scale. Set before the floor
 	# opens, so the first customers are picked under them like everyone after.
+	# And whether there is a clock at all (ShiftProfile.no_clock), before the
+	# tick budget below is read.
 	hard_weight_scale = float(p_arrivals.get("hard_weight_scale", 1.0))
 	allow_hard_duplicates = bool(p_arrivals.get("allow_hard_duplicates", false))
 	archetype_weight_scales = (p_arrivals.get("archetype_weight_scales", {}) as Dictionary).duplicate()
 	line_offset = int(p_arrivals.get("line_offset", 0))
 	combo_scale = float(p_arrivals.get("combo_scale", 1.0))
+	has_clock = not bool(p_arrivals.get("no_clock", false))
 	interests = p_interests
 	card_pool = p_cards
 	archetypes = p_arch
@@ -172,7 +181,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	lineup.assign(p_lineup)
 	excluded_archetypes.assign(p_excluded_archetypes)
 
-	tick_budget = cfg.shift_ticks
+	tick_budget = cfg.shift_ticks if has_clock else cfg.no_clock_closing_ticks
 	# The run climbs the quota shift over shift; a bare shift uses the config's.
 	quota = p_quota if p_quota > 0 else cfg.quota
 	standing = p_standing if p_standing > 0 else cfg.standing_start
@@ -183,7 +192,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
 			"margin_conceded", "margin_padded", "margin_bonus",
 			"customers_signed", "customers_walked",
-			"demands_met", "demands_missed"]:
+			"demands_met", "demands_missed", "budget_seen", "budget_spent"]:
 		stat[key] = 0
 
 	# A picked ShiftProfile (see RunState.start_shift()) may put fewer chairs
@@ -255,7 +264,17 @@ func is_over() -> bool:
 	## of ticks - checked here rather than only at report() time so the very
 	## next _apply() (already checking is_over() after every command) shows the
 	## report the instant the walkout that did it finishes resolving.
-	return tick >= tick_budget or standing <= 0
+	##
+	## A shift with no clock is also over the moment its lineup has all been
+	## dealt with - the floor empty and nobody else coming.
+	return tick >= tick_budget or standing <= 0 \
+		or (not has_clock and door_closed() and seated().is_empty() and waiting.is_empty())
+
+
+## What the tablet's clock runs the shift's hours against: its own length, or -
+## with no clock - the length a shift nominally runs.
+func clock_ticks() -> int:
+	return tick_budget if has_clock else cfg.shift_ticks
 
 
 func margin_at_risk() -> int:
@@ -271,7 +290,7 @@ func margin_at_risk() -> int:
 ## margin_lost_to_closing). False once the shift is already over - there is
 ## nothing left to warn about by then.
 func ticks_running_low() -> bool:
-	return not is_over() and (tick_budget - tick) <= cfg.low_tick_warning
+	return has_clock and not is_over() and (tick_budget - tick) <= cfg.low_tick_warning
 
 
 ## How many ticks until the next customer comes in, or -1 if nobody will
@@ -333,7 +352,12 @@ func _burn(n: int, kind: String) -> void:
 	for c in seated():
 		if c.demand != null and tick >= c.demand_due_tick:
 			_settle_demand(c, c.demand.resolve != null \
-				and c.demand.resolve.succeeds_on_expiry())
+				and c.demand.resolve.met_on_expiry(_state_of(c)))
+
+	# A boss telegraphs their next move once the last has landed or been
+	# answered, and the gap after it has passed.
+	for c in seated():
+		_next_move(c)
 
 	_settle_patience()
 
@@ -385,7 +409,13 @@ func _settle_patience() -> void:
 	## Anything that touches patience outside a tick still has to check the
 	## door. Every patience mutation in the engine ends here.
 	for i in range(chairs.size()):
-		if chairs[i] != null and chairs[i].patience <= 0:
+		if chairs[i] == null:
+			continue
+		# A shield runs out, it does not walk out: at 0 the next hit simply
+		# lands on you in full (CustomerArchetype.patience_is_shield).
+		if chairs[i].archetype.patience_is_shield:
+			chairs[i].patience = maxi(0, chairs[i].patience)
+		elif chairs[i].patience <= 0:
 			_walk(i)
 	# One log line per ENTRY into the danger zone, not one per tick spent in
 	# it - re-armed the instant patience climbs back out, so a genuine second
@@ -401,7 +431,10 @@ func _settle_patience() -> void:
 		# And out loud, a little before that: "a dialogue line for when a
 		# customer reaches 5 or less patience." Once per dip, re-armed the same
 		# way - a customer grumbling every tick is noise, one grumbling once is
-		# a person telling you who needs you next.
+		# a person telling you who needs you next. Not a shield running low:
+		# nobody is about to leave.
+		if c.archetype.patience_is_shield:
+			continue
 		if c.patience <= cfg.impatient_at:
 			if not c.said_impatient:
 				c.said_impatient = true
@@ -513,10 +546,19 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	elif arch.only_category != null:
 		c.known_top_category = arch.only_category.id   # and so does this one
 
+	# What they came in to spend - a share of the shift's quota, so spending it
+	# all IS the quota.
+	if arch.budget_share > 0.0:
+		c.budget = maxi(1, roundi(quota * arch.budget_share))
+		stat["budget_seen"] = int(stat["budget_seen"]) + c.budget
+
 	chairs[chair] = c
 	served += 1
 	events.append("[%s] %s walks up - %s."
 		% [c.key, c.display_name, arch.display_name])
+	# A boss shows their hand from the moment they sit down.
+	c.next_move_tick = tick
+	_next_move(c)
 
 
 ## Who comes in next - null only once a lineup has sent everyone on it.
@@ -837,6 +879,8 @@ func place(index: int) -> Result:
 		return Result.new(false,
 			"The %s is already on the table - offer it or drop it."
 			% c.offer.product.display_name)
+	if c.spent_out():
+		return Result.new(false, SPENT_OUT % c.display_name)
 	if c.owns(inst.card.id):
 		return Result.new(false, "%s already took the %s."
 			% [c.display_name, inst.card.display_name])
@@ -1126,6 +1170,8 @@ func offer() -> Result:
 	var c: Customer = pair[0]
 	if c.offer == null:
 		return Result.new(false, "There is nothing on the table to offer.")
+	if c.spent_out():
+		return Result.new(false, SPENT_OUT % c.display_name)
 
 	var o = c.offer
 	var iid: StringName = o.product.interest.id
@@ -1194,6 +1240,10 @@ func _settle(c: Customer) -> Dictionary:
 	# What they pay over the odds for a product they prize, on top of it all.
 	var premium := roundi(combo * (c.margin_scale_for(o.product) - 1.0))
 	var margin := combo + premium
+	# Someone on a budget pays it out of what they have left - and their last
+	# sale takes whatever that is (CustomerArchetype.budget_share).
+	if c.has_budget():
+		margin = mini(margin, c.budget_left())
 	var sale := {"product": o.product, "margin": margin, "bonus": 0,
 		"combo_margin": combo - o.margin, "premium": premium}
 	c.unsigned.append(sale)
@@ -1235,6 +1285,8 @@ func drop_offer() -> Result:
 	c.offer = null
 	c.objection = &""
 	stat["offers_dropped"] = int(stat["offers_dropped"]) + 1
+	# "Get that off my desk" is answered by exactly this.
+	_demand_saw(c, DemandResolve.DROP)
 	return Result.new(true,
 		"You take the %s back off the table." % product_name, "drop")
 
@@ -1370,6 +1422,9 @@ func close() -> Result:
 		discard.append(c.offer.instance)
 		c.offer = null
 	var banked: int = c.unsigned_margin()
+	# How much of what they came in to spend you got.
+	if c.has_budget():
+		stat["budget_spent"] = int(stat["budget_spent"]) + banked
 	# Someone in a hurry pays for the patience you did not use up.
 	var hurry: int = maxi(0, c.patience) * c.archetype.pays_per_patience_left
 	if hurry > 0:
@@ -1506,12 +1561,86 @@ func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
 	# Always available, regardless of kind - a resolve like IncreasePatience
 	# answers "did it go up since the demand was raised" no matter which
 	# action asked, rather than being wired to one specific card or effect.
-	data["patience"] = c.patience
-	data["patience_at_raise"] = c.demand_patience_at_raise
+	data.merge(_state_of(c), true)
 	if c.demand.resolve.satisfied(kind, data):
 		_settle_demand(c, true, sale)
 	elif c.demand.resolve.broken_by(kind, data):
 		_settle_demand(c, false, sale)
+
+
+## How a customer stands right now, for a DemandResolve to read whatever the
+## kind of action - see DemandResolve.satisfied() and met_on_expiry().
+func _state_of(c: Customer) -> Dictionary:
+	return {"patience": c.patience, "patience_at_raise": c.demand_patience_at_raise,
+		"table_empty": c.offer == null}
+
+
+## A boss's next move (CustomerArchetype.moves), if they are due one: telegraphed
+## on their card with its fuse, as a Demand like any other. A round deals every
+## move once, in an order drawn fresh; each round after the first, their hits
+## land harder and their fuses run shorter (Customer.move_damage(),
+## move_fuse()). A move that cannot apply yet - Demand.needs_offer_on_table
+## with nothing on it - is passed over this round.
+func _next_move(c: Customer) -> void:
+	var moves: Array[Demand] = c.archetype.moves
+	if moves.is_empty() or c.demand != null or tick < c.next_move_tick or is_over():
+		return
+	var picked := _pop_move(c)
+	# This round has nothing left that can apply: a fresh one - every move again,
+	# in a new order, and after the first, harder and faster. Only while some
+	# move can apply at all, or an empty table would deal round after round.
+	if picked == null and moves.any(func(d): return _move_applies(c, d)):
+		c.move_rounds_dealt += 1
+		c.move_round = c.move_rounds_dealt - 1
+		c.moves_left.assign(moves)
+		_shuffle(c.moves_left)
+		picked = _pop_move(c)
+	if picked == null:
+		return
+	c.demand = picked
+	c.demand_due_tick = tick + c.move_fuse(picked)
+	c.demand_patience_at_raise = c.patience
+	var hits := c.move_damage(picked)
+	var what := ""
+	if hits > 0:
+		what = "hits for %d" % hits
+		if picked.resolve != null:
+			what += " unless you %s" % picked.resolve.describe()
+	else:
+		var said_effects := PackedStringArray()
+		for e in picked.effects:
+			said_effects.append(e.describe())
+		what = ", ".join(said_effects)
+	var said := ""
+	if dialogue != null and not picked.dialogue_tags_raised.is_empty():
+		var product_id: StringName = c.offer.product.id if c.offer else &""
+		var band: StringName = StringName(band_for(c.line - c.offer.appeal)) \
+			if c.offer else &""
+		said = dialogue.pick(voice_rng, picked.dialogue_tags_raised, c.archetype.id,
+			product_id, band)
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": picked.display_name,
+		"dialogue": said,
+		"descriptions": ["%s - %d ticks: %s" % [picked.telegraph, c.move_fuse(picked), what]],
+		"floor_wide": false,
+		"fx": {"margin": 0, "standing": 0, "patience": 0, "line": 0, "swept": -1},
+	})
+
+
+## The next of this round's moves that can apply now; any passed over on the way
+## are done for the round.
+func _pop_move(c: Customer) -> Demand:
+	while not c.moves_left.is_empty():
+		var d: Demand = c.moves_left.pop_front()
+		if _move_applies(c, d):
+			return d
+	return null
+
+
+func _move_applies(c: Customer, d: Demand) -> bool:
+	return d != null and not (d.needs_offer_on_table and c.offer == null)
 
 
 func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
@@ -1519,6 +1648,10 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 	c.demand = null
 	c.demand_due_tick = 0
 	c.demand_settled_tick = tick
+	# A boss's next move comes after a gap, whichever way this one went.
+	var is_move: bool = c.archetype.moves.has(d)
+	if is_move:
+		c.next_move_tick = tick + maxi(0, c.archetype.move_gap_ticks)
 
 	var ctx := _context(c)
 	ctx.sale = sale
@@ -1532,7 +1665,8 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 		if e is ChangePatienceFloor:
 			floor_wide = true
 	if descriptions.is_empty():
-		descriptions.append("nothing comes of it" if met else "they let it go")
+		descriptions.append(("dodged" if is_move else "nothing comes of it") if met
+			else "they let it go")
 
 	stat["demands_met" if met else "demands_missed"] = \
 		int(stat["demands_met" if met else "demands_missed"]) + 1
@@ -1555,7 +1689,8 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 	action_log.append({
 		"key": c.key,
 		"customer": c.display_name,
-		"name": "%s - %s" % [d.display_name, "handled" if met else "IGNORED"],
+		"name": "%s - %s" % [d.display_name, ("answered" if met else "lands") if is_move \
+			else ("handled" if met else "IGNORED")],
 		"dialogue": said,
 		"descriptions": descriptions,
 		"floor_wide": floor_wide,
@@ -1765,6 +1900,9 @@ func report() -> Dictionary:
 		"ticks_approach": int(stat["ticks_approach"]),
 		"demands_met": int(stat["demands_met"]),
 		"demands_missed": int(stat["demands_missed"]),
+		"no_clock": not has_clock,
+		"budget_seen": int(stat["budget_seen"]),
+		"budget_spent": int(stat["budget_spent"]),
 		"sale_streak_end": sale_streak,
 		"sale_streak_events": sale_streak_events.duplicate(),
 		"peak_combo_multiplier": peak_combo_multiplier,

@@ -8,9 +8,10 @@
 [ext_resource type="Resource" path="res://data/shift_profiles/premade/one_and_done.tres" id="6_once"]
 [ext_resource type="Resource" path="res://data/shift_profiles/premade/express_lane.tres" id="7_express"]
 [ext_resource type="Resource" path="res://data/shift_profiles/premade/family_reunion.tres" id="8_family"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/skeptic_summit.tres" id="9_skeptic"]
 
 [resource]
 script = ExtResource("1_cat")
 display_name = "Specific shifts, Tuesday to Friday, wherever their difficulty fits"
 days = 30
-shifts = Array[ExtResource("2_prof")]([ExtResource("3_short"), ExtResource("4_big"), ExtResource("5_push"), ExtResource("6_once"), ExtResource("7_express"), ExtResource("8_family")])
+shifts = Array[ExtResource("2_prof")]([ExtResource("3_short"), ExtResource("4_big"), ExtResource("5_push"), ExtResource("6_once"), ExtResource("7_express"), ExtResource("8_family"), ExtResource("9_skeptic")])

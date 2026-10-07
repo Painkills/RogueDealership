@@ -117,6 +117,16 @@ func setup(r: Dictionary) -> void:
 			_product_quota.text = "Product quota missed: %d of %s sold - cost you %d standing." \
 				% [sold, what, int(r.get("category_quota_cost", 0))]
 			_product_quota.add_theme_color_override("font_color", Palette.color(&"alert"))
+	# A budget fight's own measure, in the same line - no shift has both: how
+	# much of what they came in with you got.
+	var seen := int(r.get("budget_seen", 0))
+	if seen > 0 and need <= 0:
+		var got := int(r.get("budget_spent", 0))
+		_product_quota.visible = true
+		_product_quota.text = "Budget drained: %s of the %s they came in with." \
+			% [Format.money(got), Format.money(seen)]
+		_product_quota.add_theme_color_override("font_color",
+			Palette.color(&"patience_ok") if got >= seen else Palette.color(&"alert"))
 
 	# These four never got a Palette color at all before this - plain default
 	# Label text sitting on the engine's own default panel style, which is

@@ -25,25 +25,40 @@ func _demand_texts(d: Demand, out: Dictionary) -> void:
 	for e in d.effects + d.relief:
 		out["demand %s effect" % d.id] = out.get("demand %s effect" % d.id, "") + e.describe() + " | "
 
+## Everyone who can sit down: the pool's, and whoever a shift names - a boss like
+## the Whale comes in only that way.
+func _everyone() -> Array:
+	var out: Array = (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes.duplicate()
+	for category in (load("res://data/shift_profile_pool.tres") as ShiftProfilePool).categories:
+		for p in category.shifts:
+			for a in p.lineup + p.only_archetypes:
+				if a != null and not out.has(a):
+					out.append(a)
+	return out
+
 func _described() -> Dictionary:
 	var out := {}
 	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1
-	var archetypes: ArchetypePool = load("res://data/archetype_pool.tres")
-	for a in archetypes.archetypes:
+	for a in _everyone():
 		out["%s" % a.id] = "%s | %s | %s" % [a.display_name, a.pattern, a.tell]
 		for act in a.actions:
 			out["%s / %s" % [a.id, act.id]] = "%s | %s" % [act.display_name, act.tell]
 			for e in act.effects:
 				if e is RaiseDemand and e.demand != null:
 					_demand_texts(e.demand, out)
+		for d in a.moves:
+			if d != null:
+				_demand_texts(d, out)
 		# The back of their folder, which is built from all of the above and the
 		# standing rules nothing fires for.
 		var c := Customer.new("A", "Test Person", a,
 			Customer.make_ranks(interests, rng), a.patience, a.patience, CFG, interests)
 		if a.demands_category:
 			c.demands_category = interests.categories[0].id
+		if a.budget_share > 0.0:
+			c.budget = 1000
 		out["%s folder" % a.id] = CustomerCard3D.behaviour_text(c)
 	var profiles: ShiftProfilePool = load("res://data/shift_profile_pool.tres")
 	var shifts: Array[ShiftProfile] = profiles.profiles.duplicate()
@@ -71,7 +86,7 @@ func test_an_action_is_called_what_its_warning_says() -> void:
 	## on both sides and in the floor's log.
 	var mismatched: Array[String] = []
 	var checked := 0
-	for a in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
+	for a in _everyone():
 		for act in a.actions:
 			for e in act.effects:
 				if not (e is RaiseDemand) or e.demand == null:
@@ -81,6 +96,12 @@ func test_an_action_is_called_what_its_warning_says() -> void:
 				if act.display_name.to_upper() != d.telegraph or d.display_name != act.display_name:
 					mismatched.append("%s / %s: \"%s\", demand \"%s\", warning %s"
 						% [a.id, act.id, act.display_name, d.display_name, d.telegraph])
+		# A boss's move has no action: it goes by its own warning.
+		for d in a.moves:
+			checked += 1
+			if d != null and d.display_name.to_upper() != d.telegraph:
+				mismatched.append("%s / move %s: \"%s\", warning %s"
+					% [a.id, d.id, d.display_name, d.telegraph])
 	h.check("every action and its demand go by their warning (%s)" % "; ".join(mismatched),
 		mismatched.is_empty())
 	h.check("and the check reads some actions, not none (%d)" % checked, checked > 0)

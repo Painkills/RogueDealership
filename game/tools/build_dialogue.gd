@@ -22,6 +22,10 @@ const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	&"demand_spec_question", &"demand_price_check", &"demand_tell_me_more",
 	&"relief", &"ignored", &"opens_up", &"lets_it_go", &"rejects_card",
 	&"accepted", &"impatient",
+	# A boss's moves - see CustomerArchetype.moves.
+	&"whale_lowball", &"whale_off_my_desk", &"whale_come_down",
+	&"whale_make_an_offer", &"whale_impress_me", &"whale_raises_stakes",
+	&"whale_hit", &"whale_dodged",
 	# Objections - see ProductCardDef.objection_tags and Shift._object(). The
 	# warm word instead, when a product already clears their Line.
 	&"objection", &"objection_walkaway", &"objection_walkaway_gap", &"interested",
@@ -136,6 +140,36 @@ const LINES := [
 	[[&"rejects_card"], "\"Nice try. Next.\"", [], [], []],
 	[[&"rejects_card"], "\"Saw that one on a consumer forum.\"", [], [], []],
 	[[&"rejects_card"], "\"My brother-in-law warned me about this one.\"", [], [], []],
+
+	# A boss's moves - see CustomerArchetype.moves and Demand.dialogue_tags_raised.
+	# What the Whale says as they telegraph each one, and when one lands or is
+	# dodged.
+	[[&"whale_lowball"], "\"That's not a number. That's an insult.\"", [], [], []],
+	[[&"whale_lowball"], "\"I've bought boats for less than that.\"", [], [], []],
+	[[&"whale_lowball"], "\"You'll have to do a lot better than that.\"", [], [], []],
+	[[&"whale_off_my_desk"], "\"Get that off my desk.\"", [], [], []],
+	[[&"whale_off_my_desk"], "\"I didn't ask for that. Take it away.\"", [], [], []],
+	[[&"whale_off_my_desk"], "\"Move it, or I start making phone calls.\"", [], [], []],
+	[[&"whale_come_down"], "\"Come down on it. Now.\"", [], [], []],
+	[[&"whale_come_down"], "\"Sharpen your pencil.\"", [], [], []],
+	[[&"whale_come_down"], "\"Knock something off or we're done talking.\"", [], [], []],
+	[[&"whale_make_an_offer"], "\"Stop talking and give me a number.\"", [], [], []],
+	[[&"whale_make_an_offer"], "\"What's the deal? Spit it out.\"", [], [], []],
+	[[&"whale_make_an_offer"], "\"Make me an offer. I don't have all day.\"", [], [], []],
+	[[&"whale_impress_me"], "\"Impress me.\"", [], [], []],
+	[[&"whale_impress_me"], "\"Tell me why I'd want this.\"", [], [], []],
+	[[&"whale_impress_me"], "\"Sell it to me like you mean it.\"", [], [], []],
+	[[&"whale_raises_stakes"], "\"Let's make this interesting.\"", [], [], []],
+	[[&"whale_raises_stakes"], "\"My time costs more than yours.\"", [], [], []],
+	[[&"whale_raises_stakes"], "\"Every minute you take, this gets harder.\"", [], [], []],
+	[[&"whale_hit"], "\"Your GM is going to hear about this.\"", [], [], []],
+	[[&"whale_hit"], "\"That's a mark against you.\"", [], [], []],
+	[[&"whale_hit"], "\"I'll remember that.\"", [], [], []],
+	[[&"whale_dodged"], "\"Hm. Fine.\"", [], [], []],
+	[[&"whale_dodged"], "\"Better.\"", [], [], []],
+	[[&"whale_dodged"], "\"Quicker than the last one.\"", [], [], []],
+	[[&"accepted"], "\"Put it on the card.\"", [&"whale"], [], []],
+	[[&"accepted"], "\"Fine. Add it. What else?\"", [&"whale"], [], []],
 
 	# New: demand settlement never spoke at all before this migration
 	# (_settle_demand() hardcoded dialogue to "" unconditionally). Generic

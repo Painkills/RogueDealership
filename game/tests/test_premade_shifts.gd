@@ -290,6 +290,28 @@ func test_a_slot_never_takes_a_premade_shift_bringing_someone_it_keeps_out() -> 
 	h.check("neither is ever dealt (%s)" % str(seen.map(func(p): return p.id)),
 		not seen.any(func(p): return p.id == &"brings_them" or p.id == &"names_them"))
 
+func test_a_premade_shift_bringing_someone_from_a_later_week_waits_for_it() -> void:
+	## Only a boss brings anyone early.
+	var pool := _built_tiers(5)
+	var late := CustomerArchetype.new()
+	late.id = &"made_up_late"
+	late.difficulty = 1
+	late.weight = 1.0
+	late.from_week = 2
+	var category := ShiftCategory.new()
+	var brings := _premade(&"brings_late", 0, false)
+	brings.only_archetypes.assign([late])
+	category.shifts.append(brings)
+	pool.categories.append(category)
+	var week := Week.new(pool, 10, 1, 5, _points_pool(), _deal_cfg())
+	var days: Array = []
+	for day in range(1, 11):
+		for p in week.offers(day):
+			if p.id == &"brings_late":
+				days.append(day)
+	h.check("never in week 1 (dealt on %s)" % str(days), days.all(func(d): return d > 5))
+	h.check("but in week 2", not days.is_empty())
+
 func test_a_premade_shift_is_paid_like_its_slot_and_a_boss_like_itself() -> void:
 	var pool := _built_tiers(9)
 	for t in pool.profiles:

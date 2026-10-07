@@ -65,3 +65,29 @@ class_name CustomerArchetype extends Resource
 ## shift can weight them up (ShiftProfile.hard_weight_scale).
 @export var hard: bool = false
 @export var actions: Array[CustomerAction]
+
+@export_group("Boss")
+## Comes in with this share of the shift's quota to spend - 1.0 is all of it.
+## Every sale spends its margin from it, and the last takes whatever is left
+## (Shift._settle()); once it is gone they have nothing more to buy. 0 = they
+## spend freely.
+@export var budget_share: float = 0.0
+## Their patience is your shield: a Hit comes out of it first, and only what it
+## cannot cover reaches your standing. At 0 they do not walk out - the next hit
+## just lands on you in full.
+@export var patience_is_shield: bool = false
+## A boss's moves: one at a time, telegraphed with its fuse on their card, each
+## raised as a Demand (what answers it, and what ignoring it costs - a Hit). A
+## round deals every move once, in an order drawn fresh each round; skipped is
+## any move that cannot apply yet (Demand.needs_offer_on_table).
+@export var moves: Array[Demand] = []
+## Ticks between one move landing or being answered and the next appearing.
+@export var move_gap_ticks: int = 1
+## The time limit: every round after the first, each Hit lands this much
+## harder...
+@export var escalate_damage: int = 2
+## ...and each move's fuse is this many ticks shorter - never below
+## min_move_fuse.
+@export var escalate_fuse: int = 1
+@export var min_move_fuse: int = 1
+@export_group("")

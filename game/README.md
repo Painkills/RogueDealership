@@ -642,6 +642,14 @@ one without a lineup scales, coming back harder each week with tougher
 customers and `ShiftComplicator`s. `tools/rate_shifts.gd` measures all of it
 in the same points.
 
+**A boss can be a fight rather than a lineup.** The final boss, the Whale, is
+one customer on a shift with no clock (`ShiftProfile.no_clock`): they come in
+with the shift's quota to spend (`CustomerArchetype.budget_share`), and selling
+it all is the win. Their `moves` are ordinary `Demand`s telegraphed one at a
+time, each a `Hit` on your standing unless answered; their patience is your
+shield (`patience_is_shield`) - hits come off it first - and every round of
+moves lands harder and faster (`escalate_damage`, `escalate_fuse`).
+
 **Two guards keep the shop from being able to build a run it cannot win.**
 `min_deck_size` (from G1.5) floors the deck's raw SIZE: below a full hand,
 `_draw_up` cannot fill one, so there is nothing to dig and nothing to wait for

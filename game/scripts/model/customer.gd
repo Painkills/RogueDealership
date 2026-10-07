@@ -72,6 +72,17 @@ var recent_lines: Array[String] = []
 ## CustomerArchetype.rejects_every_nth_card.
 var cards_since_rejection: int = 0
 
+## What they came in to spend - see CustomerArchetype.budget_share. 0 = they
+## spend freely.
+var budget: int = 0
+## A boss's moves (CustomerArchetype.moves): how many rounds of them are done -
+## each makes their hits harder and their fuses shorter - what is left of this
+## round, and the soonest the next may be raised.
+var move_round: int = 0
+var move_rounds_dealt: int = 0
+var moves_left: Array[Demand] = []
+var next_move_tick: int = 0
+
 var _interests: InterestPool
 
 
@@ -230,7 +241,45 @@ func owns_category(cat_id: StringName) -> bool:
 
 
 func leaving_soon() -> bool:
+	# Someone whose patience is your shield never leaves - low on it, they are
+	# only easy to hurt you through.
+	if archetype.patience_is_shield:
+		return false
 	return patience <= int(cfg.get("leaving_soon_at", 4))
+
+
+func has_budget() -> bool:
+	return budget > 0
+
+
+## What is left of their budget: all of it, less everything they have agreed
+## to so far.
+func budget_left() -> int:
+	return maxi(0, budget - unsigned_margin())
+
+
+## Whether they came in with a budget and have none of it left to spend.
+func spent_out() -> bool:
+	return has_budget() and budget_left() <= 0
+
+
+## How much harder a boss's hits land than they say on paper: their escalation
+## times every round of moves already done.
+func move_damage_bonus() -> int:
+	return archetype.escalate_damage * move_round if not archetype.moves.is_empty() else 0
+
+
+## What move `d` would hit for if it landed now.
+func move_damage(d: Demand) -> int:
+	var base := d.hit_damage()
+	return base + move_damage_bonus() if base > 0 else 0
+
+
+## The fuse move `d` is raised with now: shorter every round, never below
+## CustomerArchetype.min_move_fuse.
+func move_fuse(d: Demand) -> int:
+	return maxi(maxi(1, archetype.min_move_fuse),
+		d.ticks - archetype.escalate_fuse * move_round)
 
 
 ## Whether the next card played on them gets waved off - the telegraph for

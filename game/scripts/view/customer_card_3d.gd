@@ -144,7 +144,10 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	# its empty trough too, which on paper turned the part of the patience you
 	# have already lost the same muddy green as the part you still have.
 	_patience_fill.bg_color = Format.patience_color(c.patience, c.max_patience)
-	_patience.text = "patience %d/%d" % [c.patience, c.max_patience]
+	# A boss's patience is your shield against their hits - named for what it
+	# does for you (CustomerArchetype.patience_is_shield).
+	_patience.text = ("shield %d/%d" if c.archetype.patience_is_shield
+		else "patience %d/%d") % [c.patience, c.max_patience]
 	_patience.add_theme_color_override("font_color",
 		Palette.color(&"alert") if c.leaving_soon() else Palette.color(&"text"))
 	_demand.text = demand_text(c, tick)
@@ -180,6 +183,22 @@ func is_speaking() -> bool:
 ## reason anywhere on screen.
 static func behaviour_text(c) -> String:
 	var tells: Array[String] = []
+	# A boss's rules first: they are the fight. Short - the folder is half
+	# hidden behind the tablet, and how to answer a move is in its name.
+	if c.has_budget():
+		tells.append("DEEP POCKETS - %s to spend. Sell it all and you win."
+			% Format.money(c.budget))
+	if c.archetype.patience_is_shield:
+		tells.append("PATIENCE IS YOUR SHIELD - hits come off it first, then off your standing. They never walk out.")
+	if not c.archetype.moves.is_empty():
+		var moves: Array[String] = []
+		for d in c.archetype.moves:
+			if d == null:
+				continue
+			var hits: int = c.move_damage(d)
+			moves.append("%s %d" % [d.display_name, hits] if hits > 0 else d.display_name)
+		tells.append("MOVES - %s. Each round: hits +%d, a tick faster."
+			% [", ".join(moves), c.archetype.escalate_damage])
 	if c.demands_category != null:
 		tells.append("WILL NOT SIGN until they have bought something in %s."
 			% str(c.demands_category).capitalize())
@@ -228,7 +247,14 @@ static func demand_text(c, tick: int) -> String:
 	var parts: Array[String] = []
 	if c.demand != null:
 		var left: int = maxi(0, c.demand_due_tick - tick)
-		parts.append("%s  %dt" % [c.demand.telegraph, left])
+		# A boss's move says what it will hit for - the number you shield up
+		# against, escalation included - on the same line: what they SAY as
+		# they telegraph it pops a bubble right over the line below.
+		var hits: int = c.move_damage(c.demand) if c.archetype.moves.has(c.demand) else 0
+		if hits > 0:
+			parts.append("%s  %dt - HITS %d" % [c.demand.telegraph, left, hits])
+		else:
+			parts.append("%s  %dt" % [c.demand.telegraph, left])
 	# Not an ask but a warning, in the same place: whatever you play on them
 	# next is wasted (CustomerArchetype.rejects_every_nth_card).
 	if c.next_card_rejected():
@@ -265,6 +291,9 @@ static func status_text(c) -> String:
 		parts.append("on the table: %s" % c.offer.product.display_name)
 	if not c.unsigned.is_empty():
 		parts.append("%s unsigned" % Format.money(c.unsigned_margin()))
+	# What is left of a budget to spend - the fight's health bar.
+	if c.has_budget():
+		parts.append("budget left %s" % Format.money(c.budget_left()))
 	return "\n".join(parts)
 
 func _redraw() -> void:

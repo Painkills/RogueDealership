@@ -174,6 +174,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_double_tapping_the_empty_table_closes_on_touch_too()
 	_check_refused_drop_comes_home()
 	_check_a_skeptic_warns_before_waving_a_card_off()
+	_check_a_boss_shows_their_hit_your_shield_and_their_budget()
 	_check_a_walkout_is_hard_to_miss()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
@@ -1461,14 +1462,27 @@ func _check_the_detail_card_is_not_overflowing(det) -> void:
 			longest_category_id = cat.id
 
 	var worst := ""
-	for arch in (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes:
+	var was_budget: int = who.budget
+	# Everyone who can come in: the pool's, and whoever a shift names - a boss
+	# like the Whale, whose rules are the longest of all - with a budget for
+	# anyone who would carry one.
+	var everyone: Array = (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes.duplicate()
+	var shifts: ShiftProfilePool = load("res://data/shift_profile_pool.tres")
+	for category in shifts.categories:
+		for p in category.shifts:
+			for arch in p.lineup + p.only_archetypes:
+				if arch != null and not everyone.has(arch):
+					everyone.append(arch)
+	for arch in everyone:
 		who.archetype = arch
-		who.demands_category = longest_category_id
+		who.demands_category = longest_category_id if arch.demands_category else null
+		who.budget = 99999 if arch.budget_share > 0.0 else 0
 		var text := CustomerCard3D.behaviour_text(who)
 		if text.length() > worst.length():
 			worst = text
 	who.archetype = was_arch
 	who.demands_category = was_demands_category
+	who.budget = was_budget
 
 	var was_text: String = det._does.text
 	det._does.text = worst
@@ -2443,6 +2457,76 @@ func _check_a_skeptic_warns_before_waving_a_card_off() -> void:
 	_finish_fx()
 	who.archetype = was
 	who.cards_since_rejection = 0
+	_controller._render()
+
+## A boss fight on screen - made up, so it is the display being checked and not
+## the Whale's tuning: the move telegraphed with what it hits for, their
+## patience named as your shield, the budget, no clock - and a hit landing
+## through the shield onto your standing.
+func _check_a_boss_shows_their_hit_your_shield_and_their_budget() -> void:
+	var s: Shift = _controller._shift
+	if s.at == null or s.chairs[_at()] == null:
+		for i in range(s.chairs.size()):
+			if s.chairs[i] != null:
+				s.approach(i)
+				break
+	if s.at == null or s.chairs[_at()] == null:
+		_check("someone to stand with, to make a boss of", false)
+		return
+	var who: Customer = s.chairs[_at()]
+	var was: CustomerArchetype = who.archetype
+	var was_patience: int = who.patience
+	var move := Demand.new()
+	move.id = &"made_up_move"
+	move.display_name = "Made-up Move"
+	move.telegraph = "MADE-UP MOVE"
+	move.ticks = 2
+	var hit := Hit.new()
+	hit.amount = 9
+	move.effects.append(hit)
+	var boss := was.duplicate() as CustomerArchetype
+	boss.patience_is_shield = true
+	boss.budget_share = 1.0
+	boss.moves.assign([move])
+	who.archetype = boss
+	who.budget = 4321
+	who.demand = move
+	who.demand_due_tick = s.tick + 2
+	# Two ticks of patience leak away before it lands: 4 left to take the hit.
+	who.patience = 6
+	s.has_clock = false
+	_controller._render()
+	var front: Label = _controller._customer_cards[_at()]._demand
+	_check("their card telegraphs the move and what it hits for (%s)" % front.text,
+		front.text.contains("MADE-UP MOVE") and front.text.contains("HITS 9"))
+	_check("their patience reads as your shield (%s)" % _controller._customer_cards[_at()]._patience.text,
+		_controller._customer_cards[_at()]._patience.text.begins_with("shield"))
+	var does: String = _controller._customer_details[_at()]._does.text
+	_check("the back of their folder says how the fight works",
+		does.contains("DEEP POCKETS") and does.contains("SHIELD") and does.contains("Made-up Move 9"))
+	_check("the tablet says what is left of the budget",
+		OfferTablet.knobs_text(who).contains(Format.money(4321)))
+	_check("and the top bar there is no clock (%s)" % _controller._tick_label.text,
+		_controller._tick_label.text.contains("no clock"))
+	var standing := s.standing
+	var logged := s.events.size()
+	s._burn(2, "cards")
+	_controller._render()
+	# Read off the hit's own line: anyone else on the floor may move standing
+	# in the same two ticks.
+	var said := s.events.slice(logged).filter(func(e): return e.contains("hits for 9"))
+	_check("it lands: the shield takes 4, your standing the other 5 (%s)" % str(said),
+		said.size() == 1 and said[0].contains("4 blocked") and said[0].contains("5 off your standing")
+			and who.patience == 0)
+	_check("and the log says it landed",
+		s.action_log.any(func(e): return str(e.get("name", "")) == "Made-up Move - lands"))
+	who.archetype = was
+	who.budget = 0
+	who.demand = null
+	who.patience = was_patience
+	who.moves_left.clear()
+	s.has_clock = true
+	s.standing = standing
 	_controller._render()
 
 ## "Same for walkouts. There needs to be some sort of animation or something

@@ -185,8 +185,12 @@ func _read_the_offer(c, o, band: String) -> void:
 ## The two per-archetype combo knobs, read straight off their own data so this
 ## text can never drift from what Shift._settle() actually does with them.
 static func knobs_text(c) -> String:
-	return "Each sale: combo +%d%%, Line +%d" \
+	var text := "Each sale: combo +%d%%, Line +%d" \
 		% [roundi(c.archetype.combo_step * 100), c.archetype.line_per_sale]
+	# Someone on a budget: what they have left to spend - the fight's health bar.
+	if c.has_budget():
+		text += "\nBudget left: %s" % Format.money(c.budget_left())
+	return text
 
 ## Where the product stands on this tablet, from the tablet's own middle - the
 ## desk places the tablet this far off its slot, the other way, so the product

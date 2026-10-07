@@ -126,6 +126,12 @@ func _fits(shift: ShiftProfile, tier: ShiftProfile, target: int, week: int,
 	# Family First never show at night" holds for a premade lineup too.
 	if shift.lineup.any(func(a): return tier.excluded_archetypes.has(a)):
 		return false
+	# And nobody comes in before their week (CustomerArchetype.from_week),
+	# named or not: a premade shift that brings someone from a later week waits
+	# for it. Only a boss brings them early.
+	if (shift.lineup + shift.only_archetypes).any(
+			func(a): return a != null and a.from_week > week):
+		return false
 	if not shift.scales():
 		return shift.difficulty == 0 or absi(shift.difficulty - target) <= _tolerance
 	# What the slot leaves its customers once the shift's own rules are paid

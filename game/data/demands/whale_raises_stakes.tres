@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Demand" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="2_dmd"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_line.gd" id="4_line"]
+
+[sub_resource type="Resource" id="Sub_line"]
+script = ExtResource("4_line")
+amount = 3
+
+[resource]
+script = ExtResource("2_dmd")
+id = &"whale_raises_stakes"
+display_name = "Raises the Stakes"
+telegraph = "RAISES THE STAKES"
+dialogue_tags_met = Array[StringName]([])
+dialogue_tags_missed = Array[StringName]([])
+ticks = 3
+effects = Array[ExtResource("1_eff")]([SubResource("Sub_line")])
+dialogue_tags_raised = Array[StringName]([&"whale_raises_stakes"])

@@ -61,6 +61,16 @@ func _valid_bands(s: Shift) -> Array[StringName]:
 func test_every_line_is_well_formed() -> void:
 	var pool := _pool()
 	var archetypes: ArchetypePool = load("res://data/archetype_pool.tres")
+	# Everyone who can sit down: the pool's, and whoever a shift names - a boss
+	# like the Whale comes in only that way.
+	var real := {}
+	for a in archetypes.archetypes:
+		real[a.id] = true
+	for category in (load("res://data/shift_profile_pool.tres") as ShiftProfilePool).categories:
+		for p in category.shifts:
+			for a in p.lineup + p.only_archetypes:
+				if a != null:
+					real[a.id] = true
 	var cards: CardPool = load("res://data/card_pool.tres")
 	var bands := _valid_bands(_shift([&"easygoing"]))
 	var broken: Array[String] = []
@@ -74,7 +84,7 @@ func test_every_line_is_well_formed() -> void:
 			if not pool.known_tags.has(t):
 				broken.append("%s uses undeclared tag %s" % [who, t])
 		for a in l.archetype_ids:
-			if archetypes.by_id(a) == null:
+			if not real.has(a):
 				broken.append("%s names no real archetype %s" % [who, a])
 		for p in l.product_ids:
 			if not (cards.by_id(p) is ProductCardDef):

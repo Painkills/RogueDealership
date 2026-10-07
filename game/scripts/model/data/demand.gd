@@ -45,3 +45,21 @@ class_name Demand extends Resource
 ## which is how an archetype stays in the player's favour while still
 ## interrupting them.
 @export var relief: Array[Effect]
+
+@export_group("As a boss's move")
+## A demand raised as one of a boss's moves (CustomerArchetype.moves) has no
+## action to speak for it: this is what they say as they telegraph it.
+@export var dialogue_tags_raised: Array[StringName] = []
+## Only made while a product is on their table - "get that off my desk" means
+## nothing with an empty desk.
+@export var needs_offer_on_table: bool = false
+@export_group("")
+
+## What it hits for, before the boss's escalation (Customer.move_damage()):
+## every Hit in what ignoring it costs.
+func hit_damage() -> int:
+	var total := 0
+	for e in effects:
+		if e is Hit:
+			total += e.amount
+	return total
