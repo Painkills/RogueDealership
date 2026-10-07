@@ -158,6 +158,9 @@ var _customer_flips: Array = []      ## the pair-turning node, one per seat
 var _hover_pads: Array = []          ## the immovable thing the mouse actually finds
 var _customer_details: Array = []
 var _nodes: Dictionary = {}          ## uid -> CardFace3D
+## Cards the model took out of the deck for the fight (Shift.exhausted): out of
+## sight, kept until the next shift is dealt - see _retire().
+var _retired: Array[CardFace3D] = []
 var _dragging: CardFace3D = null
 var _framing_tween: Tween
 var _framed_at = null
@@ -467,6 +470,10 @@ func setup(shift: Shift, standing_before: int,
 	for zone in _all_zones():
 		for card in zone.remove_all():
 			card.queue_free()
+	for card in _retired:
+		if is_instance_valid(card):
+			card.queue_free()
+	_retired.clear()
 	_nodes.clear()
 
 	# A shift is dealt with people in it, but this is the other door into the
@@ -1805,6 +1812,37 @@ func _reconcile() -> void:
 		elif home == _hand_zone and home.cards.find(node) != ordinal:
 			home.move_card(node, clampi(ordinal, 0, home.cards.size() - 1))
 		_dress(node, zone)
+
+	# A card the model has taken out of the deck has no home to be walked to: it
+	# leaves the table. Not the one under the cursor - that is retired once the
+	# drag has finished with it (_on_drag_stopped renders again).
+	for inst in _shift.exhausted:
+		var gone: CardFace3D = _nodes.get(inst.uid)
+		if gone != null and gone != _dragging:
+			_nodes.erase(inst.uid)
+			_retire(gone)
+
+## Takes a card off the table for good: flown to the discard pile and out of
+## sight. Hidden, not freed - the one place card nodes are freed is setup(), and a
+## freed node still held by DragController or a hovered collection crashes it.
+func _retire(node: CardFace3D) -> void:
+	var was := node.global_position
+	var from := node.get_parent()
+	if from is CardCollection3D:
+		var at: int = (from as CardCollection3D).cards.find(node)
+		if at != -1:
+			(from as CardCollection3D).remove_card(at)
+	node.disable_collision()
+	add_child(node)
+	node.global_position = was
+	_retired.append(node)
+	var tw := node.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(node, "global_position", _discard_zone.global_position, 0.4) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.tween_property(node, "scale", Vector3.ONE * 0.2, 0.4)
+	tw.set_parallel(false)
+	tw.tween_callback(func(): node.visible = false)
 
 func _move_card(node: CardFace3D, to_zone: CardCollection3D, ordinal: int) -> void:
 	# Preserve where the card was on screen across the reparent, so the layout

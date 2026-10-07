@@ -572,8 +572,12 @@ func test_what_they_buy_leaves_your_deck_when_they_will_not_take_it_twice() -> v
 				if inst.uid == 901:
 					in_a_pile = true
 		results[leaves] = in_a_pile
+		results["exhausted %s" % leaves] = s.exhausted.any(func(i): return i.uid == 901)
 	h.check("it is in no pile at all", not results[true])
+	h.check("but the shift remembers it left, so the table can tidy it away",
+		results["exhausted true"])
 	h.check("where nothing says so it goes to the discard as ever", results[false])
+	h.check("and is not counted as gone", not results["exhausted false"])
 
 func test_a_deck_that_has_sold_everything_is_not_stuck_on_the_floor() -> void:
 	var boss := _boss([], true, 1.0)

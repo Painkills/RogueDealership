@@ -8,8 +8,9 @@ class_name CardHomes extends RefCounted
 ## because the model says so, not because anyone dragged it.
 ##
 ## Every physical card is in exactly one of draw / discard / hand / a customer's
-## table, so every uid always has a home. "The uid vanished" is not a reachable
-## state, and reconciliation never has to guess.
+## table, so every uid always has a home - or has been taken out of the deck for
+## the fight (Shift.exhausted), which reconciliation retires rather than guesses
+## at. "The uid vanished" is not a reachable state.
 
 const ZONE_DRAW := &"draw"
 const ZONE_DISCARD := &"discard"

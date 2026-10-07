@@ -976,6 +976,7 @@ func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() ->
 			and not _root._picker_view.visible and _root._shift_view._shift != null)
 	_check("and nothing leaves the store open behind it", not _root._shop_view.visible)
 	_check_the_boss_fights_folders_say_what_is_happening(_root._shift_view)
+	_check_a_product_the_boss_buys_leaves_the_table(_root._shift_view)
 	_root._on_shift_finished(_root._shift_view._shift.report())
 	_check("after the fight it is back to the menu, on a fresh run",
 		_root._title_view.visible and _root._run.shift_number == 1
@@ -1040,6 +1041,53 @@ func _check_the_boss_fights_folders_say_what_is_happening(floor_view) -> void:
 	_check("neither folder is a seat to turn to",
 		shift.chairs.size() <= mini(left, right) and not shift.approach(left).ok
 			and not shift.approach(right).ok)
+
+## What the boss buys leaves the deck for the fight - and its card leaves the table
+## with it, rather than sitting in front of their folder with nowhere to go.
+func _check_a_product_the_boss_buys_leaves_the_table(floor_view) -> void:
+	var shift: Shift = floor_view._shift
+	var front: int = floor_view._front()
+	var boss: Customer = shift.chairs[front]
+	if shift.at == null:
+		shift.approach(front)
+	var inst: CardInstance = null
+	for i in shift.hand:
+		if inst == null and i.is_product():
+			inst = i
+	if inst == null:
+		for i in shift.draw:
+			if inst == null and i.is_product():
+				inst = i
+		if inst != null:
+			shift.draw.erase(inst)
+			shift.hand.append(inst)
+	_check("there is a product to sell the boss", inst != null)
+	if inst == null:
+		return
+	floor_view._render()
+	boss.line = 0                       # a sale for certain
+	var placed := shift.place(shift.hand.find(inst))
+	floor_view._render()
+	_check("the product is on their table as a card (%s)" % placed.msg,
+		placed.ok and floor_view._nodes.has(inst.uid))
+	var sold := shift.offer()
+	floor_view._render()
+	_check("and they buy it", sold.ok and not boss.unsigned.is_empty())
+	_check("it is in no pile: out of the deck for the fight",
+		shift.exhausted.has(inst) and not shift.discard.has(inst)
+			and not shift.draw.has(inst) and not shift.hand.has(inst))
+	var on_a_table := false
+	for zone in floor_view._all_zones():
+		for card in zone.cards:
+			if card.uid == inst.uid:
+				on_a_table = true
+	_check("and its card has left the table, not stuck in front of their folder",
+		not on_a_table and not floor_view._nodes.has(inst.uid))
+	var kept := false
+	for node in floor_view._retired:
+		if node.uid == inst.uid:
+			kept = true
+	_check("hidden away, to be tidied up with the next shift", kept)
 
 func _phase_2_leave_and_work_a_night() -> void:
 	_root._shop_view.done.emit()

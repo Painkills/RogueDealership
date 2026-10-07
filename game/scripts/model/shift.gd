@@ -93,6 +93,10 @@ var last_customer = null           ## going back to them is free
 var draw: Array[CardInstance] = []
 var discard: Array[CardInstance] = []
 var hand: Array[CardInstance] = []
+## Products sold to someone who will not take a second (CustomerArchetype.
+## sold_products_leave_deck): out of every pile for the rest of the fight. Kept so
+## the table can tell a card that left from one it has simply not been told about.
+var exhausted: Array[CardInstance] = []
 var reshuffles: int = 0
 ## Non-null between PullCards.apply() staging a reveal and choose_pull()/
 ## cancel_pull() resolving it - see PendingPull's own comment. _draw_up()
@@ -1252,7 +1256,9 @@ func _settle(c: Customer) -> Dictionary:
 	c.line += c.line_per_sale
 	c.add_patience(cfg.patience_per_sale)
 	# Not into the discard, to come round again, when they will never take it twice.
-	if not c.archetype.sold_products_leave_deck:
+	if c.archetype.sold_products_leave_deck:
+		exhausted.append(o.instance)
+	else:
 		discard.append(o.instance)
 	c.offer = null
 	c.objection = &""
