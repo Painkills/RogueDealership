@@ -4,7 +4,6 @@
 
 [resource]
 script = ExtResource("1_prf")
-quota_offset = -300
 pay_scale = 1.0
 commission = 0.2
 customers = 5

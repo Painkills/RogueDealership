@@ -87,7 +87,7 @@ func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator) -> Arra
 				and _fits(c["shift"], tier, target, week, pool.complicators, day))
 		var premade := _roll(candidates, rng)
 		if premade.is_empty():
-			out.append(_regular(tier, day, week, target, rng))
+			out.append(_regular(tier, day, week, target, pool.complicators, rng))
 			continue
 		var shift: ShiftProfile = premade["shift"]
 		_this_week[shift] = true
@@ -111,10 +111,10 @@ func _builds(tier: ShiftProfile) -> bool:
 ## The tier's own shift on `day`: a lineup built to `target`, or the tier
 ## itself where this calendar builds none.
 func _regular(tier: ShiftProfile, day: int, week: int, target: int,
-		rng: RandomNumberGenerator) -> ShiftProfile:
+		complicators: Array, rng: RandomNumberGenerator) -> ShiftProfile:
 	if not _builds(tier):
 		return tier
-	return ShiftGenerator.fill(tier, tier, day, week, target, _archetypes, [], _share, rng)
+	return ShiftGenerator.fill(tier, tier, day, week, target, _archetypes, complicators, _share, rng)
 
 ## Whether premade `shift` may be dealt into `tier`'s slot at `target` - see the
 ## top of this file. Every one fits a calendar that builds nothing.

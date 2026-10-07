@@ -16,7 +16,8 @@ class_name ShiftGenerator extends RefCounted
 
 ## The copy of `shift` that goes on the calendar in `tier`'s slot on `day`,
 ## filled to `target` points. `shift` is `tier` itself for a regular shift, which
-## brings no rules or complicators of its own - only customers.
+## brings no rules of its own - customers, and a harder quota where its
+## difficulty target is spent on one (ShiftComplicator.on_regular_shifts).
 static func fill(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 		target: int, archetypes: ArchetypePool, complicators: Array, share: float,
 		rng: RandomNumberGenerator) -> ShiftProfile:
@@ -30,9 +31,8 @@ static func fill(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 	var spare := maxi(0, budget - _cheapest(pool) * count)
 	var chosen: Array[ShiftComplicator] = []
 	var open: Array[ShiftComplicator] = []
-	if premade:
-		open = _eligible(complicators, day, shift.touches(), rng)
-		_add(chosen, open, floori(spare * share))
+	open = _eligible(complicators, day, shift.touches(), rng, not premade)
+	_add(chosen, open, floori(spare * share))
 	var for_customers := budget - _points(chosen)
 	var weight_of := func(a: CustomerArchetype) -> float:
 		var w := maxf(0.0, a.weight) * maxf(0.0, float(tier.archetype_weight_scales.get(a.id, 1.0)))
@@ -44,7 +44,7 @@ static func fill(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 	var got := _sum(lineup)
 	# Customers alone could not get there - week 1 has nobody harder to send - so
 	# complicators make up what they can of the rest.
-	if premade and got < for_customers:
+	if got < for_customers:
 		_add(chosen, open, for_customers - got)
 	var copy := shift.duplicate() as ShiftProfile
 	copy.lineup = lineup
@@ -129,10 +129,12 @@ static func _draw(options: Array[CustomerArchetype], weight_of: Callable,
 ## The complicators `day` allows that change nothing the shift sets itself
 ## (`touched`), in an order drawn from `rng`.
 static func _eligible(complicators: Array, day: int, touched: Array[StringName],
-		rng: RandomNumberGenerator) -> Array[ShiftComplicator]:
+		rng: RandomNumberGenerator, regular: bool = false) -> Array[ShiftComplicator]:
 	var out: Array[ShiftComplicator] = []
 	for c in complicators:
 		if c == null or c.points <= 0 or c.from_day > day:
+			continue
+		if regular and not c.on_regular_shifts:
 			continue
 		if c.touches().any(func(t): return touched.has(t)):
 			continue

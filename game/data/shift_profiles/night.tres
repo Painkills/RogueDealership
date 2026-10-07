@@ -11,7 +11,6 @@
 script = ExtResource("1_prf")
 hard_weight_scale = 2.0
 allow_hard_duplicates = true
-quota_scale = 0.8
 pay_scale = 1.0
 commission = 0.35
 customers = 4

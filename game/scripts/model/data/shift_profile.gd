@@ -136,7 +136,12 @@ var complicators: Array[ShiftComplicator] = []
 ## This shift's quota on a day whose own is `base` - the one number RunState
 ## runs it to and the calendar shows.
 func quota_on(base: int) -> int:
-	return quota if quota > 0 else roundi(base * quota_scale) + quota_offset
+	if quota > 0:
+		return quota
+	var scale := quota_scale
+	for c in complicators:
+		scale *= c.quota_scale
+	return roundi(base * scale) + quota_offset
 
 ## A regular tier's difficulty target on `day` (1-based) of the run.
 func difficulty_on(day: int) -> int:
@@ -161,6 +166,8 @@ func touches() -> Array[StringName]:
 		out.append(&"hand")
 	if combo_scale != 1.0:
 		out.append(&"combo")
+	if quota > 0 or quota_scale != 1.0 or quota_offset != 0:
+		out.append(&"quota")
 	return out
 
 ## The rules the shift is played under - its own, and its complicators' on top.

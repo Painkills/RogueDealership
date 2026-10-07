@@ -27,10 +27,16 @@ class_name ShiftComplicator extends Resource
 @export var hand_size_delta: int = 0
 ## Multiplies every customer's combo step.
 @export var combo_scale: float = 1.0
+## Multiplies the shift's quota - 1.2 asks 20% more of the day's.
+@export var quota_scale: float = 1.0
 @export_group("")
 
+## May also be dealt onto a regular shift, not only a premade one that scales -
+## how a slot's difficulty target can be spent on a harder quota.
+@export var on_regular_shifts: bool = false
+
 ## Which of the rules it changes - &"line", &"ticks", &"patience", &"hand",
-## &"combo". Never added to a shift that sets one of them itself, or alongside
+## &"combo", &"quota". Never added to a shift that sets one of them itself, or alongside
 ## another complicator that changes the same one.
 func touches() -> Array[StringName]:
 	var out: Array[StringName] = []
@@ -44,4 +50,6 @@ func touches() -> Array[StringName]:
 		out.append(&"hand")
 	if combo_scale != 1.0:
 		out.append(&"combo")
+	if quota_scale != 1.0:
+		out.append(&"quota")
 	return out

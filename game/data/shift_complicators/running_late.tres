@@ -6,5 +6,5 @@
 script = ExtResource("1_comp")
 id = &"running_late"
 display_text = "2 fewer ticks"
-points = 4
+points = 5
 ticks_delta = -2

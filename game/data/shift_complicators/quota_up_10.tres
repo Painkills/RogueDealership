@@ -4,7 +4,8 @@
 
 [resource]
 script = ExtResource("1_comp")
-id = &"short_fuse"
-display_text = "Patience 80%"
-points = 4
-patience_scale = 0.8
+id = &"quota_up_10"
+display_text = "Quota +10%"
+points = 3
+quota_scale = 1.1
+on_regular_shifts = true

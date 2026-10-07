@@ -214,8 +214,33 @@ func test_complicators_make_up_what_customers_cannot_reach() -> void:
 	h.eq("the customers give all they can", _sum(s.lineup), 5)
 	h.eq("and complicators the rest", s.difficulty, 8)
 
-func test_a_regular_shift_never_gets_complicators() -> void:
+func test_a_regular_shift_only_gets_the_complicators_marked_for_it() -> void:
+	## A slot's difficulty target can be spent on a harder quota, but a smaller
+	## hand or a shorter day stay on specific shifts.
 	var pool := _pool([_arch(&"one", 1)])
 	var tier := _tier(5)
-	var s := ShiftGenerator.fill(tier, tier, 1, 1, 99, pool, _all_kinds(), 1.0, _rng(1))
-	h.eq("customers only", s.complicators.size(), 0)
+	var quota := _complicator(&"quota", &"quota_scale", 1.2, 4)
+	quota.on_regular_shifts = true
+	var kinds := _all_kinds() + [quota]
+	var seen := {}
+	for seed_value in range(8):
+		var s := ShiftGenerator.fill(tier, tier, 1, 1, 99, pool, kinds, 1.0, _rng(seed_value))
+		h.eq("seed %d: only the quota step, once" % seed_value, s.complicators, [quota])
+		h.eq("seed %d: and the total counts it" % seed_value, s.difficulty, 5 + 4)
+		seen[s.quota_on(1000)] = true
+	h.eq("and it asks more of the day's quota", seen.keys(), [1200])
+	var none := ShiftGenerator.fill(tier, tier, 1, 1, 99, pool, _all_kinds(), 1.0, _rng(1))
+	h.eq("with nothing marked for it, customers only", none.complicators.size(), 0)
+
+func test_a_quota_step_never_joins_a_shift_that_sets_its_own_quota() -> void:
+	var pool := _pool([_arch(&"one", 1)])
+	var quota := _complicator(&"quota", &"quota_scale", 1.2, 4)
+	var own := _scaling()
+	own.quota_scale = 1.5
+	h.eq("no second say over a quota the shift already sets",
+		_fill(own, pool, 99, [quota], 1.0, 1).complicators.size(), 0)
+	h.eq("and a quota of its own is no one's to scale", ShiftProfile.new().touches(), [])
+	var fixed := ShiftProfile.new()
+	fixed.quota = 2000
+	fixed.complicators.assign([quota])
+	h.eq("outright, it stays what it says", fixed.quota_on(9999), 2000)

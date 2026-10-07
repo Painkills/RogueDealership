@@ -101,6 +101,17 @@ func test_complicators_combine_with_the_shifts_own_rules() -> void:
 	h.check("and the run's config is untouched",
 		cfg.shift_ticks != 8 and s.cfg != cfg)
 
+func test_quota_steps_scale_the_days_quota_and_stack_with_the_slots_own() -> void:
+	var p := ShiftProfile.new()
+	h.eq("standard when nothing asks for more", p.quota_on(4000), 4000)
+	p.complicators.assign([_complicator(&"quota_scale", 1.25)])
+	h.eq("a step scales it", p.quota_on(4000), 5000)
+	p.quota_scale = 0.5
+	h.eq("on top of the shift's own scale", p.quota_on(4000), 2500)
+	var s := _run().start_shift(p)
+	h.eq("and the floor runs to it", s.quota, p.quota_on(_run().quota_for(1)))
+	h.eq("a complicator that scales quota says so", _complicator(&"quota_scale", 1.25).touches(), [&"quota"])
+
 func test_the_rules_line_lists_exactly_what_the_shift_changes() -> void:
 	h.eq("a plain shift has nothing to say", ShiftProfile.new().rules_preview(), "")
 	var p := ShiftProfile.new()
