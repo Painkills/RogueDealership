@@ -224,6 +224,9 @@ static func behaviour_text(c) -> String:
 	var past: int = c.archetype.needs_concession_past_rank
 	if past > 0:
 		tells.append("HOLDS OUT - won't take anything outside their top %d without a concession first." % past)
+	var most: int = c.archetype.min_products_to_sign
+	if most > 0:
+		tells.append("WILL NOT SIGN for fewer than %d products." % most)
 	# The rest of the rules nothing fires for, said here for the same reason.
 	var nth: int = c.archetype.rejects_every_nth_card
 	if nth > 0:

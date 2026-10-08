@@ -2134,40 +2134,78 @@ func _check_the_waiting_list_shows_who_is_next() -> void:
 	var note: Label = _controller._next_arrival
 	var due := s.next_arrival_in()
 	var says := note.text.replace("\n", " ")
-	_check("with nobody waiting it says so (%s)" % says,
-		note.is_visible_in_tree() and _waiting_rows_shown().is_empty())
-	_check("and when the next one is due (%d)" % due,
-		says.contains("in %d tick" % due) if due >= 0 else says.contains("before close"))
+	var coming := s.upcoming()
+	var block := _coming_block()
+	_check("with nobody waiting there is no waiting strip", _waiting_pictures().is_empty()
+		and _waiting_strip() == null)
+	if coming.is_empty():
+		_check("and with nobody on their way, it says nobody is due before close (%s)" % says,
+			note.is_visible_in_tree() and says.begins_with("Nobody waiting")
+				and says.contains("before close") and block == null)
+	else:
+		_check("and the note makes way for who is coming", not note.visible)
+		var when := block.find_child("When", true, false) as Label if block != null else null
+		var icon := block.find_child("Icon", true, false) as PhotoFrame if block != null else null
+		_check("the nearest one on their way is shown, with who they are (%s)"
+			% (when.text if when != null else "-"),
+			when != null and when.text.begins_with(coming[0].display_name))
+		_check("their picture is their archetype's (%s)" % (str(icon.icon) if icon != null else "-"),
+			icon != null and icon.icon == coming[0].icon)
+		_check("and how long until they walk in (%d: %s)" % [due, when.text if when != null else "-"],
+			when != null and (when.text.contains("in %d tick" % due) if due > 0
+				else when.text.ends_with("now") if due == 0 else when.text.contains("chair")))
+		var then := block.find_child("Then", true, false)
+		var smalls: Array = [] if then == null else then.get_children().filter(
+			func(n): return n is PhotoFrame).map(func(n): return n.icon)
+		_check("the rest of who is coming are small pictures after them (%s)" % str(smalls),
+			smalls == coming.slice(1).map(func(a): return a.icon))
 	var empty_height: float = panel.size.y
 
 	_fill_the_waiting_list(s)
 	_controller._render()
-	var rows := _waiting_rows_shown()
-	var names: Array = rows.map(func(r): return (r.get_node(^"Archetype") as Label).text)
-	var want: Array = s.waiting.map(func(a): return a.display_name)
-	_check("a row per customer waiting, first in line first (%s)" % ", ".join(names),
-		names == want)
-	var marked: Array = rows.map(func(r): return (r.get_node(^"NextTag") as Control).visible)
-	_check("the first of them marked as next (%s)" % str(marked),
-		not marked.is_empty() and marked[0] and not marked.slice(1).has(true))
+	var pictures := _waiting_pictures()
+	_check("a picture per customer waiting, first in line first (%s)" % str(pictures),
+		pictures == s.waiting.map(func(a): return a.icon) and not pictures.is_empty())
+	var tips: Array = _waiting_strip().get_children().filter(func(n): return n is PhotoFrame) \
+		.map(func(n): return n.tooltip_text)
+	_check("each names who they are when pointed at (%s)" % str(tips),
+		tips == s.waiting.map(func(a): return a.display_name))
 	_check("and the countdown makes way for them", not note.visible)
 	_check("the card grows to fit them (%d -> %d px)" % [int(empty_height), int(panel.size.y)],
 		panel.size.y > empty_height)
+	# Short enough to leave the player's speech bubble (and the glass under the
+	# list) clear: the bubble opens at 360 px of a 720 px screen.
+	_check("and still ends well above the speech bubble (%d px of %d)"
+		% [int(panel.get_global_rect().end.y), int(_screen().y)],
+		panel.get_global_rect().end.y < _screen().y * 0.5)
 	_on_screen("the waiting list, full", panel.get_global_rect())
 
 	s.waiting.assign(was)
 	_controller._render()
 	_check("and shrinks back when they are seated (%d px)" % int(panel.size.y),
-		_waiting_rows_shown().size() == s.waiting.size()
+		_waiting_pictures().size() == s.waiting.size()
 			and (not s.waiting.is_empty() or is_equal_approx(panel.size.y, empty_height)))
 
-## The rows on show - the template every row is copied from never is.
-func _waiting_rows_shown() -> Array:
-	var out := []
+## The strip of who is waiting for a chair, or null when nobody is.
+func _waiting_strip() -> Control:
 	for row in (_controller._waiting_rows as Control).get_children():
-		if row != _controller._waiting_row and (row as Control).visible:
-			out.append(row)
-	return out
+		if row.name == "Waiting":
+			return row as Control
+	return null
+
+## Their pictures, first in line first.
+func _waiting_pictures() -> Array:
+	var strip := _waiting_strip()
+	if strip == null:
+		return []
+	return strip.get_children().filter(func(n): return n is PhotoFrame).map(func(n): return n.icon)
+
+## The block showing who is on their way in, or null when nobody is.
+func _coming_block() -> Control:
+	for row in (_controller._waiting_rows as Control).get_children():
+		if row.name == "Coming":
+			return row as Control
+	return null
 
 ## "Add some windows visible behind the customers that suggest the morning /
 ## midday / night shift thing we did." In the framing you work in, the glass
@@ -2202,7 +2240,8 @@ func _check_the_windows_show_behind_the_customers() -> void:
 		for r in in_front:
 			if r.has_point(at):
 				hidden = true
-		_check("the window shows %s (%s)" % [spot[0], at],
+		_check("the window shows %s (%s, the waiting list ends at %d)"
+			% [spot[0], at, int(_waiting_rect().end.y)],
 			not cam.is_position_behind(p) and at.x > 0.0 and at.x < _screen().x
 				and at.y > top_bar and at.y < _screen().y and not hidden)
 	var last := panes[panes.size() - 1] as MeshInstance3D

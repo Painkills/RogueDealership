@@ -42,6 +42,16 @@ const FRAMING_TWEEN := 0.5
 ## travelling and then setting your things down.
 const PILE_TWEEN := 0.4
 const PILE_DELAY := 0.18
+## The queue's pictures: each waiting customer's and the nearest to arrive, and
+## the smaller ones of everyone after them.
+const QUEUE_ICON := 44.0
+const QUEUE_ICON_SMALL := 34.0
+## The width the queue's "waiting" and "then" labels share, so the pictures after
+## them line up.
+const QUEUE_LABEL_WIDTH := 78.0
+## The most pictures a strip of the queue shows before "+N": what fits across the
+## panel.
+const QUEUE_MOST_SHOWN := 5
 
 ## Pushes DragController's own drag-start threshold (addons/card_3d/scripts/
 ## drag_controller.gd) far past anything a mouse gesture could cross, while a
@@ -105,9 +115,10 @@ var _time_of_day: StringName = &"midday"
 var _log_folded := false
 ## The log's size open, as the scene built it, to open it back up to.
 var _log_open_size := Vector2.ZERO
-## The waiting list the rows were last built for, so a render that changes
-## nothing about it leaves them alone.
-var _waiting_shown: Array[CustomerArchetype] = []
+## What the queue's rows were last built for - who waits, who is on the way and
+## how long until the nearest - so a render that changes nothing about it leaves
+## them alone.
+var _waiting_sig: String = ""
 ## True while a RunController-level overlay (the deck viewer) sits on top of
 ## the floor - see set_hud_dimmed(). Both HUD panels it hides live in their
 ## own CanvasLayer, drawing OVER any plain Control regardless of tree order,
@@ -399,8 +410,11 @@ func _try_dig(index: int) -> void:
 ## playing it out. A manual testing convenience, not a mechanic: dig
 ## whatever is in hand (the cheapest always-legal command), and leave
 ## whoever you are with so an empty floor's own free wait() can carry the
-## clock the rest of the way.
+## clock the rest of the way. Standing is never touched: the walkouts as the
+## clock runs out and the missed quota at the bell cost nothing.
 func _debug_skip_shift() -> void:
+	# Nothing about a skipped shift costs standing - see Shift.testing_skip.
+	_shift.testing_skip = true
 	var guard := 0
 	while not _shift.is_over() and guard < 1000:
 		guard += 1
@@ -747,7 +761,7 @@ func _on_chair_pad_input(_cam: Node, event: InputEvent, _pos: Vector3, _normal: 
 		return
 	var c = _shift.chairs[chair]
 	if c == null or c.offer != null or c.unsigned.is_empty() \
-			or _shift.budget_blocks_closing(c):
+			or _shift.signing_blocked(c):
 		return
 	_on_close()
 
@@ -1405,40 +1419,123 @@ func _render() -> void:
 ## keep working someone difficult or get them signed and out can turn on who
 ## is waiting to take their chair.
 func _render_waiting() -> void:
-	if _shift.waiting != _waiting_shown:
-		_waiting_shown = _shift.waiting.duplicate()
+	var coming := _shift.upcoming()
+	var eta := _shift.next_arrival_in()
+	var sig := "%s|%s|%d" % [",".join(_shift.waiting.map(func(a): return String(a.id))),
+		",".join(coming.map(func(a): return String(a.id))), eta]
+	if sig != _waiting_sig:
+		_waiting_sig = sig
+		(_waiting_panel.find_child("WaitingTitle", true, false) as Label).text = "COMING UP"
 		for row in _waiting_rows.get_children():
 			if row != _waiting_row:
 				_waiting_rows.remove_child(row)
 				row.queue_free()
-		for i in range(_waiting_shown.size()):
-			_waiting_rows.add_child(_waiting_row_for(i, _waiting_shown[i]))
+		if not _shift.waiting.is_empty():
+			_waiting_rows.add_child(_waiting_strip(_shift.waiting))
+		if not coming.is_empty():
+			_waiting_rows.add_child(_coming_rows_for(coming, eta))
 	var nobody := _shift.waiting.is_empty()
-	_waiting_rows.visible = not nobody
-	_next_arrival.visible = nobody
-	if nobody:
-		var n := _shift.next_arrival_in()
-		_next_arrival.text = "Nobody waiting.\n" + ("Next customer in %d tick%s." \
-			% [n, "" if n == 1 else "s"] if n >= 0 else "Nobody else is due before close.")
+	_waiting_rows.visible = not (nobody and coming.is_empty())
+	# With somebody on their way the block says so itself; the note is for a
+	# floor with nobody at all.
+	_next_arrival.visible = nobody and coming.is_empty()
+	if _next_arrival.visible:
+		_next_arrival.text = "Nobody waiting.\nNobody else is due before close."
 	# A panel keeps whatever size it was given when what is in it shrinks.
 	# Asked for no height at all, it takes the least its rows need.
 	_waiting_panel.size = Vector2(_waiting_panel.size.x, 0.0)
 
-## One waiting customer's row: their place in the queue and their archetype,
-## the first of them marked as next.
-func _waiting_row_for(place: int, arch: CustomerArchetype) -> Control:
-	var row := _waiting_row.duplicate() as Control
-	row.unique_name_in_owner = false
-	row.visible = true
-	(row.get_node(^"Badge/Place") as Label).text = str(place + 1)
-	(row.get_node(^"Archetype") as Label).text = arch.display_name
-	(row.get_node(^"NextTag") as Control).visible = place == 0
-	if place == 0:
-		var badge := row.get_node(^"Badge") as PanelContainer
-		var dot := badge.get_theme_stylebox(&"panel").duplicate() as StyleBoxFlat
-		dot.bg_color = Palette.color(&"primary")
-		badge.add_theme_stylebox_override(&"panel", dot)
-	return row
+## Everyone waiting for a chair, as a strip of their archetypes' pictures, first in
+## line on the left. Kept to one short row, so the panel leaves the floor's glass
+## and the player's speech bubble clear below it.
+func _waiting_strip(waiting: Array[CustomerArchetype]) -> Control:
+	var strip := HBoxContainer.new()
+	strip.name = "Waiting"
+	strip.add_theme_constant_override("separation", 8)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var label := Label.new()
+	label.name = "Heading"
+	label.text = "waiting"
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(QUEUE_LABEL_WIDTH, QUEUE_ICON)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(label)
+	for i in range(mini(waiting.size(), QUEUE_MOST_SHOWN)):
+		strip.add_child(_icon_tile(waiting[i], QUEUE_ICON))
+	_say_how_many_more(strip, waiting.size() - QUEUE_MOST_SHOWN)
+	return strip
+
+## "+3" after a strip that was cut short, so nobody is silently left out of it.
+func _say_how_many_more(strip: Control, more: int) -> void:
+	if more <= 0:
+		return
+	var l := Label.new()
+	l.text = "+%d" % more
+	l.add_theme_font_size_override("font_size", 20)
+	l.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.add_child(l)
+
+## Everyone on their way in, nearest first: the nearest at the front with how many
+## ticks until they walk in, and the rest as a strip of smaller pictures after it.
+func _coming_rows_for(coming: Array[CustomerArchetype], eta: int) -> Control:
+	var block := VBoxContainer.new()
+	block.name = "Coming"
+	block.add_theme_constant_override("separation", 6)
+	block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var first := HBoxContainer.new()
+	first.add_theme_constant_override("separation", 10)
+	first.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	block.add_child(first)
+	var tile := _icon_tile(coming[0], QUEUE_ICON)
+	tile.name = "Icon"
+	tile.modulate.a = 0.85
+	first.add_child(tile)
+	var when := Label.new()
+	when.name = "When"
+	when.text = "%s - %s" % [coming[0].display_name, "when a chair frees" if eta < 0 \
+		else "in %d tick%s" % [eta, "" if eta == 1 else "s"] if eta > 0 else "now"]
+	when.add_theme_font_size_override("font_size", 22)
+	when.add_theme_color_override("font_color", Palette.color(&"primary"))
+	when.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	when.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	when.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	when.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	first.add_child(when)
+	if coming.size() > 1:
+		var rest := HBoxContainer.new()
+		rest.name = "Then"
+		rest.add_theme_constant_override("separation", 8)
+		rest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		block.add_child(rest)
+		var then := Label.new()
+		then.text = "then"
+		then.add_theme_font_size_override("font_size", 18)
+		then.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+		then.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		then.custom_minimum_size = Vector2(QUEUE_LABEL_WIDTH, QUEUE_ICON_SMALL)
+		then.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rest.add_child(then)
+		for i in range(1, mini(coming.size(), QUEUE_MOST_SHOWN + 1)):
+			var small := _icon_tile(coming[i], QUEUE_ICON_SMALL)
+			small.modulate.a = 0.7
+			rest.add_child(small)
+		_say_how_many_more(rest, coming.size() - 1 - QUEUE_MOST_SHOWN)
+	return block
+
+## A small picture of an archetype - the tile its folder wears, for the queue.
+## Hovering it names them.
+func _icon_tile(arch: CustomerArchetype, side: float) -> PhotoFrame:
+	var tile := PhotoFrame.new()
+	tile.custom_minimum_size = Vector2(side, side)
+	tile.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tile.mouse_filter = Control.MOUSE_FILTER_PASS
+	tile.tooltip_text = arch.display_name
+	tile.icon = arch.icon
+	return tile
 
 ## Every frame as well as on render: the carousel turns and the piles rise on
 ## tweens between renders, and a tag has to ride along with its card rather
@@ -1518,7 +1615,7 @@ func _render_details() -> void:
 		# anything close() itself would refuse.
 		var can_close_empty: bool = at_this_seat and c != null \
 			and c.offer == null and not c.unsigned.is_empty() \
-			and not _shift.budget_blocks_closing(c)
+			and not _shift.signing_blocked(c)
 		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
 			= not can_close_empty
 		_close_hints[i].visible = can_close_empty

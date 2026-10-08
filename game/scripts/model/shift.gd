@@ -74,9 +74,17 @@ var margin_banked: int = 0
 ## AT 0 when a new shift begins, since the run would already be over). A
 ## walkout docks it immediately, in _walk(), not just at report() time - see
 ## is_over() below.
-var standing: int
+var standing: int:
+	set(value):
+		# Nothing lowers it on a shift skipped for testing - see testing_skip.
+		standing = maxi(standing, value) if testing_skip else value
 var _initial_standing: int
 var _standing_lost_to_walkouts: int = 0
+## Set by the testing shortcut that burns a shift (Ctrl+E): nothing about that
+## shift can cost standing - not a walkout while the clock runs out, not a hit,
+## not the missed quota at the bell - and the run's standing carries on exactly as
+## it was. A manual convenience, never a mechanic.
+var testing_skip: bool = false
 
 var chairs: Array = []
 ## Who is waiting for a chair, first come first seated. Archetypes only: nobody
@@ -135,6 +143,9 @@ var peak_combo_multiplier: float = 1.0
 
 var _forced: Array = []
 var _forced_next: int = 0
+## Who the door has already settled will walk in after whoever just did - see
+## _pick_archetype() and upcoming().
+var _peeked: CustomerArchetype = null
 ## What is left to hand out of each archetype's names, by archetype id (&"" for
 ## the shared pool) - see _next_name().
 var _name_pools: Dictionary = {}
@@ -581,6 +592,17 @@ func _pick_archetype() -> CustomerArchetype:
 			return null
 		_lineup_next += 1
 		return lineup[_lineup_next - 1]
+	# Who comes in is settled one arrival early, so the queue can show who is
+	# coming (upcoming()). The one after this is rolled now, with this one counted
+	# as already on the floor.
+	var arriving: CustomerArchetype = _peeked if _peeked != null else _roll_arrival(null)
+	_peeked = _roll_arrival(arriving)
+	return arriving
+
+
+## One of the pool for the door to send, kept to one hard archetype at a time -
+## `arriving` being someone on their way in who is not on the floor yet.
+func _roll_arrival(arriving: CustomerArchetype) -> CustomerArchetype:
 	var pool := _archetypes_available_this_shift()
 	if cfg.unique_archetypes_on_floor and not allow_hard_duplicates:
 		# The waiting list counts as the floor: they are who sits down next.
@@ -590,6 +612,8 @@ func _pick_archetype() -> CustomerArchetype:
 			taken[c.archetype.id] = true
 		for a in waiting:
 			taken[a.id] = true
+		if arriving != null:
+			taken[arriving.id] = true
 		var fresh: Array[CustomerArchetype] = []
 		for a in pool:
 			if not (a.hard and taken.has(a.id)):
@@ -597,6 +621,26 @@ func _pick_archetype() -> CustomerArchetype:
 		if not fresh.is_empty():
 			pool = fresh
 	return _weighted_archetype(pool)
+
+
+## Who is on their way in, soonest first, for the queue to show: the rest of a
+## premade shift's lineup, or the one the door has already settled on. Nobody the
+## bell comes before.
+func upcoming() -> Array[CustomerArchetype]:
+	var out: Array[CustomerArchetype] = []
+	if is_over():
+		return out
+	if not _forced.is_empty():
+		out.append(archetypes.by_id(_forced[_forced_next % _forced.size()]))
+	elif not lineup.is_empty():
+		out.assign(lineup.slice(_lineup_next))
+	elif _peeked != null:
+		out.append(_peeked)
+	# The door's clock is stopped while the waiting list is full, so nobody can
+	# be ruled out then; otherwise it is the time left that does.
+	if next_arrival >= tick_budget - tick and waiting.size() < cfg.waiting_max:
+		out.clear()
+	return out
 
 
 ## One of `pool`, by CustomerArchetype.weight - the hard ones scaled by this
@@ -1444,6 +1488,22 @@ func budget_blocks_closing(c: Customer) -> bool:
 		and has_something_left_to_sell(c)
 
 
+## Whether `c` will not sign yet for want of more products - they have agreed to
+## fewer than CustomerArchetype.min_products_to_sign and you still hold something
+## to sell them. The same way out as a budget's: a deck with nothing more for them
+## signs them as they are.
+func needs_more_products(c: Customer) -> bool:
+	return c != null and c.archetype.min_products_to_sign > 0 \
+		and c.unsigned.size() < c.archetype.min_products_to_sign \
+		and has_something_left_to_sell(c)
+
+
+## Whether anything but a refusal of their own is in the way of signing `c` - what
+## the table asks before it offers to close.
+func signing_blocked(c: Customer) -> bool:
+	return budget_blocks_closing(c) or needs_more_products(c)
+
+
 ## Whether any product you hold - in hand, in either pile, or on their table - is
 ## one `c` has not taken and will look at.
 func has_something_left_to_sell(c: Customer) -> bool:
@@ -1477,6 +1537,10 @@ func close() -> Result:
 		return Result.new(false,
 			"%s still has $%d to spend - keep selling until it is all gone."
 			% [c.display_name, c.budget_left()])
+	if needs_more_products(c):
+		return Result.new(false,
+			"%s will not sign for fewer than %d products - that is %d so far."
+			% [c.display_name, c.archetype.min_products_to_sign, c.unsigned.size()])
 	# Exactly the promise the demand's own telegraph makes - "bought something
 	# in <category>" - and nothing stricter. See Customer.owns_category()'s
 	# own comment: a hidden priority-within-category threshold used to sit
@@ -2010,6 +2074,8 @@ func _standing_delta() -> int:
 	## term is added here because margin_banked is not final until report() is
 	## actually called - it cannot be evaluated any earlier than this. So is the
 	## shift's own heal, for the same reason.
+	if testing_skip:
+		return 0
 	return (standing - _initial_standing) + _standing_delta_from_quota() + healed() \
 		- category_quota_cost()
 

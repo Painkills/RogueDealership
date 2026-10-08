@@ -85,6 +85,7 @@ func _process(_delta: float) -> bool:
 		_check_the_week_report_comes_between_weeks()
 		_check_run_summary_screen_appears_at_the_end_of_a_run()
 		_check_the_fired_title_is_distinct_from_a_completed_run()
+		_check_the_testing_skip_costs_no_standing()
 		_check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss()
 		PlayerProfile.reset()
 		_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
@@ -975,6 +976,8 @@ func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() ->
 		profile != null and profile.is_boss_day() and run.todays_shifts().has(profile)
 			and not _root._picker_view.visible and _root._shift_view._shift != null)
 	_check("and nothing leaves the store open behind it", not _root._shop_view.visible)
+	_check("the fight is the only thing on the last day's calendar (%d offered)"
+		% run.todays_shifts().size(), run.todays_shifts().size() == 1)
 	_check_the_boss_fights_folders_say_what_is_happening(_root._shift_view)
 	_check_a_product_the_boss_buys_leaves_the_table(_root._shift_view)
 	_root._on_shift_finished(_root._shift_view._shift.report())
@@ -1048,6 +1051,29 @@ func _check_the_boss_fights_folders_say_what_is_happening(floor_view) -> void:
 	_check("neither folder is a seat to turn to",
 		shift.chairs.size() <= mini(left, right) and not shift.approach(left).ok
 			and not shift.approach(right).ok)
+
+## "Ensure that I take no standing damage when I use the shortcut to end a shift
+## early for testing": Ctrl+E (or a tap over the tick counter) on a real floor,
+## customers and clock and all, and the run's standing is exactly what it was.
+func _check_the_testing_skip_costs_no_standing() -> void:
+	_root._new_run()
+	var run: RunState = _root._run
+	var profile: ShiftProfile = run.todays_shifts()[0]
+	var shift: Shift = run.start_shift(profile)
+	_root._chosen_profile = profile
+	_root._show_only(_root._shift_view)
+	_root._shift_view.setup(shift, run.standing)
+	var before := run.standing
+	_root._shift_view._debug_skip_shift()
+	var report := shift.report()
+	_check("the skip ends the shift", shift.is_over())
+	_check("the shift's own standing is untouched (%d of %d)" % [shift.standing, before],
+		shift.standing == before)
+	_check("and so is what it hands the run (%d)" % int(report["standing_delta"]),
+		int(report["standing_delta"]) == 0 and int(report["standing_lost_to_walkouts"]) == 0)
+	_root._on_shift_finished(report)
+	_check("the run's standing is as it was (%d, was %d)" % [_root._run.standing, before],
+		_root._run.standing == before)
 
 ## What the boss buys leaves the deck for the fight - and its card leaves the table
 ## with it, rather than sitting in front of their folder with nowhere to go.

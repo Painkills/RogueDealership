@@ -10,4 +10,5 @@ display_name = "Final boss, the last Friday"
 days = 16
 weeks = 2
 boss_day = true
+takes_the_day = true
 shifts = Array[ExtResource("2_prof")]([ExtResource("3_whale")])

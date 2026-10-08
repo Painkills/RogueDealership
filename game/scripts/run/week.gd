@@ -172,7 +172,13 @@ static func _seat_the_boss(out: Array[ShiftProfile], boss: Dictionary,
 		return
 	var at: int = places[rng.randi_range(0, places.size() - 1)]
 	boss["slot"] = out[at].worked_at()
-	out[at] = _dealt(boss, (boss["shift"] as ShiftProfile).duplicate() as ShiftProfile)
+	var fight := _dealt(boss, (boss["shift"] as ShiftProfile).duplicate() as ShiftProfile)
+	# A boss that takes the whole day is the one thing offered.
+	if category.takes_the_day:
+		out.clear()
+		out.append(fight)
+		return
+	out[at] = fight
 
 ## Every premade shift that may be dealt on `day` - boss days' or the rest's -
 ## as {shift, category, slot}. A boss day takes a slot of its own category's

@@ -153,6 +153,76 @@ func test_a_boss_takes_the_place_of_one_of_the_days_shifts() -> void:
 				placed[p.worked_at()] = true
 	h.eq("a boss allowed only at night is only ever dealt at night", placed.keys(), [&"night"])
 
+func test_a_boss_that_takes_the_day_is_the_only_thing_offered() -> void:
+	var pool := _tiers()
+	var solo := _category(1 << 0, 0, true, [1.0])
+	solo.takes_the_day = true
+	pool.categories.append(solo)
+	var week := Week.new(pool, 5, 1)
+	var monday := week.offers(1)
+	h.eq("one shift on the calendar", monday.size(), 1)
+	h.check("and it is the boss", monday[0].is_boss_day())
+	h.eq("Tuesday is the tiers again", week.offers(2), pool.profiles)
+	# Without the flag it is one choice of three, as before.
+	var shared := _tiers()
+	shared.categories.append(_category(1 << 0, 0, true, [1.0]))
+	h.eq("a boss that does not take the day is one of three",
+		Week.new(shared, 5, 1).offers(1).size(), shared.profiles.size())
+
+# -------------------------------------------------------------- the queue
+func test_the_queue_shows_the_rest_of_a_lineup_in_order() -> void:
+	var cfg := _cfg()
+	cfg.waiting_max = 4
+	var order: Array = _some(5)
+	var s := _shift(cfg, [], order, 2)
+	h.eq("who has not come in yet, in order", _ids(s.upcoming()), _ids(order.slice(2)))
+	for c in s.seated():
+		c.patience = 999
+	s._burn(1, "cards")
+	h.eq("one fewer once they have", _ids(s.upcoming()), _ids(order.slice(3)))
+	s._burn(10, "cards")
+	h.check("and nobody once they all have", s.upcoming().is_empty())
+
+func test_the_queue_shows_who_the_door_sends_next() -> void:
+	var s := _shift(_cfg(), [], [], 0)
+	s._pick_archetype()
+	var shown: Array = s.upcoming()
+	h.eq("one is shown", shown.size(), 1)
+	h.eq("and it is the one who comes", s._pick_archetype(), shown[0])
+	h.eq("then the one after", s.upcoming().size(), 1)
+
+func test_who_is_shown_coming_never_doubles_a_hard_archetype_already_waiting() -> void:
+	var cfg := _cfg()
+	cfg.waiting_max = 99
+	var s := _shift(cfg, [], [], 0)
+	var doubled := false
+	var seen := {}
+	for c in s.seated():
+		if c.archetype.hard:
+			seen[c.archetype.id] = true
+	for _i in range(15):
+		var shown: Array = s.upcoming()
+		var a: CustomerArchetype = s._pick_archetype()
+		if not shown.is_empty() and shown[0] != a:
+			doubled = true
+		if a.hard and seen.has(a.id):
+			doubled = true
+		if a.hard:
+			seen[a.id] = true
+		s.waiting.append(a)
+	h.check("nobody comes who was not shown, and no hard one comes twice", not doubled)
+
+func test_nobody_is_shown_who_the_bell_comes_before() -> void:
+	var cfg := _cfg()
+	var s := _shift(cfg, [], [], 0)
+	s._pick_archetype()
+	h.check("someone is on their way early in the day", not s.upcoming().is_empty())
+	s.next_arrival = s.tick_budget - s.tick
+	h.check("none when the next is due after the bell", s.upcoming().is_empty())
+	s.waiting.assign(_some(cfg.waiting_max))
+	h.check("unless the list is full: that clock is stopped, so who knows",
+		not s.upcoming().is_empty())
+
 # ------------------------------------------------------- dealt by difficulty
 ## Made-up archetypes worth 1, 2 and 3 points, open from week 1.
 func _points_pool() -> ArchetypePool:

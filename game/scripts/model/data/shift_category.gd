@@ -17,6 +17,10 @@ const SLOTS: Array[StringName] = [&"morning", &"midday", &"night"]
 ## at random (see Week) - a choice on the calendar, marked as a boss. A boss
 ## shift carries no product quota; it is its own test.
 @export var boss_day: bool = false
+## A boss day on which the boss is the only thing on the calendar: the regular
+## shifts are not offered at all, so there is nothing to pick but the fight. The
+## final boss's.
+@export var takes_the_day: bool = false
 ## Weeks of the run its shifts may be dealt in. None ticked = any week - a
 ## shift tuned for week one (a fixed quota, say) ticks only Week 1.
 @export_flags("Week 1", "Week 2", "Week 3", "Week 4") var weeks: int = 0

@@ -12,7 +12,9 @@ class_name PhotoFrame extends Control
 ## and the silhouette reuses CategoryIcon's own person glyph so "a person" is
 ## drawn one way everywhere in the game.
 
-const RADIUS := 22
+## The tile's corner, as a share of its side - 22 px on the folder's 150, and
+## the same shape on the small copy the queue shows.
+const RADIUS_SHARE := 0.147
 
 ## ArchetypeIcon's name for the glyph to draw. Empty, or a name with no glyph:
 ## the silhouette.
@@ -27,7 +29,7 @@ func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size)
 	var tile := StyleBoxFlat.new()
 	tile.bg_color = ArchetypeIcon.tile_color(icon)
-	tile.set_corner_radius_all(RADIUS)
+	tile.set_corner_radius_all(roundi(minf(size.x, size.y) * RADIUS_SHARE))
 	draw_style_box(tile, r)
 	if ArchetypeIcon.has(icon):
 		ArchetypeIcon.draw(self, r, icon)

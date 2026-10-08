@@ -46,6 +46,11 @@ class_name CustomerArchetype extends Resource
 ## Customer.reveal_room()). The Karen's - they came in for a category. Off:
 ## ranked interest by interest, at random.
 @export var ranks_by_category: bool = false
+## Will not sign for fewer than this many products (Shift.close()): the first is
+## not enough for them. Never in the way of a deck with nothing more to sell them
+## (Shift.needs_more_products()), so nobody is stuck in the chair. 0 = signs for
+## whatever they have agreed to.
+@export var min_products_to_sign: int = 0
 ## Sits down with this share of their patience - 0.5 is half. 0 = the usual
 ## arrival roll (ShiftConfig.arrival_patience_min_fraction).
 @export var arrival_patience_share: float = 0.0

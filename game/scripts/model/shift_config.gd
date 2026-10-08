@@ -82,7 +82,9 @@ func category_quota_in_week(week: int) -> int:
 ## letting people leave should threaten the job by itself, not only a thin
 ## till. Uniform per walkout regardless of who they were or what they had
 ## unsigned - a guess like every other standing number, not measured play.
-@export var standing_cost_per_walkout: int = 8
+## Raised from 8: a customer let go should cost nearly as much as missing a
+## quota by a little.
+@export var standing_cost_per_walkout: int = 15
 
 @export var hand_size: int = 5
 ## A hand with no product in it is nearly a dead turn: needs_offer defaults to

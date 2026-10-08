@@ -28,6 +28,9 @@ func _sell(s: Shift, chair: int, def: CardDef) -> void:
 	s.at = chair
 	var c: Customer = s.chairs[chair]
 	c.line = 0
+	# Whoever the door happened to send: this is about the quota, not about them -
+	# and a customer who wants more than the one product would not sign.
+	c.archetype = CustomerArchetype.new()
 	s.hand.clear()
 	s.hand.append(CardInstance.new(def, 900 + chair))
 	s.place(0)
