@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_margin.gd" id="2_mar"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_standing.gd" id="3_std"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_def"]
+
+[sub_resource type="Resource" id="Margin_base"]
+script = ExtResource("2_mar")
+amount = 300
+
+[sub_resource type="Resource" id="Standing_base"]
+script = ExtResource("3_std")
+amount = -1
+
+[sub_resource type="Resource" id="Margin_up"]
+script = ExtResource("2_mar")
+amount = 600
+
+[sub_resource type="Resource" id="Standing_up"]
+script = ExtResource("3_std")
+amount = -2
+
+[resource]
+script = ExtResource("4_def")
+player_dialogue_tags = Array[StringName]([&"player_pad"])
+id = &"bump"
+display_name = "Bump the Price"
+text = "A little more, said quickly. The house notices."
+ticks = 0
+rarity = 2
+dialogue_tags = Array[StringName]([&"padding"])
+effects = Array[ExtResource("1_eff")]([SubResource("Margin_base"), SubResource("Standing_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Margin_up"), SubResource("Standing_up")])

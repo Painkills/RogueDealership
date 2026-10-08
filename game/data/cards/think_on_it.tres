@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_appeal.gd" id="2_app"]
+[ext_resource type="Script" path="res://scripts/model/effects/linger.gd" id="3_lin"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_def"]
+
+[sub_resource type="Resource" id="Appeal_base"]
+script = ExtResource("2_app")
+amount = 2
+
+[sub_resource type="Resource" id="Linger_base"]
+script = ExtResource("3_lin")
+inner = SubResource("Appeal_base")
+ticks = 4
+stops_on_card = true
+
+[sub_resource type="Resource" id="Appeal_up"]
+script = ExtResource("2_app")
+amount = 3
+
+[sub_resource type="Resource" id="Linger_up"]
+script = ExtResource("3_lin")
+inner = SubResource("Appeal_up")
+ticks = 4
+stops_on_card = true
+
+[resource]
+script = ExtResource("4_def")
+id = &"thinkonit"
+display_name = "Think on it"
+text = "Give them a minute with it. Do not hover."
+ticks = 1
+rarity = 2
+effects = Array[ExtResource("1_eff")]([SubResource("Linger_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Linger_up")])

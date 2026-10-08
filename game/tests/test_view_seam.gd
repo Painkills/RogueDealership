@@ -52,12 +52,57 @@ func test_dropping_on_the_customer_you_are_already_with_just_plays() -> void:
 	h.eq("command", plan["command"], DropRouter.PLAY)
 	h.eq("no approach needed - you are already there", plan["approach"], -1)
 
+## A made-up support card in hand[0], worth whatever `effects` say.
+func _hold_support(s: Shift, effects: Array) -> void:
+	var d := SupportCardDef.new()
+	d.id = &"made_up"
+	d.display_name = "Made-up"
+	d.needs_offer = false
+	d.effects.assign(effects)
+	s.hand[0] = CardInstance.new(d, 777)
+
 func test_dropping_on_a_different_customer_approaches_first() -> void:
+	## Anything that works on what is on the table in front of you - appeal, here.
 	var s := _shift([&"easygoing", &"easygoing", &"easygoing"])
 	s.approach(0)
+	var appeal := ChangeAppeal.new()
+	appeal.amount = 4
+	_hold_support(s, [appeal])
 	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.chair_zone(2))
 	h.eq("command", plan["command"], DropRouter.PLAY)
 	h.eq("approach chair 2 first", plan["approach"], 2)
+	h.eq("and not played from where you are", plan["chair"], -1)
+
+func test_a_patience_card_dropped_on_somebody_else_plays_there_without_moving_you() -> void:
+	var s := _shift([&"easygoing", &"easygoing", &"easygoing"])
+	s.approach(0)
+	var patience := ChangePatience.new()
+	patience.amount = 3
+	_hold_support(s, [patience])
+	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.chair_zone(2))
+	h.eq("command", plan["command"], DropRouter.PLAY)
+	h.eq("no walk over", plan["approach"], -1)
+	h.eq("played on chair 2", plan["chair"], 2)
+
+func test_a_product_dropped_on_somebody_else_plays_there_without_moving_you() -> void:
+	var s := _shift([&"easygoing", &"easygoing", &"easygoing"])
+	s.approach(0)
+	for def in s.card_pool.cards:
+		if def is ProductCardDef:
+			s.hand[0] = CardInstance.new(def, 778)
+			break
+	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.chair_zone(1))
+	h.eq("no walk over", plan["approach"], -1)
+	h.eq("played on chair 1", plan["chair"], 1)
+
+func test_dropping_on_the_customer_you_are_with_never_names_a_chair() -> void:
+	var s := _shift()
+	s.approach(0)
+	var patience := ChangePatience.new()
+	patience.amount = 3
+	_hold_support(s, [patience])
+	var plan := DropRouter.plan(s, s.hand[0].uid, CardHomes.chair_zone(0))
+	h.eq("you are already there", plan["chair"], -1)
 
 func test_dropping_on_the_discard_digs() -> void:
 	var s := _shift()

@@ -929,6 +929,9 @@ func _apply_framing() -> void:
 	var station := station_for(int(_shift.at) if seated else _last_station)
 	if seated:
 		_last_station = int(_shift.at)
+	# Turn the short way round: seat 3 to seat 1 is one step, not a swing back
+	# through seat 2 - the same angle, the nearest one to where it is now.
+	station = CarouselTurn.nearest(_carousel.rotation.y, station)
 
 	# NOBODY IS HIDDEN ANY MORE. The carousel turns instead, so the two you are
 	# not with fall away to either side - smaller because they are further off,
@@ -1273,6 +1276,9 @@ func _show_what_they_did(entry: Dictionary) -> void:
 	var line := int(fx.get("line", 0))
 	if line != 0:
 		notes.append("Line %+d" % line)
+	var appeal := int(fx.get("appeal", 0))
+	if appeal != 0:
+		notes.append("%+d appeal" % appeal)
 	if bool(entry.get("floor_wide", false)):
 		notes.append("WHOLE FLOOR: " + ", ".join(entry.get("descriptions", [])))
 	if not notes.is_empty():
@@ -1658,6 +1664,10 @@ func _drain_log() -> void:
 		if bool(entry.get("chatter", false)):
 			continue
 		_show_what_they_did(entry)
+		# A tick of something already said (Linger): the number rises off the
+		# folder, and the log keeps its one line.
+		if bool(entry.get("quiet", false)):
+			continue
 		var color := Palette.hex(&"alert") if entry["floor_wide"] else Palette.hex(&"action")
 		_event_log.append_text("[color=%s]>> %s (%s): %s - %s[/color]\n"
 			% [color, entry["customer"], entry["key"], entry["name"],
@@ -1846,7 +1856,8 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 		_render()
 		return
 
-	_apply(_shift.dig(idx) if command == DropRouter.DIG else _shift.play_card(idx))
+	_apply(_shift.dig(idx) if command == DropRouter.DIG \
+		else _shift.play_card(idx, int(plan["chair"])))
 
 func _zone_name_of(collection) -> StringName:
 	for i in range(_chair_zones.size()):

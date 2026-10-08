@@ -456,6 +456,14 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 				money += inner.amount
 			if inner is ChangeAppeal:
 				appeal += inner.amount
+			# Plus Service Fee: so much a product they have already taken.
+			if inner is MarginPerProductTaken:
+				money += inner.amount * c.unsigned.size()
+			# Good Will: only when the sim can see how far over the Line it is.
+			if inner is ConvertSurplusAppeal and _gap_known(c) and c.offer != null:
+				var over := maxi(0, c.offer.appeal - c.line)
+				money += over * inner.amount
+				appeal -= over
 		if money <= 0:
 			continue
 		if _gap_known(c):
@@ -506,6 +514,10 @@ static func _find(s: Shift, what: String) -> int:
 		for e in def.effects:
 			if what == "patience" and (e is ChangePatience or e is ChangePatienceFloor) \
 					and e.amount > 0:
+				return i
+			# A coffee: patience over a few ticks.
+			if what == "patience" and e is Linger and e.inner is ChangePatience \
+					and e.inner.amount > 0:
 				return i
 			if what == "concession" and e is ChangeMargin and e.amount < 0:
 				return i

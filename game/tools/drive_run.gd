@@ -490,9 +490,20 @@ func _check_the_store_holds_what_the_shift_stocks() -> void:
 	var shelf_on := (_root._shop_view.get_node(^"%ShelfSection") as Control).visible
 	var deck_on := (_root._shop_view.get_node(^"%DeckSection") as Control).visible
 	var empty_on := (_root._shop_view.get_node(^"%StoreEmptyNote") as Control).visible
-	_check("each aisle shows only when the shift stocks it (for sale %s, upgrades %s)"
-		% [shelf_on, deck_on],
-		shelf_on == (shop.cards_for_sale > 0) and deck_on == (shop.upgrades > 0))
+	var paged: bool = shop.cards_for_sale > 0 and shop.upgrades > 0 \
+		and shop.cards_for_sale + shop.upgrades > _root._shop_view.SIDE_BY_SIDE_MOST
+	if paged:
+		# Too many to fit across the page: one aisle at a time, with the buttons
+		# that turn between them.
+		var aisle: StringName = _root._shop_view._aisle
+		_check("a store too big for both aisles shows one at a time (for sale %s, upgrades %s)"
+			% [shelf_on, deck_on], shelf_on == (aisle == &"shelf") and deck_on == (aisle == &"deck")
+				and _root._shop_view._aisle_tabs.visible)
+	else:
+		_check("each aisle shows only when the shift stocks it (for sale %s, upgrades %s)"
+			% [shelf_on, deck_on],
+			shelf_on == (shop.cards_for_sale > 0) and deck_on == (shop.upgrades > 0)
+				and not _root._shop_view._aisle_tabs.visible)
 	_check("and a shift that stocks neither says so instead",
 		empty_on == (shop.cards_for_sale == 0 and shop.upgrades == 0))
 

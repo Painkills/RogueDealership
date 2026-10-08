@@ -20,3 +20,7 @@ var appeal_bonus: int = 0
 ## Multiplies any Line a card of yours LOWERS - the dealership's upgrades for
 ## that card's brand (see Shift._yours()). 1.0 for everything else.
 var line_drop_scale: float = 1.0
+## The card of yours that is being played, for an effect that outlasts it
+## (Linger) - null for everything a customer does. Untyped, like the rest, for
+## the same cycle.
+var card = null                 # CardDef

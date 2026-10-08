@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/margin_per_product_taken.gd" id="2_fee"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Fee_base"]
+script = ExtResource("2_fee")
+amount = 100
+
+[sub_resource type="Resource" id="Fee_up"]
+script = ExtResource("2_fee")
+amount = 150
+
+[resource]
+script = ExtResource("3_def")
+player_dialogue_tags = Array[StringName]([&"player_pad"])
+id = &"servicefee"
+display_name = "Plus Service Fee"
+text = "Prep, paperwork, handling. Every product has one, and so does the next."
+ticks = 1
+rarity = 2
+dialogue_tags = Array[StringName]([&"padding"])
+effects = Array[ExtResource("1_eff")]([SubResource("Fee_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Fee_up")])

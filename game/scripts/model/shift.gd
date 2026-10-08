@@ -343,6 +343,11 @@ func _burn(n: int, kind: String) -> void:
 	for c in seated():
 		c.patience -= n
 		c.ticks_on_floor += n
+	# What your cards are still doing to them, a tick at a time - after the
+	# patience each tick takes, so a coffee can save somebody at 0.
+	for _i in range(n):
+		for c in seated():
+			_tick_lingering(c)
 
 	# Standing with someone while the clock moves IS doing something to them -
 	# it is precisely what "give us a minute" is asking you not to do.
@@ -918,22 +923,61 @@ func _ticks_until_the_door_opens() -> int:
 	return maxi(1, left if door_closed() else mini(left, next_arrival))
 
 
-func play_card(index: int) -> Result:
-	var pair := _here()
+## [customer, refusal] for somebody in chair `chair` that you are NOT standing
+## with - the target of quick play (can_play_away()). Never moves you.
+func _there(chair: int) -> Array:
+	if is_over():
+		return [null, Result.new(false, "The floor is closed.")]
+	if pending_pull != null:
+		return [null, Result.new(false, PULL_FIRST)]
+	if chair < 0 or chair >= chairs.size():
+		return [null, Result.new(false, "No such chair.")]
+	if chairs[chair] == null:
+		return [null, Result.new(false, "Nobody is sitting there.")]
+	return [chairs[chair], null]
+
+
+## Whether `chair` is somebody other than who you are standing with.
+func _is_away(chair: int) -> bool:
+	return chair >= 0 and (at == null or chair != int(at))
+
+
+## A card you may play on someone you are not standing with, to keep things
+## moving: a product, which is put on their table to read later, and a card that
+## only gives patience. Anything that works on what is on the table in front of
+## you - appeal, margin - waits until you walk over.
+func can_play_away(inst: CardInstance) -> bool:
+	if inst == null:
+		return false
+	if inst.is_product():
+		return true
+	return inst.card is SupportCardDef and (inst.card as SupportCardDef).is_patience_card()
+
+
+## Plays the card at `index` on whoever you are standing with - or, given a
+## `chair`, on that customer without going to them (can_play_away() cards only).
+func play_card(index: int, chair: int = -1) -> Result:
+	var away := _is_away(chair)
+	var pair := _there(chair) if away else _here()
 	if pair[1] != null:
 		return pair[1]
 	if index < 0 or index >= hand.size():
 		return Result.new(false, "No such card.")
+	if away and not can_play_away(hand[index]):
+		return Result.new(false, "Go and stand with %s first: %s works on what is in front of you."
+			% [pair[0].display_name, hand[index].card.display_name])
 	if hand[index].is_product():
-		return place(index)
+		return place(index, chair)
 	return _support(pair[0], index)
 
 
-func place(index: int) -> Result:
+func place(index: int, chair: int = -1) -> Result:
 	## Costs a tick and shows only a BAND. Placing is the price of information
 	## here - reading a priority list by putting products in front of people
-	## costs the same as any other read in the game.
-	var pair := _here()
+	## costs the same as any other read in the game. On `chair`'s customer, when
+	## that is not who you are standing with: it goes on their table, and you
+	## stay where you are.
+	var pair := _there(chair) if _is_away(chair) else _here()
 	if pair[1] != null:
 		return pair[1]
 	var c: Customer = pair[0]
@@ -954,6 +998,7 @@ func place(index: int) -> Result:
 	if not c.accepts(inst.card as ProductCardDef):
 		return Result.new(false, "%s will only look at %s products."
 			% [c.display_name, c.archetype.only_category.display_name])
+	_card_played_on(c)
 	if c.next_card_rejected():
 		return _reject(c, index, cfg.place_ticks)
 	c.cards_since_rejection += 1
@@ -1138,6 +1183,7 @@ func _support(c: Customer, index: int) -> Result:
 	if def.needs_offer and c.offer == null:
 		return Result.new(false, "%s needs something on the table."
 			% def.display_name)
+	_card_played_on(c)
 	if c.next_card_rejected():
 		return _reject(c, index, inst.ticks())
 	c.cards_since_rejection += 1
@@ -1593,6 +1639,7 @@ func _snapshot(c: Customer) -> Dictionary:
 	return {"unsigned": c.unsigned_margin(),
 		"offer_margin": c.offer.margin if c.offer else 0,
 		"standing": standing, "patience": c.patience, "line": c.line,
+		"appeal": c.offer.appeal if c.offer else 0,
 		"offer": c.offer.instance.uid if c.offer else -1}
 
 
@@ -1612,13 +1659,68 @@ func _fx_since(before: Dictionary, c: Customer) -> Dictionary:
 	# the table. A product leaving the table - swept, or sold into `unsigned` -
 	# is not money gained or lost by itself.
 	var money: int = int(now["unsigned"]) - int(before["unsigned"])
+	var appeal := 0
 	if int(before["offer"]) >= 0 and int(before["offer"]) == int(now["offer"]):
 		money += int(now["offer_margin"]) - int(before["offer_margin"])
+		appeal = int(now["appeal"]) - int(before["appeal"])
 	return {"margin": money,
 		"standing": standing - int(before["standing"]),
 		"patience": int(now["patience"]) - int(before["patience"]),
 		"line": int(now["line"]) - int(before["line"]),
+		"appeal": appeal,
 		"swept": swept}
+
+
+## One tick of whatever your cards are still doing to `c` (Linger): each effect
+## lingering on them happens once more, shown as a rise off their folder and not
+## a line in the log (the card's own line said what it would do), and goes when
+## its ticks are used up. One that has only just been played waits for the next
+## tick.
+func _tick_lingering(c: Customer) -> void:
+	if c.lingering.is_empty():
+		return
+	var keep: Array[Dictionary] = []
+	for s in c.lingering:
+		if bool(s["fresh"]):
+			s["fresh"] = false
+			keep.append(s)
+			continue
+		var before := _snapshot(c)
+		var card: CardDef = s["card"]
+		(s["inner"] as Effect).apply(_yours(c, card))
+		s["ticks_left"] = int(s["ticks_left"]) - 1
+		action_log.append({
+			"key": c.key,
+			"customer": c.display_name,
+			"name": card.display_name if card != null else "",
+			"dialogue": "",
+			"descriptions": [(s["inner"] as Effect).describe()],
+			"floor_wide": false,
+			"quiet": true,
+			"fx": _fx_since(before, c),
+		})
+		if int(s["ticks_left"]) > 0:
+			keep.append(s)
+		else:
+			events.append("[%s] %s wears off on %s." % [c.key,
+				card.display_name if card != null else "It", c.display_name])
+	c.lingering = keep
+
+
+## You played a card on `c`: whatever of your cards was waiting for exactly that
+## to stop - Linger.stops_on_card - stops, and what it had done stays done.
+func _card_played_on(c: Customer) -> void:
+	if c.lingering.is_empty():
+		return
+	var keep: Array[Dictionary] = []
+	for s in c.lingering:
+		if bool(s["stops_on_card"]):
+			var card: CardDef = s["card"]
+			events.append("[%s] %s stops: you played another card on %s." % [c.key,
+				card.display_name if card != null else "It", c.display_name])
+		else:
+			keep.append(s)
+	c.lingering = keep
 
 
 ## The context for one of YOUR cards or products - the same as _context(), plus
@@ -1626,6 +1728,7 @@ func _fx_since(before: Dictionary, c: Customer) -> Dictionary:
 ## actions and demands never get it.
 func _yours(c: Customer, card: CardDef = null) -> EffectContext:
 	var ctx := _context(c)
+	ctx.card = card
 	ctx.appeal_bonus = int(perk(&"appeal_per_card"))
 	# Bigger Line drops for the card's own brand, from every upgrade that
 	# singles it out (or every card, with no brand named).

@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
+[ext_resource type="Script" path="res://scripts/model/effects/linger.gd" id="3_lin"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_def"]
+
+[sub_resource type="Resource" id="Patience_base"]
+script = ExtResource("2_pat")
+amount = 2
+
+[sub_resource type="Resource" id="Linger_base"]
+script = ExtResource("3_lin")
+inner = SubResource("Patience_base")
+ticks = 4
+
+[sub_resource type="Resource" id="Patience_up"]
+script = ExtResource("2_pat")
+amount = 3
+
+[sub_resource type="Resource" id="Linger_up"]
+script = ExtResource("3_lin")
+inner = SubResource("Patience_up")
+ticks = 4
+
+[resource]
+script = ExtResource("4_def")
+player_dialogue_tags = Array[StringName]([&"player_smalltalk"])
+needs_offer = false
+id = &"coffee"
+display_name = "Can I get you a coffee?"
+text = "A warm cup and a comfortable chair. They are in no hurry now."
+ticks = 1
+rarity = 2
+dialogue_tags = Array[StringName]([&"patience"])
+effects = Array[ExtResource("1_eff")]([SubResource("Linger_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Linger_up")])

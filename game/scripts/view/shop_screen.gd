@@ -48,8 +48,21 @@ signal view_deck_requested
 @onready var _account: Label = %AccountLabel
 
 var _shop: Shop
+## Past this many cards across both aisles they no longer fit side by side, and the
+## store shows one aisle at a time, with a button for each - see
+## _lay_out_the_aisles(). Eight is what the page holds at full size.
+const SIDE_BY_SIDE_MOST := 8
+## Which aisle a paged store is showing: &"shelf" or &"deck".
+var _aisle: StringName = &"shelf"
+var _aisle_tabs: HBoxContainer
+var _shelf_tab: Button
+var _deck_tab: Button
+## The aisles' own titles, which the buttons stand in for while the store is paged.
+var _shelf_title: Control
+var _deck_title: Control
 
 func _ready() -> void:
+	_build_aisle_tabs()
 	_done.pressed.connect(func(): done.emit())
 	_view_deck.pressed.connect(func(): view_deck_requested.emit())
 	_detail.action_taken.connect(_apply)
@@ -85,6 +98,7 @@ func _debug_add_money() -> void:
 
 func setup(shop: Shop) -> void:
 	_shop = shop
+	_aisle = &"shelf"
 	_log.text = ""
 	_detail.visible = false
 	_render()
@@ -173,6 +187,65 @@ func _lay_out_the_aisles() -> void:
 	_shelf_section.size_flags_stretch_ratio = maxf(1.0, float(_shop.cards_for_sale))
 	_deck_section.size_flags_stretch_ratio = maxf(1.0, float(_shop.upgrades))
 	_store_empty.visible = not shelf_on and not deck_on
+	# Too many to fit across the page together: one aisle at a time, full size.
+	var paged := shelf_on and deck_on \
+		and _shop.cards_for_sale + _shop.upgrades > SIDE_BY_SIDE_MOST
+	_aisle_tabs.visible = paged
+	_shelf_title.visible = true
+	_deck_title.visible = true
+	if paged:
+		_shelf_section.visible = _aisle == &"shelf"
+		_deck_section.visible = _aisle == &"deck"
+		# The buttons stand where the shown aisle's own title does, so the page is
+		# no taller for them.
+		var shown_section := _shelf_section if _aisle == &"shelf" else _deck_section
+		var column := shown_section.get_node(^"Column") as Control
+		if _aisle_tabs.get_parent() != column:
+			if _aisle_tabs.get_parent() != null:
+				_aisle_tabs.get_parent().remove_child(_aisle_tabs)
+			column.add_child(_aisle_tabs)
+		column.move_child(_aisle_tabs, 0)
+		(_shelf_title if _aisle == &"shelf" else _deck_title).visible = false
+		_shelf_tab.text = "FOR SALE  %d" % _shop.offers.size()
+		_deck_tab.text = "UPGRADE YOUR CARDS  %d" % _shop.upgrade_offers.size()
+		_dress_aisle_tab(_shelf_tab, _aisle == &"shelf")
+		_dress_aisle_tab(_deck_tab, _aisle == &"deck")
+
+## The two buttons that turn between the aisles of a store too big for both at
+## once. Built here rather than in the scene: they are only ever on show then, and
+## shop.tscn is a builder's output.
+func _build_aisle_tabs() -> void:
+	_shelf_title = _shelf_section.get_node(^"Column").get_child(0)
+	_deck_title = _deck_section.get_node(^"Column").get_child(0)
+	_aisle_tabs = HBoxContainer.new()
+	_aisle_tabs.name = "AisleTabs"
+	_aisle_tabs.add_theme_constant_override("separation", 14)
+	_aisle_tabs.visible = false
+	_shelf_section.get_node(^"Column").add_child(_aisle_tabs)
+	_shelf_tab = _aisle_tab(&"shelf")
+	_deck_tab = _aisle_tab(&"deck")
+
+func _aisle_tab(which: StringName) -> Button:
+	var b := Button.new()
+	b.name = "AisleTab_%s" % which
+	b.custom_minimum_size = Vector2(0, 30)
+	b.add_theme_font_size_override("font_size", 18)
+	b.pressed.connect(func():
+		_aisle = which
+		_render())
+	_aisle_tabs.add_child(b)
+	return b
+
+func _dress_aisle_tab(b: Button, shown: bool) -> void:
+	if shown:
+		ButtonStyle.filled(b, Palette.color(&"primary"))
+	else:
+		ButtonStyle.outlined(b, Palette.color(&"primary"))
+	# No taller than the title they stand in for.
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		var box := b.get_theme_stylebox(state) as StyleBoxFlat
+		box.content_margin_top = 2
+		box.content_margin_bottom = 2
 
 ## One dealership upgrade on offer: its name and what it does, the whole tile a
 ## button that takes it.

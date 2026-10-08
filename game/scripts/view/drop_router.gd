@@ -16,8 +16,10 @@ const DIG := &"dig"         ## dig() - discard it and draw
 const IGNORE := &"ignore"   ## cosmetic, no model call, no bounce
 const NONE := &"none"       ## refuse and bounce; `reason` says why
 
-## Returns {"command": StringName, "approach": int, "reason": String}
-## `approach` is -1 when no move is needed.
+## Returns {"command": StringName, "approach": int, "reason": String, "chair": int}
+## `approach` is -1 when no move is needed. `chair` is -1 unless the card is to be
+## played on somebody you are not standing with, without going to them: a product
+## or a patience card (Shift.can_play_away()); anything else walks you over first.
 static func plan(shift: Shift, uid: int, target: StringName) -> Dictionary:
 	if target == CardHomes.ZONE_HAND:
 		return _result(IGNORE)
@@ -34,9 +36,12 @@ static func plan(shift: Shift, uid: int, target: StringName) -> Dictionary:
 			return _result(NONE, -1, "There is no such chair.")
 		# shift.at is null on the floor, so compare only when standing somewhere.
 		var needs_move: bool = shift.at == null or int(shift.at) != chair
+		if needs_move and shift.can_play_away(shift.hand[CardIndex.of(shift, uid)]):
+			return _result(PLAY, -1, "", chair)
 		return _result(PLAY, chair if needs_move else -1)
 
 	return _result(NONE, -1, "You cannot put a card there.")
 
-static func _result(command: StringName, approach: int = -1, reason: String = "") -> Dictionary:
-	return {"command": command, "approach": approach, "reason": reason}
+static func _result(command: StringName, approach: int = -1, reason: String = "",
+		chair: int = -1) -> Dictionary:
+	return {"command": command, "approach": approach, "reason": reason, "chair": chair}

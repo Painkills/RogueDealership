@@ -18,5 +18,5 @@ blurb = "Busy. Everyone's on a shorter fuse."
 patience_scale = 0.8
 excluded_archetypes = Array[ExtResource("2_arch")]([ExtResource("3_karen"), ExtResource("4_skeptic")])
 from_day = 2
-cards_for_sale = 5
-upgrades = 0
+cards_for_sale = 6
+upgrades = 6

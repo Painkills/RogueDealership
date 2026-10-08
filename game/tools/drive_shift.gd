@@ -176,6 +176,8 @@ func _physics_process(_delta: float) -> bool:
 	_check_a_skeptic_warns_before_waving_a_card_off()
 	_check_a_boss_fight_shows_its_move_its_budget_and_what_lands()
 	_check_a_walkout_is_hard_to_miss()
+	_check_a_product_and_a_patience_card_play_on_the_customer_beside_you()
+	_check_the_table_turns_the_short_way()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
@@ -993,7 +995,7 @@ func _check_the_table_really_turns() -> void:
 		% rad_to_deg(station), absf(station) > 0.1)
 	_check("and the table is standing at it (%.1f)"
 		% rad_to_deg(_controller._carousel.rotation.y),
-		absf(_controller._carousel.rotation.y - station) < 0.02)
+		absf(angle_difference(_controller._carousel.rotation.y, station)) < 0.02)
 	for i in range(3):
 		var yaw: float = _controller._customer_cards[i].global_rotation.y
 		_check("seat %d's card faces the camera THROUGH the turn (%.1f off)"
@@ -1002,6 +1004,71 @@ func _check_the_table_really_turns() -> void:
 	_check("and whoever you moved to is centred (%d)" % int(here.get_center().x),
 		absf(here.get_center().x - 960.0) < 4.0)
 
+
+## "Make it possible to play product and patience cards on customers you are not
+## seated at to facilitate quick play": dragged onto somebody else's folder, either
+## goes on them where they sit and you stay where you are - on the real floor, with
+## the real drop.
+func _check_a_product_and_a_patience_card_play_on_the_customer_beside_you() -> void:
+	var shift: Shift = _controller._shift
+	if shift.chairs.size() < 2:
+		return
+	for i in range(2):
+		if shift.chairs[i] == null:
+			shift._spawn(i)
+	if shift.at != 1:
+		_controller._apply(shift.approach(1))
+	_settle()
+	var product: CardDef = null
+	var calm: CardDef = null
+	for def in shift.card_pool.cards:
+		if def is ProductCardDef and product == null and not shift.chairs[0].owns(def.id):
+			product = def
+		if def is SupportCardDef and calm == null and def.is_patience_card():
+			calm = def
+	if product == null or calm == null:
+		_check("there is a product and a patience card to play", false)
+		return
+	shift.chairs[0].offer = null
+	shift.hand[0] = CardInstance.new(product, 7001)
+	shift.hand[1] = CardInstance.new(calm, 7002)
+	_controller._render()
+	_settle()
+	var patience_before: int = shift.chairs[0].patience
+	_drop(_controller._nodes[7002], _controller._chair_zones[0])
+	_settle()
+	_check("a patience card dropped on the customer beside you is played (gone from hand: %s)"
+		% (CardIndex.of(shift, 7002) == -1), CardIndex.of(shift, 7002) == -1)
+	_check("on them, and not on you (%d -> %d)" % [patience_before, shift.chairs[0].patience],
+		shift.chairs[0].patience > patience_before - 3)
+	_check("without walking you over (still at chair %s)" % str(shift.at), shift.at == 1)
+	_drop(_controller._nodes[7001], _controller._chair_zones[0])
+	_settle()
+	_check("a product goes on their table (%s)" % str(shift.chairs[0].offer),
+		shift.chairs[0].offer != null and shift.chairs[0].offer.instance.uid == 7001)
+	_check("and you are still where you were (chair %s)" % str(shift.at), shift.at == 1)
+
+## "Make the seat swivel in the direction the target customer is in": from the
+## last seat to the first is one step round, not a swing back through the middle.
+func _check_the_table_turns_the_short_way() -> void:
+	var shift: Shift = _controller._shift
+	if shift.chairs.size() < 3:
+		return
+	for i in range(3):
+		if shift.chairs[i] == null:
+			shift._spawn(i)
+	_controller._render()
+	var back := _at()
+	_controller._apply(shift.approach(2))
+	_settle()
+	var from_last: float = _controller._carousel.rotation.y
+	_controller._apply(shift.approach(0))
+	_settle()
+	var to_first: float = _controller._carousel.rotation.y
+	_check("from the last seat to the first is one step round (%.0f degrees)"
+		% rad_to_deg(to_first - from_last), absf(to_first - from_last) < deg_to_rad(125.0))
+	_controller._apply(shift.approach(back))
+	_settle()
 
 ## The point of the carousel: sitting down with somebody no longer hides the
 ## other two. They turn out to either side, smaller because they are further
@@ -1035,7 +1102,8 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 	_check("the table turned to bring them to the front (%.1f vs %.1f degrees)"
 		% [rad_to_deg(_controller._carousel.rotation.y),
 			rad_to_deg(_controller.station_for(at))],
-		absf(_controller._carousel.rotation.y - _controller.station_for(at)) < 0.02)
+		absf(angle_difference(_controller._carousel.rotation.y,
+			_controller.station_for(at))) < 0.02)
 
 	# And every seat cancelled that turn, so its cards still face the camera.
 	# NOTHING ELSE HERE WOULD NOTICE IF THIS STOPPED: unprojecting a card centre

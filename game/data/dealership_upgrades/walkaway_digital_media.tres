@@ -6,6 +6,6 @@
 script = ExtResource("1_up")
 id = &"walkaway_digital_media"
 display_name = "WALKAWAY Digital Media"
-blurb = "Ads everywhere they scroll. Every WALKAWAY card lowers the Line twice as far."
+blurb = "Ads everywhere they scroll. Every WALKAWAY card lowers the Line one and a half times as far."
 line_drop_brand = &"walkaway"
-line_drop_extra = 1.0
+line_drop_extra = 0.5

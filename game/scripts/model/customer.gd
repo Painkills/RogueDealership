@@ -18,6 +18,9 @@ var max_patience: int
 
 var offer                          ## Offer, or null
 var unsigned: Array[Dictionary] = []
+## Effects of your cards still playing out on them, a tick at a time (Linger):
+## each {inner, ticks_left, stops_on_card, card, fresh}. Ticked by Shift._burn().
+var lingering: Array[Dictionary] = []
 
 # What the PLAYER knows. The hidden information in this game is the priority
 # list; the arithmetic of an offer already made never is.

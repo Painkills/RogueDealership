@@ -307,6 +307,12 @@ static func status_text(c) -> String:
 	# What is left of a budget to spend - the fight's health bar.
 	if c.has_budget():
 		parts.append("budget left %s" % Format.money(c.budget_left()))
+	# Your cards still working on them: what each is doing every tick, and for how
+	# many more.
+	for s in c.lingering:
+		var card: CardDef = s["card"]
+		parts.append("%s: %s a tick, %d more" % [card.display_name if card != null else "-",
+			(s["inner"] as Effect).describe(), int(s["ticks_left"])])
 	return "\n".join(parts)
 
 func _redraw() -> void:

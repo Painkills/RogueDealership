@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/convert_surplus_appeal.gd" id="2_con"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Convert_base"]
+script = ExtResource("2_con")
+amount = 20
+
+[sub_resource type="Resource" id="Convert_up"]
+script = ExtResource("2_con")
+amount = 40
+
+[resource]
+script = ExtResource("3_def")
+id = &"goodwill"
+display_name = "Good Will"
+text = "They were already sold. Now the rest of it is worth something."
+ticks = 1
+rarity = 3
+effects = Array[ExtResource("1_eff")]([SubResource("Convert_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Convert_up")])
