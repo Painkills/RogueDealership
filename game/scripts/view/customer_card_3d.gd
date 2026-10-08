@@ -27,7 +27,7 @@ var _material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
 var _name: Label
-var _photo: Control
+var _photo: PhotoFrame
 var _archetype: Label
 var _patience_bar: ProgressBar
 ## The box the bar fills - see build_customer_front_scene.gd. Shown and hidden
@@ -139,6 +139,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		return
 
 	_photo.visible = true
+	_photo.icon = c.archetype.icon
 	_name.text = c.display_name
 	_archetype.text = "%s  [%s]" % [c.archetype.display_name, c.key]
 	_patience_frame.visible = true

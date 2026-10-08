@@ -135,7 +135,9 @@ var peak_combo_multiplier: float = 1.0
 
 var _forced: Array = []
 var _forced_next: int = 0
-var _name_pool: Array = []
+## What is left to hand out of each archetype's names, by archetype id (&"" for
+## the shared pool) - see _next_name().
+var _name_pools: Dictionary = {}
 
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
@@ -521,7 +523,7 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	# one they want.
 	elif arch.only_category != null:
 		favourites = interests.in_category(arch.only_category)
-	var c := Customer.new(CHAIR_KEYS[chair], _next_name(), arch,
+	var c := Customer.new(CHAIR_KEYS[chair], _next_name(arch), arch,
 		Customer.make_ranks(interests, rng, favourites,
 			arch.ranks_by_category),
 		start, top, cfg.as_dict(), interests)
@@ -654,11 +656,27 @@ static func eligible_archetypes(pool: ArchetypePool, week: int, only: Array = []
 	return kept if not kept.is_empty() else out
 
 
-func _next_name() -> String:
-	if _name_pool.is_empty():
-		_name_pool = archetypes.names.duplicate()
-		_shuffle(_name_pool)
-	return _name_pool.pop_back()
+## The next name for a customer of `arch`: from its own list, each once before any
+## comes round again - or from the shared pool when it has none. Shuffled with
+## the voice stream, not the floor's: what somebody is called must not move
+## anything that is rolled.
+func _next_name(arch: CustomerArchetype) -> String:
+	var own: bool = not arch.names.is_empty()
+	var key: StringName = arch.id if own else &""
+	var source: Array = arch.names if own else archetypes.names
+	if source.is_empty():
+		return "Customer"
+	var pool: Array = _name_pools.get(key, [])
+	if pool.is_empty():
+		pool = source.duplicate()
+		for i in range(pool.size() - 1, 0, -1):
+			var j := voice_rng.randi_range(0, i)
+			var tmp = pool[i]
+			pool[i] = pool[j]
+			pool[j] = tmp
+	var picked: String = pool.pop_back()
+	_name_pools[key] = pool
+	return picked
 
 
 # ----------------------------------------------------------------------- deck

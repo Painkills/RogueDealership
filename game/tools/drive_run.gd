@@ -1038,6 +1038,13 @@ func _check_the_boss_fights_folders_say_what_is_happening(floor_view) -> void:
 	_check("and nothing on any of it calls their patience a shield",
 		not all_text.contains("shield"))
 	_check("the boss's own folder says patience", floor_view._customer_cards[front]._patience.text.begins_with("patience"))
+	var own_card: CustomerCard3D = floor_view._customer_cards[front]
+	_check("it wears their archetype's picture (%s)" % own_card._photo.icon,
+		ArchetypeIcon.has(boss.archetype.icon) and own_card._photo.icon == boss.archetype.icon)
+	_check("and is named from the archetype's own list (%s)" % boss.display_name,
+		boss.archetype.names.is_empty() or boss.archetype.names.has(boss.display_name))
+	_check("the folders either side are not people, so carry no picture",
+		not budget_card._photo.visible and not move_card._photo.visible)
 	_check("neither folder is a seat to turn to",
 		shift.chairs.size() <= mini(left, right) and not shift.approach(left).ok
 			and not shift.approach(right).ok)

@@ -6,6 +6,14 @@ class_name CustomerArchetype extends Resource
 
 @export var id: StringName
 @export var display_name: String
+## What the customers of this archetype are called - a pun on it, so a name says
+## who is sitting down. Each takes one from here, none twice on a floor until the
+## list runs out, and no name belongs to two archetypes. Empty: they are named
+## from the shared pool (ArchetypePool.names).
+@export var names: Array[String] = []
+## The picture on their folder, by ArchetypeIcon's name for it. Empty: the plain
+## head-and-shoulders silhouette.
+@export var icon: StringName = &""
 @export_multiline var pattern: String    ## the ONE behaviour this teaches
 @export_multiline var tell: String       ## what you see on arrival
 @export var line: int = 35
