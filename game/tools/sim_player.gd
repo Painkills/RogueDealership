@@ -110,6 +110,20 @@ static func _band_need(band: String) -> int:
 static var track := false
 static var visits := {}
 
+## With `track` on, the appeal each offer had over the Line the first time it
+## showed green and a money card was weighed: archetype id -> [points over, ...].
+## What Good Will has to work with - see probe_green.gd.
+static var greens := {}
+static var _greened := {}
+
+static func _note_green(c: Customer) -> void:
+	if not track or c.offer == null or _greened.has(c.offer):
+		return
+	_greened[c.offer] = true
+	if not greens.has(c.archetype.id):
+		greens[c.archetype.id] = []
+	greens[c.archetype.id].append(c.offer.appeal - c.line)
+
 ## What the last move in _act() was for - see _did().
 static var _last := ""
 
@@ -436,11 +450,42 @@ static func _appeal_card_for(s: Shift, gap: int) -> int:
 			biggest = i
 	return covering if covering >= 0 else biggest
 
+## What a tick spent selling brings in: a sale is two or three ticks for $1,500
+## or so, well over the $206 a tick a shift averages once the idle ones are
+## counted - sweeping the price over Good Will and Plus Service Fee, nothing is
+## gained by playing either for less. A card whose pay depends on the moment
+## (those two) is played only for more than its ticks are worth at this price.
+## Flat-money cards (Pad the Deal, Bump the Price) are played for any money, as
+## they always were. A probe can set it to try another price.
+static var tick_worth := 600
+
+## How far over the Line a fogged player expects an offer that has just shown
+## green to be, before the Line is known. The two easiest customers sit well
+## clear of theirs - 4 to 16 points, so 10 - and the rest only a little: 3, near
+## what probe_green.gd measures for them.
+const EASY_SURPLUS := 10
+const EASY_CUSTOMERS: Array[StringName] = [&"laydown", &"easygoing"]
+const USUAL_SURPLUS := 3
+
+## The points of appeal the offer on the table has over their Line, as this
+## player knows them: exactly once the gap is known, otherwise a guess from who
+## is sitting there. Only asked of an offer that is green.
+static func _surplus(c: Customer) -> int:
+	if _gap_known(c):
+		return maxi(0, c.offer.appeal - c.line)
+	return EASY_SURPLUS if EASY_CUSTOMERS.has(c.archetype.id) else USUAL_SURPLUS
+
 ## A card in hand that adds margin to the offer and still leaves appeal at the
-## Line - or -1. Only with ticks to spare for it.
+## Line - or -1. Only with ticks to spare for it, and a card whose pay varies
+## (see tick_worth) only for more than its ticks are worth. Good Will comes
+## last: it turns whatever the other cards leave over the Line into money, and
+## a card that costs appeal (Pad the Deal) played after it would drop the offer
+## back under.
 static func _money_card_for(s: Shift, c: Customer) -> int:
 	if s.tick_budget - s.tick <= 3:
 		return -1
+	_note_green(c)
+	var converter := -1
 	for i in range(s.hand.size()):
 		var inst: CardInstance = s.hand[i]
 		if inst.is_product():
@@ -450,6 +495,8 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 			else def.effects
 		var money := 0
 		var appeal := 0
+		var converts := false
+		var varies := false
 		for e in effects:
 			var inner = e.inner if e is ScaleBySales else e
 			if inner is ChangeMargin:
@@ -459,21 +506,32 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 			# Plus Service Fee: so much a product they have already taken.
 			if inner is MarginPerProductTaken:
 				money += inner.amount * c.unsigned.size()
-			# Good Will: only when the sim can see how far over the Line it is.
-			if inner is ConvertSurplusAppeal and _gap_known(c) and c.offer != null:
-				var over := maxi(0, c.offer.appeal - c.line)
+				varies = true
+			# Good Will: so much a point over the Line - it leaves them at it.
+			if inner is ConvertSurplusAppeal:
+				var over := _surplus(c)
 				money += over * inner.amount
-				appeal -= over
+				if _gap_known(c):
+					appeal -= over
+				converts = true
+				varies = true
 		if money <= 0:
 			continue
+		# Margin on the offer is multiplied by their combo when it sells.
+		if varies and money * (1.0 + c.combo_step * c.sales) <= inst.ticks() * tick_worth:
+			continue
 		if _gap_known(c):
-			if c.offer.appeal + appeal >= c.line:
-				return i
-		elif appeal >= 0 or _appeal_in_hand(s) >= -appeal:
+			if c.offer.appeal + appeal < c.line:
+				continue
+		elif appeal < 0 and _appeal_in_hand(s) < -appeal:
 			# Only the band says they are over: a card that costs appeal is
 			# played only with enough appeal in hand to win it back.
+			continue
+		if converts:
+			converter = i
+		else:
 			return i
-	return -1
+	return converter
 
 ## A draw card in hand that costs no time - or -1.
 static func _free_draw(s: Shift) -> int:
