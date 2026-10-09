@@ -1005,10 +1005,40 @@ func _check_the_table_really_turns() -> void:
 		absf(here.get_center().x - 960.0) < 4.0)
 
 
+## Let go of `face` over `chair`'s folder the way a hand does. DragController arms
+## every drop zone a card can go in and the controller switches off the seats you
+## are not at - so a ray through that folder lands in whatever zone happens to be
+## under it (the seat in front's, the draw pile's, the discard's) or in none, and
+## the card is dropped there or bounces. Where it lands is the physics space's to
+## say, and is what left quick play passing every check here and still undoable with
+## a mouse; which seat the card is FOR must not depend on it.
+func _let_go_over_folder(face: CardFace3D, chair: int, into = null) -> void:
+	var over: Vector2 = _controller._camera.unproject_position(
+		(_controller._hover_pads[chair] as Node3D).global_position)
+	_controller._pointer = func(): return over
+	var zones: Array = _controller._all_zones() + _controller._customer_zones
+	for zone in zones:
+		zone.enable_drop_zone()
+	_controller._on_drag_started(face)
+	_settle()
+	var found := _pick_at(over)
+	var landed: Node = found.get_parent() if found != null else null
+	if into != null:
+		landed = into       # another aspect ratio, another slab under the pointer
+	else:
+		print("      (a drop over seat %d's folder lands in: %s)"
+			% [chair, "nothing - it bounces" if not zones.has(landed) else str(landed.name)])
+	for zone in zones:
+		zone.disable_drop_zone()
+	if zones.has(landed) and landed != face.get_parent():
+		_drop(face, landed)
+	else:
+		_controller._on_drag_stopped(face)
+	_controller._pointer = Callable()
+
 ## "Make it possible to play product and patience cards on customers you are not
 ## seated at to facilitate quick play": dragged onto somebody else's folder, either
-## goes on them where they sit and you stay where you are - on the real floor, with
-## the real drop.
+## goes on them where they sit and you stay where you are.
 func _check_a_product_and_a_patience_card_play_on_the_customer_beside_you() -> void:
 	var shift: Shift = _controller._shift
 	if shift.chairs.size() < 2:
@@ -1035,18 +1065,43 @@ func _check_a_product_and_a_patience_card_play_on_the_customer_beside_you() -> v
 	_controller._render()
 	_settle()
 	var patience_before: int = shift.chairs[0].patience
-	_drop(_controller._nodes[7002], _controller._chair_zones[0])
+	_let_go_over_folder(_controller._nodes[7002], 0)
 	_settle()
 	_check("a patience card dropped on the customer beside you is played (gone from hand: %s)"
 		% (CardIndex.of(shift, 7002) == -1), CardIndex.of(shift, 7002) == -1)
 	_check("on them, and not on you (%d -> %d)" % [patience_before, shift.chairs[0].patience],
 		shift.chairs[0].patience > patience_before - 3)
 	_check("without walking you over (still at chair %s)" % str(shift.at), shift.at == 1)
-	_drop(_controller._nodes[7001], _controller._chair_zones[0])
+	_let_go_over_folder(_controller._nodes[7001], 0)
 	_settle()
 	_check("a product goes on their table (%s)" % str(shift.chairs[0].offer),
 		shift.chairs[0].offer != null and shift.chairs[0].offer.instance.uid == 7001)
 	_check("and you are still where you were (chair %s)" % str(shift.at), shift.at == 1)
+
+	# The slab that catches a card over a folder depends on the screen's shape - on
+	# a phone it was the draw pile's - and it is the folder that says who it is for,
+	# not the pile: a card let go over them is not dug, or drawn, whatever it lands on.
+	for pile in [_controller._discard_zone, _controller._draw_zone]:
+		var plays_before := _times_played(shift, calm)
+		var uid := 7010 + (0 if pile == _controller._discard_zone else 1)
+		shift.hand[2] = CardInstance.new(calm, uid)
+		_controller._render()
+		_settle()
+		_let_go_over_folder(_controller._nodes[uid], 0, pile)
+		_settle()
+		_check("a patience card let go over their folder is played on them even where the %s caught it"
+			% str(pile.name), _times_played(shift, calm) == plays_before + 1
+				and CardIndex.of(shift, uid) == -1)
+		_check("and you are still where you were (chair %s)" % str(shift.at), shift.at == 1)
+
+## How many times the shift's log has `def` played by you - not counting what a
+## card keeps doing on its own afterwards.
+func _times_played(shift: Shift, def: CardDef) -> int:
+	var n := 0
+	for entry in shift.action_log:
+		if not entry.get("quiet", false) and entry.get("name", "") == def.display_name:
+			n += 1
+	return n
 
 ## "Make the seat swivel in the direction the target customer is in": from the
 ## last seat to the first is one step round, not a swing back through the middle.
@@ -1135,11 +1190,11 @@ func _check_the_other_two_are_still_on_screen_while_you_work_one() -> void:
 	_check("the CLOSE SOON on the folder you are at clears its tab (%d vs tab end %d)"
 		% [int(front_tag.position.x), int(tab_end)], front_tag.position.x >= tab_end)
 
-	# A slot you are not at must still refuse drops - you should not be able to
-	# drag a product onto somebody you are not standing with, however visible
-	# they are. Enforced DURING the drag, after DragController has armed
-	# everything, because arming a drop zone outside a drag walls off the entire
-	# table. Simulate the drag start.
+	# A slot you are not at must still refuse drops - their zones would wall each
+	# other off, however visible they are. (A card let go over their folder still
+	# reaches them: see _let_go_over_folder.) Enforced DURING the drag, after
+	# DragController has armed everything, because arming a drop zone outside a
+	# drag walls off the entire table. Simulate the drag start.
 	_controller._on_drag_started(null)
 	for i in range(3):
 		var zone := _controller._chair_zones[i].get_node(

@@ -173,6 +173,9 @@ var _nodes: Dictionary = {}          ## uid -> CardFace3D
 ## sight, kept until the next shift is dealt - see _retire().
 var _retired: Array[CardFace3D] = []
 var _dragging: CardFace3D = null
+## Whether the card being dragged was dropped into another collection - as
+## opposed to bouncing off the table - see _on_drag_stopped().
+var _drag_dropped := false
 var _framing_tween: Tween
 var _framed_at = null
 var _hovered: int = -1
@@ -1747,6 +1750,7 @@ func _is_current_offer(card: CardFace3D) -> bool:
 
 func _on_drag_started(card) -> void:
 	_dragging = card as CardFace3D
+	_drag_dropped = false
 	_refuse_drops_on_slots_you_are_not_at()
 	if _is_current_offer(_dragging):
 		_offer_drag_hints[int(_shift.at)].visible = true
@@ -1780,6 +1784,8 @@ func _on_drag_started(card) -> void:
 		_dragging.set_hovered()
 
 func _on_drag_stopped(_card) -> void:
+	var dropped := _dragging
+	var was_dropped := _drag_dropped
 	_dragging = null
 	for hint in _offer_drag_hints:
 		hint.visible = false
@@ -1790,9 +1796,17 @@ func _on_drag_stopped(_card) -> void:
 	# until the pointer leaves them and comes back. A pad the pointer reached
 	# during the drag already said so; otherwise the drop zones walled the pads
 	# off, and the geometry has to say which one the pointer is over.
-	_hover_held = _hovered if _hovered >= 0 else _pad_under(_pointer_at())
+	var over := _pad_under(_pointer_at())
+	_hover_held = _hovered if _hovered >= 0 else over
 	if _shift == null:
 		return
+	# A card let go over somebody's folder where the physics found no drop zone to
+	# put it in is still for them: the card bounced, nothing was dropped, and so
+	# _on_drag_card_moved never heard of it.
+	if dropped != null and not was_dropped and over >= 0 and over < _shift.chairs.size() \
+			and not _is_current_offer(dropped) and CardIndex.of(_shift, dropped.uid) != -1:
+		_play_dropped(dropped.uid, DropRouter.plan(_shift, dropped.uid,
+			CardHomes.chair_zone(over)))
 	# DragController keeps working on the card AFTER emitting card_moved: it
 	# restores global_position and re-enables collision, undoing what _dress()
 	# decided. Settling here, once it has finished, is what makes a bounced card
@@ -1814,6 +1828,7 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 		# reconciling restores model order next render - which is right, because
 		# the 1-4 keys index the model's hand.
 		return
+	_drag_dropped = true
 
 	var face := card as CardFace3D
 
@@ -1831,7 +1846,11 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 			_on_drop()
 		return
 
-	var plan := DropRouter.plan(_shift, face.uid, _zone_name_of(to_coll))
+	_play_dropped(face.uid, DropRouter.plan(_shift, face.uid, _zone_dropped_on(to_coll)))
+
+## Runs what DropRouter made of a drop: walk to the seat if it says so, then play
+## or dig the card.
+func _play_dropped(uid: int, plan: Dictionary) -> void:
 	var command: StringName = plan["command"]
 
 	if command == DropRouter.IGNORE:
@@ -1849,7 +1868,7 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 
 	# MANDATORY, not defensive. approach() burns a tick, a tick fires customer
 	# actions, and a Karen's DiscardHand can take the very card being dragged.
-	var idx := CardIndex.of(_shift, face.uid)
+	var idx := CardIndex.of(_shift, uid)
 	if idx == -1:
 		_event_log.append_text("[color=%s]That card left your hand before you could play it.[/color]\n"
 			% Palette.hex(&"alert"))
@@ -1859,9 +1878,21 @@ func _on_drag_card_moved(card, from_coll, to_coll, _from_index: int, _to_index: 
 	_apply(_shift.dig(idx) if command == DropRouter.DIG \
 		else _shift.play_card(idx, int(plan["chair"])))
 
+## Where a hand card dropped on `collection` is meant to go. Let go over somebody's
+## folder, it is for them - whichever seat they are in, and whichever drop zone the
+## physics happened to find under the pointer: the seats you are not at have none
+## of their own (see _refuse_drops_on_slots_you_are_not_at), so over their folders
+## it finds the seat in front's zones, or the draw pile's, or the discard's. Which
+## folder the pointer is over is the geometry's answer to give.
+func _zone_dropped_on(collection) -> StringName:
+	var over := _pad_under(_pointer_at())
+	if over >= 0 and over < _shift.chairs.size():
+		return CardHomes.chair_zone(over)
+	return _zone_name_of(collection)
+
 func _zone_name_of(collection) -> StringName:
 	for i in range(_chair_zones.size()):
-		if collection == _chair_zones[i]:
+		if collection == _chair_zones[i] or collection == _customer_zones[i]:
 			return CardHomes.chair_zone(i)
 	if collection == _hand_zone:
 		return CardHomes.ZONE_HAND
