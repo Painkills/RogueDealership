@@ -6,11 +6,11 @@
 
 [sub_resource type="Resource" id="Convert_base"]
 script = ExtResource("2_con")
-amount = 20
+amount = 50
 
 [sub_resource type="Resource" id="Convert_up"]
 script = ExtResource("2_con")
-amount = 40
+amount = 75
 
 [resource]
 script = ExtResource("3_def")

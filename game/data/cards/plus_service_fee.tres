@@ -6,11 +6,11 @@
 
 [sub_resource type="Resource" id="Fee_base"]
 script = ExtResource("2_fee")
-amount = 100
+amount = 200
 
 [sub_resource type="Resource" id="Fee_up"]
 script = ExtResource("2_fee")
-amount = 150
+amount = 300
 
 [resource]
 script = ExtResource("3_def")
