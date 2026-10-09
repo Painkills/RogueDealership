@@ -76,6 +76,9 @@ jobs:
       - name: Run the live tutorial driver
         run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_tutorial.gd
 
+      - name: Run the card text driver
+        run: godot --headless --path ${{ env.PROJECT_PATH }} --script res://tools/drive_card_text.gd
+
       # After the gates above, not before: the suite and both drivers run
       # against the same "dev build" placeholder every local run does, so a
       # failure never depends on this step having run first. Only the

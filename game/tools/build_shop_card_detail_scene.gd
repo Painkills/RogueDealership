@@ -5,6 +5,9 @@ extends SceneTree
 ## where there is an upgrade to sell, and what it costs - if anything.
 
 const PREVIEW_SCENE := "res://scenes/cards/card_preview_2d.tscn"
+## Bigger than the preview scene is authored at: a card you are about to pay for
+## is read closely.
+const PREVIEW_SIZE := Vector2(340, 476)
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -17,11 +20,11 @@ func _init() -> void:
 	AppWindow.desktop(root, 0.6)
 
 	var made := AppWindow.build(root, root, "DetailWindow", "Product details",
-		Vector2(760, 0), "", 36)
+		Vector2(980, 0), "", 36)
 	var col: VBoxContainer = made["body"]
 	col.add_theme_constant_override("separation", 22)
 
-	var title := AppWindow.label(col, root, "DetailTitle", "Card Name", 34, &"text", true, true)
+	var title := AppWindow.label(col, root, "DetailTitle", "Card Name", 42, &"text", true, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	var cards_row := HBoxContainer.new()
@@ -73,7 +76,7 @@ func _preview_column(parent: Node, root: Node, node_name: String, caption: Strin
 	parent.add_child(wrap)
 	wrap.owner = root
 
-	var label := AppWindow.label(wrap, root, node_name + "Caption", caption, 18, &"text_dim",
+	var label := AppWindow.label(wrap, root, node_name + "Caption", caption, 24, &"text_dim",
 		true)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -81,6 +84,8 @@ func _preview_column(parent: Node, root: Node, node_name: String, caption: Strin
 	preview.name = preview_name
 	preview.unique_name_in_owner = true
 	preview.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	preview.custom_minimum_size = PREVIEW_SIZE
+	preview.size = PREVIEW_SIZE
 	wrap.add_child(preview)
 	preview.owner = root
 	return wrap
@@ -90,8 +95,8 @@ func _button(parent: Node, root: Node, node_name: String, text: String,
 	var b := Button.new()
 	b.name = node_name
 	b.text = text
-	b.custom_minimum_size = Vector2(160, 60)
-	b.add_theme_font_size_override("font_size", 22)
+	b.custom_minimum_size = Vector2(210, 76)
+	b.add_theme_font_size_override("font_size", 28)
 	if filled:
 		ButtonStyle.filled(b, Palette.color(role))
 	else:

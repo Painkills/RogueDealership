@@ -21,12 +21,16 @@ static func desktop(root: Control, alpha: float = 1.0) -> void:
 ## A window, centred in `parent`: a title bar with its three lights and a
 ## title, then - when `url` is given - a browser's address bar, then its body.
 ## Returns {"window", "body"}; the caller fills "body", a VBoxContainer inside
-## `margin` pixels of padding.
+## `margin` pixels of padding. `top_inset` keeps the top of the desktop clear
+## (centred in what is left): the run's VIEW TOOLKIT button sits over the top-right
+## corner of every screen, so a window too tall to be centred below it asks for the
+## room instead - and says so in its "top_inset" meta, for the driver that checks it.
 static func build(parent: Node, owner: Node, node_name: String, title: String,
-		size: Vector2, url: String = "", margin: int = 32) -> Dictionary:
+		size: Vector2, url: String = "", margin: int = 32, top_inset: float = 0.0) -> Dictionary:
 	var centre := CenterContainer.new()
 	centre.name = node_name + "Centre"
 	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centre.offset_top = top_inset
 	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(centre)
 	centre.owner = owner
@@ -35,6 +39,8 @@ static func build(parent: Node, owner: Node, node_name: String, title: String,
 	window.name = node_name
 	window.custom_minimum_size = size
 	window.unique_name_in_owner = true
+	if top_inset > 0.0:
+		window.set_meta(&"top_inset", top_inset)
 	var frame := StyleBoxFlat.new()
 	frame.bg_color = Palette.color(&"panel")
 	frame.border_color = Palette.color(&"neutral_3")

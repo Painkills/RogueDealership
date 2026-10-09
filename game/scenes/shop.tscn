@@ -467,59 +467,60 @@ corner_radius_bottom_left = 7
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8yt8d"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.6)
 
-[node name="ShopScreen" type="PanelContainer" unique_id=113849075]
+[node name="ShopScreen" type="PanelContainer" unique_id=996227678]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8r1wq")
 script = ExtResource("1_1l46r")
 
-[node name="PortalWindowCentre" type="CenterContainer" parent="." unique_id=1174423675]
+[node name="PortalWindowCentre" type="CenterContainer" parent="." unique_id=44547340]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="PortalWindow" type="PanelContainer" parent="PortalWindowCentre" unique_id=1458327369]
+[node name="PortalWindow" type="PanelContainer" parent="PortalWindowCentre" unique_id=779741387]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1680, 940)
+custom_minimum_size = Vector2(1800, 1000)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ajxib")
+metadata/top_inset = 70.0
 
-[node name="WindowColumn" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow" unique_id=528553162]
+[node name="WindowColumn" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow" unique_id=79474142]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleBar" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn" unique_id=104519599]
+[node name="TitleBar" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn" unique_id=1205658095]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_y6sft")
 
-[node name="Row" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar" unique_id=2060338826]
+[node name="Row" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar" unique_id=1567916272]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Lights" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row" unique_id=579117873]
+[node name="Lights" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row" unique_id=300504479]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Light" type="Panel" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row/Lights" unique_id=555242896]
+[node name="Light" type="Panel" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1741731393]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_m4ofw")
 
-[node name="@Panel@2" type="Panel" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row/Lights" unique_id=616320851]
+[node name="@Panel@2" type="Panel" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row/Lights" unique_id=36674915]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_heatd")
 
-[node name="@Panel@3" type="Panel" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row/Lights" unique_id=2112354814]
+[node name="@Panel@3" type="Panel" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1191610958]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_1v8qu")
 
-[node name="WindowTitle" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row" unique_id=1465678436]
+[node name="WindowTitle" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row" unique_id=341771758]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 19
@@ -527,44 +528,44 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Employee Portal"
 horizontal_alignment = 1
 
-[node name="Balance" type="Control" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row" unique_id=336583689]
+[node name="Balance" type="Control" parent="PortalWindowCentre/PortalWindow/WindowColumn/TitleBar/Row" unique_id=1957715638]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 
-[node name="AddressBar" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn" unique_id=1684054543]
+[node name="AddressBar" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn" unique_id=1983730775]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_44xle")
 
-[node name="Row" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar" unique_id=2062527348]
+[node name="Row" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar" unique_id=907279124]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Nav" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row" unique_id=67244866]
+[node name="Nav" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row" unique_id=791314499]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.72156864, 0.7529412, 0.8, 1)
 text = "‹"
 vertical_alignment = 1
 
-[node name="@Label@4" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row" unique_id=914220483]
+[node name="@Label@4" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row" unique_id=1984878494]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.72156864, 0.7529412, 0.8, 1)
 text = "›"
 vertical_alignment = 1
 
-[node name="Omnibox" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row" unique_id=786268302]
+[node name="Omnibox" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row" unique_id=213897358]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_24it5")
 
-[node name="Address" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row/Omnibox" unique_id=1155681227]
+[node name="Address" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/AddressBar/Row/Omnibox" unique_id=182557309]
 layout_mode = 2
 theme_override_font_sizes/font_size = 19
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "portal.dealership.local/store"
 
-[node name="Body" type="MarginContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn" unique_id=2125602106]
+[node name="Body" type="MarginContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn" unique_id=1960168390]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 28
@@ -572,21 +573,21 @@ theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 28
 
-[node name="Content" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body" unique_id=701328510]
+[node name="Content" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body" unique_id=1014722536]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 
-[node name="SiteHeader" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=281306151]
+[node name="SiteHeader" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=817932982]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="Logo" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1648640867]
+[node name="Logo" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=959002630]
 custom_minimum_size = Vector2(52, 52)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_7mqwv")
 
-[node name="Mark" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/Logo" unique_id=1184135392]
+[node name="Mark" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/Logo" unique_id=1649612371]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 24
@@ -595,7 +596,7 @@ text = "RD"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SiteName" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1837663285]
+[node name="SiteName" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1781187061]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 30
@@ -603,180 +604,182 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Employee Portal"
 vertical_alignment = 1
 
-[node name="Gap" type="Control" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=890564781]
+[node name="Gap" type="Control" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1098659281]
 custom_minimum_size = Vector2(24, 0)
 layout_mode = 2
 
-[node name="StoreTab" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=665397946]
+[node name="StoreTab" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=2147199008]
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_gobkm")
 
-[node name="Label" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/StoreTab" unique_id=57269620]
+[node name="Label" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/StoreTab" unique_id=2028531159]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 text = "Store"
 
-[node name="MyToolkitTab" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=244327767]
+[node name="MyToolkitTab" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1023329789]
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_j14q8")
 
-[node name="Label" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/MyToolkitTab" unique_id=1549745085]
+[node name="Label" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/MyToolkitTab" unique_id=1276514895]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "My Toolkit"
 
-[node name="Spacer" type="Control" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1097782648]
+[node name="Spacer" type="Control" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1506418607]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Account" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=1909686652]
+[node name="MoneyLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=993259058]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
+text = "$0 to spend"
+horizontal_alignment = 2
+
+[node name="Account" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader" unique_id=2077969218]
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_5u241")
 
-[node name="AccountLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/Account" unique_id=1428070739]
+[node name="AccountLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/SiteHeader/Account" unique_id=1550739072]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "F&I Manager"
 
-[node name="HeaderRule" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=321299010]
+[node name="HeaderRule" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=949979523]
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_pqync")
 
-[node name="Intro" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=701620496]
+[node name="Intro" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=1467161989]
 layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="Titles" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro" unique_id=1263932941]
+[node name="Titles" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro" unique_id=162712623]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="TitleLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles" unique_id=1537815687]
+[node name="TitleLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles" unique_id=677073287]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 36
+theme_override_font_sizes/font_size = 44
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Your perks for that shift"
 
-[node name="ShiftWrap" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles" unique_id=2071881655]
+[node name="ShiftWrap" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles" unique_id=1815319725]
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxEmpty_yuijs")
 
-[node name="ShiftLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles/ShiftWrap" unique_id=1634899109]
+[node name="ShiftLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles/ShiftWrap" unique_id=584074761]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "shift 1 of 5"
 autowrap_mode = 3
 
-[node name="ShiftTapTarget" type="Button" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles/ShiftWrap" unique_id=1087024012]
+[node name="ShiftTapTarget" type="Button" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro/Titles/ShiftWrap" unique_id=518366866]
 unique_name_in_owner = true
 layout_mode = 2
 flat = true
 
-[node name="MoneyLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Intro" unique_id=1873725273]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
-text = "$0 to spend"
-horizontal_alignment = 2
-
-[node name="Aisles" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=1638061396]
+[node name="Aisles" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=275296201]
 layout_mode = 2
 theme_override_constants/separation = 28
 
-[node name="ShelfSection" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles" unique_id=795496138]
+[node name="ShelfSection" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles" unique_id=1728929640]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_aa4hd")
 
-[node name="Column" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/ShelfSection" unique_id=995629139]
+[node name="Column" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/ShelfSection" unique_id=496969186]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="OnShelfTitle" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/ShelfSection/Column" unique_id=483140930]
+[node name="OnShelfTitle" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/ShelfSection/Column" unique_id=1834978249]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "FOR SALE"
 
-[node name="ShelfRow" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/ShelfSection/Column" unique_id=790044672]
+[node name="ShelfRow" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/ShelfSection/Column" unique_id=634485769]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 310)
+custom_minimum_size = Vector2(0, 410)
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="DeckSection" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles" unique_id=997098686]
+[node name="DeckSection" type="PanelContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles" unique_id=2107859935]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_68utx")
 
-[node name="Column" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/DeckSection" unique_id=509299909]
+[node name="Column" type="VBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/DeckSection" unique_id=2122222097]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="DeckTitle" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/DeckSection/Column" unique_id=1361162384]
+[node name="DeckTitle" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/DeckSection/Column" unique_id=583310685]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "UPGRADE YOUR CARDS"
 
-[node name="DeckRow" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/DeckSection/Column" unique_id=1079876853]
+[node name="DeckRow" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles/DeckSection/Column" unique_id=1936525413]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 310)
+custom_minimum_size = Vector2(0, 410)
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="StoreEmptyNote" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles" unique_id=83302921]
+[node name="StoreEmptyNote" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/Aisles" unique_id=352678938]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(0, 310)
+custom_minimum_size = Vector2(0, 410)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Nothing on the shelves after this shift."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="LogLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=1412257008]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
-
-[node name="ButtonRow" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=1389500988]
+[node name="ButtonRow" type="HBoxContainer" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content" unique_id=546338308]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 2
 
-[node name="ViewDeckButton" type="Button" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/ButtonRow" unique_id=754063632]
+[node name="LogLabel" type="Label" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/ButtonRow" unique_id=1521529163]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(240, 72)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+autowrap_mode = 3
+
+[node name="ViewDeckButton" type="Button" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/ButtonRow" unique_id=1284945111]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 84)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_ru2r1")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_lxs01")
@@ -787,12 +790,12 @@ theme_override_colors/font_focus_color = Color(0.14509805, 0.3882353, 0.92156863
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 30
 text = "VIEW TOOLKIT"
 
-[node name="DoneButton" type="Button" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/ButtonRow" unique_id=931056009]
+[node name="DoneButton" type="Button" parent="PortalWindowCentre/PortalWindow/WindowColumn/Body/Content/ButtonRow" unique_id=1051028202]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(400, 72)
+custom_minimum_size = Vector2(500, 84)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_5lclc")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_ouqob")
@@ -803,61 +806,61 @@ theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 32
 text = "CLOCK IN FOR THE NEXT SHIFT"
 
-[node name="FreePick" type="PanelContainer" parent="." unique_id=1496455454]
+[node name="FreePick" type="PanelContainer" parent="." unique_id=1960213551]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_ccf1r")
 
-[node name="FreePickWindowCentre" type="CenterContainer" parent="FreePick" unique_id=127304066]
+[node name="FreePickWindowCentre" type="CenterContainer" parent="FreePick" unique_id=1185395238]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="FreePickWindow" type="PanelContainer" parent="FreePick/FreePickWindowCentre" unique_id=687928162]
+[node name="FreePickWindow" type="PanelContainer" parent="FreePick/FreePickWindowCentre" unique_id=1874286694]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(760, 0)
+custom_minimum_size = Vector2(960, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mt8ix")
 
-[node name="WindowColumn" type="VBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow" unique_id=1972996750]
+[node name="WindowColumn" type="VBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow" unique_id=549421489]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleBar" type="PanelContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn" unique_id=922256544]
+[node name="TitleBar" type="PanelContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn" unique_id=1567827447]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_a6g3j")
 
-[node name="Row" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar" unique_id=1712717857]
+[node name="Row" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar" unique_id=1798610124]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Lights" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row" unique_id=1451532511]
+[node name="Lights" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row" unique_id=765576222]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Light" type="Panel" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=571610953]
+[node name="Light" type="Panel" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1563741553]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_posyw")
 
-[node name="@Panel@5" type="Panel" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=346691319]
+[node name="@Panel@5" type="Panel" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1079757422]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_xogfe")
 
-[node name="@Panel@6" type="Panel" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=574632173]
+[node name="@Panel@6" type="Panel" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1463527804]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_11hi1")
 
-[node name="WindowTitle" type="Label" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row" unique_id=493398611]
+[node name="WindowTitle" type="Label" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row" unique_id=1158408136]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 19
@@ -865,11 +868,11 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "On the house"
 horizontal_alignment = 1
 
-[node name="Balance" type="Control" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row" unique_id=957385121]
+[node name="Balance" type="Control" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/TitleBar/Row" unique_id=871231723]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 
-[node name="Body" type="MarginContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn" unique_id=471013445]
+[node name="Body" type="MarginContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn" unique_id=1272602747]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 36
@@ -877,39 +880,39 @@ theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 36
 theme_override_constants/margin_bottom = 36
 
-[node name="Content" type="VBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body" unique_id=149592137]
+[node name="Content" type="VBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body" unique_id=576723963]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="FreePickTitle" type="Label" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=1763679108]
+[node name="FreePickTitle" type="Label" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=766942279]
 layout_mode = 2
 theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 42
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Pick one, on the house"
 horizontal_alignment = 1
 
-[node name="FreePickSub" type="Label" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=1831386347]
+[node name="FreePickSub" type="Label" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=624701594]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "It goes straight into your toolkit. The store is next."
 horizontal_alignment = 1
 
-[node name="FreePickRow" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=1691065192]
+[node name="FreePickRow" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=1771303399]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 310)
+custom_minimum_size = Vector2(0, 410)
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="FreePickButtons" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=2094054110]
+[node name="FreePickButtons" type="HBoxContainer" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content" unique_id=714782690]
 layout_mode = 2
 alignment = 1
 
-[node name="SkipFreeButton" type="Button" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content/FreePickButtons" unique_id=1240437023]
+[node name="SkipFreeButton" type="Button" parent="FreePick/FreePickWindowCentre/FreePickWindow/WindowColumn/Body/Content/FreePickButtons" unique_id=1884272571]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 60)
+custom_minimum_size = Vector2(250, 76)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_k40kd")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_ovj2c")
@@ -920,62 +923,62 @@ theme_override_colors/font_focus_color = Color(0.37254903, 0.41960785, 0.4784313
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "no thanks"
 
-[node name="DealershipPick" type="PanelContainer" parent="." unique_id=1306678484]
+[node name="DealershipPick" type="PanelContainer" parent="." unique_id=2087616477]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_l0cfq")
 
-[node name="DealershipPickWindowCentre" type="CenterContainer" parent="DealershipPick" unique_id=1096191074]
+[node name="DealershipPickWindowCentre" type="CenterContainer" parent="DealershipPick" unique_id=833195583]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="DealershipPickWindow" type="PanelContainer" parent="DealershipPick/DealershipPickWindowCentre" unique_id=1125657621]
+[node name="DealershipPickWindow" type="PanelContainer" parent="DealershipPick/DealershipPickWindowCentre" unique_id=585193258]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1040, 0)
+custom_minimum_size = Vector2(1300, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_3t6hu")
 
-[node name="WindowColumn" type="VBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow" unique_id=1151075798]
+[node name="WindowColumn" type="VBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow" unique_id=356322401]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleBar" type="PanelContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn" unique_id=714030176]
+[node name="TitleBar" type="PanelContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn" unique_id=462250213]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_jphf3")
 
-[node name="Row" type="HBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar" unique_id=1273076366]
+[node name="Row" type="HBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar" unique_id=118961417]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Lights" type="HBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row" unique_id=1582421663]
+[node name="Lights" type="HBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row" unique_id=541280701]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Light" type="Panel" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=358346687]
+[node name="Light" type="Panel" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1988087442]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_lrmib")
 
-[node name="@Panel@7" type="Panel" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=203838096]
+[node name="@Panel@7" type="Panel" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1662666454]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_ihq6a")
 
-[node name="@Panel@8" type="Panel" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1837837685]
+[node name="@Panel@8" type="Panel" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row/Lights" unique_id=2006308011]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_iwtn5")
 
-[node name="WindowTitle" type="Label" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row" unique_id=830793559]
+[node name="WindowTitle" type="Label" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row" unique_id=1451791697]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 19
@@ -983,11 +986,11 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Perk"
 horizontal_alignment = 1
 
-[node name="Balance" type="Control" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row" unique_id=522916788]
+[node name="Balance" type="Control" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/TitleBar/Row" unique_id=402598460]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 
-[node name="Body" type="MarginContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn" unique_id=1485035126]
+[node name="Body" type="MarginContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn" unique_id=1061359543]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 36
@@ -995,32 +998,32 @@ theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 36
 theme_override_constants/margin_bottom = 36
 
-[node name="Content" type="VBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body" unique_id=69237904]
+[node name="Content" type="VBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body" unique_id=303843143]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="DealershipPickTitle" type="Label" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body/Content" unique_id=223185089]
+[node name="DealershipPickTitle" type="Label" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body/Content" unique_id=2216381]
 layout_mode = 2
 theme_type_variation = &"Heading"
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 40
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "You made quota - pick a perk"
 horizontal_alignment = 1
 
-[node name="DealershipPickSub" type="Label" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body/Content" unique_id=1215846044]
+[node name="DealershipPickSub" type="Label" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body/Content" unique_id=1918555672]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Pick one. It stays for the rest of the run."
 horizontal_alignment = 1
 
-[node name="DealershipRow" type="HBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body/Content" unique_id=636028892]
+[node name="DealershipRow" type="HBoxContainer" parent="DealershipPick/DealershipPickWindowCentre/DealershipPickWindow/WindowColumn/Body/Content" unique_id=423990228]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Detail" type="PanelContainer" parent="." unique_id=1398256604 instance=ExtResource("2_032fp")]
+[node name="Detail" type="PanelContainer" parent="." unique_id=1945586553 instance=ExtResource("2_032fp")]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_8yt8d")

@@ -13,7 +13,7 @@ extends SceneTree
 
 const W := 500
 const H := 700
-const PAD := 34
+const PAD := 24
 
 func _init() -> void:
 	var root := Control.new()
@@ -51,7 +51,7 @@ func _init() -> void:
 
 	var col := VBoxContainer.new()
 	col.name = "Column"
-	col.add_theme_constant_override("separation", 14)
+	col.add_theme_constant_override("separation", 8)
 	margin.add_child(col)
 	col.owner = root
 
@@ -73,7 +73,7 @@ func _init() -> void:
 	kind_row.add_child(kind_icon)
 	kind_icon.owner = root
 
-	var kind := _label("KindLabel", 30, Palette.color(&"accent"))
+	var kind := _label("KindLabel", 33, Palette.color(&"accent"))
 	kind.text = "PRODUCT"
 	kind_row.add_child(kind)
 	kind.owner = root
@@ -88,7 +88,7 @@ func _init() -> void:
 	# produce for the real card pool (data/card_pool.tres), not a generic
 	# filler word - so opening this scene in the editor already shows whether
 	# a layout change survives the worst real card, not just a short one.
-	var name_label := _label("NameLabel", 46, Palette.color(&"text"))
+	var name_label := _label("NameLabel", 53, Palette.color(&"text"))
 	name_label.text = "Anti-Theft & Key Protection"   # longest CardText.title()
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -97,7 +97,7 @@ func _init() -> void:
 	header.add_child(name_label)
 	name_label.owner = root
 
-	var cost := _label("CostLabel", 40, Palette.color(&"text_dim"))
+	var cost := _label("CostLabel", 44, Palette.color(&"text_dim"))
 	cost.text = "3t"
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	header.add_child(cost)
@@ -136,7 +136,7 @@ func _init() -> void:
 	body_row.add_child(body_icon)
 	body_icon.owner = root
 
-	var body := _label("BodyLabel", 38, Palette.color(&"text"))
+	var body := _label("BodyLabel", 46, Palette.color(&"text"))
 	body.text = "reveals their Line and the category of their number one"   # longest CardText.body()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -156,7 +156,7 @@ func _init() -> void:
 	# and EXPAND_FILL so it (not BodyRow, now its natural size) is what absorbs
 	# whatever vertical slack a short card leaves, keeping MarginLabel pinned
 	# near the bottom on every card rather than drifting with flavor length.
-	var flavor := _label("FlavorLabel", 30, Palette.color(&"text_dim"))
+	var flavor := _label("FlavorLabel", 32, Palette.color(&"text_dim"))
 	flavor.text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."   # longest CardText.flavor()
 	flavor.autowrap_mode = TextServer.AUTOWRAP_WORD
 	flavor.vertical_alignment = VERTICAL_ALIGNMENT_TOP

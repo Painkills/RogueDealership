@@ -50,8 +50,10 @@ signal view_deck_requested
 var _shop: Shop
 ## Past this many cards across both aisles they no longer fit side by side, and the
 ## store shows one aisle at a time, with a button for each - see
-## _lay_out_the_aisles(). Eight is what the page holds at full size.
-const SIDE_BY_SIDE_MOST := 8
+## _lay_out_the_aisles(). Five is what the page holds at full size.
+const SIDE_BY_SIDE_MOST := 5
+## One card on offer, as big as the page lets it be (the aisle holds six across).
+const CARD_SIZE := Vector2(240, 336)
 ## Which aisle a paged store is showing: &"shelf" or &"deck".
 var _aisle: StringName = &"shelf"
 var _aisle_tabs: HBoxContainer
@@ -228,8 +230,8 @@ func _build_aisle_tabs() -> void:
 func _aisle_tab(which: StringName) -> Button:
 	var b := Button.new()
 	b.name = "AisleTab_%s" % which
-	b.custom_minimum_size = Vector2(0, 30)
-	b.add_theme_font_size_override("font_size", 18)
+	b.custom_minimum_size = Vector2(0, 40)
+	b.add_theme_font_size_override("font_size", 24)
 	b.pressed.connect(func():
 		_aisle = which
 		_render())
@@ -252,7 +254,7 @@ func _dress_aisle_tab(b: Button, shown: bool) -> void:
 func _upgrade_button(u: DealershipUpgrade) -> Button:
 	var b := Button.new()
 	b.name = "Upgrade_%s" % u.id
-	b.custom_minimum_size = Vector2(300, 310)
+	b.custom_minimum_size = Vector2(380, 340)
 	ButtonStyle.outlined(b, Palette.color(&"primary"))
 	var col := VBoxContainer.new()
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 18)
@@ -262,7 +264,7 @@ func _upgrade_button(u: DealershipUpgrade) -> Button:
 	var title := Label.new()
 	title.text = u.display_name
 	title.theme_type_variation = &"Heading"
-	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_font_size_override("font_size", 34)
 	title.add_theme_color_override("font_color", Palette.color(&"text"))
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -270,7 +272,7 @@ func _upgrade_button(u: DealershipUpgrade) -> Button:
 	col.add_child(title)
 	var blurb := Label.new()
 	blurb.text = u.blurb
-	blurb.add_theme_font_size_override("font_size", 19)
+	blurb.add_theme_font_size_override("font_size", 25)
 	blurb.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD
 	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -306,7 +308,7 @@ func _note(row: HBoxContainer, text: String) -> void:
 	# The whole aisle's width to wrap in - an autowrapping label claims none
 	# of its own.
 	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	note.add_theme_font_size_override("font_size", 22)
+	note.add_theme_font_size_override("font_size", 28)
 	note.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	row.add_child(note)
 
@@ -324,7 +326,7 @@ func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> 
 	# Small: this is a third row stacked into every slot, and the screen's
 	# whole vertical budget was already tuned tight before it existed.
 	var rarity := Label.new()
-	rarity.add_theme_font_size_override("font_size", 12)
+	rarity.add_theme_font_size_override("font_size", 17)
 	rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rarity.text = CardText.rarity_name(inst)
 	rarity.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
@@ -332,11 +334,13 @@ func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> 
 
 	var card: ShopCardButton = (load("res://scenes/cards/shop_card_button.tscn") \
 		as PackedScene).instantiate()
+	card.custom_minimum_size = CARD_SIZE
+	card.size = CARD_SIZE
 	slot.add_child(card)
 	card.show_card(inst)
 
 	var price := Label.new()
-	price.add_theme_font_size_override("font_size", 20)
+	price.add_theme_font_size_override("font_size", 27)
 	price.add_theme_color_override("font_color", Palette.color(&"margin"))
 	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price.text = price_text

@@ -19,14 +19,17 @@ extends SceneTree
 ## costs underneath rather than folded into a line of button text.
 
 const DETAIL_SCENE := "res://scenes/cards/shop_card_detail.tscn"
-const WINDOW := Vector2(1680, 940)
+const WINDOW := Vector2(1800, 1000)
+## Room kept clear at the top of the desktop, for the run's VIEW TOOLKIT button
+## in the corner - see AppWindow.build().
+const TOP_INSET := 70.0
 ## One card on offer, as shop_screen.gd's _build_slot() stacks it: a rarity
-## line, the 252-tall card itself, and a price line. drive_run.gd measures a
+## line, the 336-tall card itself, and a price line. drive_run.gd measures a
 ## real slot against this.
-const SLOT_HEIGHT := 310
+const SLOT_HEIGHT := 410
 ## The free pick's window: room for three card slots side by side.
-const FREE_PICK_WINDOW := Vector2(760, 0)
-const DEALERSHIP_PICK_WINDOW := Vector2(1040, 0)
+const FREE_PICK_WINDOW := Vector2(960, 0)
+const DEALERSHIP_PICK_WINDOW := Vector2(1300, 0)
 
 func _init() -> void:
 	var root := PanelContainer.new()
@@ -39,15 +42,15 @@ func _init() -> void:
 	AppWindow.desktop(root)
 
 	var made := AppWindow.build(root, root, "PortalWindow", "Employee Portal", WINDOW,
-		"portal.dealership.local/store", 28)
+		"portal.dealership.local/store", 28, TOP_INSET)
 	var col: VBoxContainer = made["body"]
-	col.add_theme_constant_override("separation", 14)
+	col.add_theme_constant_override("separation", 10)
 
 	# The portal knows who is signed in - see shop_screen.gd's _render().
 	var header := AppWindow.portal_header(col, root, "Store")
 	var account := AppWindow.box(header, root, "Account", &"panel_hi", &"neutral_2", 12, 20)
 	account.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	AppWindow.label(account, root, "AccountLabel", "F&I Manager", 20, &"text", true, true)
+	AppWindow.label(account, root, "AccountLabel", "F&I Manager", 24, &"text", true, true)
 
 	AppWindow.rule(col, root, "HeaderRule")
 
@@ -64,7 +67,7 @@ func _init() -> void:
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	intro.add_child(titles)
 	titles.owner = root
-	AppWindow.label(titles, root, "TitleLabel", "Your perks for that shift", 36, &"text",
+	AppWindow.label(titles, root, "TitleLabel", "Your perks for that shift", 44, &"text",
 		true, true)
 
 	# The quota line doubles as a mobile stand-in for Ctrl+M (+$10,000) - the
@@ -81,7 +84,7 @@ func _init() -> void:
 	titles.add_child(shift_wrap)
 	shift_wrap.owner = root
 
-	var shift_label := AppWindow.label(shift_wrap, root, "ShiftLabel", "shift 1 of 5", 21,
+	var shift_label := AppWindow.label(shift_wrap, root, "ShiftLabel", "shift 1 of 5", 26,
 		&"text_dim", false, true)
 	# Wraps rather than widening the whole store: the dealership's upgrades are
 	# listed here, and that line grows over a run.
@@ -94,10 +97,13 @@ func _init() -> void:
 	shift_wrap.add_child(shift_tap)
 	shift_tap.owner = root
 
-	var money := AppWindow.label(intro, root, "MoneyLabel", "$0 to spend", 24, &"margin",
+	# In the portal's header row, beside who is signed in: out of the way of the
+	# lines about the shift, which then get the whole width to say their piece.
+	var money := AppWindow.label(header, root, "MoneyLabel", "$0 to spend", 30, &"margin",
 		true, true)
 	money.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	header.move_child(money, account.get_index())
 
 	# --- the two aisles -----------------------------------------------------------
 	# Either can hold a few cards, depending on the shift. shop_screen.gd shows
@@ -112,14 +118,12 @@ func _init() -> void:
 	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADE YOUR CARDS",
 		"DeckRow", 1.0)
 	var empty := AppWindow.label(aisles, root, "StoreEmptyNote",
-		"Nothing on the shelves after this shift.", 24, &"text_dim", false, true)
+		"Nothing on the shelves after this shift.", 30, &"text_dim", false, true)
 	empty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	empty.custom_minimum_size = Vector2(0, SLOT_HEIGHT)
 	empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	empty.visible = false
-
-	AppWindow.label(col, root, "LogLabel", "", 22, &"alert", false, true)
 
 	var button_row := HBoxContainer.new()
 	button_row.name = "ButtonRow"
@@ -128,11 +132,20 @@ func _init() -> void:
 	col.add_child(button_row)
 	button_row.owner = root
 
+	# What the last thing you did said, in the empty half of the row the two
+	# buttons leave - the line it needs is already there, so a message coming
+	# and going moves nothing on the page.
+	var log_label := AppWindow.label(button_row, root, "LogLabel", "", 28, &"alert", false,
+		true)
+	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	log_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
 	var view_deck := Button.new()
 	view_deck.name = "ViewDeckButton"
 	view_deck.text = "VIEW TOOLKIT"
-	view_deck.custom_minimum_size = Vector2(240, 72)
-	view_deck.add_theme_font_size_override("font_size", 24)
+	view_deck.custom_minimum_size = Vector2(300, 84)
+	view_deck.add_theme_font_size_override("font_size", 30)
 	ButtonStyle.outlined(view_deck, Palette.color(&"primary"))
 	view_deck.unique_name_in_owner = true
 	button_row.add_child(view_deck)
@@ -141,8 +154,8 @@ func _init() -> void:
 	var done := Button.new()
 	done.name = "DoneButton"
 	done.text = "CLOCK IN FOR THE NEXT SHIFT"
-	done.custom_minimum_size = Vector2(400, 72)
-	done.add_theme_font_size_override("font_size", 26)
+	done.custom_minimum_size = Vector2(500, 84)
+	done.add_theme_font_size_override("font_size", 32)
 	ButtonStyle.filled(done, Palette.color(&"primary"))
 	done.unique_name_in_owner = true
 	button_row.add_child(done)
@@ -187,11 +200,11 @@ func _free_pick(root: Control) -> void:
 	var col: VBoxContainer = made["body"]
 	col.add_theme_constant_override("separation", 18)
 
-	var title := AppWindow.label(col, root, "FreePickTitle", "Pick one, on the house", 34,
+	var title := AppWindow.label(col, root, "FreePickTitle", "Pick one, on the house", 42,
 		&"text", true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sub := AppWindow.label(col, root, "FreePickSub",
-		"It goes straight into your toolkit. The store is next.", 20, &"text_dim")
+		"It goes straight into your toolkit. The store is next.", 26, &"text_dim")
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	var row := HBoxContainer.new()
@@ -211,8 +224,8 @@ func _free_pick(root: Control) -> void:
 	var skip := Button.new()
 	skip.name = "SkipFreeButton"
 	skip.text = "no thanks"
-	skip.custom_minimum_size = Vector2(200, 60)
-	skip.add_theme_font_size_override("font_size", 22)
+	skip.custom_minimum_size = Vector2(250, 76)
+	skip.add_theme_font_size_override("font_size", 28)
 	ButtonStyle.outlined(skip, Palette.color(&"ink_dim"))
 	skip.unique_name_in_owner = true
 	buttons.add_child(skip)
@@ -239,10 +252,10 @@ func _dealership_pick(root: Control) -> void:
 	col.add_theme_constant_override("separation", 18)
 
 	var title := AppWindow.label(col, root, "DealershipPickTitle",
-		"You made quota - pick a perk", 32, &"text", true)
+		"You made quota - pick a perk", 40, &"text", true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sub := AppWindow.label(col, root, "DealershipPickSub",
-		"Pick one. It stays for the rest of the run.", 20, &"text_dim")
+		"Pick one. It stays for the rest of the run.", 26, &"text_dim")
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	var row := HBoxContainer.new()
@@ -269,7 +282,7 @@ func _card_section(parent: Node, root: Node, section_name: String,
 	section.add_child(col)
 	col.owner = root
 
-	AppWindow.label(col, root, title_name, title_text, 20, &"text_dim", true, true)
+	AppWindow.label(col, root, title_name, title_text, 26, &"text_dim", true, true)
 
 	var row := HBoxContainer.new()
 	row.name = row_name

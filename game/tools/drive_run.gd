@@ -247,10 +247,13 @@ func _set_standing_keys(r: Dictionary, standing_before: int) -> void:
 ## it however deferred their layout pass is.
 func _check_window_fits(what: String, window: Control) -> void:
 	var h: float = maxf(window.custom_minimum_size.y, window.get_combined_minimum_size().y)
-	var top: float = (VIEWPORT.y - h) * 0.5
+	# A window that asks for room at the top (AppWindow.build's top_inset) is
+	# centred in what is left below it.
+	var inset: float = float(window.get_meta(&"top_inset", 0.0))
+	var top: float = inset + (VIEWPORT.y - inset - h) * 0.5
 	var corner := _root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control
 	var corner_bottom: float = corner.offset_bottom
-	_check("%s's window fits the screen (%d px tall)" % [what, int(h)], h <= VIEWPORT.y)
+	_check("%s's window fits the screen (%d px tall)" % [what, int(h)], h <= VIEWPORT.y - inset)
 	_check("and starts below the corner VIEW TOOLKIT button (top %d, button ends %d)"
 		% [int(top), int(corner_bottom)], top >= corner_bottom + 4.0)
 
@@ -427,7 +430,7 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 		var texture := (side[1] as CardPreview2D).get_node(^"TextureRect") as TextureRect
 		_check("the detail's %s card texture actually shrank to its box (expand_mode=%d, size=%s)"
 			% [side[0], texture.expand_mode, texture.size],
-			texture.expand_mode == TextureRect.EXPAND_IGNORE_SIZE and texture.size.x < 300.0)
+			texture.expand_mode == TextureRect.EXPAND_IGNORE_SIZE and texture.size.x < 500.0)
 	_check("with a real upgrade price on the button (%s)" % detail._upgrade_btn.text,
 		detail._upgrade_btn.visible
 			and detail._upgrade_btn.text == "upgrade %s" % Format.money(shop.upgrade_price(inst)))
