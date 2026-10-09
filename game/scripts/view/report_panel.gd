@@ -137,7 +137,7 @@ func setup(r: Dictionary) -> void:
 		% [r["customers_seen"], r["customers_signed"], r["customers_walked"]]
 	_customers.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
-	_offers.text = "%d offers, %d closed (%.0f%%), %d fell short" \
+	_offers.text = "%d offers, %d closed (%.0f%%), %d asked too soon" \
 		% [r["offers"], r["sales"], 100.0 * r["close_rate"], r["failed_offers"]]
 	_offers.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 

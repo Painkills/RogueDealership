@@ -12,6 +12,7 @@ blurb = "Deep pockets. Every hit lands on you."
 seats = 1
 pay_scale = 1.0
 commission = 0.6
+quota = 9000
 lineup = Array[ExtResource("2_arch")]([ExtResource("3_whale")])
 no_clock = true
 chance = 1.0

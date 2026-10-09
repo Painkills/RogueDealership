@@ -51,7 +51,7 @@ const STEPS := [
 		"wait": &"supported", "prompt": "Play a support card to carry on.",
 		"targets": [&"hand", &"table"]},
 	{"id": &"offer", "title": "Make the offer",
-		"body": "That clears their Line. Drag the product off the tablet and onto them. Offering is free - but an offer that falls short costs them patience.",
+		"body": "That clears their Line. Drag the product off the tablet and onto them. You can only make the offer once it clears their Line - asking sooner is refused, free of charge.",
 		"wait": &"sold", "prompt": "Make the offer to carry on.",
 		"hint": "Not enough Appeal yet - play Acknowledge & Empathize, then offer again.",
 		"targets": [&"table", &"customer"]},

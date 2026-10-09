@@ -82,7 +82,7 @@ func _synthetic_product(s: Shift, effects: Array[Effect],
 	return def
 
 # ----------------------------------------------------------- place and offer
-func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
+func test_placing_costs_a_tick_and_shows_where_it_ranks_and_only_a_band() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
 	_rank(c, [&"status", &"power", &"reliability"])
@@ -92,9 +92,9 @@ func test_placing_costs_a_tick_and_shows_only_a_band() -> void:
 	h.eq("it costs a tick", s.tick, 1)
 	h.eq("appeal opens at the rank value", c.offer.appeal, _appeal_for_rank(s, 3))
 	h.check("a band came back", r.data.has("band"))
-	h.check("but not the rank", not c.known_ranks.has(&"reliability"))
-	h.check("and not the Line", not c.known_line)
-	h.check("and the offer is not revealed", not c.offer.revealed)
+	h.eq("and where it ranks, on the grid at once", c.known_ranks.get(&"reliability", -1), 3)
+	h.eq("and in the result", r.data.get("rank", -1), 3)
+	h.check("but not the Line", not c.known_line)
 
 func test_placing_a_product_applies_its_own_effects() -> void:
 	var s := _shift([&"easygoing"])
@@ -128,8 +128,9 @@ func test_accept_fires_exactly_at_the_line_not_above() -> void:
 	_rank(c2, [&"status", &"power", &"reliability"])
 	_hand(s2, [&"vsc"])
 	s2.place(0)
-	s2.offer()
-	h.eq("one short does not sell", c2.unsigned.size(), 0)
+	var refused := s2.offer()
+	h.check("one short cannot be offered", not refused.ok)
+	h.eq("so nothing sold", c2.unsigned.size(), 0)
 	h.check("and it stays on the table", c2.offer != null)
 
 func test_support_cards_alone_never_close_a_sale() -> void:

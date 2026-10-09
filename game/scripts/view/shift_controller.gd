@@ -1246,8 +1246,11 @@ func _show_what_they_did(entry: Dictionary) -> void:
 	if chair < 0 or chair >= _customer_cards.size():
 		return
 	var at := _chair_on_screen(chair)
+	# A card of yours (the entry says so) changes what is ON THE TABLE, not what is
+	# unsigned: its money is a number on their folder like the rest, below.
+	var yours := bool(entry.get("yours", false))
 	var money := int(fx.get("margin", 0))
-	if money != 0:
+	if money != 0 and not yours:
 		var role: StringName = &"margin" if money > 0 else &"alert"
 		_fly(("+" if money > 0 else "") + Format.money(money), role, at + Vector2(0, 90),
 			_at_risk_label, func(): _pulse(_at_risk_label, role, money < 0))
@@ -1272,6 +1275,30 @@ func _show_what_they_did(entry: Dictionary) -> void:
 			tw.tween_property(node, "scale", Vector3.ONE * 1.35, 0.15) \
 				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			tw.tween_property(node, "scale", Vector3.ONE, 0.45)
+	var notes := _fx_notes(fx, yours)
+	if bool(entry.get("floor_wide", false)) and not yours:
+		notes.append("WHOLE FLOOR: " + ", ".join(entry.get("descriptions", [])))
+	# A card of yours that moved nothing a number can show - a read, a draw, a card
+	# that keeps working - says what it does instead: nothing you play is silent.
+	if yours and notes.is_empty() and not bool(entry.get("quiet", false)):
+		for d in entry.get("descriptions", []):
+			notes.append("no effect" if d == "nothing you could point at" else str(d))
+	if not notes.is_empty():
+		_rise("\n".join(notes), _fx_role(fx, bool(entry.get("floor_wide", false)) and not yours),
+			chair)
+	# What a card that hits the whole floor did to everyone else it touched.
+	for other in entry.get("fx_others", []):
+		var there: int = Shift.CHAIR_KEYS.find(str(other["key"]))
+		if there < 0 or there >= _customer_cards.size():
+			continue
+		var others_notes := _fx_notes(other["fx"], true)
+		if not others_notes.is_empty():
+			_rise("\n".join(others_notes), _fx_role(other["fx"], false), there)
+
+## What moved on a customer, as the short lines that rise off their folder: their
+## patience, their Line, the appeal of what is on the table - and, for a card of
+## yours, the money it put on or took off that product.
+func _fx_notes(fx: Dictionary, with_money: bool) -> Array[String]:
 	var notes: Array[String] = []
 	var patience := int(fx.get("patience", 0))
 	if patience != 0:
@@ -1282,11 +1309,17 @@ func _show_what_they_did(entry: Dictionary) -> void:
 	var appeal := int(fx.get("appeal", 0))
 	if appeal != 0:
 		notes.append("%+d appeal" % appeal)
-	if bool(entry.get("floor_wide", false)):
-		notes.append("WHOLE FLOOR: " + ", ".join(entry.get("descriptions", [])))
-	if not notes.is_empty():
-		_rise("\n".join(notes), &"alert" if patience < 0 or line > 0 \
-			or bool(entry.get("floor_wide", false)) else &"margin", chair)
+	var money := int(fx.get("margin", 0))
+	if with_money and money != 0:
+		notes.append("%s%s margin" % ["+" if money > 0 else "-", Format.money(absi(money))])
+	return notes
+
+## Red for what is bad for you - patience gone, their Line up, money off the deal -
+## green for what is good.
+func _fx_role(fx: Dictionary, whole_floor: bool) -> StringName:
+	var bad := int(fx.get("patience", 0)) < 0 or int(fx.get("line", 0)) > 0 \
+		or int(fx.get("appeal", 0)) < 0 or int(fx.get("margin", 0)) < 0
+	return &"alert" if bad or whole_floor else &"margin"
 
 ## Text that rises off a customer's folder and fades - something that happened
 ## to them, said where it happened.

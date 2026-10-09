@@ -153,27 +153,19 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 ## The verdict under the meter: nothing yet, a band, or the exact gap.
 ##
 ## The FILL is always honest about your own appeal; only the LINE is fogged, and
-## Read the Room is the ONLY thing that lifts it. Offering used to lift it too,
-## which quietly made the card optional: ask once, anywhere, and the exact
-## number was yours for the rest of the shift.
-##
-## So the exact gap is gated on known_line rather than on having offered.
-## Having offered still buys you something real - the band - but a band is a
-## read and a number is a readout, and only one of those you have paid for.
+## Read the Room is the ONLY thing that lifts it.
 ##
 ## From the moment you place, it names the band in the meter's own colour -
 ## INTERESTED once you are over their Line, then ALMOST, WARM, COOL, COLD - so
 ## a player who has not read the room still knows roughly how far there is to
-## go. The exact number stays Read the Room's.
+## go. INTERESTED is the one that matters: it is when you can make the offer, and
+## you cannot before it. The exact number stays Read the Room's.
 func _read_the_offer(c, o, band: String) -> void:
-	if not (o.revealed and c.known_line):
+	if not c.known_line:
 		_status.text = band
 		_status.add_theme_color_override("font_color", _bar.fill_color())
 		return
 
-	# READY is gated behind known_line for the same reason the number is: appeal
-	# can climb past the Line on cards played AFTER a miss, and being told you
-	# have cleared a line you cannot see is the number by another name.
 	var gap: int = c.line - o.appeal
 	if gap <= 0:
 		_status.text = "READY TO SIGN"

@@ -18,6 +18,10 @@ class_name CustomerArchetype extends Resource
 @export_multiline var tell: String       ## what you see on arrival
 @export var line: int = 35
 @export var patience: int = 16
+## The most patience they can ever have - what you can build it up to with
+## patience cards. 0 = no more than the patience they sit down with (`patience`,
+## after the shift's scale); a number above it is a shield to grow. Never below it.
+@export var max_patience: int = 0
 @export var line_per_sale: int = 3       ## Lay-Down Larry runs at 0
 ## Extra margin multiplier per product ALREADY sold to this customer this
 ## visit - see Shift._settle(). Low for an easy moneybag (cheap to chain,

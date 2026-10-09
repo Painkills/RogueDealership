@@ -138,8 +138,9 @@ func _physics_process(_delta: float) -> bool:
 	_check_they_objected_on_their_folder()
 	_check_the_meter_shows_your_appeal_but_hides_their_line()
 	_check_the_meter_climbs_and_changes_colour()
-	# A Line they cannot clear, so KEY_O below is guaranteed to MISS. Left to the
-	# deal, this customer signs, the table clears, and the fog check has nothing
+	_check_placing_a_product_puts_its_rank_on_the_grid()
+	# A Line they cannot clear, so KEY_O below is guaranteed to be REFUSED. Left to
+	# the deal, this customer signs, the table clears, and the fog check has nothing
 	# live to look at - it returns early and counts for almost nothing while
 	# still reporting a pass. Impose the rare case; never wait for it.
 	_fix_the_line_out_of_reach()
@@ -178,6 +179,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_a_walkout_is_hard_to_miss()
 	_check_a_product_and_a_patience_card_play_on_the_customer_beside_you()
 	_check_the_table_turns_the_short_way()
+	_check_every_card_shows_what_it_did()
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
@@ -1103,6 +1105,60 @@ func _times_played(shift: Shift, def: CardDef) -> int:
 			n += 1
 	return n
 
+## "When walkaway complimentary is played, you dont know what happened, it just
+## gets discarded. In general, all cards should SHOW what they've done with those
+## popup numbers": a card that lowers a Line nobody can see rises it off their
+## folder, one that hits the whole floor rises its effect off every folder it
+## touched, and one with no number to show says what it does instead.
+func _check_every_card_shows_what_it_did() -> void:
+	var shift: Shift = _controller._shift
+	for i in range(shift.chairs.size()):
+		if shift.chairs[i] == null:
+			shift._spawn(i)
+	if shift.at == null:
+		_controller._apply(shift.approach(0))
+	var seated := 0
+	for who in shift.chairs:
+		if who != null:
+			seated += 1
+	var drop := ChangeLine.new()
+	drop.amount = -2
+	var floor_wide := ChangePatienceFloor.new()
+	floor_wide.amount = -1
+	var def := SupportCardDef.new()
+	def.id = &"driven_card"
+	def.display_name = "Driven card"
+	def.needs_offer = false
+	def.ticks = 0
+	def.effects.assign([drop, floor_wide])
+	shift.hand[0] = CardInstance.new(def, 7101)
+	_controller._render()
+	_settle()
+	_controller._clear_fx()
+	_controller._apply(shift.play_card(0))
+	var texts := _fx_texts()
+	_check("the Line it lowered rises off their folder (%s)" % str(texts),
+		texts.any(func(t): return str(t).contains("Line -2")))
+	var patience_notes := texts.filter(func(t): return str(t).contains("-1 patience"))
+	_check("and the patience it took from the floor off every folder it touched (%d of %d)"
+		% [patience_notes.size(), seated], patience_notes.size() == seated)
+	_controller._clear_fx()
+
+	var quiet := SupportCardDef.new()
+	quiet.id = &"driven_quiet_card"
+	quiet.display_name = "Driven quiet card"
+	quiet.needs_offer = false
+	quiet.ticks = 0
+	var reveal := RevealRoom.new()
+	quiet.effects.assign([reveal])
+	shift.hand[0] = CardInstance.new(quiet, 7102)
+	_controller._render()
+	_settle()
+	_controller._apply(shift.play_card(0))
+	var said := _fx_texts()
+	_check("a card with no number to show says what it does (%s)" % str(said), not said.is_empty())
+	_controller._clear_fx()
+
 ## "Make the seat swivel in the direction the target customer is in": from the
 ## last seat to the first is one step round, not a swing back through the middle.
 func _check_the_table_turns_the_short_way() -> void:
@@ -1825,6 +1881,23 @@ func _check_what_a_customer_says_reaches_their_card() -> void:
 ## Their real Line, parked while the fog checks run against a guaranteed miss.
 var _parked_line: int = -1
 
+## "Maybe when you place a product, it immediately gives you the ranking for it":
+## where it ranks is on their grid from the moment it is on the table, with
+## nothing asked.
+func _check_placing_a_product_puts_its_rank_on_the_grid() -> void:
+	if _controller._shift.at == null:
+		_check("seated, to read the grid", false)
+		return
+	var c = _controller._shift.chairs[_at()]
+	if c == null or c.offer == null:
+		_check("a product on the table to read the grid for", false)
+		return
+	var iid: StringName = c.offer.product.interest.id
+	_check("its rank is known (%s)" % str(c.known_ranks.get(iid)),
+		c.known_ranks.get(iid, -1) == int(c.ranks[iid]))
+	var grid: InterestGrid = _controller._customer_cards[_at()]._grid
+	_check("and their folder's grid is drawing it", grid._known.get(iid, -1) == int(c.ranks[iid]))
+
 func _fix_the_line_out_of_reach() -> void:
 	if _controller._shift.at == null:
 		_check("still seated to fix the Line", false)
@@ -1849,8 +1922,9 @@ func _put_the_line_back() -> void:
 ## "The chat bubble on the customer whose table you're at should also go away
 ## if you offer them a product (or replace with a new one about how they are
 ## happy about the product they accepted)." Both halves, on the real O key: an
-## offer that falls short clears whatever they were saying, and one they take
-## puts their yes up in its place.
+## offer that is refused (short of their Line) is not an offer at all, so it
+## leaves whatever they were saying where it is, and one they take puts their yes
+## up in its place.
 const _STALE_LINE := "\"Something from before you asked.\""
 
 func _say_something_before_the_offer() -> void:
@@ -1860,11 +1934,11 @@ func _say_something_before_the_offer() -> void:
 
 func _check_the_offer_cleared_what_they_were_saying() -> void:
 	if _controller._shift.at == null:
-		_check("still seated after the offer that fell short", false)
+		_check("still seated after the offer that was refused", false)
 		return
 	var card: CustomerCard3D = _controller._customer_cards[_at()]
-	_check("an offer that falls short still clears what they were saying",
-		not card.is_speaking())
+	_check("an offer that is refused leaves what they were saying alone",
+		card.is_speaking())
 
 ## A driven shift has no dialogue pool, so it is lent one for this offer alone
 ## - and the rng put back once it is over, so nothing further down this driver

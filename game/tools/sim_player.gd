@@ -91,9 +91,9 @@ static func _est_appeal(c: Customer, iid: StringName) -> int:
 	return int(c.cfg["appeal_step"]) * (c.ranks.size() - _est_rank(c, iid))
 
 ## Whether this player knows the exact gap on the table: always without fog;
-## with it, once the Line is read or the offer has been made once.
+## with it, once the Line is read.
 static func _gap_known(c: Customer) -> bool:
-	return not fog or c.known_line or (c.offer != null and c.offer.revealed)
+	return not fog or c.known_line
 
 ## How much appeal a band suggests is still missing - about its middle, in
 ## rungs of appeal_step (4): ALMOST is within one, WARM within 2.5, COOL 4.5.
@@ -259,21 +259,26 @@ static func _act(s: Shift, c: Customer) -> bool:
 	if c.demand != null and _can_answer(s, c):
 		var r := c.demand.resolve
 		if r is ClearTheTable:
-			if c.offer != null and c.line - c.offer.appeal <= 0 and _gap_known(c):
+			if c.offer != null and s.offer_refusal(c) == "":
 				return _did("answer a move: sell what is on the table", s.offer().ok)
 			return _did("answer a move: take it off the table", s.drop_offer().ok)
 		if r is IncreasePatience:
 			return _did("answer a demand: raise patience", s.play_card(_find(s, "patience")).ok)
+		# Asking is only possible once they would say yes: short of that, the ask
+		# waits on the appeal the ordinary way, below.
 		if r is MakeAnOffer:
 			if c.offer == null:
 				return _did("answer a demand: make an offer", s.place(_best_product(s, c, true)).ok)
-			return _did("answer a demand: make an offer", s.offer().ok)
+			if s.offer_refusal(c) == "":
+				return _did("answer a demand: make an offer", s.offer().ok)
 		if r is OfferSomethingGood:
 			if c.offer != null and _est_rank(c, c.offer.product.interest.id) <= 3:
-				return _did("answer a demand: offer a top-3", s.offer().ok)
-			if c.offer != null:
-				s.drop_offer()
-			return _did("answer a demand: offer a top-3", s.place(_top3_product(s, c)).ok)
+				if s.offer_refusal(c) == "":
+					return _did("answer a demand: offer a top-3", s.offer().ok)
+			else:
+				if c.offer != null:
+					s.drop_offer()
+				return _did("answer a demand: offer a top-3", s.place(_top3_product(s, c)).ok)
 		if r is PlayConcession:
 			return _did("answer a demand: concession", s.play_card(_find(s, "concession")).ok)
 		if r is PlayAnySupport:
@@ -301,7 +306,7 @@ static func _act(s: Shift, c: Customer) -> bool:
 			var sweetener := _money_card_for(s, c)
 			if sweetener >= 0:
 				return _did("money card", s.play_card(sweetener).ok)
-			return _did("offer", s.offer().ok)
+			return _offer(s, c)
 		var need := _band_need(band)
 		if _appeal_in_hand(s) >= need:
 			return _did("appeal card", s.play_card(_appeal_card_for(s, need)).ok)
@@ -314,7 +319,7 @@ static func _act(s: Shift, c: Customer) -> bool:
 			var sweetener := _money_card_for(s, c)
 			if sweetener >= 0:
 				return _did("money card", s.play_card(sweetener).ok)
-			return _did("offer", s.offer().ok)
+			return _offer(s, c)
 		var card := _appeal_card_for(s, gap)
 		if card >= 0:
 			return _did("appeal card", s.play_card(card).ok)
@@ -335,6 +340,18 @@ static func _act(s: Shift, c: Customer) -> bool:
 	if not c.unsigned.is_empty() and not c.has_budget():
 		return _did("close", s.close().ok)
 	return false
+
+## Asks for the business, now that they would say yes - or, for someone who holds
+## out for a concession first, gives the one in hand, or takes the product back for
+## another that they would take.
+static func _offer(s: Shift, c: Customer) -> bool:
+	if s.offer_refusal(c) == "":
+		return _did("offer", s.offer().ok)
+	if s.holds_out_for_a_concession(c):
+		var give := _find(s, "concession")
+		if give >= 0:
+			return _did("a concession", s.play_card(give).ok)
+	return _did("take back what they will not take", s.drop_offer().ok)
 
 static func _should_close(s: Shift, c: Customer) -> bool:
 	# A budget: sign once close() lets you - it is all spent, or there is

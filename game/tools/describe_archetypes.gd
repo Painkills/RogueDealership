@@ -54,6 +54,8 @@ func _print_archetype(a: CustomerArchetype) -> void:
 		rules.append("waves off every %s card" % CustomerCard3D.ordinal(a.rejects_every_nth_card))
 	if a.only_category != null:
 		rules.append("only looks at %s" % a.only_category.display_name)
+	if a.max_patience > a.patience:
+		rules.append("patience builds up to %d (sits down at %d)" % [a.max_patience, a.patience])
 	if a.arrival_patience_share > 0.0:
 		rules.append("sits down with %d%% of their patience" % roundi(a.arrival_patience_share * 100))
 	if a.pays_per_patience_left > 0:

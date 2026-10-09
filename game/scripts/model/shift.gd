@@ -527,6 +527,10 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	var comfort := int(perk(&"patience"))
 	top = maxi(1, top + comfort)
 	start = clampi(start + comfort, 1, top)
+	# Somebody whose patience can be built up past where they sit down - their own
+	# ceiling, scaled like the rest of it, and never under what they came in with.
+	if arch.max_patience > 0:
+		top = maxi(top, roundi(arch.max_patience * patience_scale) + comfort)
 
 	# Someone who demands a category comes in for one at random, and its
 	# interests are their favourites - what they want is what they want.
@@ -972,7 +976,8 @@ func play_card(index: int, chair: int = -1) -> Result:
 
 
 func place(index: int, chair: int = -1) -> Result:
-	## Costs a tick and shows only a BAND. Placing is the price of information
+	## Costs a tick and shows where the product ranks for them - and only a BAND
+	## of how far it is from their Line. Placing is the price of information
 	## here - reading a priority list by putting products in front of people
 	## costs the same as any other read in the game. On `chair`'s customer, when
 	## that is not who you are standing with: it goes on their table, and you
@@ -1008,6 +1013,9 @@ func place(index: int, chair: int = -1) -> Result:
 	var rank: int = int(c.ranks[iid])
 	c.offer = Offer.new(inst, c.appeal_for(iid),
 		roundi(inst.margin() * (1.0 + perk(&"margin"))))
+	# Where it ranks on their list is on the grid the moment it is on the table:
+	# nobody should have to remember what asking about a product once taught them.
+	c.known_ranks[iid] = rank
 	# A new product is a new conversation: whatever they objected to about the
 	# last one went with it.
 	c.objection = &""
@@ -1025,6 +1033,7 @@ func place(index: int, chair: int = -1) -> Result:
 		var ctx := _yours(c, product)
 		var descriptions: Array[String] = []
 		var floor_wide := false
+		var floor_before := _floor_snapshots()
 		for e in effects:
 			e.apply(ctx)
 			var d := e.describe()
@@ -1040,6 +1049,9 @@ func place(index: int, chair: int = -1) -> Result:
 			"descriptions": descriptions if not descriptions.is_empty() \
 				else ["nothing you could point at"],
 			"floor_wide": floor_wide,
+			"yours": true,
+			"fx": _fx_since(floor_before[c], c),
+			"fx_others": _fx_on_the_others(floor_before, c),
 		})
 
 	# The band is read AFTER the effects land, not before - a product whose
@@ -1049,9 +1061,7 @@ func place(index: int, chair: int = -1) -> Result:
 	hand.remove_at(index)
 	stat["places"] = int(stat["places"]) + 1
 	_draw_up()
-	# Placing teaches nothing the player can see - rank stays hidden, unlike
-	# offer()'s known_ranks reveal - but an archetype can still react to it
-	# internally, the same way OnOffer already reacts to a rank you never see.
+	# An archetype can react to where it ranks, the same way OnOffer does.
 	fire(&"on_place", c, {"rank": rank})
 	_demand_saw(c, DemandResolve.PLACE, {"product": product})
 	# After their archetype has had its say, so the objection is what is left
@@ -1060,7 +1070,7 @@ func place(index: int, chair: int = -1) -> Result:
 	_object(c, product)
 	_burn(cfg.place_ticks, "place")
 	return Result.new(true, "You put the %s in front of %s."
-		% [product.display_name, c.display_name], "place", {"band": band})
+		% [product.display_name, c.display_name], "place", {"band": band, "rank": rank})
 
 
 ## Shared by place() and _support(): an effect that hits the whole floor
@@ -1197,6 +1207,7 @@ func _support(c: Customer, index: int) -> Result:
 		if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
 	var before_margin: int = c.offer.margin if c.offer else 0
 	var patience_before: int = c.patience
+	var floor_before := _floor_snapshots()
 	# One pass, the same one fire() and _settle_demand() make: apply, collect
 	# what to say it did, and notice a floor-wide hit while we are here.
 	var descriptions: Array[String] = []
@@ -1259,6 +1270,9 @@ func _support(c: Customer, index: int) -> Result:
 		"dialogue": said,
 		"descriptions": descriptions,
 		"floor_wide": floor_wide,
+		"yours": true,
+		"fx": _fx_since(floor_before[c], c),
+		"fx_others": _fx_on_the_others(floor_before, c),
 	})
 
 	hand.remove_at(index)
@@ -1274,9 +1288,27 @@ func _support(c: Customer, index: int) -> Result:
 	return Result.new(true, def.display_name + ".", "support")
 
 
+## Why the product on `c`'s table cannot be offered yet - in words - or "" when
+## they would say yes. You can only ask once it is past their Line (the band reads
+## INTERESTED) and, for a customer who holds out for one, once something has been
+## conceded on it: asking too soon is refused, and costs nothing at all.
+func offer_refusal(c: Customer) -> String:
+	var o = c.offer
+	if o == null:
+		return "There is nothing on the table to offer."
+	if o.appeal < c.line:
+		return "%s is not ready for an offer - the %s is still short of their Line." \
+			% [c.display_name, o.product.display_name]
+	if holds_out_for_a_concession(c):
+		return "%s will not take the %s until something is conceded on it." \
+			% [c.display_name, o.product.display_name]
+	return ""
+
+
 func offer() -> Result:
-	## Free in time. What it costs is exposure: a short offer bruises their
-	## patience and is what provokes whatever this archetype does.
+	## Free in time, and only possible once they would say yes (offer_refusal()):
+	## nothing is risked by asking, so nothing is learned by asking either - where a
+	## product ranks is on the grid from the moment it is placed.
 	var pair := _here()
 	if pair[1] != null:
 		return pair[1]
@@ -1287,56 +1319,38 @@ func offer() -> Result:
 		return Result.new(false, SPENT_OUT % c.display_name)
 
 	var o = c.offer
+	stat["offers"] = int(stat["offers"]) + 1
+	var why := offer_refusal(c)
+	if why != "":
+		stat["failed_offers"] = int(stat["failed_offers"]) + 1
+		# Turned down for want of a concession, not for appeal: they say so too.
+		if o.appeal >= c.line:
+			_chatter(c, [&"wants_concession"], o.product.id)
+		return Result.new(false, why)
+
 	var iid: StringName = o.product.interest.id
 	var rank: int = int(c.ranks[iid])
-	var gap: int = max(0, c.line - o.appeal)
 	# The trial close - asking is what you say, before they answer, and it
 	# closes on whatever they were objecting to where a close was written for it.
 	_speak([&"player_close"], c, o.product.id, StringName(band_for(c.line - o.appeal)))
-
-	# Offering teaches you the RANK of what you just put in front of them, and
-	# nothing about their Line. It used to set known_line too, which made Read
-	# the Room a convenience rather than the only way to see the number - ask
-	# once and the fog was gone for the rest of the shift, for free. The gap is
-	# still true in the model; detail_card_3d.gd decides how much of it you see.
-	o.revealed = true
-	c.known_ranks[iid] = rank
-	stat["offers"] = int(stat["offers"]) + 1
 
 	# They evaluate at the Line they had when you ASKED. A Hawk's reaction to
 	# being asked cannot retroactively sink an offer that already cleared.
 	var patience_before: int = c.patience
 	var sale := _settle(c)
-	if not sale.is_empty():
-		# They say yes out loud, about the product they just took where a line
-		# was written for it - before anything their archetype does about it,
-		# which is what happens next.
-		_chatter(c, [&"accepted"], sale["product"].id)
-		fire(&"on_sale", c, {"rank": rank, "sale": sale})
-	else:
-		stat["failed_offers"] = int(stat["failed_offers"]) + 1
-		c.patience -= cfg.failed_offer_patience
-		# Turned down for want of a concession, not for appeal: say so, or
-		# nothing on screen tells the player what would have worked.
-		if o.appeal >= c.line and holds_out_for_a_concession(c):
-			_chatter(c, [&"wants_concession"], o.product.id)
-
-	fire(&"on_offer", c, {"rank": rank, "short": gap, "sale": sale})
-	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": gap, "sale": sale,
+	# They say yes out loud, about the product they just took where a line was
+	# written for it - before anything their archetype does about it, which is
+	# what happens next.
+	_chatter(c, [&"accepted"], sale["product"].id)
+	fire(&"on_sale", c, {"rank": rank, "sale": sale})
+	fire(&"on_offer", c, {"rank": rank, "short": 0, "sale": sale})
+	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": 0, "sale": sale,
 		"patience_before": patience_before})
 	_settle_patience()
-
-	if not sale.is_empty():
-		return Result.new(true, "%s takes the %s - $%d."
-			% [c.display_name, sale["product"].display_name, sale["margin"]],
-			"sale", {"rank": rank, "margin": sale["margin"],
-				"bonus": sale.get("bonus", 0)})
-	# Exact on purpose, and NOT player-facing: _apply() logs a Result's message
-	# only when it is a refusal. The model always knows the true gap; the fog
-	# lives in the view, which is the only place that can decide how much of it
-	# a player has earned the right to see.
-	return Result.new(true, "%d SHORT." % gap, "miss",
-		{"short": gap, "rank": rank})
+	return Result.new(true, "%s takes the %s - $%d."
+		% [c.display_name, sale["product"].display_name, sale["margin"]],
+		"sale", {"rank": rank, "margin": sale["margin"],
+			"bonus": sale.get("bonus", 0)})
 
 
 func _settle(c: Customer) -> Dictionary:
@@ -1643,6 +1657,35 @@ func _snapshot(c: Customer) -> Dictionary:
 		"offer": c.offer.instance.uid if c.offer else -1}
 
 
+## Everyone on the floor as they stand, by customer - read before a card of yours
+## lands, so what it did to each of them can be shown after (_fx_on_the_others()).
+func _floor_snapshots() -> Dictionary:
+	var out := {}
+	for who in chairs:
+		if who != null:
+			out[who] = _snapshot(who)
+	return out
+
+
+## What a card of yours did to everybody but `c` - a card that hits the whole floor
+## touches them all - as [{"key": chair letter, "fx": what moved}], for the ones it
+## moved. Their patience and Line and the like; what happened to your standing
+## belongs to the entry itself, once.
+func _fx_on_the_others(before: Dictionary, c: Customer) -> Array:
+	var out: Array = []
+	for who in before:
+		if who == c or not chairs.has(who):
+			continue
+		var fx := _fx_since(before[who], who)
+		fx["standing"] = 0
+		fx["swept"] = -1
+		for key in ["margin", "patience", "line", "appeal"]:
+			if int(fx[key]) != 0:
+				out.append({"key": who.key, "fx": fx})
+				break
+	return out
+
+
 ## What it actually did, for the view to show happening rather than only say:
 ## money gained or lost on their deal, standing, their patience and Line, and
 ## the uid of a product it swept off the table (-1 if none). Logged as the
@@ -1697,6 +1740,7 @@ func _tick_lingering(c: Customer) -> void:
 			"descriptions": [(s["inner"] as Effect).describe()],
 			"floor_wide": false,
 			"quiet": true,
+			"yours": true,
 			"fx": _fx_since(before, c),
 		})
 		if int(s["ticks_left"]) > 0:

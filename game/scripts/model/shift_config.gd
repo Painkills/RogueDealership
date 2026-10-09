@@ -103,7 +103,6 @@ func category_quota_in_week(week: int) -> int:
 @export var approach_ticks: int = 0
 @export var place_ticks: int = 1
 @export var dig_ticks: int = 1
-@export var failed_offer_patience: int = 1
 
 ## One rung of appeal: what a product opens at drops by this for every place
 ## down their list. Cards and Lines are tuned in rungs and half rungs of it.

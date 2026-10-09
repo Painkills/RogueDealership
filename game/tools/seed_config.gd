@@ -19,7 +19,6 @@ func _init() -> void:
 	cfg.approach_ticks = 1
 	cfg.place_ticks = 1
 	cfg.dig_ticks = 1
-	cfg.failed_offer_patience = 1
 	cfg.appeal_step = 5
 	cfg.line_per_sale = 3
 	cfg.patience_per_sale = 3

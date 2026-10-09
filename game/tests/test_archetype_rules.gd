@@ -127,6 +127,28 @@ func test_someone_in_a_hurry_sits_down_with_their_share_of_patience() -> void:
 	var c: Customer = _seated(arch)[1]
 	h.eq("half of it", c.patience, roundi(c.max_patience * 0.5))
 
+func test_patience_can_be_built_up_to_an_archetypes_own_ceiling() -> void:
+	var arch := _arch()
+	arch.arrival_patience_share = 1.0
+	var plain: Customer = _seated(arch)[1]
+	h.eq("with no ceiling set, they sit down at the most they can have",
+		plain.patience, plain.max_patience)
+	var started := plain.patience
+	arch = _arch()
+	arch.arrival_patience_share = 1.0
+	arch.max_patience = started * 2 + 5
+	var c: Customer = _seated(arch)[1]
+	h.eq("sits down with the patience they always did", c.patience, started)
+	h.eq("under a ceiling of their own, scaled like the rest of it", c.max_patience,
+		arch.max_patience)
+	c.add_patience(1000)
+	h.eq("and it builds up to that and no further", c.patience, c.max_patience)
+	arch = _arch()
+	arch.max_patience = 1
+	var low: Customer = _seated(arch)[1]
+	h.check("a ceiling under where they start changes nothing (%d of %d)"
+		% [low.patience, low.max_patience], low.max_patience >= low.patience)
+
 func test_someone_in_a_hurry_pays_for_the_patience_they_have_left() -> void:
 	var arch := _arch()
 	arch.pays_per_patience_left = 100
