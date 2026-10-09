@@ -57,7 +57,7 @@ func _init() -> void:
 	strip.add_theme_constant_override("separation", 12)
 	col.add_child(strip)
 	strip.owner = root
-	var strip_title := AppWindow.label(strip, root, "DealershipStripTitle", "MY DEALERSHIP", 20,
+	var strip_title := AppWindow.label(strip, root, "DealershipStripTitle", "MY PERKS", 20,
 		&"text_dim", true)
 	strip_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var badges := HBoxContainer.new()

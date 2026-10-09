@@ -19,4 +19,4 @@ patience_scale = 0.8
 excluded_archetypes = Array[ExtResource("2_arch")]([ExtResource("3_karen"), ExtResource("4_skeptic")])
 from_day = 2
 cards_for_sale = 6
-upgrades = 6
+upgrades = 0

@@ -22,5 +22,5 @@ blurb = "Quiet floor, trouble walks in. After it, upgrade your cards."
 walk_up_scale = 1.8
 excluded_archetypes = Array[ExtResource("2_arch")]([ExtResource("3_easy"), ExtResource("4_lay"), ExtResource("5_family"), ExtResource("6_speedster")])
 from_day = 2
-cards_for_sale = 6
+cards_for_sale = 0
 upgrades = 6

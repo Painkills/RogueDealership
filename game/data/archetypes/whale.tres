@@ -34,6 +34,6 @@ moves = Array[ExtResource("2_dmd")]([ExtResource("4_imp"), ExtResource("5_stk")]
 timed_moves = Array[ExtResource("3_tm")]([SubResource("Timed_desk")])
 move_gap_ticks = 0
 sold_products_leave_deck = true
-escalate_damage = 1
+escalate_damage = 2
 escalate_fuse = 0
 min_move_fuse = 1

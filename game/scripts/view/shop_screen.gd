@@ -125,7 +125,7 @@ func _render() -> void:
 		var names: Array[String] = []
 		for u in run.dealership:
 			names.append(u.display_name)
-		_shift_label.text += "\nYour dealership: " + ", ".join(names)
+		_shift_label.text += "\nYour perks: " + ", ".join(names)
 
 	# A night's dealership upgrade comes first, over everything - the free card
 	# waits behind it.

@@ -280,7 +280,7 @@ func reward_preview() -> String:
 	if heal_up_to > 0.0:
 		earned.append("heal")
 	if dealership_upgrades > 0:
-		earned.append("dealership upgrade")
+		earned.append("perk")
 	var parts: Array[String] = []
 	if not stocked.is_empty():
 		parts.append("Shop: %s." % " and ".join(stocked))

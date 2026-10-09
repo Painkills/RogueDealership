@@ -233,13 +233,13 @@ func _dealership_pick(root: Control) -> void:
 	root.add_child(popup)
 	popup.owner = root
 
-	var made := AppWindow.build(popup, root, "DealershipPickWindow", "Dealership upgrade",
+	var made := AppWindow.build(popup, root, "DealershipPickWindow", "Perk",
 		DEALERSHIP_PICK_WINDOW, "", 36)
 	var col: VBoxContainer = made["body"]
 	col.add_theme_constant_override("separation", 18)
 
 	var title := AppWindow.label(col, root, "DealershipPickTitle",
-		"You made quota - upgrade the dealership", 32, &"text", true)
+		"You made quota - pick a perk", 32, &"text", true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sub := AppWindow.label(col, root, "DealershipPickSub",
 		"Pick one. It stays for the rest of the run.", 20, &"text_dim")

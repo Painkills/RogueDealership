@@ -96,13 +96,13 @@ func _roll_dealership_offers(count: int) -> void:
 ## Picks one of this visit's dealership upgrades - the run keeps it for good.
 func take_dealership_upgrade(u: DealershipUpgrade) -> Result:
 	if dealership_picks_left <= 0:
-		return Result.new(false, "The dealership has had its upgrade this visit.")
+		return Result.new(false, "You have had your perk this visit.")
 	if u == null or not dealership_offers.has(u):
 		return Result.new(false, "That upgrade is not on offer.")
 	run.dealership.append(u)
 	dealership_picks_left = 0
 	dealership_taken = u
-	return Result.new(true, "The dealership gets %s." % u.display_name,
+	return Result.new(true, "New perk: %s." % u.display_name,
 		"dealership", {"price": 0})
 
 func _roll_cards() -> void:
@@ -239,7 +239,7 @@ func perk_text() -> String:
 		extras.append("%d card%s for sale" % [cards_for_sale, "" if cards_for_sale == 1 else "s"])
 	if upgrades > 0:
 		extras.append("%d of your cards to upgrade" % upgrades)
-	var missed := " No dealership upgrade - that shift missed quota." if dealership_missed else ""
+	var missed := " No perk - that shift missed quota." if dealership_missed else ""
 	if extras.is_empty():
 		return "Just your free card this visit - your bonus carries over." + missed
 	# A store opened with no free card (the last-fight shortcut) has none to be
