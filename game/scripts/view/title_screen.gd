@@ -11,6 +11,10 @@ signal new_game_started
 ## The practice shift - see TutorialCoach.
 signal tutorial_requested
 
+## How often, in seconds, an installed copy of the game looks to see whether a
+## newer build has been fetched - see _watch_for_a_new_build().
+const NEW_BUILD_POLL_SECONDS := 4.0
+
 ## What the banner under the showroom's sign says on each page.
 const BANNERS := {
 	&"menu": "NOW HIRING: F&I MANAGER",
@@ -74,6 +78,27 @@ func _ready() -> void:
 	_everyone_tab.pressed.connect(func(): show_board(&"everyone"))
 	_yours_tab.pressed.connect(func(): show_board(&"yours"))
 	show_menu()
+	if OS.has_feature("web"):
+		_watch_for_a_new_build()
+
+## An installed copy of the game runs the build it downloaded the time before, and
+## fetches any newer one in the background (the service worker the web export
+## ships). Without this it would stay one deploy behind until the app had been
+## closed and opened twice. Once a newer build is waiting, the front door is where
+## to switch to it: nothing is in progress here.
+func _watch_for_a_new_build() -> void:
+	var timer := Timer.new()
+	timer.wait_time = NEW_BUILD_POLL_SECONDS
+	timer.timeout.connect(func():
+		if switches_to_a_new_build(_page, _popup.visible, JavaScriptBridge.pwa_needs_update()):
+			JavaScriptBridge.pwa_update())
+	add_child(timer)
+	timer.start()
+
+## Whether to switch to a newer build that is `waiting`: on the menu, with nobody
+## in the middle of typing a name.
+static func switches_to_a_new_build(page: StringName, popup_open: bool, waiting: bool) -> bool:
+	return waiting and page == &"menu" and not popup_open
 
 func show_menu() -> void:
 	_show(&"menu")
