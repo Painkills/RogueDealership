@@ -1163,6 +1163,7 @@ func _phase_2_leave_and_work_a_night() -> void:
 		_root._picker_view.visible and not _root._shop_view.visible)
 	_check_reopening_the_game_continues_the_run("on the next day's calendar", &"calendar")
 	_check_a_newer_build_starts_the_day_over()
+	_check_a_reload_for_a_lost_gpu_goes_straight_back()
 	_check_the_calendar_shows_the_week()
 	_check_the_calendar_shows_premade_shifts()
 	# This driver digs every shift away, and a second total wipeout on top of
@@ -1355,6 +1356,21 @@ func _check_a_newer_build_starts_the_day_over() -> void:
 		_root._picker_view._sub.text.contains("starts over"))
 	_check("and the save is back at the start of that day",
 		RunFile.read() != null and not RunFile.read().has_pick())
+	_run = _root._run
+
+## Back from the phone taking the GPU away: the page reloads itself (see
+## RunFile.RESUME_FLAG), and the game goes straight back into the run - no
+## title screen to tap through.
+func _check_a_reload_for_a_lost_gpu_goes_straight_back() -> void:
+	_root._keep_the_save_current()
+	var before := RunSave.fingerprint_of(_root._run, _root._live_shift, _root._live_shop)
+	RunFile.resume_on_boot_for_testing = true
+	_reopen_the_game()
+	_check("a reload after losing the GPU skips the title, straight back to the calendar",
+		_root._picker_view.visible and not _root._title_view.visible)
+	_check("exactly where it was",
+		RunSave.fingerprint_of(_root._run, _root._live_shift, _root._live_shop) == before)
+	_check("and it is asked only once", not RunFile.resume_on_boot_for_testing)
 	_run = _root._run
 
 func _finish_the_shift() -> void:

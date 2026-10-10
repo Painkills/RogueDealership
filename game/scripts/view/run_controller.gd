@@ -119,6 +119,9 @@ func _ready() -> void:
 	if title_at_boot:
 		_new_run()
 		_open_the_title()
+		# Back from the phone taking the GPU away mid-run: straight back to it.
+		if RunFile.reloaded_to_pick_up():
+			_continue_run()
 	else:
 		_start_run()
 

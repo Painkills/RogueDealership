@@ -95,15 +95,18 @@ func _watch_for_a_new_build() -> void:
 	var timer := Timer.new()
 	timer.wait_time = NEW_BUILD_POLL_SECONDS
 	timer.timeout.connect(func():
-		if switches_to_a_new_build(_page, _popup.visible, JavaScriptBridge.pwa_needs_update()):
+		if switches_to_a_new_build(_page, _popup.visible, JavaScriptBridge.pwa_needs_update(),
+				is_visible_in_tree()):
 			JavaScriptBridge.pwa_update())
 	add_child(timer)
 	timer.start()
 
 ## Whether to switch to a newer build that is `waiting`: on the menu, with nobody
-## in the middle of typing a name.
-static func switches_to_a_new_build(page: StringName, popup_open: bool, waiting: bool) -> bool:
-	return waiting and page == &"menu" and not popup_open
+## in the middle of typing a name - and the title `showing` at all, not put away
+## behind a run that CONTINUE (or the tutorial) left it on its menu page for.
+static func switches_to_a_new_build(page: StringName, popup_open: bool, waiting: bool,
+		showing: bool) -> bool:
+	return waiting and showing and page == &"menu" and not popup_open
 
 func show_menu() -> void:
 	_show(&"menu")

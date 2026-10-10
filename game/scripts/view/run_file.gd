@@ -13,6 +13,28 @@ class_name RunFile extends RefCounted
 ## real player's run.
 static var path := "user://run.save"
 
+## A phone takes the GPU away from an app left in the background, and the
+## engine cannot get it back. The page then reloads itself (the Web preset's
+## head_include, in export_presets.cfg) and leaves this in its sessionStorage,
+## so the game boots straight back into the run instead of onto the title.
+const RESUME_FLAG := "rd_resume"
+## What a driver sets to boot as though the page had just done that.
+static var resume_on_boot_for_testing := false
+
+## Whether this boot is the page coming back after losing its GPU - asked once:
+## the answer is forgotten as it is given.
+static func reloaded_to_pick_up() -> bool:
+	if resume_on_boot_for_testing:
+		resume_on_boot_for_testing = false
+		return true
+	if not OS.has_feature("web"):
+		return false
+	# Answered as a string: a JS boolean comes back across the bridge as a number.
+	var asked = JavaScriptBridge.eval(("(function(){try{var v=sessionStorage.getItem('%s');"
+		+ "sessionStorage.removeItem('%s');return v==='1'?'yes':'no';}catch(e){return 'no';}})()")
+		% [RESUME_FLAG, RESUME_FLAG], true)
+	return str(asked) == "yes"
+
 ## Written whole to a file beside it first, then moved over it - a write cut
 ## short leaves the last good save, never half of one.
 static func write(save: RunSave) -> void:

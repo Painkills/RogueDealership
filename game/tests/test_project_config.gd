@@ -33,6 +33,25 @@ func test_the_web_export_installs_as_a_full_screen_app() -> void:
 		h.check("%s is a picture that exists (%s)" % [key, path],
 			path != "" and FileAccess.file_exists(path))
 
+func test_an_app_that_loses_its_gpu_reloads_back_into_the_run() -> void:
+	## "Returning to the app says lost WebGL context, then it goes gray and doesn't
+	## reload unless I close and reopen." A phone takes the GPU from an app left in
+	## the background; the engine's only answer is an alert asking for a reload an
+	## installed app has no button for. The page's own script gets there first.
+	var presets := ConfigFile.new()
+	presets.load("res://export_presets.cfg")
+	var head := ""
+	for section in presets.get_sections():
+		if presets.get_value(section, "platform", "") == "Web":
+			head = str(presets.get_value(section + ".options", "html/head_include", ""))
+	h.check("the page listens for the GPU being lost",
+		head.contains("addEventListener('webglcontextlost'"))
+	h.check("ahead of the engine's own alert, which it stops",
+		head.contains("}, true);") and head.contains("stopImmediatePropagation()"))
+	h.check("and reloads", head.contains("location.reload()"))
+	h.check("telling the game to pick the run back up, by the name the game asks for (%s)"
+		% RunFile.RESUME_FLAG, head.contains("'%s'" % RunFile.RESUME_FLAG))
+
 func test_the_vendored_card3d_addon_is_present_and_loadable() -> void:
 	for path in [
 			"res://addons/card_3d/scenes/card_3d.tscn",
