@@ -95,7 +95,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_debug_add_money()
 
 func _debug_add_money() -> void:
-	_shop.run.money += 10000
+	_shop.add_money_for_testing(10000)
 	_render()
 
 func setup(shop: Shop) -> void:

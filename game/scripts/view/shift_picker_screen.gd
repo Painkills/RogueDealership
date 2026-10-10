@@ -94,6 +94,11 @@ func setup(offers: Array[ShiftProfile], day: int = 1, days: int = 5, quota: int 
 			for profile in offers:
 				_offer(body, profile)
 
+## One more thing said in the header, after where you are - until the next
+## setup().
+func note(text: String) -> void:
+	_sub.text += "  |  " + text
+
 ## `d` is the run's own day from 0 - the date in the circle - and `weekday`
 ## which day of the week it falls on.
 func _day_header(d: int, weekday: int, is_today: bool) -> Control:

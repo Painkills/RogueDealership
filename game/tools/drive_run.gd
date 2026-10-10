@@ -23,6 +23,7 @@ var _taken_uid: int = -1
 var _bought_uid: int = -1
 
 const PROFILE := "user://drive_run_profile.cfg"
+const SAVE := "user://drive_run.save"
 
 ## Every error the engine reports while the run is driven - see ErrorTrap.
 var _trap := ErrorTrap.new()
@@ -38,6 +39,9 @@ func _init() -> void:
 	# player's personal bests.
 	PlayerProfile.path = PROFILE
 	PlayerProfile.reset()
+	# And its own save, so it never takes the place of a real run in progress.
+	RunFile.path = SAVE
+	RunFile.clear()
 	# Nor ever posted to the real shared board.
 	Leaderboard.offline = true
 	get_root().add_child(_root)
@@ -61,6 +65,12 @@ func _process(_delta: float) -> bool:
 		_check_shop_layout_fits_on_screen()
 		_check_the_view_deck_button_shows_the_whole_deck()
 		_check_the_free_card_is_on_the_house()
+		# Before any check below hands the store money no move ever earned - a
+		# save rightly refuses to play back a run its moves cannot explain.
+		_check_reopening_the_game_continues_the_run("in the store", &"store")
+		_check("with the card taken there still taken", _root._live_shop != null
+			and _root._shop_view._shop == _root._live_shop
+			and _root._live_shop.find(_taken_uid) != null)
 		_check_the_store_holds_what_the_shift_stocks()
 		_check_clicking_a_shelf_card_buys_it()
 		_check_debug_add_money_key_works()
@@ -88,6 +98,7 @@ func _process(_delta: float) -> bool:
 		_check_the_testing_skip_costs_no_standing()
 		_check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss()
 		PlayerProfile.reset()
+		RunFile.clear()
 		_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
 			_trap.errors.is_empty())
 
@@ -156,6 +167,16 @@ func _phase_0_open_and_finish_shift() -> void:
 		_run.money == money_before_debug_press)
 	_check("and the shift's HUD with it",
 		(_root._shift_view.get_node(^"HUD") as CanvasLayer).visible)
+
+	# A few moves in, the game is thrown away and opened again.
+	var s: Shift = _root._shift_view._shift
+	_root._shift_view._apply(s.dig(0))
+	_root._shift_view._apply(s.leave())
+	_check_reopening_the_game_continues_the_run("mid-shift", &"floor")
+	var log_text: String = _root._shift_view._event_log.get_parsed_text()
+	_check("whose log still has what happened, and says it was picked up again",
+		log_text.contains("Picked up where you left off") and log_text.length() > 60)
+	_check("standing out on the floor, as it was left", _root._shift_view._shift.at == null)
 
 	_finish_the_shift()
 
@@ -1140,6 +1161,8 @@ func _phase_2_leave_and_work_a_night() -> void:
 	_root._shop_view.done.emit()
 	_check("leaving the shop opens the picker, not the floor directly",
 		_root._picker_view.visible and not _root._shop_view.visible)
+	_check_reopening_the_game_continues_the_run("on the next day's calendar", &"calendar")
+	_check_a_newer_build_starts_the_day_over()
 	_check_the_calendar_shows_the_week()
 	_check_the_calendar_shows_premade_shifts()
 	# This driver digs every shift away, and a second total wipeout on top of
@@ -1267,6 +1290,72 @@ func _take_any_dealership_upgrade() -> void:
 	(row.get_child(0) as Button).pressed.emit()
 	_check("clicking one keeps %s for the run and closes the popup" % first.display_name,
 		_run.dealership.has(first) and not popup.visible)
+
+## "In the PWA it loses context and forces a reload, losing the run." The game
+## thrown away and opened again - a fresh run.tscn, on the title screen it boots
+## to, and CONTINUE - must land exactly where it was left: the same screen, and
+## every die and every card where they were.
+func _check_reopening_the_game_continues_the_run(where: String, screen: StringName) -> void:
+	_root._keep_the_save_current()   # what the next frame would do
+	var before := RunSave.fingerprint_of(_root._run, _root._live_shift, _root._live_shop)
+	var saved := RunFile.read()
+	_check("the run is on disk %s" % where, saved != null)
+	if saved == null:
+		return
+	_check("as it stands right now, %s" % where, saved.fingerprint == before)
+	var old_run: RunState = _root._run
+	_reopen_the_game()
+	var title = _root._title_view
+	var button := title.get_node(^"%ContinueButton") as Button
+	_check("the game opens on its title screen, offering to continue day %d (%s)"
+		% [saved.day(), button.text],
+		title.visible and title.continue_offered() and button.text.contains(str(saved.day())))
+	button.pressed.emit()
+	var view: Node = {&"floor": _root._shift_view, &"store": _root._shop_view,
+		&"calendar": _root._picker_view}[screen]
+	_check("CONTINUE goes straight back to the %s, %s" % [screen, where],
+		view.visible and not title.visible)
+	_check("on a run rebuilt from disk, not the one left behind", _root._run != old_run)
+	_check("played back to exactly where it was, %s" % where,
+		RunSave.fingerprint_of(_root._run, _root._live_shift, _root._live_shop) == before)
+	if screen == &"floor":
+		_check("the floor is working the played-back shift",
+			_root._shift_view._shift == _root._live_shift)
+	_run = _root._run
+
+## The page reloaded: everything in memory gone, a new run.tscn booted the way
+## the game boots - on the title screen.
+func _reopen_the_game() -> void:
+	var old := _root
+	get_root().remove_child(old)
+	old.queue_free()
+	_root = (load("res://scenes/run.tscn") as PackedScene).instantiate()
+	get_root().add_child(_root)
+
+## A newer build can play a day's moves out differently - and then CONTINUE
+## must not put you somewhere that never happened: the day starts over from its
+## calendar, and the calendar says why.
+func _check_a_newer_build_starts_the_day_over() -> void:
+	var day: int = _run.shift_number
+	_root._picker_view.chosen.emit(_run.todays_shifts()[0])
+	var s: Shift = _root._shift_view._shift
+	_root._shift_view._apply(s.dig(0))
+	_root._keep_the_save_current()
+	# What a build that dealt this day differently would find: moves that no
+	# longer land where they did.
+	var saved := RunFile.read()
+	saved.fingerprint += 1
+	RunFile.write(saved)
+	_reopen_the_game()
+	(_root._title_view.get_node(^"%ContinueButton") as Button).pressed.emit()
+	_check("a day whose moves play out differently starts over on its calendar (day %d)"
+		% _root._run.shift_number, _root._picker_view.visible
+			and not _root._shift_view.visible and _root._run.shift_number == day)
+	_check("which says why (%s)" % _root._picker_view._sub.text,
+		_root._picker_view._sub.text.contains("starts over"))
+	_check("and the save is back at the start of that day",
+		RunFile.read() != null and not RunFile.read().has_pick())
+	_run = _root._run
 
 func _finish_the_shift() -> void:
 	## Burn the clock the way test_deck_persistence does, then press the report's
@@ -1565,6 +1654,8 @@ func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
 		% _root._title_view._scores_list.get_child_count(),
 		_root._title_view._scores_list.get_child_count() == PlayerProfile.bests().size()
 			and not _root._title_view._scores_empty.visible)
+	_check("with nothing left on disk to continue",
+		RunFile.read() == null and not _root._title_view.continue_offered())
 	_check("and rolls a genuinely fresh RunState, not the finished one relabeled",
 		_root._run != stale_run and _root._run.shift_number == 1)
 	_check("with a full standing meter again",
@@ -1595,3 +1686,6 @@ func _check(label: String, ok: bool) -> void:
 	_checks += 1
 	if not ok:
 		_failures.append(label)
+		# Said at once too: a later step that never finishes would otherwise
+		# take every failure before it down with it.
+		print("FAIL (as it happened)  " + label)

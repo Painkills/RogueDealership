@@ -51,6 +51,45 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi(), cfg.days_per_week,
 			archetypes, cfg)
 
+## Plain data, for a save: everything a run has become since it was dealt - the
+## seed rebuilds the rest (the calendar, the pools). See RunSave.
+func snapshot() -> Dictionary:
+	var perks: Array = []
+	for u in dealership:
+		perks.append(u.id)
+	return {
+		"seed": rng.seed,
+		"rng_state": rng.state,
+		"deck": deck.snapshot(),
+		"shift_number": shift_number,
+		"money": money,
+		"last_bonus": last_bonus,
+		"banked_total": banked_total,
+		"standing": standing,
+		"reports": reports.duplicate(true),
+		"sale_streak": sale_streak,
+		"dealership": perks,
+	}
+
+## Puts this run - dealt from the same seed - where snapshot() left one. A card
+## or perk this build no longer has is left out.
+func restore(data: Dictionary) -> void:
+	rng.state = int(data["rng_state"])
+	deck = Deck.from_snapshot(data["deck"], card_pool)
+	shift_number = int(data["shift_number"])
+	money = int(data["money"])
+	last_bonus = int(data["last_bonus"])
+	banked_total = int(data["banked_total"])
+	standing = int(data["standing"])
+	reports.assign((data["reports"] as Array).duplicate(true))
+	sale_streak = int(data["sale_streak"])
+	dealership.clear()
+	if upgrade_pool != null:
+		for id in data["dealership"]:
+			for u in upgrade_pool.upgrades:
+				if u != null and u.id == StringName(id):
+					dealership.append(u)
+
 ## What today - the shift about to be played - offers to pick from.
 func todays_shifts() -> Array[ShiftProfile]:
 	var out: Array[ShiftProfile] = []

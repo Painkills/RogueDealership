@@ -417,7 +417,7 @@ func _try_dig(index: int) -> void:
 ## clock runs out and the missed quota at the bell cost nothing.
 func _debug_skip_shift() -> void:
 	# Nothing about a skipped shift costs standing - see Shift.testing_skip.
-	_shift.testing_skip = true
+	_shift.skip_for_testing()
 	var guard := 0
 	while not _shift.is_over() and guard < 1000:
 		guard += 1
@@ -437,13 +437,13 @@ func _debug_skip_shift() -> void:
 ## clamp ChangeStanding uses, so this can never push standing above its own
 ## starting value or read negative.
 func _debug_add_standing() -> void:
-	_shift.standing = clampi(_shift.standing + 50, 0, _shift.cfg.standing_start)
+	_shift.give_standing_for_testing(50)
 	_render()
 
 # --- lifecycle -------------------------------------------------------------
 
 func setup(shift: Shift, standing_before: int,
-		time_of_day: StringName = &"midday") -> void:
+		time_of_day: StringName = &"midday", resumed: bool = false) -> void:
 	## Play THIS shift. The run builds it - this file used to construct its own,
 	## which made it the run orchestrator as well as the table, the framing, the
 	## HUD and reconciliation.
@@ -456,6 +456,10 @@ func setup(shift: Shift, standing_before: int,
 	## point Shift.standing has already moved.
 	##
 	## time_of_day is the picked ShiftProfile's id - see _time_of_day.
+	##
+	## `resumed`: a shift already under way, played back from a save (RunSave) -
+	## what happened before goes into the log as it stands, with nothing said
+	## or popped up again, and a shift that had ended shows its report.
 	_shift = shift
 	_standing_before = standing_before
 	_time_of_day = time_of_day
@@ -493,10 +497,16 @@ func setup(shift: Shift, standing_before: int,
 	_retired.clear()
 	_nodes.clear()
 
+	if resumed:
+		_drain_log(true)
+		_event_log.append_text("[color=%s]-- Picked up where you left off --[/color]\n"
+			% Palette.hex(&"text_dim"))
 	# A shift is dealt with people in it, but this is the other door into the
 	# view besides _apply(), and an empty floor is a dead end from either.
 	_let_time_pass_on_an_empty_floor()
 	_render()
+	if _shift.is_over():
+		_show_report()
 
 ## Hiding a Node3D does NOT hide a CanvasLayer child - the HUD is not a
 ## CanvasItem and does not inherit the 3D node's visibility. Both have to be
@@ -1673,7 +1683,9 @@ func _render_details() -> void:
 		_close_soon_tags[i].wanted = c != null and not c.unsigned.is_empty() \
 			and low_on_time
 
-func _drain_log() -> void:
+## `quiet`: into the log only - nothing said, nothing popping up - for what
+## happened before a resumed shift was put back on the table.
+func _drain_log(quiet: bool = false) -> void:
 	for line in _shift.events.slice(_events_seen):
 		_event_log.append_text(line + "\n")
 	_events_seen = _shift.events.size()
@@ -1682,7 +1694,7 @@ func _drain_log() -> void:
 	# before the response from the customer": whatever they say back in the
 	# same breath waits REPLY_DELAY to answer it. Like theirs, it is not for
 	# the log.
-	var you_spoke := _shift.player_lines.size() > _player_lines_seen
+	var you_spoke := _shift.player_lines.size() > _player_lines_seen and not quiet
 	if you_spoke:
 		_player_bubble.say(_shift.player_lines[-1], _shift.tick)
 	_player_lines_seen = _shift.player_lines.size()
@@ -1693,13 +1705,14 @@ func _drain_log() -> void:
 		# demand said out loud still reads as a person interrupting you - it
 		# just does it on their folder rather than in a column of text.
 		var said: String = str(entry.get("dialogue", ""))
-		if said != "":
+		if said != "" and not quiet:
 			_say_on_the_card(str(entry["key"]), said, REPLY_DELAY if you_spoke else 0.0)
 		# Chatter is words and nothing else - taking a product, running short of
 		# patience (see Shift._chatter()) - so it leaves nothing here at all.
 		if bool(entry.get("chatter", false)):
 			continue
-		_show_what_they_did(entry)
+		if not quiet:
+			_show_what_they_did(entry)
 		# A tick of something already said (Linger): the number rises off the
 		# folder, and the log keeps its one line.
 		if bool(entry.get("quiet", false)):

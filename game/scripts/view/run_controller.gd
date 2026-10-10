@@ -69,6 +69,20 @@ var _practice_run := false
 ## True between that shortcut's store and its fight - leaving the store goes
 ## straight to the boss rather than to a calendar to pick from.
 var _straight_to_the_boss := false
+## The run being worked, as it goes to disk after every move (RunFile) - null
+## behind the title screen and for a run nothing is kept of (the last-fight
+## shortcut). See _keep_the_save_current().
+var _save: RunSave = null
+## The shift being worked today and the store open after it, once there are
+## any - what the save's fingerprint is taken of.
+var _live_shift: Shift = null
+var _live_shop: Shop = null
+## How far the save on disk had got when it was written - see
+## _keep_the_save_current().
+var _saved_mark: Array = []
+## Said on the next calendar: CONTINUE could not play today's moves back on this
+## build, so today starts over from its calendar.
+var _calendar_note := ""
 
 func _ready() -> void:
 	_picker_view.chosen.connect(_on_profile_chosen)
@@ -99,6 +113,7 @@ func _ready() -> void:
 	_coach.finished.connect(_on_tutorial_finished)
 	_title_view.tutorial_requested.connect(_open_the_tutorial)
 	_title_view.new_game_started.connect(_start_run)
+	_title_view.continue_requested.connect(_continue_run)
 	_bind_key(&"debug_last_fight", KEY_B, true)   # Ctrl+B, on the title screen
 	_last_fight_tap.pressed.connect(_debug_last_fight)
 	if title_at_boot:
@@ -107,10 +122,80 @@ func _ready() -> void:
 	else:
 		_start_run()
 
-## A fresh run, straight to its first day's calendar.
+## A fresh run, straight to its first day's calendar. It takes the place of
+## any run on this device that was still going.
 func _start_run() -> void:
 	_new_run()
+	_begin_the_day()
 	_open_the_picker()
+
+## CONTINUE: the run on this device, put back exactly where it was left - the
+## calendar, the floor mid-shift, the report, or the store. Played back from the
+## start of its day (RunSave); if this build plays those moves out differently,
+## the day starts over from its calendar instead, and the calendar says so.
+func _continue_run() -> void:
+	var save := RunFile.read()
+	if save == null:
+		_open_the_title()
+		return
+	_new_run(save.seed_value())
+	var back := save.resume(_run)
+	if not back["ok"]:
+		_new_run(save.seed_value())
+		save.restart_day()
+		back = save.resume(_run, false)
+		_calendar_note = "A new build came in - today starts over"
+	_history = back["history"]
+	_save = save
+	_live_shift = back["shift"]
+	_live_shop = back["shop"]
+	_chosen_profile = back["profile"]
+	# The played-back shift and store keep their own logs from here on.
+	if _live_shift != null:
+		_save.shift_commands = _live_shift.commands
+	if _live_shop != null:
+		_save.shop_commands = _live_shop.commands
+	_write_the_save()
+	if _live_shop != null:
+		_show_only(_shop_view)
+		_shop_view.setup(_live_shop)
+	elif _live_shift != null:
+		_show_only(_shift_view)
+		_shift_view.setup(_live_shift, _run.standing, _chosen_profile.worked_at(), true)
+	else:
+		_open_the_day()
+
+## A day beginning on its calendar: what the save plays back from, from here.
+func _begin_the_day() -> void:
+	_live_shift = null
+	_live_shop = null
+	if _practice_run:
+		return
+	_save = RunSave.start_of_day(_run, _history)
+	_write_the_save()
+
+func _write_the_save() -> void:
+	if _save == null:
+		return
+	_save.build = BuildInfo.LABEL
+	_save.fingerprint = RunSave.fingerprint_of(_run, _live_shift, _live_shop)
+	RunFile.write(_save)
+	_saved_mark = _save_mark()
+
+func _save_mark() -> Array:
+	return [_save.pick, _save.pick_path, _save.shift_commands.size(), _save.shop_open,
+		_save.shop_commands.size()]
+
+## Every move lands in the shift's or the store's own log (Shift.commands,
+## Shop.commands), wherever it came from - a tap, a drag, a key - so the save
+## only has to notice that one did. Written the frame after, with the game still
+## in front of you.
+func _process(_delta: float) -> void:
+	_keep_the_save_current()
+
+func _keep_the_save_current() -> void:
+	if _save != null and _save_mark() != _saved_mark:
+		_write_the_save()
 
 func _bind_key(action: StringName, keycode: Key, ctrl: bool = false) -> void:
 	if not InputMap.has_action(action):
@@ -156,18 +241,22 @@ func _debug_last_fight() -> void:
 	_shop_view.setup(shop)
 
 ## A fresh RunState with nothing worked yet - built behind the title screen
-## too, since the practice shift borrows its config and pools.
-func _new_run() -> void:
+## too, since the practice shift borrows its config and pools. Dealt from
+## `seed_value`, or a new seed; nothing of it is saved until a day begins.
+func _new_run(seed_value: int = -1) -> void:
 	_profiles = load("res://data/shift_profile_pool.tres")
 	_run = RunState.new(load("res://data/shift_config.tres"),
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), randi(),
+		load("res://data/archetype_pool.tres"), seed_value if seed_value >= 0 else randi(),
 		load("res://data/dialogue/dialogue_pool.tres"), _profiles,
 		load("res://data/dealership_upgrades/upgrade_pool.tres"))
 	_history = []
 	_practice_run = false
 	_straight_to_the_boss = false
+	_save = null
+	_live_shift = null
+	_live_shop = null
 
 ## The title screen, on its menu - or, `intro`, on a new game's first day.
 func _open_the_title(intro: bool = false) -> void:
@@ -176,10 +265,24 @@ func _open_the_title(intro: bool = false) -> void:
 		_title_view.show_intro()
 	else:
 		_title_view.show_menu()
+	var saved := RunFile.read()
+	_title_view.offer_continue(saved.day() if saved != null else 0)
 
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
 	_set_up_the_calendar(null)
+	if _calendar_note != "":
+		_picker_view.note(_calendar_note)
+		_calendar_note = ""
+
+## The start of a day: the week just worked gets its report first when this day
+## begins a new one, then the calendar.
+func _open_the_day() -> void:
+	if _run.week_starts_today():
+		_show_only(_week_view)
+		_week_view.setup(_run, _history)
+		return
+	_open_the_picker()
 
 ## The calendar for today - to pick from, or with `working`, to look at from
 ## the floor while working that shift.
@@ -221,14 +324,20 @@ func _week_product_quotas() -> Dictionary:
 
 func _on_profile_chosen(profile: ShiftProfile) -> void:
 	_chosen_profile = profile
+	if _save != null:
+		_save.picked(_run, profile)
 	_open_the_floor()
 
 func _open_the_floor() -> void:
 	_show_only(_shift_view)
+	var shift := _run.start_shift(_chosen_profile)
+	_live_shift = shift
+	if _save != null:
+		_save.shift_commands = shift.commands
 	# Worked at the profile's own time of day - the office windows and the
 	# tablet's clock both follow it.
-	_shift_view.setup(_run.start_shift(_chosen_profile), _run.standing,
-		_chosen_profile.worked_at())
+	_shift_view.setup(shift, _run.standing, _chosen_profile.worked_at())
+	_keep_the_save_current()
 
 ## The practice shift, on the same floor the real ones use. Dealt from its own
 ## starter deck (see Tutorial), so nothing done in practice touches the run.
@@ -265,6 +374,9 @@ func _on_shift_finished(report: Dictionary) -> void:
 	_history.append({"profile": _chosen_profile, "report": report})
 	_run.finish_shift(report)
 	if _run.is_over():
+		# Nothing left to pick up.
+		RunFile.clear()
+		_save = null
 		# Neither the floor nor the shop - the run stops here, on top of
 		# whichever of them the last shift ended on, the same way that
 		# shift's own ReportOverlay already sits on top of the floor.
@@ -287,8 +399,14 @@ func _on_shift_finished(report: Dictionary) -> void:
 	# again. Anything past the free card costs money from the bonus pot, which
 	# only beating quota fills - so failing a harder tier buys nothing it did
 	# not already have saved.
+	var shop := Shop.new(_run, _chosen_profile)
+	_live_shop = shop
+	if _save != null:
+		_save.shop_open = true
+		_save.shop_commands = shop.commands
+		_write_the_save()
 	_show_only(_shop_view)
-	_shop_view.setup(Shop.new(_run, _chosen_profile))
+	_shop_view.setup(shop)
 
 func _on_summary_continue() -> void:
 	_summary_view.visible = false
@@ -307,11 +425,8 @@ func _on_shop_done() -> void:
 				_chosen_profile = p
 				_open_the_floor()
 				return
-	if _run.week_starts_today():
-		_show_only(_week_view)
-		_week_view.setup(_run, _history)
-		return
-	_open_the_picker()
+	_begin_the_day()
+	_open_the_day()
 
 func _on_view_deck_requested() -> void:
 	_deck_viewer.show_deck(_run)

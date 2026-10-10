@@ -85,6 +85,11 @@ var _standing_lost_to_walkouts: int = 0
 ## not the missed quota at the bell - and the run's standing carries on exactly as
 ## it was. A manual convenience, never a mechanic.
 var testing_skip: bool = false
+## Every command played on this shift, in order, as [name, args...] - all a run
+## picked up again needs to play the shift back from its seed and land exactly
+## where it was (see RunSave and replay()). Refused ones too: an offer asked too
+## soon still counts, and still gets an answer.
+var commands: Array = []
 
 var chairs: Array = []
 ## Who is waiting for a chair, first come first seated. Archetypes only: nobody
@@ -856,6 +861,44 @@ func _here() -> Array:
 	return [c, null]
 
 
+## Plays one entry of `commands` again - how RunSave puts a shift back where it
+## was. Recorded again as it plays, like any other command.
+func replay(cmd: Array) -> Result:
+	var args := cmd.slice(1)
+	match StringName(cmd[0]):
+		&"approach": return approach(int(args[0]))
+		&"leave": return leave()
+		&"wait": return wait()
+		&"play_card": return play_card(int(args[0]), int(args[1]))
+		&"place": return place(int(args[0]), int(args[1]))
+		&"offer": return offer()
+		&"drop_offer": return drop_offer()
+		&"dig": return dig(int(args[0]))
+		&"choose_pull": return choose_pull(int(args[0]))
+		&"cancel_pull": return cancel_pull()
+		&"close": return close()
+		&"skip_for_testing":
+			skip_for_testing()
+			return Result.new(true, "")
+		&"give_standing_for_testing":
+			give_standing_for_testing(int(args[0]))
+			return Result.new(true, "")
+	return Result.new(false, "Nothing called %s to play back." % str(cmd[0]))
+
+
+## The testing shortcut that burns a shift (Ctrl+E) - see testing_skip.
+func skip_for_testing() -> void:
+	commands.append([&"skip_for_testing"])
+	testing_skip = true
+
+
+## The testing shortcut over the standing counter: `n` more standing, never past
+## where a run starts.
+func give_standing_for_testing(n: int) -> void:
+	commands.append([&"give_standing_for_testing", n])
+	standing = clampi(standing + n, 0, cfg.standing_start)
+
+
 func approach(chair: int) -> Result:
 	## Walking is FREE. The clock measures work - cards, digs, waiting for the
 	## door - not distance. Charging a tick to go and look at someone made the
@@ -867,6 +910,7 @@ func approach(chair: int) -> Result:
 	## NOT survive is the old discount for returning to last_customer: an
 	## asymmetry that made coming back cheaper than going was the shape of the
 	## tunnel vision, so if the charge ever comes back it comes back uniform.
+	commands.append([&"approach", chair])
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if chair < 0 or chair >= chairs.size():
@@ -886,6 +930,7 @@ func approach(chair: int) -> Result:
 
 
 func leave() -> Result:
+	commands.append([&"leave"])
 	if at == null:
 		return Result.new(false, "You are already out on the floor.")
 	at = null
@@ -906,6 +951,7 @@ func wait() -> Result:
 	## Refused while anybody is still seated, deliberately. Being able to skip
 	## time at will is a different game - the pressure a Karen puts on the whole
 	## floor only means anything if you cannot simply wait them out.
+	commands.append([&"wait"])
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if not seated().is_empty():
@@ -961,6 +1007,7 @@ func can_play_away(inst: CardInstance) -> bool:
 ## Plays the card at `index` on whoever you are standing with - or, given a
 ## `chair`, on that customer without going to them (can_play_away() cards only).
 func play_card(index: int, chair: int = -1) -> Result:
+	commands.append([&"play_card", index, chair])
 	var away := _is_away(chair)
 	var pair := _there(chair) if away else _here()
 	if pair[1] != null:
@@ -971,11 +1018,16 @@ func play_card(index: int, chair: int = -1) -> Result:
 		return Result.new(false, "Go and stand with %s first: %s works on what is in front of you."
 			% [pair[0].display_name, hand[index].card.display_name])
 	if hand[index].is_product():
-		return place(index, chair)
+		return _place(index, chair)
 	return _support(pair[0], index)
 
 
 func place(index: int, chair: int = -1) -> Result:
+	commands.append([&"place", index, chair])
+	return _place(index, chair)
+
+
+func _place(index: int, chair: int = -1) -> Result:
 	## Costs a tick and shows where the product ranks for them - and only a BAND
 	## of how far it is from their Line. Placing is the price of information
 	## here - reading a priority list by putting products in front of people
@@ -1309,6 +1361,7 @@ func offer() -> Result:
 	## Free in time, and only possible once they would say yes (offer_refusal()):
 	## nothing is risked by asking, so nothing is learned by asking either - where a
 	## product ranks is on the grid from the moment it is placed.
+	commands.append([&"offer"])
 	var pair := _here()
 	if pair[1] != null:
 		return pair[1]
@@ -1405,6 +1458,7 @@ func holds_out_for_a_concession(c: Customer) -> bool:
 func drop_offer() -> Result:
 	## Free. The ticks that built this offer are already spent - charging again
 	## for admitting it failed would just tax you for being wrong.
+	commands.append([&"drop_offer"])
 	var pair := _here()
 	if pair[1] != null:
 		return pair[1]
@@ -1424,6 +1478,7 @@ func drop_offer() -> Result:
 
 func dig(index: int) -> Result:
 	## Rummage for the right pitch. The floor pays for it either way.
+	commands.append([&"dig", index])
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if pending_pull != null:
@@ -1511,6 +1566,7 @@ func _return_pull(p: PendingPull, chosen_index: int) -> void:
 
 
 func choose_pull(index: int) -> Result:
+	commands.append([&"choose_pull", index])
 	if pending_pull == null:
 		return Result.new(false, "There is nothing to choose from.")
 	if index < 0 or index >= pending_pull.revealed.size():
@@ -1526,6 +1582,7 @@ func choose_pull(index: int) -> Result:
 
 
 func cancel_pull() -> Result:
+	commands.append([&"cancel_pull"])
 	if pending_pull == null:
 		return Result.new(false, "There is nothing to cancel.")
 	_return_pull(pending_pull, -1)
@@ -1579,6 +1636,7 @@ func has_something_left_to_sell(c: Customer) -> bool:
 
 func close() -> Result:
 	## Sign it. The only thing in the game that banks margin.
+	commands.append([&"close"])
 	var pair := _here()
 	if pair[1] != null:
 		return pair[1]

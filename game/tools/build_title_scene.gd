@@ -50,6 +50,9 @@ func _menu(root: Control) -> void:
 		"They bought the car. Now sell them everything else.", 24, &"text_dim")
 	tag.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_gap(col, root, 14)
+	# Only for a run still going on this device - see title_screen.gd's
+	# offer_continue().
+	_button(col, root, "ContinueButton", "CONTINUE", &"primary", true).visible = false
 	_button(col, root, "NewGameButton", "NEW GAME", &"primary", true)
 	_button(col, root, "TutorialButton", "TUTORIAL", &"primary", false)
 	_button(col, root, "HighScoresButton", "HIGH SCORES", &"ink", false)

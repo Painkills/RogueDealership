@@ -10,6 +10,8 @@ extends Control
 signal new_game_started
 ## The practice shift - see TutorialCoach.
 signal tutorial_requested
+## The run on this device, picked up where it was left - see RunFile.
+signal continue_requested
 
 ## How often, in seconds, an installed copy of the game looks to see whether a
 ## newer build has been fetched - see _watch_for_a_new_build().
@@ -37,6 +39,8 @@ const BANNERS := {
 @onready var _tabs: Control = %ScoresTabs
 @onready var _everyone_tab: Button = %EveryoneTab
 @onready var _yours_tab: Button = %YoursTab
+@onready var _continue: Button = %ContinueButton
+@onready var _new_game: Button = %NewGameButton
 
 var _page := &""
 ## What the name popup goes on to once it is answered - &"new_game" or
@@ -48,7 +52,8 @@ var _board := &""
 var leaderboard: Leaderboard
 
 func _ready() -> void:
-	(%NewGameButton as Button).pressed.connect(ask_name.bind(&"new_game"))
+	_continue.pressed.connect(func(): continue_requested.emit())
+	_new_game.pressed.connect(ask_name.bind(&"new_game"))
 	(%TutorialButton as Button).pressed.connect(ask_name.bind(&"tutorial"))
 	(%HighScoresButton as Button).pressed.connect(show_scores)
 	(%ScoresBackButton as Button).pressed.connect(show_menu)
@@ -102,6 +107,20 @@ static func switches_to_a_new_build(page: StringName, popup_open: bool, waiting:
 
 func show_menu() -> void:
 	_show(&"menu")
+
+## CONTINUE, on top of the menu, for a run still going on this device - `day`
+## the day it is on, 0 for none. NEW GAME steps back to an outline beside it:
+## starting one gives that run up.
+func offer_continue(day: int) -> void:
+	_continue.visible = day > 0
+	_continue.text = "CONTINUE - DAY %d" % day
+	if day > 0:
+		ButtonStyle.outlined(_new_game, Palette.color(&"primary"))
+	else:
+		ButtonStyle.filled(_new_game, Palette.color(&"primary"))
+
+func continue_offered() -> bool:
+	return _continue.visible
 
 ## Everyone's board when there is one to reach, this device's otherwise.
 func show_scores() -> void:

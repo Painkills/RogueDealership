@@ -33,7 +33,7 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hk8ax"]
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
-[node name="Run" type="Node" unique_id=708973446]
+[node name="Run" type="Node" unique_id=666770088]
 script = ExtResource("1_47ec3")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1460737143 instance=ExtResource("2_lc2vt")]
@@ -71,7 +71,7 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_0nko1")
 script = ExtResource("11_jt87d")
 
-[node name="TitleView" type="Control" parent="." unique_id=1565310187 instance=ExtResource("12_hge7r")]
+[node name="TitleView" type="Control" parent="." unique_id=1060240373 instance=ExtResource("12_hge7r")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -90,10 +90,10 @@ script = ExtResource("15_pffcw")
 layer = 50
 script = ExtResource("17_1561w")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=192919578]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1433471215]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=692736824]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=373724621]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -112,7 +112,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=1205127759]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=329885071]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1
@@ -126,7 +126,7 @@ grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
 text = "VIEW TOOLKIT"
 
-[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=1191606963]
+[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=1404697768]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(240, 56)
@@ -141,7 +141,7 @@ grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
 text = "VIEW CALENDAR"
 
-[node name="LastFightTapTarget" type="Button" parent="BuildBadge" unique_id=318060187]
+[node name="LastFightTapTarget" type="Button" parent="BuildBadge" unique_id=1401802184]
 unique_name_in_owner = true
 visible = false
 anchors_preset = 3

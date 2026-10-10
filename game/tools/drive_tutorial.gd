@@ -12,6 +12,7 @@ extends SceneTree
 
 const PROGRESS := "user://drive_tutorial_progress.cfg"
 const PROFILE := "user://drive_tutorial_profile.cfg"
+const SAVE := "user://drive_tutorial.save"
 
 var _root: Node
 var _coach: TutorialCoach
@@ -26,6 +27,9 @@ func _init() -> void:
 	TutorialProgress.reset()
 	PlayerProfile.path = PROFILE
 	PlayerProfile.reset()
+	# Nor a real run in progress - and none of its own to continue.
+	RunFile.path = SAVE
+	RunFile.clear()
 	# Nothing this plays ever goes on the real shared board.
 	Leaderboard.offline = true
 	_boot()
@@ -41,6 +45,7 @@ func _drive() -> void:
 	_floor = _root._shift_view
 
 	_check_the_title_screen()
+	await _check_the_menu_fits_with_continue()
 	_check_the_name_popup()
 	await _frames(3)
 	_check("practice has no week, so no VIEW CALENDAR",
@@ -210,6 +215,7 @@ func _drive() -> void:
 
 	TutorialProgress.reset()
 	PlayerProfile.reset()
+	RunFile.clear()
 	_report()
 
 func _title_button(node_name: String) -> Button:
@@ -228,6 +234,8 @@ func _check_the_title_screen() -> void:
 		var button := _title_button(b)
 		_check("the menu offers %s (%s)" % [b, button.text],
 			button.is_visible_in_tree() and button.text != "")
+	_check("and no CONTINUE, with no run going on this device",
+		not _title_button("ContinueButton").visible)
 	_check("with no toolkit button over the front door",
 		not (_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control).visible)
 	_check("and the calendar has no tutorial button of its own",
@@ -249,6 +257,25 @@ func _check_the_title_screen() -> void:
 	_check_everyones_board()
 	_title_button("ScoresBackButton").pressed.emit()
 	_check("BACK returns to the menu", _on_the_menu())
+
+## CONTINUE, for a run still going on this device, puts one more button on the
+## menu - measured once it has been laid out, since a wrapped line reports no
+## real height before then.
+func _check_the_menu_fits_with_continue() -> void:
+	var title = _root._title_view
+	title.offer_continue(4)
+	await _frames(3)
+	var menu := title.get_node(^"%MenuCard") as Control
+	var r := menu.get_global_rect()
+	_check("with CONTINUE on it, the menu still fits the screen (%s)" % r,
+		_root.get_viewport().get_visible_rect().encloses(r))
+	_check("and it says which day it goes back to (%s)" % _title_button("ContinueButton").text,
+		_title_button("ContinueButton").is_visible_in_tree()
+			and _title_button("ContinueButton").text.contains("4"))
+	title.offer_continue(0)
+	await _frames(1)
+	_check("and it goes again with no run to continue",
+		not _title_button("ContinueButton").visible)
 
 ## "High scores tracked for all players": the EVERYONE board, fed the way a
 ## reply from the table would feed it - this driver never touches the network.

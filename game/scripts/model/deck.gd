@@ -30,3 +30,25 @@ func upgrade(uid: int) -> bool:
 			c.upgraded = true
 			return true
 	return false
+
+## Plain data, for a save: every card as [card id, uid, upgraded], and the uid
+## the next card gets.
+func snapshot() -> Dictionary:
+	var out: Array = []
+	for c in cards:
+		out.append([c.card.id, c.uid, c.upgraded])
+	return {"cards": out, "next_uid": _next_uid}
+
+## The deck snapshot() wrote, its cards looked up in `pool` by id. A card the
+## pool no longer has is left out.
+static func from_snapshot(data: Dictionary, pool: CardPool) -> Deck:
+	var d := Deck.new()
+	for entry in data.get("cards", []):
+		var def := pool.by_id(StringName(entry[0]))
+		if def == null:
+			continue
+		var inst := CardInstance.new(def, int(entry[1]))
+		inst.upgraded = bool(entry[2])
+		d.cards.append(inst)
+	d._next_uid = int(data.get("next_uid", d._next_uid))
+	return d
