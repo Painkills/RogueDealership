@@ -150,12 +150,31 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 		_worth.text = "%s if they buy" % Format.money(combo + roundi(combo * (prized - 1.0)))
 		_read_the_offer(c, o, band)
 
+## The combo's flash, while it plays - see flash_combo().
+var _flash: Tween = null
+
+## Whether the combo is flashing right now.
+func combo_flashing() -> bool:
+	return _flash != null and _flash.is_valid() and _flash.is_running()
+
+## Where the MARGIN number sits, in the screen's own pixels - a sale's number
+## lifts off from here.
+func margin_px() -> Rect2:
+	_bind()
+	return _margin.get_global_rect()
+
+## The type size the MARGIN number is drawn at, in the screen's own pixels.
+func margin_font_px() -> int:
+	_bind()
+	return _margin.get_theme_font_size("font_size")
+
 ## The combo on the screen pops and flashes - a sale just went through, and the
 ## multiplier the next one gets is what it now shows.
 func flash_combo() -> void:
 	_bind()
 	_combo.pivot_offset = _combo.size * 0.5
 	var tw := create_tween()
+	_flash = tw
 	tw.tween_property(_combo, "scale", Vector2(1.6, 1.6), 0.12) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	for _k in range(2):

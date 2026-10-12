@@ -593,15 +593,18 @@ func screen_rect_of(target: StringName) -> Rect2:
 			if not _chair_zones[front].visible:
 				return Rect2()
 			return _on_screen_rect(_card_rect(_chair_zones[front], card))
-		&"tablet", &"appeal", &"deal":
+		&"tablet", &"appeal", &"deal", &"margin":
 			# The whole tablet, its appeal panel - the meter the practice shift
-			# teaches you to read - or its deal panel, where the combo lives.
+			# teaches you to read - its deal panel, or the MARGIN number on it.
 			var tablet: OfferTablet = _tablets[front]
 			if not tablet.is_on():
 				return Rect2()
 			if target == &"tablet":
 				return _on_screen_rect(_card_rect(tablet, OfferTablet.SIZE))
 			var panel := OfferTablet.APPEAL_RECT if target == &"appeal" else OfferTablet.DEAL_RECT
+			if target == &"margin":
+				var px := tablet.margin_px()
+				panel = Rect2i(Vector2i(px.position), Vector2i(px.size))
 			return _on_screen_rect(_rect_at(
 				tablet.to_global(OfferTablet.centre_of(panel)), OfferTablet.size_of(panel)))
 		&"hand":
@@ -683,7 +686,7 @@ func _apply(res: Result) -> void:
 	_let_time_pass_on_an_empty_floor()
 	_render()
 	if sold_at != null:
-		_light_up_the_combo(res.data, int(sold_at))
+		_celebrate_the_yes(res.data, int(sold_at))
 	if _shift.is_over():
 		_show_report()
 
@@ -1030,9 +1033,11 @@ func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
 const FX_FLY := 0.9        ## seconds for an amount to fly to the top bar
 const FX_ROLL := 0.6       ## seconds for the number there to roll to its total
 const FX_STAMP := 1.6      ## seconds a WALKED OUT / SIGNED stamp stays up
-## Seconds what a sale made - "$950 -> $1,425, next sale x1.50" - stays up over
-## the tablet before it fades: long enough to actually read.
-const FX_MARGIN_READ := 3.5
+## A yes, in seconds: the tablet's number lifting off, rolling up to what the
+## combo made of it, and held there to be read before it flies to the top bar.
+const FX_LIFT := 0.3
+const FX_COUNT := 0.9
+const FX_HOLD := 0.9
 
 ## What the top bar is SHOWING, which trails the model while an amount is
 ## still on its way up to it.
@@ -1225,85 +1230,74 @@ func _celebrate_close(chair: int, amount: int) -> void:
 		_roll(_banked_label, from, _write_banked,
 			func(): _banked_rolling = false, &"margin", false))
 
-## "Make the combo more evident: the combo number multiplies the initial value,
-## and you see it light up as soon as your offer passes." Over the tablet, the
-## moment they say yes: the multiplier slammed down - bigger the longer the
-## chain - then the product's own margin turning into what it sold for, and
-## what the next sale to them will get. The tablet's own combo pulses with it.
-func _light_up_the_combo(data: Dictionary, chair: int) -> void:
+## "In UI, less is more." The moment they say yes: ACCEPTED over their folder,
+## and the tablet's own MARGIN number lifts off and grows. With a combo, the
+## tablet's multiplier flashes and the number rolls up to what it sold for; then
+## it flies to the top bar, to what is unsigned on the floor - it is not banked
+## until they sign, and the SIGNED stamp's flight takes it the rest of the way.
+func _celebrate_the_yes(data: Dictionary, chair: int) -> void:
 	var mult := float(data.get("multiplier", 1.0))
-	var next := float(data.get("next_multiplier", 1.0))
-	var base := int(data.get("base_margin", 0))
 	var sold := int(data.get("margin", 0))
-	var chained := mult > 1.0
-	# The combo over the tablet's right-hand panel, where its combo lives; what
-	# the sale made in the middle of the screen, where the product stood.
-	var tablet := screen_rect_of(&"tablet")
-	var deal := screen_rect_of(&"deal")
-	var at := tablet.get_center() if tablet.size != Vector2.ZERO \
-		else get_viewport().get_visible_rect().get_center()
-	var right := deal.get_center() if deal.size != Vector2.ZERO else at + Vector2(240, 0)
-	# Bigger with every link of the chain, to a point - and never wider than
-	# the panel it sits over.
-	var size := 64 + mini(5, roundi((mult - 1.0) * 4.0)) * 12
-	var big := _fx_label("COMBO\n%s!" % Format.multiplier(mult) if chained else "SOLD!",
-		&"accent" if chained else &"margin", size, right)
-	big.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_fit_fx_label(big, deal.size.x * 1.15 if deal.size != Vector2.ZERO else 360.0, right)
-	big.scale = Vector2(2.4, 2.4)
-	big.modulate.a = 0.0
+	var base := int(data.get("base_margin", sold))
+	var rolls := base != sold
+	var folder := _card_rect(_customer_cards[chair], CustomerCard3D.CARD_SIZE)
+	var above := Vector2(folder.get_center().x, maxf(48.0, folder.position.y - 34.0))
+	var stamp := _fx_label("ACCEPTED", &"margin", 52, above)
+	stamp.scale = Vector2(1.8, 1.8)
+	stamp.modulate.a = 0.0
+	var st := _fx_tween()
+	st.set_parallel(true)
+	st.tween_property(stamp, "scale", Vector2.ONE, 0.2) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	st.tween_property(stamp, "modulate:a", 1.0, 0.1)
+	st.set_parallel(false)
+	st.tween_interval(FX_STAMP)
+	st.tween_property(stamp, "modulate:a", 0.0, 0.4)
+	st.tween_callback(func(): _fx_done(stamp))
+
+	# The number, lifted off the MARGIN figure where it sat - at its size there.
+	var tablet: OfferTablet = _tablets[chair] if chair < _tablets.size() else null
+	var spot := screen_rect_of(&"margin")
+	var px := tablet.margin_px() if tablet != null else Rect2()
+	var size := 48
+	if spot.size.y > 0.0 and px.size.y > 0.0:
+		size = maxi(24, roundi(tablet.margin_font_px() * spot.size.y / px.size.y))
+	var n := _fx_label(Format.money(base), &"margin", size,
+		spot.get_center() if spot.size != Vector2.ZERO else _chair_on_screen(chair))
+	if spot.size != Vector2.ZERO:
+		# Left-aligned, the way the figure on the tablet is.
+		n.position = Vector2(spot.position.x, spot.get_center().y - n.size.y * 0.5)
 	var tw := _fx_tween()
 	tw.set_parallel(true)
-	tw.tween_property(big, "scale", Vector2.ONE, 0.25) \
+	tw.tween_property(n, "position:y", n.position.y - 30.0, FX_LIFT) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(big, "modulate:a", 1.0, 0.1)
+	tw.tween_property(n, "scale", Vector2(1.5, 1.5), FX_LIFT) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.set_parallel(false)
-	# A flash: it lights up brighter than its own colour, twice.
-	for _k in range(2):
-		tw.tween_property(big, "modulate", Color(1.6, 1.6, 1.6, 1.0), 0.09)
-		tw.tween_property(big, "modulate", Color.WHITE, 0.12)
-	tw.tween_interval(FX_STAMP)
-	tw.tween_property(big, "modulate:a", 0.0, 0.4)
-	tw.tween_callback(func(): _fx_done(big))
-	# What the combo made of the product, and what comes next.
-	# In the lower middle of the screen: the note an empty table puts up takes
-	# the top of it. The multiplication spelled out, then what it sold for -
-	# which can be more (a prized product) or less (a budget running out).
-	var lines: Array[String] = []
-	if chained and base > 0:
-		lines.append("%s %s" % [Format.money(base), Format.multiplier(mult)])
-	lines.append("sold for %s" % Format.money(sold))
-	if next > mult:
-		lines.append("next sale %s" % Format.multiplier(next))
-	var below := Vector2(0, tablet.size.y * 0.22) if tablet.size != Vector2.ZERO else Vector2(0, 90)
-	var sub := _fx_label("\n".join(lines), &"margin", 44, at + below)
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.modulate.a = 0.0
-	# Up long enough to read: "it's disappearing too fast and is impossible to
-	# read."
-	var st := _fx_tween()
-	st.tween_interval(0.2)
-	st.tween_property(sub, "modulate:a", 1.0, 0.15)
-	st.tween_interval(FX_MARGIN_READ)
-	st.set_parallel(true)
-	st.tween_property(sub, "position:y", sub.position.y - 40.0, 0.8)
-	st.tween_property(sub, "modulate:a", 0.0, 0.8)
-	st.set_parallel(false)
-	st.tween_callback(func(): _fx_done(sub))
-	if chair >= 0 and chair < _tablets.size():
-		_tablets[chair].flash_combo()
-
-## Shrinks an effect's text until it is no wider than `width`, kept centred on
-## `centre`.
-func _fit_fx_label(l: Label, width: float, centre: Vector2) -> void:
-	var size := l.get_theme_font_size("font_size")
-	while l.get_combined_minimum_size().x > width and size > 24:
-		size -= 4
-		l.add_theme_font_size_override("font_size", size)
-		l.add_theme_constant_override("outline_size", maxi(6, size / 6))
-	l.size = l.get_combined_minimum_size()
-	l.pivot_offset = l.size * 0.5
-	l.position = centre - l.size * 0.5
+	if mult > 1.0 and tablet != null:
+		# The multiplier flashes...
+		tw.tween_callback(tablet.flash_combo)
+		tw.tween_interval(0.45)
+	if rolls:
+		# ...then the number counts up to what it sold for.
+		var count_to := func(v: float) -> void:
+			n.text = Format.money(roundi(v))
+			n.size = n.get_combined_minimum_size()
+			n.pivot_offset = n.size * 0.5
+		tw.tween_method(count_to, float(base), float(sold), FX_COUNT) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(FX_HOLD)
+	# Then up to the top bar.
+	var to := _at_risk_label.get_global_rect().get_center()
+	tw.set_parallel(true)
+	tw.tween_property(n, "position", to - n.size * 0.5, FX_FLY) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(n, "scale", Vector2(0.55, 0.55), FX_FLY) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.set_parallel(false)
+	tw.tween_callback(func():
+		_fx_done(n)
+		_pulse(_at_risk_label, &"margin", false))
 
 func _mourn_walkout(chair: int, lost: int) -> void:
 	var at := _chair_on_screen(chair)

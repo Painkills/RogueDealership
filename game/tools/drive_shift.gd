@@ -2664,15 +2664,17 @@ func _check_a_signing_flies_its_money_to_the_top(before: int) -> void:
 		label.text.begins_with("margin %s " % Format.money(s.margin_banked)))
 	_check("and the effects clean up after themselves", _fx_texts().is_empty())
 
-## "Successive sales increase combo - make it more evident: the combo number
-## multiplies the initial value and you see it light up as soon as your offer
-## passes." The yes just given put the burst over the tablet; a second sale to
-## the same customer, through the real O key, puts up the multiplied one.
+## "In UI, less is more. When an offer is accepted, the accepted shows up above
+## the folder. Then, from the existing numbers in the right side of the iPad,
+## the number comes up and enlarges, if there's a multiplier, the multiplier
+## number flashes, then the number gets multiplied and does that kind of
+## flipping animation as numbers go up to the new value, and then it flies up
+## to the banked area." The yes just given, then a second sale to the same
+## customer through the real O key, with a combo on it.
 func _check_a_sale_lights_up_the_combo() -> void:
 	var s: Shift = _controller._shift
 	var texts := _fx_texts()
-	_check("their yes lights up over the tablet (%s)" % str(texts),
-		texts.any(func(t): return str(t) == "SOLD!" or str(t).begins_with("COMBO")))
+	_check("their yes stamps ACCEPTED (%s)" % str(texts), texts.has("ACCEPTED"))
 	_finish_fx()
 	var c: Customer = s.chairs[_at()]
 	var line_was := c.line
@@ -2685,17 +2687,36 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	s.hand.append(CardInstance.new(product, 990))
 	_controller._apply(s.place(s.hand.size() - 1))
 	_settle()
-	var expected := 1.0 + c.combo_step * c.sales
+	var tablet: OfferTablet = _controller._tablets[_at()]
 	_press(KEY_O);            _settle()
+	var sold := int(c.unsigned[-1]["margin"])
 	texts = _fx_texts()
-	_check("a sale on top of another shows the combo it sold at (%s, expected %s)"
-		% [str(texts), Format.multiplier(expected)],
-		texts.has("COMBO\n%s!" % Format.multiplier(expected)))
-	_check("and the product's own margin times the combo, then what it sold for (%s)" % str(texts),
-		texts.any(func(t): return str(t).contains("%s %s" % [Format.money(product.margin),
-			Format.multiplier(expected)]) and str(t).contains("sold for $")))
-	# A character the game's font does not have draws as an empty box - "$1,050
-	# [] $1,181" is how the first version of this read on screen.
+	_check("ACCEPTED goes up over their folder", _fx_label_saying("ACCEPTED") != null
+		and _fx_label_saying("ACCEPTED").get_global_rect().get_center().y
+			< _controller._card_rect(_controller._customer_cards[_at()],
+				CustomerCard3D.CARD_SIZE).position.y)
+	_check("and nothing else is written over the screen - no COMBO, no lines of sums (%s)"
+		% str(texts), texts.size() == 2)
+	var number: Label = _fx_label_saying("$")
+	var spot: Rect2 = _controller.screen_rect_of(&"margin")
+	_check("the number starts as the product's own margin (%s)" % (number.text if number else "none"),
+		number != null and number.text == Format.money(product.margin))
+	_check("lifted off the MARGIN figure on the tablet's right-hand side (%s at %s)"
+		% [number.get_global_rect() if number else null, spot],
+		number != null and spot.size != Vector2.ZERO
+			and absf(number.position.x - spot.position.x) < 2.0
+			and _controller.screen_rect_of(&"deal").has_point(spot.get_center()))
+	_step_fx(_controller.FX_LIFT + 0.05)
+	_check("it grows as it comes up", number.scale.x > 1.2)
+	_check("and the tablet's multiplier flashes", tablet.combo_flashing())
+	_step_fx(0.45 + _controller.FX_COUNT * 0.5)
+	var halfway := number.text
+	_check("the number counts up through the values between (%s, from %s to %s)"
+		% [halfway, Format.money(product.margin), Format.money(sold)],
+		halfway != Format.money(product.margin) and halfway != Format.money(sold))
+	_step_fx(_controller.FX_COUNT)
+	_check("to what it sold for (%s)" % number.text, number.text == Format.money(sold))
+	# A character the game's font does not have draws as an empty box.
 	for n in _controller._fx:
 		if not (is_instance_valid(n) and n is Label):
 			continue
@@ -2705,28 +2726,10 @@ func _check_a_sale_lights_up_the_combo() -> void:
 			if ch != "\n" and not font.has_char(ch.unicode_at(0)):
 				missing += ch
 		_check("every character of '%s' is in the game's font (missing: '%s')"
-			% [(n as Label).text.replace("\n", " / "), missing], missing == "")
-	_check("and what the next one gets", texts.any(func(t): return str(t).contains("next sale ×")))
-	# "The combo text should appear on the right side of the iPad. The margin in
-	# the center."
-	var deal: Rect2 = _controller.screen_rect_of(&"deal")
-	var tablet: Rect2 = _controller.screen_rect_of(&"tablet")
-	var combo_label: Label = _fx_label_saying("COMBO")
-	var margin_label: Label = _fx_label_saying("sold for")
-	_check("the combo sits over the tablet's right-hand panel (%s in %s)"
-		% [combo_label.get_global_rect() if combo_label else null, deal],
-		combo_label != null and deal.has_point(combo_label.get_global_rect().get_center()))
-	_check("no wider than that panel's side of the tablet (%d px, panel %d)"
-		% [int(combo_label.size.x) if combo_label else -1, int(deal.size.x)],
-		combo_label != null and combo_label.size.x <= deal.size.x * 1.15 + 1.0)
-	var mid: Vector2 = margin_label.get_global_rect().get_center() if margin_label else Vector2.ZERO
-	_check("and what it made sits in the middle of the tablet, below the empty table's note (%s in %s)"
-		% [mid, tablet], margin_label != null and absf(mid.x - tablet.get_center().x) < 4.0
-			and mid.y > tablet.get_center().y and tablet.has_point(mid))
-	# "The margin should stay visible a little longer": still up two seconds on.
-	_step_fx(2.0)
-	_check("what it made is still up to read two seconds later",
-		_fx_texts().any(func(t): return str(t).contains("sold for")))
+			% [(n as Label).text, missing], missing == "")
+	_step_fx(_controller.FX_HOLD + _controller.FX_FLY + 0.1)
+	_check("then it flies up to the top bar and is gone",
+		not is_instance_valid(number) or not _controller._fx.has(number))
 	c.line = line_was
 	_finish_fx()
 	_check_the_deal_panel_fits_its_slot()
