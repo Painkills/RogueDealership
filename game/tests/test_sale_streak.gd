@@ -1,7 +1,7 @@
 extends RefCounted
 ## Shift.sale_streak / sale_streak_events - the raw mechanic Score turns into
 ## points. Shift only tracks the streak and the order it grew in; it knows
-## nothing about scoring, exactly the same split RunState.bonus_from() draws
+## nothing about scoring, exactly the same split RunState.pay_from() draws
 ## between "what happened" and "what it's worth". Unrelated to the per-
 ## customer combo multiplier (see test_combo.gd) - this is a floor-wide,
 ## cross-shift streak of closes with no walkout anywhere.

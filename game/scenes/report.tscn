@@ -129,59 +129,59 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[node name="ReportPanel" type="PanelContainer" unique_id=2091252640]
+[node name="ReportPanel" type="PanelContainer" unique_id=1854167273]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_smm52")
 script = ExtResource("1_66ide")
 
-[node name="ReportWindowCentre" type="CenterContainer" parent="." unique_id=1069440096]
+[node name="ReportWindowCentre" type="CenterContainer" parent="." unique_id=703355218]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="ReportWindow" type="PanelContainer" parent="ReportWindowCentre" unique_id=146634837]
+[node name="ReportWindow" type="PanelContainer" parent="ReportWindowCentre" unique_id=1780103456]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(1100, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_q5px1")
 
-[node name="WindowColumn" type="VBoxContainer" parent="ReportWindowCentre/ReportWindow" unique_id=1957911636]
+[node name="WindowColumn" type="VBoxContainer" parent="ReportWindowCentre/ReportWindow" unique_id=1313002895]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleBar" type="PanelContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn" unique_id=1427939990]
+[node name="TitleBar" type="PanelContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn" unique_id=1436616692]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_4lv02")
 
-[node name="Row" type="HBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar" unique_id=350966240]
+[node name="Row" type="HBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar" unique_id=292074218]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Lights" type="HBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row" unique_id=1496266260]
+[node name="Lights" type="HBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row" unique_id=1973834659]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Light" type="Panel" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row/Lights" unique_id=2013933882]
+[node name="Light" type="Panel" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row/Lights" unique_id=478768405]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_bsvqr")
 
-[node name="@Panel@2" type="Panel" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row/Lights" unique_id=356309839]
+[node name="@Panel@2" type="Panel" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row/Lights" unique_id=908521823]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_txauj")
 
-[node name="@Panel@3" type="Panel" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1309197777]
+[node name="@Panel@3" type="Panel" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1550119024]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_4fhai")
 
-[node name="WindowTitle" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row" unique_id=1629370225]
+[node name="WindowTitle" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row" unique_id=253897898]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 19
@@ -189,11 +189,11 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Dealership System  -  End of Day Report"
 horizontal_alignment = 1
 
-[node name="Balance" type="Control" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row" unique_id=1005124936]
+[node name="Balance" type="Control" parent="ReportWindowCentre/ReportWindow/WindowColumn/TitleBar/Row" unique_id=239417608]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 
-[node name="Body" type="MarginContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn" unique_id=1142331511]
+[node name="Body" type="MarginContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn" unique_id=1180315320]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 40
@@ -201,18 +201,18 @@ theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 40
 
-[node name="Content" type="VBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body" unique_id=962375451]
+[node name="Content" type="VBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body" unique_id=132984692]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Eyebrow" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1702289505]
+[node name="Eyebrow" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1720693570]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.14509805, 0.3882353, 0.92156863, 1)
 text = "END OF DAY REPORT"
 
-[node name="TitleLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=958655989]
+[node name="TitleLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1211792383]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -220,7 +220,7 @@ theme_override_font_sizes/font_size = 56
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "CLOSING TIME"
 
-[node name="BankedLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1728175381]
+[node name="BankedLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1464154504]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -228,78 +228,78 @@ theme_override_font_sizes/font_size = 36
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 autowrap_mode = 2
 
-[node name="BonusLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1753578324]
+[node name="PayLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=746190505]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 autowrap_mode = 2
 
-[node name="Detail" type="PanelContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1296962262]
+[node name="Detail" type="PanelContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=226945335]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_yvsl5")
 
-[node name="Rows" type="VBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail" unique_id=715591439]
+[node name="Rows" type="VBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail" unique_id=1884041889]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="StandingLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=2099980879]
+[node name="StandingLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=338731765]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 
-[node name="WalkoutsLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=743169835]
+[node name="WalkoutsLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=2019324683]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 autowrap_mode = 2
 
-[node name="ProductQuotaLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=1880815332]
+[node name="ProductQuotaLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=1520212817]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 autowrap_mode = 2
 
-[node name="DetailRule" type="PanelContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=1982168047]
+[node name="DetailRule" type="PanelContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=711211154]
 custom_minimum_size = Vector2(0, 1)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_fjlyb")
 
-[node name="CustomersLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=529704350]
+[node name="CustomersLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=762259856]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 21
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 
-[node name="OffersLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=550045855]
+[node name="OffersLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=1484502906]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 21
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 
-[node name="MarginMovedLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=1440431090]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 21
-theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
-autowrap_mode = 2
-
-[node name="LostLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=2101972128]
+[node name="MarginMovedLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=1286013541]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 21
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 autowrap_mode = 2
 
-[node name="Buttons" type="HBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1792585050]
+[node name="LostLabel" type="Label" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Detail/Rows" unique_id=2141056658]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content" unique_id=1468099647]
 layout_mode = 2
 alignment = 2
 
-[node name="RestartButton" type="Button" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Buttons" unique_id=1874757926]
+[node name="RestartButton" type="Button" parent="ReportWindowCentre/ReportWindow/WindowColumn/Body/Content/Buttons" unique_id=286216846]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(320, 72)
 layout_mode = 2

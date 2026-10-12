@@ -18,8 +18,8 @@ var rng := RandomNumberGenerator.new()
 
 var deck: Deck
 var shift_number: int = 1            ## 1-based; the shift about to be played
-var money: int = 0                   ## the shop budget: every over-quota bonus, stacked
-var last_bonus: int = 0              ## what the shift just played added to it
+var money: int = 0                   ## the shop money: every shift's pay, stacked
+var last_pay: int = 0              ## what the shift just played paid
 var banked_total: int = 0
 var standing: int                    ## the run's HP - no inline default, _init sets it from cfg
 var reports: Array[Dictionary] = []
@@ -63,7 +63,7 @@ func snapshot() -> Dictionary:
 		"deck": deck.snapshot(),
 		"shift_number": shift_number,
 		"money": money,
-		"last_bonus": last_bonus,
+		"last_pay": last_pay,
 		"banked_total": banked_total,
 		"standing": standing,
 		"reports": reports.duplicate(true),
@@ -78,7 +78,7 @@ func restore(data: Dictionary) -> void:
 	deck = Deck.from_snapshot(data["deck"], card_pool)
 	shift_number = int(data["shift_number"])
 	money = int(data["money"])
-	last_bonus = int(data["last_bonus"])
+	last_pay = int(data["last_pay"])
 	banked_total = int(data["banked_total"])
 	standing = int(data["standing"])
 	reports.assign((data["reports"] as Array).duplicate(true))
@@ -188,8 +188,8 @@ func finish_shift(report: Dictionary) -> void:
 	reports.append(report)
 	var banked := int(report["margin_banked"])
 	banked_total += banked
-	last_bonus = bonus_from(report)
-	money += last_bonus
+	last_pay = pay_from(report)
+	money += last_pay
 	standing = clampi(standing + int(report["standing_delta"]), 0, cfg.standing_start)
 	shift_number += 1
 	# .get() rather than a bare index: several test_run_state.gd checks build a
@@ -198,7 +198,7 @@ func finish_shift(report: Dictionary) -> void:
 	# missing this one should carry the streak forward unchanged, not crash.
 	sale_streak = int(report.get("sale_streak_end", sale_streak))
 
-static func bonus_from(report: Dictionary) -> int:
+static func pay_from(report: Dictionary) -> int:
 	## Static because the report panel needs this number BEFORE finish_shift runs
 	## - it is on screen while you are still looking at the shift you just played,
 	## and the run does not advance until you press the button.

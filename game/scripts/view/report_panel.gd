@@ -4,7 +4,7 @@ signal continue_pressed
 
 var _title: Label
 var _banked: Label
-var _bonus: Label
+var _pay: Label
 var _standing: Label
 var _walkouts: Label
 var _product_quota: Label
@@ -29,7 +29,7 @@ func _bind() -> void:
 	_bound = true
 	_title = %TitleLabel
 	_banked = %BankedLabel
-	_bonus = %BonusLabel
+	_pay = %PayLabel
 	_standing = %StandingLabel
 	_walkouts = %WalkoutsLabel
 	_product_quota = %ProductQuotaLabel
@@ -61,24 +61,24 @@ func setup(r: Dictionary) -> void:
 	_banked.add_theme_color_override("font_color",
 		Palette.color(&"patience_ok" if r["made_quota"] else &"alert"))
 
-	# The bonus is derived here rather than passed in, because this panel is up
+	# The pay is derived here rather than passed in, because this panel is up
 	# while the run has not advanced yet - finish_shift() does not run until the
 	# button below is pressed. RunState owns the arithmetic either way.
-	var pay := RunState.bonus_from(r)
+	var pay := RunState.pay_from(r)
 	var base := int(r.get("paycheck", 0))
 	if pay > base:
 		# Beating quota adds commission on top of the base salary: say both.
-		_bonus.text = "You beat quota - paycheck %s: %s base + %s commission (%d%% of what you banked over)!" \
+		_pay.text = "You beat quota - paycheck %s: %s base + %s commission (%d%% of the margin you banked over quota)!" \
 			% [Format.money(pay), Format.money(base), Format.money(pay - base),
 				roundi(float(r.get("commission", 0.0)) * 100.0)]
-		_bonus.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
+		_pay.add_theme_color_override("font_color", Palette.color(&"patience_ok"))
 	elif r["made_quota"]:
-		_bonus.text = "Paycheck: %s. Quota hit on the nose." % Format.money(pay)
-		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+		_pay.text = "Paycheck: %s. Quota hit on the nose." % Format.money(pay)
+		_pay.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	else:
-		_bonus.text = "Paycheck: %s. You finished %s short of quota." % [Format.money(pay),
+		_pay.text = "Paycheck: %s. You finished %s short of quota." % [Format.money(pay),
 			Format.money(int(r["quota"]) - int(r["margin_banked"]))]
-		_bonus.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+		_pay.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
 	var delta: int = int(r["standing_delta"])
 	# A shift that heals (a boss fight's reward) says how much of that was the
@@ -141,9 +141,9 @@ func setup(r: Dictionary) -> void:
 		% [r["offers"], r["sales"], 100.0 * r["close_rate"], r["failed_offers"]]
 	_offers.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
-	_margin.text = "conceded %s, padded %s, bonuses %s" \
+	_margin.text = "conceded %s, padded %s, extras %s" \
 		% [Format.money(r["margin_conceded"]), Format.money(r["margin_padded"]),
-			Format.money(r["margin_bonus"])]
+			Format.money(r["margin_extra"])]
 	_margin.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 
 	var lost: int = r["margin_lost_to_walks"] + r["margin_lost_to_closing"]

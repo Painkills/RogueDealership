@@ -97,11 +97,11 @@ func _init() -> void:
 	header.add_child(name_label)
 	name_label.owner = root
 
-	var cost := _label("CostLabel", 44, Palette.color(&"text_dim"))
-	cost.text = "3t"
-	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	header.add_child(cost)
-	cost.owner = root
+	var ticks := _label("TicksLabel", 44, Palette.color(&"text_dim"))
+	ticks.text = "3t"
+	ticks.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	header.add_child(ticks)
+	ticks.owner = root
 
 	var rule := ColorRect.new()
 	rule.name = "Rule"

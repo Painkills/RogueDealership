@@ -29,8 +29,8 @@ func _init() -> void:
 	AppWindow.label(col, root, "TitleLabel", "CLOSING TIME", 56, &"text", true, true)
 	var banked := AppWindow.label(col, root, "BankedLabel", "", 36, &"text", true, true)
 	banked.autowrap_mode = TextServer.AUTOWRAP_WORD
-	var bonus := AppWindow.label(col, root, "BonusLabel", "", 24, &"text_dim", false, true)
-	bonus.autowrap_mode = TextServer.AUTOWRAP_WORD
+	var pay := AppWindow.label(col, root, "PayLabel", "", 24, &"text_dim", false, true)
+	pay.autowrap_mode = TextServer.AUTOWRAP_WORD
 
 	# --- the supporting detail, in its own panel -----------------------------
 	var detail := AppWindow.box(col, root, "Detail", &"panel_hi", &"neutral_2", 24, 12)

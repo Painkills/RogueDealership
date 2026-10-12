@@ -59,7 +59,7 @@ func setup(run: RunState, history: Array) -> void:
 	var banked := 0
 	var quota := 0
 	var made := 0
-	var bonus := 0
+	var pay := 0
 	var standing := 0
 	var signed := 0
 	var walked := 0
@@ -78,15 +78,15 @@ func setup(run: RunState, history: Array) -> void:
 		banked += int(r.get("margin_banked", 0))
 		quota += int(r.get("quota", 0))
 		made += 1 if ok else 0
-		bonus += RunState.bonus_from(r) if not r.is_empty() else 0
+		pay += RunState.pay_from(r) if not r.is_empty() else 0
 		standing += delta
 		signed += int(r.get("customers_signed", 0))
 		walked += int(r.get("customers_walked", 0))
 
-	_headline.text = "%s banked against %s of quota - %d of %d quotas made." \
+	_headline.text = "%s margin banked against %s of quota - %d of %d quotas made." \
 		% [Format.money(banked), Format.money(quota), made, entries.size()]
 	_totals.text = "Pay earned: %s   |   Standing: %d/%d (%s%d this week)   |   %d signed, %d walked out" \
-		% [Format.money(bonus), run.standing, run.cfg.standing_start,
+		% [Format.money(pay), run.standing, run.cfg.standing_start,
 			"+" if standing >= 0 else "", standing, signed, walked]
 
 	# What the next week holds, from the run's own calendar - its first quota,

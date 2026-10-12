@@ -2657,10 +2657,10 @@ func _check_a_signing_flies_its_money_to_the_top(before: int) -> void:
 	_check("and the amount banked flies up from it (%s)" % str(flying),
 		flying.size() == 1 and flying[0] == "+" + Format.money(s.margin_banked - before))
 	_check("while the top bar still shows the old total (%s)" % label.text,
-		label.text.begins_with("banked %s " % Format.money(before)))
+		label.text.begins_with("margin %s " % Format.money(before)))
 	_finish_fx()
 	_check("then rolls up to the new one (%s)" % label.text,
-		label.text.begins_with("banked %s " % Format.money(s.margin_banked)))
+		label.text.begins_with("margin %s " % Format.money(s.margin_banked)))
 	_check("and the effects clean up after themselves", _fx_texts().is_empty())
 
 ## "This needs to be clearly telegraphed (NEXT CARD REJECTED)." Imposed on
@@ -2931,7 +2931,7 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 	_check("and the unsigned total is not flagged with nothing unsigned",
 		_controller._at_risk_label.get_theme_color("font_color") != Palette.color(&"alert"))
 
-	c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
+	c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 1600, "extra_margin": 0})
 	_controller._render()
 	_check("few ticks left with something to sign: the unsigned total is flagged",
 		_controller._at_risk_label.get_theme_color("font_color") == Palette.color(&"alert"))
@@ -2965,7 +2965,7 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 	var other_was_unsigned: Array[Dictionary] = []
 	if other_c != null:
 		other_was_unsigned = other_c.unsigned.duplicate()
-		other_c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 900, "bonus": 0})
+		other_c.unsigned.append({"product": s.card_pool.by_id(&"vsc"), "margin": 900, "extra_margin": 0})
 		_controller._render()
 		_settle()
 	_check("a DIFFERENT customer with something unsigned gets the tag too, "
@@ -3295,7 +3295,7 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 	_check("but offers no close - there is nothing to close",
 		not note.get_node(^"Lines/CloseRow").visible)
 
-	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
+	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "extra_margin": 0})
 	_controller._render()
 	_check("empty table WITH something unsigned: the close pad turns on",
 		not (_controller._chair_pads[chair].get_node(^"CollisionShape3D")
@@ -3347,7 +3347,7 @@ func _check_double_tapping_the_empty_table_closes_on_touch_too() -> void:
 	if c.offer != null:
 		shift.discard.append(c.offer.instance)
 	c.offer = null
-	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "bonus": 0})
+	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "extra_margin": 0})
 	_controller._render()
 
 	_controller._touch_check = func(): return true

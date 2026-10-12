@@ -11,7 +11,7 @@ class_name CardText extends RefCounted
 static func title(inst: CardInstance) -> String:
 	return inst.card.display_name
 
-static func cost(inst: CardInstance) -> String:
+static func ticks(inst: CardInstance) -> String:
 	return "%dt" % inst.ticks()
 
 static func kind(inst: CardInstance) -> String:

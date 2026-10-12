@@ -42,24 +42,24 @@ func test_every_shift_pays_its_paycheck() -> void:
 	var pay: int = r.cfg.paycheck
 	r.finish_shift(_report(500, 3600, r.cfg))
 	h.eq("missing quota still pays it", r.money, pay)
-	h.eq("and the shift says so", r.last_bonus, pay)
+	h.eq("and the shift says so", r.last_pay, pay)
 	r.finish_shift(_report(4140, 4140, r.cfg))
-	h.eq("landing exactly on quota pays it, no more", r.last_bonus, pay)
+	h.eq("landing exactly on quota pays it, no more", r.last_pay, pay)
 	h.eq("and paychecks stack in the pot", r.money, pay * 2)
 	h.eq("while the lifetime total counts every dollar banked", r.banked_total, 4640)
 
 func test_beating_quota_adds_a_commission_on_the_overage() -> void:
 	## "Base salary plus X percent over quota (differentiated by shift type)."
 	## Made-up reports, so no tuned number is pinned here.
-	h.eq("a share of the dollars banked over quota, on top of the base", RunState.bonus_from(
+	h.eq("a share of the dollars banked over quota, on top of the base", RunState.pay_from(
 		{"margin_banked": 1500, "quota": 1000, "paycheck": 1000, "commission": 0.3}), 1150)
-	h.eq("a higher commission pays more for the same overage", RunState.bonus_from(
+	h.eq("a higher commission pays more for the same overage", RunState.pay_from(
 		{"margin_banked": 1500, "quota": 1000, "paycheck": 1000, "commission": 0.5}), 1250)
-	h.eq("landing on quota pays the base alone", RunState.bonus_from(
+	h.eq("landing on quota pays the base alone", RunState.pay_from(
 		{"margin_banked": 1000, "quota": 1000, "paycheck": 1000, "commission": 0.5}), 1000)
-	h.eq("never less than the base salary", RunState.bonus_from(
+	h.eq("never less than the base salary", RunState.pay_from(
 		{"margin_banked": 0, "quota": 1000, "paycheck": 1000, "commission": 0.5}), 1000)
-	h.eq("and a report without one pays nothing extra", RunState.bonus_from(
+	h.eq("and a report without one pays nothing extra", RunState.pay_from(
 		{"margin_banked": 100, "quota": 3600}), 0)
 
 func test_repeated_total_failure_ends_the_run_before_it_would_naturally_end() -> void:

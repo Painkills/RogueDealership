@@ -5,7 +5,7 @@ func apply(ctx: EffectContext) -> void:
 	if ctx.sale.is_empty():
 		return
 	ctx.sale["margin"] = int(ctx.sale["margin"]) + amount
-	ctx.sale["bonus"] = int(ctx.sale.get("bonus", 0)) + amount
+	ctx.sale["extra_margin"] = int(ctx.sale.get("extra_margin", 0)) + amount
 
 func describe() -> String:
 	return "+$%d on the sale" % amount

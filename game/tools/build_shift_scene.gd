@@ -952,7 +952,7 @@ func _build_hud(root: Node) -> void:
 
 	var banked := Label.new()
 	banked.name = "BankedLabel"
-	banked.text = "banked $0 / $3,600"
+	banked.text = "margin $0 / $3,600"
 	banked.add_theme_font_size_override("font_size", 30)
 	banked.theme_type_variation = &"Heading"
 	banked.mouse_filter = Control.MOUSE_FILTER_IGNORE

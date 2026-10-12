@@ -156,7 +156,7 @@ func test_someone_in_a_hurry_pays_for_the_patience_they_have_left() -> void:
 	var s: Shift = pair[0]
 	var c: Customer = pair[1]
 	var sold := _product(_interests().interests[0], 821)
-	c.unsigned.append({"product": sold.card, "margin": 500, "bonus": 0})
+	c.unsigned.append({"product": sold.card, "margin": 500, "extra_margin": 0})
 	c.patience = 7
 	var before := s.margin_banked
 	h.check("they sign", s.close().ok)

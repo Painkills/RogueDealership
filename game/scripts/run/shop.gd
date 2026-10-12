@@ -63,7 +63,7 @@ const RARITY_WEIGHTS := {
 ## top of the free card. A null profile adds nothing: the free card alone.
 ##
 ## The free card comes whether or not that shift made quota. What missing quota
-## costs you is already applied elsewhere - standing, and a bonus pot left
+## costs you is already applied elsewhere - standing, and a money pot left
 ## empty - and anything that is not free here is paid for out of that pot.
 func _init(p_run: RunState, p_profile: ShiftProfile = null) -> void:
 	run = p_run
@@ -246,11 +246,11 @@ func perk_text() -> String:
 		extras.append("%d of your cards to upgrade" % upgrades)
 	var missed := " No perk - that shift missed quota." if dealership_missed else ""
 	if extras.is_empty():
-		return "Just your free card this visit - your bonus carries over." + missed
+		return "Just your free card this visit - your money carries over." + missed
 	# A store opened with no free card (the last-fight shortcut) has none to be
 	# on top of.
 	var lead := "On top of your free card: " if not free_cards.is_empty() else "In the store: "
-	return "%s%s. Buy as many as your bonus covers.%s" % [lead, " and ".join(extras), missed]
+	return "%s%s. Buy as many as your money covers.%s" % [lead, " and ".join(extras), missed]
 
 # --- the verbs ---------------------------------------------------------------
 

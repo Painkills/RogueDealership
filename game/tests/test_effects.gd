@@ -48,10 +48,10 @@ func test_grant_margin_lands_on_the_sale_if_one_just_settled() -> void:
 	var e := GrantMargin.new()
 	e.amount = 300
 	var ctx := EffectContext.new()
-	ctx.sale = {"margin": 1600, "bonus": 0}
+	ctx.sale = {"margin": 1600, "extra_margin": 0}
 	e.apply(ctx)
 	h.eq("the sale grew", int(ctx.sale["margin"]), 1900)
-	h.eq("and recorded the bonus", int(ctx.sale["bonus"]), 300)
+	h.eq("and recorded the extra margin", int(ctx.sale["extra_margin"]), 300)
 
 func test_grant_margin_lands_on_the_offer_if_it_is_still_open() -> void:
 	var e := GrantMargin.new()

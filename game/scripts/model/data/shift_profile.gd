@@ -43,7 +43,7 @@ class_name ShiftProfile extends Resource
 @export_range(0.0, 1.0, 0.05) var heal_up_to: float = 0.0
 ## The shift's quota against the run's climbing one: scaled by this, then
 ## `quota_offset` added. Raising an easy shift's quota makes it pay less - the
-## bonus is only what you bank OVER quota. A flat offset costs the same every
+## commission is only on what you bank OVER quota. A flat offset costs the same every
 ## day of the week; a scale bites harder as the quota climbs. A premade
 ## shift's own `quota` replaces both outright.
 @export var quota_scale: float = 1.0
@@ -51,7 +51,7 @@ class_name ShiftProfile extends Resource
 ## Commission: this share of what you bank OVER quota is paid on top of the
 ## base salary - a harder shift paying out in money as well as in what its
 ## store stocks (morning lowest, then midday, night, and the boss highest). See
-## RunState.bonus_from().
+## RunState.pay_from().
 @export_range(0.0, 1.0, 0.01) var commission: float = 0.25
 ## The base salary for working this shift, as a multiple of the week's
 ## (ShiftConfig.paycheck_in_week) - a night differential. It is paid whether or
@@ -120,7 +120,7 @@ class_name ShiftProfile extends Resource
 
 ## The store that follows it. Every visit starts with one card free, picked
 ## from a few, whatever the shift; this is what the store holds after that -
-## see Shop. Buy or upgrade as many of them as the bonus covers.
+## see Shop. Buy or upgrade as many of them as your money covers.
 @export var cards_for_sale: int = 0          ## cards put up for sale
 @export var upgrades: int = 0                ## of your cards offered for an upgrade
 ## The lowest rarity the free pick after this shift offers - a boss's reward.

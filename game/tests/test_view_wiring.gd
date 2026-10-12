@@ -16,7 +16,7 @@ func test_report_dictionary_has_every_key_the_report_panel_reads() -> void:
 	for key in ["margin_banked", "quota", "made_quota", "standing_delta",
 			"standing_lost_to_walkouts", "customers_seen", "customers_signed",
 			"customers_walked", "offers", "sales", "close_rate", "failed_offers",
-			"margin_conceded", "margin_padded", "margin_bonus",
+			"margin_conceded", "margin_padded", "margin_extra",
 			"margin_lost_to_walks", "margin_lost_to_closing"]:
 		h.check("report has %s, which report_panel.gd reads" % key, r.has(key))
 

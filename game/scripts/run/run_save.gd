@@ -15,7 +15,7 @@ class_name RunSave extends RefCounted
 ## Pure like the rest of scripts/run: writing it to disk is RunFile's job.
 
 ## Bumped whenever what is saved changes shape - an older save is not read.
-const VERSION := 1
+const VERSION := 2
 
 ## Which build wrote it - for a person reading the file, never checked.
 var build: String = ""

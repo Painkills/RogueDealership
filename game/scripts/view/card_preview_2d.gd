@@ -11,7 +11,7 @@ const FRONT_SIZE := Vector2i(500, 700)
 var _viewport: SubViewport
 var _texture: TextureRect
 var _name: Label
-var _cost: Label
+var _ticks: Label
 var _kind: Label
 var _kind_icon: CardTypeIconControl
 var _body: Label
@@ -32,7 +32,7 @@ func _bind() -> void:
 	_texture = $TextureRect
 	var front: Control = $SubViewport/CardFront
 	_name = front.get_node(^"Margin/Column/Header/NameLabel")
-	_cost = front.get_node(^"Margin/Column/Header/CostLabel")
+	_ticks = front.get_node(^"Margin/Column/Header/TicksLabel")
 	_kind = front.get_node(^"Margin/Column/KindRow/KindLabel")
 	_kind_icon = front.get_node(^"Margin/Column/KindRow/KindIcon")
 	_body = front.get_node(^"Margin/Column/BodyRow/BodyLabel")
@@ -67,7 +67,7 @@ func _bind() -> void:
 func show_card(inst: CardInstance) -> void:
 	_bind()
 	_name.text = CardText.title(inst)
-	_cost.text = CardText.cost(inst)
+	_ticks.text = CardText.ticks(inst)
 	_kind.text = CardText.kind(inst)
 	_body.text = CardText.body(inst)
 	# The same glyph the interest grid and every other card use for this
@@ -92,7 +92,7 @@ func clear() -> void:
 	_bind()
 	_name.text = "hover a card"
 	_name.add_theme_color_override("font_color", Palette.color(&"text_dim"))
-	_cost.text = ""
+	_ticks.text = ""
 	_kind.text = ""
 	_kind_icon.visible = false
 	_body.text = "to see it here"

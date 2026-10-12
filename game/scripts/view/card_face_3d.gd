@@ -29,7 +29,7 @@ var _viewport: SubViewport
 var _back_viewport: SubViewport
 var _back: CardBack2D
 var _name: Label
-var _cost: Label
+var _ticks: Label
 var _kind: Label
 var _kind_icon: CardTypeIconControl
 var _body: Label
@@ -54,7 +54,7 @@ func _bind() -> void:
 	_viewport = $FrontViewport
 	var front: Control = $FrontViewport/CardFront
 	_name = front.get_node(^"Margin/Column/Header/NameLabel")
-	_cost = front.get_node(^"Margin/Column/Header/CostLabel")
+	_ticks = front.get_node(^"Margin/Column/Header/TicksLabel")
 	_kind = front.get_node(^"Margin/Column/KindRow/KindLabel")
 	_kind_icon = front.get_node(^"Margin/Column/KindRow/KindIcon")
 	_body = front.get_node(^"Margin/Column/BodyRow/BodyLabel")
@@ -82,7 +82,7 @@ func setup(inst: CardInstance) -> void:
 	uid = inst.uid
 
 	_name.text = CardText.title(inst)
-	_cost.text = CardText.cost(inst)
+	_ticks.text = CardText.ticks(inst)
 	_kind.text = CardText.kind(inst)
 	_body.text = CardText.body(inst)
 	# The same glyph the interest grid uses for this row, so a Vehicle Service

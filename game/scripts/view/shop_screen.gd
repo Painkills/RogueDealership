@@ -2,7 +2,7 @@ extends PanelContainer
 ## The store between shifts. Every visit opens on a popup first - a few cards
 ## on the house, to pick one from, or pass - and then the store itself: the
 ## cards the shift you just worked put up for sale, and a few of your own it
-## offers to upgrade. Buy or upgrade as many as the bonus covers. Every one of
+## offers to upgrade. Buy or upgrade as many as your money covers. Every one of
 ## them is a real card you click, not a text row.
 ##
 ## Your own cards here are Shop.upgrade_offers, not the whole deck - a random
@@ -112,8 +112,8 @@ func _render() -> void:
 	# the run, so a total on its own cannot tell you whether the shift you just
 	# played earned anything - and that is the number you came here to find out.
 	_money.text = "Money to spend: %s" % Format.money(run.money)
-	if run.last_bonus > 0:
-		_money.text += "   (+%s from that shift)" % Format.money(run.last_bonus)
+	if run.last_pay > 0:
+		_money.text += "   (+%s from that shift)" % Format.money(run.last_pay)
 	elif not run.reports.is_empty():
 		_money.text += "   (no pay that shift)"
 	_money.text += "   |   Standing: %d/%d" % [run.standing, run.cfg.standing_start]

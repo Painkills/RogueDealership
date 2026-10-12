@@ -39,7 +39,7 @@ var combo_scale: float = 1.0
 var has_clock: bool = true
 ## The share of what you bank over quota paid on top of base salary - the
 ## picked ShiftProfile's commission. Nothing here uses it but report(); see
-## RunState.bonus_from().
+## RunState.pay_from().
 var commission: float = 0.25
 ## The picked ShiftProfile's pay_scale - see paycheck().
 var pay_scale: float = 1.0
@@ -212,7 +212,7 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	for key in ["cards_played", "offers", "failed_offers", "offers_dropped",
 			"sales", "places", "digs", "approaches", "actions_fired",
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
-			"margin_conceded", "margin_padded", "margin_bonus",
+			"margin_conceded", "margin_padded", "margin_extra",
 			"customers_signed", "customers_walked",
 			"demands_met", "demands_missed", "budget_seen", "budget_spent"]:
 		stat[key] = 0
@@ -1403,7 +1403,7 @@ func offer() -> Result:
 	return Result.new(true, "%s takes the %s - $%d."
 		% [c.display_name, sale["product"].display_name, sale["margin"]],
 		"sale", {"rank": rank, "margin": sale["margin"],
-			"bonus": sale.get("bonus", 0)})
+			"extra_margin": sale.get("extra_margin", 0)})
 
 
 func _settle(c: Customer) -> Dictionary:
@@ -1424,7 +1424,7 @@ func _settle(c: Customer) -> Dictionary:
 	# sale takes whatever that is (CustomerArchetype.budget_share).
 	if c.has_budget():
 		margin = mini(margin, c.budget_left())
-	var sale := {"product": o.product, "margin": margin, "bonus": 0,
+	var sale := {"product": o.product, "margin": margin, "extra_margin": 0,
 		"combo_margin": combo - o.margin, "premium": premium}
 	c.unsigned.append(sale)
 	c.sales += 1
@@ -1685,7 +1685,7 @@ func close() -> Result:
 	var hurry: int = maxi(0, c.patience) * c.archetype.pays_per_patience_left
 	if hurry > 0:
 		banked += hurry
-		stat["margin_bonus"] = int(stat["margin_bonus"]) + hurry
+		stat["margin_extra"] = int(stat["margin_extra"]) + hurry
 		events.append("[%s] +$%d for the %d patience they had left."
 			% [c.key, hurry, c.patience])
 	margin_banked += banked
@@ -2155,7 +2155,7 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 		# Dictionaries are references, so MarginBonus mutating ctx.sale updates
 		# the very entry already sitting in the customer's unsigned deal.
 		ctx.sale = extra.get("sale", {})
-		var bonus_before: int = int(ctx.sale.get("bonus", 0))
+		var extra_before: int = int(ctx.sale.get("extra_margin", 0))
 		var before := _snapshot(c)
 
 		var descriptions: Array[String] = []
@@ -2167,8 +2167,8 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 				floor_wide = true
 
 		if not ctx.sale.is_empty():
-			stat["margin_bonus"] = int(stat["margin_bonus"]) \
-				+ int(ctx.sale.get("bonus", 0)) - bonus_before
+			stat["margin_extra"] = int(stat["margin_extra"]) \
+				+ int(ctx.sale.get("extra_margin", 0)) - extra_before
 
 		# What they say when this fires - same post-effect product/band read
 		# _support() uses, for the same reason: react to where things ARE.
@@ -2249,7 +2249,7 @@ func report() -> Dictionary:
 		"close_rate": (float(stat["sales"]) / offers) if offers > 0 else 0.0,
 		"margin_conceded": int(stat["margin_conceded"]),
 		"margin_padded": int(stat["margin_padded"]),
-		"margin_bonus": int(stat["margin_bonus"]),
+		"margin_extra": int(stat["margin_extra"]),
 		"margin_lost_to_walks": lost_to_walks,
 		"margin_lost_to_closing": lost_at_bell,
 		"actions_fired": int(stat["actions_fired"]),

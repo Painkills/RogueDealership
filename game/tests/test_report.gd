@@ -40,7 +40,7 @@ func test_the_report_carries_every_key_the_ui_will_need() -> void:
 			"standing_lost_to_walkouts", "ticks", "tick_budget", "customers_seen",
 			"customers_signed", "customers_walked", "sales", "offers",
 			"failed_offers", "close_rate", "margin_conceded", "margin_padded",
-			"margin_bonus", "margin_lost_to_walks", "margin_lost_to_closing",
+			"margin_extra", "margin_lost_to_walks", "margin_lost_to_closing",
 			"actions_fired", "digs", "approaches", "ticks_cards", "ticks_place",
 			"ticks_digs", "ticks_approach", "sale_streak_end", "sale_streak_events",
 			"peak_combo_multiplier"]:

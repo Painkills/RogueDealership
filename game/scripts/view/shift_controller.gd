@@ -1041,7 +1041,7 @@ var _fx_tweens: Array = []
 
 func _write_banked(v: int) -> void:
 	_banked_shown = v
-	_banked_label.text = "banked %s / %s" % [Format.money(v), Format.money(_shift.quota)]
+	_banked_label.text = "margin %s / %s" % [Format.money(v), Format.money(_shift.quota)]
 
 ## The boss's product quota beside what you have banked: "Vehicle 1/2", amber
 ## until it is met and green after. Hidden on a shift without one.

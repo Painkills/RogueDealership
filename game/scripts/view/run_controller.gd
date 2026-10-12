@@ -399,7 +399,7 @@ func _on_shift_finished(report: Dictionary) -> void:
 		return
 	# The shop is what the JUST-PLAYED shift's tier adds to the free card, not
 	# whatever gets picked next - so it goes in before the picker is shown
-	# again. Anything past the free card costs money from the bonus pot, which
+	# again. Anything past the free card costs money from your pay, which
 	# only beating quota fills - so failing a harder tier buys nothing it did
 	# not already have saved.
 	var shop := Shop.new(_run, _chosen_profile)

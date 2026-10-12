@@ -187,14 +187,14 @@ func _phase_0_open_and_finish_shift() -> void:
 	var r0: Dictionary = _run.reports[0]
 	_check("with what that shift paid (%d banked, %d quota)"
 		% [int(r0["margin_banked"]), int(r0["quota"])],
-		_run.money == RunState.bonus_from(r0))
+		_run.money == RunState.pay_from(r0))
 	# This driver digs the clock away rather than selling anything, so it always
 	# lands on the missed-quota branch: the paycheck, and nothing on top.
 	# The week's base salary, at the shift's own pay_scale.
 	var base_pay := roundi(_run.cfg.paycheck_in_week(1) * _root._chosen_profile.pay_scale)
 	_check("which after a shift that banked nothing is the paycheck alone (%d)" % base_pay,
 		not bool(r0["made_quota"]) and int(r0["paycheck"]) == base_pay
-			and _run.money == base_pay and _run.last_bonus == base_pay)
+			and _run.money == base_pay and _run.last_pay == base_pay)
 	# The total wipeout costs standing too - but not all of it, so the run must
 	# have SURVIVED to reach shift 2 at all. This is also where a stale _run
 	# reference (the exact bug class this project has already caught once - a
@@ -219,9 +219,9 @@ func _phase_0_open_and_finish_shift() -> void:
 	# The panel you were just looking at had to show that number before
 	# finish_shift() ran at all, so the two must agree.
 	var panel = _root._shift_view._report_overlay
-	_check("and the report panel's own pay line agrees (%s)" % panel._bonus.text,
-		panel._bonus.text.contains(Format.money(base_pay))
-			and panel._bonus.text.contains("short"))
+	_check("and the report panel's own pay line agrees (%s)" % panel._pay.text,
+		panel._pay.text.contains(Format.money(base_pay))
+			and panel._pay.text.contains("short"))
 	# Missing quota is the only branch this driver's own play can reach, and the
 	# line that ANNOUNCES a bonus is the whole point of the feature. Drive it
 	# directly rather than leave the copy that matters unrendered by any test.
@@ -239,11 +239,11 @@ func _phase_0_open_and_finish_shift() -> void:
 	_set_standing_keys(over, _run.cfg.standing_start)
 	panel.setup(over)
 	# What 900 over pays depends on the shift's own commission - read, not assumed.
-	var paid := RunState.bonus_from(over)
-	_check("and announces the pay, base and commission, when there is some (%s)" % panel._bonus.text,
-		panel._bonus.text.contains(Format.money(paid)) and panel._bonus.text.contains("paycheck")
-			and panel._bonus.text.contains("commission")
-			and panel._bonus.text.contains(Format.money(int(over["paycheck"]))))
+	var paid := RunState.pay_from(over)
+	_check("and announces the pay, base and commission, when there is some (%s)" % panel._pay.text,
+		panel._pay.text.contains(Format.money(paid)) and panel._pay.text.contains("paycheck")
+			and panel._pay.text.contains("commission")
+			and panel._pay.text.contains(Format.money(int(over["paycheck"]))))
 	var r0_shown: Dictionary = r0.duplicate()
 	_set_standing_keys(r0_shown, _run.cfg.standing_start)
 	panel.setup(r0_shown)
@@ -1414,13 +1414,13 @@ func _check_report_card_fits_the_worst_case(report) -> void:
 		"customers_seen": 999, "customers_signed": 999, "customers_walked": 999,
 		"offers": 9999, "sales": 9999, "close_rate": 0.999, "failed_offers": 9999,
 		"margin_conceded": 1234567, "margin_padded": 1234567,
-		"margin_bonus": 1234567, "margin_lost_to_walks": 1234567,
+		"margin_extra": 1234567, "margin_lost_to_walks": 1234567,
 		"margin_lost_to_closing": 1234567, "standing_delta": -100,
 		"standing_lost_to_walkouts": 100, "standing_healed": 100,
 	}
 	_set_standing_keys(worst, 100)
 	var was := {}
-	for key in ["title", "banked", "bonus", "standing", "walkouts", "customers",
+	for key in ["title", "banked", "pay", "standing", "walkouts", "customers",
 			"offers", "margin", "lost"]:
 		was[key] = report.get("_" + key).text
 	report.setup(worst)

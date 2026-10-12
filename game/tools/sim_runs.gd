@@ -151,7 +151,7 @@ func _one_run(strategy: Callable, seed_value: int) -> Dictionary:
 		r["quota_on"][day] = int(report["quota"])
 		run.finish_shift(report)
 		r["days"] = day if run.standing > 0 else day - 1
-		r["earned"] += run.last_bonus
+		r["earned"] += run.last_pay
 		r["standing"][day] = run.standing
 		if not run.is_over():
 			_shop(Shop.new(run, profile), r)

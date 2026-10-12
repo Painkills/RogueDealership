@@ -61,7 +61,7 @@ func _init() -> void:
 
 ## Base salary for the week, plus commission on the dollars over quota.
 func _pay(cfg: ShiftConfig, profile: ShiftProfile, quota: int, over: float, week: int) -> int:
-	return RunState.bonus_from({"paycheck": cfg.paycheck_in_week(week),
+	return RunState.pay_from({"paycheck": cfg.paycheck_in_week(week),
 		"quota": quota, "margin_banked": roundi(quota * over),
 		"commission": profile.commission})
 

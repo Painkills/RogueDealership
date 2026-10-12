@@ -51,7 +51,7 @@ class_name ShiftConfig extends Resource
 @export var miss_standing_max_by_week: Array[int] = [35, 45]
 ## Base salary: what a shift pays however it went, so one bad shift does not
 ## also mean a shop you cannot buy anything in. Beating quota adds a commission
-## on top - see RunState.bonus_from() and ShiftProfile.commission.
+## on top - see RunState.pay_from() and ShiftProfile.commission.
 @export var paycheck: int = 1000
 ## "Base pay should increase each week by a little bit": this much more in each
 ## week after the first. The end-of-week report says so.
