@@ -42,8 +42,8 @@ func _print_archetype(a: CustomerArchetype) -> void:
 	print("\n==== %s (%s) ====" % [a.display_name, a.id])
 	print("pattern: %s" % a.pattern)
 	print("tell: %s" % a.tell)
-	print("line=%d patience=%d line_per_sale=%d combo_step=%s demands_category=%s from_week=%d difficulty=%d"
-		% [a.line, a.patience, a.line_per_sale, a.combo_step, a.demands_category, a.from_week,
+	print("line=%d patience=%d line_per_sale=%d combo_weight=%s demands_category=%s from_week=%d difficulty=%d"
+		% [a.line, a.patience, a.line_per_sale, a.combo_weight, a.demands_category, a.from_week,
 			a.difficulty])
 	# The standing rules, where set - nothing fires for these, so the actions
 	# below never mention them.

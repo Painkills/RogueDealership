@@ -1,7 +1,8 @@
 extends RefCounted
 ## The per-customer combo multiplier: Shift._settle() rewards chaining sales
 ## onto the same customer with a margin multiplier that grows with
-## Customer.combo_step (copied from CustomerArchetype.combo_step). Unrelated
+## Customer.combo_step (ShiftConfig.combo_step x CustomerArchetype.combo_weight,
+## set when they are seated). Unrelated
 ## to Shift.sale_streak (see test_sale_streak.gd) - that is a floor-wide,
 ## cross-shift streak; this is per-customer, resets every new visit.
 var h: Harness
@@ -93,6 +94,33 @@ func test_offers_result_reports_the_multiplied_margin_not_the_sticker_price() ->
 	var second := _sell(s, c, &"gap", 902)
 	h.eq("second sale's Result already reflects the x2.0 combo",
 		int(second.data["margin"]), gap_margin * 2)
+
+func test_every_customer_combos_by_the_one_shared_step_times_their_weight() -> void:
+	## "All customers give combo on every successive sale by the same amount" -
+	## one step in the config, each archetype only a weight on it.
+	var s := _shift([&"easygoing", &"easygoing"], {"combo_step": 0.4})
+	for c in s.seated():
+		h.check("%s combos by the shared step x their weight (%.3f)" % [c.key, c.combo_step],
+			is_equal_approx(c.combo_step, 0.4 * c.archetype.combo_weight))
+	var lower: Customer = _shift([&"easygoing"], {"combo_step": 0.1}).chairs[0]
+	h.check("a change to the shared step reaches every customer",
+		is_equal_approx(lower.combo_step, 0.1 * lower.archetype.combo_weight))
+
+func test_a_sale_says_what_the_combo_made_of_it() -> void:
+	## The view lights the combo up the moment an offer passes - from what the
+	## sale itself reports, never re-derived.
+	var s := _shift([&"easygoing"], {"combo_step": 0.5})
+	s.at = 0
+	s.last_customer = s.chairs[0]
+	var c: Customer = s.chairs[0]
+	s.hand.clear()
+	_sell(s, c, &"vsc", 901)
+	var second := _sell(s, c, &"gap", 902)
+	h.eq("the multiplier it sold at", float(second.data["multiplier"]), 1.0 + c.combo_step)
+	h.check("the product's own margin before it",
+		int(second.data["base_margin"]) > 0)
+	h.eq("and the multiplier the next sale will get", float(second.data["next_multiplier"]),
+		1.0 + c.combo_step * 2)
 
 func test_peak_combo_multiplier_remembers_the_highest_reached_not_the_last() -> void:
 	var s := _shift([&"easygoing", &"easygoing"])

@@ -58,11 +58,12 @@ func test_a_combo_scale_multiplies_each_customers_step_before_an_upgrade_adds() 
 	var p := ShiftProfile.new()
 	p.combo_scale = 2.0
 	for c in _run().start_shift(p).seated():
-		h.eq("%s: step doubled" % c.key, c.combo_step, c.archetype.combo_step * 2.0)
+		h.check("%s: step doubled" % c.key, is_equal_approx(c.combo_step,
+			c.archetype.combo_weight * (load("res://data/shift_config.tres") as ShiftConfig).combo_step * 2.0))
 	var with_perk := _run(7, [_upgrade(&"combo_step", 0.1)]).start_shift(p)
 	for c in with_perk.seated():
 		h.check("%s: then the upgrade's on top" % c.key,
-			is_equal_approx(c.combo_step, c.archetype.combo_step * 2.0 + 0.1))
+			is_equal_approx(c.combo_step, c.archetype.combo_weight * (load("res://data/shift_config.tres") as ShiftConfig).combo_step * 2.0 + 0.1))
 	p.combo_scale = 0.0
 	for c in _run().start_shift(p).seated():
 		h.eq("%s: 0 is no combo at all" % c.key, c.combo_step, 0.0)

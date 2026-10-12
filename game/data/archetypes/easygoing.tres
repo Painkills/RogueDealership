@@ -38,5 +38,4 @@ icon = &"mug"
 pattern = "Basic increase of line as sales increase."
 tell = "Pleasant, unhurried, no strong opinions about anything."
 line_per_sale = 1
-combo_step = 0.15
 actions = Array[ExtResource("1_1cw48")]([SubResource("Sub_opens_up")])

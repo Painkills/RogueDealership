@@ -558,7 +558,7 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	if easier != 0:
 		c.line = maxi(0, c.line + easier)
 		c.start_line = c.line
-	c.combo_step = c.combo_step * combo_scale + perk(&"combo_step")
+	c.combo_step = cfg.combo_step * arch.combo_weight * combo_scale + perk(&"combo_step")
 
 	# Every-triggered actions start their cadence counter jittered, not at a
 	# clean 0, so this customer's first demand does not land on the exact same
@@ -1403,7 +1403,11 @@ func offer() -> Result:
 	return Result.new(true, "%s takes the %s - $%d."
 		% [c.display_name, sale["product"].display_name, sale["margin"]],
 		"sale", {"rank": rank, "margin": sale["margin"],
-			"extra_margin": sale.get("extra_margin", 0)})
+			"extra_margin": sale.get("extra_margin", 0),
+			# What the combo made of it, for the view to light up: the product's
+			# own margin, what it sold at, and what the next one will.
+			"base_margin": sale["base_margin"], "multiplier": sale["multiplier"],
+			"next_multiplier": 1.0 + c.combo_step * c.sales})
 
 
 func _settle(c: Customer) -> Dictionary:
@@ -1425,7 +1429,8 @@ func _settle(c: Customer) -> Dictionary:
 	if c.has_budget():
 		margin = mini(margin, c.budget_left())
 	var sale := {"product": o.product, "margin": margin, "extra_margin": 0,
-		"combo_margin": combo - o.margin, "premium": premium}
+		"combo_margin": combo - o.margin, "premium": premium,
+		"base_margin": o.margin, "multiplier": multiplier}
 	c.unsigned.append(sale)
 	c.sales += 1
 	c.line += c.line_per_sale

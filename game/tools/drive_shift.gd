@@ -157,6 +157,7 @@ func _physics_process(_delta: float) -> bool:
 	# the point of this sequence, only a convenient way to vacate the chair.
 	_press(KEY_O);             _settle(); _check_table("after offering again")
 	_check_their_yes_replaced_it()
+	_check_a_sale_lights_up_the_combo()
 	var digs_before: int = int(_controller._shift.stat["digs"])
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
 	_check("Shift+2 digs, sent the way a browser sends it ('@' on the 2 key)",
@@ -2662,6 +2663,38 @@ func _check_a_signing_flies_its_money_to_the_top(before: int) -> void:
 	_check("then rolls up to the new one (%s)" % label.text,
 		label.text.begins_with("margin %s " % Format.money(s.margin_banked)))
 	_check("and the effects clean up after themselves", _fx_texts().is_empty())
+
+## "Successive sales increase combo - make it more evident: the combo number
+## multiplies the initial value and you see it light up as soon as your offer
+## passes." The yes just given put the burst over the tablet; a second sale to
+## the same customer, through the real O key, puts up the multiplied one.
+func _check_a_sale_lights_up_the_combo() -> void:
+	var s: Shift = _controller._shift
+	var texts := _fx_texts()
+	_check("their yes lights up over the tablet (%s)" % str(texts),
+		texts.any(func(t): return str(t) == "SOLD!" or str(t).begins_with("COMBO ×")))
+	_finish_fx()
+	var c: Customer = s.chairs[_at()]
+	var line_was := c.line
+	c.line = 0
+	var product: CardDef = null
+	for def in s.card_pool.cards:
+		if def is ProductCardDef and not c.unsigned.any(func(u): return u["product"] == def):
+			product = def
+			break
+	s.hand.append(CardInstance.new(product, 990))
+	_controller._apply(s.place(s.hand.size() - 1))
+	_settle()
+	var expected := 1.0 + c.combo_step * c.sales
+	_press(KEY_O);            _settle()
+	texts = _fx_texts()
+	_check("a sale on top of another shows the combo it sold at (%s, expected ×%.2f)"
+		% [str(texts), expected], texts.has("COMBO ×%.2f!" % expected))
+	_check("and the product's own margin turned into what it sold for (%s)" % str(texts),
+		texts.any(func(t): return str(t).contains(Format.money(product.margin) + " → ")))
+	_check("and what the next one gets", texts.any(func(t): return str(t).contains("next sale ×")))
+	c.line = line_was
+	_finish_fx()
 
 ## "This needs to be clearly telegraphed (NEXT CARD REJECTED)." Imposed on
 ## whoever you are with: a copy of their archetype that waves off every 2nd

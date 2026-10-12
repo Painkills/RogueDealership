@@ -679,8 +679,11 @@ func _last_customer_chair() -> int:
 func _apply(res: Result) -> void:
 	if not res.ok:
 		_event_log.append_text("[color=%s]%s[/color]\n" % [Palette.hex(&"alert"), res.msg])
+	var sold_at = _shift.at if res.ok and res.kind == "sale" else null
 	_let_time_pass_on_an_empty_floor()
 	_render()
+	if sold_at != null:
+		_light_up_the_combo(res.data, int(sold_at))
 	if _shift.is_over():
 		_show_report()
 
@@ -1218,6 +1221,60 @@ func _celebrate_close(chair: int, amount: int) -> void:
 	_fly("+" + Format.money(amount), &"margin", at + Vector2(0, 90), _banked_label, func():
 		_roll(_banked_label, from, _write_banked,
 			func(): _banked_rolling = false, &"margin", false))
+
+## "Make the combo more evident: the combo number multiplies the initial value,
+## and you see it light up as soon as your offer passes." Over the tablet, the
+## moment they say yes: the multiplier slammed down - bigger the longer the
+## chain - then the product's own margin turning into what it sold for, and
+## what the next sale to them will get. The tablet's own combo pulses with it.
+func _light_up_the_combo(data: Dictionary, chair: int) -> void:
+	var mult := float(data.get("multiplier", 1.0))
+	var next := float(data.get("next_multiplier", 1.0))
+	var base := int(data.get("base_margin", 0))
+	var sold := int(data.get("margin", 0))
+	var chained := mult > 1.0
+	var tablet := screen_rect_of(&"tablet")
+	var at := tablet.get_center() if tablet.size != Vector2.ZERO \
+		else get_viewport().get_visible_rect().get_center()
+	# Bigger with every link of the chain, to a point.
+	var size := 64 + mini(5, roundi((mult - 1.0) * 4.0)) * 12
+	var big := _fx_label("COMBO ×%.2f!" % mult if chained else "SOLD!",
+		&"accent" if chained else &"margin", size, at + Vector2(0, -70))
+	big.scale = Vector2(2.4, 2.4)
+	big.modulate.a = 0.0
+	var tw := _fx_tween()
+	tw.set_parallel(true)
+	tw.tween_property(big, "scale", Vector2.ONE, 0.25) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(big, "modulate:a", 1.0, 0.1)
+	tw.set_parallel(false)
+	# A flash: it lights up brighter than its own colour, twice.
+	for _k in range(2):
+		tw.tween_property(big, "modulate", Color(1.6, 1.6, 1.6, 1.0), 0.09)
+		tw.tween_property(big, "modulate", Color.WHITE, 0.12)
+	tw.tween_interval(FX_STAMP)
+	tw.tween_property(big, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(func(): _fx_done(big))
+	# What the combo made of the product, and what comes next.
+	var lines: Array[String] = []
+	lines.append("%s → %s" % [Format.money(base), Format.money(sold)] if chained and base > 0
+		else Format.money(sold))
+	if next > mult:
+		lines.append("next sale ×%.2f" % next)
+	var sub := _fx_label("\n".join(lines), &"margin", 40, at + Vector2(0, 40))
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.modulate.a = 0.0
+	var st := _fx_tween()
+	st.tween_interval(0.2)
+	st.tween_property(sub, "modulate:a", 1.0, 0.15)
+	st.tween_interval(FX_STAMP)
+	st.set_parallel(true)
+	st.tween_property(sub, "position:y", sub.position.y - 60.0, 0.6)
+	st.tween_property(sub, "modulate:a", 0.0, 0.6)
+	st.set_parallel(false)
+	st.tween_callback(func(): _fx_done(sub))
+	if chair >= 0 and chair < _tablets.size():
+		_tablets[chair].flash_combo()
 
 func _mourn_walkout(chair: int, lost: int) -> void:
 	var at := _chair_on_screen(chair)

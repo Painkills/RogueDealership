@@ -12,7 +12,7 @@ func _arch(who: String) -> CustomerArchetype:
 	a.line = 20
 	a.patience = 20
 	a.line_per_sale = 0
-	a.combo_step = 0.0
+	a.combo_weight = 0.0
 	return a
 
 ## Two customers on the floor, you at the first, with a product on their table.

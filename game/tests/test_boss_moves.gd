@@ -46,7 +46,7 @@ func _boss(moves: Array = [], shield: bool = true, budget_share: float = 0.0,
 	a.line = 0
 	a.patience = 20
 	a.line_per_sale = 0
-	a.combo_step = 0.0
+	a.combo_weight = 0.0
 	a.arrival_patience_share = 1.0
 	a.patience_is_shield = shield
 	a.budget_share = budget_share

@@ -22,7 +22,7 @@ func _arch() -> CustomerArchetype:
 	a.line = 20
 	a.patience = 16
 	a.line_per_sale = 0
-	a.combo_step = 0.0
+	a.combo_weight = 0.0
 	return a
 
 ## [shift, customer]: `arch` alone on a one-chair floor, you standing with

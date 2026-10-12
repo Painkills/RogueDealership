@@ -150,6 +150,19 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 		_worth.text = "%s margin if they buy" % Format.money(combo + roundi(combo * (prized - 1.0)))
 		_read_the_offer(c, o, band)
 
+## The combo on the screen pops and flashes - a sale just went through, and the
+## multiplier the next one gets is what it now shows.
+func flash_combo() -> void:
+	_bind()
+	_combo.pivot_offset = _combo.size * 0.5
+	var tw := create_tween()
+	tw.tween_property(_combo, "scale", Vector2(1.6, 1.6), 0.12) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	for _k in range(2):
+		tw.tween_property(_combo, "modulate", Color(1.8, 1.8, 1.8, 1.0), 0.08)
+		tw.tween_property(_combo, "modulate", Color.WHITE, 0.1)
+	tw.tween_property(_combo, "scale", Vector2.ONE, 0.35)
+
 ## The verdict under the meter: nothing yet, a band, or the exact gap.
 ##
 ## The FILL is always honest about your own appeal; only the LINE is fogged, and
@@ -178,7 +191,7 @@ func _read_the_offer(c, o, band: String) -> void:
 ## text can never drift from what Shift._settle() actually does with them.
 static func knobs_text(c) -> String:
 	var text := "Each sale: combo +%d%%, Line +%d" \
-		% [roundi(c.archetype.combo_step * 100), c.archetype.line_per_sale]
+		% [roundi(c.combo_step * 100), c.archetype.line_per_sale]
 	# Someone on a budget: what they have left to spend - the fight's health bar.
 	if c.has_budget():
 		text += "\nBudget left: %s" % Format.money(c.budget_left())

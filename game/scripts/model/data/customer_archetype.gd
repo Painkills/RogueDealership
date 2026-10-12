@@ -23,12 +23,12 @@ class_name CustomerArchetype extends Resource
 ## after the shift's scale); a number above it is a shield to grow. Never below it.
 @export var max_patience: int = 0
 @export var line_per_sale: int = 3       ## Lay-Down Larry runs at 0
-## Extra margin multiplier per product ALREADY sold to this customer this
-## visit - see Shift._settle(). Low for an easy moneybag (cheap to chain,
-## not very lucrative to), high for someone worth the trouble of keeping
-## seated. Every archetype sets this explicitly; nothing should rely on this
-## default. Unrelated to Shift.sale_streak, a separate floor-wide streak.
-@export var combo_step: float = 0.15
+## How strongly this customer combos, against the one combo step every customer
+## shares (ShiftConfig.combo_step): 1 is everyone's, 0.5 half, 2 double, 0 none.
+## Low for an easy moneybag (cheap to chain, not very lucrative to), high for
+## someone worth the trouble of keeping seated. See Shift._settle(). Unrelated
+## to Shift.sale_streak, a separate floor-wide streak.
+@export var combo_weight: float = 1.0
 @export var demands_category: bool = false
 ## Will not take a product they rank worse than this unless something was
 ## conceded on it first - a card that gave margin away (Offer.conceded). No

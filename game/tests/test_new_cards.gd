@@ -27,7 +27,7 @@ func _arch(line: int = 20, patience: int = 99) -> CustomerArchetype:
 	a.line = line
 	a.patience = patience
 	a.line_per_sale = 0
-	a.combo_step = 0.5
+	a.combo_weight = 2.0
 	return a
 
 func _products() -> Array:

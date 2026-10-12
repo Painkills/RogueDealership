@@ -103,7 +103,8 @@ func _init(p_key: String, p_name: String, p_arch: CustomerArchetype,
 	line = p_arch.line
 	start_line = p_arch.line
 	line_per_sale = p_arch.line_per_sale
-	combo_step = p_arch.combo_step
+	# Set when they are seated, from the shift's own step - see Shift._spawn().
+	combo_step = 0.0
 	patience = p_patience
 	max_patience = p_max
 	_interests = p_interests
