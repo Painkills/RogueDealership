@@ -95,8 +95,9 @@ func _drive() -> void:
 
 	await _next(&"dig")
 	var ticks_before: int = shift.tick
-	# The second of the scripted products - whichever Tutorial deals.
-	_floor._apply(shift.dig(_index_of(shift, Tutorial.RANKS.keys()[1])))
+	# A spare support card - the lesson needs both products, and Small Talk for
+	# the wrong card further on.
+	_floor._apply(shift.dig(_index_of(shift, &"empathize")))
 	await _settle()
 	_check("digging moves it on", _coach.step_id() == &"clock")
 	_check("and the dig really did cost a tick (%d -> %d)" % [ticks_before, shift.tick],
@@ -104,16 +105,18 @@ func _drive() -> void:
 	await _check_it_points_at_something("the clock")
 
 	await _next(&"place")
-	var product := _index_of(shift, &"vsc")
+	var low_name: String = shift.card_pool.by_id(Tutorial.LOW).display_name
+	_check("the memo names the product to put down (%s)" % low_name,
+		_coach._body.text.contains(low_name))
+	var product := _index_of(shift, Tutorial.LOW)
 	_check("the scripted product is still in hand to place", product >= 0)
 	_floor._apply(shift.play_card(product))
 	await _settle()
 	_check("placing a product moves it on", _coach.step_id() == &"meter")
 	var c: Customer = shift.chairs[0]
-	_check("and their Line was tuned to it (appeal %d, Line %d)"
-		% [c.offer.appeal, c.line], c.line == c.offer.appeal + Tutorial.LINE_GAP)
-	_check("with a real Appeal in the meter to look at (%d)" % c.offer.appeal,
-		c.offer.appeal >= 20)
+	var step: int = int(shift.cfg.appeal_step)
+	_check("a long way under their Line - more than a card's worth (appeal %d, Line %d)"
+		% [c.offer.appeal, c.line], c.line - c.offer.appeal > step)
 	await _check_it_points_at_something("the tablet's appeal meter")
 	var appeal: Rect2 = _floor.screen_rect_of(&"appeal")
 	var tablet: Rect2 = _floor.screen_rect_of(&"tablet")
@@ -122,7 +125,36 @@ func _drive() -> void:
 	_check("left of the product standing on it",
 		appeal.end.x <= _floor.screen_rect_of(&"table").position.x)
 
-	await _next(&"support")
+	# Where it ranks: placing put its rank on their grid, and the memo says why
+	# that matters.
+	await _next(&"ranks")
+	var low_interest: StringName = (shift.card_pool.by_id(Tutorial.LOW) as ProductCardDef).interest.id
+	_check("its rank is on their grid (%s)" % str(c.known_ranks),
+		c.known_ranks.has(low_interest))
+	_check("the memo says rank sets the Appeal it starts with",
+		_coach._body.text.contains("rank") and _coach._body.text.contains("Appeal"))
+	await _check_it_points_at_something("their grid and the meter")
+
+	# Too low to be worth it: take it back, free.
+	await _next(&"drop")
+	var ticks_at_drop: int = shift.tick
+	_floor._apply(shift.drop_offer())
+	await _settle()
+	_check("taking it back moves it on", _coach.step_id() == &"better")
+	_check("and was free (%d -> %d)" % [ticks_at_drop, shift.tick], shift.tick == ticks_at_drop)
+	_check("leaving the table empty", c.offer == null)
+
+	# The one they rank well, a support card short of their Line.
+	var high := _index_of(shift, Tutorial.HIGH)
+	_check("the product they want is in hand", high >= 0)
+	_floor._apply(shift.play_card(high))
+	await _settle()
+	_check("placing it moves it on", _coach.step_id() == &"support")
+	_check("and their Line was tuned to it (appeal %d, Line %d)"
+		% [c.offer.appeal, c.line], c.line == c.offer.appeal + Tutorial.LINE_GAP)
+	_check("with a real Appeal in the meter to look at (%d)" % c.offer.appeal,
+		c.offer.appeal >= 20)
+
 	# The wrong card on purpose - Small Talk buys patience, not Appeal. The
 	# lesson should carry on regardless, and then say why the offer failed.
 	_floor._apply(shift.play_card(_index_of(shift, &"smalltalk")))

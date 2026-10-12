@@ -22,18 +22,23 @@ const TICKS := 30
 const ARCHETYPE := &"easygoing"
 const CUSTOMER_NAME := "Dana Whitaker"
 const PATIENCE := 20
-## Left to right: something to dig, two products, and two of the support card
-## the coach asks for, so digging either one of those still leaves the other.
-const HAND := [&"smalltalk", &"vsc", &"empathize", &"tvp", &"empathize"]
-## Once a product is on the table, their Line sits this far above its Appeal.
-## Short enough that the one support card the coach asks for next is exactly
-## what tips it over - whichever product they happened to put down.
+## The product they rank near the bottom of their list - put down first, to
+## learn that a low rank starts far from their Line and is worth taking back.
+const LOW := &"tvp"
+## The one they rank near the top - put down second, and sold.
+const HIGH := &"vsc"
+## Left to right: something to dig, the low product, the support card the coach
+## asks for, the high product, and the support card again - so digging one of
+## those still leaves the other.
+const HAND := [&"smalltalk", LOW, &"empathize", HIGH, &"empathize"]
+## Once the high product is on the table, their Line sits this far above its
+## Appeal - short enough that the one support card the coach asks for next is
+## exactly what tips it over.
 const LINE_GAP := 3
-## Where the two scripted products sit on their list. Left to the shuffle, a
-## product they rank last opens at 0 Appeal: the first meter anyone ever sees
-## is an empty bar with the Line's mark crammed against its start, which
-## teaches nothing about filling a bar up to a mark.
-const RANKS := {&"vsc": 3, &"tvp": 4}
+## Where the two scripted products sit on their list: one low enough that
+## reaching the Line from it is not worth the cards, one high enough that it
+## starts most of the way there.
+const RANKS := {LOW: 8, HIGH: 2}
 
 static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPool,
 		archetypes: ArchetypePool, dialogue: DialoguePool = null) -> Shift:
@@ -76,16 +81,12 @@ static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPo
 	c.known_line = true
 	for product in RANKS:
 		_rank(c, cards, product, RANKS[product])
-	# Whichever of the scripted products they put down lands under their Line,
-	# so it draws an objection the way it would on the floor - the coach's
-	# next lesson is answering it. tune_line() then settles the Line just
-	# above whatever landed.
-	var top := 0
-	for product in RANKS:
-		var def := cards.by_id(product) as ProductCardDef
-		if def != null:
-			top = maxi(top, c.appeal_for(def.interest.id))
-	c.line = top + LINE_GAP
+	# Just over what the high product opens at: the low one lands a long way
+	# under it, and the high one only a support card short - so it draws an
+	# objection the way it would on the floor, and the coach's next lesson is
+	# answering it. tune_line() settles it exactly once the high one lands.
+	var high := cards.by_id(HIGH) as ProductCardDef
+	c.line = (c.appeal_for(high.interest.id) if high != null else 0) + LINE_GAP
 	_deal(s, HAND)
 	return s
 
@@ -114,12 +115,12 @@ static func _deal(s: Shift, ids: Array) -> void:
 				s.hand.append(s.draw.pop_at(i))
 				break
 
-## Called once the first product lands on the table: moves their Line to just
-## above it, so the support card the coach asks for next is what clears it.
-## Returns whether it changed anything - there is nothing to tune with an empty
-## table.
+## Called whenever a product lands on the table: once it is one they rank well,
+## moves their Line to just above it, so the support card the coach asks for
+## next is what clears it. A product they rank low is left a long way under -
+## that is the lesson. Returns whether it changed anything.
 static func tune_line(c: Customer) -> bool:
-	if c == null or c.offer == null:
+	if c == null or c.offer == null or c.offer.product.id != HIGH:
 		return false
 	c.line = c.offer.appeal + LINE_GAP
 	return true

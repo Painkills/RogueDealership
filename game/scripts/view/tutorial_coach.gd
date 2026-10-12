@@ -41,11 +41,22 @@ const STEPS := [
 		"body": "See the tick counter go up? That clock runs the whole floor. Every tick you spend here, every customer waiting loses patience too - so spend them where they count.",
 		"wait": &"next", "targets": [&"clock"]},
 	{"id": &"place", "title": "Put a product in front of them",
-		"body": "Drag a product (orange) onto the tablet in front of them - its screen shows how your pitch is landing. Placing costs a tick.",
+		"body": "Drag Trade-In Value Protection (orange) onto the tablet in front of them - its screen shows how your pitch is landing. Placing costs a tick.",
 		"wait": &"placed", "prompt": "Place a product to carry on.", "targets": [&"table"]},
 	{"id": &"meter", "title": "Read the offer",
-		"body": "The bar is the product's Appeal; the mark is their Line. Appeal has to reach the Line before they'll buy. Their Line is normally hidden until you work it out - this time you can see it.",
+		"body": "The bar is the product's Appeal; the mark is their Line. Appeal has to reach the Line before they'll buy. Their Line is normally hidden until you work it out - this time you can see it. This one is a long way short.",
 		"wait": &"next", "targets": [&"appeal"]},
+	{"id": &"ranks", "title": "Where it ranks",
+		"body": "Every customer ranks what they care about, 1st to 9th, and placing a product shows where it sits: the number on its square of their grid. That rank sets the Appeal it starts with - their 1st starts close to their Line, something near the bottom starts with almost nothing. This one is near the bottom.",
+		"wait": &"next", "targets": [&"customer", &"appeal"]},
+	{"id": &"drop", "title": "Too far to go? Take it back",
+		"body": "From down there it would take card after card - tick after tick - to reach their Line, and it may not be worth it. Drag it off the tablet onto the DISCARD pile: taking a product back is free.",
+		"wait": &"dropped", "prompt": "Take the product back to carry on.",
+		"targets": [&"table", &"discard"]},
+	{"id": &"better", "title": "Pitch what they want",
+		"body": "Vehicle Service Contract sits near the top of their list, so it starts most of the way to their Line. Drag it onto the tablet.",
+		"wait": &"placed_again", "prompt": "Place the other product to carry on.",
+		"targets": [&"hand", &"table"]},
 	{"id": &"support", "title": "Answer the objection",
 		"body": "They objected - expect that. Answer it: drag Acknowledge & Empathize onto the tablet. Cards like it push Appeal up, and cost a tick too.",
 		"wait": &"supported", "prompt": "Play a support card to carry on.",
@@ -303,6 +314,8 @@ func _met(wait: StringName, shift: Shift) -> bool:
 		&"flipped": return _floor.customer_showing_back(0)
 		&"dug": return _since_start(shift, "digs") > 0
 		&"placed": return _since_start(shift, "places") > 0
+		&"dropped": return _since_start(shift, "offers_dropped") > 0
+		&"placed_again": return _since_start(shift, "places") > 1
 		&"supported": return _since_start(shift, "cards_played") > 0
 		&"sold": return _since_start(shift, "sales") > 0
 		&"signed": return _since_start(shift, "customers_signed") > 0

@@ -40,6 +40,38 @@ func test_the_practice_floor_has_one_chair_and_one_easy_customer() -> void:
 		asked = asked or (s.chairs[0] != null and s.chairs[0].demand != null)
 	h.check("and nothing they ask for interrupts a beginner", not asked)
 
+func test_practice_teaches_ranks_with_one_product_to_drop_and_one_to_sell() -> void:
+	## "The tutorial needs to explain how appeal and interest rankings work, and
+	## how you can drop a product if it's too low."
+	var s := _shift()
+	var c: Customer = s.chairs[0]
+	var low := _cards().by_id(Tutorial.LOW) as ProductCardDef
+	var high := _cards().by_id(Tutorial.HIGH) as ProductCardDef
+	h.check("both are in the opening hand", s.hand.any(func(i): return i.card == low)
+		and s.hand.any(func(i): return i.card == high))
+	h.check("the one to drop ranks lower than the one to sell",
+		int(c.ranks[low.interest.id]) > int(c.ranks[high.interest.id]))
+	var step: int = int(s.cfg.appeal_step)
+	# Put down first, the low one: more than a support card's worth short.
+	s.place(_hand_index(s, Tutorial.LOW))
+	h.check("the low one opens a long way under their Line (%d of %d)"
+		% [c.offer.appeal, c.line], c.line - c.offer.appeal > step)
+	Tutorial.tune_line(c)
+	h.check("and the Line is left there for it", c.line - c.offer.appeal > step)
+	var tick := s.tick
+	h.check("taking it back works", s.drop_offer().ok and c.offer == null)
+	h.eq("and is free", s.tick, tick)
+	s.place(_hand_index(s, Tutorial.HIGH))
+	Tutorial.tune_line(c)
+	h.eq("the high one is one short support card away", c.line - c.offer.appeal,
+		Tutorial.LINE_GAP)
+
+func _hand_index(s: Shift, id: StringName) -> int:
+	for i in range(s.hand.size()):
+		if s.hand[i].card.id == id:
+			return i
+	return -1
+
 func test_practice_never_touches_the_run() -> void:
 	## Built from the run's pools but never its deck: nothing done in practice
 	## - no card dug, no product sold - is something the run carries forward.
