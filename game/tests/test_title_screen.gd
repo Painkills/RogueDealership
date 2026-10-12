@@ -19,6 +19,8 @@ func test_check_for_updates_says_how_far_it_has_got() -> void:
 	h.check("once it is ready, from the engine's word or the browser's",
 		TitleScreen.update_message("installing", true).contains("switching")
 			and TitleScreen.update_message("waiting", false).contains("switching"))
+	h.check("or already in the browser's cache, taken over under the running page",
+		TitleScreen.update_message("cached", false).contains("switching"))
 	h.check("nothing newer", TitleScreen.update_message("none", false).contains("latest"))
 	h.check("and no connection", TitleScreen.update_message("error", false).contains("Couldn't"))
 

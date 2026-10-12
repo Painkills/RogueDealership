@@ -120,8 +120,12 @@ var _checking := false
 ## Asks the browser for the newest build now, rather than when it next gets
 ## round to it, and keeps it moving: the service worker fetches it in the
 ## background (window.rdUpdate says how far that has got), and the moment it is
-## ready the game switches to it.
-const _ASK_FOR_THE_NEWEST := "(function(){window.rdUpdate='checking';if(!navigator.serviceWorker){window.rdUpdate='none';return;}navigator.serviceWorker.getRegistration().then(function(r){if(!r){window.rdUpdate='none';return;}return r.update().then(function(){var s=function(){window.rdUpdate=r.waiting?'waiting':(r.installing?'installing':'none');};s();if(r.installing){r.installing.addEventListener('statechange',s);}});}).catch(function(){window.rdUpdate='error';});})()"
+## ready the game switches to it. A newer build can also already be in the
+## browser's cache, taken over while this page was still running the old one -
+## told apart by the cache this page was loaded from (window.rdBootCache, noted
+## by the page's own script in export_presets.cfg): 'cached', and a reload
+## picks it up.
+const _ASK_FOR_THE_NEWEST := "(function(){window.rdUpdate='checking';if(!navigator.serviceWorker){window.rdUpdate='none';return;}navigator.serviceWorker.getRegistration().then(function(r){if(!r){window.rdUpdate='none';return;}return r.update().then(function(){var s=function(){if(r.waiting){window.rdUpdate='waiting';return;}if(r.installing){window.rdUpdate='installing';return;}caches.keys().then(function(k){var now=k.join('|');if(!window.rdBootCache){window.rdBootCache=now;}window.rdUpdate=(now&&now!==window.rdBootCache)?'cached':'none';});};s();if(r.installing){r.installing.addEventListener('statechange',s);}});}).catch(function(){window.rdUpdate='error';});})()"
 ## A new build that is downloaded and waiting, switched to directly - in case
 ## the engine's own listener has not caught up with it.
 const _SWITCH_TO_THE_WAITING := "navigator.serviceWorker.getRegistration().then(function(r){if(r&&r.waiting){r.waiting.postMessage('update');}})"
@@ -151,6 +155,9 @@ func check_for_update() -> void:
 		if state == "waiting":
 			JavaScriptBridge.eval(_SWITCH_TO_THE_WAITING, true)
 			return
+		if state == "cached":
+			JavaScriptBridge.eval("location.reload()", true)
+			return
 		if state == "none" or state == "error":
 			break
 	_checking = false
@@ -158,7 +165,7 @@ func check_for_update() -> void:
 ## What CHECK FOR UPDATES says, from how far the browser has got (`state`) and
 ## whether the engine says a new build is `ready`.
 static func update_message(state: String, ready: bool) -> String:
-	if ready or state == "waiting":
+	if ready or state == "waiting" or state == "cached":
 		return "New build found - switching to it..."
 	match state:
 		"installing":

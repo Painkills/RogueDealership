@@ -51,6 +51,8 @@ func test_an_app_that_loses_its_gpu_reloads_back_into_the_run() -> void:
 	h.check("and reloads", head.contains("location.reload()"))
 	h.check("telling the game to pick the run back up, by the name the game asks for (%s)"
 		% RunFile.RESUME_FLAG, head.contains("'%s'" % RunFile.RESUME_FLAG))
+	h.check("and it notes which build's cache the page was loaded from, for CHECK FOR UPDATES",
+		head.contains("window.rdBootCache ="))
 
 func test_the_vendored_card3d_addon_is_present_and_loadable() -> void:
 	for path in [
