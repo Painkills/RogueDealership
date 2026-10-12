@@ -124,7 +124,7 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 	# how many they have ALREADY taken this visit, the same prior-sales count
 	# Shift._settle() multiplies by, so this is a preview of the real number.
 	var mult: float = 1.0 + c.combo_step * c.sales if c != null else 1.0
-	_combo.text = "×%.2f" % mult
+	_combo.text = Format.multiplier(mult)
 	_combo.add_theme_color_override("font_color",
 		Palette.color(&"accent") if mult > 1.0 else Palette.color(&"text_dim"))
 	_knobs.text = knobs_text(c) if c != null else ""

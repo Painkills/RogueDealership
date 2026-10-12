@@ -88,7 +88,7 @@ func setup(score: Dictionary, fired: bool, rank: int = 0) -> void:
 	_set_row(_rows["StreakRow"], "Best streak with no walkout",
 		"%d in a row" % score["best_streak"], int(score["streak_points"]))
 	_set_row(_rows["ComboRow"], "Best combo multiplier",
-		"×%.2f" % score["best_combo_multiplier"], int(score["combo_multiplier_points"]))
+		Format.multiplier(float(score["best_combo_multiplier"])), int(score["combo_multiplier_points"]))
 	_total.text = Format.number(int(score["total"]))
 	_total.add_theme_color_override("font_color",
 		Palette.color(&"margin" if int(score["total"]) >= 0 else &"alert"))

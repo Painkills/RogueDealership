@@ -6,6 +6,11 @@ static func money(n: int) -> String:
 	var minus := "-" if n < 0 else ""
 	return "%s$%s" % [minus, _grouped(abs(n))]
 
+## A combo multiplier, "×1.13" - rounded half up, the way a step's "+13%" is,
+## so the two never disagree (a bare "%.2f" turns 1.125 into 1.12).
+static func multiplier(m: float) -> String:
+	return "×%.2f" % (roundi(m * 100.0) / 100.0)
+
 ## A count or a score, grouped like money but without the dollar sign.
 static func number(n: int) -> String:
 	var minus := "-" if n < 0 else ""

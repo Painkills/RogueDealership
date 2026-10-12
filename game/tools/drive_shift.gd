@@ -2688,8 +2688,9 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	var expected := 1.0 + c.combo_step * c.sales
 	_press(KEY_O);            _settle()
 	texts = _fx_texts()
-	_check("a sale on top of another shows the combo it sold at (%s, expected ×%.2f)"
-		% [str(texts), expected], texts.has("COMBO ×%.2f!" % expected))
+	_check("a sale on top of another shows the combo it sold at (%s, expected %s)"
+		% [str(texts), Format.multiplier(expected)],
+		texts.has("COMBO %s!" % Format.multiplier(expected)))
 	_check("and the product's own margin turned into what it sold for (%s)" % str(texts),
 		texts.any(func(t): return str(t).contains(Format.money(product.margin) + " → ")))
 	_check("and what the next one gets", texts.any(func(t): return str(t).contains("next sale ×")))

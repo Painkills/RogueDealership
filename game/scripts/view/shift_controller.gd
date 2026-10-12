@@ -1238,7 +1238,7 @@ func _light_up_the_combo(data: Dictionary, chair: int) -> void:
 		else get_viewport().get_visible_rect().get_center()
 	# Bigger with every link of the chain, to a point.
 	var size := 64 + mini(5, roundi((mult - 1.0) * 4.0)) * 12
-	var big := _fx_label("COMBO ×%.2f!" % mult if chained else "SOLD!",
+	var big := _fx_label("COMBO %s!" % Format.multiplier(mult) if chained else "SOLD!",
 		&"accent" if chained else &"margin", size, at + Vector2(0, -70))
 	big.scale = Vector2(2.4, 2.4)
 	big.modulate.a = 0.0
@@ -1260,7 +1260,7 @@ func _light_up_the_combo(data: Dictionary, chair: int) -> void:
 	lines.append("%s → %s" % [Format.money(base), Format.money(sold)] if chained and base > 0
 		else Format.money(sold))
 	if next > mult:
-		lines.append("next sale ×%.2f" % next)
+		lines.append("next sale %s" % Format.multiplier(next))
 	var sub := _fx_label("\n".join(lines), &"margin", 40, at + Vector2(0, 40))
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.modulate.a = 0.0
