@@ -2691,28 +2691,42 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	_check("a sale on top of another shows the combo it sold at (%s, expected %s)"
 		% [str(texts), Format.multiplier(expected)],
 		texts.has("COMBO\n%s!" % Format.multiplier(expected)))
-	_check("and the product's own margin turned into what it sold for (%s)" % str(texts),
-		texts.any(func(t): return str(t).contains(Format.money(product.margin) + " → ")))
+	_check("and the product's own margin times the combo, then what it sold for (%s)" % str(texts),
+		texts.any(func(t): return str(t).contains("%s %s" % [Format.money(product.margin),
+			Format.multiplier(expected)]) and str(t).contains("sold for $")))
+	# A character the game's font does not have draws as an empty box - "$1,050
+	# [] $1,181" is how the first version of this read on screen.
+	for n in _controller._fx:
+		if not (is_instance_valid(n) and n is Label):
+			continue
+		var font := (n as Label).get_theme_font("font")
+		var missing := ""
+		for ch in (n as Label).text:
+			if ch != "\n" and not font.has_char(ch.unicode_at(0)):
+				missing += ch
+		_check("every character of '%s' is in the game's font (missing: '%s')"
+			% [(n as Label).text.replace("\n", " / "), missing], missing == "")
 	_check("and what the next one gets", texts.any(func(t): return str(t).contains("next sale ×")))
 	# "The combo text should appear on the right side of the iPad. The margin in
 	# the center."
 	var deal: Rect2 = _controller.screen_rect_of(&"deal")
 	var tablet: Rect2 = _controller.screen_rect_of(&"tablet")
 	var combo_label: Label = _fx_label_saying("COMBO")
-	var margin_label: Label = _fx_label_saying(" → ")
+	var margin_label: Label = _fx_label_saying("sold for")
 	_check("the combo sits over the tablet's right-hand panel (%s in %s)"
 		% [combo_label.get_global_rect() if combo_label else null, deal],
 		combo_label != null and deal.has_point(combo_label.get_global_rect().get_center()))
 	_check("no wider than that panel's side of the tablet (%d px, panel %d)"
 		% [int(combo_label.size.x) if combo_label else -1, int(deal.size.x)],
 		combo_label != null and combo_label.size.x <= deal.size.x * 1.15 + 1.0)
-	_check("and what it made sits in the middle of the tablet",
-		margin_label != null and margin_label.get_global_rect().get_center().distance_to(
-			tablet.get_center()) < 4.0)
+	var mid: Vector2 = margin_label.get_global_rect().get_center() if margin_label else Vector2.ZERO
+	_check("and what it made sits in the middle of the tablet, below the empty table's note (%s in %s)"
+		% [mid, tablet], margin_label != null and absf(mid.x - tablet.get_center().x) < 4.0
+			and mid.y > tablet.get_center().y and tablet.has_point(mid))
 	# "The margin should stay visible a little longer": still up two seconds on.
 	_step_fx(2.0)
 	_check("what it made is still up to read two seconds later",
-		_fx_texts().any(func(t): return str(t).contains(" → ")))
+		_fx_texts().any(func(t): return str(t).contains("sold for")))
 	c.line = line_was
 	_finish_fx()
 	_check_the_deal_panel_fits_its_slot()

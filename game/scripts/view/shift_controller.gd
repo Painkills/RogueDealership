@@ -1266,12 +1266,17 @@ func _light_up_the_combo(data: Dictionary, chair: int) -> void:
 	tw.tween_property(big, "modulate:a", 0.0, 0.4)
 	tw.tween_callback(func(): _fx_done(big))
 	# What the combo made of the product, and what comes next.
+	# In the lower middle of the screen: the note an empty table puts up takes
+	# the top of it. The multiplication spelled out, then what it sold for -
+	# which can be more (a prized product) or less (a budget running out).
 	var lines: Array[String] = []
-	lines.append("%s → %s" % [Format.money(base), Format.money(sold)] if chained and base > 0
-		else Format.money(sold))
+	if chained and base > 0:
+		lines.append("%s %s" % [Format.money(base), Format.multiplier(mult)])
+	lines.append("sold for %s" % Format.money(sold))
 	if next > mult:
 		lines.append("next sale %s" % Format.multiplier(next))
-	var sub := _fx_label("\n".join(lines), &"margin", 48, at)
+	var below := Vector2(0, tablet.size.y * 0.22) if tablet.size != Vector2.ZERO else Vector2(0, 90)
+	var sub := _fx_label("\n".join(lines), &"margin", 44, at + below)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.modulate.a = 0.0
 	# Up long enough to read: "it's disappearing too fast and is impossible to
