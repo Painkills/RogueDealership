@@ -103,29 +103,29 @@ size = Vector3(0.07, 0.48, 0.08)
 [sub_resource type="BoxMesh" id="BoxMesh_h4kjv"]
 size = Vector3(0.07, 0.48, 0.08)
 
-[node name="OfferTablet" type="Node3D" unique_id=315069918]
+[node name="OfferTablet" type="Node3D" unique_id=1659042786]
 script = ExtResource("1_46ehp")
 
-[node name="ScreenViewport" type="SubViewport" parent="." unique_id=527819596]
+[node name="ScreenViewport" type="SubViewport" parent="." unique_id=1634205909]
 disable_3d = true
 transparent_bg = true
 size = Vector2i(1109, 688)
 render_target_update_mode = 0
 
-[node name="TabletScreen" type="Control" parent="ScreenViewport" unique_id=1353674148]
+[node name="TabletScreen" type="Control" parent="ScreenViewport" unique_id=149588121]
 custom_minimum_size = Vector2(1109, 688)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1109.0
 offset_bottom = 688.0
 
-[node name="Edge" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=1645250592]
+[node name="Edge" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=987437852]
 layout_mode = 0
 offset_right = 1109.0
 offset_bottom = 688.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_61gvi")
 
-[node name="Lens" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=1330038637]
+[node name="Lens" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=1669735501]
 layout_mode = 0
 offset_left = 549.5
 offset_top = 4.0
@@ -133,7 +133,7 @@ offset_right = 559.5
 offset_bottom = 14.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ncb67")
 
-[node name="Screen" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=586157167]
+[node name="Screen" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=1490967797]
 layout_mode = 0
 offset_left = 18.0
 offset_top = 18.0
@@ -141,14 +141,14 @@ offset_right = 1091.0
 offset_bottom = 670.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_bean0")
 
-[node name="StatusBar" type="Control" parent="ScreenViewport/TabletScreen" unique_id=538934494]
+[node name="StatusBar" type="Control" parent="ScreenViewport/TabletScreen" unique_id=1382161087]
 anchors_preset = 0
 offset_left = 40.0
 offset_top = 24.0
 offset_right = 1069.0
 offset_bottom = 54.0
 
-[node name="ClockLabel" type="Label" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1367962339]
+[node name="ClockLabel" type="Label" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=494090723]
 layout_mode = 0
 offset_top = -2.0
 offset_bottom = -2.0
@@ -157,7 +157,7 @@ theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "10:20 AM"
 
-[node name="BatteryShell" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=138075071]
+[node name="BatteryShell" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1075515394]
 layout_mode = 0
 offset_left = 981.0
 offset_top = 4.0
@@ -165,7 +165,7 @@ offset_right = 1023.0
 offset_bottom = 26.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_mm4oq")
 
-[node name="BatteryCharge" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1841412612]
+[node name="BatteryCharge" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=2116796076]
 layout_mode = 0
 offset_left = 985.0
 offset_top = 8.0
@@ -173,7 +173,7 @@ offset_right = 1013.0
 offset_bottom = 22.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_fmjxr")
 
-[node name="BatteryNub" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1496514913]
+[node name="BatteryNub" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1664757184]
 layout_mode = 0
 offset_left = 1024.0
 offset_top = 11.0
@@ -181,7 +181,7 @@ offset_right = 1028.0
 offset_bottom = 19.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_fmjxr")
 
-[node name="BatteryLabel" type="Label" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1043685869]
+[node name="BatteryLabel" type="Label" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=2050958330]
 layout_mode = 0
 offset_left = 913.0
 offset_right = 973.0
@@ -191,7 +191,7 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "82%"
 horizontal_alignment = 2
 
-[node name="Signal0" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1932301462]
+[node name="Signal0" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1330170697]
 layout_mode = 0
 offset_left = 873.0
 offset_top = 18.0
@@ -199,7 +199,7 @@ offset_right = 879.0
 offset_bottom = 26.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_fmjxr")
 
-[node name="Signal1" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1546172888]
+[node name="Signal1" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=279308836]
 layout_mode = 0
 offset_left = 882.0
 offset_top = 14.0
@@ -207,7 +207,7 @@ offset_right = 888.0
 offset_bottom = 26.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_fmjxr")
 
-[node name="Signal2" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1249035559]
+[node name="Signal2" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1384266089]
 layout_mode = 0
 offset_left = 891.0
 offset_top = 10.0
@@ -215,7 +215,7 @@ offset_right = 897.0
 offset_bottom = 26.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_fmjxr")
 
-[node name="Signal3" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=957158315]
+[node name="Signal3" type="Panel" parent="ScreenViewport/TabletScreen/StatusBar" unique_id=1825933954]
 layout_mode = 0
 offset_left = 900.0
 offset_top = 6.0
@@ -223,7 +223,7 @@ offset_right = 906.0
 offset_bottom = 26.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_fmjxr")
 
-[node name="Well" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=979835274]
+[node name="Well" type="Panel" parent="ScreenViewport/TabletScreen" unique_id=681284589]
 layout_mode = 0
 offset_left = 224.0
 offset_top = 29.0
@@ -231,7 +231,7 @@ offset_right = 674.0
 offset_bottom = 659.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_6e6jf")
 
-[node name="AppealPanel" type="PanelContainer" parent="ScreenViewport/TabletScreen" unique_id=1744105565]
+[node name="AppealPanel" type="PanelContainer" parent="ScreenViewport/TabletScreen" unique_id=46909343]
 custom_minimum_size = Vector2(170, 595)
 layout_mode = 0
 offset_left = 32.0
@@ -240,11 +240,11 @@ offset_right = 202.0
 offset_bottom = 659.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_vr30n")
 
-[node name="Column" type="VBoxContainer" parent="ScreenViewport/TabletScreen/AppealPanel" unique_id=1075414132]
+[node name="Column" type="VBoxContainer" parent="ScreenViewport/TabletScreen/AppealPanel" unique_id=1002431110]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="AppealTitle" type="Label" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=1572450603]
+[node name="AppealTitle" type="Label" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=375107594]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 28
@@ -252,13 +252,13 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "APPEAL"
 horizontal_alignment = 1
 
-[node name="AppealBar" type="Control" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=1634360578]
+[node name="AppealBar" type="Control" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=589712816]
 custom_minimum_size = Vector2(124, 0)
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("2_hmbjp")
 
-[node name="StatusLabel" type="Label" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=190620357]
+[node name="StatusLabel" type="Label" parent="ScreenViewport/TabletScreen/AppealPanel/Column" unique_id=122869176]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -269,7 +269,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="DealPanel" type="PanelContainer" parent="ScreenViewport/TabletScreen" unique_id=1490378407]
+[node name="DealPanel" type="PanelContainer" parent="ScreenViewport/TabletScreen" unique_id=699116717]
 custom_minimum_size = Vector2(381, 595)
 layout_mode = 0
 offset_left = 696.0
@@ -278,69 +278,70 @@ offset_right = 1077.0
 offset_bottom = 659.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ranom")
 
-[node name="Column" type="VBoxContainer" parent="ScreenViewport/TabletScreen/DealPanel" unique_id=1821828809]
+[node name="Column" type="VBoxContainer" parent="ScreenViewport/TabletScreen/DealPanel" unique_id=654844061]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="MarginTitle" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=2022281791]
+[node name="MarginTitle" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=508628575]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 34
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "MARGIN"
 
-[node name="MarginLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=501308210]
+[node name="MarginLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=1962644476]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 76
 theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
 text = "$1,600"
 
-[node name="Gap" type="Control" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=253795785]
+[node name="Gap" type="Control" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=907497949]
 custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
 
-[node name="ComboTitle" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=1122632734]
+[node name="ComboTitle" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=1210398435]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 34
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "CURRENT COMBO"
 
-[node name="ComboLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=28952572]
+[node name="ComboLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=233195045]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 60
 theme_override_colors/font_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
 text = "×2.35"
 
-[node name="WorthLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=536301547]
+[node name="WorthLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=2123464903]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
-text = "$3,760 margin if they buy"
+text = "$3,760 if they buy"
+autowrap_mode = 2
 
-[node name="KnobsLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=1973726263]
+[node name="KnobsLabel" type="Label" parent="ScreenViewport/TabletScreen/DealPanel/Column" unique_id=515893041]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Each sale: combo +45%, Line +5"
 autowrap_mode = 2
 
-[node name="Face" type="MeshInstance3D" parent="." unique_id=312019688]
+[node name="Face" type="MeshInstance3D" parent="." unique_id=1103362729]
 mesh = SubResource("QuadMesh_6hwgx")
 
-[node name="LockButton" type="MeshInstance3D" parent="." unique_id=983971443]
+[node name="LockButton" type="MeshInstance3D" parent="." unique_id=1019248209]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1805553, 1.9311111, 0)
 material_override = SubResource("StandardMaterial3D_yrch6")
 mesh = SubResource("BoxMesh_kwvxh")
 
-[node name="VolumeUp" type="MeshInstance3D" parent="." unique_id=1122882594]
+[node name="VolumeUp" type="MeshInstance3D" parent="." unique_id=1991619054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1005554, 1.02, 0)
 material_override = SubResource("StandardMaterial3D_yrch6")
 mesh = SubResource("BoxMesh_84fxg")
 
-[node name="VolumeDown" type="MeshInstance3D" parent="." unique_id=1097674111]
+[node name="VolumeDown" type="MeshInstance3D" parent="." unique_id=472343323]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.1005554, 0.42, 0)
 material_override = SubResource("StandardMaterial3D_yrch6")
 mesh = SubResource("BoxMesh_h4kjv")

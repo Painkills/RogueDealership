@@ -593,17 +593,17 @@ func screen_rect_of(target: StringName) -> Rect2:
 			if not _chair_zones[front].visible:
 				return Rect2()
 			return _on_screen_rect(_card_rect(_chair_zones[front], card))
-		&"tablet", &"appeal":
-			# The whole tablet, or just its appeal panel - the meter the
-			# practice shift teaches you to read.
+		&"tablet", &"appeal", &"deal":
+			# The whole tablet, its appeal panel - the meter the practice shift
+			# teaches you to read - or its deal panel, where the combo lives.
 			var tablet: OfferTablet = _tablets[front]
 			if not tablet.is_on():
 				return Rect2()
 			if target == &"tablet":
 				return _on_screen_rect(_card_rect(tablet, OfferTablet.SIZE))
+			var panel := OfferTablet.APPEAL_RECT if target == &"appeal" else OfferTablet.DEAL_RECT
 			return _on_screen_rect(_rect_at(
-				tablet.to_global(OfferTablet.centre_of(OfferTablet.APPEAL_RECT)),
-				OfferTablet.size_of(OfferTablet.APPEAL_RECT)))
+				tablet.to_global(OfferTablet.centre_of(panel)), OfferTablet.size_of(panel)))
 		&"hand":
 			var r := Rect2()
 			for c in _hand_zone.cards:
@@ -1030,6 +1030,9 @@ func _tween_pile(zone: Node3D, to: Vector3, delay: float) -> void:
 const FX_FLY := 0.9        ## seconds for an amount to fly to the top bar
 const FX_ROLL := 0.6       ## seconds for the number there to roll to its total
 const FX_STAMP := 1.6      ## seconds a WALKED OUT / SIGNED stamp stays up
+## Seconds what a sale made - "$950 -> $1,425, next sale x1.50" - stays up over
+## the tablet before it fades: long enough to actually read.
+const FX_MARGIN_READ := 3.5
 
 ## What the top bar is SHOWING, which trails the model while an amount is
 ## still on its way up to it.
@@ -1233,13 +1236,20 @@ func _light_up_the_combo(data: Dictionary, chair: int) -> void:
 	var base := int(data.get("base_margin", 0))
 	var sold := int(data.get("margin", 0))
 	var chained := mult > 1.0
+	# The combo over the tablet's right-hand panel, where its combo lives; what
+	# the sale made in the middle of the screen, where the product stood.
 	var tablet := screen_rect_of(&"tablet")
+	var deal := screen_rect_of(&"deal")
 	var at := tablet.get_center() if tablet.size != Vector2.ZERO \
 		else get_viewport().get_visible_rect().get_center()
-	# Bigger with every link of the chain, to a point.
+	var right := deal.get_center() if deal.size != Vector2.ZERO else at + Vector2(240, 0)
+	# Bigger with every link of the chain, to a point - and never wider than
+	# the panel it sits over.
 	var size := 64 + mini(5, roundi((mult - 1.0) * 4.0)) * 12
-	var big := _fx_label("COMBO %s!" % Format.multiplier(mult) if chained else "SOLD!",
-		&"accent" if chained else &"margin", size, at + Vector2(0, -70))
+	var big := _fx_label("COMBO\n%s!" % Format.multiplier(mult) if chained else "SOLD!",
+		&"accent" if chained else &"margin", size, right)
+	big.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_fit_fx_label(big, deal.size.x * 1.15 if deal.size != Vector2.ZERO else 360.0, right)
 	big.scale = Vector2(2.4, 2.4)
 	big.modulate.a = 0.0
 	var tw := _fx_tween()
@@ -1261,20 +1271,34 @@ func _light_up_the_combo(data: Dictionary, chair: int) -> void:
 		else Format.money(sold))
 	if next > mult:
 		lines.append("next sale %s" % Format.multiplier(next))
-	var sub := _fx_label("\n".join(lines), &"margin", 40, at + Vector2(0, 40))
+	var sub := _fx_label("\n".join(lines), &"margin", 48, at)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.modulate.a = 0.0
+	# Up long enough to read: "it's disappearing too fast and is impossible to
+	# read."
 	var st := _fx_tween()
 	st.tween_interval(0.2)
 	st.tween_property(sub, "modulate:a", 1.0, 0.15)
-	st.tween_interval(FX_STAMP)
+	st.tween_interval(FX_MARGIN_READ)
 	st.set_parallel(true)
-	st.tween_property(sub, "position:y", sub.position.y - 60.0, 0.6)
-	st.tween_property(sub, "modulate:a", 0.0, 0.6)
+	st.tween_property(sub, "position:y", sub.position.y - 40.0, 0.8)
+	st.tween_property(sub, "modulate:a", 0.0, 0.8)
 	st.set_parallel(false)
 	st.tween_callback(func(): _fx_done(sub))
 	if chair >= 0 and chair < _tablets.size():
 		_tablets[chair].flash_combo()
+
+## Shrinks an effect's text until it is no wider than `width`, kept centred on
+## `centre`.
+func _fit_fx_label(l: Label, width: float, centre: Vector2) -> void:
+	var size := l.get_theme_font_size("font_size")
+	while l.get_combined_minimum_size().x > width and size > 24:
+		size -= 4
+		l.add_theme_font_size_override("font_size", size)
+		l.add_theme_constant_override("outline_size", maxi(6, size / 6))
+	l.size = l.get_combined_minimum_size()
+	l.pivot_offset = l.size * 0.5
+	l.position = centre - l.size * 0.5
 
 func _mourn_walkout(chair: int, lost: int) -> void:
 	var at := _chair_on_screen(chair)

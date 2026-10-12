@@ -2672,7 +2672,7 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	var s: Shift = _controller._shift
 	var texts := _fx_texts()
 	_check("their yes lights up over the tablet (%s)" % str(texts),
-		texts.any(func(t): return str(t) == "SOLD!" or str(t).begins_with("COMBO ×")))
+		texts.any(func(t): return str(t) == "SOLD!" or str(t).begins_with("COMBO")))
 	_finish_fx()
 	var c: Customer = s.chairs[_at()]
 	var line_was := c.line
@@ -2690,12 +2690,66 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	texts = _fx_texts()
 	_check("a sale on top of another shows the combo it sold at (%s, expected %s)"
 		% [str(texts), Format.multiplier(expected)],
-		texts.has("COMBO %s!" % Format.multiplier(expected)))
+		texts.has("COMBO\n%s!" % Format.multiplier(expected)))
 	_check("and the product's own margin turned into what it sold for (%s)" % str(texts),
 		texts.any(func(t): return str(t).contains(Format.money(product.margin) + " → ")))
 	_check("and what the next one gets", texts.any(func(t): return str(t).contains("next sale ×")))
+	# "The combo text should appear on the right side of the iPad. The margin in
+	# the center."
+	var deal: Rect2 = _controller.screen_rect_of(&"deal")
+	var tablet: Rect2 = _controller.screen_rect_of(&"tablet")
+	var combo_label: Label = _fx_label_saying("COMBO")
+	var margin_label: Label = _fx_label_saying(" → ")
+	_check("the combo sits over the tablet's right-hand panel (%s in %s)"
+		% [combo_label.get_global_rect() if combo_label else null, deal],
+		combo_label != null and deal.has_point(combo_label.get_global_rect().get_center()))
+	_check("no wider than that panel's side of the tablet (%d px, panel %d)"
+		% [int(combo_label.size.x) if combo_label else -1, int(deal.size.x)],
+		combo_label != null and combo_label.size.x <= deal.size.x * 1.15 + 1.0)
+	_check("and what it made sits in the middle of the tablet",
+		margin_label != null and margin_label.get_global_rect().get_center().distance_to(
+			tablet.get_center()) < 4.0)
+	# "The margin should stay visible a little longer": still up two seconds on.
+	_step_fx(2.0)
+	_check("what it made is still up to read two seconds later",
+		_fx_texts().any(func(t): return str(t).contains(" → ")))
 	c.line = line_was
 	_finish_fx()
+	_check_the_deal_panel_fits_its_slot()
+
+## The label among the effects on screen whose text contains `part`, or null.
+func _fx_label_saying(part: String) -> Label:
+	for n in _controller._fx:
+		if is_instance_valid(n) and n is Label and (n as Label).text.contains(part):
+			return n
+	return null
+
+## Plays every running effect forward `seconds`.
+func _step_fx(seconds: float) -> void:
+	for tw in _controller._fx_tweens:
+		if tw != null and tw.is_valid() and tw.is_running():
+			tw.custom_step(seconds)
+
+## "The rounded amount in the combo is too long and makes the iPad section wider
+## than the iPad itself." Every line on the tablet's right-hand panel at the
+## longest it can read, in the game's own font: the panel still fits its slot.
+func _check_the_deal_panel_fits_its_slot() -> void:
+	var t: OfferTablet = _controller._tablets[_at()]
+	var was := [t._margin.text, t._combo.text, t._worth.text, t._worth.visible, t._knobs.text]
+	t._margin.text = Format.money(123456)
+	t._combo.text = Format.multiplier(12.345)
+	t._worth.text = "%s if they buy" % Format.money(1234567)
+	t._worth.visible = true
+	t._knobs.text = "Each sale: combo +125%, Line +10\nBudget left: $1,234,567"
+	var panel := t.get_node(^"ScreenViewport/TabletScreen/DealPanel") as Control
+	var wide: float = panel.get_combined_minimum_size().x
+	_check("the tablet's right-hand panel stays inside its slot at its longest (%d of %d px)"
+		% [int(wide), OfferTablet.DEAL_RECT.size.x], wide <= OfferTablet.DEAL_RECT.size.x)
+	t._margin.text = was[0]
+	t._combo.text = was[1]
+	t._worth.text = was[2]
+	t._worth.visible = was[3]
+	t._knobs.text = was[4]
 
 ## "This needs to be clearly telegraphed (NEXT CARD REJECTED)." Imposed on
 ## whoever you are with: a copy of their archetype that waves off every 2nd

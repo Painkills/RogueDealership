@@ -147,7 +147,7 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 		# the way _settle() rounds it, so the tablet never promises a dollar the
 		# sale will not pay.
 		var combo := roundi(o.margin * mult)
-		_worth.text = "%s margin if they buy" % Format.money(combo + roundi(combo * (prized - 1.0)))
+		_worth.text = "%s if they buy" % Format.money(combo + roundi(combo * (prized - 1.0)))
 		_read_the_offer(c, o, band)
 
 ## The combo on the screen pops and flashes - a sale just went through, and the
