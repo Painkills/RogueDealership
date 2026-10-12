@@ -2691,10 +2691,13 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	_press(KEY_O);            _settle()
 	var sold := int(c.unsigned[-1]["margin"])
 	texts = _fx_texts()
-	_check("ACCEPTED goes up over their folder", _fx_label_saying("ACCEPTED") != null
-		and _fx_label_saying("ACCEPTED").get_global_rect().get_center().y
-			< _controller._card_rect(_controller._customer_cards[_at()],
-				CustomerCard3D.CARD_SIZE).position.y)
+	# "In yellow and in the same area and style where SIGNED shows up."
+	var accepted: Label = _fx_label_saying("ACCEPTED")
+	_check("ACCEPTED is stamped where SIGNED is - on their folder, as a stamp",
+		accepted != null and accepted.has_meta(&"chair") and int(accepted.get_meta(&"chair")) == _at()
+			and absf(accepted.rotation_degrees) > 0.0)
+	_check("in yellow", accepted != null
+		and accepted.get_theme_color("font_color") == Palette.color(&"sticky"))
 	_check("and nothing else is written over the screen - no COMBO, no lines of sums (%s)"
 		% str(texts), texts.size() == 2)
 	var number: Label = _fx_label_saying("$")
@@ -2733,6 +2736,7 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	c.line = line_was
 	_finish_fx()
 	_check_the_deal_panel_fits_its_slot()
+	_check_each_sale_is_the_tablets_alone()
 
 ## The label among the effects on screen whose text contains `part`, or null.
 func _fx_label_saying(part: String) -> Label:
@@ -2752,21 +2756,81 @@ func _step_fx(seconds: float) -> void:
 ## longest it can read, in the game's own font: the panel still fits its slot.
 func _check_the_deal_panel_fits_its_slot() -> void:
 	var t: OfferTablet = _controller._tablets[_at()]
-	var was := [t._margin.text, t._combo.text, t._worth.text, t._worth.visible, t._knobs.text]
+	var was := [t._margin.text, t._combo.text, t._worth.text, t._worth.visible, t._knobs.text,
+		t._budget.text, t._budget.visible]
 	t._margin.text = Format.money(123456)
 	t._combo.text = Format.multiplier(12.345)
 	t._worth.text = "%s if they buy" % Format.money(1234567)
 	t._worth.visible = true
-	t._knobs.text = "Each sale: combo +125%, Line +10\nBudget left: $1,234,567"
+	t._knobs.text = "Combo +125%\nLine +10"
+	t._budget.text = "Budget left: %s" % Format.money(1234567)
+	t._budget.visible = true
 	var panel := t.get_node(^"ScreenViewport/TabletScreen/DealPanel") as Control
-	var wide: float = panel.get_combined_minimum_size().x
-	_check("the tablet's right-hand panel stays inside its slot at its longest (%d of %d px)"
-		% [int(wide), OfferTablet.DEAL_RECT.size.x], wide <= OfferTablet.DEAL_RECT.size.x)
+	var need: Vector2 = panel.get_combined_minimum_size()
+	_check("the tablet's right-hand panel stays inside its slot at its longest (%d of %d px wide)"
+		% [int(need.x), OfferTablet.DEAL_RECT.size.x], need.x <= OfferTablet.DEAL_RECT.size.x)
+	var tall := _panel_height(panel)
+	_check("and inside its height, budget line and all (%d of %d px)"
+		% [int(tall), OfferTablet.DEAL_RECT.size.y], tall <= OfferTablet.DEAL_RECT.size.y)
 	t._margin.text = was[0]
 	t._combo.text = was[1]
 	t._worth.text = was[2]
 	t._worth.visible = was[3]
 	t._knobs.text = was[4]
+	t._budget.text = was[5]
+	t._budget.visible = was[6]
+
+## "Remove the 'each sale' info from the customer folder and leave it only on
+## the iPad. Make sure that on sale, combo, and line are all on different lines."
+func _check_each_sale_is_the_tablets_alone() -> void:
+	var t: OfferTablet = _controller._tablets[_at()]
+	var c: Customer = _controller._shift.chairs[_at()]
+	var title := t.get_node(^"ScreenViewport/TabletScreen/DealPanel/Column/KnobsTitle") as Label
+	var lines := t._knobs.text.split("\n")
+	_check("the tablet heads it ON EACH SALE, on its own line (%s)" % title.text,
+		title.visible and title.text == "ON EACH SALE")
+	_check("then combo and Line each on a line of their own (%s)" % str(lines),
+		lines.size() == 2 and lines[0].begins_with("Combo +") and lines[1].begins_with("Line +"))
+	var indent := t._knobs.get_parent() as MarginContainer
+	_check("indented under the heading",
+		indent != null and indent.get_theme_constant("margin_left") > 0
+			and indent.get_parent() == title.get_parent())
+	var detail = _controller._customer_details[_at()]
+	var says_it := func(s): return s.contains("Each sale") or s.contains("Combo +")
+	_check("and the folder no longer says it",
+		detail.get_node_or_null(^"FrontViewport/DetailFront/KnobsLabel") == null
+			and not _texts_under(detail).any(says_it))
+
+## How tall the tablet's right-hand panel lays out, worked out line by line in
+## the game's own font: a wrapping label at the column's real width (the panel's
+## slot less its padding), everything else at its own height.
+func _panel_height(panel: PanelContainer) -> float:
+	var box := panel.get_theme_stylebox("panel")
+	var width: float = OfferTablet.DEAL_RECT.size.x - box.get_margin(SIDE_LEFT) - box.get_margin(SIDE_RIGHT)
+	var column := panel.get_node(^"Column") as VBoxContainer
+	var total := box.get_margin(SIDE_TOP) + box.get_margin(SIDE_BOTTOM)
+	var shown := 0
+	for child in column.get_children():
+		if not (child as Control).visible:
+			continue
+		shown += 1
+		var l := child as Label
+		if l != null and l.autowrap_mode != TextServer.AUTOWRAP_OFF:
+			var font := l.get_theme_font("font")
+			var size := l.get_theme_font_size("font_size")
+			total += font.get_multiline_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, width, size).y
+		else:
+			total += (child as Control).get_combined_minimum_size().y
+	return total + column.get_theme_constant("separation") * maxi(0, shown - 1)
+
+## Every Label's text under `node`.
+func _texts_under(node: Node) -> Array:
+	var out := []
+	for child in node.get_children():
+		if child is Label:
+			out.append((child as Label).text)
+		out.append_array(_texts_under(child))
+	return out
 
 ## "This needs to be clearly telegraphed (NEXT CARD REJECTED)." Imposed on
 ## whoever you are with: a copy of their archetype that waves off every 2nd
@@ -2862,7 +2926,7 @@ func _check_a_boss_fight_shows_its_move_its_budget_and_what_lands() -> void:
 		does == BossPanels.fight_text(who) and does.contains("Left folder")
 			and not does.to_lower().contains("shield"))
 	_check("the tablet says what is left of the budget",
-		OfferTablet.knobs_text(who).contains(Format.money(4321)))
+		OfferTablet.budget_text(who).contains(Format.money(4321)))
 	_check("and the top bar there is no clock (%s)" % _controller._tick_label.text,
 		_controller._tick_label.text.contains("no clock"))
 	# With a deal agreed to and the table empty, "double-click to close" is

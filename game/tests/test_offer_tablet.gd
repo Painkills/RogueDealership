@@ -34,6 +34,7 @@ func test_an_empty_chair_shows_nobodys_numbers() -> void:
 	h.eq("an empty meter", t._bar._appeal, 0)
 	h.eq("no combo from nobody", t._combo.text, "×1.00")
 	h.eq("and no knobs to read", t._knobs.text, "")
+	h.check("and no budget line", not t._budget.visible)
 	t.free()
 
 func _find_collider(node: Node) -> Node:

@@ -95,25 +95,51 @@ func _init() -> void:
 
 	# --- right: what it is worth ---------------------------------------------
 	var deal := _panel(screen, root, "DealPanel", OfferTablet.DEAL_RECT)
-	col = _column(deal, root, 4)
-	_label(col, root, "MarginTitle", "MARGIN", 34, &"text_dim", true)
-	_label(col, root, "MarginLabel", "$1,600", 76, &"margin", true)
+	col = _column(deal, root, 2)
+	_label(col, root, "MarginTitle", "MARGIN", 28, &"text_dim", true)
+	_label(col, root, "MarginLabel", "$1,600", 70, &"margin", true)
 	var gap := Control.new()
 	gap.name = "Gap"
-	gap.custom_minimum_size = Vector2(0, 18)
+	gap.custom_minimum_size = Vector2(0, 10)
 	col.add_child(gap)
 	gap.owner = root
 	# CURRENT: this one is where they stand now; the folder's corner says
 	# what each sale adds to it.
-	_label(col, root, "ComboTitle", "CURRENT COMBO", 34, &"text_dim", true)
-	_label(col, root, "ComboLabel", "×2.35", 60, &"accent", true)
+	_label(col, root, "ComboTitle", "CURRENT COMBO", 28, &"text_dim", true)
+	_label(col, root, "ComboLabel", "×2.35", 54, &"accent", true)
 	# Wraps rather than widening the panel past the tablet's edge, however long
 	# the amount gets.
-	var worth := _label(col, root, "WorthLabel", "$3,760 if they buy", 32, &"margin")
+	var worth := _label(col, root, "WorthLabel", "$3,760 if they buy", 28, &"margin")
 	worth.autowrap_mode = TextServer.AUTOWRAP_WORD
-	var knobs := _label(col, root, "KnobsLabel", "Each sale: combo +45%, Line +5",
-		28, &"text_dim")
-	knobs.autowrap_mode = TextServer.AUTOWRAP_WORD
+	# What each sale does to them: a small heading with a hairline under it, then
+	# each knob on its own line, indented under it - the folder no longer says it.
+	var before := Control.new()
+	before.name = "KnobsGap"
+	before.custom_minimum_size = Vector2(0, 6)
+	col.add_child(before)
+	before.owner = root
+	_label(col, root, "KnobsTitle", "ON EACH SALE", 22, &"text_dim", true)
+	var rule := PanelContainer.new()
+	rule.name = "KnobsRule"
+	rule.custom_minimum_size = Vector2(0, 2)
+	var line := StyleBoxFlat.new()
+	line.bg_color = Palette.color(&"neutral_3")
+	rule.add_theme_stylebox_override("panel", line)
+	col.add_child(rule)
+	rule.owner = root
+	var indent := MarginContainer.new()
+	indent.name = "KnobsIndent"
+	indent.add_theme_constant_override("margin_left", 18)
+	indent.add_theme_constant_override("margin_top", 2)
+	col.add_child(indent)
+	indent.owner = root
+	var knobs := _label(indent, root, "KnobsLabel", "Combo +45%\nLine +5", 26, &"text")
+	knobs.add_theme_constant_override("line_spacing", -2)
+	# Not a per-sale figure, so not under that heading: what a customer on a
+	# budget has left to spend - the fight's health bar.
+	var budget := _label(col, root, "BudgetLabel", "Budget left: $9,000", 24, &"text_dim")
+	budget.autowrap_mode = TextServer.AUTOWRAP_WORD
+	budget.visible = false
 
 	# The tablet itself: one quad, standing up, facing you.
 	var quad := QuadMesh.new()

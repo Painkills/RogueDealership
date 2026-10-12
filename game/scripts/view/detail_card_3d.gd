@@ -28,9 +28,6 @@ var _material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
 var _title: Label
-## What each sale does to them - OfferTablet.knobs_text(), in the top-right
-## corner of the folder.
-var _knobs: Label
 var _sub: Label
 var _customer_body: Control
 var _does: Label
@@ -49,7 +46,6 @@ func _bind() -> void:
 	var col: Node = $FrontViewport/DetailFront/Margin/Column
 	# Their name is on the folder's tab; their kind of buyer heads the sheet.
 	_title = $FrontViewport/DetailFront/Tab/TitleLabel
-	_knobs = $FrontViewport/DetailFront/KnobsLabel
 	_sub = col.get_node(^"SubLabel")
 	_customer_body = col.get_node(^"CustomerBody")
 	_does = _customer_body.get_node(^"DoesLabel")
@@ -70,7 +66,6 @@ func _bind() -> void:
 func show_customer(c) -> void:
 	_bind()
 	_customer_body.visible = c != null
-	_knobs.text = OfferTablet.knobs_text(c) if c != null else ""
 	if c == null:
 		_title.text = "- empty -"
 		_sub.text = "nobody in this chair"

@@ -1180,7 +1180,7 @@ func _follow_stamps() -> void:
 			l.position = _chair_on_screen(int(l.get_meta(&"chair"))) - l.size * 0.5
 
 ## A stamp slapped onto a customer's folder, then faded out.
-func _stamp(text: String, role: StringName, chair: int, tilt: float) -> void:
+func _stamp(text: String, role: StringName, chair: int, tilt: float) -> Label:
 	var l := _fx_label(text, role, 64, _chair_on_screen(chair))
 	l.set_meta(&"chair", chair)
 	l.rotation_degrees = tilt
@@ -1195,6 +1195,7 @@ func _stamp(text: String, role: StringName, chair: int, tilt: float) -> void:
 	tw.tween_interval(FX_STAMP)
 	tw.tween_property(l, "modulate:a", 0.0, 0.4)
 	tw.tween_callback(func(): _fx_done(l))
+	return l
 
 ## Rolls a top-bar number from what it shows to what the model says, then
 ## pulses the label in `role`'s colour - `shake` for a loss.
@@ -1240,20 +1241,10 @@ func _celebrate_the_yes(data: Dictionary, chair: int) -> void:
 	var sold := int(data.get("margin", 0))
 	var base := int(data.get("base_margin", sold))
 	var rolls := base != sold
-	var folder := _card_rect(_customer_cards[chair], CustomerCard3D.CARD_SIZE)
-	var above := Vector2(folder.get_center().x, maxf(48.0, folder.position.y - 34.0))
-	var stamp := _fx_label("ACCEPTED", &"margin", 52, above)
-	stamp.scale = Vector2(1.8, 1.8)
-	stamp.modulate.a = 0.0
-	var st := _fx_tween()
-	st.set_parallel(true)
-	st.tween_property(stamp, "scale", Vector2.ONE, 0.2) \
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	st.tween_property(stamp, "modulate:a", 1.0, 0.1)
-	st.set_parallel(false)
-	st.tween_interval(FX_STAMP)
-	st.tween_property(stamp, "modulate:a", 0.0, 0.4)
-	st.tween_callback(func(): _fx_done(stamp))
+	# Stamped where SIGNED is, the way SIGNED is - in yellow, edged dark so it
+	# reads on the folder: agreed, not yet signed.
+	var stamp := _stamp("ACCEPTED", &"sticky", chair, -8.0)
+	stamp.add_theme_color_override("font_outline_color", Palette.color(&"neutral_1"))
 
 	# The number, lifted off the MARGIN figure where it sat - at its size there.
 	var tablet: OfferTablet = _tablets[chair] if chair < _tablets.size() else null

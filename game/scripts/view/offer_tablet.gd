@@ -54,6 +54,7 @@ var _margin: Label
 var _combo: Label
 var _worth: Label
 var _knobs: Label
+var _budget: Label
 var _clock: Label
 
 func _ready() -> void:
@@ -72,7 +73,8 @@ func _bind() -> void:
 	_margin = screen.get_node(^"DealPanel/Column/MarginLabel")
 	_combo = screen.get_node(^"DealPanel/Column/ComboLabel")
 	_worth = screen.get_node(^"DealPanel/Column/WorthLabel")
-	_knobs = screen.get_node(^"DealPanel/Column/KnobsLabel")
+	_knobs = screen.get_node(^"DealPanel/Column/KnobsIndent/KnobsLabel")
+	_budget = screen.get_node(^"DealPanel/Column/BudgetLabel")
 	_clock = screen.get_node(^"StatusBar/ClockLabel")
 
 	_viewport.size = SIZE_PX
@@ -128,6 +130,8 @@ func show_offer(c, band: String, meter_scale: int) -> void:
 	_combo.add_theme_color_override("font_color",
 		Palette.color(&"accent") if mult > 1.0 else Palette.color(&"text_dim"))
 	_knobs.text = knobs_text(c) if c != null else ""
+	_budget.text = budget_text(c) if c != null else ""
+	_budget.visible = _budget.text != ""
 
 	var o = c.offer if c != null else null
 	# And on top of the combo, whatever they pay over the odds for a product
@@ -208,13 +212,14 @@ func _read_the_offer(c, o, band: String) -> void:
 
 ## The two per-archetype combo knobs, read straight off their own data so this
 ## text can never drift from what Shift._settle() actually does with them.
+## Under the tablet's ON EACH SALE heading, one to a line.
 static func knobs_text(c) -> String:
-	var text := "Each sale: combo +%d%%, Line +%d" \
-		% [roundi(c.combo_step * 100), c.archetype.line_per_sale]
-	# Someone on a budget: what they have left to spend - the fight's health bar.
-	if c.has_budget():
-		text += "\nBudget left: %s" % Format.money(c.budget_left())
-	return text
+	return "Combo +%d%%\nLine +%d" % [roundi(c.combo_step * 100), c.archetype.line_per_sale]
+
+## Someone on a budget: what they have left to spend - the fight's health bar.
+## Empty for everyone else.
+static func budget_text(c) -> String:
+	return "Budget left: %s" % Format.money(c.budget_left()) if c.has_budget() else ""
 
 ## Where the product stands on this tablet, from the tablet's own middle - the
 ## desk places the tablet this far off its slot, the other way, so the product
