@@ -28,6 +28,9 @@ extends Node
 @onready var _view_deck_btn: Button = $BuildBadge/ViewDeckCornerButton
 ## On the floor only: this week's calendar to look at, not pick from.
 @onready var _view_calendar_btn: Button = $BuildBadge/ViewCalendarCornerButton
+## The very corner, in a run: give it up - asked first (QuitPopup).
+@onready var _quit_btn: Button = $BuildBadge/QuitRunCornerButton
+@onready var _quit_popup: Control = $BuildBadge/QuitPopup
 ## Whether the calendar is up over the floor - see _open_the_calendar_view().
 var _calendar_open := false
 ## The practice shift's teacher - see scripts/run/tutorial.gd for the shift
@@ -92,6 +95,9 @@ func _ready() -> void:
 	_shop_view.view_deck_requested.connect(_on_view_deck_requested)
 	_view_deck_btn.pressed.connect(_on_view_deck_requested)
 	_view_calendar_btn.pressed.connect(_open_the_calendar_view)
+	_quit_btn.pressed.connect(_ask_to_quit)
+	(_quit_popup.get_node(^"%KeepPlayingButton") as Button).pressed.connect(_keep_playing)
+	(_quit_popup.get_node(^"%ConfirmQuitButton") as Button).pressed.connect(_quit_the_run)
 	_picker_view.closed.connect(_close_the_calendar_view)
 	# The deck viewer sits in front of the floor visually, but its own action
 	# column and shift log live in the floor's HUD CanvasLayer - drawn by
@@ -167,6 +173,29 @@ func _continue_run() -> void:
 		_shift_view.setup(_live_shift, _run.standing, _chosen_profile.worked_at(), true)
 	else:
 		_open_the_day()
+
+## QUIT RUN, in the corner: nothing is given up until the popup says so.
+## While it is up the floor takes no keys - only the popup's two buttons.
+func _ask_to_quit() -> void:
+	_quit_popup.visible = true
+	_shift_view.set_process_unhandled_input(false)
+
+func _keep_playing() -> void:
+	_quit_popup.visible = false
+	_shift_view.set_process_unhandled_input(_shift_view.visible)
+
+## "The run will be lost": its save is gone and it is back to the front door,
+## on a fresh run. The last-fight shortcut never had a save of its own - a run
+## on this device it was opened over is left as it was.
+func _quit_the_run() -> void:
+	_quit_popup.visible = false
+	if not _practice_run:
+		RunFile.clear()
+	_shift_view.set_active(false)
+	_deck_viewer.visible = false
+	_summary_view.visible = false
+	_new_run()
+	_open_the_title()
 
 ## A day beginning on its calendar: what the save plays back from, from here.
 func _begin_the_day() -> void:
@@ -452,3 +481,7 @@ func _show_only(screen: Node) -> void:
 	_view_calendar_btn.visible = screen == _shift_view and not _in_tutorial
 	# The shortcut to the last fight: from the front door only.
 	_last_fight_tap.visible = screen == _title_view
+	# Quitting is for a run - not the front door, and not practice, which has
+	# its own way out.
+	_quit_btn.visible = screen != _title_view and not _in_tutorial
+	_quit_popup.visible = false

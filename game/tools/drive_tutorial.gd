@@ -54,6 +54,8 @@ func _drive() -> void:
 		_coach.is_running() and not _root._picker_view.visible
 			and not _root._title_view.visible)
 	_check("on the real floor", (_floor.get_node(^"HUD") as CanvasLayer).visible)
+	_check("practice has its own way out, not QUIT RUN",
+		not (_root.get_node(^"BuildBadge/QuitRunCornerButton") as Control).visible)
 	var shift: Shift = _floor.current_shift()
 	_check("with one chair", shift.chairs.size() == 1)
 	_check("it opens on the welcome", _coach.step_id() == &"welcome")
@@ -295,7 +297,16 @@ func _check_the_title_screen() -> void:
 ## real height before then.
 func _check_the_menu_fits_with_continue() -> void:
 	var title = _root._title_view
+	_check("CHECK FOR UPDATES is the web app's alone - not here",
+		not _title_button("UpdateButton").visible)
+	_check("there is no run to quit from the front door",
+		not (_root.get_node(^"BuildBadge/QuitRunCornerButton") as Control).visible)
 	title.offer_continue(4)
+	# The tallest the menu gets: CONTINUE, and the web app's update button and
+	# what it says.
+	_title_button("UpdateButton").visible = true
+	title._update_status.text = title.update_message("installing", false)
+	title._update_status.visible = true
 	await _frames(3)
 	var menu := title.get_node(^"%MenuCard") as Control
 	var r := menu.get_global_rect()
@@ -305,6 +316,8 @@ func _check_the_menu_fits_with_continue() -> void:
 		_title_button("ContinueButton").is_visible_in_tree()
 			and _title_button("ContinueButton").text.contains("4"))
 	title.offer_continue(0)
+	_title_button("UpdateButton").visible = false
+	title._update_status.visible = false
 	await _frames(1)
 	_check("and it goes again with no run to continue",
 		not _title_button("ContinueButton").visible)

@@ -56,6 +56,15 @@ func _menu(root: Control) -> void:
 	_button(col, root, "NewGameButton", "NEW GAME", &"primary", true)
 	_button(col, root, "TutorialButton", "TUTORIAL", &"primary", false)
 	_button(col, root, "HighScoresButton", "HIGH SCORES", &"ink", false)
+	# The web app only - see title_screen.gd's check_for_update().
+	var update := _button(col, root, "UpdateButton", "CHECK FOR UPDATES", &"ink", false)
+	update.custom_minimum_size = Vector2(0, 52)
+	update.add_theme_font_size_override("font_size", 20)
+	update.visible = false
+	var status := AppWindow.label(col, root, "UpdateStatus", "", 18, &"text_dim", false, true)
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status.visible = false
 
 # --- the high scores -------------------------------------------------------
 

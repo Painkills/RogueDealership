@@ -16,7 +16,7 @@ const MEMO_POS := Vector2(18, 80)
 const MEMO_WIDTH := 370.0
 ## Top right, on the same row as the run's own VIEW TOOLKIT button and just
 ## left of it (see build_run_scene.gd) - where a way out of anything lives.
-const EXIT_RECT := Rect2(1408, 8, 240, 56)
+const EXIT_RECT := Rect2(1222, 8, 240, 56)
 ## The first-day welcome, centred on the floor it is welcoming you to.
 const SPLASH_WIDTH := 880.0
 const SPLASH_BUTTON := Vector2(320, 72)

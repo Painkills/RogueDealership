@@ -3,6 +3,9 @@ extends SceneTree
 ## shop and switches between them.
 
 const DECK_VIEWER_SCENE := "res://scenes/deck_viewer.tscn"
+## The width the corner's QUIT RUN button takes, the toolkit and calendar
+## buttons moved over by it.
+const QUIT_W := 186
 
 func _init() -> void:
 	var root := Node.new()
@@ -126,9 +129,9 @@ func _init() -> void:
 	# Anchored to the right edge, so any growth has to go left, into the
 	# screen, rather than off it.
 	view_deck_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	view_deck_btn.offset_left = -256
+	view_deck_btn.offset_left = -256 - QUIT_W
 	view_deck_btn.offset_top = 8
-	view_deck_btn.offset_right = -16
+	view_deck_btn.offset_right = -16 - QUIT_W
 	view_deck_btn.offset_bottom = 64
 	badge_layer.add_child(view_deck_btn)
 	view_deck_btn.owner = root
@@ -144,12 +147,31 @@ func _init() -> void:
 	view_calendar_btn.add_theme_font_size_override("font_size", 22)
 	view_calendar_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	view_calendar_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	view_calendar_btn.offset_left = -512
+	view_calendar_btn.offset_left = -512 - QUIT_W
 	view_calendar_btn.offset_top = 8
-	view_calendar_btn.offset_right = -272
+	view_calendar_btn.offset_right = -272 - QUIT_W
 	view_calendar_btn.offset_bottom = 64
 	badge_layer.add_child(view_calendar_btn)
 	view_calendar_btn.owner = root
+
+	# The very corner, in a run only: give it up and go back to the front door -
+	# asked first, since a run quit is a run lost.
+	var quit_btn := Button.new()
+	quit_btn.name = "QuitRunCornerButton"
+	quit_btn.text = "QUIT RUN"
+	quit_btn.unique_name_in_owner = true
+	quit_btn.visible = false
+	quit_btn.custom_minimum_size = Vector2(QUIT_W - 16, 56)
+	quit_btn.add_theme_font_size_override("font_size", 22)
+	ButtonStyle.outlined(quit_btn, Palette.color(&"alert"))
+	quit_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	quit_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	quit_btn.offset_left = -QUIT_W
+	quit_btn.offset_top = 8
+	quit_btn.offset_right = -16
+	quit_btn.offset_bottom = 64
+	badge_layer.add_child(quit_btn)
+	quit_btn.owner = root
 
 	# Over the build badge, on the title screen only: the touch equivalent of
 	# Ctrl+B, a shortcut to the last fight (run_controller.gd's
@@ -171,6 +193,8 @@ func _init() -> void:
 	badge_layer.add_child(last_fight_tap)
 	last_fight_tap.owner = root
 
+	_quit_popup(badge_layer, root)
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/run.tscn")
@@ -181,3 +205,88 @@ func _init() -> void:
 	print("saved run.tscn")
 	root.free()
 	quit(0)
+
+## "Have a popup to confirm saying the run will be lost": over everything, on the
+## corner buttons' own layer, so nothing on any screen can be pressed behind it.
+func _quit_popup(layer: Node, root: Node) -> void:
+	var popup := Control.new()
+	popup.name = "QuitPopup"
+	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+	popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	popup.visible = false
+	popup.unique_name_in_owner = true
+	layer.add_child(popup)
+	popup.owner = root
+
+	var dim := Panel.new()
+	dim.name = "Dim"
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shade := StyleBoxFlat.new()
+	shade.bg_color = Color(0, 0, 0, 0.6)
+	dim.add_theme_stylebox_override("panel", shade)
+	popup.add_child(dim)
+	dim.owner = root
+
+	var centre := CenterContainer.new()
+	centre.name = "Centre"
+	centre.set_anchors_preset(Control.PRESET_FULL_RECT)
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	popup.add_child(centre)
+	centre.owner = root
+
+	var card := PanelContainer.new()
+	card.name = "QuitCard"
+	card.custom_minimum_size = Vector2(640, 0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Palette.color(&"panel")
+	style.border_color = Palette.color(&"neutral_3")
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(18)
+	style.shadow_color = Color(0, 0, 0, 0.35)
+	style.shadow_size = 30
+	style.set_content_margin_all(40)
+	card.add_theme_stylebox_override("panel", style)
+	centre.add_child(card)
+	card.owner = root
+	var col := VBoxContainer.new()
+	col.name = "Column"
+	col.add_theme_constant_override("separation", 16)
+	card.add_child(col)
+	col.owner = root
+	AppWindow.label(col, root, "QuitEyebrow", "BEFORE YOU WALK OUT", 20, &"alert", true)
+	AppWindow.label(col, root, "QuitTitle", "Quit this run?", 46, &"ink", true)
+	var why := AppWindow.label(col, root, "QuitWhy",
+		"The run will be lost - every day worked, your toolkit and your money. There's no getting it back.",
+		22, &"text_dim")
+	why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+	var buttons := HBoxContainer.new()
+	buttons.name = "QuitButtons"
+	buttons.add_theme_constant_override("separation", 16)
+	col.add_child(buttons)
+	buttons.owner = root
+	var keep := _popup_button(buttons, root, "KeepPlayingButton", "KEEP PLAYING", &"primary", true)
+	keep.custom_minimum_size = Vector2(260, 64)
+	var spacer := Control.new()
+	spacer.name = "Spacer"
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buttons.add_child(spacer)
+	spacer.owner = root
+	var quit_it := _popup_button(buttons, root, "ConfirmQuitButton", "QUIT RUN", &"alert", false)
+	quit_it.custom_minimum_size = Vector2(220, 64)
+
+func _popup_button(parent: Node, root: Node, node_name: String, text: String,
+		role: StringName, filled: bool) -> Button:
+	var b := Button.new()
+	b.name = node_name
+	b.text = text
+	b.add_theme_font_size_override("font_size", 24)
+	if filled:
+		ButtonStyle.filled(b, Palette.color(role))
+	else:
+		ButtonStyle.outlined(b, Palette.color(role))
+	b.unique_name_in_owner = true
+	parent.add_child(b)
+	b.owner = root
+	return b

@@ -97,6 +97,7 @@ func _process(_delta: float) -> bool:
 		_check_the_fired_title_is_distinct_from_a_completed_run()
 		_check_the_testing_skip_costs_no_standing()
 		_check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss()
+		_check_quitting_a_run_asks_first_then_loses_it()
 		PlayerProfile.reset()
 		RunFile.clear()
 		_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
@@ -1322,6 +1323,39 @@ func _check_reopening_the_game_continues_the_run(where: String, screen: StringNa
 	if screen == &"floor":
 		_check("the floor is working the played-back shift",
 			_root._shift_view._shift == _root._live_shift)
+	_run = _root._run
+
+## "A button in the top right corner allowing you to quit a run. Have a popup to
+## confirm saying the run will be lost." A run on the floor, a mind changed once,
+## then quit for real.
+func _check_quitting_a_run_asks_first_then_loses_it() -> void:
+	_root._start_run()
+	var first := _pick_tier_by(func(p): return p.cards_for_sale)
+	_check("a run under way (%s)" % first.id, _root._shift_view.visible)
+	var quit_btn := _root.get_node(^"BuildBadge/QuitRunCornerButton") as Button
+	var popup := _root.get_node(^"BuildBadge/QuitPopup") as Control
+	var toolkit := _root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control
+	_check("QUIT RUN is in the very top-right corner, in a run",
+		quit_btn.visible and quit_btn.offset_right > toolkit.offset_right)
+	_root._keep_the_save_current()
+	_check("with the run on disk to lose", RunFile.read() != null)
+	quit_btn.pressed.emit()
+	_check("pressing it asks first", popup.visible and _root._shift_view.visible)
+	var why := (popup.find_child("QuitWhy", true, false) as Label).text
+	_check("saying the run will be lost (%s)" % why, why.contains("lost"))
+	_check("and the floor takes no keys behind it",
+		not _root._shift_view.is_processing_unhandled_input())
+	(popup.get_node(^"%KeepPlayingButton") as Button).pressed.emit()
+	_check("KEEP PLAYING puts the popup away and leaves the run alone",
+		not popup.visible and _root._shift_view.visible and RunFile.read() != null
+			and _root._shift_view.is_processing_unhandled_input())
+	quit_btn.pressed.emit()
+	(popup.get_node(^"%ConfirmQuitButton") as Button).pressed.emit()
+	_check("QUIT RUN goes back to the front door",
+		_root._title_view.visible and not _root._shift_view.visible and not popup.visible)
+	_check("with the run gone - nothing on disk, nothing to continue",
+		RunFile.read() == null and not _root._title_view.continue_offered())
+	_check("and no QUIT RUN on the front door", not quit_btn.visible)
 	_run = _root._run
 
 ## The page reloaded: everything in memory gone, a new run.tscn booted the way

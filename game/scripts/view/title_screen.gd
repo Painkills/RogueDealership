@@ -40,6 +40,8 @@ const BANNERS := {
 @onready var _everyone_tab: Button = %EveryoneTab
 @onready var _yours_tab: Button = %YoursTab
 @onready var _continue: Button = %ContinueButton
+@onready var _update_btn: Button = %UpdateButton
+@onready var _update_status: Label = %UpdateStatus
 @onready var _new_game: Button = %NewGameButton
 
 var _page := &""
@@ -83,7 +85,9 @@ func _ready() -> void:
 	_everyone_tab.pressed.connect(func(): show_board(&"everyone"))
 	_yours_tab.pressed.connect(func(): show_board(&"yours"))
 	show_menu()
+	_update_btn.pressed.connect(check_for_update)
 	if OS.has_feature("web"):
+		_update_btn.visible = true
 		_watch_for_a_new_build()
 
 ## An installed copy of the game runs the build it downloaded the time before, and
@@ -107,6 +111,63 @@ func _watch_for_a_new_build() -> void:
 static func switches_to_a_new_build(page: StringName, popup_open: bool, waiting: bool,
 		showing: bool) -> bool:
 	return waiting and showing and page == &"menu" and not popup_open
+
+## How long CHECK FOR UPDATES keeps watching a new build download before it
+## leaves it to the background - a phone on a slow connection takes a while.
+const UPDATE_WATCH_SECONDS := 60.0
+var _checking := false
+
+## Asks the browser for the newest build now, rather than when it next gets
+## round to it, and keeps it moving: the service worker fetches it in the
+## background (window.rdUpdate says how far that has got), and the moment it is
+## ready the game switches to it.
+const _ASK_FOR_THE_NEWEST := "(function(){window.rdUpdate='checking';if(!navigator.serviceWorker){window.rdUpdate='none';return;}navigator.serviceWorker.getRegistration().then(function(r){if(!r){window.rdUpdate='none';return;}return r.update().then(function(){var s=function(){window.rdUpdate=r.waiting?'waiting':(r.installing?'installing':'none');};s();if(r.installing){r.installing.addEventListener('statechange',s);}});}).catch(function(){window.rdUpdate='error';});})()"
+## A new build that is downloaded and waiting, switched to directly - in case
+## the engine's own listener has not caught up with it.
+const _SWITCH_TO_THE_WAITING := "navigator.serviceWorker.getRegistration().then(function(r){if(r&&r.waiting){r.waiting.postMessage('update');}})"
+
+## CHECK FOR UPDATES - "instead of having to wait 4 seconds".
+func check_for_update() -> void:
+	if _checking:
+		return
+	_checking = true
+	_update_status.visible = true
+	_update_status.text = update_message("checking", false)
+	if not OS.has_feature("web"):
+		_update_status.text = update_message("none", false)
+		_checking = false
+		return
+	JavaScriptBridge.eval(_ASK_FOR_THE_NEWEST, true)
+	var waited := 0.0
+	while waited < UPDATE_WATCH_SECONDS:
+		await get_tree().create_timer(0.5).timeout
+		waited += 0.5
+		var ready := JavaScriptBridge.pwa_needs_update()
+		var state := str(JavaScriptBridge.eval("window.rdUpdate || 'checking'", true))
+		_update_status.text = update_message(state, ready)
+		if ready:
+			JavaScriptBridge.pwa_update()
+			return
+		if state == "waiting":
+			JavaScriptBridge.eval(_SWITCH_TO_THE_WAITING, true)
+			return
+		if state == "none" or state == "error":
+			break
+	_checking = false
+
+## What CHECK FOR UPDATES says, from how far the browser has got (`state`) and
+## whether the engine says a new build is `ready`.
+static func update_message(state: String, ready: bool) -> String:
+	if ready or state == "waiting":
+		return "New build found - switching to it..."
+	match state:
+		"installing":
+			return "Downloading the new build..."
+		"none":
+			return "You're on the latest build."
+		"error":
+			return "Couldn't reach the server - try again in a bit."
+	return "Checking for a new build..."
 
 func show_menu() -> void:
 	_show(&"menu")
