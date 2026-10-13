@@ -2,13 +2,13 @@
 
 [ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="1_prof"]
 [ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="2_arch"]
-[ext_resource type="Resource" path="res://data/archetypes/enforcer.tres" id="3_boss"]
+[ext_resource type="Resource" path="res://data/archetypes/repo_man.tres" id="3_boss"]
 
 [resource]
 script = ExtResource("1_prof")
-id = &"the_enforcer"
-display_name = "The Enforcer"
-blurb = "A different blow every turn. Build your shield, then watch it go."
+id = &"the_repo_man"
+display_name = "The Repo Man"
+blurb = "A new notice every turn. Build your shield, then watch it go."
 seats = 1
 pay_scale = 1.0
 commission = 0.6

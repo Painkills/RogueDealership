@@ -15,11 +15,11 @@ amount = 4
 
 [resource]
 script = ExtResource("2_dmd")
-id = &"enforcer_cheap_shot"
-display_name = "Cheap Shot"
-telegraph = "CHEAP SHOT"
-dialogue_tags_met = Array[StringName]([&"enforcer_dodged"])
-dialogue_tags_missed = Array[StringName]([&"enforcer_hit"])
+id = &"repo_fine_print"
+display_name = "Fine Print"
+telegraph = "FINE PRINT"
+dialogue_tags_met = Array[StringName]([&"repo_dodged"])
+dialogue_tags_missed = Array[StringName]([&"repo_hit"])
 ticks = 3
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_0"), SubResource("Sub_1")])
-dialogue_tags_raised = Array[StringName]([&"enforcer_cheap_shot"])
+dialogue_tags_raised = Array[StringName]([&"repo_fine_print"])

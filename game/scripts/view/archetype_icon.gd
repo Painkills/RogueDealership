@@ -213,7 +213,7 @@ static func _tire(ci: CanvasItem, g: Rect2, ink: Color, accent: Color, light: Co
 	_stroke(ci, g, [Vector2(0.84, 0.40), Vector2(0.98, 0.38)], 0.05, accent)
 	_stroke(ci, g, [Vector2(0.72, 0.22), Vector2(0.76, 0.08)], 0.05, accent)
 
-## The Enforcer: a clenched fist, a cuff, and the lines of a blow that landed.
+## The Repo Man: a clenched fist, a cuff, and the lines of a blow that landed.
 static func _fist(ci: CanvasItem, g: Rect2, ink: Color, accent: Color, light: Color) -> void:
 	_rrect(ci, g, 0.30, 0.74, 0.72, 0.92, 0.04, accent)
 	_rrect(ci, g, 0.24, 0.38, 0.76, 0.80, 0.08, ink)

@@ -43,8 +43,8 @@ var _calendar_open := false
 ## Over the build badge on the title screen: the touch way to the last fight,
 ## as Ctrl+B is the keyboard's - see _debug_last_fight().
 @onready var _last_fight_tap: Button = $BuildBadge/LastFightTapTarget
-## And the touch way to the Enforcer, a second boss: Ctrl+N - see _debug_enforcer_fight().
-@onready var _enforcer_tap: Button = $BuildBadge/EnforcerTapTarget
+## And the touch way to the Repo Man, a second boss: Ctrl+N - see _debug_repo_fight().
+@onready var _repo_tap: Button = $BuildBadge/RepoManTapTarget
 
 ## What the last fight's store puts up for sale, and how many of your cards it
 ## offers to upgrade - see _debug_last_fight().
@@ -53,14 +53,14 @@ const LAST_FIGHT_UPGRADES := 5
 ## How many dealership upgrades it offers, to pick ONE from - in place of the
 ## free card.
 const LAST_FIGHT_DEALERSHIP_UPGRADES := 3
-## What the store before the Enforcer puts up: 6 purchases, 6 upgrades and a perk
+## What the store before the Repo Man puts up: 6 purchases, 6 upgrades and a perk
 ## (a dealership upgrade, one to pick from the same three).
-const ENFORCER_PURCHASES := 6
-const ENFORCER_UPGRADES := 6
-## The Enforcer's shift and the category that makes it a boss day, for the shortcut -
+const REPO_PURCHASES := 6
+const REPO_UPGRADES := 6
+## The Repo Man's shift and the category that makes it a boss day, for the shortcut -
 ## he is not on any calendar.
-const ENFORCER_SHIFT := "res://data/shift_profiles/premade/the_enforcer.tres"
-const ENFORCER_CATEGORY := "res://data/shift_categories/enforcer_boss.tres"
+const REPO_SHIFT := "res://data/shift_profiles/premade/the_repo_man.tres"
+const REPO_CATEGORY := "res://data/shift_categories/repo_man_boss.tres"
 
 ## Open the game on the title screen's menu. A driver that is testing the run
 ## itself turns this off BEFORE adding the run to the tree, so it boots
@@ -134,8 +134,8 @@ func _ready() -> void:
 	_title_view.continue_requested.connect(_continue_run)
 	_bind_key(&"debug_last_fight", KEY_B, true)   # Ctrl+B, on the title screen
 	_last_fight_tap.pressed.connect(_debug_last_fight)
-	_bind_key(&"debug_enforcer_fight", KEY_N, true)   # Ctrl+N, on the title screen
-	_enforcer_tap.pressed.connect(_debug_enforcer_fight)
+	_bind_key(&"debug_repo_fight", KEY_N, true)   # Ctrl+N, on the title screen
+	_repo_tap.pressed.connect(_debug_repo_fight)
 	if title_at_boot:
 		_new_run()
 		_open_the_title()
@@ -258,9 +258,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_last_fight") and _title_view.visible \
 			and not _title_view.name_popup_showing():
 		_debug_last_fight()
-	elif event.is_action_pressed("debug_enforcer_fight") and _title_view.visible \
+	elif event.is_action_pressed("debug_repo_fight") and _title_view.visible \
 			and not _title_view.name_popup_showing():
-		_debug_enforcer_fight()
+		_debug_repo_fight()
 
 ## Ctrl+B on the title screen, or a tap over the build badge: the last fight,
 ## without the nine days before it - a manual testing convenience, not a
@@ -276,12 +276,12 @@ func _debug_last_fight() -> void:
 	_debug_boss_fight(LAST_FIGHT_PURCHASES, LAST_FIGHT_UPGRADES, null)
 
 ## Ctrl+N on the title screen, or a tap to the left of the build badge: the same
-## shortcut to the Enforcer - 6 purchases, 6 upgrades and a perk to pick, then
+## shortcut to the Repo Man - 6 purchases, 6 upgrades and a perk to pick, then
 ## straight to his fight.
-func _debug_enforcer_fight() -> void:
-	var boss := (load(ENFORCER_SHIFT) as ShiftProfile).duplicate() as ShiftProfile
-	boss.dealt_by = load(ENFORCER_CATEGORY)
-	_debug_boss_fight(ENFORCER_PURCHASES, ENFORCER_UPGRADES, boss)
+func _debug_repo_fight() -> void:
+	var boss := (load(REPO_SHIFT) as ShiftProfile).duplicate() as ShiftProfile
+	boss.dealt_by = load(REPO_CATEGORY)
+	_debug_boss_fight(REPO_PURCHASES, REPO_UPGRADES, boss)
 
 ## The store, then the boss: `boss` is the shift to fight, or null for the last
 ## day's own.
@@ -518,7 +518,7 @@ func _show_only(screen: Node) -> void:
 	_view_calendar_btn.visible = screen == _shift_view and not _in_tutorial
 	# The shortcut to the last fight: from the front door only.
 	_last_fight_tap.visible = screen == _title_view
-	_enforcer_tap.visible = screen == _title_view
+	_repo_tap.visible = screen == _title_view
 	# Quitting is for a run - not the front door, and not practice, which has
 	# its own way out.
 	_quit_btn.visible = screen != _title_view and not _in_tutorial

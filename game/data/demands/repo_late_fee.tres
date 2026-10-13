@@ -6,15 +6,15 @@
 
 [sub_resource type="Resource" id="Sub_0"]
 script = ExtResource("3_fx")
-amount = 15
+amount = 5
 
 [resource]
 script = ExtResource("2_dmd")
-id = &"enforcer_critical_hit"
-display_name = "Critical Hit"
-telegraph = "CRITICAL HIT"
-dialogue_tags_met = Array[StringName]([&"enforcer_dodged"])
-dialogue_tags_missed = Array[StringName]([&"enforcer_hit"])
+id = &"repo_late_fee"
+display_name = "Late Fee"
+telegraph = "LATE FEE"
+dialogue_tags_met = Array[StringName]([&"repo_dodged"])
+dialogue_tags_missed = Array[StringName]([&"repo_hit"])
 ticks = 3
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_0")])
-dialogue_tags_raised = Array[StringName]([&"enforcer_critical_hit"])
+dialogue_tags_raised = Array[StringName]([&"repo_late_fee"])

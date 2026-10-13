@@ -266,7 +266,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[node name="Run" type="Node" unique_id=1404346425]
+[node name="Run" type="Node" unique_id=30940542]
 script = ExtResource("1_47ec3")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1460737143 instance=ExtResource("2_lc2vt")]
@@ -323,10 +323,10 @@ script = ExtResource("15_pffcw")
 layer = 50
 script = ExtResource("17_1561w")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=2099018995]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=1950865464]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1696881612]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=1185730512]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -345,7 +345,7 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=1422705234]
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=1595220346]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(240, 56)
 anchors_preset = 1
@@ -359,7 +359,7 @@ grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
 text = "VIEW TOOLKIT"
 
-[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=244096862]
+[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=1095650889]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(240, 56)
@@ -374,7 +374,7 @@ grow_horizontal = 0
 theme_override_font_sizes/font_size = 22
 text = "VIEW CALENDAR"
 
-[node name="QuitRunCornerButton" type="Button" parent="BuildBadge" unique_id=1680652885]
+[node name="QuitRunCornerButton" type="Button" parent="BuildBadge" unique_id=232589866]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(170, 56)
@@ -398,7 +398,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 22
 text = "QUIT RUN"
 
-[node name="LastFightTapTarget" type="Button" parent="BuildBadge" unique_id=229271623]
+[node name="LastFightTapTarget" type="Button" parent="BuildBadge" unique_id=2046313323]
 unique_name_in_owner = true
 visible = false
 anchors_preset = 3
@@ -415,7 +415,7 @@ grow_vertical = 0
 focus_mode = 0
 flat = true
 
-[node name="EnforcerTapTarget" type="Button" parent="BuildBadge" unique_id=507854767]
+[node name="RepoManTapTarget" type="Button" parent="BuildBadge" unique_id=47998049]
 unique_name_in_owner = true
 visible = false
 anchors_preset = 3
@@ -432,7 +432,7 @@ grow_vertical = 0
 focus_mode = 0
 flat = true
 
-[node name="QuitPopup" type="Control" parent="BuildBadge" unique_id=1951420799]
+[node name="QuitPopup" type="Control" parent="BuildBadge" unique_id=175027149]
 unique_name_in_owner = true
 visible = false
 layout_mode = 3
@@ -440,54 +440,54 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Dim" type="Panel" parent="BuildBadge/QuitPopup" unique_id=40484953]
+[node name="Dim" type="Panel" parent="BuildBadge/QuitPopup" unique_id=801994038]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_qnv67")
 
-[node name="Centre" type="CenterContainer" parent="BuildBadge/QuitPopup" unique_id=1355987091]
+[node name="Centre" type="CenterContainer" parent="BuildBadge/QuitPopup" unique_id=18303950]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="QuitCard" type="PanelContainer" parent="BuildBadge/QuitPopup/Centre" unique_id=1150142215]
+[node name="QuitCard" type="PanelContainer" parent="BuildBadge/QuitPopup/Centre" unique_id=27440742]
 custom_minimum_size = Vector2(640, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_l3hs8")
 
-[node name="Column" type="VBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard" unique_id=673094935]
+[node name="Column" type="VBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard" unique_id=377363524]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="QuitEyebrow" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=291253250]
+[node name="QuitEyebrow" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=161092888]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 text = "BEFORE YOU WALK OUT"
 
-[node name="QuitTitle" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=1723296765]
+[node name="QuitTitle" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=646868961]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 46
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Quit this run?"
 
-[node name="QuitWhy" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=1230387842]
+[node name="QuitWhy" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=640606242]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "The run will be lost - every day worked, your toolkit and your money. There's no getting it back."
 autowrap_mode = 3
 
-[node name="QuitButtons" type="HBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=1065784813]
+[node name="QuitButtons" type="HBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=557632884]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="KeepPlayingButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=123833563]
+[node name="KeepPlayingButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1839326564]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 64)
 layout_mode = 2
@@ -503,11 +503,11 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 24
 text = "KEEP PLAYING"
 
-[node name="Spacer" type="Control" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1544630158]
+[node name="Spacer" type="Control" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1244467899]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ConfirmQuitButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1244555650]
+[node name="ConfirmQuitButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1455217985]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(220, 64)
 layout_mode = 2

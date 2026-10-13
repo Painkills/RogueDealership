@@ -97,7 +97,7 @@ func _process(_delta: float) -> bool:
 		_check_the_fired_title_is_distinct_from_a_completed_run()
 		_check_the_testing_skip_costs_no_standing()
 		_check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss()
-		_check_the_enforcer_shortcut_stops_in_the_store_then_fights_him()
+		_check_the_repo_man_shortcut_stops_in_the_store_then_fights_him()
 		_check_quitting_a_run_asks_first_then_loses_it()
 		PlayerProfile.reset()
 		RunFile.clear()
@@ -1721,12 +1721,12 @@ func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
 ## play never lands on live.
 ## "Give me a new shortcut to reach this boss, also provide a perk and 6 purchase
 ## and 6 upgrade before this boss": Ctrl+N or a tap just left of the build badge,
-## then the store, then straight to the Enforcer - and nothing of it filed.
-func _check_the_enforcer_shortcut_stops_in_the_store_then_fights_him() -> void:
+## then the store, then straight to the Repo Man - and nothing of it filed.
+func _check_the_repo_man_shortcut_stops_in_the_store_then_fights_him() -> void:
 	var filed_before := PlayerProfile.bests().size()
 	_root._new_run()
 	_root._open_the_title()
-	var tap := _root.get_node(^"%EnforcerTapTarget") as Button
+	var tap := _root.get_node(^"%RepoManTapTarget") as Button
 	_check("the title screen has a second, invisible tap target",
 		tap.visible and tap.flat and tap.text == "")
 	tap.pressed.emit()
@@ -1734,8 +1734,8 @@ func _check_the_enforcer_shortcut_stops_in_the_store_then_fights_him() -> void:
 	var shop: Shop = _root._shop_view._shop
 	_check("it opens the store (%d for sale, %d to upgrade)"
 		% [shop.offers.size(), shop.upgrade_offers.size()],
-		_root._shop_view.visible and shop.offers.size() == _root.ENFORCER_PURCHASES
-			and shop.upgrade_offers.size() == _root.ENFORCER_UPGRADES)
+		_root._shop_view.visible and shop.offers.size() == _root.REPO_PURCHASES
+			and shop.upgrade_offers.size() == _root.REPO_UPGRADES)
 	_check("with a perk to pick and no free card",
 		shop.dealership_offers.size() > 0 and shop.dealership_picks_left == 1
 			and shop.free_cards.is_empty())
@@ -1749,7 +1749,7 @@ func _check_the_enforcer_shortcut_stops_in_the_store_then_fights_him() -> void:
 	var shift: Shift = _root._shift_view._shift
 	var boss: Customer = shift.chairs[0] if shift != null else null
 	_check("leaving it goes straight to the fight with him",
-		boss != null and boss.archetype.id == &"enforcer" and _root._chosen_profile.is_boss_day()
+		boss != null and boss.archetype.id == &"repo_man" and _root._chosen_profile.is_boss_day()
 			and not _root._picker_view.visible)
 	_check("he has an attack up already, on a fuse of 3 ticks or less",
 		boss != null and boss.demand != null and boss.demand_due_tick - shift.tick <= 3)
@@ -1771,7 +1771,7 @@ func _check_the_enforcer_shortcut_stops_in_the_store_then_fights_him() -> void:
 	key.pressed = true
 	_root._unhandled_input(key)
 	_check("Ctrl+N opens the same store from the keyboard", _root._shop_view.visible
-		and _root._shop_view._shop.offers.size() == _root.ENFORCER_PURCHASES)
+		and _root._shop_view._shop.offers.size() == _root.REPO_PURCHASES)
 	_root._new_run()
 	_root._open_the_title()
 
