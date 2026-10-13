@@ -181,6 +181,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_a_product_and_a_patience_card_play_on_the_customer_beside_you()
 	_check_the_table_turns_the_short_way()
 	_check_every_card_shows_what_it_did()
+	_check_the_last_of_a_budget_signs_for_you()        # signs somebody off the floor
 	_check_an_empty_floor_does_not_end_the_shift()   # LAST: it empties the floor
 	_check_a_fatal_shift_shows_its_own_report()      # replaces _shift entirely
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
@@ -2883,6 +2884,42 @@ func _check_a_skeptic_warns_before_waving_a_card_off() -> void:
 ## the tablet, no clock - and a hit landing through their patience onto your
 ## standing. The side folders that explain it are checked on the real floor, in
 ## drive_run.gd's last-fight check: this floor has someone in every chair.
+## "As soon as you hit the Whale's budget it signs for you." A customer with
+## exactly one product's worth to spend, sold that product through the real O key:
+## SIGNED goes up where ACCEPTED would have, the money is banked, and the chair
+## is empty - with nothing for the player to close.
+func _check_the_last_of_a_budget_signs_for_you() -> void:
+	var s: Shift = _controller._shift
+	_finish_fx()
+	var who: Customer = s.chairs[_at()] if s.at != null else null
+	if who == null:
+		_check("someone to stand with, whose budget to spend", false)
+		return
+	who.archetype.min_products_to_sign = 0
+	who.demands_category = null
+	var product: ProductCardDef = null
+	for def in s.card_pool.cards:
+		if def is ProductCardDef and not who.owns(def.id) and who.accepts(def):
+			product = def
+			break
+	who.unsigned.clear()
+	who.offer = null
+	who.demand = null
+	who.budget = product.margin
+	who.line = 0
+	var banked_before := s.margin_banked
+	s.hand.append(CardInstance.new(product, 996))
+	_controller._apply(s.place(s.hand.size() - 1))
+	_settle()
+	_press(KEY_O);            _settle()
+	var texts := _fx_texts()
+	_check("they signed on their own, the moment the budget was spent",
+		who.state == "signed" and s.chairs[_at()] != who)
+	_check("banking what they had agreed to", s.margin_banked > banked_before)
+	_check("SIGNED goes up, not ACCEPTED (%s)" % str(texts),
+		texts.has("SIGNED") and not texts.has("ACCEPTED"))
+	_finish_fx()
+
 func _check_a_boss_fight_shows_its_move_its_budget_and_what_lands() -> void:
 	var s: Shift = _controller._shift
 	if s.at == null or s.chairs[_at()] == null:

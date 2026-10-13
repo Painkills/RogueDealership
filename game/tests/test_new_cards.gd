@@ -47,11 +47,11 @@ func _card(effects: Array, needs_offer: bool = true, ticks: int = 1) -> SupportC
 	d.effects.assign(effects)
 	return d
 
-func _lingering(inner: Effect, ticks: int, stops: bool = false) -> Linger:
+func _lingering(inner: Effect, ticks: int, stacks: bool = true) -> Linger:
 	var l := Linger.new()
 	l.inner = inner
 	l.ticks = ticks
-	l.stops_on_card = stops
+	l.stacks = stacks
 	return l
 
 func _patience(amount: int) -> ChangePatience:
@@ -183,44 +183,55 @@ func test_a_lingering_effect_goes_on_while_you_work_somebody_else() -> void:
 		a.patience > 10 - 3)
 	h.check("and the customer you are with is only draining (%d)" % b.patience, b.patience < b.max_patience)
 
-func test_think_on_it_stops_when_you_play_another_card_on_them() -> void:
+func test_a_lingering_effect_goes_on_whatever_else_you_play_on_them() -> void:
+	## "Remove the breaking of the over time effect": nothing you play cancels it.
 	var s := _shift()
 	var c := _seat(s, 0, _arch(60, 99))
 	var appeal: int = c.offer.appeal
-	var think := _card([_lingering(_appeal(2), 4, true)])
-	_hold(s, think)
+	_hold(s, _card([_lingering(_appeal(2), 4, false)]))
 	s.play_card(0)
 	h.eq("the card itself adds nothing yet", c.offer.appeal, appeal)
 	s._burn(1, "cards")
-	h.eq("one tick of thinking: +2", c.offer.appeal, appeal + 2)
-	s._burn(1, "cards")
-	h.eq("two: +4", c.offer.appeal, appeal + 4)
+	h.eq("one tick: +2", c.offer.appeal, appeal + 2)
 	_hold(s, _card([_appeal(1)]), 901)
 	s.play_card(0)
-	h.eq("another card on them: its own +1 and the thinking is over", c.offer.appeal, appeal + 5)
-	h.check("nothing lingers", c.lingering.is_empty())
-	s._burn(3, "cards")
-	h.eq("and what it had given stays, with no more coming", c.offer.appeal, appeal + 5)
+	h.eq("another card on them adds its own +1 and the +2 a tick carries on",
+		c.offer.appeal, appeal + 2 + 1 + 2)
+	h.eq("still working", c.lingering.size(), 1)
+	s._burn(2, "cards")
+	h.check("until it has run its ticks (%d from %d)" % [c.offer.appeal, appeal],
+		c.offer.appeal >= appeal + 2 + 1 + 2 + 2)
 
-func test_a_card_played_on_somebody_else_does_not_stop_it() -> void:
+func test_a_lingering_effect_that_does_not_stack_only_starts_over() -> void:
 	var s := _shift()
 	var c := _seat(s, 0, _arch(60, 99))
-	var other := _seat(s, 1, _arch(60, 99))
 	var appeal: int = c.offer.appeal
-	s.at = 0
-	_hold(s, _card([_lingering(_appeal(2), 4, true)]))
+	var think := _card([_lingering(_appeal(2), 4, false)])
+	_hold(s, think)
 	s.play_card(0)
-	s.at = 1
-	_hold(s, _card([_appeal(1)]), 902)
-	s.play_card(0)
-	h.eq("still thinking", c.lingering.size(), 1)
 	s._burn(2, "cards")
-	h.check("and still adding (%d from %d)" % [c.offer.appeal, appeal], c.offer.appeal >= appeal + 4)
+	h.eq("two ticks in: +4", c.offer.appeal, appeal + 4)
+	s.hand.append(CardInstance.new(think, 902))
+	s.play_card(s.hand.size() - 1)
+	h.eq("played again, there is still only one of it", c.lingering.size(), 1)
+	h.eq("started over: four ticks to go", int(c.lingering[0]["ticks_left"]), 4)
+	s._burn(1, "cards")
+	h.eq("so +2 a tick, not +4", c.offer.appeal, appeal + 4 + 2)
+
+func test_a_lingering_effect_that_stacks_runs_twice_when_played_twice() -> void:
+	var s := _shift()
+	var c := _seat(s, 0, _arch(60, 99))
+	var card := _card([_lingering(_appeal(2), 4)])
+	_hold(s, card)
+	s.play_card(0)
+	s.hand.append(CardInstance.new(card, 903))
+	s.play_card(s.hand.size() - 1)
+	h.eq("two of it at once", c.lingering.size(), 2)
 
 func test_a_lingering_effect_for_a_product_that_is_gone_does_nothing() -> void:
 	var s := _shift()
 	var c := _seat(s, 0, _arch(60, 99))
-	_hold(s, _card([_lingering(_appeal(2), 4, true)]))
+	_hold(s, _card([_lingering(_appeal(2), 4, false)]))
 	s.play_card(0)
 	s.drop_offer()
 	s._burn(3, "cards")
@@ -230,9 +241,9 @@ func test_a_lingering_effect_describes_itself() -> void:
 	var l := _lingering(_patience(2), 4)
 	h.check("what it does and for how long (%s)" % l.describe(),
 		l.describe().contains("+2") and l.describe().contains("4 ticks"))
-	var t := _lingering(_appeal(2), 4, true)
-	h.check("and when it stops (%s)" % t.describe(),
-		t.describe().contains("until you play another card on them"))
+	var t := _lingering(_appeal(2), 4, false)
+	h.check("and that it does not stack (%s)" % t.describe(),
+		t.describe().contains("does not stack") and not l.describe().contains("does not stack"))
 
 # ------------------------------------------------- play on somebody you are not with
 func test_a_product_can_be_put_in_front_of_somebody_you_are_not_standing_with() -> void:

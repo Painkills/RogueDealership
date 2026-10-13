@@ -179,10 +179,9 @@ static func play(s: Shift) -> void:
 ## and so are left alone until it is done. See _park().
 static var _parked := {}
 
-## Whether a card of ours is still doing its work on `c` for as long as nothing
-## else is played on them (Linger.stops_on_card).
+## Whether a card the player parked on `c` is still doing its work.
 static func _parked_and_working(c: Customer) -> bool:
-	return c.lingering.any(func(l): return bool(l["stops_on_card"]))
+	return _parked.has(c) and not c.lingering.is_empty()
 
 ## Who to work next: whoever has a demand you can answer, soonest due; then
 ## anyone with a deal unsigned and about to walk; then who you are with, if
@@ -196,7 +195,7 @@ static func _pick_target(s: Shift) -> int:
 			continue
 		if c.demand != null and c.demand.resolve is LeaveThemAlone:
 			continue
-		# Anything played on them now would cancel what a parked card has left to do.
+		# Nothing to do for them until what was parked on them has done its work.
 		if _parked_and_working(c):
 			continue
 		var score := 0.0
@@ -367,7 +366,7 @@ static func _act(s: Shift, c: Customer) -> bool:
 	return false
 
 ## Think on it: appeal that builds a tick at a time for a few ticks while you are
-## busy with somebody else, until anything else is played on them. Played when
+## busy with somebody else. Played when
 ## that adds up to the `gap` left to close, there is someone else worth working
 ## in the meantime, and the shift has the time for it. Then the customer is left
 ## alone (see _pick_target) until it has done its work.
@@ -382,7 +381,10 @@ static func _park(s: Shift, c: Customer, gap: int) -> bool:
 		var effects: Array = def.upgraded_effects \
 			if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
 		for e in effects:
-			if not (e is Linger and e.stops_on_card and e.inner is ChangeAppeal):
+			if not (e is Linger and e.inner is ChangeAppeal):
+				continue
+			# It does not stack: not while it is still working on them.
+			if not e.stacks and c.lingering.any(func(l): return l["card"] == def):
 				continue
 			if e.inner.amount * e.ticks < gap:
 				continue

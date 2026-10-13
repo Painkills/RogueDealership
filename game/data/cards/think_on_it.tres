@@ -13,7 +13,7 @@ amount = 2
 script = ExtResource("3_lin")
 inner = SubResource("Appeal_base")
 ticks = 4
-stops_on_card = true
+stacks = false
 
 [sub_resource type="Resource" id="Appeal_up"]
 script = ExtResource("2_app")
@@ -23,13 +23,13 @@ amount = 3
 script = ExtResource("3_lin")
 inner = SubResource("Appeal_up")
 ticks = 4
-stops_on_card = true
+stacks = false
 
 [resource]
 script = ExtResource("4_def")
 id = &"thinkonit"
 display_name = "Think on it"
-text = "Give them a minute with it. Do not hover."
+text = "Give them a minute with it."
 ticks = 1
 rarity = 2
 effects = Array[ExtResource("1_eff")]([SubResource("Linger_base")])

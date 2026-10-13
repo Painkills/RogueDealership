@@ -682,7 +682,7 @@ func _last_customer_chair() -> int:
 func _apply(res: Result) -> void:
 	if not res.ok:
 		_event_log.append_text("[color=%s]%s[/color]\n" % [Palette.hex(&"alert"), res.msg])
-	var sold_at = _shift.at if res.ok and res.kind == "sale" else null
+	var sold_at = res.data.get("chair", _shift.at) if res.ok and res.kind == "sale" else null
 	_let_time_pass_on_an_empty_floor()
 	_render()
 	if sold_at != null:
@@ -1241,10 +1241,14 @@ func _celebrate_the_yes(data: Dictionary, chair: int) -> void:
 	var sold := int(data.get("margin", 0))
 	var base := int(data.get("base_margin", sold))
 	var rolls := base != sold
-	# Stamped where SIGNED is, the way SIGNED is - in yellow, edged dark so it
-	# reads on the folder: agreed, not yet signed.
-	var stamp := _stamp("ACCEPTED", &"sticky", chair, -8.0)
-	stamp.add_theme_color_override("font_outline_color", Palette.color(&"neutral_1"))
+	# A yes that spent the last of a budget signed them there and then: SIGNED
+	# takes ACCEPTED's place, and its own flight carries the money on.
+	var signed := bool(data.get("signed", false))
+	if not signed:
+		# Stamped where SIGNED is, the way SIGNED is - in yellow, edged dark so it
+		# reads on the folder: agreed, not yet signed.
+		var stamp := _stamp("ACCEPTED", &"sticky", chair, -8.0)
+		stamp.add_theme_color_override("font_outline_color", Palette.color(&"neutral_1"))
 
 	# The number, lifted off the MARGIN figure where it sat - at its size there.
 	var tablet: OfferTablet = _tablets[chair] if chair < _tablets.size() else null
@@ -1278,6 +1282,11 @@ func _celebrate_the_yes(data: Dictionary, chair: int) -> void:
 		tw.tween_method(count_to, float(base), float(sold), FX_COUNT) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_interval(FX_HOLD)
+	if signed:
+		# It is banked with the rest, by SIGNED: this one only fades.
+		tw.tween_property(n, "modulate:a", 0.0, 0.4)
+		tw.tween_callback(func(): _fx_done(n))
+		return
 	# Then up to the top bar.
 	var to := _at_risk_label.get_global_rect().get_center()
 	tw.set_parallel(true)

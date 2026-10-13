@@ -299,12 +299,13 @@ func test_a_budget_is_the_quota_and_selling_it_down_ends_the_fight() -> void:
 	var first: int = c.unsigned[0]["margin"]
 	h.eq("spends from their budget", c.budget_left(), quota - first)
 	s.place(_hand(s, products[1], 902))
-	s.offer()
+	var last := s.offer()
 	h.eq("the last takes whatever is left", c.unsigned_margin(), quota)
 	h.check("spent out", c.spent_out())
+	h.check("and they sign for you the moment it is (%s)" % last.msg,
+		last.data["signed"] and c.state == "signed" and s.chairs[0] == null)
 	var refused := s.place(_hand(s, products[2], 903))
-	h.check("and they will take nothing more (%s)" % refused.msg, not refused.ok)
-	h.check("you sign them", s.close().ok)
+	h.check("so there is nobody left to take more (%s)" % refused.msg, not refused.ok)
 	h.check("which banks the quota exactly", s.margin_banked == quota and s.report()["made_quota"])
 	h.check("and with nobody else coming, the fight is over", s.is_over())
 
@@ -327,7 +328,27 @@ func test_nobody_with_a_budget_can_be_signed_until_it_is_all_spent() -> void:
 	s.place(_hand(s, products[1], 902))
 	s.offer()
 	h.check("spent out", c.spent_out())
-	h.check("and now you can", s.close().ok)
+	h.check("and they signed on their own - nothing to close", c.state == "signed")
+	h.check("which closing again says", not s.close().ok)
+
+func test_the_sale_that_spends_the_last_of_a_budget_signs_them() -> void:
+	## "As soon as you hit the Whale's budget it signs for you."
+	var products := _products()
+	products.sort_custom(func(a, b): return a.margin < b.margin)
+	var quota: int = products[0].margin + products[1].margin
+	var pair := _fight(_boss([], true, 1.0), quota)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s.place(_hand(s, products[0], 901))
+	var first := s.offer()
+	h.check("a sale with budget left does not sign them", not first.data["signed"]
+		and c.state != "signed" and s.chairs[0] == c)
+	s.place(_hand(s, products[1], 902))
+	var last := s.offer()
+	h.check("the one that spends it does", last.data["signed"] and c.state == "signed")
+	h.eq("banking all of it", s.margin_banked, quota)
+	h.check("and the log says so", s.events.any(func(e): return e.contains("signs for")))
+	h.eq("the result says which chair it was", int(last.data["chair"]), 0)
 
 func test_a_budget_that_cannot_be_spent_does_not_trap_you_on_the_floor() -> void:
 	## Nothing left to sell them: the way out of a deck that cannot drain the
@@ -531,9 +552,8 @@ func test_signing_a_boss_does_not_raise_another_move() -> void:
 	s.place(_hand(s, _products()[0], 901))
 	s.offer()
 	h.check("sold out", c.spent_out())
-	h.check("the sale answered one and the next is already up", c.demand == desk)
-	h.check("signing them", s.close().ok)
-	h.check("raises nothing more", c.demand == null)
+	h.check("so they signed, and the move that was up goes with them",
+		c.state == "signed" and c.demand == null)
 
 # ---------------------------------------------------- a hit with nothing to answer
 func test_a_move_with_no_answer_lands_however_much_patience_there_is() -> void:

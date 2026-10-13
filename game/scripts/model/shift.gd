@@ -1058,7 +1058,6 @@ func _place(index: int, chair: int = -1) -> Result:
 	if not c.accepts(inst.card as ProductCardDef):
 		return Result.new(false, "%s will only look at %s products."
 			% [c.display_name, c.archetype.only_category.display_name])
-	_card_played_on(c)
 	if c.next_card_rejected():
 		return _reject(c, index, cfg.place_ticks)
 	c.cards_since_rejection += 1
@@ -1248,7 +1247,6 @@ func _support(c: Customer, index: int) -> Result:
 	if def.needs_offer and c.offer == null:
 		return Result.new(false, "%s needs something on the table."
 			% def.display_name)
-	_card_played_on(c)
 	if c.next_card_rejected():
 		return _reject(c, index, inst.ticks())
 	c.cards_since_rejection += 1
@@ -1403,14 +1401,23 @@ func offer() -> Result:
 	_demand_saw(c, DemandResolve.OFFER, {"rank": rank, "short": 0, "sale": sale,
 		"patience_before": patience_before})
 	_settle_patience()
-	return Result.new(true, "%s takes the %s - $%d."
-		% [c.display_name, sale["product"].display_name, sale["margin"]],
-		"sale", {"rank": rank, "margin": sale["margin"],
-			"extra_margin": sale.get("extra_margin", 0),
-			# What the combo made of it, for the view to light up: the product's
-			# own margin, what it sold at, and what the next one will.
-			"base_margin": sale["base_margin"], "multiplier": sale["multiplier"],
-			"next_multiplier": c.combo_multiplier()})
+	var data := {"rank": rank, "margin": sale["margin"],
+		"extra_margin": sale.get("extra_margin", 0),
+		# What the combo made of it, for the view to light up: the product's
+		# own margin, what it sold at, and what the next one will.
+		"base_margin": sale["base_margin"], "multiplier": sale["multiplier"],
+		"next_multiplier": c.combo_multiplier(),
+		"chair": chairs.find(c), "signed": false}
+	var said := "%s takes the %s - $%d." \
+		% [c.display_name, sale["product"].display_name, sale["margin"]]
+	# The last of a budget is spent: they sign without being asked. Whatever stands
+	# in the way of closing them (a category they came for) leaves them waiting
+	# for you, as before.
+	if c.state != "signed" and c.spent_out() and _signing_refusal(c) == "":
+		var signed := _sign(c)
+		data["signed"] = true
+		said += " " + signed.msg
+	return Result.new(true, said, "sale", data)
 
 
 func _settle(c: Customer) -> Dictionary:
@@ -1649,24 +1656,29 @@ func close() -> Result:
 	if pair[1] != null:
 		return pair[1]
 	var c: Customer = pair[0]
+	var why := _signing_refusal(c)
+	if why != "":
+		return Result.new(false, why)
+	return _sign(c)
+
+
+## Why `c` cannot be signed right now - or "" when they can.
+func _signing_refusal(c: Customer) -> String:
 	# Closing empty used to be a free "give up on this one" button - now the
 	# only way to shed a customer you will not sell to is to let their patience
 	# run out (which costs standing when they walk). A future effect/card can
 	# grant a one-time bypass here ("strike") without this check itself moving.
 	if c.unsigned.is_empty():
-		return Result.new(false,
-			"%s hasn't agreed to anything yet - sell them something first."
-			% c.display_name)
+		return "%s hasn't agreed to anything yet - sell them something first." \
+			% c.display_name
 	# Someone who came in to spend a budget is signed when it is spent, not
 	# before: closing early is how a fight would be walked away from.
 	if budget_blocks_closing(c):
-		return Result.new(false,
-			"%s still has $%d to spend - keep selling until it is all gone."
-			% [c.display_name, c.budget_left()])
+		return "%s still has $%d to spend - keep selling until it is all gone." \
+			% [c.display_name, c.budget_left()]
 	if needs_more_products(c):
-		return Result.new(false,
-			"%s will not sign for fewer than %d products - that is %d so far."
-			% [c.display_name, c.archetype.min_products_to_sign, c.unsigned.size()])
+		return "%s will not sign for fewer than %d products - that is %d so far." \
+			% [c.display_name, c.archetype.min_products_to_sign, c.unsigned.size()]
 	# Exactly the promise the demand's own telegraph makes - "bought something
 	# in <category>" - and nothing stricter. See Customer.owns_category()'s
 	# own comment: a hidden priority-within-category threshold used to sit
@@ -1674,11 +1686,15 @@ func close() -> Result:
 	# refused with no way to have known why.
 	if c.demands_category != null \
 			and not c.owns_category(c.demands_category):
-		return Result.new(false,
-			"%s came in for %s protection and is not signing until they get it."
-			% [c.display_name, str(c.demands_category)])
+		return "%s came in for %s protection and is not signing until they get it." \
+			% [c.display_name, str(c.demands_category)]
+	return ""
 
-	var chair: int = at
+
+## Signs `c`: what they agreed to is banked and they leave. By close() - or by
+## the sale that spends the last of their budget (offer()).
+func _sign(c: Customer) -> Result:
+	var chair: int = chairs.find(c)
 	# While they are still in the chair: settling a demand mutates the customer,
 	# and after _vacate() nothing can see them to do it.
 	_demand_saw(c, DemandResolve.CLOSE)
@@ -1816,22 +1832,6 @@ func _tick_lingering(c: Customer) -> void:
 		else:
 			events.append("[%s] %s wears off on %s." % [c.key,
 				card.display_name if card != null else "It", c.display_name])
-	c.lingering = keep
-
-
-## You played a card on `c`: whatever of your cards was waiting for exactly that
-## to stop - Linger.stops_on_card - stops, and what it had done stays done.
-func _card_played_on(c: Customer) -> void:
-	if c.lingering.is_empty():
-		return
-	var keep: Array[Dictionary] = []
-	for s in c.lingering:
-		if bool(s["stops_on_card"]):
-			var card: CardDef = s["card"]
-			events.append("[%s] %s stops: you played another card on %s." % [c.key,
-				card.display_name if card != null else "It", c.display_name])
-		else:
-			keep.append(s)
 	c.lingering = keep
 
 
