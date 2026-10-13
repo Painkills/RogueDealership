@@ -2787,32 +2787,83 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 		gain != null and card_rect.has_point(gain.get_global_rect().get_center()))
 
 	var meter: Rect2 = _controller._tablet_spot(chair, &"appeal")
-	var lift := _fx_label_saying("appeal")
-	_check("the appeal gain is at the top of the tablet's meter (%s, meter %s)"
-		% [lift.get_global_rect().get_center() if lift else null, meter],
-		lift != null and meter.size != Vector2.ZERO
-			and absf(lift.get_global_rect().get_center().x - meter.get_center().x) < 6.0
-			and absf(lift.get_global_rect().get_center().y - meter.position.y) < 6.0)
+	var well: Rect2 = _controller._tablet_spot(chair, &"well")
+	var spot: Rect2 = _controller._tablet_spot(chair, &"margin")
+	var bar: Rect2 = _controller._tablet_spot(chair, &"bar")
 	var lower := _fx_label_saying("Line")
-	_check("and the Line it lowered at the foot of the same meter",
+	_check("the Line it lowered is at the foot of the tablet's meter",
 		lower != null and absf(lower.get_global_rect().get_center().x - meter.get_center().x) < 6.0
 			and absf(lower.get_global_rect().get_center().y - meter.end.y) < 6.0)
 
-	var well: Rect2 = _controller._tablet_spot(chair, &"well")
-	var spot: Rect2 = _controller._tablet_spot(chair, &"margin")
-	var money := _fx_label_saying("margin")
-	_check("the money starts in the middle of the tablet, where the card landed (%s, well %s)"
-		% [money.get_global_rect().get_center() if money else null, well.get_center()],
-		money != null and money.get_global_rect().get_center().distance_to(well.get_center()) < 6.0)
-	_step_fx(1.4)
-	money = _fx_label_saying("margin")
-	_check("and travels to the MARGIN on the tablet's right-hand side (%s, margin %s)"
-		% [money.get_global_rect().get_center() if money else null, spot.get_center()],
-		money != null and money.get_global_rect().get_center().distance_to(spot.get_center()) < 6.0
-			and spot.get_center().x > well.get_center().x)
+	var lift := _fx_label_saying("appeal")
+	_check("the appeal gain starts in the middle of the tablet (%s, well %s)"
+		% [lift.get_global_rect().get_center() if lift else null, well.get_center()],
+		lift != null and lift.get_global_rect().get_center().distance_to(well.get_center()) < 6.0)
+	var tablet: OfferTablet = _controller._tablets[chair]
+	var new_margin: int = c.offer.margin
+	var money := _fx_label_saying("+$300")
+	_check("and so does the money, with no word 'margin' on it",
+		money != null and not money.text.contains("margin")
+			and money.get_global_rect().get_center().distance_to(well.get_center()) < 6.0)
+	_check("the money is in the same type as the tablet's MARGIN",
+		money != null and absf(money.get_theme_font_size("font_size")
+			- _controller._margin_type_px(tablet, spot)) < 1.0
+			and money.theme_type_variation == &"Heading")
+	_check("the tablet's own figure is held back while the popup stands in for it",
+		tablet.margin_covered())
 	_check("every character of them is in the game's font", _fx_labels_are_all_in_the_font())
+	_step_fx(1.14)
+	lift = _fx_label_saying("appeal")
+	_check("the appeal arrives at the meter (%s, bar %s)"
+		% [lift.get_global_rect().get_center() if lift else null, bar.get_center()],
+		lift != null and bar.size != Vector2.ZERO
+			and lift.get_global_rect().get_center().distance_to(bar.get_center()) < 6.0)
+	money = _fx_label_saying("+$300")
+	_check("and the money at the MARGIN figure, left-aligned the way the figure is (%s, margin %s)"
+		% [money.get_global_rect() if money else null, spot],
+		money != null and absf(money.get_global_rect().position.x - spot.position.x) < 6.0
+			and absf(money.get_global_rect().get_center().y - spot.get_center().y) < 6.0
+			and spot.get_center().x > well.get_center().x)
+	_step_fx(0.4)
+	var rolling := _fx_label_saying("$")
+	_check("where the old number rolls to the new one (now %s)"
+		% [rolling.text if rolling else null], rolling != null and rolling.text != "+$300")
+	_step_fx(4.0)
+	_check("then it fades and the figure comes back showing %s" % Format.money(new_margin),
+		_fx_label_saying("$") == null and not tablet.margin_covered()
+			and tablet.spot_px(&"margin").size.x > 0.0)
 	_finish_fx()
+	_check_over_time_cards_show_a_clock(chair)
 	s.drop_offer()
+
+## "An icon with a timer for all these over-time effects": a card still working on
+## a customer puts a clock, and the ticks it has left, on their folder - and takes
+## it off when it is done.
+func _check_over_time_cards_show_a_clock(chair: int) -> void:
+	var s: Shift = _controller._shift
+	var folder: CustomerCard3D = _controller._customer_cards[chair]
+	_check("no clock on a folder nothing is working on", folder.badge_text() == "")
+	var def := SupportCardDef.new()
+	def.id = &"made_up_slow_burn"
+	def.display_name = "Slow burn"
+	def.ticks = 1
+	var patience := ChangePatience.new()
+	patience.amount = 1
+	var slow := Linger.new()
+	slow.inner = patience
+	slow.ticks = 4
+	var effects: Array[Effect] = [slow]
+	def.effects = effects
+	s.hand.append(CardInstance.new(def, 996))
+	_controller._apply(s.play_card(s.hand.size() - 1))
+	_settle()
+	_check("a card working on them puts a clock with its ticks on their folder (%s)"
+		% folder.badge_text(), folder.badge_text() != "" and folder.badge_text().begins_with("4"))
+	s.chairs[chair].lingering.clear()
+	_controller._render()
+	_settle()
+	_check("and the clock goes when it is done", folder.badge_text() == "")
+	_finish_fx()
 
 ## Whether every effect label on screen uses only characters the game's font has.
 func _fx_labels_are_all_in_the_font() -> bool:

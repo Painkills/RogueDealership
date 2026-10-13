@@ -42,6 +42,8 @@ var _status: Label
 ## The body of a note - see setup_note().
 var _note: Label
 var _bubble: SpeechBubble
+## The clocks for your cards still working on them - see LingerBadges.
+var _badges: LingerBadges
 ## Numerals in the interest grid stop being readable before the cells do, so a
 ## card that is going to be drawn small says so once rather than guessing from
 ## its own size - the face is authored at 500x700 no matter where it lands.
@@ -75,6 +77,7 @@ func _bind() -> void:
 	_status = col.get_node(^"StatusLabel")
 	_note = col.get_node(^"NoteLabel")
 	_bubble = $FrontViewport/CustomerFront/SpeechBubble
+	_badges = $FrontViewport/CustomerFront/LingerBadges
 	# Rounded to sit inside the frame's own corners.
 	_patience_fill.set_corner_radius_all(7)
 	_patience_bar.add_theme_stylebox_override("fill", _patience_fill)
@@ -124,6 +127,11 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		_bubble.update_visibility(tick, SpeechBubble.AT_YOUR_DESK_TICKS if seated \
 			else SpeechBubble.SIDE_SEAT_TICKS)
 	_status.visible = not seated
+	var turns: Array[int] = []
+	if c != null:
+		for s in c.lingering:
+			turns.append(int(s["ticks_left"]))
+	_badges.show_turns(turns)
 
 	if c == null:
 		_name.text = "- empty -"
@@ -168,6 +176,14 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 ## Where the patience bar sits on the folder's face, as a share of its width and
 ## height - for a popup about their patience to go beside it.
 func patience_frac() -> Vector2:
+	return _patience_at()
+
+## The clocks' numbers as drawn ("" when no card of yours is working on them).
+func badge_text() -> String:
+	_bind()
+	return _badges.shown_text() if _badges.visible else ""
+
+func _patience_at() -> Vector2:
 	_bind()
 	var r := _patience_bar.get_global_rect()
 	if r.size.x <= 0.0 or _viewport == null or _viewport.size.x <= 0:
@@ -177,6 +193,7 @@ func patience_frac() -> Vector2:
 func setup_note(note: Dictionary) -> void:
 	_bind()
 	customer = null
+	_badges.show_turns([] as Array[int])
 	if _bubble != null:
 		_bubble.visible = false
 	_status.visible = false

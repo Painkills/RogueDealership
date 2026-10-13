@@ -176,8 +176,22 @@ func spot_px(which: StringName) -> Rect2:
 		&"margin": return _margin.get_global_rect()
 		&"combo": return _combo.get_global_rect()
 		&"appeal": return Rect2(APPEAL_RECT)   # the meter's panel, APPEAL over it
+		&"bar":
+			# The meter itself - its panel when it has not been laid out yet.
+			var r := _bar.get_global_rect()
+			return r if r.size.x > 0.0 and r.size.y > 0.0 else Rect2(APPEAL_RECT)
 		&"well": return Rect2(WELL_RECT)
 	return Rect2()
+
+## Hides (or shows) the MARGIN figure itself, while a popup rolls over it and
+## stands in for it.
+func cover_margin(on: bool) -> void:
+	_bind()
+	_margin.modulate.a = 0.0 if on else 1.0
+
+func margin_covered() -> bool:
+	_bind()
+	return _margin.modulate.a < 0.5
 
 ## The type size the MARGIN number is drawn at, in the screen's own pixels.
 func margin_font_px() -> int:

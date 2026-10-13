@@ -1253,10 +1253,7 @@ func _celebrate_the_yes(data: Dictionary, chair: int) -> void:
 	# The number, lifted off the MARGIN figure where it sat - at its size there.
 	var tablet: OfferTablet = _tablets[chair] if chair < _tablets.size() else null
 	var spot := screen_rect_of(&"margin")
-	var px := tablet.margin_px() if tablet != null else Rect2()
-	var size := 48
-	if spot.size.y > 0.0 and px.size.y > 0.0:
-		size = maxi(24, roundi(tablet.margin_font_px() * spot.size.y / px.size.y))
+	var size := _margin_type_px(tablet, spot) if tablet != null else 48
 	var n := _fx_label(Format.money(base), &"margin", size,
 		spot.get_center() if spot.size != Vector2.ZERO else _chair_on_screen(chair))
 	if spot.size != Vector2.ZERO:
@@ -1415,11 +1412,17 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 		count += 1
 	var appeal := int(fx.get("appeal", 0))
 	if appeal != 0:
-		var bar := _tablet_spot(chair, &"appeal")
-		var at := Vector2(bar.get_center().x, bar.position.y) if bar.size != Vector2.ZERO \
-			else folder + Vector2(0, 38.0 * stacked)
-		stacked += 0 if bar.size != Vector2.ZERO else 1
-		_rise_at("%+d appeal" % appeal, _fx_tone(appeal < 0, whole_floor), at)
+		# Shown in the middle of the tablet, where the card was played, and carried
+		# over to the meter.
+		var bar := _tablet_spot(chair, &"bar")
+		var well := _tablet_spot(chair, &"well")
+		var text := "%+d appeal" % appeal
+		var role := _fx_tone(appeal < 0, whole_floor)
+		if bar.size != Vector2.ZERO and well.size != Vector2.ZERO:
+			_travel_text(text, role, well.get_center(), bar.get_center())
+		else:
+			_rise_at(text, role, folder + Vector2(0, 38.0 * stacked))
+			stacked += 1
 		count += 1
 	var combo := int(fx.get("combo", 0))
 	if combo != 0:
@@ -1431,16 +1434,60 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 		count += 1
 	var money := int(fx.get("margin", 0))
 	if with_money and money != 0:
-		var text := "%s%s margin" % ["+" if money > 0 else "-", Format.money(absi(money))]
+		var text := "%s%s" % ["+" if money > 0 else "-", Format.money(absi(money))]
 		var role := _fx_tone(money < 0, whole_floor)
-		var to := _tablet_spot(chair, &"margin")
-		var from := _tablet_spot(chair, &"well")
-		if to.size != Vector2.ZERO and from.size != Vector2.ZERO:
-			_travel_text(text, role, from.get_center(), to.get_center())
-		else:
-			_rise_at(text, role, folder + Vector2(0, 38.0 * stacked))
+		if not _roll_into_margin(chair, text, role, money):
+			_rise_at(text + " margin", role, folder + Vector2(0, 38.0 * stacked))
 		count += 1
 	return count
+
+## Money a card put on or took off the product on the table: the amount appears in
+## the middle of the tablet, where the card was played, and carries over to the
+## MARGIN figure - drawn in the figure's own type, with no label, because where it
+## lands says what it is. The figure itself stays at what it was meanwhile; the
+## old number rolls to the new one, then fades into the tablet's own. False when
+## that tablet is not showing, or has nothing on the table.
+func _roll_into_margin(chair: int, text: String, role: StringName, delta: int) -> bool:
+	var spot := _tablet_spot(chair, &"margin")
+	var well := _tablet_spot(chair, &"well")
+	var tablet: OfferTablet = _tablets[chair] if chair >= 0 and chair < _tablets.size() else null
+	var c = _shift.chairs[chair] if chair < _shift.chairs.size() else null
+	if tablet == null or spot.size == Vector2.ZERO or well.size == Vector2.ZERO \
+			or c == null or c.offer == null:
+		return false
+	var now: int = c.offer.margin
+	var was := now - delta
+	var size := _margin_type_px(tablet, spot)
+	var left := func(l: Label) -> Vector2:
+		# Left-aligned in the figure's box, the way the figure is.
+		return Vector2(spot.position.x, spot.get_center().y - l.size.y * 0.5)
+	# What the figure showed, standing in for it until the roll.
+	var base := _fx_label(Format.money(was), &"margin", size, spot.get_center())
+	base.position = left.call(base)
+	tablet.cover_margin(true)
+	var carried := _fx_label(text, role, size, well.get_center())
+	var tw := _fx_tween()
+	tw.tween_interval(0.35)
+	tw.tween_property(carried, "position", left.call(carried), 0.8) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_callback(func(): _fx_done(carried))
+	var count_to := func(v: float) -> void:
+		base.text = Format.money(roundi(v))
+	tw.tween_method(count_to, float(was), float(now), FX_COUNT) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(0.5)
+	tw.tween_property(base, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(func():
+		tablet.cover_margin(false)
+		_fx_done(base))
+	return true
+
+## The type size, on screen, that draws a number the way the tablet's MARGIN is.
+func _margin_type_px(tablet: OfferTablet, spot: Rect2) -> int:
+	var px := tablet.margin_px()
+	if spot.size.y > 0.0 and px.size.y > 0.0:
+		return maxi(24, roundi(tablet.margin_font_px() * spot.size.y / px.size.y))
+	return 48
 
 ## Red for what is bad for you - patience gone, their Line up, money off the deal -
 ## green for what is good; the whole floor's hits are always red.
@@ -1518,6 +1565,10 @@ func _clear_fx() -> void:
 		if is_instance_valid(n):
 			n.queue_free()
 	_fx.clear()
+	# A figure a popup was standing in for comes back.
+	for t in _tablets:
+		if t != null and t.margin_covered():
+			t.cover_margin(false)
 	_banked_rolling = false
 	_standing_rolling = false
 

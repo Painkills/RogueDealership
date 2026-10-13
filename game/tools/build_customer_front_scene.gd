@@ -303,6 +303,19 @@ func _init() -> void:
 	bubble_panel.add_child(bubble_label)
 	bubble_label.owner = root
 
+	# A clock and a number for each of your cards still working on them: how many
+	# more ticks. Top right, level with the name; outside Margin, in root
+	# coordinates, and drawn over everything.
+	var badges := Control.new()
+	badges.name = "LingerBadges"
+	badges.set_script(load("res://scripts/view/linger_badges.gd"))
+	badges.position = Vector2(W - MARGIN_X - 170, MARGIN_TOP + 2)
+	badges.size = Vector2(170, 56)
+	badges.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badges.visible = false
+	root.add_child(badges)
+	badges.owner = root
+
 	var packed := PackedScene.new()
 	packed.pack(root)
 	var err := ResourceSaver.save(packed, "res://scenes/cards/customer_front_2d.tscn")
