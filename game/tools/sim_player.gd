@@ -141,6 +141,7 @@ static func _note(c: Customer, ticks: int, banked: int, kind: String) -> void:
 		visits[c]["by"][kind] = int(visits[c]["by"].get(kind, 0)) + ticks
 
 static func play(s: Shift) -> void:
+	_parked.clear()
 	var guard := 0
 	while not s.is_over() and guard < 600:
 		guard += 1
@@ -174,6 +175,15 @@ static func play(s: Shift) -> void:
 		if stuck:
 			break
 
+## Customers a card is working on while the player is elsewhere - Think on it -
+## and so are left alone until it is done. See _park().
+static var _parked := {}
+
+## Whether a card of ours is still doing its work on `c` for as long as nothing
+## else is played on them (Linger.stops_on_card).
+static func _parked_and_working(c: Customer) -> bool:
+	return c.lingering.any(func(l): return bool(l["stops_on_card"]))
+
 ## Who to work next: whoever has a demand you can answer, soonest due; then
 ## anyone with a deal unsigned and about to walk; then who you are with, if
 ## there is still a sale in hand for them; then the best sale on the floor.
@@ -186,8 +196,14 @@ static func _pick_target(s: Shift) -> int:
 			continue
 		if c.demand != null and c.demand.resolve is LeaveThemAlone:
 			continue
+		# Anything played on them now would cancel what a parked card has left to do.
+		if _parked_and_working(c):
+			continue
 		var score := 0.0
-		if c.demand != null and _can_answer(s, c):
+		# What the parked card was for: their offer is over the Line - sign it.
+		if _parked.has(c) and c.offer != null and s.offer_refusal(c) == "":
+			score = 850.0
+		elif c.demand != null and _can_answer(s, c):
 			score = 1000.0 - float(c.demand_due_tick - s.tick)
 		elif not c.unsigned.is_empty() and c.patience <= 3:
 			score = 900.0 - float(c.patience)
@@ -250,6 +266,7 @@ static func _only_tells(d: Demand) -> bool:
 
 ## One move with customer `c`. False when there was nothing worth doing.
 static func _act(s: Shift, c: Customer) -> bool:
+	_parked.erase(c)
 	# A boss's hit nothing in hand answers, coming due: shield up first.
 	if c.archetype.patience_is_shield and _incoming(c) > 0 and not _can_answer(s, c) \
 			and c.demand_due_tick - s.tick <= 2 and not _shield_covers(s, c):
@@ -310,6 +327,8 @@ static func _act(s: Shift, c: Customer) -> bool:
 		var need := _band_need(band)
 		if _appeal_in_hand(s) >= need:
 			return _did("appeal card", s.play_card(_appeal_card_for(s, need)).ok)
+		if _park(s, c, need):
+			return true
 		s.drop_offer()
 	elif c.offer != null:
 		var gap: int = c.line - c.offer.appeal
@@ -321,6 +340,12 @@ static func _act(s: Shift, c: Customer) -> bool:
 				return _did("money card", s.play_card(sweetener).ok)
 			return _offer(s, c)
 		var card := _appeal_card_for(s, gap)
+		if card >= 0 and _appeal_of(s.hand[card], c.sales) >= gap:
+			return _did("appeal card", s.play_card(card).ok)
+		# Nothing in hand closes it at once: a card that keeps working while you
+		# go and sell to somebody else might.
+		if _park(s, c, gap):
+			return true
 		if card >= 0:
 			return _did("appeal card", s.play_card(card).ok)
 		s.drop_offer()
@@ -339,6 +364,43 @@ static func _act(s: Shift, c: Customer) -> bool:
 	# hand runs dry: cycle a card instead (the caller digs).
 	if not c.unsigned.is_empty() and not c.has_budget():
 		return _did("close", s.close().ok)
+	return false
+
+## Think on it: appeal that builds a tick at a time for a few ticks while you are
+## busy with somebody else, until anything else is played on them. Played when
+## that adds up to the `gap` left to close, there is someone else worth working
+## in the meantime, and the shift has the time for it. Then the customer is left
+## alone (see _pick_target) until it has done its work.
+static func _park(s: Shift, c: Customer, gap: int) -> bool:
+	if gap <= 0 or not _someone_else_to_work(s, c):
+		return false
+	for i in range(s.hand.size()):
+		var inst: CardInstance = s.hand[i]
+		if inst.is_product():
+			continue
+		var def := inst.card as SupportCardDef
+		var effects: Array = def.upgraded_effects \
+			if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
+		for e in effects:
+			if not (e is Linger and e.stops_on_card and e.inner is ChangeAppeal):
+				continue
+			if e.inner.amount * e.ticks < gap:
+				continue
+			if s.tick_budget - s.tick <= e.ticks + inst.ticks() + 1:
+				continue
+			_parked[c] = true
+			return _did("park a card on them (think on it)", s.play_card(i).ok)
+	return false
+
+## Whether somebody other than `c` is there with something to do about.
+static func _someone_else_to_work(s: Shift, c: Customer) -> bool:
+	for o in s.seated():
+		if o == c or _parked_and_working(o):
+			continue
+		if o.demand != null and o.demand.resolve is LeaveThemAlone:
+			continue
+		if o.offer != null or not o.unsigned.is_empty() or _best_product(s, o) >= 0:
+			return true
 	return false
 
 ## Asks for the business, now that they would say yes - or, for someone who holds
@@ -514,10 +576,18 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 		var appeal := 0
 		var converts := false
 		var varies := false
+		# Keep It Coming's money is already worked out in dollars - see below.
+		var flat := false
 		for e in effects:
 			var inner = e.inner if e is ScaleBySales else e
 			if inner is ChangeMargin:
 				money += inner.amount
+			# Keep It Coming: its percent of this product's margin, and of every
+			# one they would take after it.
+			if inner is ChangeCombo:
+				money += roundi(inner.amount / 100.0 * (c.offer.margin + _later_margin(s, c)))
+				varies = true
+				flat = true
 			if inner is ChangeAppeal:
 				appeal += inner.amount
 			# Plus Service Fee: so much a product they have already taken.
@@ -535,7 +605,7 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 		if money <= 0:
 			continue
 		# Margin on the offer is multiplied by their combo when it sells.
-		if varies and money * c.combo_multiplier() <= inst.ticks() * tick_worth:
+		if varies and money * (1.0 if flat else c.combo_multiplier()) <= inst.ticks() * tick_worth:
 			continue
 		if _gap_known(c):
 			if c.offer.appeal + appeal < c.line:
@@ -549,6 +619,27 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 		else:
 			return i
 	return converter
+
+## The margin of up to two more products in hand that `c` would take after the
+## one on the table - the sales a card that raises their combo also pays on - as
+## this player reads them, and only while the shift has time left to make them.
+static func _later_margin(s: Shift, c: Customer) -> int:
+	if s.tick_budget - s.tick <= 6:
+		return 0
+	var margins: Array[int] = []
+	for inst in s.hand:
+		if not inst.is_product() or c.owns(inst.card.id) \
+				or not c.accepts(inst.card as ProductCardDef):
+			continue
+		if _est_rank(c, (inst.card as ProductCardDef).interest.id) > GUESS_MIDDLE:
+			continue
+		margins.append(inst.margin())
+	margins.sort()
+	margins.reverse()
+	var total := 0
+	for m in margins.slice(0, 2):
+		total += m
+	return total
 
 ## A draw card in hand that costs no time - or -1.
 static func _free_draw(s: Shift) -> int:
