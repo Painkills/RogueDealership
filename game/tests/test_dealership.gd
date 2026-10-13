@@ -132,3 +132,26 @@ func test_a_store_offers_upgrades_the_run_does_not_own_and_keeps_the_one_taken()
 	Shop.new(with_pool, ShiftProfile.new())
 	h.eq("no upgrades on offer moves no dice", with_pool.rng.state, plain.rng.state)
 	h.check("and offers nothing", Shop.new(_run(pool), ShiftProfile.new()).dealership_offers.is_empty())
+
+func test_the_margin_bonus_is_a_share_of_the_product_alone() -> void:
+	## +15% of the product's own value as it goes on the table. What a card adds
+	## afterwards is not raised by it, and neither is it a rise on the final amount.
+	var u := DealershipUpgrade.new()
+	u.margin = 0.15
+	var plain := _shift([])
+	var upgraded := _shift([u])
+	var product: ProductCardDef = plain.card_pool.cards.filter(func(d): return d is ProductCardDef)[0]
+	var margins := []
+	for s in [plain, upgraded]:
+		var c: Customer = s.chairs[0]
+		s.at = 0
+		s.hand.clear()
+		s.hand.append(CardInstance.new(product, 990))
+		s.place(0)
+		var fee := ChangeMargin.new()
+		fee.amount = 300
+		var placed: int = c.offer.margin
+		fee.apply(s._yours(c))
+		margins.append([placed, c.offer.margin - placed])
+	h.eq("the product starts 15% above its card", margins[1][0], roundi(margins[0][0] * 1.15))
+	h.eq("a card's +300 is still +300", margins[1][1], 300)

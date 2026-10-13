@@ -27,7 +27,9 @@ class_name DealershipUpgrade extends Resource
 ## Added to every bit of appeal one of your cards or products adds - a card
 ## that adds +4 adds +5 with this at 1.
 @export var appeal_per_card: int = 0
-## Every product's margin, as a share on top: 0.05 is +5%.
+## Added to a product's own margin as it is put on the table: 0.15 makes it start
+## 15% above its card. Only the product's printed value - what cards add after,
+## and the combo that multiplies it, are not raised by it again.
 @export var margin: float = 0.0
 ## Added to every customer's combo step - see CustomerArchetype.combo_step.
 @export var combo_step: float = 0.0
