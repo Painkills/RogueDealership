@@ -535,7 +535,7 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 		if money <= 0:
 			continue
 		# Margin on the offer is multiplied by their combo when it sells.
-		if varies and money * (1.0 + c.combo_step * c.sales) <= inst.ticks() * tick_worth:
+		if varies and money * c.combo_multiplier() <= inst.ticks() * tick_worth:
 			continue
 		if _gap_known(c):
 			if c.offer.appeal + appeal < c.line:

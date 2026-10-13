@@ -12,7 +12,10 @@ var ranks: Dictionary              ## interest id -> 1..9. Hidden from the playe
 var line: int                      ## how high Appeal must climb before yes
 var start_line: int
 var line_per_sale: int
-var combo_step: float              ## see CustomerArchetype.combo_step
+var combo_step: float              ## see Shift._spawn()
+## Added to this customer's multiplier by cards of yours (ChangeCombo) - on top
+## of what their sales have built up, and kept for the visit.
+var combo_bonus: float = 0.0
 var patience: int
 var max_patience: int
 
@@ -108,6 +111,12 @@ func _init(p_key: String, p_name: String, p_arch: CustomerArchetype,
 	patience = p_patience
 	max_patience = p_max
 	_interests = p_interests
+
+
+## What their next sale is multiplied by: 1, plus their step for every sale
+## they have already made, plus whatever your cards have added.
+func combo_multiplier() -> float:
+	return 1.0 + combo_step * sales + combo_bonus
 
 
 func appeal_for(interest_id: StringName) -> int:

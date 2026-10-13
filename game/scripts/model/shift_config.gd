@@ -12,8 +12,8 @@ class_name ShiftConfig extends Resource
 @export var quota: int = 3600
 ## The combo: every further sale to the same customer this visit pays this much
 ## more of its margin than the last - x1.25, x1.5, x1.75... - times their
-## archetype's combo_weight. One number for every customer, so the curve is
-## learned once.
+## archetype's combo_weight, rounded to the nearest 5%. One number for every
+## customer, so the curve is learned once.
 @export var combo_step: float = 0.25
 @export var floor_size: int = 3
 ## Ticks between one customer coming in the door and the next, rolled fresh

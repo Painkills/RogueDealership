@@ -1390,6 +1390,9 @@ func _fx_notes(fx: Dictionary, with_money: bool) -> Array[String]:
 	var appeal := int(fx.get("appeal", 0))
 	if appeal != 0:
 		notes.append("%+d appeal" % appeal)
+	var combo := int(fx.get("combo", 0))
+	if combo != 0:
+		notes.append("combo %+d%%" % combo)
 	var money := int(fx.get("margin", 0))
 	if with_money and money != 0:
 		notes.append("%s%s margin" % ["+" if money > 0 else "-", Format.money(absi(money))])

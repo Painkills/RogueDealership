@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_combo.gd" id="2_combo"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Combo_base"]
+script = ExtResource("2_combo")
+amount = 25
+
+[sub_resource type="Resource" id="Combo_up"]
+script = ExtResource("2_combo")
+amount = 50
+
+[resource]
+script = ExtResource("3_def")
+needs_offer = false
+id = &"keep_it_coming"
+display_name = "Keep It Coming"
+text = "\"And while we're at it...\" Every yes makes the next one worth more."
+ticks = 1
+rarity = 2
+effects = Array[ExtResource("1_eff")]([SubResource("Combo_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Combo_up")])

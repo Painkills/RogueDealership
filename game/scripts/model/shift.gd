@@ -558,7 +558,10 @@ func _spawn(chair: int, arch: CustomerArchetype = null) -> void:
 	if easier != 0:
 		c.line = maxi(0, c.line + easier)
 		c.start_line = c.line
-	c.combo_step = cfg.combo_step * arch.combo_weight * combo_scale + perk(&"combo_step")
+	# Their step, to the nearest 5% - 12.5 reads 15, 31.25 reads 30 - so what the
+	# tablet says is what is paid. The dealership's own is added after, whole.
+	c.combo_step = roundf(cfg.combo_step * arch.combo_weight * combo_scale * 20.0) / 20.0 \
+		+ perk(&"combo_step")
 
 	# Every-triggered actions start their cadence counter jittered, not at a
 	# clean 0, so this customer's first demand does not land on the exact same
@@ -1407,7 +1410,7 @@ func offer() -> Result:
 			# What the combo made of it, for the view to light up: the product's
 			# own margin, what it sold at, and what the next one will.
 			"base_margin": sale["base_margin"], "multiplier": sale["multiplier"],
-			"next_multiplier": 1.0 + c.combo_step * c.sales})
+			"next_multiplier": c.combo_multiplier()})
 
 
 func _settle(c: Customer) -> Dictionary:
@@ -1418,7 +1421,7 @@ func _settle(c: Customer) -> Dictionary:
 		return {}
 	# c.sales is PRIOR sales this visit only - it has not been incremented
 	# for this one yet, so the first sale always multiplies by exactly 1.0.
-	var multiplier: float = 1.0 + c.combo_step * c.sales
+	var multiplier: float = c.combo_multiplier()
 	peak_combo_multiplier = maxf(peak_combo_multiplier, multiplier)
 	var combo := roundi(o.margin * multiplier)
 	# What they pay over the odds for a product they prize, on top of it all.
@@ -1716,6 +1719,7 @@ func _snapshot(c: Customer) -> Dictionary:
 	return {"unsigned": c.unsigned_margin(),
 		"offer_margin": c.offer.margin if c.offer else 0,
 		"standing": standing, "patience": c.patience, "line": c.line,
+		"combo": c.combo_bonus,
 		"appeal": c.offer.appeal if c.offer else 0,
 		"offer": c.offer.instance.uid if c.offer else -1}
 
@@ -1773,6 +1777,7 @@ func _fx_since(before: Dictionary, c: Customer) -> Dictionary:
 		"standing": standing - int(before["standing"]),
 		"patience": int(now["patience"]) - int(before["patience"]),
 		"line": int(now["line"]) - int(before["line"]),
+		"combo": roundi((float(now["combo"]) - float(before["combo"])) * 100.0),
 		"appeal": appeal,
 		"swept": swept}
 
@@ -1991,7 +1996,7 @@ func _next_move(c: Customer) -> void:
 		"dialogue": said,
 		"descriptions": ["%s - %d ticks: %s" % [picked.telegraph, c.move_fuse(picked), what]],
 		"floor_wide": false,
-		"fx": {"margin": 0, "standing": 0, "patience": 0, "line": 0, "swept": -1},
+		"fx": {"margin": 0, "standing": 0, "patience": 0, "line": 0, "combo": 0, "swept": -1},
 	})
 
 
