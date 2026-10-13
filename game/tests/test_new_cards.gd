@@ -340,3 +340,36 @@ func test_each_tick_of_a_slow_card_shows_its_total_too() -> void:
 	s._tick_lingering(c)
 	s._tick_lingering(c)
 	h.eq("each tick shows +4", int(s.action_log.back()["fx"]["appeal"]), 4)
+
+# ----------------------------------- a customer patience cards count double for
+func test_patience_cards_count_by_the_scale_of_who_they_are_played_on() -> void:
+	var s := _shift()
+	var arch := _arch(40, 20)
+	arch.patience_card_scale = 2.0
+	var c := _seat(s, 0, arch)
+	c.patience = 10
+	_hold(s, _card([_patience(3)]))
+	s.play_card(0)
+	h.eq("+3 counts as +6 (and a tick of patience is spent playing it)", c.patience, 15)
+	_hold(s, _card([_patience(-4)]))
+	s.play_card(0)
+	h.eq("a loss is not scaled", c.patience, 10)
+
+func test_over_time_patience_is_scaled_every_tick() -> void:
+	var s := _shift()
+	var arch := _arch(40, 50)
+	arch.patience_card_scale = 2.0
+	var c := _seat(s, 0, arch)
+	c.patience = 10
+	_hold(s, _card([_lingering(_patience(2), 3)]))
+	s.play_card(0)
+	s._tick_lingering(c)
+	h.eq("a tick of +2 is +4", c.patience, 13)
+
+func test_a_customer_with_no_scale_gets_the_card_as_written() -> void:
+	var s := _shift()
+	var c := _seat(s, 0, _arch(40, 20))
+	c.patience = 10
+	_hold(s, _card([_patience(3)]))
+	s.play_card(0)
+	h.eq("+3 is +3", c.patience, 12)

@@ -15,6 +15,6 @@ display_name = "Getting Impatient"
 telegraph = "GETTING IMPATIENT"
 dialogue_tags_met = Array[StringName]([])
 dialogue_tags_missed = Array[StringName]([&"whale_hit"])
-ticks = 3
+ticks = 2
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_0")])
 dialogue_tags_raised = Array[StringName]([&"whale_getting_impatient"])

@@ -1392,18 +1392,40 @@ func _show_what_they_did(entry: Dictionary) -> void:
 ## How far apart two numbers from one card start, in the middle of the tablet.
 const STACK_GAP := 34.0
 
+## Where in the middle of the tablet `which` starts, among the numbers one card
+## starts there: centred on the middle, STACK_GAP apart, in the order given.
+func _start_offset(starts: Array[StringName], which: StringName) -> Vector2:
+	return Vector2(0, (starts.find(which) - (starts.size() - 1) * 0.5) * STACK_GAP)
+
 func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool) -> int:
 	var count := 0
 	# Stacks the ones that fall back to the middle of a folder, so they do not
 	# land on each other.
 	var stacked := 0
 	var folder := _chair_on_screen(chair) + Vector2(0, -40)
+	# A card of yours played at this tablet puts its numbers in the middle of it,
+	# where it landed, and each is carried to where the screen shows it. More than
+	# one from a card start one above the next: appeal, patience, money.
+	var well := _tablet_spot(chair, &"well") if with_money else Rect2()
+	var starts: Array[StringName] = []
+	if well.size != Vector2.ZERO:
+		if int(fx.get("appeal", 0)) != 0 and _tablet_spot(chair, &"bar").size != Vector2.ZERO:
+			starts.append(&"appeal")
+		if int(fx.get("patience", 0)) != 0:
+			starts.append(&"patience")
+		if int(fx.get("margin", 0)) != 0:
+			starts.append(&"money")
 	var patience := int(fx.get("patience", 0))
 	if patience != 0:
 		var frac: Vector2 = (_customer_cards[chair] as CustomerCard3D).patience_frac()
 		var r := _card_rect(_customer_cards[chair], CustomerCard3D.CARD_SIZE)
-		_rise_at("%+d" % patience, _fx_tone(patience < 0, whole_floor),
-			r.position + r.size * frac)
+		var bar_at := r.position + r.size * frac
+		var role := _fx_tone(patience < 0, whole_floor)
+		if starts.has(&"patience"):
+			_travel_text("%+d" % patience, role, well.get_center() + _start_offset(starts, &"patience"),
+				bar_at, 0.25, 0.3)
+		else:
+			_rise_at("%+d" % patience, role, bar_at)
 		count += 1
 	var line := int(fx.get("line", 0))
 	if line != 0:
@@ -1418,14 +1440,12 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 		# Shown in the middle of the tablet, where the card was played, and carried
 		# over to the meter.
 		var bar := _tablet_spot(chair, &"bar")
-		var well := _tablet_spot(chair, &"well")
-		# Just the number: it lands on the meter, which says what it is. Two things
-		# from one card start apart - this above the middle, the money below it.
+		# Just the number: it lands on the meter, which says what it is.
 		var text := "%+d" % appeal
 		var role := _fx_tone(appeal < 0, whole_floor)
-		if bar.size != Vector2.ZERO and well.size != Vector2.ZERO:
-			var start := well.get_center() + Vector2(0, -STACK_GAP if with_money and fx.get("margin", 0) != 0 else 0.0)
-			_travel_text(text, role, start, bar.get_center(), 0.25, 0.3)
+		if starts.has(&"appeal"):
+			_travel_text(text, role, well.get_center() + _start_offset(starts, &"appeal"),
+				bar.get_center(), 0.25, 0.3)
 		else:
 			_rise_at(text + " appeal", role, folder + Vector2(0, 38.0 * stacked))
 			stacked += 1
@@ -1442,7 +1462,7 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 	if with_money and money != 0:
 		var text := "%s%s" % ["+" if money > 0 else "-", Format.money(absi(money))]
 		var role := _fx_tone(money < 0, whole_floor)
-		var below := STACK_GAP if int(fx.get("appeal", 0)) != 0 else 0.0
+		var below := _start_offset(starts, &"money").y if starts.has(&"money") else 0.0
 		if not _roll_into_margin(chair, text, role, money, below):
 			_rise_at(text + " margin", role, folder + Vector2(0, 38.0 * stacked))
 		count += 1

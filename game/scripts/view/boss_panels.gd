@@ -11,8 +11,11 @@ class_name BossPanels extends RefCounted
 
 ## The back of the boss's folder. Short on purpose: the fight explains itself,
 ## move by move, on the folders either side.
-static func fight_text(_c = null) -> String:
-	return "A FIGHT, NOT A SALE\nLeft folder: their budget. Spend it all and they sign.\nRight folder: what is coming, and what stops it. Whatever it hits comes off their patience first, then your standing."
+static func fight_text(c = null) -> String:
+	var text := "A FIGHT, NOT A SALE\nLeft folder: their budget. Spend it all and they sign.\nRight folder: what is coming, and what stops it. Whatever it hits comes off their patience first, then your standing."
+	if c != null and c.archetype.patience_card_scale != 1.0:
+		text += "\nPatience cards count x%s here." % str(c.archetype.patience_card_scale)
+	return text
 
 ## The notes for a floor with `front` at the front: seat -> note, for each of the
 ## two seats either side of it that nobody sits in. Empty when nobody on the

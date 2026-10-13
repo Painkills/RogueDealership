@@ -93,6 +93,9 @@ class_name CustomerArchetype extends Resource
 ## cannot cover reaches your standing. At 0 they do not walk out - the next hit
 ## just lands on you in full. (The words on screen only ever call it patience.)
 @export var patience_is_shield: bool = false
+## Every point of patience a card of yours gives them counts for this many: 2.0 and
+## a +4 is +8. For a fight where keeping their patience up is the whole game.
+@export var patience_card_scale: float = 1.0
 ## A boss's moves: one at a time, telegraphed with its fuse on their card, each
 ## raised as a Demand (what answers it, and what ignoring it costs - a Hit). A
 ## round deals every move once, in an order drawn fresh each round; skipped is

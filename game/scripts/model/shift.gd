@@ -1850,6 +1850,7 @@ func _yours(c: Customer, card: CardDef = null) -> EffectContext:
 				or (card != null and card.brand == u.line_drop_brand)):
 			extra += u.line_drop_extra
 	ctx.line_drop_scale = 1.0 + extra
+	ctx.patience_scale = c.archetype.patience_card_scale
 	return ctx
 
 

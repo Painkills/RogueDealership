@@ -2779,16 +2779,11 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 		CustomerCard3D.CARD_SIZE)
 	var bar_at: Vector2 = card_rect.position + card_rect.size \
 		* (_controller._customer_cards[chair] as CustomerCard3D).patience_frac()
-	var gain: Label = null
-	for n in _controller._fx:
-		if is_instance_valid(n) and n is Label and (n as Label).get_global_rect().get_center().distance_to(bar_at) < 6.0:
-			gain = n
-	_check("the patience gain is at their patience bar (%s, bar %s)"
-		% [gain.get_global_rect().get_center() if gain else null, bar_at],
-		gain != null and gain.get_global_rect().get_center().distance_to(bar_at) < 6.0)
-	_check("which is on their folder, not over the middle of it",
-		gain != null and card_rect.has_point(gain.get_global_rect().get_center()))
-
+	var middle: Vector2 = _controller._tablet_spot(chair, &"well").get_center()
+	var gain := _label_near(middle)
+	_check("the patience gain starts in the middle of the tablet (%s, middle %s)"
+		% [gain.get_global_rect().get_center() if gain else null, middle],
+		gain != null)
 	var meter: Rect2 = _controller._tablet_spot(chair, &"appeal")
 	var well: Rect2 = _controller._tablet_spot(chair, &"well")
 	var spot: Rect2 = _controller._tablet_spot(chair, &"margin")
@@ -2799,6 +2794,9 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 			and absf(lower.get_global_rect().get_center().y - meter.end.y) < 6.0)
 
 	var lift := _fx_label_saying("+2")
+	_check("the appeal gain starts in the middle of the tablet, above the patience (%s)"
+		% [lift.get_global_rect().get_center() if lift else null],
+		lift != null and lift.get_global_rect().get_center().distance_to(middle + Vector2(0, -_controller.STACK_GAP)) < 6.0)
 	var tablet: OfferTablet = _controller._tablets[chair]
 	var new_margin: int = c.offer.margin
 	var money := _fx_label_saying("+$300")
@@ -2818,6 +2816,10 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 		% [lift.get_global_rect().get_center() if lift else null, bar.get_center()],
 		lift != null and bar.size != Vector2.ZERO
 			and lift.get_global_rect().get_center().distance_to(bar.get_center()) < 6.0)
+	gain = _label_near(bar_at)
+	_check("and is carried to their patience bar on the folder (%s, bar %s)"
+		% [gain.get_global_rect().get_center() if gain else null, bar_at],
+		gain != null and card_rect.has_point(gain.get_global_rect().get_center()))
 	money = _fx_label_saying("+$300")
 	_check("and the money at the MARGIN figure, left-aligned the way the figure is (%s, margin %s)"
 		% [money.get_global_rect() if money else null, spot],
@@ -2865,6 +2867,14 @@ func _check_over_time_cards_show_a_clock(chair: int) -> void:
 	_settle()
 	_check("and the clock goes when it is done", folder.badge_text() == "")
 	_finish_fx()
+
+## The effect label whose middle is within a few pixels of `at`, or null.
+func _label_near(at: Vector2) -> Label:
+	for n in _controller._fx:
+		if is_instance_valid(n) and n is Label \
+				and (n as Label).get_global_rect().get_center().distance_to(at) < 6.0:
+			return n
+	return null
 
 ## Whether every effect label on screen uses only characters the game's font has.
 func _fx_labels_are_all_in_the_font() -> bool:
