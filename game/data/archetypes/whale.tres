@@ -31,7 +31,6 @@ combo_weight = 1.25
 arrival_patience_share = 1.0
 budget_share = 1.0
 patience_is_shield = true
-patience_card_scale = 2.0
 moves = Array[ExtResource("2_dmd")]([ExtResource("4_imp"), ExtResource("4_imp"), ExtResource("5_stk")])
 timed_moves = Array[ExtResource("3_tm")]([SubResource("Timed_desk")])
 move_gap_ticks = 0
