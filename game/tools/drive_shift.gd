@@ -2796,14 +2796,22 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 			and absf(lower.get_global_rect().get_center().y - meter.end.y) < 6.0)
 
 	var lift := _fx_label_saying("+2")
+	_check("the appeal has its word too, smaller",
+		lift != null and lift.get_node_or_null(^"Word") != null
+			and (lift.get_node(^"Word") as Label).text == "appeal"
+			and (lift.get_node(^"Word") as Label).get_theme_font_size("font_size")
+				< lift.get_theme_font_size("font_size"))
 	_check("the appeal gain starts in the middle of the tablet, above the money (%s, well %s)"
 		% [lift.get_global_rect().get_center() if lift else null, well.get_center()],
 		lift != null and lift.get_global_rect().get_center().distance_to(well.get_center() + Vector2(0, -_controller.STACK_GAP)) < 6.0)
 	var tablet: OfferTablet = _controller._tablets[chair]
 	var new_margin: int = c.offer.margin
 	var money := _fx_label_saying("+$300")
-	_check("and so does the money, with no word 'margin' on it",
-		money != null and not money.text.contains("margin")
+	_check("and so does the money, with 'margin' beside it in a smaller size",
+		money != null and money.get_node_or_null(^"Word") != null
+			and (money.get_node(^"Word") as Label).text == "margin"
+			and (money.get_node(^"Word") as Label).get_theme_font_size("font_size")
+				< money.get_theme_font_size("font_size")
 			and money.get_global_rect().get_center().distance_to(well.get_center() + Vector2(0, _controller.STACK_GAP)) < 6.0)
 	_check("the money is in the same type as the tablet's MARGIN",
 		money != null and absf(money.get_theme_font_size("font_size")
