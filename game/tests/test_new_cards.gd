@@ -316,3 +316,27 @@ func test_the_table_always_turns_the_short_way() -> void:
 		worst <= deg_to_rad(120.0) + 0.0001)
 	h.eq("from the last seat to the first, one step on", snappedf(
 		CarouselTurn.nearest(-deg_to_rad(240.0), 0.0), 0.0001), snappedf(-deg_to_rad(360.0), 0.0001))
+
+# ------------------------------------------- numbers shown are the totals
+func _perked_shift(bonus: int) -> Shift:
+	var s := _shift()
+	var u := DealershipUpgrade.new()
+	u.appeal_per_card = bonus
+	s.dealership.append(u)
+	return s
+
+func test_the_appeal_a_card_shows_includes_what_the_dealership_adds() -> void:
+	var s := _perked_shift(2)
+	_seat(s, 0, _arch(40))
+	_hold(s, _card([_appeal(2)]))
+	s.play_card(0)
+	h.eq("+2 and the perk's +2 shown as one +4", int(s.action_log.back()["fx"]["appeal"]), 4)
+
+func test_each_tick_of_a_slow_card_shows_its_total_too() -> void:
+	var s := _perked_shift(2)
+	var c := _seat(s, 0, _arch(40))
+	_hold(s, _card([_lingering(_appeal(2), 3)]))
+	s.play_card(0)
+	s._tick_lingering(c)
+	s._tick_lingering(c)
+	h.eq("each tick shows +4", int(s.action_log.back()["fx"]["appeal"]), 4)

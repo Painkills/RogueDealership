@@ -1389,6 +1389,9 @@ func _show_what_they_did(entry: Dictionary) -> void:
 ## MARGIN, travelling there from the middle of the tablet where it was played.
 ## Wherever the tablet is not on (another folder, away) it is the folder itself.
 ## Returns how many it put up.
+## How far apart two numbers from one card start, in the middle of the tablet.
+const STACK_GAP := 34.0
+
 func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool) -> int:
 	var count := 0
 	# Stacks the ones that fall back to the middle of a folder, so they do not
@@ -1416,10 +1419,13 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 		# over to the meter.
 		var bar := _tablet_spot(chair, &"bar")
 		var well := _tablet_spot(chair, &"well")
-		var text := "%+d appeal" % appeal
+		# Just the number: it lands on the meter, which says what it is. Two things
+		# from one card start apart - this above the middle, the money below it.
+		var text := "%+d" % appeal
 		var role := _fx_tone(appeal < 0, whole_floor)
 		if bar.size != Vector2.ZERO and well.size != Vector2.ZERO:
-			_travel_text(text, role, well.get_center(), bar.get_center())
+			var start := well.get_center() + Vector2(0, -STACK_GAP if with_money and fx.get("margin", 0) != 0 else 0.0)
+			_travel_text(text, role, start, bar.get_center(), 0.25, 0.3)
 		else:
 			_rise_at(text, role, folder + Vector2(0, 38.0 * stacked))
 			stacked += 1
@@ -1436,7 +1442,8 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 	if with_money and money != 0:
 		var text := "%s%s" % ["+" if money > 0 else "-", Format.money(absi(money))]
 		var role := _fx_tone(money < 0, whole_floor)
-		if not _roll_into_margin(chair, text, role, money):
+		var below := STACK_GAP if int(fx.get("appeal", 0)) != 0 else 0.0
+		if not _roll_into_margin(chair, text, role, money, below):
 			_rise_at(text + " margin", role, folder + Vector2(0, 38.0 * stacked))
 		count += 1
 	return count
@@ -1447,7 +1454,8 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 ## lands says what it is. The figure itself stays at what it was meanwhile; the
 ## old number rolls to the new one, then fades into the tablet's own. False when
 ## that tablet is not showing, or has nothing on the table.
-func _roll_into_margin(chair: int, text: String, role: StringName, delta: int) -> bool:
+func _roll_into_margin(chair: int, text: String, role: StringName, delta: int,
+		below: float = 0.0) -> bool:
 	var spot := _tablet_spot(chair, &"margin")
 	var well := _tablet_spot(chair, &"well")
 	var tablet: OfferTablet = _tablets[chair] if chair >= 0 and chair < _tablets.size() else null
@@ -1465,7 +1473,7 @@ func _roll_into_margin(chair: int, text: String, role: StringName, delta: int) -
 	var base := _fx_label(Format.money(was), &"margin", size, spot.get_center())
 	base.position = left.call(base)
 	tablet.cover_margin(true)
-	var carried := _fx_label(text, role, size, well.get_center())
+	var carried := _fx_label(text, role, size, well.get_center() + Vector2(0, below))
 	var tw := _fx_tween()
 	tw.tween_interval(0.35)
 	tw.tween_property(carried, "position", left.call(carried), 0.8) \
@@ -1524,15 +1532,16 @@ func _rise_at(text: String, role: StringName, at: Vector2) -> void:
 	tw.tween_callback(func(): _fx_done(l))
 
 ## Text that appears where a card was played and travels to the number it changed.
-func _travel_text(text: String, role: StringName, from: Vector2, to: Vector2) -> void:
+func _travel_text(text: String, role: StringName, from: Vector2, to: Vector2,
+		hold: float = 0.9, fade: float = 0.5) -> void:
 	var l := _fx_label(text, role, 34, from)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var tw := _fx_tween()
 	tw.tween_interval(0.35)
 	tw.tween_property(l, "position", to - l.size * 0.5, 0.9) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_interval(0.9)
-	tw.tween_property(l, "modulate:a", 0.0, 0.5)
+	tw.tween_interval(hold)
+	tw.tween_property(l, "modulate:a", 0.0, fade)
 	tw.tween_callback(func(): _fx_done(l))
 
 ## Text that rises off a customer's folder and fades - something that happened

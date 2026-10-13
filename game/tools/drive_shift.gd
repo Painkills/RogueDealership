@@ -2795,16 +2795,16 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 		lower != null and absf(lower.get_global_rect().get_center().x - meter.get_center().x) < 6.0
 			and absf(lower.get_global_rect().get_center().y - meter.end.y) < 6.0)
 
-	var lift := _fx_label_saying("appeal")
-	_check("the appeal gain starts in the middle of the tablet (%s, well %s)"
+	var lift := _fx_label_saying("+2")
+	_check("the appeal gain starts in the middle of the tablet, above the money (%s, well %s)"
 		% [lift.get_global_rect().get_center() if lift else null, well.get_center()],
-		lift != null and lift.get_global_rect().get_center().distance_to(well.get_center()) < 6.0)
+		lift != null and lift.get_global_rect().get_center().distance_to(well.get_center() + Vector2(0, -_controller.STACK_GAP)) < 6.0)
 	var tablet: OfferTablet = _controller._tablets[chair]
 	var new_margin: int = c.offer.margin
 	var money := _fx_label_saying("+$300")
 	_check("and so does the money, with no word 'margin' on it",
 		money != null and not money.text.contains("margin")
-			and money.get_global_rect().get_center().distance_to(well.get_center()) < 6.0)
+			and money.get_global_rect().get_center().distance_to(well.get_center() + Vector2(0, _controller.STACK_GAP)) < 6.0)
 	_check("the money is in the same type as the tablet's MARGIN",
 		money != null and absf(money.get_theme_font_size("font_size")
 			- _controller._margin_type_px(tablet, spot)) < 1.0
@@ -2813,7 +2813,7 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 		tablet.margin_covered())
 	_check("every character of them is in the game's font", _fx_labels_are_all_in_the_font())
 	_step_fx(1.14)
-	lift = _fx_label_saying("appeal")
+	lift = _fx_label_saying("+2")
 	_check("the appeal arrives at the meter (%s, bar %s)"
 		% [lift.get_global_rect().get_center() if lift else null, bar.get_center()],
 		lift != null and bar.size != Vector2.ZERO
@@ -2824,7 +2824,8 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 		money != null and absf(money.get_global_rect().position.x - spot.position.x) < 6.0
 			and absf(money.get_global_rect().get_center().y - spot.get_center().y) < 6.0
 			and spot.get_center().x > well.get_center().x)
-	_step_fx(0.4)
+	_step_fx(0.8)
+	_check("the appeal does not linger on the meter", _fx_label_saying("+2") == null)
 	var rolling := _fx_label_saying("$")
 	_check("where the old number rolls to the new one (now %s)"
 		% [rolling.text if rolling else null], rolling != null and rolling.text != "+$300")
