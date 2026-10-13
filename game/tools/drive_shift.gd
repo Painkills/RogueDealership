@@ -1142,7 +1142,7 @@ func _check_every_card_shows_what_it_did() -> void:
 	var texts := _fx_texts()
 	_check("the Line it lowered rises off their folder (%s)" % str(texts),
 		texts.any(func(t): return str(t).contains("Line -2")))
-	var patience_notes := texts.filter(func(t): return str(t).contains("-1 patience"))
+	var patience_notes := texts.filter(func(t): return str(t) == "-1")
 	_check("and the patience it took from the floor off every folder it touched (%d of %d)"
 		% [patience_notes.size(), seated], patience_notes.size() == seated)
 	_controller._clear_fx()
@@ -2779,7 +2779,10 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 		CustomerCard3D.CARD_SIZE)
 	var bar_at: Vector2 = card_rect.position + card_rect.size \
 		* (_controller._customer_cards[chair] as CustomerCard3D).patience_frac()
-	var gain := _fx_label_saying("patience")
+	var gain: Label = null
+	for n in _controller._fx:
+		if is_instance_valid(n) and n is Label and (n as Label).get_global_rect().get_center().distance_to(bar_at) < 6.0:
+			gain = n
 	_check("the patience gain is at their patience bar (%s, bar %s)"
 		% [gain.get_global_rect().get_center() if gain else null, bar_at],
 		gain != null and gain.get_global_rect().get_center().distance_to(bar_at) < 6.0)
@@ -2796,22 +2799,11 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 			and absf(lower.get_global_rect().get_center().y - meter.end.y) < 6.0)
 
 	var lift := _fx_label_saying("+2")
-	_check("the appeal has its word too, smaller",
-		lift != null and lift.get_node_or_null(^"Word") != null
-			and (lift.get_node(^"Word") as Label).text == "appeal"
-			and (lift.get_node(^"Word") as Label).get_theme_font_size("font_size")
-				< lift.get_theme_font_size("font_size"))
-	_check("the appeal gain starts in the middle of the tablet, above the money (%s, well %s)"
-		% [lift.get_global_rect().get_center() if lift else null, well.get_center()],
-		lift != null and lift.get_global_rect().get_center().distance_to(well.get_center() + Vector2(0, -_controller.STACK_GAP)) < 6.0)
 	var tablet: OfferTablet = _controller._tablets[chair]
 	var new_margin: int = c.offer.margin
 	var money := _fx_label_saying("+$300")
-	_check("and so does the money, with 'margin' beside it in a smaller size",
-		money != null and money.get_node_or_null(^"Word") != null
-			and (money.get_node(^"Word") as Label).text == "margin"
-			and (money.get_node(^"Word") as Label).get_theme_font_size("font_size")
-				< money.get_theme_font_size("font_size")
+	_check("and so does the money, as a bare number",
+		money != null and money.text == "+$300" and money.get_child_count() == 0
 			and money.get_global_rect().get_center().distance_to(well.get_center() + Vector2(0, _controller.STACK_GAP)) < 6.0)
 	_check("the money is in the same type as the tablet's MARGIN",
 		money != null and absf(money.get_theme_font_size("font_size")

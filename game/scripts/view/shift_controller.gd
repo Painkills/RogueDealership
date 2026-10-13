@@ -1402,7 +1402,7 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 	if patience != 0:
 		var frac: Vector2 = (_customer_cards[chair] as CustomerCard3D).patience_frac()
 		var r := _card_rect(_customer_cards[chair], CustomerCard3D.CARD_SIZE)
-		_rise_at("%+d patience" % patience, _fx_tone(patience < 0, whole_floor),
+		_rise_at("%+d" % patience, _fx_tone(patience < 0, whole_floor),
 			r.position + r.size * frac)
 		count += 1
 	var line := int(fx.get("line", 0))
@@ -1423,12 +1423,11 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 		# from one card start apart - this above the middle, the money below it.
 		var text := "%+d" % appeal
 		var role := _fx_tone(appeal < 0, whole_floor)
-		var word := "appeal"
 		if bar.size != Vector2.ZERO and well.size != Vector2.ZERO:
 			var start := well.get_center() + Vector2(0, -STACK_GAP if with_money and fx.get("margin", 0) != 0 else 0.0)
-			_travel_text(text, role, start, bar.get_center(), 0.25, 0.3, word)
+			_travel_text(text, role, start, bar.get_center(), 0.25, 0.3)
 		else:
-			_rise_at(text + " " + word, role, folder + Vector2(0, 38.0 * stacked))
+			_rise_at(text + " appeal", role, folder + Vector2(0, 38.0 * stacked))
 			stacked += 1
 		count += 1
 	var combo := int(fx.get("combo", 0))
@@ -1437,14 +1436,14 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 		var at := spot.get_center() if spot.size != Vector2.ZERO \
 			else folder + Vector2(0, 38.0 * stacked)
 		stacked += 0 if spot.size != Vector2.ZERO else 1
-		_rise_at("combo %+d%%" % combo, _fx_tone(combo < 0, whole_floor), at)
+		_rise_at("%+d%%" % combo, _fx_tone(combo < 0, whole_floor), at)
 		count += 1
 	var money := int(fx.get("margin", 0))
 	if with_money and money != 0:
 		var text := "%s%s" % ["+" if money > 0 else "-", Format.money(absi(money))]
 		var role := _fx_tone(money < 0, whole_floor)
 		var below := STACK_GAP if int(fx.get("appeal", 0)) != 0 else 0.0
-		if not _roll_into_margin(chair, text, role, money, below, "margin"):
+		if not _roll_into_margin(chair, text, role, money, below):
 			_rise_at(text + " margin", role, folder + Vector2(0, 38.0 * stacked))
 		count += 1
 	return count
@@ -1456,7 +1455,7 @@ func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool
 ## old number rolls to the new one, then fades into the tablet's own. False when
 ## that tablet is not showing, or has nothing on the table.
 func _roll_into_margin(chair: int, text: String, role: StringName, delta: int,
-		below: float = 0.0, word: String = "") -> bool:
+		below: float = 0.0) -> bool:
 	var spot := _tablet_spot(chair, &"margin")
 	var well := _tablet_spot(chair, &"well")
 	var tablet: OfferTablet = _tablets[chair] if chair >= 0 and chair < _tablets.size() else null
@@ -1475,7 +1474,6 @@ func _roll_into_margin(chair: int, text: String, role: StringName, delta: int,
 	base.position = left.call(base)
 	tablet.cover_margin(true)
 	var carried := _fx_label(text, role, size, well.get_center() + Vector2(0, below))
-	_add_word(carried, word, role)
 	var tw := _fx_tween()
 	tw.tween_interval(0.35)
 	tw.tween_property(carried, "position", left.call(carried), 0.8) \
@@ -1535,9 +1533,8 @@ func _rise_at(text: String, role: StringName, at: Vector2) -> void:
 
 ## Text that appears where a card was played and travels to the number it changed.
 func _travel_text(text: String, role: StringName, from: Vector2, to: Vector2,
-		hold: float = 0.9, fade: float = 0.5, word: String = "") -> void:
+		hold: float = 0.9, fade: float = 0.5) -> void:
 	var l := _fx_label(text, role, 34, from)
-	_add_word(l, word, role)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var tw := _fx_tween()
 	tw.tween_interval(0.35)
@@ -1546,29 +1543,6 @@ func _travel_text(text: String, role: StringName, from: Vector2, to: Vector2,
 	tw.tween_interval(hold)
 	tw.tween_property(l, "modulate:a", 0.0, fade)
 	tw.tween_callback(func(): _fx_done(l))
-
-## Says what a number is in a smaller size beside it, riding along with it
-## (a child, so it moves and fades with the number).
-func _add_word(number: Label, word: String, role: StringName) -> void:
-	if word == "":
-		return
-	var w := Label.new()
-	w.name = "Word"
-	w.text = word
-	w.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	w.theme_type_variation = &"Heading"
-	var px := maxi(14, roundi(number.get_theme_font_size("font_size") * WORD_SCALE))
-	w.add_theme_font_size_override("font_size", px)
-	w.add_theme_color_override("font_color", Palette.color(role))
-	w.add_theme_color_override("font_outline_color", Palette.color(&"paper"))
-	w.add_theme_constant_override("outline_size", maxi(4, px / 6))
-	number.add_child(w)
-	w.size = w.get_combined_minimum_size()
-	# After the number, sharing its baseline.
-	w.position = Vector2(number.size.x + 6.0, number.size.y - w.size.y - number.size.y * 0.08)
-
-## The word beside a number, against the number's size.
-const WORD_SCALE := 0.55
 
 ## Text that rises off a customer's folder and fades - something that happened
 ## to them, said where it happened.
