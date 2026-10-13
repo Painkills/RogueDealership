@@ -167,6 +167,18 @@ func margin_px() -> Rect2:
 	_bind()
 	return _margin.get_global_rect()
 
+## Where one of the tablet's numbers sits, in its screen's own pixels: &"margin",
+## &"combo", &"appeal" (the meter's panel) or &"well" (where the product stands, and the
+## cards you play land) - for a popup to go where the number it is about is.
+func spot_px(which: StringName) -> Rect2:
+	_bind()
+	match which:
+		&"margin": return _margin.get_global_rect()
+		&"combo": return _combo.get_global_rect()
+		&"appeal": return Rect2(APPEAL_RECT)   # the meter's panel, APPEAL over it
+		&"well": return Rect2(WELL_RECT)
+	return Rect2()
+
 ## The type size the MARGIN number is drawn at, in the screen's own pixels.
 func margin_font_px() -> int:
 	_bind()

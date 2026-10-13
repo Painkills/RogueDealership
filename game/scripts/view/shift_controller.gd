@@ -1365,68 +1365,133 @@ func _show_what_they_did(entry: Dictionary) -> void:
 			tw.tween_property(node, "scale", Vector3.ONE * 1.35, 0.15) \
 				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			tw.tween_property(node, "scale", Vector3.ONE, 0.45)
-	var notes := _fx_notes(fx, yours)
-	if bool(entry.get("floor_wide", false)) and not yours:
-		notes.append("WHOLE FLOOR: " + ", ".join(entry.get("descriptions", [])))
+	# Each number goes where the screen already shows what it is about.
+	var whole := bool(entry.get("floor_wide", false)) and not yours
+	var shown := _popups_for(fx, chair, yours, whole)
+	var words: Array[String] = []
+	if whole:
+		words.append("WHOLE FLOOR: " + ", ".join(entry.get("descriptions", [])))
 	# A card of yours that moved nothing a number can show - a read, a draw, a card
 	# that keeps working - says what it does instead: nothing you play is silent.
-	if yours and notes.is_empty() and not bool(entry.get("quiet", false)):
+	if yours and shown == 0 and words.is_empty() and not bool(entry.get("quiet", false)):
 		for d in entry.get("descriptions", []):
-			notes.append("no effect" if d == "nothing you could point at" else str(d))
-	if not notes.is_empty():
-		_rise("\n".join(notes), _fx_role(fx, bool(entry.get("floor_wide", false)) and not yours),
-			chair)
+			words.append("no effect" if d == "nothing you could point at" else str(d))
+	if not words.is_empty():
+		_rise("\n".join(words), &"alert" if whole else &"margin", chair)
 	# What a card that hits the whole floor did to everyone else it touched.
 	for other in entry.get("fx_others", []):
 		var there: int = Shift.CHAIR_KEYS.find(str(other["key"]))
 		if there < 0 or there >= _customer_cards.size():
 			continue
-		var others_notes := _fx_notes(other["fx"], true)
-		if not others_notes.is_empty():
-			_rise("\n".join(others_notes), _fx_role(other["fx"], false), there)
+		_popups_for(other["fx"], there, true, false)
 
-## What moved on a customer, as the short lines that rise off their folder: their
-## patience, their Line, the appeal of what is on the table - and, for a card of
-## yours, the money it put on or took off that product.
-func _fx_notes(fx: Dictionary, with_money: bool) -> Array[String]:
-	var notes: Array[String] = []
+## What moved on a customer, each number a popup where the screen already shows
+## what it is about: patience by their patience bar, appeal and their Line by the
+## tablet's meter, their combo by the combo number, and - for a card of yours -
+## the money it put on or took off the product on the table at the tablet's
+## MARGIN, travelling there from the middle of the tablet where it was played.
+## Wherever the tablet is not on (another folder, away) it is the folder itself.
+## Returns how many it put up.
+func _popups_for(fx: Dictionary, chair: int, with_money: bool, whole_floor: bool) -> int:
+	var count := 0
+	# Stacks the ones that fall back to the middle of a folder, so they do not
+	# land on each other.
+	var stacked := 0
+	var folder := _chair_on_screen(chair) + Vector2(0, -40)
 	var patience := int(fx.get("patience", 0))
 	if patience != 0:
-		notes.append("%+d patience" % patience)
+		var frac: Vector2 = (_customer_cards[chair] as CustomerCard3D).patience_frac()
+		var r := _card_rect(_customer_cards[chair], CustomerCard3D.CARD_SIZE)
+		_rise_at("%+d patience" % patience, _fx_tone(patience < 0, whole_floor),
+			r.position + r.size * frac)
+		count += 1
 	var line := int(fx.get("line", 0))
 	if line != 0:
-		notes.append("Line %+d" % line)
+		var bar := _tablet_spot(chair, &"appeal")
+		var at := Vector2(bar.get_center().x, bar.end.y) if bar.size != Vector2.ZERO \
+			else folder + Vector2(0, 38.0 * stacked)
+		stacked += 0 if bar.size != Vector2.ZERO else 1
+		_rise_at("Line %+d" % line, _fx_tone(line > 0, whole_floor), at)
+		count += 1
 	var appeal := int(fx.get("appeal", 0))
 	if appeal != 0:
-		notes.append("%+d appeal" % appeal)
+		var bar := _tablet_spot(chair, &"appeal")
+		var at := Vector2(bar.get_center().x, bar.position.y) if bar.size != Vector2.ZERO \
+			else folder + Vector2(0, 38.0 * stacked)
+		stacked += 0 if bar.size != Vector2.ZERO else 1
+		_rise_at("%+d appeal" % appeal, _fx_tone(appeal < 0, whole_floor), at)
+		count += 1
 	var combo := int(fx.get("combo", 0))
 	if combo != 0:
-		notes.append("combo %+d%%" % combo)
+		var spot := _tablet_spot(chair, &"combo")
+		var at := spot.get_center() if spot.size != Vector2.ZERO \
+			else folder + Vector2(0, 38.0 * stacked)
+		stacked += 0 if spot.size != Vector2.ZERO else 1
+		_rise_at("combo %+d%%" % combo, _fx_tone(combo < 0, whole_floor), at)
+		count += 1
 	var money := int(fx.get("margin", 0))
 	if with_money and money != 0:
-		notes.append("%s%s margin" % ["+" if money > 0 else "-", Format.money(absi(money))])
-	return notes
+		var text := "%s%s margin" % ["+" if money > 0 else "-", Format.money(absi(money))]
+		var role := _fx_tone(money < 0, whole_floor)
+		var to := _tablet_spot(chair, &"margin")
+		var from := _tablet_spot(chair, &"well")
+		if to.size != Vector2.ZERO and from.size != Vector2.ZERO:
+			_travel_text(text, role, from.get_center(), to.get_center())
+		else:
+			_rise_at(text, role, folder + Vector2(0, 38.0 * stacked))
+		count += 1
+	return count
 
 ## Red for what is bad for you - patience gone, their Line up, money off the deal -
-## green for what is good.
-func _fx_role(fx: Dictionary, whole_floor: bool) -> StringName:
-	var bad := int(fx.get("patience", 0)) < 0 or int(fx.get("line", 0)) > 0 \
-		or int(fx.get("appeal", 0)) < 0 or int(fx.get("margin", 0)) < 0
+## green for what is good; the whole floor's hits are always red.
+func _fx_tone(bad: bool, whole_floor: bool) -> StringName:
 	return &"alert" if bad or whole_floor else &"margin"
 
-## Text that rises off a customer's folder and fades - something that happened
-## to them, said where it happened.
-func _rise(text: String, role: StringName, chair: int) -> void:
-	var l := _fx_label(text, role, 34, _chair_on_screen(chair) + Vector2(0, -40))
+## Where on screen one of the tablet's numbers is, for the tablet at `chair` - an
+## empty Rect2 when that tablet is not showing.
+func _tablet_spot(chair: int, which: StringName) -> Rect2:
+	if chair < 0 or chair >= _tablets.size():
+		return Rect2()
+	var tablet: OfferTablet = _tablets[chair]
+	if not tablet.is_on():
+		return Rect2()
+	var px := tablet.spot_px(which)
+	if px.size.x <= 0.0 or px.size.y <= 0.0:
+		return Rect2()
+	var cell := Rect2i(Vector2i(px.position), Vector2i(px.size))
+	return _on_screen_rect(_rect_at(tablet.to_global(OfferTablet.centre_of(cell)),
+		OfferTablet.size_of(cell)))
+
+## Text that rises from `at` and fades - something that happened there, said
+## where it happened.
+func _rise_at(text: String, role: StringName, at: Vector2) -> void:
+	var l := _fx_label(text, role, 34, at)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var tw := _fx_tween()
 	tw.tween_interval(0.2)
 	tw.set_parallel(true)
-	tw.tween_property(l, "position:y", l.position.y - 110.0, 1.8) \
+	tw.tween_property(l, "position:y", l.position.y - 70.0, 1.8) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tw.tween_property(l, "modulate:a", 0.0, 1.8).set_ease(Tween.EASE_IN)
 	tw.set_parallel(false)
 	tw.tween_callback(func(): _fx_done(l))
+
+## Text that appears where a card was played and travels to the number it changed.
+func _travel_text(text: String, role: StringName, from: Vector2, to: Vector2) -> void:
+	var l := _fx_label(text, role, 34, from)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var tw := _fx_tween()
+	tw.tween_interval(0.35)
+	tw.tween_property(l, "position", to - l.size * 0.5, 0.9) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_interval(0.9)
+	tw.tween_property(l, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(func(): _fx_done(l))
+
+## Text that rises off a customer's folder and fades - something that happened
+## to them, said where it happened.
+func _rise(text: String, role: StringName, chair: int) -> void:
+	_rise_at(text, role, _chair_on_screen(chair) + Vector2(0, -40))
 
 ## The landing of an amount on a label that is not rolled - what is unsigned on
 ## the floor is rewritten every render - just a pulse in its colour.

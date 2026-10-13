@@ -158,6 +158,7 @@ func _physics_process(_delta: float) -> bool:
 	_press(KEY_O);             _settle(); _check_table("after offering again")
 	_check_their_yes_replaced_it()
 	_check_a_sale_lights_up_the_combo()
+	_check_card_numbers_appear_where_the_screen_shows_them()
 	var digs_before: int = int(_controller._shift.stat["digs"])
 	_press(KEY_2, true);      _settle(); _check_table("after digging hand card 2")
 	_check("Shift+2 digs, sent the way a browser sends it ('@' on the 2 key)",
@@ -2738,6 +2739,91 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	_finish_fx()
 	_check_the_deal_panel_fits_its_slot()
 	_check_each_sale_is_the_tablets_alone()
+
+## "Any card effect's notification should show up where the UI already has that
+## info": patience by the customer's patience bar, appeal by the tablet's meter,
+## money on the product by the tablet's MARGIN - travelling there from the middle
+## of the tablet, where the card was played.
+func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
+	var s: Shift = _controller._shift
+	_finish_fx()
+	var chair := _at()
+	var c: Customer = s.chairs[chair]
+	var product: ProductCardDef = null
+	for def in s.card_pool.cards:
+		if def is ProductCardDef and not c.owns(def.id) and c.accepts(def):
+			product = def
+			break
+	s.hand.append(CardInstance.new(product, 997))
+	_controller._apply(s.place(s.hand.size() - 1))
+	_settle()
+	_finish_fx()
+	var def := SupportCardDef.new()
+	def.id = &"made_up_numbers"
+	def.display_name = "Made-up numbers"
+	def.ticks = 1
+	var patience := ChangePatience.new()
+	patience.amount = 3
+	var appeal := ChangeAppeal.new()
+	appeal.amount = 2
+	var margin := ChangeMargin.new()
+	margin.amount = 300
+	var line := ChangeLine.new()
+	line.amount = -2
+	var effects: Array[Effect] = [patience, appeal, margin, line]
+	def.effects = effects
+	s.hand.append(CardInstance.new(def, 998))
+	_controller._apply(s.play_card(s.hand.size() - 1))
+
+	var card_rect: Rect2 = _controller._card_rect(_controller._customer_cards[chair],
+		CustomerCard3D.CARD_SIZE)
+	var bar_at: Vector2 = card_rect.position + card_rect.size \
+		* (_controller._customer_cards[chair] as CustomerCard3D).patience_frac()
+	var gain := _fx_label_saying("patience")
+	_check("the patience gain is at their patience bar (%s, bar %s)"
+		% [gain.get_global_rect().get_center() if gain else null, bar_at],
+		gain != null and gain.get_global_rect().get_center().distance_to(bar_at) < 6.0)
+	_check("which is on their folder, not over the middle of it",
+		gain != null and card_rect.has_point(gain.get_global_rect().get_center()))
+
+	var meter: Rect2 = _controller._tablet_spot(chair, &"appeal")
+	var lift := _fx_label_saying("appeal")
+	_check("the appeal gain is at the top of the tablet's meter (%s, meter %s)"
+		% [lift.get_global_rect().get_center() if lift else null, meter],
+		lift != null and meter.size != Vector2.ZERO
+			and absf(lift.get_global_rect().get_center().x - meter.get_center().x) < 6.0
+			and absf(lift.get_global_rect().get_center().y - meter.position.y) < 6.0)
+	var lower := _fx_label_saying("Line")
+	_check("and the Line it lowered at the foot of the same meter",
+		lower != null and absf(lower.get_global_rect().get_center().x - meter.get_center().x) < 6.0
+			and absf(lower.get_global_rect().get_center().y - meter.end.y) < 6.0)
+
+	var well: Rect2 = _controller._tablet_spot(chair, &"well")
+	var spot: Rect2 = _controller._tablet_spot(chair, &"margin")
+	var money := _fx_label_saying("margin")
+	_check("the money starts in the middle of the tablet, where the card landed (%s, well %s)"
+		% [money.get_global_rect().get_center() if money else null, well.get_center()],
+		money != null and money.get_global_rect().get_center().distance_to(well.get_center()) < 6.0)
+	_step_fx(1.4)
+	money = _fx_label_saying("margin")
+	_check("and travels to the MARGIN on the tablet's right-hand side (%s, margin %s)"
+		% [money.get_global_rect().get_center() if money else null, spot.get_center()],
+		money != null and money.get_global_rect().get_center().distance_to(spot.get_center()) < 6.0
+			and spot.get_center().x > well.get_center().x)
+	_check("every character of them is in the game's font", _fx_labels_are_all_in_the_font())
+	_finish_fx()
+	s.drop_offer()
+
+## Whether every effect label on screen uses only characters the game's font has.
+func _fx_labels_are_all_in_the_font() -> bool:
+	for n in _controller._fx:
+		if not (is_instance_valid(n) and n is Label):
+			continue
+		var font := (n as Label).get_theme_font("font")
+		for ch in (n as Label).text:
+			if ch != "\n" and not font.has_char(ch.unicode_at(0)):
+				return false
+	return true
 
 ## The label among the effects on screen whose text contains `part`, or null.
 func _fx_label_saying(part: String) -> Label:

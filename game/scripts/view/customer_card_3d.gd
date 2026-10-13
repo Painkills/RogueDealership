@@ -165,6 +165,15 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 ## name goes, a bar and its words where their patience goes, a red line where
 ## their countdown goes - with the explanation where their interests would be,
 ## and nobody's photo.
+## Where the patience bar sits on the folder's face, as a share of its width and
+## height - for a popup about their patience to go beside it.
+func patience_frac() -> Vector2:
+	_bind()
+	var r := _patience_bar.get_global_rect()
+	if r.size.x <= 0.0 or _viewport == null or _viewport.size.x <= 0:
+		return Vector2(0.55, 0.2)
+	return r.get_center() / Vector2(_viewport.size)
+
 func setup_note(note: Dictionary) -> void:
 	_bind()
 	customer = null
