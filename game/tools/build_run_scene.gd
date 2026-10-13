@@ -193,6 +193,23 @@ func _init() -> void:
 	badge_layer.add_child(last_fight_tap)
 	last_fight_tap.owner = root
 
+	# And beside it, to its left: the same for the Enforcer (_debug_enforcer_fight()).
+	var enforcer_tap := Button.new()
+	enforcer_tap.name = "EnforcerTapTarget"
+	enforcer_tap.flat = true
+	enforcer_tap.visible = false
+	enforcer_tap.unique_name_in_owner = true
+	enforcer_tap.focus_mode = Control.FOCUS_NONE
+	enforcer_tap.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	enforcer_tap.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	enforcer_tap.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	enforcer_tap.offset_left = -600
+	enforcer_tap.offset_top = -44
+	enforcer_tap.offset_right = -304
+	enforcer_tap.offset_bottom = -4
+	badge_layer.add_child(enforcer_tap)
+	enforcer_tap.owner = root
+
 	_quit_popup(badge_layer, root)
 
 	var packed := PackedScene.new()

@@ -50,6 +50,7 @@ var _bound := false
 var _viewport: SubViewport
 var _bar: AppealBar
 var _status: Label
+var _title: Label
 var _margin: Label
 var _combo: Label
 var _worth: Label
@@ -70,6 +71,7 @@ func _bind() -> void:
 	var screen: Node = $ScreenViewport/TabletScreen
 	_bar = screen.get_node(^"AppealPanel/Column/AppealBar") as AppealBar
 	_status = screen.get_node(^"AppealPanel/Column/StatusLabel")
+	_title = screen.get_node(^"AppealPanel/Column/AppealTitle")
 	_margin = screen.get_node(^"DealPanel/Column/MarginLabel")
 	_combo = screen.get_node(^"DealPanel/Column/ComboLabel")
 	_worth = screen.get_node(^"DealPanel/Column/WorthLabel")
@@ -119,8 +121,12 @@ func clock_text() -> String:
 ## here, and `meter_scale` from ShiftConfig.appeal_meter_scale - a fixed
 ## ceiling, the same for every customer and every offer, so the bar never
 ## resizes itself out from under the fill.
-func show_offer(c, band: String, meter_scale: int) -> void:
+func show_offer(c, band: String, meter_scale: int, blocked_ticks: int = 0) -> void:
 	_bind()
+	# A debuff that stops your cards adding appeal says so over the meter.
+	_title.text = "NO APPEAL" if blocked_ticks > 0 else "APPEAL"
+	_title.add_theme_color_override("font_color",
+		Palette.color(&"alert") if blocked_ticks > 0 else Palette.color(&"text_dim"))
 	# The combo belongs to the CUSTOMER, not the product - it stands whether or
 	# not anything is on the table yet, so it is shown either way. c.sales is
 	# how many they have ALREADY taken this visit, the same prior-sales count
@@ -182,6 +188,11 @@ func spot_px(which: StringName) -> Rect2:
 			return r if r.size.x > 0.0 and r.size.y > 0.0 else Rect2(APPEAL_RECT)
 		&"well": return Rect2(WELL_RECT)
 	return Rect2()
+
+## What heads the meter: APPEAL, or NO APPEAL under a debuff.
+func title_text() -> String:
+	_bind()
+	return _title.text
 
 ## Hides (or shows) the MARGIN figure itself, while a popup rolls over it and
 ## stands in for it.

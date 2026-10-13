@@ -1885,7 +1885,8 @@ func _render_details() -> void:
 		if c != null and c.offer != null:
 			band = _shift.band_for(c.line - c.offer.appeal)
 		_tablets[i].switch_on(at_this_seat)
-		_tablets[i].show_offer(c, band, _shift.cfg.appeal_meter_scale)
+		_tablets[i].show_offer(c, band, _shift.cfg.appeal_meter_scale,
+			_shift.appeal_blocked_ticks)
 		_tablets[i].show_clock(ShiftHours.clock(_time_of_day, _shift.tick,
 			_shift.clock_ticks()))
 

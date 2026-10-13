@@ -96,6 +96,10 @@ class_name CustomerArchetype extends Resource
 ## Every point of patience a card of yours gives them counts for this many: 2.0 and
 ## a +4 is +8. For a fight where keeping their patience up is the whole game.
 @export var patience_card_scale: float = 1.0
+## At the end of each of their moves - it lands, or it is answered - their patience
+## is back to 0: whatever shield you built is spent, and the next move starts
+## unprotected. Only means anything for patience_is_shield.
+@export var patience_resets_after_move: bool = false
 ## A boss's moves: one at a time, telegraphed with its fuse on their card, each
 ## raised as a Demand (what answers it, and what ignoring it costs - a Hit). A
 ## round deals every move once, in an order drawn fresh each round; skipped is

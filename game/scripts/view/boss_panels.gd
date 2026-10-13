@@ -114,6 +114,10 @@ static func _live_move(c, d: Demand, tick: int) -> Dictionary:
 		else:
 			lines.append("It comes off their patience first (%d), then your standing."
 				% c.patience)
+	# What else it does when it lands - a debuff on top of the hit.
+	for e in d.effects:
+		if not e is Hit and hits > 0:
+			lines.append("Then: %s." % e.describe())
 	var headline := "HITS FOR %d" % hits if hits > 0 else ""
 	if hits <= 0:
 		var does := PackedStringArray()

@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="CustomerArchetype" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
+[ext_resource type="Script" path="res://scripts/model/data/demand.gd" id="2_dmd"]
+[ext_resource type="Resource" path="res://data/demands/enforcer_body_blow.tres" id="3_blow"]
+[ext_resource type="Resource" path="res://data/demands/enforcer_critical_hit.tres" id="4_crit"]
+[ext_resource type="Resource" path="res://data/demands/enforcer_cheap_shot.tres" id="5_cheap"]
+[ext_resource type="Resource" path="res://data/demands/enforcer_knockout.tres" id="6_ko"]
+
+[resource]
+script = ExtResource("1_arch")
+hard = true
+weight = 0.0
+difficulty = 0
+id = &"enforcer"
+display_name = "The Enforcer"
+names = Array[String](["Rocco Hardplace", "Boris Beatdown", "Gunnar Bruiseworth", "Tank Reyes"])
+icon = &"fist"
+pattern = "A fight of reactions: every turn a different blow is coming, and the shield you built is gone by the next."
+tell = "knuckles on the desk, and a different threat every few minutes"
+line = 24
+patience = 10
+max_patience = 50
+line_per_sale = 2
+combo_weight = 1.0
+arrival_patience_share = 1.0
+budget_share = 1.0
+patience_is_shield = true
+patience_resets_after_move = true
+moves = Array[ExtResource("2_dmd")]([ExtResource("3_blow"), ExtResource("4_crit"), ExtResource("5_cheap"), ExtResource("6_ko")])
+move_gap_ticks = 1
+sold_products_leave_deck = true
+escalate_damage = 1
+escalate_fuse = 0
+min_move_fuse = 3

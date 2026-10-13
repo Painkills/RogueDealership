@@ -25,6 +25,8 @@ const KNOWN_TAGS := [&"appeal", &"patience", &"concession", &"pressure",
 	# A boss's moves - see CustomerArchetype.moves.
 	&"whale_getting_impatient", &"whale_off_my_desk", &"whale_raise_the_stakes",
 	&"whale_hit", &"whale_dodged",
+	&"enforcer_body_blow", &"enforcer_critical_hit", &"enforcer_cheap_shot",
+	&"enforcer_knockout", &"enforcer_hit", &"enforcer_dodged",
 	# Objections - see ProductCardDef.objection_tags and Shift._object(). The
 	# warm word instead, when a product already clears their Line.
 	&"objection", &"objection_walkaway", &"objection_walkaway_gap", &"interested",
@@ -158,6 +160,18 @@ const LINES := [
 	[[&"whale_dodged"], "\"Hm. Fine.\"", [], [], []],
 	[[&"whale_dodged"], "\"Better.\"", [], [], []],
 	[[&"whale_dodged"], "\"Quicker than the last one.\"", [], [], []],
+	[[&"enforcer_body_blow"], "\"Warming up.\"", [], [], []],
+	[[&"enforcer_body_blow"], "\"Here's a little something.\"", [], [], []],
+	[[&"enforcer_critical_hit"], "\"This one's going to hurt.\"", [], [], []],
+	[[&"enforcer_critical_hit"], "\"Right on the button.\"", [], [], []],
+	[[&"enforcer_cheap_shot"], "\"Didn't see that coming, did you?\"", [], [], []],
+	[[&"enforcer_cheap_shot"], "\"Hold still a second.\"", [], [], []],
+	[[&"enforcer_knockout"], "\"Lights out.\"", [], [], []],
+	[[&"enforcer_knockout"], "\"You'd better clear your hands.\"", [], [], []],
+	[[&"enforcer_hit"], "\"That's how it's done.\"", [], [], []],
+	[[&"enforcer_hit"], "\"Told you.\"", [], [], []],
+	[[&"enforcer_dodged"], "\"Quick. I'll give you that.\"", [], [], []],
+	[[&"enforcer_dodged"], "\"Huh. Again.\"", [], [], []],
 	[[&"accepted"], "\"Put it on the card.\"", [&"whale"], [], []],
 	[[&"accepted"], "\"Fine. Add it. What else?\"", [&"whale"], [], []],
 

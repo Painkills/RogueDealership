@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ShiftCategory" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_category.gd" id="1_cat"]
+[ext_resource type="Script" path="res://scripts/model/data/shift_profile.gd" id="2_prof"]
+[ext_resource type="Resource" path="res://data/shift_profiles/premade/the_enforcer.tres" id="3_boss"]
+
+[resource]
+script = ExtResource("1_cat")
+display_name = "Boss shift, the Enforcer"
+boss_day = true
+takes_the_day = true
+shifts = Array[ExtResource("2_prof")]([ExtResource("3_boss")])

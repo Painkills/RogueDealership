@@ -89,6 +89,9 @@ var move_round: int = 0
 ## when they sit down (start_timed_moves()), and again each time one comes up.
 var timed_move_due: Array[int] = []
 var move_rounds_dealt: int = 0
+## Cards you have set aside (dug) since their live move was raised - what a move
+## that wants cards discarded (DiscardCards) counts.
+var discards_since_raise: int = 0
 var moves_left: Array[Demand] = []
 var next_move_tick: int = 0
 

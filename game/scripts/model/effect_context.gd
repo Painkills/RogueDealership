@@ -23,6 +23,9 @@ var line_drop_scale: float = 1.0
 ## Multiplies any patience a card of yours GIVES - set by the customer it lands on
 ## (CustomerArchetype.patience_card_scale). 1.0 for everything else.
 var patience_scale: float = 1.0
+## True for a card or product of yours - see Shift._yours(). False for everything
+## a customer does, which a debuff on YOU (BlockAppeal) does not reach.
+var yours: bool = false
 ## The card of yours that is being played, for an effect that outlasts it
 ## (Linger) - null for everything a customer does. Untyped, like the rest, for
 ## the same cycle.

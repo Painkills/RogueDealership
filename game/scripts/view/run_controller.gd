@@ -43,6 +43,8 @@ var _calendar_open := false
 ## Over the build badge on the title screen: the touch way to the last fight,
 ## as Ctrl+B is the keyboard's - see _debug_last_fight().
 @onready var _last_fight_tap: Button = $BuildBadge/LastFightTapTarget
+## And the touch way to the Enforcer, a second boss: Ctrl+N - see _debug_enforcer_fight().
+@onready var _enforcer_tap: Button = $BuildBadge/EnforcerTapTarget
 
 ## What the last fight's store puts up for sale, and how many of your cards it
 ## offers to upgrade - see _debug_last_fight().
@@ -51,6 +53,14 @@ const LAST_FIGHT_UPGRADES := 5
 ## How many dealership upgrades it offers, to pick ONE from - in place of the
 ## free card.
 const LAST_FIGHT_DEALERSHIP_UPGRADES := 3
+## What the store before the Enforcer puts up: 6 purchases, 6 upgrades and a perk
+## (a dealership upgrade, one to pick from the same three).
+const ENFORCER_PURCHASES := 6
+const ENFORCER_UPGRADES := 6
+## The Enforcer's shift and the category that makes it a boss day, for the shortcut -
+## he is not on any calendar.
+const ENFORCER_SHIFT := "res://data/shift_profiles/premade/the_enforcer.tres"
+const ENFORCER_CATEGORY := "res://data/shift_categories/enforcer_boss.tres"
 
 ## Open the game on the title screen's menu. A driver that is testing the run
 ## itself turns this off BEFORE adding the run to the tree, so it boots
@@ -72,6 +82,8 @@ var _practice_run := false
 ## True between that shortcut's store and its fight - leaving the store goes
 ## straight to the boss rather than to a calendar to pick from.
 var _straight_to_the_boss := false
+## When the shortcut is to a boss that is not the last day's, that boss's shift.
+var _boss_shortcut: ShiftProfile = null
 ## The run being worked, as it goes to disk after every move (RunFile) - null
 ## behind the title screen and for a run nothing is kept of (the last-fight
 ## shortcut). See _keep_the_save_current().
@@ -122,6 +134,8 @@ func _ready() -> void:
 	_title_view.continue_requested.connect(_continue_run)
 	_bind_key(&"debug_last_fight", KEY_B, true)   # Ctrl+B, on the title screen
 	_last_fight_tap.pressed.connect(_debug_last_fight)
+	_bind_key(&"debug_enforcer_fight", KEY_N, true)   # Ctrl+N, on the title screen
+	_enforcer_tap.pressed.connect(_debug_enforcer_fight)
 	if title_at_boot:
 		_new_run()
 		_open_the_title()
@@ -244,6 +258,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_last_fight") and _title_view.visible \
 			and not _title_view.name_popup_showing():
 		_debug_last_fight()
+	elif event.is_action_pressed("debug_enforcer_fight") and _title_view.visible \
+			and not _title_view.name_popup_showing():
+		_debug_enforcer_fight()
 
 ## Ctrl+B on the title screen, or a tap over the build badge: the last fight,
 ## without the nine days before it - a manual testing convenience, not a
@@ -256,13 +273,27 @@ func _unhandled_input(event: InputEvent) -> void:
 ## straight to the final boss. Nothing of it is filed among the scores - after
 ## the fight, it is back to the menu.
 func _debug_last_fight() -> void:
+	_debug_boss_fight(LAST_FIGHT_PURCHASES, LAST_FIGHT_UPGRADES, null)
+
+## Ctrl+N on the title screen, or a tap to the left of the build badge: the same
+## shortcut to the Enforcer - 6 purchases, 6 upgrades and a perk to pick, then
+## straight to his fight.
+func _debug_enforcer_fight() -> void:
+	var boss := (load(ENFORCER_SHIFT) as ShiftProfile).duplicate() as ShiftProfile
+	boss.dealt_by = load(ENFORCER_CATEGORY)
+	_debug_boss_fight(ENFORCER_PURCHASES, ENFORCER_UPGRADES, boss)
+
+## The store, then the boss: `boss` is the shift to fight, or null for the last
+## day's own.
+func _debug_boss_fight(purchases: int, upgrades: int, boss: ShiftProfile) -> void:
 	_new_run()
 	_practice_run = true
 	_straight_to_the_boss = true
+	_boss_shortcut = boss
 	_run.shift_number = _run.cfg.shifts_in_run
 	var store := ShiftProfile.new()
-	store.cards_for_sale = LAST_FIGHT_PURCHASES
-	store.upgrades = LAST_FIGHT_UPGRADES
+	store.cards_for_sale = purchases
+	store.upgrades = upgrades
 	store.dealership_upgrades = LAST_FIGHT_DEALERSHIP_UPGRADES
 	var shop := Shop.new(_run, store)
 	# A dealership upgrade instead of the free card.
@@ -286,6 +317,7 @@ func _new_run(seed_value: int = -1) -> void:
 	_history = []
 	_practice_run = false
 	_straight_to_the_boss = false
+	_boss_shortcut = null
 	_save = null
 	_live_shift = null
 	_live_shop = null
@@ -452,6 +484,11 @@ func _on_shop_done() -> void:
 	# The last-fight shortcut: from the store to the boss, no calendar between.
 	if _straight_to_the_boss:
 		_straight_to_the_boss = false
+		if _boss_shortcut != null:
+			_chosen_profile = _boss_shortcut
+			_boss_shortcut = null
+			_open_the_floor()
+			return
 		for p in _run.todays_shifts():
 			if p.is_boss_day():
 				_chosen_profile = p
@@ -481,6 +518,7 @@ func _show_only(screen: Node) -> void:
 	_view_calendar_btn.visible = screen == _shift_view and not _in_tutorial
 	# The shortcut to the last fight: from the front door only.
 	_last_fight_tap.visible = screen == _title_view
+	_enforcer_tap.visible = screen == _title_view
 	# Quitting is for a run - not the front door, and not practice, which has
 	# its own way out.
 	_quit_btn.visible = screen != _title_view and not _in_tutorial

@@ -21,6 +21,8 @@ var rng := RandomNumberGenerator.new()
 var voice_rng := RandomNumberGenerator.new()
 
 var tick: int = 0
+## Ticks left on a debuff that stops your cards adding appeal (BlockAppeal).
+var appeal_blocked_ticks: int = 0
 var tick_budget: int
 var quota: int
 var shift_number: int = 1          ## which shift of the run; its week gates archetypes
@@ -342,6 +344,7 @@ func _burn(n: int, kind: String) -> void:
 	if n <= 0:
 		return
 	tick += n
+	appeal_blocked_ticks = maxi(0, appeal_blocked_ticks - n)
 	var key := "ticks_" + kind
 	stat[key] = int(stat.get(key, 0)) + n
 
@@ -1268,6 +1271,9 @@ func _support(c: Customer, index: int) -> Result:
 	for e in effects:
 		e.apply(ctx)
 		var d := e.describe()
+		# Said as it is, not as the card is printed: under a debuff it added nothing.
+		if e is ChangeAppeal and e.amount > 0 and appeal_is_blocked():
+			d = "blocked - no appeal added"
 		if d != "":
 			descriptions.append(d)
 		if _is_floor_wide(e):
@@ -1504,6 +1510,11 @@ func dig(index: int) -> Result:
 	discard.append(inst)
 	stat["digs"] = int(stat["digs"]) + 1
 	_draw_up()
+	# Counted for any move that wants cards thrown away, before the tick this costs.
+	for who in seated():
+		if who.demand != null:
+			who.discards_since_raise += 1
+			_demand_saw(who, DemandResolve.DISCARD)
 	_burn(cfg.dig_ticks, "digs")
 	return Result.new(true,
 		"You set aside the %s." % inst.card.display_name, "dig")
@@ -1840,6 +1851,7 @@ func _tick_lingering(c: Customer) -> void:
 ## actions and demands never get it.
 func _yours(c: Customer, card: CardDef = null) -> EffectContext:
 	var ctx := _context(c)
+	ctx.yours = true
 	ctx.card = card
 	ctx.appeal_bonus = int(perk(&"appeal_per_card"))
 	# Bigger Line drops for the card's own brand, from every upgrade that
@@ -1852,6 +1864,11 @@ func _yours(c: Customer, card: CardDef = null) -> EffectContext:
 	ctx.line_drop_scale = 1.0 + extra
 	ctx.patience_scale = c.archetype.patience_card_scale
 	return ctx
+
+
+## Whether a debuff stops your cards adding appeal right now (BlockAppeal).
+func appeal_is_blocked() -> bool:
+	return appeal_blocked_ticks > 0
 
 
 func _context(c: Customer) -> EffectContext:
@@ -1934,7 +1951,7 @@ func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
 ## kind of action - see DemandResolve.satisfied() and met_on_expiry().
 func _state_of(c: Customer) -> Dictionary:
 	return {"patience": c.patience, "patience_at_raise": c.demand_patience_at_raise,
-		"table_empty": c.offer == null}
+		"table_empty": c.offer == null, "discards": c.discards_since_raise}
 
 
 ## A boss's next move, if they are due one: telegraphed on their card with its
@@ -1972,6 +1989,7 @@ func _next_move(c: Customer) -> void:
 	c.demand = picked
 	c.demand_due_tick = tick + c.move_fuse(picked)
 	c.demand_patience_at_raise = c.patience
+	c.discards_since_raise = 0
 	var hits := c.move_damage(picked)
 	var what := ""
 	if hits > 0:
@@ -2036,6 +2054,10 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 		descriptions.append(e.describe())
 		if e is ChangePatienceFloor:
 			floor_wide = true
+	# The end of their turn: what shield you built is spent.
+	if is_move and c.archetype.patience_resets_after_move:
+		c.patience = 0
+		descriptions.append("their patience is back to 0")
 	if descriptions.is_empty():
 		descriptions.append(("dodged" if is_move else "nothing comes of it") if met
 			else "they let it go")

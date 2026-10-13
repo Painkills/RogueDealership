@@ -20,6 +20,7 @@ const OFFER := &"offer"          ## you asked for the business
 const CLOSE := &"close"          ## you signed them
 const PRESENT := &"present"      ## a tick burned while you stood with them
 const DROP := &"drop"            ## you took the product back off their table
+const DISCARD := &"discard"      ## you set a card aside from your hand
 
 ## Every call also gets the customer's state - `patience`, `patience_at_raise`,
 ## and `table_empty` (nothing on their table) - whatever the kind.

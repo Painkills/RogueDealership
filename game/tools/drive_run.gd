@@ -97,6 +97,7 @@ func _process(_delta: float) -> bool:
 		_check_the_fired_title_is_distinct_from_a_completed_run()
 		_check_the_testing_skip_costs_no_standing()
 		_check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss()
+		_check_the_enforcer_shortcut_stops_in_the_store_then_fights_him()
 		_check_quitting_a_run_asks_first_then_loses_it()
 		PlayerProfile.reset()
 		RunFile.clear()
@@ -1718,6 +1719,62 @@ func _check_run_summary_screen_appears_at_the_end_of_a_run() -> void:
 ## version of this screen. Driven directly through setup(), the same way
 ## _check_report_card_fits_the_worst_case() reaches a branch this driver's own
 ## play never lands on live.
+## "Give me a new shortcut to reach this boss, also provide a perk and 6 purchase
+## and 6 upgrade before this boss": Ctrl+N or a tap just left of the build badge,
+## then the store, then straight to the Enforcer - and nothing of it filed.
+func _check_the_enforcer_shortcut_stops_in_the_store_then_fights_him() -> void:
+	var filed_before := PlayerProfile.bests().size()
+	_root._new_run()
+	_root._open_the_title()
+	var tap := _root.get_node(^"%EnforcerTapTarget") as Button
+	_check("the title screen has a second, invisible tap target",
+		tap.visible and tap.flat and tap.text == "")
+	tap.pressed.emit()
+	var run: RunState = _root._run
+	var shop: Shop = _root._shop_view._shop
+	_check("it opens the store (%d for sale, %d to upgrade)"
+		% [shop.offers.size(), shop.upgrade_offers.size()],
+		_root._shop_view.visible and shop.offers.size() == _root.ENFORCER_PURCHASES
+			and shop.upgrade_offers.size() == _root.ENFORCER_UPGRADES)
+	_check("with a perk to pick and no free card",
+		shop.dealership_offers.size() > 0 and shop.dealership_picks_left == 1
+			and shop.free_cards.is_empty())
+	_check("and enough money for all of it", run.money >= shop.cost_of_everything())
+	shop.take_dealership_upgrade(shop.dealership_offers[0])
+	for def in shop.offers.duplicate():
+		shop.buy(def)
+	for uid in shop.upgrade_offers.duplicate():
+		shop.upgrade(uid)
+	_root._shop_view.done.emit()
+	var shift: Shift = _root._shift_view._shift
+	var boss: Customer = shift.chairs[0] if shift != null else null
+	_check("leaving it goes straight to the fight with him",
+		boss != null and boss.archetype.id == &"enforcer" and _root._chosen_profile.is_boss_day()
+			and not _root._picker_view.visible)
+	_check("he has an attack up already, on a fuse of 3 ticks or less",
+		boss != null and boss.demand != null and boss.demand_due_tick - shift.tick <= 3)
+	# The debuff, on his tablet's meter.
+	shift.at = 0
+	_root._shift_view._render()
+	var tablet: OfferTablet = _root._shift_view._tablets[0]
+	_check("the meter says APPEAL", tablet.title_text() == "APPEAL")
+	shift.appeal_blocked_ticks = 4
+	_root._shift_view._render()
+	_check("and NO APPEAL while a debuff is on", tablet.title_text() == "NO APPEAL")
+	shift.appeal_blocked_ticks = 0
+	_root._on_shift_finished(shift.report())
+	_check("after the fight it is back to the menu, and none of it filed",
+		_root._title_view.visible and PlayerProfile.bests().size() == filed_before)
+	var key := InputEventKey.new()
+	key.keycode = KEY_N
+	key.ctrl_pressed = true
+	key.pressed = true
+	_root._unhandled_input(key)
+	_check("Ctrl+N opens the same store from the keyboard", _root._shop_view.visible
+		and _root._shop_view._shop.offers.size() == _root.ENFORCER_PURCHASES)
+	_root._new_run()
+	_root._open_the_title()
+
 func _check_the_fired_title_is_distinct_from_a_completed_run() -> void:
 	var summary = _root._summary_view
 	var score := Score.tally(_run)

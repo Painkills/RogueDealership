@@ -29,6 +29,7 @@ const LOOKS := {
 	&"stopwatch": {"tile": "fff2d2", "ink": "36373d", "accent": "f08a00", "light": "fffaf0"},
 	&"chip": {"tile": "dff3f5", "ink": "1b4d5a", "accent": "22b8cf", "light": "f1fbfc"},
 	&"whale": {"tile": "e1ecf8", "ink": "1f3b63", "accent": "8fbdf0", "light": "f5f9ff"},
+	&"fist": {"tile": "f6e0dc", "ink": "4a1d19", "accent": "d9483b", "light": "fff1ee"},
 }
 
 static func has(icon: StringName) -> bool:
@@ -61,6 +62,7 @@ static func draw(ci: CanvasItem, rect: Rect2, icon: StringName) -> void:
 		&"stopwatch": _stopwatch(ci, g, ink, accent, light)
 		&"chip": _chip(ci, g, ink, accent, light)
 		&"whale": _whale(ci, g, ink, accent, light)
+		&"fist": _fist(ci, g, ink, accent, light)
 
 # ---------------------------------------------------------------- helpers
 static func _p(g: Rect2, x: float, y: float) -> Vector2:
@@ -210,6 +212,20 @@ static func _tire(ci: CanvasItem, g: Rect2, ink: Color, accent: Color, light: Co
 	_stroke(ci, g, [Vector2(0.80, 0.30), Vector2(0.93, 0.17)], 0.05, accent)
 	_stroke(ci, g, [Vector2(0.84, 0.40), Vector2(0.98, 0.38)], 0.05, accent)
 	_stroke(ci, g, [Vector2(0.72, 0.22), Vector2(0.76, 0.08)], 0.05, accent)
+
+## The Enforcer: a clenched fist, a cuff, and the lines of a blow that landed.
+static func _fist(ci: CanvasItem, g: Rect2, ink: Color, accent: Color, light: Color) -> void:
+	_rrect(ci, g, 0.30, 0.74, 0.72, 0.92, 0.04, accent)
+	_rrect(ci, g, 0.24, 0.38, 0.76, 0.80, 0.08, ink)
+	for i in range(4):
+		_circle(ci, g, 0.33 + 0.12 * i, 0.38, 0.085, ink)
+	for i in range(3):
+		_line(ci, g, Vector2(0.39 + 0.12 * i, 0.40), Vector2(0.39 + 0.12 * i, 0.56), 0.016, light)
+	_rrect(ci, g, 0.20, 0.54, 0.54, 0.68, 0.06, ink)
+	_line(ci, g, Vector2(0.27, 0.61), Vector2(0.47, 0.61), 0.016, light)
+	_stroke(ci, g, [Vector2(0.82, 0.30), Vector2(0.94, 0.18)], 0.045, accent)
+	_stroke(ci, g, [Vector2(0.86, 0.42), Vector2(0.98, 0.40)], 0.045, accent)
+	_stroke(ci, g, [Vector2(0.74, 0.20), Vector2(0.78, 0.08)], 0.045, accent)
 
 ## Lay-Down Larry: yes. A tick in a badge.
 static func _check(ci: CanvasItem, g: Rect2, ink: Color, accent: Color) -> void:

@@ -623,3 +623,129 @@ func test_every_way_of_answering_says_how() -> void:
 	h.check("taking it off the table names the key and the pile",
 		ClearTheTable.new().how_to_answer().contains("press D")
 			and ClearTheTable.new().how_to_answer().contains("discard"))
+
+# --------------------------------------------- a boss whose turn spends the shield
+func test_their_patience_is_back_to_zero_at_the_end_of_each_of_their_turns() -> void:
+	var blow := _move(&"blow", 4, 3)
+	var boss := _boss([blow])
+	boss.patience_resets_after_move = true
+	var pair := _fight(boss)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	c.patience = 30
+	s._burn(3, "cards")
+	h.eq("the blow landed and the shield it left is spent", c.patience, 0)
+
+func test_an_answered_move_ends_their_turn_too() -> void:
+	var desk := _move(&"desk", 6, 5, ClearTheTable.new(), true)
+	var boss := _boss([desk])
+	boss.patience_resets_after_move = true
+	var pair := _fight(boss)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s.place(_hand(s, _products()[0], 903))
+	c.patience = 25
+	s.drop_offer()
+	h.eq("dodged, and the shield goes anyway", c.patience, 0)
+
+func test_without_the_flag_the_shield_survives_the_turn() -> void:
+	var pair := _fight(_boss([_move(&"blow", 4, 3)]))
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	c.patience = 30
+	s._burn(3, "cards")
+	h.check("what the blow did not take is still there (%d)" % c.patience, c.patience > 0)
+
+# ------------------------------------------------------- a debuff on your appeal
+func _appeal_card(amount: int) -> SupportCardDef:
+	var e := ChangeAppeal.new()
+	e.amount = amount
+	var d := SupportCardDef.new()
+	d.id = &"made_up_appeal"
+	d.display_name = "Made-up appeal"
+	d.ticks = 1
+	d.needs_offer = true
+	d.effects.assign([e])
+	return d
+
+func test_a_blocked_appeal_adds_nothing_and_a_cut_still_cuts() -> void:
+	var pair := _fight(_boss([], false))
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s.place(_hand(s, _products()[0], 904))
+	var before: int = c.offer.appeal
+	var block := BlockAppeal.new()
+	block.amount = 4
+	var ctx := EffectContext.new()
+	ctx.shift = s
+	block.apply(ctx)
+	s.play_card(_hand(s, _appeal_card(5), 905))
+	h.eq("nothing added", c.offer.appeal, before)
+	var log: Dictionary = s.action_log.back()
+	h.check("and it says so (%s)" % str(log["descriptions"]),
+		str(log["descriptions"]).contains("blocked"))
+	s.play_card(_hand(s, _appeal_card(-2), 906))
+	h.eq("appeal taken away still works", c.offer.appeal, before - 2)
+
+func test_a_customers_own_appeal_effects_are_not_blocked() -> void:
+	var pair := _fight(_boss([], false))
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	s.place(_hand(s, _products()[0], 907))
+	s.appeal_blocked_ticks = 4
+	var before: int = c.offer.appeal
+	var add := ChangeAppeal.new()
+	add.amount = 3
+	add.apply(s._context(c))
+	h.eq("theirs still lands", c.offer.appeal, before + 3)
+
+func test_the_block_lasts_its_ticks_and_does_not_stack() -> void:
+	var pair := _fight(_boss([], false))
+	var s: Shift = pair[0]
+	var block := BlockAppeal.new()
+	block.amount = 4
+	var ctx := EffectContext.new()
+	ctx.shift = s
+	block.apply(ctx)
+	s._burn(1, "cards")
+	block.apply(ctx)
+	h.eq("a second one only starts the count again", s.appeal_blocked_ticks, 4)
+	s._burn(3, "cards")
+	h.check("still on with a tick to go", s.appeal_is_blocked())
+	s._burn(1, "cards")
+	h.check("and gone when they are used", not s.appeal_is_blocked())
+	s.play_card(_hand(s, _appeal_card(5), 908))
+
+# ------------------------------------------------------ a move you answer by discarding
+func test_discarding_enough_cards_inside_the_fuse_answers_the_move() -> void:
+	var resolve := DiscardCards.new()
+	resolve.count = 3
+	var pair := _fight(_boss([_move(&"big", 30, 3, resolve)]))
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	for i in range(4):
+		_hand(s, _products()[i % _products().size()], 910 + i)
+	var standing := s.standing
+	h.check("it is up", c.demand != null)
+	s.dig(0)
+	s.dig(0)
+	h.check("two are not enough", c.demand != null)
+	s.dig(0)
+	h.check("the third answers it",
+		s.action_log.any(func(e): return str(e["name"]).ends_with("answered")))
+	h.eq("and nothing landed", s.standing, standing)
+
+func test_too_few_discards_and_it_lands() -> void:
+	var resolve := DiscardCards.new()
+	resolve.count = 3
+	var pair := _fight(_boss([_move(&"big", 10, 3, resolve)]))
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	for i in range(3):
+		_hand(s, _products()[i % _products().size()], 920 + i)
+	c.patience = 0
+	var standing := s.standing
+	s.dig(0)
+	s.dig(0)
+	s._burn(1, "cards")
+	h.check("two and the fuse out, it landed", s.standing < standing)
