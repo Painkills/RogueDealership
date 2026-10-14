@@ -25,6 +25,9 @@ import urllib.request
 
 PROJECT_URL = "https://tmiauedyfphaytwfbsde.supabase.co"
 PAGE = 1000
+# A gap longer than this between two moves is somebody away from the game, not
+# thinking: it is left out of the think times and counted on its own.
+AWAY_SECONDS = 120
 
 
 # --- fetching ------------------------------------------------------------------
@@ -132,19 +135,25 @@ def analyse(rows):
                        for (i, step), v in sorted(tut.items())]
 
     # Stall points: think time by situation, and the slowest single moments.
+    def thinking(r):
+        return r.get("think_ms") is not None and r["think_ms"] / 1000.0 <= AWAY_SECONDS
+
+    away = [r for r in rows if r.get("think_ms") is not None and r["think_ms"] / 1000.0 > AWAY_SECONDS]
+    out["away"] = [(r["think_ms"] / 60000.0, r["kind"], (r.get("data") or {}).get("cmd", ""),
+                    (r.get("data") or {}).get("day", "")) for r in sorted(away, key=lambda r: -r["think_ms"])]
     think = collections.defaultdict(list)
     for r in by_kind["action"]:
-        if r.get("think_ms") is not None:
+        if thinking(r):
             think[situation(r)].append(r["think_ms"] / 1000.0)
     for r in by_kind["shop"]:
-        if r.get("think_ms") is not None:
+        if thinking(r):
             think["store: " + (r.get("data") or {}).get("cmd", "?")].append(r["think_ms"] / 1000.0)
     for r in by_kind["shift_pick"]:
-        if r.get("think_ms") is not None:
+        if thinking(r):
             think["calendar: pick a shift"].append(r["think_ms"] / 1000.0)
     out["think"] = sorted(((k, len(v), statistics.median(v), quantile(v, 0.9)) for k, v in think.items() if len(v) >= 3),
                           key=lambda t: -t[2])
-    slow = sorted((r for r in by_kind["action"] if r.get("think_ms")), key=lambda r: -r["think_ms"])[:15]
+    slow = sorted((r for r in by_kind["action"] if thinking(r) and r["think_ms"]), key=lambda r: -r["think_ms"])[:15]
     out["slowest"] = [(r["think_ms"] / 1000.0, situation(r), (r.get("data") or {}).get("card", ""),
                        (r.get("data") or {}).get("archetype", ""), (r.get("data") or {}).get("day", ""),
                        (r.get("data") or {}).get("tick", "")) for r in slow]
@@ -212,11 +221,19 @@ def analyse(rows):
         d = r.get("data") or {}
         if d.get("card") and d.get("ok"):
             cards[d["card"]][d.get("cmd", "?")] += 1
+    perks = collections.Counter()
     for r in by_kind["shop"]:
         d = r.get("data") or {}
+        if not d.get("ok"):
+            continue
+        # A perk is a dealership upgrade, not a card - counted on its own.
+        if d.get("cmd") == "take_dealership_upgrade":
+            perks[d.get("id", "?")] += 1
+            continue
         card = d.get("card") or d.get("id")
-        if card and d.get("ok"):
+        if card:
             cards[card]["shop:" + d.get("cmd", "?")] += 1
+    out["perks"] = perks.most_common()
     out["cards"] = sorted(((c, v["play_card"] + v["place"], v["dig"], v["shop:buy"], v["shop:upgrade"],
                             v["shop:remove"], v["shop:take_free"]) for c, v in cards.items()), key=lambda t: -t[1])
 
@@ -311,13 +328,16 @@ def page(a, title):
         + "<h3>Where runs were quit</h3>" + table(["Day, screen", "Quits"], a["quits"], (1,))))
     sections.append(("Tutorial", table(["Step", "Seen", "Median s", "90th pct s", "Left here"], a["tutorial"], (1, 2, 3, 4))))
     sections.append(("Stall points - think time by situation", table(["Situation", "Moves", "Median s", "90th pct s"], a["think"], (1, 2, 3))
-                     + "<h3>The slowest single moves</h3>" + table(["Seconds", "Situation", "Card", "Customer", "Day", "Tick"], a["slowest"], (0, 4, 5))))
+                     + "<h3>The slowest single moves</h3>" + table(["Seconds", "Situation", "Card", "Customer", "Day", "Tick"], a["slowest"], (0, 4, 5))
+                     + "<h3>Left out as time away (over %d s)</h3>" % AWAY_SECONDS
+                     + table(["Minutes", "Event", "Move", "Day"], a["away"], (0, 3))))
     sections.append(("Confusion - what the rules refused", table(["Move", "Refusal", "Times", "Players", "Same one twice in a row"], a["refusals"], (2, 3, 4))))
     sections.append(("Shifts", table(["Shift", "Worked", "Made quota %", "Walkouts", "Standing change", "Banked"], a["shifts"], (1, 2, 3, 4, 5))))
     sections.append(("Customers", table(["Archetype", "Left the floor", "Signed", "Walked out", "Walkout %"], a["archetypes"], (1, 2, 3, 4))
                      + "<h3>Demands and boss moves</h3>" + table(["Demand / move", "Answered", "Missed", "Missed %"], a["demands"], (1, 2, 3))))
     s = a["store"]
     sections.append(("Cards", table(["Card", "Played", "Dug", "Bought", "Upgraded", "Removed", "Free pick"], a["cards"], (1, 2, 3, 4, 5, 6))
+                     + "<h3>Perks taken</h3>" + table(["Perk", "Times"], a["perks"], (1,))
                      + "<p>Store: %d visits, median %.0f s, median $%s left unspent.</p>" % (s["visits"], s["median_seconds"], s["median_money_left"])))
     options = "".join('<option value="%s">%s (%d events)</option>' % (esc(k), esc(k), len(v)) for k, v in a["timelines"].items())
     sections.append(("Session timeline", '<select id="pick">%s</select><div id="timeline"></div>' % options))
