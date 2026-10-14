@@ -749,3 +749,19 @@ func test_too_few_discards_and_it_lands() -> void:
 	s.dig(0)
 	s._burn(1, "cards")
 	h.check("two and the fuse out, it landed", s.standing < standing)
+
+func test_the_shield_is_spent_whichever_way_the_turn_ends() -> void:
+	## Landed, dodged by dropping the product, or answered by discarding: the same.
+	var resolve := DiscardCards.new()
+	resolve.count = 2
+	var boss := _boss([_move(&"big", 30, 3, resolve)])
+	boss.patience_resets_after_move = true
+	var pair := _fight(boss)
+	var s: Shift = pair[0]
+	var c: Customer = pair[1]
+	for i in range(3):
+		_hand(s, _products()[i % _products().size()], 930 + i)
+	c.patience = 35
+	s.dig(0)
+	s.dig(0)
+	h.eq("answered by discarding, and the shield goes", c.patience, 0)
