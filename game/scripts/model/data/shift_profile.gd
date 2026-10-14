@@ -263,6 +263,10 @@ func is_premade() -> bool:
 	return dealt_by != null
 
 ## Dealt as a boss - see ShiftCategory.boss_day.
+## What the calendar's sticker on this shift says, or "" for none.
+func sticker() -> String:
+	return dealt_by.sticker if is_boss_day() else ""
+
 func is_boss_day() -> bool:
 	return dealt_by != null and dealt_by.boss_day
 

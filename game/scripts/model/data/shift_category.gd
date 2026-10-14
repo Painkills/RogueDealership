@@ -17,6 +17,9 @@ const SLOTS: Array[StringName] = [&"morning", &"midday", &"night"]
 ## at random (see Week) - a choice on the calendar, marked as a boss. A boss
 ## shift carries no product quota; it is its own test.
 @export var boss_day: bool = false
+## What the calendar's sticker on one of these says - BOSS SHIFT, or HARD SHIFT
+## for a hard optional one.
+@export var sticker: String = "BOSS SHIFT"
 ## A boss day on which the boss is the only thing on the calendar: the regular
 ## shifts are not offered at all, so there is nothing to pick but the fight. The
 ## final boss's.

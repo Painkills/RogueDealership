@@ -213,7 +213,7 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	# what set it apart.
 	if profile.is_boss_day():
 		when.modulate.a = 0.0
-		_sticker(event, "BOSS SHIFT", hue)
+		_sticker(event, profile.sticker(), hue)
 	if pickable:
 		event.pressed.connect(func(): chosen.emit(profile))
 	else:

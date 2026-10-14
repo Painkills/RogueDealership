@@ -104,14 +104,18 @@ func setup(run: RunState, history: Array) -> void:
 			% [Format.money(new_pay - was_pay), Format.money(new_pay)]
 	# Every boss on next week's calendar, by day.
 	if run.week != null:
-		var bosses: Array[String] = []
+		# By what their sticker says: the bosses, and the hard shifts beside them.
+		var by_sticker := {}
 		for day in range(next_first, next_last + 1):
 			for p in run.week.offers(day):
 				if p.is_boss_day():
-					bosses.append("%s %s" % [_day_name(day - 1, per_week).capitalize(),
+					var kind: String = p.sticker().capitalize() + "s"
+					if not by_sticker.has(kind):
+						by_sticker[kind] = []
+					by_sticker[kind].append("%s %s" % [_day_name(day - 1, per_week).capitalize(),
 						p.display_name])
-		if not bosses.is_empty():
-			_next.text += " Boss shifts: %s." % ", ".join(bosses)
+		for kind in by_sticker:
+			_next.text += " %s: %s." % [kind, ", ".join(by_sticker[kind])]
 	_write_memo(run, week)
 	_start.text = "START WEEK %d" % (week + 1)
 
