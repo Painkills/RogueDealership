@@ -50,6 +50,21 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	if p_shifts != null:
 		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi(), cfg.days_per_week,
 			archetypes, cfg)
+		_set_quotas_against_the_day_before()
+
+## A shift that asks for a multiple of the hardest quota the day before offered
+## (ShiftProfile.quota_over_hardest) gets it now, day by day - so that day's own
+## are settled before they are looked at - and the calendar, the floor and the
+## store all read one number.
+func _set_quotas_against_the_day_before() -> void:
+	for day in range(2, cfg.shifts_in_run + 1):
+		for p in week.offers(day):
+			if p.quota_over_hardest <= 0.0:
+				continue
+			var hardest := 0
+			for before in week.offers(day - 1):
+				hardest = maxi(hardest, before.quota_on(quota_for(day - 1)))
+			p.quota = roundi(hardest * p.quota_over_hardest)
 
 ## Plain data, for a save: everything a run has become since it was dealt - the
 ## seed rebuilds the rest (the calendar, the pools). See RunSave.

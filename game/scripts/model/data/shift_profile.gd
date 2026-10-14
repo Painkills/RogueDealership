@@ -85,6 +85,11 @@ class_name ShiftProfile extends Resource
 @export var shift_ticks: int = 0
 ## The shift's own quota, in place of the run's climbing one. 0 = the run's.
 @export var quota: int = 0
+## A boss's quota - its budget - set against the day before: this many times the
+## quota of the hardest shift that day offered (including a boss's or a special
+## shift's). 0 = not so; `quota` or the run's own. On the run's first day there is
+## no day before, and `quota` stands.
+@export var quota_over_hardest: float = 0.0
 ## How many customers can wait for a chair. 0 = ShiftConfig.waiting_max.
 @export var waiting_room: int = 0
 ## Only these come in - "a shift that has only Karens". The week each archetype

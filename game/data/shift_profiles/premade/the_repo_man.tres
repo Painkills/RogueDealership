@@ -12,6 +12,7 @@ blurb = "A new notice every turn. Build up their patience, then watch it go."
 seats = 1
 pay_scale = 1.0
 commission = 0.6
+quota_over_hardest = 1.5
 quota = 12000
 lineup = Array[ExtResource("2_arch")]([ExtResource("3_boss")])
 no_clock = true

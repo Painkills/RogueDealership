@@ -476,3 +476,35 @@ func test_a_boss_with_no_budget_is_dealt_as_authored() -> void:
 	var dealt: ShiftProfile = Week.new(pool, 1, 1, 5, _points_pool(), _deal_cfg()).offers(1).filter(
 		func(p): return p.is_boss_day())[0]
 	h.eq("its own lineup, untouched", dealt.lineup, boss.lineup)
+
+# ------------------------------------- a boss's quota against the day before
+func test_a_boss_can_ask_a_multiple_of_the_hardest_quota_the_day_before_offered() -> void:
+	var pool := _tiers()
+	# A tier that asks for more than the others, so "the hardest" is not any one.
+	pool.profiles[1].quota_scale = 1.4
+	var category := ShiftCategory.new()
+	category.days = 1 << 1
+	category.boss_day = true
+	category.takes_the_day = true
+	var boss := ShiftProfile.new()
+	boss.id = &"made_up_boss"
+	boss.quota = 777
+	boss.quota_over_hardest = 1.5
+	category.shifts.append(boss)
+	pool.categories.append(category)
+	var run := RunState.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"), load("res://data/card_pool.tres"),
+		load("res://data/archetype_pool.tres"), 3, null, pool)
+	var checked := 0
+	for day in range(2, run.cfg.shifts_in_run + 1):
+		for p in run.week.offers(day):
+			if p.id != &"made_up_boss":
+				continue
+			var hardest := 0
+			for before in run.week.offers(day - 1):
+				hardest = maxi(hardest, before.quota_on(run.quota_for(day - 1)))
+			h.eq("day %d: 1.5 times the hardest of the day before" % day,
+				p.quota_on(run.quota_for(day)), roundi(hardest * 1.5))
+			checked += 1
+	h.check("and there was a boss to check", checked > 0)
+	h.eq("the authored one is untouched", boss.quota, 777)
