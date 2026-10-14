@@ -979,7 +979,7 @@ func _check_the_whale_shortcut_stops_in_the_store_then_fights_the_boss() -> void
 		tap.visible and tap.flat and (tap.text == ""))
 	tap.pressed.emit()
 	var run: RunState = _root._run
-	_check("it opens the store, on the first Friday",
+	_check("it opens the store, on the first Saturday",
 		_root._shop_view.visible and not _root._title_view.visible
 			and run.shift_number == run.cfg.days_per_week)
 	var shop: Shop = _root._shop_view._shop

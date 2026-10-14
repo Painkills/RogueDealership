@@ -56,7 +56,7 @@ const SHORTCUT_DEALERSHIP_UPGRADES := 3
 ## The two bosses a shortcut reaches, each with the category that makes its shift a
 ## boss day.
 const WHALE_SHIFT := "res://data/shift_profiles/premade/the_whale.tres"
-const WHALE_CATEGORY := "res://data/shift_categories/boss_shifts_first_friday.tres"
+const WHALE_CATEGORY := "res://data/shift_categories/boss_shifts_first_saturday.tres"
 const REPO_SHIFT := "res://data/shift_profiles/premade/the_repo_man.tres"
 const REPO_CATEGORY := "res://data/shift_categories/final_boss.tres"
 
@@ -272,8 +272,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _debug_whale_fight() -> void:
 	var boss := (load(WHALE_SHIFT) as ShiftProfile).duplicate() as ShiftProfile
 	boss.dealt_by = load(WHALE_CATEGORY)
-	# On the first Friday, the day he comes on the calendar.
-	_debug_boss_fight(boss, _run_day_of_the_first_friday())
+	# On the first Saturday, the day he comes on the calendar.
+	_debug_boss_fight(boss, _run_day_of_the_first_saturday())
 
 ## Ctrl+N on the title screen, or a tap to the left of the build badge: the same
 ## shortcut to the Repo Man, the final boss.
@@ -282,8 +282,8 @@ func _debug_repo_fight() -> void:
 	boss.dealt_by = load(REPO_CATEGORY)
 	_debug_boss_fight(boss, load("res://data/shift_config.tres").shifts_in_run)
 
-## The first Friday: the last day of the first week.
-func _run_day_of_the_first_friday() -> int:
+## The first Saturday: the last day of the first week.
+func _run_day_of_the_first_saturday() -> int:
 	return (load("res://data/shift_config.tres") as ShiftConfig).days_per_week
 
 ## The store, then the boss, on `day` of a run: SHORTCUT_PURCHASES cards for sale,

@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("1_cat")
-display_name = "Final boss, the last Friday"
-days = 16
+display_name = "Final boss, the last Saturday"
+days = 32
 weeks = 2
 boss_day = true
 takes_the_day = true

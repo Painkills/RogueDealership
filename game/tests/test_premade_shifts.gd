@@ -424,3 +424,55 @@ func test_a_run_deals_its_week_once_from_its_own_seed() -> void:
 		h.eq("day %d is the same week from the same seed" % day,
 			a.week.offers(day).map(func(p): return p.id),
 			runs[1].week.offers(day).map(func(p): return p.id))
+
+# ------------------------------------------------- special shifts with a budget
+func _special_pool(start: int, customers: int, tier_start: int = 5) -> ShiftProfilePool:
+	var pool := _built_tiers(tier_start)
+	var category := ShiftCategory.new()
+	category.days = 0
+	category.boss_day = true
+	var special := ShiftProfile.new()
+	special.id = &"special"
+	special.chance = 1.0
+	special.customers = customers
+	special.difficulty_start = start
+	special.difficulty_per_day = 0.0
+	category.shifts.append(special)
+	pool.categories.append(category)
+	return pool
+
+func test_a_special_shift_with_a_budget_is_built_to_it() -> void:
+	var week := Week.new(_special_pool(12, 4), 1, 1, 5, _points_pool(), _deal_cfg())
+	var special: Array = week.offers(1).filter(func(p): return p.is_boss_day())
+	h.eq("dealt", special.size(), 1)
+	h.eq("its own number of customers", special[0].lineup.size(), 4)
+	h.eq("and their points come to its budget", special[0].difficulty, 12)
+
+func test_a_special_shift_keeps_its_budget_above_the_slots_it_sits_in() -> void:
+	## "Significantly more difficult than night or midday": the budget is the shift's
+	## own, not the slot's.
+	var pool := _special_pool(20, 4, 5)
+	var week := Week.new(pool, 1, 1, 5, _points_pool(), _deal_cfg())
+	var offers := week.offers(1)
+	var special: ShiftProfile = offers.filter(func(p): return p.is_boss_day())[0]
+	var others: Array = offers.filter(func(p): return not p.is_boss_day())
+	h.check("harder than anything else offered that day",
+		others.all(func(p): return special.difficulty > p.difficulty))
+
+func test_a_special_shift_comes_up_once_a_week() -> void:
+	var week := Week.new(_special_pool(12, 3), 6, 1, 3, _points_pool(), _deal_cfg())
+	var first := _offered(week, 3).filter(func(p): return p.is_boss_day())
+	h.eq("once in the first week", first.size(), 1)
+	var second := _offered(week, 6).filter(func(p): return p.is_boss_day())
+	h.eq("and once more in the second", second.size(), 2)
+
+func test_a_boss_with_no_budget_is_dealt_as_authored() -> void:
+	var pool := _built_tiers(5)
+	var category := ShiftCategory.new()
+	category.boss_day = true
+	var boss := _premade(&"fixed_boss", 0, true)
+	category.shifts.append(boss)
+	pool.categories.append(category)
+	var dealt: ShiftProfile = Week.new(pool, 1, 1, 5, _points_pool(), _deal_cfg()).offers(1).filter(
+		func(p): return p.is_boss_day())[0]
+	h.eq("its own lineup, untouched", dealt.lineup, boss.lineup)

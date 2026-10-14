@@ -5,7 +5,7 @@
 [ext_resource type="Resource" path="res://data/shift_profiles/morning.tres" id="2_morn"]
 [ext_resource type="Resource" path="res://data/shift_categories/monday_mornings.tres" id="2_v286r"]
 [ext_resource type="Resource" path="res://data/shift_categories/boss_shifts.tres" id="3_boss"]
-[ext_resource type="Resource" path="res://data/shift_categories/boss_shifts_first_friday.tres" id="6_boss_fri"]
+[ext_resource type="Resource" path="res://data/shift_categories/boss_shifts_first_saturday.tres" id="6_boss_fri"]
 [ext_resource type="Resource" path="res://data/shift_categories/final_boss.tres" id="7_final"]
 [ext_resource type="Resource" path="res://data/shift_categories/specific_shifts.tres" id="8_specific"]
 [ext_resource type="Resource" uid="uid://btlybt0nusv2t" path="res://data/shift_profiles/midday.tres" id="3_mid"]

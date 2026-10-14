@@ -61,7 +61,7 @@ func setup(score: Dictionary, fired: bool, rank: int = 0) -> void:
 	_title.add_theme_color_override("font_color",
 		Palette.color(&"alert" if fired else &"text"))
 	_to.text = "to %s" % who
-	_when.text = "Fri, 6:02 PM"
+	_when.text = "Sat, 6:02 PM"
 	_greeting.text = "%s," % who if fired else "Hi %s," % who
 	# A first week is the best on the board by default; a personal best means
 	# beating one that was already there.
@@ -71,7 +71,7 @@ func setup(score: Dictionary, fired: bool, rank: int = 0) -> void:
 		_sign_off.text = "Leave your badge at the front desk.\n- %s, General Manager" % BOSS
 	elif new_best:
 		_opening.text = "Best week I've seen from that desk. Here's how it added up - every line counts toward the number at the bottom."
-		_sign_off.text = "Drinks are on me Friday.\n- %s, General Manager" % BOSS
+		_sign_off.text = "Drinks are on me Saturday.\n- %s, General Manager" % BOSS
 	else:
 		_opening.text = "That's the week. Here's where you landed - every line counts toward the number at the bottom."
 		_sign_off.text = "See you Monday.\n- %s, General Manager" % BOSS

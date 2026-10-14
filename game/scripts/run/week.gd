@@ -70,7 +70,9 @@ func offers(day: int) -> Array[ShiftProfile]:
 
 func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator) -> Array[ShiftProfile]:
 	var out: Array[ShiftProfile] = []
-	var boss := _roll(_candidates(pool, day, true, &"", _week_length), rng)
+	# A special shift comes up at most once a week, like any premade shift.
+	var boss := _roll(_candidates(pool, day, true, &"", _week_length).filter(
+		func(c): return not _this_week.has(c["shift"])), rng)
 	var tiers: Array[ShiftProfile] = []
 	tiers.assign(pool.profiles.filter(func(t): return day >= t.from_day))
 	# A day with nothing to pick would stop the run dead - misauthored from_days
@@ -100,7 +102,8 @@ func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator) -> Arra
 		out.append(_dealt(premade, copy))
 		copy.take_rewards_from(tier)
 	if not boss.is_empty():
-		_seat_the_boss(out, boss, rng)
+		_this_week[boss["shift"]] = true
+		_seat_the_boss(out, boss, rng, day, week, pool.complicators)
 	return out
 
 ## Whether this calendar builds `tier`'s shifts to a difficulty target - it has
@@ -157,8 +160,9 @@ func _fits(shift: ShiftProfile, tier: ShiftProfile, target: int, week: int,
 ## Puts `boss` in the place of one of `out`'s shifts, at random: one its
 ## category allows the slot of, and a regular tier's where there is one - a
 ## special shift already dealt that day keeps its place if it can.
-static func _seat_the_boss(out: Array[ShiftProfile], boss: Dictionary,
-		rng: RandomNumberGenerator) -> void:
+func _seat_the_boss(out: Array[ShiftProfile], boss: Dictionary,
+		rng: RandomNumberGenerator, day: int = 1, week: int = 1,
+		complicators: Array = []) -> void:
 	var category: ShiftCategory = boss["category"]
 	var places: Array[int] = []
 	for i in range(out.size()):
@@ -172,7 +176,19 @@ static func _seat_the_boss(out: Array[ShiftProfile], boss: Dictionary,
 		return
 	var at: int = places[rng.randi_range(0, places.size() - 1)]
 	boss["slot"] = out[at].worked_at()
-	var fight := _dealt(boss, (boss["shift"] as ShiftProfile).duplicate() as ShiftProfile)
+	var picked: ShiftProfile = boss["shift"]
+	var built: ShiftProfile
+	if _archetypes != null and picked.lineup.is_empty() and picked.customers > 0 \
+			and picked.difficulty_start > 0:
+		# A special shift with a difficulty budget of its own: a lineup of its
+		# `customers` (from whoever it names), filled to the target the way a slot's
+		# is - and where they cannot reach it, complicators make up the rest. It sits
+		# in no slot, so no slot's exclusions apply to it.
+		built = ShiftGenerator.fill(picked, ShiftProfile.new(), day, week,
+			picked.difficulty_on(day), _archetypes, complicators, _share, rng)
+	else:
+		built = picked.duplicate() as ShiftProfile
+	var fight := _dealt(boss, built)
 	# A boss that takes the whole day is the one thing offered.
 	if category.takes_the_day:
 		out.clear()

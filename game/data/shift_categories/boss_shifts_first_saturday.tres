@@ -6,8 +6,8 @@
 
 [resource]
 script = ExtResource("1_4wy7u")
-display_name = "Boss shifts, the first Friday"
-days = 16
+display_name = "Boss shift, the first Saturday"
+days = 32
 weeks = 1
 boss_day = true
 takes_the_day = true
