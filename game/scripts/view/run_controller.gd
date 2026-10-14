@@ -98,6 +98,12 @@ var _saved_mark: Array = []
 var _calendar_note := ""
 
 func _ready() -> void:
+	# The play metrics: this launch's session, and the node that sends them.
+	var metrics := Telemetry.new()
+	metrics.name = "Telemetry"
+	add_child(metrics)
+	Telemetry.start_session({"installed": Telemetry.installed_app(),
+		"first_launch": not PlayerProfile.has_best() and not TutorialProgress.is_done()})
 	_picker_view.chosen.connect(_on_profile_chosen)
 	_shift_view.shift_finished.connect(_on_shift_finished)
 	_shift_view.deck_viewed.connect(_on_view_deck_requested)
@@ -147,6 +153,7 @@ func _ready() -> void:
 ## any run on this device that was still going.
 func _start_run() -> void:
 	_new_run()
+	Telemetry.start_run("new", {"seed": _run.rng.seed})
 	_begin_the_day()
 	_open_the_picker()
 
@@ -160,12 +167,17 @@ func _continue_run() -> void:
 		_open_the_title()
 		return
 	_new_run(save.seed_value())
+	# Played back, those moves were recorded the first time.
+	Telemetry.muted = true
 	var back := save.resume(_run)
 	if not back["ok"]:
 		_new_run(save.seed_value())
 		save.restart_day()
 		back = save.resume(_run, false)
 		_calendar_note = "A new build came in - today starts over"
+	Telemetry.muted = false
+	Telemetry.start_run("continue", {"seed": save.seed_value(), "day": _run.shift_number,
+		"restarted_day": not back.get("ok", true) or _calendar_note != ""})
 	_history = back["history"]
 	_save = save
 	_live_shift = back["shift"]
@@ -201,6 +213,9 @@ func _keep_playing() -> void:
 ## on this device it was opened over is left as it was.
 func _quit_the_run() -> void:
 	_quit_popup.visible = false
+	Telemetry.record("run_quit", {"day": _run.shift_number, "standing": _run.standing,
+		"in": _where_you_are()}, true)
+	Telemetry.end_run()
 	if not _practice_run:
 		RunFile.clear()
 	_shift_view.set_active(false)
@@ -291,6 +306,7 @@ func _run_day_of_the_first_saturday() -> int:
 ## of it.
 func _debug_boss_fight(boss: ShiftProfile, day: int) -> void:
 	_new_run()
+	Telemetry.start_run("shortcut", {"boss": String(boss.id), "day": day})
 	_practice_run = true
 	_straight_to_the_boss = true
 	_boss_shortcut = boss
@@ -339,6 +355,8 @@ func _open_the_title(intro: bool = false) -> void:
 func _open_the_picker() -> void:
 	_show_only(_picker_view)
 	_set_up_the_calendar(null)
+	Telemetry.record("day_offers", {"day": _run.shift_number, "standing": _run.standing,
+		"money": _run.money, "offers": _run.todays_shifts().map(_offer_summary)})
 	if _calendar_note != "":
 		_picker_view.note(_calendar_note)
 		_calendar_note = ""
@@ -363,6 +381,7 @@ func _set_up_the_calendar(working: ShiftProfile) -> void:
 ## VIEW CALENDAR, from the floor: the week laid over it, nothing to pick, and
 ## the floor's own HUD put away until it closes - the deck viewer's trick.
 func _open_the_calendar_view() -> void:
+	Telemetry.record("calendar_view", {"day": _run.shift_number}, true)
 	_calendar_open = true
 	_set_up_the_calendar(_chosen_profile)
 	_picker_view.visible = true
@@ -391,6 +410,7 @@ func _week_product_quotas() -> Dictionary:
 	return out
 
 func _on_profile_chosen(profile: ShiftProfile) -> void:
+	Telemetry.record("shift_pick", _offer_summary(profile), true)
 	_chosen_profile = profile
 	if _save != null:
 		_save.picked(_run, profile)
@@ -410,6 +430,7 @@ func _open_the_floor() -> void:
 ## The practice shift, on the same floor the real ones use. Dealt from its own
 ## starter deck (see Tutorial), so nothing done in practice touches the run.
 func _open_the_tutorial() -> void:
+	Telemetry.record("tutorial_start", {}, true)
 	_in_tutorial = true
 	_show_only(_shift_view)
 	# A first day starts in the morning.
@@ -421,6 +442,7 @@ func _open_the_tutorial() -> void:
 ## is START MY FIRST SHIFT - goes on to a new game's first day; skipped or
 ## exited goes back to the menu it was opened from.
 func _on_tutorial_finished(completed: bool) -> void:
+	Telemetry.record("tutorial_end", {"completed": completed, "step": _coach.step_id()}, true)
 	_in_tutorial = false
 	_coach.stop()
 	TutorialProgress.mark_done()
@@ -441,6 +463,7 @@ func _on_shift_finished(report: Dictionary) -> void:
 		return
 	_history.append({"profile": _chosen_profile, "report": report})
 	_run.finish_shift(report)
+	Telemetry.record("shift_end", _shift_summary(report))
 	if _run.is_over():
 		# Nothing left to pick up.
 		RunFile.clear()
@@ -461,6 +484,10 @@ func _on_shift_finished(report: Dictionary) -> void:
 			int(tally["margin_banked"]), fired)
 		_summary_view.setup(tally, fired, rank)
 		_summary_view.visible = true
+		Telemetry.record("run_end", {"score": int(tally["total"]), "fired": fired,
+			"day": _run.shift_number - 1, "standing": _run.standing,
+			"banked": int(tally["margin_banked"])})
+		Telemetry.end_run()
 		return
 	# The shop is what the JUST-PLAYED shift's tier adds to the free card, not
 	# whatever gets picked next - so it goes in before the picker is shown
@@ -475,6 +502,7 @@ func _on_shift_finished(report: Dictionary) -> void:
 		_write_the_save()
 	_show_only(_shop_view)
 	_shop_view.setup(shop)
+	_shop_opened_ms = Time.get_ticks_msec()
 
 func _on_summary_continue() -> void:
 	_summary_view.visible = false
@@ -485,6 +513,10 @@ func _on_summary_continue() -> void:
 ## The store closes on the next day's calendar - unless that day starts a new
 ## week, when the week just worked gets its report first.
 func _on_shop_done() -> void:
+	Telemetry.record("shop_end", {"day": _run.shift_number, "money_left": _run.money,
+		"seconds": (Time.get_ticks_msec() - _shop_opened_ms) / 1000.0 \
+			if _shop_opened_ms >= 0 else 0.0}, true)
+	_shop_opened_ms = -1
 	# A boss shortcut: from the store to the boss, no calendar between.
 	if _straight_to_the_boss and _boss_shortcut != null:
 		_straight_to_the_boss = false
@@ -496,7 +528,37 @@ func _on_shop_done() -> void:
 	_open_the_day()
 
 func _on_view_deck_requested() -> void:
+	Telemetry.record("deck_view", {"in": _where_you_are()}, true)
 	_deck_viewer.show_deck(_run)
+
+## When the store opened, for how long it took (-1: not open).
+var _shop_opened_ms := -1
+
+## Which screen you are on, for the play metrics.
+func _where_you_are() -> String:
+	if _shift_view.visible:
+		return "floor"
+	if _shop_view.visible:
+		return "store"
+	if _picker_view.visible:
+		return "calendar"
+	return "other"
+
+## A shift as the calendar offers it, for the play metrics.
+func _offer_summary(p: ShiftProfile) -> Dictionary:
+	return {"id": String(p.id), "slot": String(p.worked_at()), "difficulty": p.difficulty,
+		"quota": p.quota_on(_run.quota_for(_run.shift_number)), "boss": p.is_boss_day(),
+		"rules": p.rules_preview(),
+		"lineup": p.lineup.map(func(a): return String(a.id) if a != null else "")}
+
+## What a shift's report says, without anything that is not plain data.
+func _shift_summary(report: Dictionary) -> Dictionary:
+	var out: Dictionary = Telemetry.plain(report)
+	out["profile"] = String(_chosen_profile.id) if _chosen_profile != null else ""
+	out["day"] = _run.shift_number - 1
+	out["standing_after"] = _run.standing
+	out["money_after"] = _run.money
+	return out
 
 ## Exactly one of the four screens visible at a time. ShiftView is a Node3D,
 ## not a Control (the table), which is why this takes a plain Node - and it

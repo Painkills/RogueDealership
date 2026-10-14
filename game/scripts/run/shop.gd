@@ -47,6 +47,9 @@ var dealership_missed: bool = false
 ## by id, your cards by uid - so a run picked up again can play the visit back
 ## (see RunSave and replay()), the way Shift.commands does a shift.
 var commands: Array = []
+## Beside each of `commands`: the money before it, and the card a uid was - for
+## the play metrics (Telemetry). Replay never reads it.
+var command_notes: Array = []
 
 ## How often each rarity turns up, relative to the others - not a percentage,
 ## just a ratio consumed by _weighted_pick(). Flat on purpose: the pool is still
@@ -99,7 +102,7 @@ func _roll_dealership_offers(count: int) -> void:
 
 ## Picks one of this visit's dealership upgrades - the run keeps it for good.
 func take_dealership_upgrade(u: DealershipUpgrade) -> Result:
-	commands.append([&"take_dealership_upgrade", u.id if u != null else &""])
+	_noted([&"take_dealership_upgrade", u.id if u != null else &""])
 	if dealership_picks_left <= 0:
 		return Result.new(false, "You have had your perk this visit.")
 	if u == null or not dealership_offers.has(u):
@@ -257,7 +260,7 @@ func perk_text() -> String:
 ## "Out of which the player picks ONE. Once they've picked one, they can't pick
 ## any more of these free ones until the next shift."
 func take_free(def: CardDef) -> Result:
-	commands.append([&"take_free", def.id])
+	_noted([&"take_free", def.id])
 	if free_picks_left <= 0:
 		return Result.new(false, "You have already taken this visit's free card.")
 	if not free_cards.has(def):
@@ -270,14 +273,14 @@ func take_free(def: CardDef) -> Result:
 
 ## "Pick one, or none": passing spends the visit's pick on nothing.
 func pass_on_free() -> Result:
-	commands.append([&"pass_on_free"])
+	_noted([&"pass_on_free"])
 	if free_picks_left <= 0:
 		return Result.new(false, "You have already had this visit's free card.")
 	free_picks_left = 0
 	return Result.new(true, "You pass on the free cards this time.", "pass")
 
 func buy(def: CardDef) -> Result:
-	commands.append([&"buy", def.id])
+	_noted([&"buy", def.id])
 	if not offers.has(def):
 		return Result.new(false, "%s is not for sale." % def.display_name)
 	var price := buy_price(def)
@@ -290,7 +293,7 @@ func buy(def: CardDef) -> Result:
 		"buy", {"price": price})
 
 func upgrade(uid: int) -> Result:
-	commands.append([&"upgrade", uid])
+	_noted([&"upgrade", uid])
 	var inst := find(uid)
 	if inst == null:
 		return Result.new(false, "No such card.")
@@ -314,7 +317,7 @@ func upgrade(uid: int) -> Result:
 		"upgrade", {"price": price})
 
 func remove(uid: int) -> Result:
-	commands.append([&"remove", uid])
+	_noted([&"remove", uid])
 	var inst := find(uid)
 	if inst == null:
 		return Result.new(false, "No such card.")
@@ -341,6 +344,16 @@ func remove(uid: int) -> Result:
 
 ## Plays one entry of `commands` again - how RunSave puts a visit back where it
 ## was. Recorded again as it plays, like any other verb.
+## Logs a command, and the money and card it was about (command_notes).
+func _noted(cmd: Array) -> void:
+	commands.append(cmd)
+	var n := {"money": run.money}
+	if cmd.size() > 1 and cmd[1] is int:
+		var inst := find(int(cmd[1]))
+		if inst != null:
+			n["card"] = String(inst.card.id)
+	command_notes.append(n)
+
 func replay(cmd: Array) -> Result:
 	var arg = cmd[1] if cmd.size() > 1 else null
 	match StringName(cmd[0]):
@@ -368,7 +381,7 @@ func _perk(id: StringName) -> DealershipUpgrade:
 
 ## The testing shortcut in the store (Ctrl+M): `n` more to spend.
 func add_money_for_testing(n: int) -> void:
-	commands.append([&"add_money_for_testing", n])
+	_noted([&"add_money_for_testing", n])
 	run.money += n
 
 func find(uid: int) -> CardInstance:

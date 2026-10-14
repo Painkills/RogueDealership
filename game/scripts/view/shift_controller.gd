@@ -680,6 +680,8 @@ func _last_customer_chair() -> int:
 ## Every model command funnels through here. A refusal costs nothing but must
 ## still say why - "the rules never say no" only holds if the player hears it.
 func _apply(res: Result) -> void:
+	# Before anything else moves the clock (an empty floor waits itself out).
+	Telemetry.shift_action(_shift, res)
 	if not res.ok:
 		_event_log.append_text("[color=%s]%s[/color]\n" % [Palette.hex(&"alert"), res.msg])
 	var sold_at = res.data.get("chair", _shift.at) if res.ok and res.kind == "sale" else null
@@ -1086,6 +1088,9 @@ func _notice_departures() -> void:
 			_mourn_walkout(i, was.unsigned_margin())
 		else:
 			continue
+		Telemetry.record(was.state, {"tick": _shift.tick, "chair": i,
+			"archetype": String(was.archetype.id), "unsigned": was.unsigned_margin(),
+			"patience": was.patience, "products": was.unsigned.size(), "day": _shift.shift_number})
 		# "Wait to show the new customer who appears in the chair until the
 		# 'signed' or 'walk out' sign has disappeared."
 		_held[i] = {"who": was, "until": Time.get_ticks_msec() + int(HOLD_SECONDS * 1000.0)}
@@ -1942,6 +1947,7 @@ func _drain_log(quiet: bool = false) -> void:
 			continue
 		if not quiet:
 			_show_what_they_did(entry)
+			Telemetry.customer_entry(_shift, entry)
 		# A tick of something already said (Linger): the number rises off the
 		# folder, and the log keeps its one line.
 		if bool(entry.get("quiet", false)):

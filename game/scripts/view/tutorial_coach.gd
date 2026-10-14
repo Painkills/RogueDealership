@@ -117,6 +117,8 @@ const WELCOME_BACK := {
 
 var _floor = null            ## the ShiftController being taught on
 var _step := -1
+## When the current memo went up, for the play metrics (-1: none yet).
+var _step_shown_ms := -1
 var _start_stat := {}        ## the shift's counters when the tutorial began
 var _step_stat := {}         ## and when the current memo went up
 ## The product whose Line was last tuned - see Tutorial.tune_line(). Re-tuned
@@ -146,6 +148,7 @@ func start(floor_view) -> void:
 	_tuned_uid = -1
 	var shift: Shift = _floor.current_shift()
 	_start_stat = shift.stat.duplicate() if shift != null else {}
+	_step_shown_ms = -1
 	visible = true
 	set_process(true)
 	_go(0)
@@ -169,6 +172,12 @@ func splash_showing() -> bool:
 	return _splash.visible
 
 func _go(i: int) -> void:
+	# How long the memo before this one was up, for the play metrics.
+	var now := Time.get_ticks_msec()
+	if _step >= 0 and _step < STEPS.size() and _step_shown_ms >= 0:
+		Telemetry.record("tutorial_step", {"step": String(step_id()), "index": _step,
+			"seconds": (now - _step_shown_ms) / 1000.0}, true)
+	_step_shown_ms = now
 	_step = i
 	var s: Dictionary = STEPS[i]
 	var shift: Shift = _floor.current_shift()

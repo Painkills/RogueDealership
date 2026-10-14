@@ -92,6 +92,11 @@ var testing_skip: bool = false
 ## where it was (see RunSave and replay()). Refused ones too: an offer asked too
 ## soon still counts, and still gets an answer.
 var commands: Array = []
+## Beside each of `commands`, the same index: how things stood the moment it was
+## made - which card the hand position was, who it was aimed at, their patience,
+## Line and offer - as plain data, for the play metrics (Telemetry) to say what a
+## move WAS once the hand has moved on. Replay never reads it.
+var command_notes: Array = []
 
 var chairs: Array = []
 ## Who is waiting for a chair, first come first seated. Archetypes only: nobody
@@ -869,6 +874,50 @@ func _here() -> Array:
 
 ## Plays one entry of `commands` again - how RunSave puts a shift back where it
 ## was. Recorded again as it plays, like any other command.
+## Logs a command, and how things stood as it was made (command_notes).
+func _noted(cmd: Array) -> void:
+	commands.append(cmd)
+	command_notes.append(_note_for(cmd))
+
+
+func _note_for(cmd: Array) -> Dictionary:
+	var verb := StringName(cmd[0])
+	var n := {"tick": tick, "standing": standing, "margin_banked": margin_banked,
+		"hand": hand.map(func(i): return String(i.card.id))}
+	var index := int(cmd[1]) if cmd.size() > 1 else -1
+	if verb in [&"play_card", &"place", &"dig"] and index >= 0 and index < hand.size():
+		n["card"] = String(hand[index].card.id)
+	if verb == &"choose_pull" and pending_pull != null and index >= 0 \
+			and index < pending_pull.revealed.size():
+		n["card"] = String(pending_pull.revealed[index].card.id)
+	# Who it was aimed at: the chair named, or the one you are standing at.
+	var chair := -1
+	if verb == &"approach":
+		chair = index
+	elif verb in [&"play_card", &"place"] and cmd.size() > 2 and int(cmd[2]) >= 0:
+		chair = int(cmd[2])
+	elif at != null:
+		chair = int(at)
+	var c = chairs[chair] if chair >= 0 and chair < chairs.size() else null
+	if c != null:
+		n["chair"] = chair
+		n["archetype"] = String(c.archetype.id)
+		n["patience"] = c.patience
+		n["line"] = c.line
+		n["known_line"] = c.known_line
+		if c.demand != null:
+			n["demand"] = String(c.demand.id)
+			n["demand_left"] = c.demand_due_tick - tick
+		if c.offer != null:
+			n["offer"] = String(c.offer.product.id)
+			n["appeal"] = c.offer.appeal
+			n["offer_margin"] = c.offer.margin
+			n["rank"] = int(c.ranks.get(c.offer.product.interest.id, 0))
+		if c.has_budget():
+			n["budget_left"] = c.budget_left()
+	return n
+
+
 func replay(cmd: Array) -> Result:
 	var args := cmd.slice(1)
 	match StringName(cmd[0]):
@@ -894,14 +943,14 @@ func replay(cmd: Array) -> Result:
 
 ## The testing shortcut that burns a shift (Ctrl+E) - see testing_skip.
 func skip_for_testing() -> void:
-	commands.append([&"skip_for_testing"])
+	_noted([&"skip_for_testing"])
 	testing_skip = true
 
 
 ## The testing shortcut over the standing counter: `n` more standing, never past
 ## where a run starts.
 func give_standing_for_testing(n: int) -> void:
-	commands.append([&"give_standing_for_testing", n])
+	_noted([&"give_standing_for_testing", n])
 	standing = clampi(standing + n, 0, cfg.standing_start)
 
 
@@ -916,7 +965,7 @@ func approach(chair: int) -> Result:
 	## NOT survive is the old discount for returning to last_customer: an
 	## asymmetry that made coming back cheaper than going was the shape of the
 	## tunnel vision, so if the charge ever comes back it comes back uniform.
-	commands.append([&"approach", chair])
+	_noted([&"approach", chair])
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if chair < 0 or chair >= chairs.size():
@@ -936,7 +985,7 @@ func approach(chair: int) -> Result:
 
 
 func leave() -> Result:
-	commands.append([&"leave"])
+	_noted([&"leave"])
 	if at == null:
 		return Result.new(false, "You are already out on the floor.")
 	at = null
@@ -957,7 +1006,7 @@ func wait() -> Result:
 	## Refused while anybody is still seated, deliberately. Being able to skip
 	## time at will is a different game - the pressure a Karen puts on the whole
 	## floor only means anything if you cannot simply wait them out.
-	commands.append([&"wait"])
+	_noted([&"wait"])
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if not seated().is_empty():
@@ -1013,7 +1062,7 @@ func can_play_away(inst: CardInstance) -> bool:
 ## Plays the card at `index` on whoever you are standing with - or, given a
 ## `chair`, on that customer without going to them (can_play_away() cards only).
 func play_card(index: int, chair: int = -1) -> Result:
-	commands.append([&"play_card", index, chair])
+	_noted([&"play_card", index, chair])
 	var away := _is_away(chair)
 	var pair := _there(chair) if away else _here()
 	if pair[1] != null:
@@ -1029,7 +1078,7 @@ func play_card(index: int, chair: int = -1) -> Result:
 
 
 func place(index: int, chair: int = -1) -> Result:
-	commands.append([&"place", index, chair])
+	_noted([&"place", index, chair])
 	return _place(index, chair)
 
 
@@ -1368,7 +1417,7 @@ func offer() -> Result:
 	## Free in time, and only possible once they would say yes (offer_refusal()):
 	## nothing is risked by asking, so nothing is learned by asking either - where a
 	## product ranks is on the grid from the moment it is placed.
-	commands.append([&"offer"])
+	_noted([&"offer"])
 	var pair := _here()
 	if pair[1] != null:
 		return pair[1]
@@ -1479,7 +1528,7 @@ func holds_out_for_a_concession(c: Customer) -> bool:
 func drop_offer() -> Result:
 	## Free. The ticks that built this offer are already spent - charging again
 	## for admitting it failed would just tax you for being wrong.
-	commands.append([&"drop_offer"])
+	_noted([&"drop_offer"])
 	var pair := _here()
 	if pair[1] != null:
 		return pair[1]
@@ -1499,7 +1548,7 @@ func drop_offer() -> Result:
 
 func dig(index: int) -> Result:
 	## Rummage for the right pitch. The floor pays for it either way.
-	commands.append([&"dig", index])
+	_noted([&"dig", index])
 	if is_over():
 		return Result.new(false, "The floor is closed.")
 	if pending_pull != null:
@@ -1592,7 +1641,7 @@ func _return_pull(p: PendingPull, chosen_index: int) -> void:
 
 
 func choose_pull(index: int) -> Result:
-	commands.append([&"choose_pull", index])
+	_noted([&"choose_pull", index])
 	if pending_pull == null:
 		return Result.new(false, "There is nothing to choose from.")
 	if index < 0 or index >= pending_pull.revealed.size():
@@ -1608,7 +1657,7 @@ func choose_pull(index: int) -> Result:
 
 
 func cancel_pull() -> Result:
-	commands.append([&"cancel_pull"])
+	_noted([&"cancel_pull"])
 	if pending_pull == null:
 		return Result.new(false, "There is nothing to cancel.")
 	_return_pull(pending_pull, -1)
@@ -1662,7 +1711,7 @@ func has_something_left_to_sell(c: Customer) -> bool:
 
 func close() -> Result:
 	## Sign it. The only thing in the game that banks margin.
-	commands.append([&"close"])
+	_noted([&"close"])
 	var pair := _here()
 	if pair[1] != null:
 		return pair[1]

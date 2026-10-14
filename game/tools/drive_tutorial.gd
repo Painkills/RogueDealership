@@ -32,6 +32,7 @@ func _init() -> void:
 	RunFile.clear()
 	# Nothing this plays ever goes on the real shared board.
 	Leaderboard.offline = true
+	Telemetry.offline = true
 	_boot()
 	_drive.call_deferred()
 

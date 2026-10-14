@@ -45,6 +45,9 @@ func _init() -> void:
 	# the hard way: a run reporting "all passed" had simply been dealt a kind
 	# shift.
 	seed(20260903)
+	# Recorded in memory, for the checks below - never written or sent.
+	Telemetry.offline = true
+	Telemetry.reset_for_testing()
 	_controller = (load("res://scenes/shift.tscn") as PackedScene).instantiate()
 	get_root().add_child(_controller)
 
@@ -166,6 +169,7 @@ func _physics_process(_delta: float) -> bool:
 	var banked_before: int = _controller._banked_shown
 	_press(KEY_C, true);      _settle(); _check_table("after closing")
 	_check_a_signing_flies_its_money_to_the_top(banked_before)
+	_check_every_move_is_recorded()
 	_press(KEY_B);            _settle(); _check_table("after approaching chair B")
 	_check_the_table_really_turns()
 
@@ -2875,6 +2879,24 @@ func _label_near(at: Vector2) -> Label:
 				and (n as Label).get_global_rect().get_center().distance_to(at) < 6.0:
 			return n
 	return null
+
+## "Track all player actions as data points, with timings": every move the keys
+## and the drags above made is an `action` event - by card id, with the time it
+## took to decide - a refused one says why, and the signing is its own event.
+func _check_every_move_is_recorded() -> void:
+	var actions := Telemetry.of_kind("action")
+	_check("the moves above were recorded (%d)" % actions.size(), actions.size() >= 5)
+	var by_card := actions.filter(func(e): return e["data"]["cmd"] in ["play_card", "place", "dig"])
+	_check("each card played, placed or dug by its id (%d)" % by_card.size(),
+		not by_card.is_empty() and by_card.all(func(e): return str(e["data"].get("card", "")) != ""))
+	_check("every one with how long it took to decide",
+		actions.all(func(e): return e["think_ms"] != null and int(e["think_ms"]) >= 0))
+	var refused := actions.filter(func(e): return not e["data"]["ok"])
+	var refused_offers := refused.filter(func(e): return e["data"]["cmd"] == "offer")
+	_check("the offer made too soon is there, with the words the player saw (%d refused)"
+		% refused.size(), refused_offers.any(func(e): return str(e["data"].get("refused", "")) != ""))
+	_check("and the signing is an event of its own", not Telemetry.of_kind("signed").is_empty())
+	_check("nothing was queued to send - the driver is offline", Telemetry.queued().is_empty())
 
 ## Whether every effect label on screen uses only characters the game's font has.
 func _fx_labels_are_all_in_the_font() -> bool:

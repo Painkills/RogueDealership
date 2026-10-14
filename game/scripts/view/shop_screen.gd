@@ -350,6 +350,7 @@ func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> 
 func _apply(res: Result) -> void:
 	## A refusal costs nothing but must still say why - the same rule the shift
 	## screen follows.
+	Telemetry.shop_action(_shop, res)
 	_log.text = res.msg
 	_log.add_theme_color_override("font_color",
 		Palette.color(&"text_dim" if res.ok else &"alert"))

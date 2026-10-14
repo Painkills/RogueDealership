@@ -86,6 +86,15 @@ static func short_date(iso: String) -> String:
 	var month := clampi(int(parts[1]), 1, 12)
 	return "%s %d" % [MONTHS[month - 1], int(parts[2])]
 
+## Whether the player has turned the anonymous play metrics off (Telemetry).
+static func telemetry_off() -> bool:
+	return bool(_load().get_value("player", "telemetry_off", false))
+
+static func set_telemetry_off(off: bool) -> void:
+	var file := _load()
+	file.set_value("player", "telemetry_off", off)
+	file.save(path)
+
 static func reset() -> void:
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

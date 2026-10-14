@@ -44,6 +44,8 @@ func _init() -> void:
 	RunFile.clear()
 	# Nor ever posted to the real shared board.
 	Leaderboard.offline = true
+	Telemetry.offline = true
+	Telemetry.reset_for_testing()
 	get_root().add_child(_root)
 
 func _process(_delta: float) -> bool:
@@ -67,6 +69,7 @@ func _process(_delta: float) -> bool:
 		_check_the_free_card_is_on_the_house()
 		# Before any check below hands the store money no move ever earned - a
 		# save rightly refuses to play back a run its moves cannot explain.
+		_check_the_run_is_in_the_play_metrics()
 		_check_reopening_the_game_continues_the_run("in the store", &"store")
 		_check("with the card taken there still taken", _root._live_shop != null
 			and _root._shop_view._shop == _root._live_shop
@@ -1305,6 +1308,7 @@ func _check_reopening_the_game_continues_the_run(where: String, screen: StringNa
 		return
 	_check("as it stands right now, %s" % where, saved.fingerprint == before)
 	var old_run: RunState = _root._run
+	var moves_before := _recorded_moves()
 	_reopen_the_game()
 	var title = _root._title_view
 	var button := title.get_node(^"%ContinueButton") as Button
@@ -1322,7 +1326,36 @@ func _check_reopening_the_game_continues_the_run(where: String, screen: StringNa
 	if screen == &"floor":
 		_check("the floor is working the played-back shift",
 			_root._shift_view._shift == _root._live_shift)
+	_check("and the moves played back are not recorded a second time (%d, %d)"
+		% [moves_before, _recorded_moves()], _recorded_moves() == moves_before)
+	_check("the play metrics say the run was picked up again",
+		Telemetry.of_kind("run_start").back()["data"]["mode"] == "continue")
 	_run = _root._run
+
+## How many moves the play metrics hold - on the floor, in the store, and what
+## customers did.
+func _recorded_moves() -> int:
+	return Telemetry.of_kind("action").size() + Telemetry.of_kind("shop").size() \
+		+ Telemetry.of_kind("customer").size()
+
+## "Track all player actions as data points": the run so far, in the play
+## metrics - begun, each day's offers and the pick, the shift's end, the store.
+func _check_the_run_is_in_the_play_metrics() -> void:
+	_check("the run's start is recorded", not Telemetry.of_kind("run_start").is_empty())
+	var offers := Telemetry.of_kind("day_offers")
+	_check("each day's offers, every shift by id, quota and difficulty",
+		not offers.is_empty() and (offers[0]["data"]["offers"] as Array).all(
+			func(o): return str(o["id"]) != "" and o.has("quota") and o.has("difficulty")))
+	var picks := Telemetry.of_kind("shift_pick")
+	_check("the pick, with how long it took", not picks.is_empty()
+		and picks[0]["think_ms"] != null)
+	var ends := Telemetry.of_kind("shift_end")
+	_check("the shift's end, with its report", not ends.is_empty()
+		and ends[0]["data"].has("margin_banked") and ends[0]["data"].has("made_quota"))
+	_check("and the store's moves", not Telemetry.of_kind("shop").is_empty())
+	_check("every event in this run carries the run's id",
+		Telemetry.events.filter(func(e): return e["kind"] == "shift_end").all(
+			func(e): return e["run"] != null))
 
 ## "A button in the top right corner allowing you to quit a run. Have a popup to
 ## confirm saying the run will be lost." A run on the floor, a mind changed once,
@@ -1355,6 +1388,9 @@ func _check_quitting_a_run_asks_first_then_loses_it() -> void:
 	_check("with the run gone - nothing on disk, nothing to continue",
 		RunFile.read() == null and not _root._title_view.continue_offered())
 	_check("and no QUIT RUN on the front door", not quit_btn.visible)
+	_check("quitting is in the play metrics, with the day it happened on",
+		not Telemetry.of_kind("run_quit").is_empty()
+			and Telemetry.of_kind("run_quit").back()["data"].has("day"))
 	_run = _root._run
 
 ## The page reloaded: everything in memory gone, a new run.tscn booted the way

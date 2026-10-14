@@ -4,3 +4,7 @@ game/build/
 __pycache__/
 *.pyc
 *.tmp
+
+# The play metrics report: made locally from live data, never committed.
+telemetry_report.html
+*.events.json

@@ -16,6 +16,7 @@ var _failures: Array[String] = []
 var _checks := 0
 
 func _init() -> void:
+	Telemetry.offline = true
 	_drive.call_deferred()
 
 func _drive() -> void:

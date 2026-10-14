@@ -1,4 +1,4 @@
-class_name Leaderboard extends Node
+class_name Leaderboard extends SupabaseClient
 ## The high scores everyone shares: a finished week's badge name and score,
 ## posted to a Supabase table, and the top of that table read back for the
 ## title screen. docs/leaderboard_setup.sql builds the table and its rules:
@@ -11,10 +11,9 @@ class_name Leaderboard extends Node
 ## In the view layer for the same reason PlayerProfile is: it reaches outside
 ## the game, and the model and run layers never do.
 
-## The Supabase project - Settings -> API. The anon key is MEANT to be public:
-## what it may do is limited by the table's own rules, not by keeping it secret.
-const URL := "https://tmiauedyfphaytwfbsde.supabase.co"
-const KEY := "sb_publishable_mv8R90Sh_xDHPxLmIVoH8Q_JQi3ibf-"
+## The project - see SupabaseClient.
+const URL := SupabaseClient.PROJECT_URL
+const KEY := SupabaseClient.PUBLIC_KEY
 
 ## How many of the best scores the title screen asks for.
 const TOP := 20
@@ -52,67 +51,6 @@ func submit(player_name: String, score: int, banked: int, fired: bool) -> void:
 	_send(insert_url(URL), HTTPClient.METHOD_POST,
 		JSON.stringify(body(player_name, score, banked, fired)), func(_c, _t): pass)
 
-## Requests sent through the browser, waiting on their reply: id -> {done,
-## waited}. See _send_in_browser().
-var _in_flight := {}
-var _next_id := 0
-
-func _send(url: String, method: int, data: String, done: Callable) -> void:
-	if OS.has_feature("web"):
-		_send_in_browser(url, method, data, done)
-		return
-	var req := HTTPRequest.new()
-	req.timeout = 10.0
-	add_child(req)
-	req.request_completed.connect(
-		func(_result: int, code: int, _headers: PackedStringArray, bytes: PackedByteArray):
-			req.queue_free()
-			done.call(code, bytes.get_string_from_utf8()))
-	if req.request(url, headers(KEY), method, data) != OK:
-		req.queue_free()
-		done.call(0, "")
-
-## In a web build Godot's own HTTPRequest never completes against this table,
-## though the browser's fetch() with the same headers does - so the browser
-## sends it, files the reply under an id, and _process() collects it.
-func _send_in_browser(url: String, method: int, data: String, done: Callable) -> void:
-	var id := _next_id
-	_next_id += 1
-	var head := {}
-	for line in headers(KEY):
-		var at := line.find(": ")
-		head[line.left(at)] = line.substr(at + 2)
-	var options := {"method": "POST" if method == HTTPClient.METHOD_POST else "GET",
-		"headers": head}
-	if data != "":
-		options["body"] = data
-	JavaScriptBridge.eval("""(function () {
-		window.__rdBoard = window.__rdBoard || {};
-		fetch(%s, %s)
-			.then(function (r) { return r.text().then(function (t) { window.__rdBoard[%d] = [r.status, t]; }); })
-			.catch(function () { window.__rdBoard[%d] = [0, ""]; });
-	})();""" % [JSON.stringify(url), JSON.stringify(options), id, id], true)
-	_in_flight[id] = {"done": done, "waited": 0.0}
-	set_process(true)
-
-func _process(delta: float) -> void:
-	if _in_flight.is_empty():
-		set_process(false)
-		return
-	for id in _in_flight.keys():
-		var entry: Dictionary = _in_flight[id]
-		entry["waited"] += delta
-		var got = JavaScriptBridge.eval(
-			"(function () { var b = window.__rdBoard || {}; var r = b[%d]; delete b[%d]; return r ? JSON.stringify(r) : ''; })()"
-				% [id, id], true)
-		if got is String and got != "":
-			_in_flight.erase(id)
-			var reply = JSON.parse_string(got)
-			(entry["done"] as Callable).call(int(reply[0]), str(reply[1]))
-		elif entry["waited"] > 10.0:
-			_in_flight.erase(id)
-			(entry["done"] as Callable).call(0, "")
-
 # --- the request, as plain data (tested without a network) -----------------
 
 static func rows_url(base: String, limit: int) -> String:
@@ -121,10 +59,6 @@ static func rows_url(base: String, limit: int) -> String:
 
 static func insert_url(base: String) -> String:
 	return "%s/rest/v1/scores" % base.trim_suffix("/")
-
-static func headers(key: String) -> PackedStringArray:
-	return PackedStringArray(["apikey: " + key, "Authorization: Bearer " + key,
-		"Content-Type: application/json", "Prefer: return=minimal"])
 
 static func body(player_name: String, score: int, banked: int, fired: bool) -> Dictionary:
 	return {"name": clean_name(player_name), "score": score,
