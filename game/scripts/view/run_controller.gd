@@ -40,25 +40,23 @@ var _calendar_open := false
 ## The front door: the menu (NEW GAME, TUTORIAL, HIGH SCORES), and a new
 ## game's first-day welcome - see title_screen.gd.
 @onready var _title_view = $TitleView
-## Over the build badge on the title screen: the touch way to the last fight,
-## as Ctrl+B is the keyboard's - see _debug_last_fight().
-@onready var _last_fight_tap: Button = $BuildBadge/LastFightTapTarget
-## And the touch way to the Repo Man, a second boss: Ctrl+N - see _debug_repo_fight().
+## Over the build badge on the title screen: the touch way to the Whale's fight,
+## as Ctrl+B is the keyboard's - see _debug_whale_fight().
+@onready var _whale_tap: Button = $BuildBadge/WhaleTapTarget
+## And the touch way to the Repo Man: Ctrl+N - see _debug_repo_fight().
 @onready var _repo_tap: Button = $BuildBadge/RepoManTapTarget
 
-## What the last fight's store puts up for sale, and how many of your cards it
-## offers to upgrade - see _debug_last_fight().
-const LAST_FIGHT_PURCHASES := 5
-const LAST_FIGHT_UPGRADES := 5
-## How many dealership upgrades it offers, to pick ONE from - in place of the
-## free card.
-const LAST_FIGHT_DEALERSHIP_UPGRADES := 3
-## What the store before the Repo Man puts up: 6 purchases, 6 upgrades and a perk
-## (a dealership upgrade, one to pick from the same three).
-const REPO_PURCHASES := 6
-const REPO_UPGRADES := 6
-## The Repo Man's shift and the category that makes it a boss day, for the shortcut -
-## he is not on any calendar.
+## What the store before either shortcut's boss puts up: cards for sale, and how many
+## of your cards it offers to upgrade - see _debug_boss_fight().
+const SHORTCUT_PURCHASES := 6
+const SHORTCUT_UPGRADES := 6
+## How many dealership upgrades it offers, to pick ONE from (a perk) - in place of
+## the free card.
+const SHORTCUT_DEALERSHIP_UPGRADES := 3
+## The two bosses a shortcut reaches, each with the category that makes its shift a
+## boss day.
+const WHALE_SHIFT := "res://data/shift_profiles/premade/the_whale.tres"
+const WHALE_CATEGORY := "res://data/shift_categories/boss_shifts_first_friday.tres"
 const REPO_SHIFT := "res://data/shift_profiles/premade/the_repo_man.tres"
 const REPO_CATEGORY := "res://data/shift_categories/final_boss.tres"
 
@@ -77,12 +75,12 @@ var _in_tutorial := false
 ## calendar shows each past day as the shift you took and how it went.
 var _history: Array = []
 ## True for a run begun with the last-fight shortcut: nothing of it is filed
-## among the scores - see _debug_last_fight().
+## among the scores - see _debug_boss_fight().
 var _practice_run := false
 ## True between that shortcut's store and its fight - leaving the store goes
 ## straight to the boss rather than to a calendar to pick from.
 var _straight_to_the_boss := false
-## When the shortcut is to a boss that is not the last day's, that boss's shift.
+## The boss a shortcut goes to once its store is left.
 var _boss_shortcut: ShiftProfile = null
 ## The run being worked, as it goes to disk after every move (RunFile) - null
 ## behind the title screen and for a run nothing is kept of (the last-fight
@@ -132,8 +130,8 @@ func _ready() -> void:
 	_title_view.tutorial_requested.connect(_open_the_tutorial)
 	_title_view.new_game_started.connect(_start_run)
 	_title_view.continue_requested.connect(_continue_run)
-	_bind_key(&"debug_last_fight", KEY_B, true)   # Ctrl+B, on the title screen
-	_last_fight_tap.pressed.connect(_debug_last_fight)
+	_bind_key(&"debug_whale_fight", KEY_B, true)   # Ctrl+B, on the title screen
+	_whale_tap.pressed.connect(_debug_whale_fight)
 	_bind_key(&"debug_repo_fight", KEY_N, true)   # Ctrl+N, on the title screen
 	_repo_tap.pressed.connect(_debug_repo_fight)
 	if title_at_boot:
@@ -255,46 +253,52 @@ func _bind_key(action: StringName, keycode: Key, ctrl: bool = false) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# On the title screen, but not while the name tag is being written.
-	if event.is_action_pressed("debug_last_fight") and _title_view.visible \
+	if event.is_action_pressed("debug_whale_fight") and _title_view.visible \
 			and not _title_view.name_popup_showing():
-		_debug_last_fight()
+		_debug_whale_fight()
 	elif event.is_action_pressed("debug_repo_fight") and _title_view.visible \
 			and not _title_view.name_popup_showing():
 		_debug_repo_fight()
 
-## Ctrl+B on the title screen, or a tap over the build badge: the last fight,
-## without the nine days before it - a manual testing convenience, not a
-## mechanic, like Ctrl+E and Ctrl+M.
+## Ctrl+B on the title screen, or a tap over the build badge: the Whale's fight,
+## without the days before it - a manual testing convenience, not a mechanic, like
+## Ctrl+E and Ctrl+M.
 ##
-## It stops in the store first, on the last day, with a dealership upgrade to
-## pick (no free card), LAST_FIGHT_PURCHASES cards for sale and
-## LAST_FIGHT_UPGRADES of yours to upgrade, and enough money that none of it is
-## out of reach: build the deck to test the fight with. Leaving the store goes
-## straight to the final boss. Nothing of it is filed among the scores - after
-## the fight, it is back to the menu.
-func _debug_last_fight() -> void:
-	_debug_boss_fight(LAST_FIGHT_PURCHASES, LAST_FIGHT_UPGRADES, null)
+## It stops in the store first, with a perk (a dealership upgrade, no free card),
+## SHORTCUT_PURCHASES cards for sale and SHORTCUT_UPGRADES of yours to upgrade, and
+## enough money that none of it is out of reach: build the deck to test the fight
+## with. Leaving the store goes straight to the fight. Nothing of it is filed among
+## the scores - after the fight, it is back to the menu.
+func _debug_whale_fight() -> void:
+	var boss := (load(WHALE_SHIFT) as ShiftProfile).duplicate() as ShiftProfile
+	boss.dealt_by = load(WHALE_CATEGORY)
+	# On the first Friday, the day he comes on the calendar.
+	_debug_boss_fight(boss, _run_day_of_the_first_friday())
 
 ## Ctrl+N on the title screen, or a tap to the left of the build badge: the same
-## shortcut to the Repo Man - 6 purchases, 6 upgrades and a perk to pick, then
-## straight to his fight.
+## shortcut to the Repo Man, the final boss.
 func _debug_repo_fight() -> void:
 	var boss := (load(REPO_SHIFT) as ShiftProfile).duplicate() as ShiftProfile
 	boss.dealt_by = load(REPO_CATEGORY)
-	_debug_boss_fight(REPO_PURCHASES, REPO_UPGRADES, boss)
+	_debug_boss_fight(boss, load("res://data/shift_config.tres").shifts_in_run)
 
-## The store, then the boss: `boss` is the shift to fight, or null for the last
-## day's own.
-func _debug_boss_fight(purchases: int, upgrades: int, boss: ShiftProfile) -> void:
+## The first Friday: the last day of the first week.
+func _run_day_of_the_first_friday() -> int:
+	return (load("res://data/shift_config.tres") as ShiftConfig).days_per_week
+
+## The store, then the boss, on `day` of a run: SHORTCUT_PURCHASES cards for sale,
+## SHORTCUT_UPGRADES of yours to upgrade and a perk to pick, and the money for all
+## of it.
+func _debug_boss_fight(boss: ShiftProfile, day: int) -> void:
 	_new_run()
 	_practice_run = true
 	_straight_to_the_boss = true
 	_boss_shortcut = boss
-	_run.shift_number = _run.cfg.shifts_in_run
+	_run.shift_number = day
 	var store := ShiftProfile.new()
-	store.cards_for_sale = purchases
-	store.upgrades = upgrades
-	store.dealership_upgrades = LAST_FIGHT_DEALERSHIP_UPGRADES
+	store.cards_for_sale = SHORTCUT_PURCHASES
+	store.upgrades = SHORTCUT_UPGRADES
+	store.dealership_upgrades = SHORTCUT_DEALERSHIP_UPGRADES
 	var shop := Shop.new(_run, store)
 	# A dealership upgrade instead of the free card.
 	shop.free_cards.clear()
@@ -481,19 +485,13 @@ func _on_summary_continue() -> void:
 ## The store closes on the next day's calendar - unless that day starts a new
 ## week, when the week just worked gets its report first.
 func _on_shop_done() -> void:
-	# The last-fight shortcut: from the store to the boss, no calendar between.
-	if _straight_to_the_boss:
+	# A boss shortcut: from the store to the boss, no calendar between.
+	if _straight_to_the_boss and _boss_shortcut != null:
 		_straight_to_the_boss = false
-		if _boss_shortcut != null:
-			_chosen_profile = _boss_shortcut
-			_boss_shortcut = null
-			_open_the_floor()
-			return
-		for p in _run.todays_shifts():
-			if p.is_boss_day():
-				_chosen_profile = p
-				_open_the_floor()
-				return
+		_chosen_profile = _boss_shortcut
+		_boss_shortcut = null
+		_open_the_floor()
+		return
 	_begin_the_day()
 	_open_the_day()
 
@@ -516,8 +514,8 @@ func _show_only(screen: Node) -> void:
 	# The calendar from the floor - not in practice, which has no week.
 	_calendar_open = false
 	_view_calendar_btn.visible = screen == _shift_view and not _in_tutorial
-	# The shortcut to the last fight: from the front door only.
-	_last_fight_tap.visible = screen == _title_view
+	# The shortcuts to the bosses: from the front door only.
+	_whale_tap.visible = screen == _title_view
 	_repo_tap.visible = screen == _title_view
 	# Quitting is for a run - not the front door, and not practice, which has
 	# its own way out.

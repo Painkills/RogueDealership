@@ -174,24 +174,24 @@ func _init() -> void:
 	quit_btn.owner = root
 
 	# Over the build badge, on the title screen only: the touch equivalent of
-	# Ctrl+B, a shortcut to the last fight (run_controller.gd's
-	# _debug_last_fight()). No visible chrome at all - it is a testing
+	# Ctrl+B, a shortcut to the Whale's fight (run_controller.gd's
+	# _debug_whale_fight()). No visible chrome at all - it is a testing
 	# convenience, like the tick and standing counters' own.
-	var last_fight_tap := Button.new()
-	last_fight_tap.name = "LastFightTapTarget"
-	last_fight_tap.flat = true
-	last_fight_tap.visible = false
-	last_fight_tap.unique_name_in_owner = true
-	last_fight_tap.focus_mode = Control.FOCUS_NONE
-	last_fight_tap.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	last_fight_tap.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	last_fight_tap.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	last_fight_tap.offset_left = -300
-	last_fight_tap.offset_top = -44
-	last_fight_tap.offset_right = -4
-	last_fight_tap.offset_bottom = -4
-	badge_layer.add_child(last_fight_tap)
-	last_fight_tap.owner = root
+	var whale_tap := Button.new()
+	whale_tap.name = "WhaleTapTarget"
+	whale_tap.flat = true
+	whale_tap.visible = false
+	whale_tap.unique_name_in_owner = true
+	whale_tap.focus_mode = Control.FOCUS_NONE
+	whale_tap.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	whale_tap.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	whale_tap.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	whale_tap.offset_left = -300
+	whale_tap.offset_top = -44
+	whale_tap.offset_right = -4
+	whale_tap.offset_bottom = -4
+	badge_layer.add_child(whale_tap)
+	whale_tap.owner = root
 
 	# And beside it, to its left: the same for the Repo Man (_debug_repo_fight()).
 	var repo_tap := Button.new()

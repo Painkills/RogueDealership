@@ -198,7 +198,7 @@ func upgrade_price(inst: CardInstance) -> int:
 
 ## What it would cost to buy everything on the shelf and upgrade everything
 ## offered - the money that leaves nothing out of reach, for a store opened to
-## test with (RunController._debug_last_fight()).
+## test with (RunController._debug_boss_fight()).
 func cost_of_everything() -> int:
 	var total := 0
 	for def in offers:

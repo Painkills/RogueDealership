@@ -96,7 +96,7 @@ func _process(_delta: float) -> bool:
 		_check_run_summary_screen_appears_at_the_end_of_a_run()
 		_check_the_fired_title_is_distinct_from_a_completed_run()
 		_check_the_testing_skip_costs_no_standing()
-		_check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss()
+		_check_the_whale_shortcut_stops_in_the_store_then_fights_the_boss()
 		_check_the_repo_man_shortcut_stops_in_the_store_then_fights_him()
 		_check_quitting_a_run_asks_first_then_loses_it()
 		PlayerProfile.reset()
@@ -965,32 +965,32 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	_root._open_the_picker()
 	_check("and the run's own week comes back", _todays_events().size() == _run.todays_shifts().size())
 
-## "Add a shortcut to last fight, which stops me in the store with 5 upgrades and
-## 5 purchases to pick from" - and "instead of free card, give me a dealership
-## upgrade": Ctrl+B or a tap over the badge on the title screen, then the store,
-## then straight to the final boss - and nothing of it filed among the scores. Run last: it replaces the run the rest of this driver has been
-## following.
-func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() -> void:
+## "One shortcut to whale, another to repo": Ctrl+B or a tap over the badge on the
+## title screen, then the store (a perk to pick instead of the free card, and
+## purchases and upgrades to spend on), then straight to the Whale's fight - and
+## nothing of it filed among the scores. Run last: it replaces the run the rest of
+## this driver has been following.
+func _check_the_whale_shortcut_stops_in_the_store_then_fights_the_boss() -> void:
 	var filed_before := PlayerProfile.bests().size()
 	_root._new_run()
 	_root._open_the_title()
-	var tap := _root.get_node(^"%LastFightTapTarget") as Button
+	var tap := _root.get_node(^"%WhaleTapTarget") as Button
 	_check("the title screen has a tap target for it, with nothing to see",
 		tap.visible and tap.flat and (tap.text == ""))
 	tap.pressed.emit()
 	var run: RunState = _root._run
-	_check("it opens the store, on the last day",
+	_check("it opens the store, on the first Friday",
 		_root._shop_view.visible and not _root._title_view.visible
-			and run.shift_number == run.cfg.shifts_in_run)
+			and run.shift_number == run.cfg.days_per_week)
 	var shop: Shop = _root._shop_view._shop
 	_check("with %d cards for sale and %d of yours to upgrade (%d, %d)"
-		% [_root.LAST_FIGHT_PURCHASES, _root.LAST_FIGHT_UPGRADES, shop.offers.size(),
+		% [_root.SHORTCUT_PURCHASES, _root.SHORTCUT_UPGRADES, shop.offers.size(),
 			shop.upgrade_offers.size()],
-		shop.offers.size() == _root.LAST_FIGHT_PURCHASES
-			and shop.upgrade_offers.size() == _root.LAST_FIGHT_UPGRADES)
+		shop.offers.size() == _root.SHORTCUT_PURCHASES
+			and shop.upgrade_offers.size() == _root.SHORTCUT_UPGRADES)
 	_check("a dealership upgrade to pick, in place of the free card (%d offered, %d free cards)"
 		% [shop.dealership_offers.size(), shop.free_cards.size()],
-		shop.dealership_offers.size() == _root.LAST_FIGHT_DEALERSHIP_UPGRADES
+		shop.dealership_offers.size() == _root.SHORTCUT_DEALERSHIP_UPGRADES
 			and shop.dealership_picks_left == 1 and shop.free_cards.is_empty()
 			and shop.free_picks_left == 0)
 	_check("the store puts the upgrade first and no free card behind it",
@@ -1006,15 +1006,13 @@ func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() ->
 	for uid in shop.upgrade_offers.duplicate():
 		upgraded += 1 if shop.upgrade(uid).ok else 0
 	_check("buying all of them and upgrading all of them works (%d, %d)" % [bought, upgraded],
-		bought == _root.LAST_FIGHT_PURCHASES and upgraded == _root.LAST_FIGHT_UPGRADES)
+		bought == _root.SHORTCUT_PURCHASES and upgraded == _root.SHORTCUT_UPGRADES)
 	_root._shop_view.done.emit()
 	var profile: ShiftProfile = _root._chosen_profile
-	_check("leaving it goes straight to the last day's boss, no calendar between",
-		profile != null and profile.is_boss_day() and run.todays_shifts().has(profile)
+	_check("leaving it goes straight to the Whale, no calendar between",
+		profile != null and profile.id == &"the_whale" and profile.is_boss_day()
 			and not _root._picker_view.visible and _root._shift_view._shift != null)
 	_check("and nothing leaves the store open behind it", not _root._shop_view.visible)
-	_check("the fight is the only thing on the last day's calendar (%d offered)"
-		% run.todays_shifts().size(), run.todays_shifts().size() == 1)
 	_check_the_boss_fights_folders_say_what_is_happening(_root._shift_view)
 	_check_a_product_the_boss_buys_leaves_the_table(_root._shift_view)
 	_root._on_shift_finished(_root._shift_view._shift.report())
@@ -1036,7 +1034,7 @@ func _check_the_last_fight_shortcut_stops_in_the_store_then_fights_the_boss() ->
 	_root._title_view._close_popup()
 	_root._unhandled_input(key)
 	_check("and opens the store once it is not", _root._shop_view.visible
-		and _root._run.shift_number == _root._run.cfg.shifts_in_run)
+		and _root._run.shift_number == _root._run.cfg.days_per_week)
 	_root._new_run()
 	_root._open_the_title()
 	_check("the tap target is back up on the front door", tap.visible)
@@ -1734,8 +1732,8 @@ func _check_the_repo_man_shortcut_stops_in_the_store_then_fights_him() -> void:
 	var shop: Shop = _root._shop_view._shop
 	_check("it opens the store (%d for sale, %d to upgrade)"
 		% [shop.offers.size(), shop.upgrade_offers.size()],
-		_root._shop_view.visible and shop.offers.size() == _root.REPO_PURCHASES
-			and shop.upgrade_offers.size() == _root.REPO_UPGRADES)
+		_root._shop_view.visible and shop.offers.size() == _root.SHORTCUT_PURCHASES
+			and shop.upgrade_offers.size() == _root.SHORTCUT_UPGRADES)
 	_check("with a perk to pick and no free card",
 		shop.dealership_offers.size() > 0 and shop.dealership_picks_left == 1
 			and shop.free_cards.is_empty())
@@ -1771,7 +1769,7 @@ func _check_the_repo_man_shortcut_stops_in_the_store_then_fights_him() -> void:
 	key.pressed = true
 	_root._unhandled_input(key)
 	_check("Ctrl+N opens the same store from the keyboard", _root._shop_view.visible
-		and _root._shop_view._shop.offers.size() == _root.REPO_PURCHASES)
+		and _root._shop_view._shop.offers.size() == _root.SHORTCUT_PURCHASES)
 	_root._new_run()
 	_root._open_the_title()
 
