@@ -328,7 +328,7 @@ def page(a, title):
         .replace("{{timelines}}", json.dumps(a["timelines"]).replace("</", "<\\/"))
 
 
-TEMPLATE = """<title>Play Metrics</title>
+TEMPLATE = """<title>Rogue Dealership Play Metrics</title>
 <style>
 :root { --bg:#f6f4ef; --card:#fffdf8; --fg:#23211d; --dim:#6b665c; --line:#e3ddd0; --accent:#c25b1f; --fill:#d98a4e; color-scheme: light }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#191816; --card:#22201d; --fg:#ece7dc; --dim:#a39c8e; --line:#36322c; --accent:#f08a4b; --fill:#c8763c; color-scheme: dark } }
