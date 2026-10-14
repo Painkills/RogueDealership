@@ -8,7 +8,7 @@
 script = ExtResource("1_prof")
 id = &"the_repo_man"
 display_name = "The Repo Man"
-blurb = "A new notice every turn. Build your shield, then watch it go."
+blurb = "A new notice every turn. Build up their patience, then watch it go."
 seats = 1
 pay_scale = 1.0
 commission = 0.6

@@ -60,7 +60,7 @@ const REPO_UPGRADES := 6
 ## The Repo Man's shift and the category that makes it a boss day, for the shortcut -
 ## he is not on any calendar.
 const REPO_SHIFT := "res://data/shift_profiles/premade/the_repo_man.tres"
-const REPO_CATEGORY := "res://data/shift_categories/repo_man_boss.tres"
+const REPO_CATEGORY := "res://data/shift_categories/final_boss.tres"
 
 ## Open the game on the title screen's menu. A driver that is testing the run
 ## itself turns this off BEFORE adding the run to the tree, so it boots
