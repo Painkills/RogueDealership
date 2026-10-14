@@ -374,6 +374,20 @@ if (pick) { pick.addEventListener('change', () => show(pick.value)); show(pick.v
 """
 
 
+def service_key():
+    """The key from this terminal's environment - or, on Windows, from where setx
+    saved it: setx only reaches terminals opened after it ran."""
+    key = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if key or os.name != "nt":
+        return key
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as k:
+            return str(winreg.QueryValueEx(k, "SUPABASE_SERVICE_KEY")[0])
+    except OSError:
+        return ""
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--since", help="only events on or after this date (YYYY-MM-DD)")
@@ -386,7 +400,7 @@ def main():
         with open(args.from_json, encoding="utf-8") as f:
             rows = json.load(f)
     else:
-        key = os.environ.get("SUPABASE_SERVICE_KEY", "")
+        key = service_key()
         if not key:
             sys.exit("Set SUPABASE_SERVICE_KEY (Supabase -> Settings -> API -> service_role) first.")
         rows = fetch(args.since, args.build, key)
