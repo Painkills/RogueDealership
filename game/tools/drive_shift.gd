@@ -3279,6 +3279,28 @@ func _check_the_discard_takes_drops_from_higher_up(shared: ConvexPolygonShape3D,
 ## few ticks left has to be as loud as a customer's patience going red, and
 ## CLOSE SOON should only join in on a folder with something unsigned in it
 ## (close() refuses an empty hand now).
+## "Show a big old 'shift is almost over!' warning when you are 1 tick from end":
+## big, in the middle of the screen, once - and gone after.
+func _check_the_last_tick_says_so_big(s: Shift) -> void:
+	var was := s.tick
+	s.tick = s.tick_budget - 1
+	_controller._render()
+	var l := _fx_label_saying(_controller.ALMOST_OVER)
+	var middle: Vector2 = _controller.get_viewport().get_visible_rect().get_center()
+	_check("one tick left: SHIFT IS ALMOST OVER! across the middle of the screen",
+		l != null and l.get_global_rect().get_center().distance_to(middle) < 8.0
+			and l.get_theme_font_size("font_size") >= 72)
+	_controller._render()
+	var count := 0
+	for n in _controller._fx:
+		if is_instance_valid(n) and n is Label and (n as Label).text == _controller.ALMOST_OVER:
+			count += 1
+	_check("said once, not every render (%d)" % count, count == 1)
+	_step_fx(4.0)
+	_check("and it goes after a moment", _fx_label_saying(_controller.ALMOST_OVER) == null)
+	s.tick = was
+	_controller._render()
+
 func _check_the_clock_warns_when_time_is_short() -> void:
 	if _controller._shift.at == null:
 		_check("still seated to check the clock warning", false)
@@ -3311,6 +3333,9 @@ func _check_the_clock_warns_when_time_is_short() -> void:
 	_controller._render()
 	_check("few ticks left with something to sign: the unsigned total is flagged",
 		_controller._at_risk_label.get_theme_color("font_color") == Palette.color(&"alert"))
+	_check("no SHIFT IS ALMOST OVER! before the last tick",
+		_fx_label_saying(_controller.ALMOST_OVER) == null)
+	_check_the_last_tick_says_so_big(s)
 
 	# CLOSE SOON is the CUSTOMER's, in their folder's corner, and NOT scoped to
 	# the seat you are at: a customer flanking the one you are with can still

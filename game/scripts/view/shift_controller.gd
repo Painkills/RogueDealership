@@ -209,6 +209,8 @@ var _pending_says: Array = []
 ## reset the moment time is no longer short, so a shift that somehow recovers
 ## (it never does today, but nothing here should assume that) pulses again.
 var _tick_warning_flashed := false
+## Whether "SHIFT IS ALMOST OVER!" has gone up for this last tick.
+var _last_tick_warned := false
 
 func _ready() -> void:
 	# Card3D takes mouse input through StaticBody3D.input_event, which does
@@ -1641,6 +1643,14 @@ func _render() -> void:
 		_flash_tick_label()
 	elif not low_on_time:
 		_tick_warning_flashed = false
+	# One tick left: said big, across the middle of the screen, once.
+	var last_tick: bool = _shift.has_clock and not _shift.is_over() \
+		and _shift.tick_budget - _shift.tick == 1
+	if last_tick and not _last_tick_warned:
+		_last_tick_warned = true
+		_warn_the_shift_is_almost_over()
+	elif not last_tick:
+		_last_tick_warned = false
 	if low_on_time and risk > 0:
 		_at_risk_label.add_theme_color_override("font_color", Palette.color(&"alert"))
 	else:
@@ -1856,6 +1866,27 @@ func _render_pull_picker() -> void:
 
 ## Grows the tick counter and settles it back over about a second - a Control,
 ## so this scales the Label itself.
+## "Show a big old 'shift is almost over!' warning when you are 1 tick from the
+## end": across the middle of the screen, slammed down like a stamp, held, faded.
+func _warn_the_shift_is_almost_over() -> void:
+	var middle := get_viewport().get_visible_rect().get_center()
+	var l := _fx_label(ALMOST_OVER, &"alert", 84, middle)
+	var sub := _fx_label("1 tick left - close what you can", &"alert", 40, middle + Vector2(0, 80))
+	for n in [l, sub]:
+		n.scale = Vector2(2.0, 2.0)
+		n.modulate.a = 0.0
+		var tw := _fx_tween()
+		tw.set_parallel(true)
+		tw.tween_property(n, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK) \
+			.set_ease(Tween.EASE_OUT)
+		tw.tween_property(n, "modulate:a", 1.0, 0.12)
+		tw.set_parallel(false)
+		tw.tween_interval(2.2)
+		tw.tween_property(n, "modulate:a", 0.0, 0.5)
+		tw.tween_callback(func(): _fx_done(n))
+
+const ALMOST_OVER := "SHIFT IS ALMOST OVER!"
+
 func _flash_tick_label() -> void:
 	_tick_label.pivot_offset = _tick_label.size / 2.0
 	var tw := create_tween()
