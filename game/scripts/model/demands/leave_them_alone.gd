@@ -1,25 +1,22 @@
 class_name LeaveThemAlone extends DemandResolve
 ## "Give us a minute." The inverted demand: the fuse running out is the ANSWER,
-## and touching them at all before it does is the failure.
+## and playing anything on them before it does is the failure.
 ##
-## PRESENT is what makes this a real decision rather than a free pause. It fires
-## when a tick burns while you are standing with them, so you cannot satisfy
-## this by standing there doing nothing - and since walking is free and the
-## clock only moves when you WORK, the only way to spend their minute is to go
-## and spend it on somebody else. That is the whole triage loop in one card.
+## Only what you DO to them breaks it - a card, a product, an offer, a close.
+## Standing with them while the clock moves does not: their minute can be spent
+## anywhere, here included, as long as nothing is played on them.
 
 func satisfied(_kind: StringName, _data: Dictionary) -> bool:
 	return false
 
 func broken_by(kind: StringName, _data: Dictionary) -> bool:
-	return kind == SUPPORT or kind == PLACE or kind == OFFER \
-		or kind == CLOSE or kind == PRESENT
+	return kind == SUPPORT or kind == PLACE or kind == OFFER or kind == CLOSE
 
 func succeeds_on_expiry() -> bool:
 	return true
 
 func describe() -> String:
-	return "go and work someone else until they are ready"
+	return "play nothing on them until they are ready"
 
 func how_to_answer() -> String:
-	return "Leave them alone: go and work someone else."
+	return "Leave them alone: play nothing on them until they are ready."

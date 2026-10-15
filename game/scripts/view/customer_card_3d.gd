@@ -44,7 +44,7 @@ var _note: Label
 var _bubble: SpeechBubble
 ## The clocks for your cards still working on them - see LingerBadges.
 var _badges: LingerBadges
-## The countdown on their incoming action, and the red banner it sits on.
+## The countdown on their incoming action, and the red banner it sits on (at its right end).
 var _countdown: DemandBadge
 var _banner := StyleBoxFlat.new()
 ## The action the banner last popped for - a new one pops it again.
@@ -87,7 +87,7 @@ func _bind() -> void:
 	_countdown = _demand.get_node(^"DemandBadge")
 	_banner.bg_color = Palette.color(&"alert")
 	_banner.set_corner_radius_all(14)
-	_banner.content_margin_right = 14
+	_banner.content_margin_left = 14
 	_banner.content_margin_top = 2
 	_banner.content_margin_bottom = 2
 	# Rounded to sit inside the frame's own corners.
@@ -338,7 +338,7 @@ func _set_banner(text: String, ticks: int) -> void:
 		_demand.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 		_countdown.show_ticks(-1)
 		return
-	_banner.content_margin_left = (DEMAND_BADGE_ROOM if ticks >= 0 else 14)
+	_banner.content_margin_right = (DEMAND_BADGE_ROOM if ticks >= 0 else 14)
 	_demand.add_theme_stylebox_override("normal", _banner)
 	_demand.add_theme_color_override("font_color", Palette.color(&"panel"))
 	_countdown.show_ticks(ticks)

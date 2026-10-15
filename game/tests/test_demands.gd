@@ -176,3 +176,13 @@ func test_a_demand_can_dock_standing_directly_and_end_the_run() -> void:
 	h.eq("standing reads exactly 0, never negative", s.standing, 0)
 	h.check("and the shift is over on the spot", s.is_over())
 	h.check("with ticks that were never spent", s.tick < s.tick_budget)
+
+# ------------------------------------------------ give us a minute
+func test_give_us_a_minute_breaks_only_on_something_played() -> void:
+	## "Only if you play a card on them, not if you're still there when it ticks."
+	var r := LeaveThemAlone.new()
+	h.check("standing with them as the clock moves does not break it",
+		not r.broken_by(DemandResolve.PRESENT, {}))
+	for kind in [DemandResolve.SUPPORT, DemandResolve.PLACE, DemandResolve.OFFER, DemandResolve.CLOSE]:
+		h.check("%s breaks it" % kind, r.broken_by(kind, {}))
+	h.check("and waiting it out is the answer", r.succeeds_on_expiry())

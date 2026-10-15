@@ -209,8 +209,13 @@ func _init() -> void:
 	var badge := Control.new()
 	badge.name = "DemandBadge"
 	badge.set_script(load("res://scripts/view/demand_badge.gd"))
-	badge.position = Vector2(8, 2)
-	badge.size = Vector2(DEMAND_H - 4, DEMAND_H - 4)
+	# At the banner's right end, whatever its width.
+	badge.anchor_left = 1.0
+	badge.anchor_right = 1.0
+	badge.offset_left = -(DEMAND_H - 4) - 8
+	badge.offset_right = -8
+	badge.offset_top = 2
+	badge.offset_bottom = DEMAND_H - 2
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.visible = false
 	demand_label.add_child(badge)
