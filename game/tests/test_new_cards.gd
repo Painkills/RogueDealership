@@ -242,8 +242,8 @@ func test_a_lingering_effect_describes_itself() -> void:
 	h.check("what it does and for how long (%s)" % l.describe(),
 		l.describe().contains("+2") and l.describe().contains("4 ticks"))
 	var t := _lingering(_appeal(2), 4, false)
-	h.check("and that it does not stack (%s)" % t.describe(),
-		t.describe().contains("does not stack") and not l.describe().contains("does not stack"))
+	h.eq("and nothing about stacking - the card does not need to say it (%s)" % t.describe(),
+		t.describe(), l.describe())
 
 # ------------------------------------------------- play on somebody you are not with
 func test_a_product_can_be_put_in_front_of_somebody_you_are_not_standing_with() -> void:

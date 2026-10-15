@@ -6,5 +6,5 @@
 script = ExtResource("1_up")
 id = &"word_track_binder"
 display_name = "Word Track Binder"
-blurb = "Every pitch has a script now. Every card that adds appeal adds 2 more."
+blurb = "Every pitch has a script. +2 Appeal on every card that adds Appeal."
 appeal_per_card = 2

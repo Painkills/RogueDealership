@@ -6,5 +6,5 @@
 script = ExtResource("1_up")
 id = &"walkaway_wednesday"
 display_name = "Walkaway Wednesday"
-blurb = "A midweek WALKAWAY promo keeps the pitches coming. +1 card in your hand, every shift."
+blurb = "A midweek WALKAWAY promo. +1 card in your hand every shift."
 hand_size = 1

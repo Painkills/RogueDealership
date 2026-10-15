@@ -7,5 +7,4 @@ func apply(ctx: EffectContext) -> void:
 		customer.add_patience(amount)
 
 func describe() -> String:
-	return "EVERYONE on the floor %s %d Patience" \
-		% ["gains" if amount > 0 else "loses", abs(amount)]
+	return "%+d Patience for everyone" % amount

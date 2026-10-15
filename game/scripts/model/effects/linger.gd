@@ -37,5 +37,4 @@ func apply(ctx: EffectContext) -> void:
 
 func describe() -> String:
 	var what := inner.describe() if inner != null else "?"
-	return "%s every tick for %d ticks%s" % [what, ticks,
-		"" if stacks else ", does not stack"]
+	return "%s every tick for %d ticks" % [what, ticks]

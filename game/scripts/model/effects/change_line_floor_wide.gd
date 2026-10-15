@@ -7,4 +7,4 @@ func apply(ctx: EffectContext) -> void:
 			c.line += ChangeLine.lowered(amount, ctx)
 
 func describe() -> String:
-	return "everyone's Line moves %+d" % amount
+	return "%+d Line for everyone" % amount

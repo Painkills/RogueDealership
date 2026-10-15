@@ -6,5 +6,5 @@
 script = ExtResource("1_up")
 id = &"loyalty_program"
 display_name = "Loyalty Program"
-blurb = "Points on everything. Each further sale to the same customer pays an extra 25% combo."
+blurb = "Points on everything. +25% Combo on each sale."
 combo_step = 0.25

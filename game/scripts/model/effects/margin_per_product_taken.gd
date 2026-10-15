@@ -9,4 +9,4 @@ func apply(ctx: EffectContext) -> void:
 		ctx.offer.margin += amount * ctx.sales_so_far
 
 func describe() -> String:
-	return "+$%d Margin for every product they have taken" % amount
+	return "+$%d Margin per product taken" % amount

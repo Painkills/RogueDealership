@@ -9,4 +9,4 @@ static func lowered(amount: int, ctx: EffectContext) -> int:
 	return roundi(amount * ctx.line_drop_scale) if amount < 0 else amount
 
 func describe() -> String:
-	return "their Line moves %+d" % amount
+	return "%+d Line" % amount

@@ -6,4 +6,4 @@ func apply(ctx: EffectContext) -> void:
 		ctx.customer.combo_bonus += amount / 100.0
 
 func describe() -> String:
-	return "their combo %+d%%" % amount
+	return "%+d%% Combo" % amount

@@ -6,5 +6,5 @@
 script = ExtResource("1_up")
 id = &"fancy_showroom"
 display_name = "Fancy Showroom"
-blurb = "Marble floors and a chandelier. Every product starts 15% above its card's margin. Cards and combos then work on that; they don't add 15% more."
+blurb = "Marble floors and a chandelier. +15% Margin on every product."
 margin = 0.15

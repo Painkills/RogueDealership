@@ -18,4 +18,4 @@ func apply(ctx: EffectContext) -> void:
 	ctx.offer.margin += surplus * amount
 
 func describe() -> String:
-	return "every point of appeal over their Line becomes $%d" % amount
+	return "$%d per Appeal over their Line" % amount

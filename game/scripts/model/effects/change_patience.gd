@@ -5,4 +5,4 @@ func apply(ctx: EffectContext) -> void:
 		ctx.customer.add_patience(roundi(amount * ctx.patience_scale) if amount > 0 else amount)
 
 func describe() -> String:
-	return "%+d their Patience" % amount
+	return "%+d Patience" % amount

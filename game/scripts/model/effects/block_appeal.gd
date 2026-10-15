@@ -10,4 +10,4 @@ func apply(ctx: EffectContext) -> void:
 		ctx.shift.events.append("You cannot add appeal for %d ticks." % amount)
 
 func describe() -> String:
-	return "you cannot add appeal for %d ticks" % amount
+	return "no Appeal for %d ticks" % amount
