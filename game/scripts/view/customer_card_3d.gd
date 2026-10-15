@@ -44,6 +44,12 @@ var _note: Label
 var _bubble: SpeechBubble
 ## The clocks for your cards still working on them - see LingerBadges.
 var _badges: LingerBadges
+## The countdown on their incoming action, and the red banner it sits on.
+var _countdown: DemandBadge
+var _banner := StyleBoxFlat.new()
+## The action the banner last popped for - a new one pops it again.
+var _shown_demand = null
+var _pop: Tween = null
 ## Numerals in the interest grid stop being readable before the cells do, so a
 ## card that is going to be drawn small says so once rather than guessing from
 ## its own size - the face is authored at 500x700 no matter where it lands.
@@ -78,6 +84,12 @@ func _bind() -> void:
 	_note = col.get_node(^"NoteLabel")
 	_bubble = $FrontViewport/CustomerFront/SpeechBubble
 	_badges = $FrontViewport/CustomerFront/LingerBadges
+	_countdown = _demand.get_node(^"DemandBadge")
+	_banner.bg_color = Palette.color(&"alert")
+	_banner.set_corner_radius_all(14)
+	_banner.content_margin_right = 14
+	_banner.content_margin_top = 2
+	_banner.content_margin_bottom = 2
 	# Rounded to sit inside the frame's own corners.
 	_patience_fill.set_corner_radius_all(7)
 	_patience_bar.add_theme_stylebox_override("fill", _patience_fill)
@@ -137,7 +149,8 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		_name.text = "- empty -"
 		_archetype.text = ""
 		_patience.text = ""
-		_demand.text = ""
+		_set_banner("", -1)
+		_shown_demand = null
 		_status.text = ""
 		_patience_frame.visible = false
 		_grid.visible = false
@@ -160,7 +173,12 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_patience.text = "patience %d/%d" % [c.patience, c.max_patience]
 	_patience.add_theme_color_override("font_color",
 		Palette.color(&"alert") if c.leaving_soon() else Palette.color(&"text"))
-	_demand.text = demand_text(c, tick)
+	# "Incoming" - a red banner across the folder, the countdown big at its left
+	# end, and a pop and a flash the moment something new comes up.
+	_set_banner(banner_text(c), maxi(0, c.demand_due_tick - tick) if c.demand != null else -1)
+	if c.demand != null and c.demand != _shown_demand:
+		_pop_banner()
+	_shown_demand = c.demand
 	_grid.visible = true
 	_grid.set_state(c.interests(), c.known_ranks, c.known_top_category,
 		sold_interests(c), not compact, c.known_top_three)
@@ -206,7 +224,7 @@ func setup_note(note: Dictionary) -> void:
 	_patience_fill.bg_color = note.get("bar_color", Palette.color(&"money"))
 	_patience.text = str(note.get("bar_text", ""))
 	_patience.add_theme_color_override("font_color", Palette.color(&"text"))
-	_demand.text = str(note.get("headline", ""))
+	_set_banner(str(note.get("headline", "")), -1)
 	_grid.visible = false
 	_note.text = str(note.get("body", ""))
 	_note.visible = true
@@ -301,6 +319,51 @@ static func demand_text(c, tick: int) -> String:
 	return "\n".join(parts)
 
 const NEXT_CARD_REJECTED := "NEXT CARD REJECTED"
+
+## The banner's words: what they are asking for, and the warning that the next
+## card is wasted - the countdown goes on the badge, not in the words.
+static func banner_text(c) -> String:
+	var parts: Array[String] = []
+	if c.demand != null:
+		parts.append(c.demand.telegraph)
+	if c.next_card_rejected():
+		parts.append(NEXT_CARD_REJECTED)
+	return "\n".join(parts)
+
+## The banner: red with white words when there is something to say, nothing at
+## all when not; the countdown badge when there is a clock on it.
+func _set_banner(text: String, ticks: int) -> void:
+	_demand.text = text
+	if text == "":
+		_demand.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		_countdown.show_ticks(-1)
+		return
+	_banner.content_margin_left = (DEMAND_BADGE_ROOM if ticks >= 0 else 14)
+	_demand.add_theme_stylebox_override("normal", _banner)
+	_demand.add_theme_color_override("font_color", Palette.color(&"panel"))
+	_countdown.show_ticks(ticks)
+
+const DEMAND_BADGE_ROOM := 70
+
+## The ticks on the countdown, or -1 when there is none.
+func countdown() -> int:
+	return _countdown.ticks()
+
+## Whether the banner is popping right now - a new action just came up.
+func banner_popping() -> bool:
+	return _pop != null and _pop.is_valid() and _pop.is_running()
+
+func _pop_banner() -> void:
+	if _pop != null and _pop.is_valid():
+		_pop.kill()
+	_demand.pivot_offset = _demand.size * 0.5
+	_pop = create_tween()
+	for _k in range(3):
+		_pop.tween_property(_demand, "scale", Vector2(1.18, 1.18), 0.12) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_pop.parallel().tween_property(_demand, "modulate", Color(1.7, 1.7, 1.7, 1.0), 0.12)
+		_pop.tween_property(_demand, "scale", Vector2.ONE, 0.22)
+		_pop.parallel().tween_property(_demand, "modulate", Color.WHITE, 0.22)
 
 ## 3 -> "3rd".
 static func ordinal(n: int) -> String:

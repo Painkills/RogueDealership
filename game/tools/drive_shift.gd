@@ -1484,10 +1484,20 @@ func _check_the_customer_card_carries_its_triage_row() -> void:
 	_controller._render()
 	_check("and when they ask, it shouts it (%s)" % telegraph.text,
 		telegraph.text.contains("MANAGER?"))
-	_check("with the fuse attached (%s)" % telegraph.text,
-		telegraph.text.contains("3t"))
-	_check("in the alert colour, because it is a countdown",
-		telegraph.get_theme_color("font_color") == Palette.color(&"alert"))
+	var folder: CustomerCard3D = _controller._customer_cards[_at()]
+	_check("with the fuse on a clock at the banner's end (%d)" % folder.countdown(),
+		folder.countdown() == 3)
+	var banner := telegraph.get_theme_stylebox("normal") as StyleBoxFlat
+	_check("on a red banner, because it is a countdown",
+		banner != null and banner.bg_color == Palette.color(&"alert"))
+	_check("and it pops the moment it comes up", folder.banner_popping())
+	_controller._render()
+	_check("but not again on every render after",
+		folder._shown_demand == d)
+	who.demand = null
+	_controller._render()
+	_check("gone, the banner goes too",
+		not (telegraph.get_theme_stylebox("normal") is StyleBoxFlat) and folder.countdown() == -1)
 
 	who.demand = parked
 	who.demand_due_tick = parked_due
@@ -3124,8 +3134,9 @@ func _check_a_boss_fight_shows_its_move_its_budget_and_what_lands() -> void:
 	s.has_clock = false
 	_controller._render()
 	var front: Label = _controller._customer_cards[_at()]._demand
-	_check("their folder telegraphs the move and its countdown (%s)" % front.text,
-		front.text.contains("MADE-UP MOVE") and front.text.contains("2t"))
+	_check("their folder telegraphs the move and its countdown (%s, %d)"
+		% [front.text, _controller._customer_cards[_at()].countdown()],
+		front.text.contains("MADE-UP MOVE") and _controller._customer_cards[_at()].countdown() == 2)
 	_check("their patience reads as patience (%s)" % _controller._customer_cards[_at()]._patience.text,
 		_controller._customer_cards[_at()]._patience.text.begins_with("patience"))
 	var does: String = _controller._customer_details[_at()]._does.text

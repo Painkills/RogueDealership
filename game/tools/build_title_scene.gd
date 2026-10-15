@@ -65,19 +65,23 @@ func _menu(root: Control) -> void:
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status.visible = false
-	# The play metrics, and how to turn them off - see title_screen.gd's
-	# metrics_text() and Telemetry.
-	var metrics := Button.new()
-	metrics.name = "MetricsButton"
-	metrics.flat = true
-	metrics.unique_name_in_owner = true
-	metrics.focus_mode = Control.FOCUS_NONE
-	metrics.text = "Anonymous play data helps balance the game - Turn off"
-	metrics.add_theme_font_size_override("font_size", 16)
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		metrics.add_theme_color_override(state, Palette.color(&"text_dim"))
-	col.add_child(metrics)
-	metrics.owner = root
+	# The play metrics, and a switch to turn them off - see Telemetry.
+	var row := HBoxContainer.new()
+	row.name = "MetricsRow"
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
+	col.add_child(row)
+	row.owner = root
+	var says := AppWindow.label(row, root, "MetricsLabel",
+		"Share anonymous play data to help balance the game", 16, &"text_dim")
+	says.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var switch := Control.new()
+	switch.name = "MetricsSwitch"
+	switch.set_script(load("res://scripts/view/toggle_switch.gd"))
+	switch.custom_minimum_size = Vector2(76, 36)
+	switch.unique_name_in_owner = true
+	row.add_child(switch)
+	switch.owner = root
 
 # --- the high scores -------------------------------------------------------
 

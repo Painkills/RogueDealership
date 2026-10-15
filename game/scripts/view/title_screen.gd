@@ -43,7 +43,7 @@ const BANNERS := {
 @onready var _update_btn: Button = %UpdateButton
 @onready var _update_status: Label = %UpdateStatus
 @onready var _new_game: Button = %NewGameButton
-@onready var _metrics_btn: Button = %MetricsButton
+@onready var _metrics_switch: ToggleSwitch = %MetricsSwitch
 
 var _page := &""
 ## What the name popup goes on to once it is answered - &"new_game" or
@@ -87,8 +87,8 @@ func _ready() -> void:
 	_yours_tab.pressed.connect(func(): show_board(&"yours"))
 	show_menu()
 	_update_btn.pressed.connect(check_for_update)
-	_metrics_btn.text = metrics_text(Telemetry.enabled())
-	_metrics_btn.pressed.connect(toggle_metrics)
+	_metrics_switch.set_on(Telemetry.enabled())
+	_metrics_switch.toggled.connect(set_metrics)
 	if OS.has_feature("web"):
 		_update_btn.visible = true
 		_watch_for_a_new_build()
@@ -168,18 +168,12 @@ func check_for_update() -> void:
 
 ## What CHECK FOR UPDATES says, from how far the browser has got (`state`) and
 ## whether the engine says a new build is `ready`.
-## The anonymous play metrics on, or off - and what tapping the line does.
-func toggle_metrics() -> void:
-	var on := Telemetry.enabled()
+## The anonymous play metrics on, or off - the switch under the menu.
+func set_metrics(on: bool) -> void:
 	# Off is off: not even the turning off is sent.
-	Telemetry.set_off(on)
-	if not on:
+	Telemetry.set_off(not on)
+	if on:
 		Telemetry.record("metrics_on", {}, true)
-	_metrics_btn.text = metrics_text(not on)
-
-static func metrics_text(on: bool) -> String:
-	return "Anonymous play data helps balance the game - Turn off" if on \
-		else "Anonymous play data is off - Turn on"
 
 static func update_message(state: String, ready: bool) -> String:
 	if ready or state == "waiting" or state == "cached":

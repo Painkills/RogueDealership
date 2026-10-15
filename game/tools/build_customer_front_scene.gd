@@ -204,6 +204,17 @@ func _init() -> void:
 	demand_label.custom_minimum_size = Vector2(0, DEMAND_H)
 	col.add_child(demand_label)
 	demand_label.owner = root
+	# The countdown, as a clock face at the banner's left end - see DemandBadge
+	# and CustomerCard3D's _set_banner().
+	var badge := Control.new()
+	badge.name = "DemandBadge"
+	badge.set_script(load("res://scripts/view/demand_badge.gd"))
+	badge.position = Vector2(8, 2)
+	badge.size = Vector2(DEMAND_H - 4, DEMAND_H - 4)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.visible = false
+	demand_label.add_child(badge)
+	badge.owner = root
 
 	# A folder with nobody in it can carry a note instead of an interest grid -
 	# a boss fight's budget and next move, on the seats either side of the boss

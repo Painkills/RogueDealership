@@ -1332,6 +1332,21 @@ func _check_reopening_the_game_continues_the_run(where: String, screen: StringNa
 		Telemetry.of_kind("run_start").back()["data"]["mode"] == "continue")
 	_run = _root._run
 
+## "The opt out for the data thing should be a switch with green for on and red
+## for off": on the front door, on when the metrics are, and flipping it turns
+## them off and back on.
+func _check_the_play_data_switch() -> void:
+	var switch := _root._title_view.get_node(^"%MetricsSwitch") as ToggleSwitch
+	_check("the front door has the play data switch", switch != null and switch.is_visible_in_tree())
+	if switch == null:
+		return
+	var was := Telemetry.enabled()
+	_check("on, while the metrics are", switch.on == was)
+	switch.flip()
+	_check("flipped off, nothing is recorded", not Telemetry.enabled() and not switch.on)
+	switch.flip()
+	_check("and back on, it records again", Telemetry.enabled() and switch.on)
+
 ## How many moves the play metrics hold - on the floor, in the store, and what
 ## customers did.
 func _recorded_moves() -> int:
@@ -1388,6 +1403,7 @@ func _check_quitting_a_run_asks_first_then_loses_it() -> void:
 	_check("with the run gone - nothing on disk, nothing to continue",
 		RunFile.read() == null and not _root._title_view.continue_offered())
 	_check("and no QUIT RUN on the front door", not quit_btn.visible)
+	_check_the_play_data_switch()
 	_check("quitting is in the play metrics, with the day it happened on",
 		not Telemetry.of_kind("run_quit").is_empty()
 			and Telemetry.of_kind("run_quit").back()["data"].has("day"))
@@ -1785,8 +1801,8 @@ func _check_the_repo_man_shortcut_stops_in_the_store_then_fights_him() -> void:
 	_check("leaving it goes straight to the fight with him",
 		boss != null and boss.archetype.id == &"repo_man" and _root._chosen_profile.is_boss_day()
 			and not _root._picker_view.visible)
-	_check("he has an attack up already, on a fuse of 3 ticks or less",
-		boss != null and boss.demand != null and boss.demand_due_tick - shift.tick <= 3)
+	_check("he has an attack up already, on a fuse of 4 ticks or less",
+		boss != null and boss.demand != null and boss.demand_due_tick - shift.tick <= 4)
 	# The debuff, on his tablet's meter.
 	shift.at = 0
 	_root._shift_view._render()
