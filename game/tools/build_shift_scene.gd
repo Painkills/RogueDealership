@@ -869,7 +869,7 @@ func _build_hud(root: Node) -> void:
 	# White pills for the piles, which only name a place; filled pills in the
 	# button colours for the two drops, which are doing something.
 	_tag(hints, root, "DrawTag", ^"Camera3D/Draw/TagAnchor", &"paper", &"neutral_3",
-		[["Label", "DRAW", 22, &"ink"]])
+		[["Label", "DECK", 22, &"ink"]])
 	_tag(hints, root, "DiscardTag", ^"Camera3D/Discard/TagAnchor", &"paper", &"neutral_3",
 		[["Label", "DISCARD", 22, &"ink"], ["Sub", "drag a card here to dig", 16, &"ink_dim"]])
 	# Same top edge as DiscardTag, and only ever shown in its place.

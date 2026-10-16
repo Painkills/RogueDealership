@@ -14,5 +14,5 @@ func apply(ctx: EffectContext) -> void:
 
 func describe() -> String:
 	var what := "cards" if kind == &"any" else "%s cards" % kind
-	return "Reveals %d %s from the draw pile. Keep one." \
+	return "Reveals %d %s from your deck. Keep one." \
 		% [count, what]
