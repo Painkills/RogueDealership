@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_bej78"]
 [ext_resource type="Resource" path="res://data/interests/stability.tres" id="1_q7v6b"]
 [ext_resource type="Script" uid="uid://cjjt8kflgpayg" path="res://scripts/model/data/product_card_def.gd" id="2_bej78"]
+[ext_resource type="Texture2D" path="res://art/cards/ppp.png" id="99_art"]
 
 [resource]
 script = ExtResource("2_bej78")
@@ -13,5 +14,6 @@ margin = 1450
 upgraded_margin = 1810
 id = &"ppp"
 display_name = "Payment Protection Plan"
+art = ExtResource("99_art")
 text = "Covers a payment when they can't."
 rarity = 1

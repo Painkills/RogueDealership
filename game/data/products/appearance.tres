@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://data/interests/status.tres" id="1_xi2cp"]
 [ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_g1o7f"]
+[ext_resource type="Texture2D" path="res://art/cards/appearance.png" id="99_art"]
 
 [resource]
 script = ExtResource("2_g1o7f")
@@ -13,5 +14,6 @@ margin = 1000
 upgraded_margin = 1250
 id = &"appearance"
 display_name = "Appearance & Wheel Package"
+art = ExtResource("99_art")
 text = "Ceramic coat, tint, and wheels people look at."
 rarity = 0

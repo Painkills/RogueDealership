@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_8vwyo"]
 [ext_resource type="Script" uid="uid://cgjl21wcy3iqp" path="res://scripts/model/effects/reveal_room.gd" id="2_mxwf3"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="3_kqu7d"]
+[ext_resource type="Texture2D" path="res://art/cards/readroom.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_ej50r"]
 script = ExtResource("2_mxwf3")
@@ -15,6 +16,7 @@ dialogue_tags = Array[StringName]([&"reply_listen"])
 needs_offer = false
 id = &"readroom"
 display_name = "Active Listening"
+art = ExtResource("99_art")
 upgraded_ticks = 0
 text = "Stay calm and curious. Let them talk, and they'll tell you what matters."
 effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])

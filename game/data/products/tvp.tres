@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://data/interests/value_retention.tres" id="1_uotsg"]
 [ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_4tnw0"]
+[ext_resource type="Texture2D" path="res://art/cards/tvp.png" id="99_art"]
 
 [resource]
 script = ExtResource("2_4tnw0")
@@ -13,5 +14,6 @@ margin = 1050
 upgraded_margin = 1310
 id = &"tvp"
 display_name = "Trade-In Value Protection"
+art = ExtResource("99_art")
 text = "Guarantees a floor under what it books for at trade-in."
 rarity = 0

@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_pat"]
 [ext_resource type="Script" path="res://scripts/model/effects/linger.gd" id="3_lin"]
 [ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_def"]
+[ext_resource type="Texture2D" path="res://art/cards/coffee.png" id="99_art"]
 
 [sub_resource type="Resource" id="Patience_base"]
 script = ExtResource("2_pat")
@@ -29,6 +30,7 @@ player_dialogue_tags = Array[StringName]([&"player_smalltalk"])
 needs_offer = false
 id = &"coffee"
 display_name = "Can I get you a coffee?"
+art = ExtResource("99_art")
 text = "A warm cup and a comfortable chair. They are in no hurry now."
 ticks = 1
 rarity = 2

@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://data/interests/reliability.tres" id="1_07wyo"]
 [ext_resource type="Script" uid="uid://cjjt8kflgpayg" path="res://scripts/model/data/product_card_def.gd" id="2_jnf47"]
+[ext_resource type="Texture2D" path="res://art/cards/vsc.png" id="99_art"]
 
 [resource]
 script = ExtResource("2_jnf47")
@@ -12,6 +13,7 @@ margin = 1150
 upgraded_margin = 1440
 id = &"vsc"
 display_name = "Vehicle Service Contract"
+art = ExtResource("99_art")
 text = "Covers the repair bill when it breaks after the factory walks away."
 starter = true
 rarity = 0

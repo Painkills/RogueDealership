@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_cem2g"]
 [ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="3_dtsc6"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="4_g14ik"]
+[ext_resource type="Texture2D" path="res://art/cards/hardclose.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_jydys"]
 script = ExtResource("2_cem2g")
@@ -28,6 +29,7 @@ script = ExtResource("4_g14ik")
 player_dialogue_tags = Array[StringName]([&"player_clarify"])
 id = &"hardclose"
 display_name = "Ask Clarifying Questions"
+art = ExtResource("99_art")
 text = "Flush out the real objection: is it the cost, or the coverage? Pointed questions wear on them."
 dialogue_tags = Array[StringName]([&"reply_clarify"])
 effects = Array[ExtResource("1_dtsc6")]([SubResource("Resource_jydys"), SubResource("Resource_dtsc6")])

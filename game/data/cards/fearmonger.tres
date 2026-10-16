@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_kavsq"]
 [ext_resource type="Script" uid="uid://b41b5fbmrgc8c" path="res://scripts/model/effects/change_standing.gd" id="3_kavsq"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="4_67703"]
+[ext_resource type="Texture2D" path="res://art/cards/fearmonger.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_1wqcv"]
 script = ExtResource("2_kavsq")
@@ -28,6 +29,7 @@ script = ExtResource("4_67703")
 player_dialogue_tags = Array[StringName]([&"player_fearmonger"])
 id = &"fearmonger"
 display_name = "Fearmonger"
+art = ExtResource("99_art")
 text = "You describe, vividly, what happens to people who skip it. It works. It also makes you scary."
 rarity = 2
 dialogue_tags = Array[StringName]([&"appeal", &"pressure"])

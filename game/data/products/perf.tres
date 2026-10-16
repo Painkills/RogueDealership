@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://data/interests/power.tres" id="1_lp8aw"]
 [ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_sya1t"]
+[ext_resource type="Texture2D" path="res://art/cards/perf.png" id="99_art"]
 
 [resource]
 script = ExtResource("2_sya1t")
@@ -12,5 +13,6 @@ margin = 1750
 upgraded_margin = 2190
 id = &"perf"
 display_name = "Performance & Tow Package"
+art = ExtResource("99_art")
 text = "Tow rating, all-weather traction, and a badge that says so."
 rarity = 2

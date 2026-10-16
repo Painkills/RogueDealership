@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
 [ext_resource type="Script" path="res://scripts/model/effects/convert_surplus_appeal.gd" id="2_con"]
 [ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+[ext_resource type="Texture2D" path="res://art/cards/goodwill.png" id="99_art"]
 
 [sub_resource type="Resource" id="Convert_base"]
 script = ExtResource("2_con")
@@ -16,6 +17,7 @@ amount = 75
 script = ExtResource("3_def")
 id = &"goodwill"
 display_name = "Good Will"
+art = ExtResource("99_art")
 text = "They were already sold. Now the rest of it is worth something."
 ticks = 1
 rarity = 3

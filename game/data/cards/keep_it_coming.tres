@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
 [ext_resource type="Script" path="res://scripts/model/effects/change_combo.gd" id="2_combo"]
 [ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+[ext_resource type="Texture2D" path="res://art/cards/keep_it_coming.png" id="99_art"]
 
 [sub_resource type="Resource" id="Combo_base"]
 script = ExtResource("2_combo")
@@ -17,6 +18,7 @@ script = ExtResource("3_def")
 needs_offer = false
 id = &"keep_it_coming"
 display_name = "Keep It Coming"
+art = ExtResource("99_art")
 text = "\"And while we're at it...\" Every yes makes the next one worth more."
 ticks = 1
 rarity = 2

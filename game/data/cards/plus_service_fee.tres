@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
 [ext_resource type="Script" path="res://scripts/model/effects/margin_per_product_taken.gd" id="2_fee"]
 [ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+[ext_resource type="Texture2D" path="res://art/cards/servicefee.png" id="99_art"]
 
 [sub_resource type="Resource" id="Fee_base"]
 script = ExtResource("2_fee")
@@ -17,6 +18,7 @@ script = ExtResource("3_def")
 player_dialogue_tags = Array[StringName]([&"player_pad"])
 id = &"servicefee"
 display_name = "Plus Service Fee"
+art = ExtResource("99_art")
 text = "Prep, paperwork, handling. Every product has one, and so does the next."
 ticks = 1
 rarity = 2

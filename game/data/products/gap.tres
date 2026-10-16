@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://data/interests/equity.tres" id="1_2umkk"]
 [ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_gu0vk"]
+[ext_resource type="Texture2D" path="res://art/cards/gap.png" id="99_art"]
 
 [resource]
 script = ExtResource("2_gu0vk")
@@ -12,5 +13,6 @@ margin = 1500
 upgraded_margin = 1875
 id = &"gap"
 display_name = "GAP Insurance"
+art = ExtResource("99_art")
 text = "Pays the difference when the loan outlives the car."
 rarity = 1

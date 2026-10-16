@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_c58bq"]
 [ext_resource type="Script" uid="uid://ulx4li35o01c" path="res://scripts/model/effects/change_margin.gd" id="3_t6btv"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="4_jlfgo"]
+[ext_resource type="Texture2D" path="res://art/cards/pad.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_4jeqi"]
 script = ExtResource("2_c58bq")
@@ -26,6 +27,7 @@ script = ExtResource("4_jlfgo")
 player_dialogue_tags = Array[StringName]([&"player_pad"])
 id = &"pad"
 display_name = "Pad the Deal"
+art = ExtResource("99_art")
 text = "They won't even notice the difference."
 dialogue_tags = Array[StringName]([&"padding"])
 effects = Array[ExtResource("1_0q0j0")]([SubResource("Resource_4jeqi"), SubResource("Resource_2bgt0")])

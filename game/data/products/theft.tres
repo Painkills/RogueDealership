@@ -2,6 +2,7 @@
 
 [ext_resource type="Resource" path="res://data/interests/security.tres" id="1_by407"]
 [ext_resource type="Script" path="res://scripts/model/data/product_card_def.gd" id="2_1muci"]
+[ext_resource type="Texture2D" path="res://art/cards/theft.png" id="99_art"]
 
 [resource]
 script = ExtResource("2_1muci")
@@ -12,6 +13,7 @@ margin = 950
 upgraded_margin = 1190
 id = &"theft"
 display_name = "Anti-Theft & Key Protection"
+art = ExtResource("99_art")
 text = "Etching, tracking, and a replacement key that doesn't cost a weekend."
 starter = true
 rarity = 0

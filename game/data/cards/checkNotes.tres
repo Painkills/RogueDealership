@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_8h0vr"]
 [ext_resource type="Script" uid="uid://c1sm1kdlc5c5h" path="res://scripts/model/effects/pull_cards.gd" id="2_5u756"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="2_sijsq"]
+[ext_resource type="Texture2D" path="res://art/cards/checknotes.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_5u756"]
 script = ExtResource("2_5u756")
@@ -19,6 +20,7 @@ player_dialogue_tags = Array[StringName]([&"player_guide"])
 needs_offer = false
 id = &"checknotes"
 display_name = "The Program Guide"
+art = ExtResource("99_art")
 ticks = 0
 text = "\"Uh... let me just check the Program Guide...\""
 rarity = 2

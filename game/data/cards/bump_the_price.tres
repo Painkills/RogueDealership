@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/model/effects/change_margin.gd" id="2_mar"]
 [ext_resource type="Script" path="res://scripts/model/effects/change_standing.gd" id="3_std"]
 [ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="4_def"]
+[ext_resource type="Texture2D" path="res://art/cards/bump.png" id="99_art"]
 
 [sub_resource type="Resource" id="Margin_base"]
 script = ExtResource("2_mar")
@@ -26,6 +27,7 @@ script = ExtResource("4_def")
 player_dialogue_tags = Array[StringName]([&"player_pad"])
 id = &"bump"
 display_name = "Bump the Price"
+art = ExtResource("99_art")
 text = "A little more, said quickly. The house notices."
 ticks = 0
 rarity = 2

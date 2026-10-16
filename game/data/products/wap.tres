@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://bu5uqojkpf1vo" path="res://scripts/model/effects/change_line.gd" id="2_d4q6h"]
 [ext_resource type="Resource" path="res://data/interests/stability.tres" id="3_1osr0"]
 [ext_resource type="Script" uid="uid://cjjt8kflgpayg" path="res://scripts/model/data/product_card_def.gd" id="4_7ghae"]
+[ext_resource type="Texture2D" path="res://art/cards/wap.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_3ka7l"]
 script = ExtResource("2_d4q6h")
@@ -25,6 +26,7 @@ upgraded_margin = 2500
 id = &"wap"
 brand = &"walkaway"
 display_name = "WALKAWAY"
+art = ExtResource("99_art")
 text = "Provides financial protection from life's \"What Ifs\""
 rarity = 3
 effects = Array[ExtResource("1_kming")]([SubResource("Resource_3ka7l")])

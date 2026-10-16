@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_eqeo5"]
 [ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="2_vesdw"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="3_la8pn"]
+[ext_resource type="Texture2D" path="res://art/cards/smalltalk.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_r5yyh"]
 script = ExtResource("2_vesdw")
@@ -18,6 +19,7 @@ player_dialogue_tags = Array[StringName]([&"player_smalltalk"])
 needs_offer = false
 id = &"smalltalk"
 display_name = "Small Talk"
+art = ExtResource("99_art")
 text = "Kids, weather, the drive over. Buy yourself some time."
 copies = 3
 starter = true
