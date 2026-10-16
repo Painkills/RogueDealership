@@ -27,7 +27,7 @@ var _frame_style := StyleBoxFlat.new()
 
 func _ready() -> void:
 	_frame_style.draw_center = false
-	_frame_style.set_border_width_all(8)
+	_frame_style.set_border_width_all(14)
 	_frame.add_theme_stylebox_override("panel", _frame_style)
 
 ## Everything about `inst`'s face but its words, which its owner writes.

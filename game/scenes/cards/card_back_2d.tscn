@@ -27,7 +27,7 @@ corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
-[node name="CardBack" type="Control" unique_id=5564781]
+[node name="CardBack" type="Control" unique_id=1156182618]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
@@ -35,13 +35,13 @@ offset_right = 500.0
 offset_bottom = 700.0
 script = ExtResource("1_vf82n")
 
-[node name="Background" type="ColorRect" parent="." unique_id=21973915]
+[node name="Background" type="ColorRect" parent="." unique_id=237253775]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 
-[node name="Frame" type="Panel" parent="." unique_id=676938392]
+[node name="Frame" type="Panel" parent="." unique_id=114373631]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -51,7 +51,7 @@ offset_right = -24.0
 offset_bottom = -24.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_jdeq3")
 
-[node name="FrameInner" type="Panel" parent="." unique_id=1641188340]
+[node name="FrameInner" type="Panel" parent="." unique_id=2024290771]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -61,12 +61,12 @@ offset_right = -44.0
 offset_bottom = -44.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_netl4")
 
-[node name="IconWrap" type="CenterContainer" parent="." unique_id=1788751600]
+[node name="IconWrap" type="CenterContainer" parent="." unique_id=213847781]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="TypeIcon" type="Control" parent="IconWrap" unique_id=47484408]
+[node name="TypeIcon" type="Control" parent="IconWrap" unique_id=1416292646]
 custom_minimum_size = Vector2(320, 320)
 layout_mode = 2
 script = ExtResource("2_onw68")

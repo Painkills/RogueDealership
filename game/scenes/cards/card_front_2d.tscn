@@ -24,17 +24,17 @@ corner_radius_bottom_left = 12
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hvc1m"]
 bg_color = Color(0.06666667, 0.09411765, 0.15294118, 1)
 draw_center = false
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
 border_color = Color(0.06666667, 0.09411765, 0.15294118, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
-[node name="CardFront" type="Control" unique_id=1155993077]
+[node name="CardFront" type="Control" unique_id=1856738834]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
@@ -42,12 +42,12 @@ offset_right = 500.0
 offset_bottom = 700.0
 script = ExtResource("1_4egrp")
 
-[node name="Background" type="ColorRect" parent="." unique_id=993951966]
+[node name="Background" type="ColorRect" parent="." unique_id=503144912]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Inset" type="ColorRect" parent="." unique_id=1456368644]
+[node name="Inset" type="ColorRect" parent="." unique_id=1359542907]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -57,7 +57,7 @@ offset_right = -10.0
 offset_bottom = -10.0
 color = Color(0.9647059, 0.972549, 0.9843137, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1017914143]
+[node name="Margin" type="MarginContainer" parent="." unique_id=1210230573]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -66,20 +66,20 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1861325160]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=765771626]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="KindRow" type="HBoxContainer" parent="Margin/Column" unique_id=1396943216]
+[node name="KindRow" type="HBoxContainer" parent="Margin/Column" unique_id=1168479387]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="KindIcon" type="Control" parent="Margin/Column/KindRow" unique_id=1794103494]
+[node name="KindIcon" type="Control" parent="Margin/Column/KindRow" unique_id=1629016519]
 custom_minimum_size = Vector2(34, 34)
 layout_mode = 2
 script = ExtResource("2_e1nb3")
 
-[node name="KindLabel" type="Label" parent="Margin/Column/KindRow" unique_id=200346096]
+[node name="KindLabel" type="Label" parent="Margin/Column/KindRow" unique_id=966340286]
 layout_mode = 2
 theme_override_font_sizes/font_size = 33
 theme_override_colors/font_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
@@ -88,11 +88,11 @@ theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 text = "PRODUCT"
 
-[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=937773951]
+[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=17034145]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=392334520]
+[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=1596665754]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 53
@@ -103,7 +103,7 @@ theme_override_constants/shadow_offset_y = 2
 text = "Anti-Theft & Key Protection"
 autowrap_mode = 2
 
-[node name="TicksLabel" type="Label" parent="Margin/Column/Header" unique_id=607480582]
+[node name="TicksLabel" type="Label" parent="Margin/Column/Header" unique_id=1998446585]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
@@ -113,54 +113,54 @@ theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 text = "3t"
 
-[node name="Art" type="Panel" parent="Margin/Column" unique_id=1227333687]
+[node name="Art" type="Panel" parent="Margin/Column" unique_id=1530722443]
 visible = false
-custom_minimum_size = Vector2(452, 130)
+custom_minimum_size = Vector2(452, 170)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_wa1rp")
 
-[node name="Clip" type="Panel" parent="Margin/Column/Art" unique_id=911851557]
+[node name="Clip" type="Panel" parent="Margin/Column/Art" unique_id=1469561979]
 clip_children = 2
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_5lnx1")
 
-[node name="Picture" type="TextureRect" parent="Margin/Column/Art/Clip" unique_id=165271431]
+[node name="Picture" type="TextureRect" parent="Margin/Column/Art/Clip" unique_id=1906614761]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Frame" type="Panel" parent="Margin/Column/Art" unique_id=95996181]
+[node name="Frame" type="Panel" parent="Margin/Column/Art" unique_id=363922037]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hvc1m")
 
-[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=2051791074]
+[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=316899935]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 color = Color(0.8862745, 0.9019608, 0.9254902, 1)
 
-[node name="RuleGap" type="Control" parent="Margin/Column" unique_id=1902160865]
+[node name="RuleGap" type="Control" parent="Margin/Column" unique_id=1948874356]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="BodyRow" type="HBoxContainer" parent="Margin/Column" unique_id=151322826]
+[node name="BodyRow" type="HBoxContainer" parent="Margin/Column" unique_id=578055015]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=1226666260]
+[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=1379666385]
 visible = false
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 size_flags_vertical = 4
 script = ExtResource("3_7dkk7")
 
-[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=1278780545]
+[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=694269370]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 46
@@ -172,7 +172,7 @@ text = "reveals their Line and the category of their number one"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="FlavorLabel" type="Label" parent="Margin/Column" unique_id=150900258]
+[node name="FlavorLabel" type="Label" parent="Margin/Column" unique_id=1424266773]
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
@@ -183,20 +183,20 @@ text = "-2 Line for everyone"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="EffectGap" type="Control" parent="Margin/Column" unique_id=354821887]
+[node name="EffectGap" type="Control" parent="Margin/Column" unique_id=1556556494]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="FlavorRule" type="ColorRect" parent="Margin/Column" unique_id=1633115600]
+[node name="FlavorRule" type="ColorRect" parent="Margin/Column" unique_id=1168550850]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 color = Color(0.8862745, 0.9019608, 0.9254902, 1)
 
-[node name="Rest" type="Control" parent="Margin/Column" unique_id=1338194782]
+[node name="Rest" type="Control" parent="Margin/Column" unique_id=887571615]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=11747956]
+[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=1075863058]
 layout_mode = 2
 theme_override_font_sizes/font_size = 62
 theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
@@ -206,13 +206,13 @@ theme_override_constants/shadow_offset_y = 2
 text = "$1,600"
 horizontal_alignment = 1
 
-[node name="KindFrame" type="Panel" parent="." unique_id=1473923418]
+[node name="KindFrame" type="Panel" parent="." unique_id=1624499111]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="TickClock" type="Control" parent="." unique_id=463935347]
+[node name="TickClock" type="Control" parent="." unique_id=13695454]
 anchors_preset = 0
 offset_left = 404.0
 offset_top = 18.0

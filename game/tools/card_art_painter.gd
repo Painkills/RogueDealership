@@ -4,7 +4,7 @@ extends Control
 ## until real pictures are made; each is replaced by dropping a new image in.
 
 const W := 900
-const H := 258
+const H := 338
 
 const BG := Color("f7f1e4")
 const NAVY := Color("23395b")
@@ -22,7 +22,9 @@ var id := ""
 
 func _draw() -> void:
 	draw_rect(Rect2(0, 0, W, H), BG)
-	draw_rect(Rect2(0, 222, W, 36), Color("ece3cf"))
+	draw_rect(Rect2(0, 262, W, 76), Color("ece3cf"))
+	# Drawn for a 258-high strip; centred in the taller one.
+	draw_set_transform(Vector2(0, 40))
 	match id:
 		"bump": _tag(330, 130, 1.2, ORANGE); _arrow(560, 130, 1.2, GREEN, true)
 		"bundle": _gift(330, 150, 0.8, ORANGE); _gift(450, 120, 1.0, BLUE); _gift(570, 150, 0.8, GREEN)

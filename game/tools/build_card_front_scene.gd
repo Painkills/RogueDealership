@@ -15,7 +15,7 @@ const W := 500
 const H := 700
 const PAD := 24
 ## A card's picture, when it has one: as wide as the text, this tall.
-const ART_H := 130
+const ART_H := 170
 ## The clock in the top right corner that shows the tick cost.
 const CLOCK := 72
 ## The room between the grey rules and what they frame.
@@ -134,7 +134,7 @@ func _init() -> void:
 	picture.owner = root
 	var edge := _rounded(Palette.color(&"neutral_1"))
 	edge.draw_center = false
-	edge.set_border_width_all(3)
+	edge.set_border_width_all(6)
 	var art_frame := Panel.new()
 	art_frame.name = "Frame"
 	art_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
