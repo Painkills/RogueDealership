@@ -10,7 +10,7 @@ extends SceneTree
 ## tall its wrapped text is once a real layout pass has given it its width.
 
 const SCENE := "res://scenes/cards/card_face_3d.tscn"
-const EXPECTED_MIN := 40
+const EXPECTED_MIN := 160
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -28,13 +28,22 @@ func _drive() -> void:
 		for upgraded in [false, true]:
 			if upgraded and not _can_upgrade(def):
 				continue
-			var inst := CardInstance.new(def, uid)
-			uid += 1
-			inst.upgraded = upgraded
-			var face := scene.instantiate() as CardFace3D
-			face.setup(inst)
-			get_root().add_child(face)
-			faces.append([face, "%s%s" % [def.display_name, " (upgraded)" if upgraded else ""]])
+			# As it is, and with a picture - any card can be given one, and the
+			# picture takes room from the words.
+			for pictured in [false, true]:
+				var shown: CardDef = def
+				if pictured:
+					shown = def.duplicate() as CardDef
+					shown.art = ImageTexture.create_from_image(
+						Image.create(16, 16, false, Image.FORMAT_RGBA8))
+				var inst := CardInstance.new(shown, uid)
+				uid += 1
+				inst.upgraded = upgraded
+				var face := scene.instantiate() as CardFace3D
+				face.setup(inst)
+				get_root().add_child(face)
+				faces.append([face, "%s%s%s" % [def.display_name, " (upgraded)" if upgraded else "",
+					" with a picture" if pictured else ""], inst])
 	# One pass for the viewports to size themselves, one for the labels to wrap.
 	for _i in 3:
 		await process_frame
@@ -54,6 +63,12 @@ func _drive() -> void:
 			worst = entry[1]
 		_check("%s fits on its face (needs %d of %d px)" % [entry[1], int(need), int(room)],
 			need <= room)
+		var dressed := front as CardFront
+		var inst: CardInstance = entry[2]
+		_check("%s: its tick cost on the clock (%d)" % [entry[1], dressed.ticks_shown()],
+			dressed.ticks_shown() == inst.ticks())
+		_check("%s: its picture shown only if it has one" % entry[1],
+			dressed.shows_art() == (inst.card.art != null))
 		face.queue_free()
 	print("the tallest is %s, needing %d px" % [worst, int(tallest)])
 	_report()

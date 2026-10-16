@@ -76,3 +76,4 @@ func show_card(inst: CardInstance) -> void:
 	# hand and table already use for it.
 	_name.add_theme_color_override("font_color",
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
+	($SubViewport/CardFront as CardFront).dress(inst)

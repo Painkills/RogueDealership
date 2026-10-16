@@ -85,6 +85,7 @@ func show_card(inst: CardInstance) -> void:
 	_kind_icon.set_type(inst.is_product(), kind_color)
 	_name.add_theme_color_override("font_color",
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
+	($SubViewport/CardFront as CardFront).dress(inst)
 
 ## The same shape CustomerCard3D.setup(null) uses for an empty chair: one
 ## state on the SAME node rather than a second node to keep hidden and synced.

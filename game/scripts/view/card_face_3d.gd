@@ -105,6 +105,7 @@ func setup(inst: CardInstance) -> void:
 	# An upgraded card should be obvious without reading it.
 	_name.add_theme_color_override("font_color",
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
+	($FrontViewport/CardFront as CardFront).dress(inst)
 
 	_redraw()
 

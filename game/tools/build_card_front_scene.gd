@@ -14,10 +14,17 @@ extends SceneTree
 const W := 500
 const H := 700
 const PAD := 24
+## A card's picture, when it has one: as wide as the text, this tall.
+const ART_H := 130
+## The clock in the top right corner that shows the tick cost.
+const CLOCK := 72
+## The room between the grey rules and what they frame.
+const RULE_GAP := 8
 
 func _init() -> void:
 	var root := Control.new()
 	root.name = "CardFront"
+	root.set_script(load("res://scripts/view/card_front.gd"))
 	root.custom_minimum_size = Vector2(W, H)
 	root.size = Vector2(W, H)
 
@@ -92,16 +99,48 @@ func _init() -> void:
 	name_label.text = "Anti-Theft & Key Protection"   # longest CardText.title()
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	name_label.custom_minimum_size = Vector2(0, 130)
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	header.add_child(name_label)
 	name_label.owner = root
-
+	# The tick cost as words - kept for what reads it, but the clock shows it.
 	var ticks := _label("TicksLabel", 44, Palette.color(&"text_dim"))
 	ticks.text = "3t"
-	ticks.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ticks.visible = false
 	header.add_child(ticks)
 	ticks.owner = root
+
+	# The card's picture (CardDef.art), when it has one: clipped to rounded
+	# corners, with a thin dark frame over it. Hidden on a card without one.
+	var art := Panel.new()
+	art.name = "Art"
+	art.custom_minimum_size = Vector2(W - PAD * 2, ART_H)
+	art.add_theme_stylebox_override("panel", _rounded(Palette.color(&"paper_shade")))
+	art.visible = false
+	col.add_child(art)
+	art.owner = root
+	var clip := Panel.new()
+	clip.name = "Clip"
+	clip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	clip.add_theme_stylebox_override("panel", _rounded(Palette.color(&"paper_shade")))
+	clip.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	art.add_child(clip)
+	clip.owner = root
+	var picture := TextureRect.new()
+	picture.name = "Picture"
+	picture.set_anchors_preset(Control.PRESET_FULL_RECT)
+	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	clip.add_child(picture)
+	picture.owner = root
+	var edge := _rounded(Palette.color(&"neutral_1"))
+	edge.draw_center = false
+	edge.set_border_width_all(3)
+	var art_frame := Panel.new()
+	art_frame.name = "Frame"
+	art_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art_frame.add_theme_stylebox_override("panel", edge)
+	art.add_child(art_frame)
+	art_frame.owner = root
 
 	var rule := ColorRect.new()
 	rule.name = "Rule"
@@ -109,18 +148,12 @@ func _init() -> void:
 	rule.color = Palette.color(&"neutral_2")
 	col.add_child(rule)
 	rule.owner = root
+	_gap(col, root, "RuleGap", RULE_GAP)
 
-	# The icon only means something for a PRODUCT, whose body line IS a
-	# category - a support card's body is its effects' own describe() text, and
-	# has no category to show. So the icon is a sibling the running script
-	# shows or hides per card, not something baked into every card alike.
-	#
-	# Stacked - badge above caption - not side by side: a VBoxContainer
-	# stretches a child's WIDTH to fill it by default, and CategoryIcon.draw()
-	# scales its glyph to whatever rect.size it is handed with no aspect
-	# correction, so a non-square icon draws visibly distorted.
+	# A support card's effect; a product's category, its flag on the same line.
+	# Side by side: CategoryIcon draws its glyph to whatever rect it is handed, so
 	# SIZE_SHRINK_CENTER holds it to its own square custom_minimum_size.
-	var body_row := VBoxContainer.new()
+	var body_row := HBoxContainer.new()
 	body_row.name = "BodyRow"
 	body_row.add_theme_constant_override("separation", 10)
 	body_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -130,8 +163,8 @@ func _init() -> void:
 	var body_icon := Control.new()
 	body_icon.name = "BodyIcon"
 	body_icon.set_script(load("res://scripts/view/category_icon_control.gd"))
-	body_icon.custom_minimum_size = Vector2(80, 80)
-	body_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	body_icon.custom_minimum_size = Vector2(40, 40)
+	body_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	body_icon.visible = false
 	body_row.add_child(body_icon)
 	body_icon.owner = root
@@ -144,6 +177,16 @@ func _init() -> void:
 	body_row.add_child(body)
 	body.owner = root
 
+	# What a product does beyond its price - WALKAWAY's "-2 Line" - as big as a
+	# support card's effect. Hidden when there is nothing (see CardFront).
+	var flavor := _label("FlavorLabel", 44, Palette.color(&"text"))
+	flavor.text = "-2 Line for everyone"   # longest CardText.flavor()
+	flavor.autowrap_mode = TextServer.AUTOWRAP_WORD
+	flavor.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(flavor)
+	flavor.owner = root
+
+	_gap(col, root, "EffectGap", RULE_GAP)
 	var flavor_rule := ColorRect.new()
 	flavor_rule.name = "FlavorRule"
 	flavor_rule.custom_minimum_size = Vector2(0, 3)
@@ -151,24 +194,36 @@ func _init() -> void:
 	col.add_child(flavor_rule)
 	flavor_rule.owner = root
 
-	# The authored CardDef.text, unused anywhere until now - dimmer and smaller
-	# than BodyLabel so it reads as color commentary, not a second rules line,
-	# and EXPAND_FILL so it (not BodyRow, now its natural size) is what absorbs
-	# whatever vertical slack a short card leaves, keeping MarginLabel pinned
-	# near the bottom on every card rather than drifting with flavor length.
-	var flavor := _label("FlavorLabel", 32, Palette.color(&"text_dim"))
-	flavor.text = "You walk them through it properly. The workhorse: costs nothing but the clock, and moves you slightly less than one place up their list."   # longest CardText.flavor()
-	flavor.autowrap_mode = TextServer.AUTOWRAP_WORD
-	flavor.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	flavor.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	col.add_child(flavor)
-	flavor.owner = root
+	# Whatever a short card leaves, so the price sits at the bottom on every card.
+	var rest := Control.new()
+	rest.name = "Rest"
+	rest.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(rest)
+	rest.owner = root
 
-	var money := _label("MarginLabel", 68, Palette.color(&"margin"))
+	var money := _label("MarginLabel", 62, Palette.color(&"margin"))
 	money.text = "$1,600"   # longest CardText.margin()
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(money)
 	money.owner = root
+
+	# A frame on the card's very edge, in its kind's colour (CardFront.dress()).
+	var frame := Panel.new()
+	frame.name = "KindFrame"
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(frame)
+	frame.owner = root
+
+	# The tick cost, on a little stopwatch in the top right corner.
+	var clock := Control.new()
+	clock.name = "TickClock"
+	clock.set_script(load("res://scripts/view/tick_clock.gd"))
+	clock.position = Vector2(W - PAD - CLOCK, 18)
+	clock.size = Vector2(CLOCK, CLOCK)
+	clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(clock)
+	clock.owner = root
 
 	var packed := PackedScene.new()
 	packed.pack(root)
@@ -180,6 +235,20 @@ func _init() -> void:
 	print("saved card_front_2d.tscn")
 	root.free()
 	quit(0)
+
+func _gap(parent: Node, root: Node, node_name: String, height: int) -> void:
+	var g := Control.new()
+	g.name = node_name
+	g.custom_minimum_size = Vector2(0, height)
+	parent.add_child(g)
+	g.owner = root
+
+func _rounded(color: Color) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = color
+	s.border_color = color
+	s.set_corner_radius_all(12)
+	return s
 
 func _label(node_name: String, size: int, color: Color) -> Label:
 	var l := Label.new()

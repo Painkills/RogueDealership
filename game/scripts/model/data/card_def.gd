@@ -5,6 +5,9 @@ class_name CardDef extends Resource
 
 @export var id: StringName
 @export var display_name: String
+## The picture on the card's face, about 3.5:1 (1600 x 460 or so), the subject in
+## the middle band. None: the card is just words.
+@export var art: Texture2D = null
 ## Flavour only, printed on the card face below the mechanics (CardText.flavor,
 ## FlavorLabel). The MECHANICAL text is instead generated from
 ## Effect.describe(), so what is printed can never drift from what executes.
