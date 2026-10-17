@@ -12,6 +12,10 @@ const CATEGORY_ICON := 40
 ## A support card's effect, and a product's: the line that says what it does.
 const EFFECT_FONT := 46
 const PRODUCT_EFFECT_FONT := 44
+## Whether cards show their pictures at all. Off while the art is being made:
+## the cards keep their pictures (CardDef.art, art/cards/), they just don't
+## show them until this is turned back on.
+const SHOW_ART := false
 
 @onready var _art: Control = $Margin/Column/Art
 @onready var _picture: TextureRect = $Margin/Column/Art/Clip/Picture
@@ -39,7 +43,7 @@ func dress(inst: CardInstance) -> void:
 	_frame.queue_redraw()
 
 	var art: Texture2D = inst.card.art
-	_art.visible = art != null
+	_art.visible = SHOW_ART and art != null
 	_picture.texture = art
 
 	_clock.show_ticks(inst.ticks())

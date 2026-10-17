@@ -2,7 +2,9 @@ extends SceneTree
 ## Saves a placeholder picture (tools/card_art_painter.gd) for every card in the
 ## pool that has no art yet, to res://art/cards/<id>.png - and a contact sheet of
 ## them all to user://card_art_sheet.png to look at. Hooking each one up to its
-## card is a separate step (CardDef.art), so a real picture is never overwritten.
+## card is a separate step (CardDef.art); a card that has a picture is skipped,
+## so a real one is never overwritten. Pictures show only while
+## CardFront.SHOW_ART is on.
 ##
 ##   godot --path game --script res://tools/render_card_art.gd
 
@@ -24,7 +26,9 @@ func _go() -> void:
 	vp.add_child(painter)
 	var shots: Array[Image] = []
 	for def in pool.cards:
-		if def.art != null and not def.art.resource_path.ends_with(".png"):
+		# Never over a picture a card already has - placeholder or real, it may
+		# have been replaced by hand with the real thing.
+		if def.art != null:
 			continue
 		painter.set("id", String(def.id))
 		painter.queue_redraw()
