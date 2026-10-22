@@ -57,24 +57,32 @@ func _build() -> void:
 	_grid.add_theme_constant_override("v_separation", GAP)
 	_grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(_grid)
-	_zoom = _card(ZOOM)
+	_zoom = _card()
 	_zoom.top_level = true
 	_zoom.visible = false
 	add_child(_zoom)
-	_ghost = _card(SLOT * 1.3)
+	_fit(_zoom, ZOOM)
+	_ghost = _card()
 	_ghost.top_level = true
 	_ghost.visible = false
 	_ghost.modulate.a = 0.85
 	add_child(_ghost)
+	_fit(_ghost, SLOT * 1.3)
 
-func _card(sz: Vector2) -> ShopCardButton:
+func _card() -> ShopCardButton:
 	var card: ShopCardButton = (load("res://scenes/cards/shop_card_button.tscn") \
 		as PackedScene).instantiate()
-	card.custom_minimum_size = sz
-	card.size = sz
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.focus_mode = Control.FOCUS_NONE
 	return card
+
+## Sizes `card`, once it is in the tree - nothing here is a container to do it,
+## and out of the tree a size neither sticks nor reaches the picture inside.
+func _fit(card: ShopCardButton, sz: Vector2) -> void:
+	card.custom_minimum_size = sz
+	card.size = sz
+	var picture := card.get_node(^"TextureRect") as Control
+	picture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 ## Lays the menu out for `shift`, with `focus`'s ranks on it (null: nobody's).
 func show_board(shift: Shift, focus) -> void:
@@ -94,7 +102,9 @@ func show_board(shift: Shift, focus) -> void:
 				_grid.add_child(_empty_slot(shift.interests.by_id(iid)))
 			else:
 				_shown[inst.card.id] = inst
-				_grid.add_child(_slot(shift, inst, focus))
+				var slot := _slot(shift, inst, focus)
+				_grid.add_child(slot)
+				_fit(slot.get_child(0) as ShopCardButton, SLOT)
 
 func _empty_slot(interest: Interest) -> Control:
 	var box := Panel.new()
@@ -122,7 +132,7 @@ func _slot(shift: Shift, inst: CardInstance, focus) -> Control:
 	box.custom_minimum_size = SLOT
 	box.mouse_filter = Control.MOUSE_FILTER_STOP
 	box.set_meta("product", inst.card.id)
-	var card := _card(SLOT)
+	var card := _card()
 	card.show_card(inst)
 	box.add_child(card)
 	var free := shift.board_available(inst)

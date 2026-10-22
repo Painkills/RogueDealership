@@ -3955,6 +3955,16 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	for node in [board] + _all_under(board):
 		if node is Container:
 			(node as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
+	# Every card on the menu inside its own slot - not drawn at the face's full
+	# size over its neighbours.
+	for child in board._grid.get_children():
+		if not child.has_meta("product"):
+			continue
+		var box := (child as Control).get_global_rect().grow(1.0)
+		var face := (child.get_child(0) as Control).get_node(^"TextureRect") as Control
+		_check("%s's card fits its slot on the menu (%s in %s)"
+			% [child.get_meta("product"), face.get_global_rect(), box],
+			box.encloses(face.get_global_rect()))
 	# The first slot that holds a product you can put down.
 	var slot: Control = null
 	var inst: CardInstance = null
