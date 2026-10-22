@@ -122,6 +122,11 @@ static func resize_quads(card: Node3D, size: Vector2) -> void:
 ## line: that is there so the FLOOR can tell you that you left a product with
 ## someone, and once you are with them the product is standing right below this
 ## card. It also sets how long what they say stays up - see SpeechBubble.
+## A menu run's grid columns and the interests you have a product for (see
+## InterestGrid._order) - set by the floor before setup(). Empty in a classic run.
+var menu_order: Dictionary = {}
+var menu_stocked: Dictionary = {}
+
 func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_bind()
 	# A bubble is keyed to whoever said it, not to the chair - the moment the
@@ -181,7 +186,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_shown_demand = c.demand
 	_grid.visible = true
 	_grid.set_state(c.interests(), c.known_ranks, c.known_top_category,
-		sold_interests(c), not compact, c.known_top_three)
+		sold_interests(c), not compact, c.known_top_three, menu_order, menu_stocked)
 	_status.text = status_text(c)
 	_redraw()
 

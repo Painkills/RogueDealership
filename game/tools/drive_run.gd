@@ -101,6 +101,7 @@ func _process(_delta: float) -> bool:
 		_check_the_testing_skip_costs_no_standing()
 		_check_the_whale_shortcut_stops_in_the_store_then_fights_the_boss()
 		_check_the_repo_man_shortcut_stops_in_the_store_then_fights_him()
+		_check_a_menu_run_starts_from_the_front_door_and_comes_back()
 		_check_quitting_a_run_asks_first_then_loses_it()
 		PlayerProfile.reset()
 		RunFile.clear()
@@ -1375,6 +1376,47 @@ func _check_the_run_is_in_the_play_metrics() -> void:
 ## "A button in the top right corner allowing you to quit a run. Have a popup to
 ## confirm saying the run will be lost." A run on the floor, a mind changed once,
 ## then quit for real.
+## TRY MENU MODE on the front door: a menu run (RunState.menu) - its shifts
+## deal the products onto the menu beside the floor - and CONTINUE puts one back
+## as a menu run, with a product it had on a table still there.
+func _check_a_menu_run_starts_from_the_front_door_and_comes_back() -> void:
+	_reopen_the_game()
+	var title = _root._title_view
+	var button := title.get_node(^"%MenuGameButton") as Button
+	_check("the front door offers menu mode", button != null and button.is_visible_in_tree())
+	button.pressed.emit()
+	title.confirm_name()
+	(title.get_node(^"%StartDayButton") as Button).pressed.emit()
+	_check("it starts a menu run", _root._run != null and _root._run.menu)
+	_check("and the play metrics say so",
+		Telemetry.of_kind("run_start").back()["data"].get("variant") == "menu")
+	_pick_tier_by(func(p): return p.cards_for_sale)
+	var floor_view = _root._shift_view
+	var s: Shift = floor_view._shift
+	_check("its shift deals the products onto the menu",
+		s.cfg.products_on_board and not s.board.is_empty()
+			and s.hand.all(func(i): return not i.is_product()))
+	_check("and shows it", (floor_view.get_node(^"%ProductBoard") as Control).visible)
+	var placed: StringName = &""
+	for inst in s.board:
+		var c = s.chairs[int(s.at)] if s.at != null else null
+		if c != null and c.offer == null and c.accepts(inst.card as ProductCardDef):
+			floor_view._apply(s.place_board(inst.card.id))
+			placed = inst.card.id
+			break
+	_check("a product goes on the table from it (%s)" % placed, placed != &"")
+	_check_reopening_the_game_continues_the_run("on a menu run's floor", &"floor")
+	_check("still a menu run", _root._run.menu)
+	var back: Shift = _root._live_shift
+	var c = back.chairs[int(back.at)] if back.at != null else null
+	_check("with the product on the table again",
+		c != null and c.offer != null and c.offer.product.id == placed)
+	_check("and the menu showing it taken",
+		not back.board_available(back.board_product(placed)))
+	_check("CONTINUE says it is a menu run",
+		Telemetry.of_kind("run_start").back()["data"].get("variant") == "menu")
+	_reopen_the_game()
+
 func _check_quitting_a_run_asks_first_then_loses_it() -> void:
 	_root._start_run()
 	var first := _pick_tier_by(func(p): return p.cards_for_sale)

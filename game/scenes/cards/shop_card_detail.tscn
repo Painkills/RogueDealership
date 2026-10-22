@@ -384,59 +384,59 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[node name="ShopCardDetail" type="PanelContainer" unique_id=486291083]
+[node name="ShopCardDetail" type="PanelContainer" unique_id=757780891]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_8yt8d")
 script = ExtResource("1_pd54g")
 
-[node name="DetailWindowCentre" type="CenterContainer" parent="." unique_id=1836510714]
+[node name="DetailWindowCentre" type="CenterContainer" parent="." unique_id=109628992]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="DetailWindow" type="PanelContainer" parent="DetailWindowCentre" unique_id=87385378]
+[node name="DetailWindow" type="PanelContainer" parent="DetailWindowCentre" unique_id=681166503]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(980, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_hckes")
 
-[node name="WindowColumn" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow" unique_id=883123436]
+[node name="WindowColumn" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow" unique_id=2026356261]
 layout_mode = 2
 theme_override_constants/separation = 0
 
-[node name="TitleBar" type="PanelContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn" unique_id=1454605798]
+[node name="TitleBar" type="PanelContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn" unique_id=1086424064]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_smf1f")
 
-[node name="Row" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar" unique_id=922058800]
+[node name="Row" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar" unique_id=1033360113]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Lights" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row" unique_id=1580477919]
+[node name="Lights" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row" unique_id=682401741]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Light" type="Panel" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row/Lights" unique_id=764814354]
+[node name="Light" type="Panel" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1392929177]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_8idff")
 
-[node name="@Panel@2" type="Panel" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1985014046]
+[node name="@Panel@2" type="Panel" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row/Lights" unique_id=2048652341]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_tunp6")
 
-[node name="@Panel@3" type="Panel" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1587376511]
+[node name="@Panel@3" type="Panel" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row/Lights" unique_id=1764943650]
 custom_minimum_size = Vector2(14, 14)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_wmkwd")
 
-[node name="WindowTitle" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row" unique_id=1315796975]
+[node name="WindowTitle" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row" unique_id=562127430]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 19
@@ -444,11 +444,11 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "Product details"
 horizontal_alignment = 1
 
-[node name="Balance" type="Control" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row" unique_id=980439701]
+[node name="Balance" type="Control" parent="DetailWindowCentre/DetailWindow/WindowColumn/TitleBar/Row" unique_id=2082949750]
 custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 
-[node name="Body" type="MarginContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn" unique_id=1399516167]
+[node name="Body" type="MarginContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn" unique_id=30778390]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 36
@@ -456,11 +456,11 @@ theme_override_constants/margin_top = 36
 theme_override_constants/margin_right = 36
 theme_override_constants/margin_bottom = 36
 
-[node name="Content" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body" unique_id=1872736726]
+[node name="Content" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body" unique_id=1722027643]
 layout_mode = 2
 theme_override_constants/separation = 22
 
-[node name="DetailTitle" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content" unique_id=56476459]
+[node name="DetailTitle" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content" unique_id=894534012]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"Heading"
@@ -469,17 +469,17 @@ theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Card Name"
 horizontal_alignment = 1
 
-[node name="CardsRow" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content" unique_id=647295690]
+[node name="CardsRow" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content" unique_id=1052478622]
 layout_mode = 2
 theme_override_constants/separation = 40
 alignment = 1
 
-[node name="CurrentWrap" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow" unique_id=300533579]
+[node name="CurrentWrap" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow" unique_id=1620592817]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="CurrentWrapCaption" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/CurrentWrap" unique_id=786641957]
+[node name="CurrentWrapCaption" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/CurrentWrap" unique_id=1149476138]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 24
@@ -487,7 +487,7 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "NOW"
 horizontal_alignment = 1
 
-[node name="CurrentPreview" type="Control" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/CurrentWrap" unique_id=1194844654 instance=ExtResource("2_yc31i")]
+[node name="CurrentPreview" type="Control" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/CurrentWrap" unique_id=1682756547 instance=ExtResource("2_yc31i")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(340, 476)
 clip_contents = true
@@ -495,13 +495,13 @@ layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("3_lkrqj")
 
-[node name="UpgradedWrap" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow" unique_id=946617894]
+[node name="UpgradedWrap" type="VBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow" unique_id=1428724530]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="UpgradedWrapCaption" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/UpgradedWrap" unique_id=527986275]
+[node name="UpgradedWrapCaption" type="Label" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/UpgradedWrap" unique_id=1907271712]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 24
@@ -509,7 +509,7 @@ theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "UPGRADED"
 horizontal_alignment = 1
 
-[node name="UpgradedPreview" type="Control" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/UpgradedWrap" unique_id=716969740 instance=ExtResource("2_yc31i")]
+[node name="UpgradedPreview" type="Control" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/CardsRow/UpgradedWrap" unique_id=1884173000 instance=ExtResource("2_yc31i")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(340, 476)
 clip_contents = true
@@ -517,12 +517,12 @@ layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("3_lkrqj")
 
-[node name="ButtonRow" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content" unique_id=704210740]
+[node name="ButtonRow" type="HBoxContainer" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content" unique_id=1683434524]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="TakeButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=781798188]
+[node name="TakeButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=495640633]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(210, 76)
 layout_mode = 2
@@ -538,7 +538,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 28
 text = "take it - free"
 
-[node name="BuyButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=112997958]
+[node name="BuyButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=1523611718]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(210, 76)
 layout_mode = 2
@@ -554,7 +554,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 28
 text = "buy $0"
 
-[node name="UpgradeButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=2218051]
+[node name="UpgradeButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=325415166]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(210, 76)
 layout_mode = 2
@@ -570,7 +570,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 28
 text = "upgrade $0"
 
-[node name="RemoveButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=1515476475]
+[node name="RemoveButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=1916903671]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(210, 76)
 layout_mode = 2
@@ -586,7 +586,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 28
 text = "remove $0"
 
-[node name="CloseButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=332988801]
+[node name="CloseButton" type="Button" parent="DetailWindowCentre/DetailWindow/WindowColumn/Body/Content/ButtonRow" unique_id=576410682]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(210, 76)
 layout_mode = 2

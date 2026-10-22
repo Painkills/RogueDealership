@@ -329,6 +329,11 @@ func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> 
 	rarity.add_theme_font_size_override("font_size", 17)
 	rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rarity.text = CardText.rarity_name(inst)
+	# A menu run's product takes its interest's slot on the menu: which product
+	# it would push off - more to the point here than how rare it is.
+	if _shop.run.menu and inst.is_product() and inst.uid < 0:
+		var old := _shop.replaces(inst.card)
+		rarity.text = "Replaces %s" % old.card.display_name if old != null else "New menu slot"
 	rarity.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
 	slot.add_child(rarity)
 

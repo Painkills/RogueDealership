@@ -2,8 +2,8 @@ class_name CardFront extends Control
 ## The face of a card (card_front_2d.tscn): what every place that shows one - the
 ## table (CardFace3D), the store (ShopCardButton), the preview (CardPreview2D) -
 ## does to it beyond writing its words. The picture, when the card has one; the
-## tick cost on a clock; a frame on the card's edge in its kind's colour; and a
-## product's body laid out as a small category line, its effect, and its price.
+## tick cost on a clock; and a product's body laid out as a small category
+## line, its effect, and its price.
 
 ## How big a product's category line is, and its flag - it says what kind of
 ## product this is, which matters less than what it does and what it pays.
@@ -21,27 +21,15 @@ const SHOW_ART := false
 @onready var _picture: TextureRect = $Margin/Column/Art/Clip/Picture
 @onready var _clock: TickClock = $TickClock
 @onready var _ticks_label: Label = $Margin/Column/Header/TicksLabel
-@onready var _frame: Panel = $KindFrame
 @onready var _body_icon: Control = $Margin/Column/BodyRow/BodyIcon
 @onready var _body: Label = $Margin/Column/BodyRow/BodyLabel
 @onready var _effect: Label = $Margin/Column/FlavorLabel
 @onready var _price: Label = $Margin/Column/MarginLabel
 
-var _frame_style := StyleBoxFlat.new()
-
-func _ready() -> void:
-	_frame_style.draw_center = false
-	_frame_style.set_border_width_all(14)
-	_frame.add_theme_stylebox_override("panel", _frame_style)
-
 ## Everything about `inst`'s face but its words, which its owner writes.
 func dress(inst: CardInstance) -> void:
 	if not is_node_ready():
 		await ready
-	var kind := Palette.color(&"accent") if inst.is_product() else Palette.color(&"action")
-	_frame_style.border_color = kind
-	_frame.queue_redraw()
-
 	var art: Texture2D = inst.card.art
 	_art.visible = SHOW_ART and art != null
 	_picture.texture = art

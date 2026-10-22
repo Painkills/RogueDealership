@@ -84,6 +84,8 @@ signal deck_viewed
 @onready var _at_risk_label: Label = %AtRiskLabel
 @onready var _event_log: RichTextLabel = %EventLog
 @onready var _side_panel: Control = %SidePanel
+## A menu run's products, in the log's place - see ProductBoard.
+@onready var _product_board: ProductBoard = %ProductBoard
 @onready var _log_toggle: Button = %LogToggle
 ## Who is waiting for a chair - see _render_waiting().
 @onready var _waiting_panel: Control = %WaitingPanel
@@ -291,6 +293,7 @@ func _ready() -> void:
 
 	_register_keyboard_actions()
 	_log_open_size = _side_panel.size
+	_product_board.dropped.connect(_on_board_dropped)
 	_log_toggle.pressed.connect(func(): set_log_folded(not _log_folded))
 	# Mobile has no Ctrl+E: an invisible button laid over the tick counter
 	# itself is the touch equivalent, wired to the exact same method.
@@ -526,7 +529,8 @@ func set_active(on: bool) -> void:
 ## wiring), regardless of which of the three ways it was opened.
 func set_hud_dimmed(dimmed: bool) -> void:
 	_hud_dimmed = dimmed
-	_side_panel.visible = not dimmed
+	_side_panel.visible = not dimmed and not _menu()
+	_product_board.visible = not dimmed and _menu()
 	_waiting_panel.visible = not dimmed
 	# The shift's manila strip is opaque now, where its bare numbers used to
 	# float over whatever was beneath them - over the deck viewer it would be a
@@ -1610,6 +1614,30 @@ func _clear_fx() -> void:
 
 # --- rendering -------------------------------------------------------------
 
+## Whether this is a menu run's shift (Shift.board).
+func _menu() -> bool:
+	return _shift != null and _shift.cfg.products_on_board
+
+## A product dragged off the menu and let go at `at`: on whoever's folder that
+## is - where it lands is their table, whichever seat they are in.
+func _on_board_dropped(product_id: StringName, at: Vector2) -> void:
+	if _shift == null or _shift.is_over() or _shift.pending_pull != null:
+		return
+	var chair := _pad_under(at)
+	if chair < 0 or chair >= _shift.chairs.size():
+		return
+	_apply(_shift.place_board(product_id, chair))
+
+## The menu, with the ranks of whoever you are looking at on it.
+func _render_board() -> void:
+	_side_panel.visible = not _hud_dimmed and not _menu()
+	_product_board.visible = not _hud_dimmed and _menu()
+	if not _menu():
+		return
+	var front := _front()
+	var focus = _shift.chairs[front] if front >= 0 and front < _shift.chairs.size() else null
+	_product_board.show_board(_shift, focus)
+
 func _render() -> void:
 	# A shift with no clock has no limit to count towards.
 	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget] if _shift.has_clock \
@@ -1675,7 +1703,11 @@ func _render() -> void:
 			boss = who
 			break
 	var notes := BossPanels.side_notes(boss, _front(), _shift.tick)
+	var menu_order := _shift.board_order()
+	var menu_stocked := _shift.board_stocked() if not menu_order.is_empty() else {}
 	for i in range(_customer_cards.size()):
+		_customer_cards[i].menu_order = menu_order
+		_customer_cards[i].menu_stocked = menu_stocked
 		# Keyed on being FRONTED rather than on being seated: the carousel
 		# draws the two flankers small on the floor as well, and that is where
 		# rank numerals stop surviving the SubViewport's downscale.
@@ -1693,6 +1725,7 @@ func _render() -> void:
 
 	_render_details()
 	_render_hover_flip()
+	_render_board()
 	_render_pull_picker()
 	_render_waiting()
 	# Both piles are face down, so a count is the only way to see how much of
@@ -2246,6 +2279,9 @@ func _reconcile() -> void:
 			# hand's own local origin.
 			if desired[uid]["zone"] == CardHomes.ZONE_HAND:
 				node.position = home.to_local(_draw_zone.global_position)
+			elif _shift.board.has(desired[uid]["instance"]):
+				# Off the menu, from the rail it sits on.
+				node.position = home.to_local(_board_point())
 			home.insert_card(node, clampi(desired[uid]["ordinal"], 0, home.cards.size()))
 
 	for uid in desired:
@@ -2272,11 +2308,20 @@ func _reconcile() -> void:
 		if gone != null and gone != _dragging:
 			_nodes.erase(inst.uid)
 			_retire(gone)
+	# A menu product off the table is back on the menu: its card goes back to
+	# the rail, and the menu shows it again.
+	for inst in _shift.board:
+		if desired.has(inst.uid):
+			continue
+		var back: CardFace3D = _nodes.get(inst.uid)
+		if back != null and back != _dragging:
+			_nodes.erase(inst.uid)
+			_retire(back, _board_point())
 
 ## Takes a card off the table for good: flown to the discard pile and out of
 ## sight. Hidden, not freed - the one place card nodes are freed is setup(), and a
 ## freed node still held by DragController or a hovered collection crashes it.
-func _retire(node: CardFace3D) -> void:
+func _retire(node: CardFace3D, to = null) -> void:
 	var was := node.global_position
 	var from := node.get_parent()
 	if from is CardCollection3D:
@@ -2289,11 +2334,19 @@ func _retire(node: CardFace3D) -> void:
 	_retired.append(node)
 	var tw := node.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(node, "global_position", _discard_zone.global_position, 0.4) \
+	tw.tween_property(node, "global_position",
+		to if to != null else _discard_zone.global_position, 0.4) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_property(node, "scale", Vector3.ONE * 0.2, 0.4)
 	tw.set_parallel(false)
 	tw.tween_callback(func(): node.visible = false)
+
+## Where the menu is, on the table: the rail's middle, as deep as the discard
+## pile - where a product comes from when it goes on a table, and goes back to.
+func _board_point() -> Vector3:
+	var at := _product_board.get_global_rect().get_center()
+	var depth := _camera.global_position.distance_to(_discard_zone.global_position)
+	return _camera.project_position(at, depth)
 
 func _move_card(node: CardFace3D, to_zone: CardCollection3D, ordinal: int) -> void:
 	# Preserve where the card was on screen across the reparent, so the layout

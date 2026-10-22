@@ -1075,6 +1075,14 @@ func _build_hud(root: Node) -> void:
 	col.add_child(log_box)
 	log_box.owner = root
 
+	# A menu run's products, in the log's place (ProductBoard) - the log
+	# stays for a classic run. The controller shows one or the other.
+	var board := _rail_card(hud, root, "ProductBoard", LOG_RECT)
+	# Ignores the mouse like the rest of the HUD: only its slots, built as the
+	# shift is dealt, take a press - the gaps between them leave the table be.
+	board.set_script(load("res://scripts/view/product_board.gd"))
+	board.visible = false
+
 	# Over the table and the rails, under the report and the pull picker.
 	_player_bubble(hud, root)
 

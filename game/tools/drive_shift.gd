@@ -192,6 +192,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_debug_skip_shift_key_ends_it()            # replaces _shift entirely
 	_check_tick_tap_target_ends_the_shift_too()      # replaces _shift entirely
 	_check_standing_tap_target_adds_standing()       # replaces _shift entirely
+	_check_a_menu_shift_places_from_the_menu()       # replaces _shift entirely
 	_check("and not one error on the way (%s)" % "; ".join(_trap.errors),
 		_trap.errors.is_empty())
 
@@ -3920,6 +3921,93 @@ func _check_standing_tap_target_adds_standing() -> void:
 	tap.pressed.emit()
 	_check("and never climbs past cfg.standing_start (%d)" % fresh.standing,
 		fresh.standing == fresh.cfg.standing_start)
+
+## A menu run's shift (ShiftConfig.products_on_board): the menu in the log's
+## place, a hand of support cards, and a product put on a customer's table by a
+## real press on its slot, dragged and let go over their folder - pushed through
+## the viewport, the way a mouse sends it, not called on the controller.
+func _check_a_menu_shift_places_from_the_menu() -> void:
+	var cfg := (load("res://data/shift_config.tres") as ShiftConfig).duplicate() as ShiftConfig
+	cfg.products_on_board = true
+	cfg.hand_min_products = 0
+	var menu := Shift.new(cfg, load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"), randi())
+	_controller.setup(menu, cfg.standing_start)
+	_controller._render()
+	_settle()
+	var board := _controller.get_node(^"%ProductBoard") as ProductBoard
+	_check("the menu is up", board.visible)
+	_check("in the log's place", not (_controller.get_node(^"%SidePanel") as Control).visible)
+	_check("the hand holds no product",
+		menu.hand.all(func(i): return not i.is_product()))
+	_check("a slot for every interest (%d)" % board._grid.get_child_count(),
+		board._grid.get_child_count() == menu.interests.count())
+	_check("the customers' grids take the menu's order",
+		not (_controller._customer_cards[0]._grid as InterestGrid)._order.is_empty())
+	if menu.chairs[0] == null:
+		menu._spawn(0)
+	menu.chairs[0].offer = null
+	_controller._render()
+	_settle()
+	# A container lays its children out on the frame after they change, and there
+	# is no next frame inside this one - lay the menu out now, so a slot is where
+	# the screen shows it.
+	for node in [board] + _all_under(board):
+		if node is Container:
+			(node as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
+	# The first slot that holds a product you can put down.
+	var slot: Control = null
+	var inst: CardInstance = null
+	for child in board._grid.get_children():
+		if not child.has_meta("product"):
+			continue
+		var candidate := menu.board_product(StringName(child.get_meta("product")))
+		if menu.board_available(candidate) and not menu.chairs[0].owns(candidate.card.id) \
+				and menu.chairs[0].accepts(candidate.card as ProductCardDef):
+			slot = child
+			break
+	if slot == null:
+		_check("there is a product on the menu to drag", false)
+		return
+	var from := slot.get_global_rect().get_center()
+	var over: Vector2 = _controller._camera.unproject_position(
+		(_controller._hover_pads[0] as Node3D).global_position)
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = from
+	press.global_position = from
+	get_root().push_input(press)
+	var held := board.held()
+	inst = menu.board_product(held) if held != &"" else null
+	_check("pressing a slot picks its product up (%s)" % held,
+		inst != null and held == StringName(slot.get_meta("product")))
+	var move := InputEventMouseMotion.new()
+	move.position = over
+	move.global_position = over
+	move.relative = over - from
+	get_root().push_input(move)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = over
+	release.global_position = over
+	get_root().push_input(release)
+	_settle()
+	if inst == null:
+		return
+	var c = menu.chairs[0]
+	_check("let go over their folder, it is on their table (%s)"
+		% (str(c.offer.product.id) if c.offer != null else "nothing"),
+		c.offer != null and c.offer.instance == inst)
+	_check("and greyed on the menu", not menu.board_available(inst))
+	_check("with a card on the table for it", _controller._nodes.has(inst.uid))
+	_check("nothing left the hand", menu.hand.all(func(i): return not i.is_product()))
+	_controller._apply(menu.drop_offer())
+	_settle()
+	_check("dropped, it is back on the menu", menu.board_available(inst))
+	_check("and its card is off the table", not _controller._nodes.has(inst.uid))
+	_check("not in the discard", not menu.discard.has(inst))
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1

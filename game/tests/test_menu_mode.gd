@@ -314,3 +314,15 @@ func test_a_menu_store_never_offers_a_classic_only_card_or_one_you_have() -> voi
 			if def is ProductCardDef:
 				h.check("seed %d: %s is not already on the menu" % [seed_value, def.id],
 					not r.deck.cards.any(func(i): return i.card == def))
+
+func test_a_menu_runs_grid_keeps_the_menus_columns() -> void:
+	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
+	var cat: Category = interests.categories[0]
+	var row: Array = interests.in_category(cat).map(func(i): return i.id)
+	var turned: Array = row.duplicate()
+	turned.reverse()
+	var laid := InterestGrid.fixed_order(interests, cat, turned)
+	h.eq("the columns in the menu's order", laid.map(func(i): return i.id), turned)
+	var short := InterestGrid.fixed_order(interests, cat, [row[row.size() - 1]])
+	h.eq("one it was not told about still gets a column", short.size(), row.size())
+	h.eq("after the ones it was", short[0].id, row[row.size() - 1])

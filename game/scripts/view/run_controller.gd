@@ -153,7 +153,10 @@ func _ready() -> void:
 ## any run on this device that was still going.
 func _start_run() -> void:
 	_new_run()
-	Telemetry.start_run("new", {"seed": _run.rng.seed})
+	if _title_view.menu_run:
+		_run.make_menu()
+	Telemetry.start_run("new", {"seed": _run.rng.seed,
+		"variant": "menu" if _run.menu else "classic"})
 	_begin_the_day()
 	_open_the_picker()
 
@@ -177,7 +180,8 @@ func _continue_run() -> void:
 		_calendar_note = "A new build came in - today starts over"
 	Telemetry.muted = false
 	Telemetry.start_run("continue", {"seed": save.seed_value(), "day": _run.shift_number,
-		"restarted_day": not back.get("ok", true) or _calendar_note != ""})
+		"restarted_day": not back.get("ok", true) or _calendar_note != "",
+		"variant": "menu" if _run.menu else "classic"})
 	_history = back["history"]
 	_save = save
 	_live_shift = back["shift"]
@@ -479,14 +483,16 @@ func _on_shift_finished(report: Dictionary) -> void:
 		var fired := _run.standing <= 0
 		var rank := PlayerProfile.record_run(int(tally["total"]),
 			int(tally["margin_banked"]), fired)
-		# And onto everyone's board, under the name on your badge.
-		_title_view.post_score(PlayerProfile.display_name(), int(tally["total"]),
-			int(tally["margin_banked"]), fired)
+		# And onto everyone's board, under the name on your badge - a classic
+		# run's only, while menu mode is a prototype.
+		if not _run.menu:
+			_title_view.post_score(PlayerProfile.display_name(), int(tally["total"]),
+				int(tally["margin_banked"]), fired)
 		_summary_view.setup(tally, fired, rank)
 		_summary_view.visible = true
 		Telemetry.record("run_end", {"score": int(tally["total"]), "fired": fired,
 			"day": _run.shift_number - 1, "standing": _run.standing,
-			"banked": int(tally["margin_banked"])})
+			"banked": int(tally["margin_banked"]), "variant": "menu" if _run.menu else "classic"})
 		Telemetry.end_run()
 		return
 	# The shop is what the JUST-PLAYED shift's tier adds to the free card, not

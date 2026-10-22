@@ -51,10 +51,21 @@ var _top_three: Array = []
 ## Flankers are small enough that a rank numeral stops being readable before
 ## the CELL does. Colour and fill survive the downscale; digits do not.
 var _numerals: bool = true
+## A menu run's fixed columns (Shift.board_order()): category id -> interest ids,
+## the ones you have a product for first, the empty slots last - the same order
+## as the menu beside the floor, so a column here is the product under it there.
+## Empty: a classic run's known-first order (row_order()).
+var _order: Dictionary = {}
+## Of a menu run's interests, the ones you have a product for. The rest are
+## drawn faded: nothing of yours to put in front of them there.
+var _stocked: Dictionary = {}
 
 func set_state(pool: InterestPool, known_ranks: Dictionary, top_category,
-		sold: Dictionary, numerals: bool = true, top_three: Array = []) -> void:
+		sold: Dictionary, numerals: bool = true, top_three: Array = [],
+		order: Dictionary = {}, stocked: Dictionary = {}) -> void:
 	_pool = pool
+	_order = order
+	_stocked = stocked
 	_known = known_ranks
 	_top_three = top_three
 	_top_category = top_category
@@ -75,6 +86,19 @@ static func row_order(in_row: Array, known: Dictionary) -> Array:
 			rest.append(i)
 	seen.sort_custom(func(a, b): return int(known[a.id]) < int(known[b.id]))
 	return seen + rest
+
+## A menu run's row: `ids` as interests, any of the category's the list misses
+## kept behind in pool order.
+static func fixed_order(pool: InterestPool, cat: Category, ids: Array) -> Array:
+	var out: Array = []
+	for id in ids:
+		var i := pool.by_id(StringName(id))
+		if i != null and i.category == cat:
+			out.append(i)
+	for i in pool.in_category(cat):
+		if not out.has(i):
+			out.append(i)
+	return out
 
 func _draw() -> void:
 	if _pool == null or _pool.categories.is_empty():
@@ -100,7 +124,7 @@ func _draw() -> void:
 		var in_cat: bool = _top_category != null and cat.id == _top_category
 		_draw_row_icon(Rect2(Vector2(0.0, r * (ch + GAP)), Vector2(ICON_COL, ch)),
 			cat, in_cat)
-		var ordered := row_order(_pool.in_category(cat), _known)
+		var ordered := fixed_order(_pool, cat, _order[cat.id]) if _order.has(cat.id) 			else row_order(_pool.in_category(cat), _known)
 		for c in range(ordered.size()):
 			var cell := Rect2(Vector2(grid_x + c * (cw + GAP), r * (ch + GAP)),
 				Vector2(cw, ch))
@@ -195,3 +219,9 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 			cell.position.y + cell.size.y - 6.0)
 		draw_string(font, name_at, name_text, HORIZONTAL_ALIGNMENT_LEFT, -1,
 			name_size, ink)
+
+	# A menu run's empty slot: nothing of yours for this interest yet.
+	if not _order.is_empty() and not _stocked.has(interest.id):
+		var veil := Palette.color(&"panel")
+		veil.a = 0.6
+		draw_rect(cell, veil, true)

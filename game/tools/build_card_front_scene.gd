@@ -207,14 +207,6 @@ func _init() -> void:
 	col.add_child(money)
 	money.owner = root
 
-	# A frame on the card's very edge, in its kind's colour (CardFront.dress()).
-	var frame := Panel.new()
-	frame.name = "KindFrame"
-	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(frame)
-	frame.owner = root
-
 	# The tick cost, on a little stopwatch in the top right corner.
 	var clock := Control.new()
 	clock.name = "TickClock"

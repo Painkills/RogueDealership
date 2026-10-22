@@ -54,6 +54,9 @@ func _menu(root: Control) -> void:
 	# offer_continue().
 	_button(col, root, "ContinueButton", "CONTINUE", &"primary", true).visible = false
 	_button(col, root, "NewGameButton", "NEW GAME", &"primary", true)
+	# A menu run - the prototype where products sit on a menu beside the floor
+	# instead of in the deck (RunState.menu).
+	_button(col, root, "MenuGameButton", "TRY MENU MODE", &"primary", false)
 	_button(col, root, "TutorialButton", "TUTORIAL", &"primary", false)
 	_button(col, root, "HighScoresButton", "HIGH SCORES", &"ink", false)
 	# The web app only - see title_screen.gd's check_for_update().

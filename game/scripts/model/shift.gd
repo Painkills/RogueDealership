@@ -1184,6 +1184,14 @@ func board_order() -> Dictionary:
 	return order
 
 
+## The interests the menu has a product for, as a set (id -> true).
+func board_stocked() -> Dictionary:
+	var out := {}
+	for inst in board:
+		out[(inst.card as ProductCardDef).interest.id] = true
+	return out
+
+
 func _put_down(c: Customer, inst: CardInstance) -> Result:
 	if not inst.is_product():
 		return Result.new(false, "%s is not a product." % inst.card.display_name)
