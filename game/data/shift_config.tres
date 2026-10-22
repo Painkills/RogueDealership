@@ -1,6 +1,8 @@
 [gd_resource type="Resource" script_class="ShiftConfig" format=3 uid="uid://got8l6e4uxda"]
 
 [ext_resource type="Script" uid="uid://osfy8f5cg0kj" path="res://scripts/model/shift_config.gd" id="1_khiuw"]
+[ext_resource type="Script" uid="uid://duanbribvke2t" path="res://scripts/model/data/card_def.gd" id="3_carddef"]
+[ext_resource type="Resource" uid="uid://b0sdb4urqiwpa" path="res://data/cards/readroom.tres" id="2_listen"]
 
 [resource]
 script = ExtResource("1_khiuw")
@@ -15,3 +17,4 @@ upgrade_price_share = 0.75
 paycheck_raise_per_week = 100
 complicator_share = 0.5
 difficulty_tolerance = 1
+menu_starters = Array[ExtResource("3_carddef")]([ExtResource("2_listen")])

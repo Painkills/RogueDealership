@@ -33,6 +33,11 @@ var upgrade_pool: DealershipUpgradePool = null
 ## The dealership upgrades this run has picked, in the order it picked them -
 ## every shift from here on is worked with all of them. See DealershipUpgrade.
 var dealership: Array[DealershipUpgrade] = []
+## A menu run (ShiftConfig.products_on_board): its products sit on the menu
+## beside the floor instead of being drawn, and the store swaps them by
+## interest instead of piling them up. Set once, by make_menu(), as the run
+## starts.
+var menu: bool = false
 
 func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		p_arch: ArchetypePool, p_seed: int,
@@ -51,6 +56,14 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 		week = Week.new(p_shifts, cfg.shifts_in_run, rng.randi(), cfg.days_per_week,
 			archetypes, cfg)
 		_set_quotas_against_the_day_before()
+
+## Makes this a menu run: the menu's extra starters join the deck. Call it once,
+## straight after the run is dealt.
+func make_menu() -> void:
+	menu = true
+	for def in cfg.menu_starters:
+		if def != null:
+			deck.add(def)
 
 ## A shift that asks for a multiple of the hardest quota the day before offered
 ## (ShiftProfile.quota_over_hardest) gets it now, day by day - so that day's own
@@ -84,6 +97,7 @@ func snapshot() -> Dictionary:
 		"reports": reports.duplicate(true),
 		"sale_streak": sale_streak,
 		"dealership": perks,
+		"menu": menu,
 	}
 
 ## Puts this run - dealt from the same seed - where snapshot() left one. A card
@@ -98,6 +112,7 @@ func restore(data: Dictionary) -> void:
 	standing = int(data["standing"])
 	reports.assign((data["reports"] as Array).duplicate(true))
 	sale_streak = int(data["sale_streak"])
+	menu = bool(data.get("menu", false))
 	dealership.clear()
 	if upgrade_pool != null:
 		for id in data["dealership"]:
@@ -136,13 +151,17 @@ func start_shift(profile: ShiftProfile) -> Shift:
 	# touched.
 	var shift_cfg := cfg
 	var ticks := profile.ticks_on(cfg.shift_ticks)
-	var hand := profile.hand_on(cfg.hand_size)
-	if ticks != cfg.shift_ticks or hand != cfg.hand_size or profile.waiting_room > 0:
+	var hand := profile.hand_on(cfg.menu_hand_size if menu else cfg.hand_size)
+	if menu or ticks != cfg.shift_ticks or hand != cfg.hand_size or profile.waiting_room > 0:
 		shift_cfg = cfg.duplicate() as ShiftConfig
 		shift_cfg.shift_ticks = ticks
 		shift_cfg.hand_size = hand
 		if profile.waiting_room > 0:
 			shift_cfg.waiting_max = profile.waiting_room
+		if menu:
+			# Supports only in the hand: nothing for the product bias to do.
+			shift_cfg.products_on_board = true
+			shift_cfg.hand_min_products = 0
 	var s := Shift.new(shift_cfg, interests, card_pool, archetypes,
 		rng.randi(), [], deck, profile.quota_on(quota_for(shift_number)), shift_number,
 		standing, sale_streak, dialogue, profile.seats,

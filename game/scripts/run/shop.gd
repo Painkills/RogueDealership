@@ -123,6 +123,11 @@ func _roll_cards() -> void:
 	## twice, and the card for sale is never one you could have had free.
 	var pool: Array[CardDef] = []
 	for c in run.card_pool.shoppable_cards():
+		# A menu run has no use for a card that finds products in the deck or
+		# sorts supports from them (CardDef.classic_only) - and none for a
+		# product it already has on its menu.
+		if run.menu and (c.classic_only or _owns_product(c)):
+			continue
 		pool.append(c)
 	free_cards.clear()
 	# A shift can raise the floor on its free pick - "finishing a boss should
@@ -265,11 +270,11 @@ func take_free(def: CardDef) -> Result:
 		return Result.new(false, "You have already taken this visit's free card.")
 	if not free_cards.has(def):
 		return Result.new(false, "%s is not one of the free cards." % def.display_name)
-	run.deck.add(def)
+	var replaced := _gain(def)
 	free_picks_left -= 1
 	free_taken = def
-	return Result.new(true, "You add the %s to your toolkit. On the house."
-		% def.display_name, "take", {"price": 0})
+	return Result.new(true, "You add the %s to your toolkit. On the house.%s"
+		% [def.display_name, _replaced_note(replaced)], "take", {"price": 0})
 
 ## "Pick one, or none": passing spends the visit's pick on nothing.
 func pass_on_free() -> Result:
@@ -287,10 +292,44 @@ func buy(def: CardDef) -> Result:
 	if run.money < price:
 		return Result.new(false, "You cannot afford the %s." % def.display_name)
 	run.money -= price
-	run.deck.add(def)
+	var replaced := _gain(def)
 	offers.erase(def)
-	return Result.new(true, "You add the %s to your toolkit." % def.display_name,
-		"buy", {"price": price})
+	return Result.new(true, "You add the %s to your toolkit.%s"
+		% [def.display_name, _replaced_note(replaced)], "buy", {"price": price})
+
+## Adds `def` to the deck - in a menu run, a product takes its interest's slot
+## on the menu, and whatever product held it leaves the deck. Returns that one's
+## name, or "".
+func _gain(def: CardDef) -> String:
+	var old := replaces(def)
+	var gone := ""
+	if old != null:
+		gone = old.card.display_name
+		run.deck.remove(old.uid)
+	run.deck.add(def)
+	return gone
+
+## In a menu run, the product `def` would push off the menu - the one holding its
+## interest's slot - or null.
+func replaces(def: CardDef) -> CardInstance:
+	if not run.menu or not def is ProductCardDef:
+		return null
+	var iid: StringName = (def as ProductCardDef).interest.id
+	for c in run.deck.cards:
+		if c.is_product() and (c.card as ProductCardDef).interest.id == iid:
+			return c
+	return null
+
+func _replaced_note(gone: String) -> String:
+	return " It replaces the %s on your menu." % gone if gone != "" else ""
+
+func _owns_product(def: CardDef) -> bool:
+	if not def is ProductCardDef:
+		return false
+	for c in run.deck.cards:
+		if c.card == def:
+			return true
+	return false
 
 func upgrade(uid: int) -> Result:
 	_noted([&"upgrade", uid])
@@ -321,15 +360,25 @@ func remove(uid: int) -> Result:
 	var inst := find(uid)
 	if inst == null:
 		return Result.new(false, "No such card.")
+	if run.menu:
+		# The menu is swapped, never thinned: a product only leaves it when
+		# another for its interest takes its place.
+		if inst.is_product():
+			return Result.new(false,
+				"The %s stays on your menu until a product for its interest replaces it."
+					% inst.card.display_name)
+		if run.deck.cards.size() - _product_count() <= run.cfg.menu_min_supports:
+			return Result.new(false,
+				"You need at least %d support cards to work a floor." % run.cfg.menu_min_supports)
 	# Below a full hand, _draw_up cannot fill one - nothing to dig, and nothing
 	# to wait for if you are seated. The shop must not be able to build that.
-	if run.deck.cards.size() <= run.cfg.min_deck_size:
+	if not run.menu and run.deck.cards.size() <= run.cfg.min_deck_size:
 		return Result.new(false,
 			"You need at least %d cards to work a floor." % run.cfg.min_deck_size)
 	# margin_banked only moves through a placed product's Offer. Strip the deck
 	# of products and the shop has $0 forever with no way to earn it back - the
 	# run keeps playing but is already dead.
-	if inst.is_product() and _product_count() <= run.cfg.min_products:
+	if not run.menu and inst.is_product() and _product_count() <= run.cfg.min_products:
 		return Result.new(false,
 			"You need at least %d products in your toolkit to ever bank a dollar."
 				% run.cfg.min_products)

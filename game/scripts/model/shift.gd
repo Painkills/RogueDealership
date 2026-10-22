@@ -117,6 +117,12 @@ var hand: Array[CardInstance] = []
 ## sold_products_leave_deck): out of every pile for the rest of the fight. Kept so
 ## the table can tell a card that left from one it has simply not been told about.
 var exhausted: Array[CardInstance] = []
+## The menu (ShiftConfig.products_on_board): every product the deck holds, dealt
+## face up beside the floor instead of into the draw - always there to put on a
+## table, one table at a time (board_available()). Fixed for the shift; a product
+## on a table or exhausted is still on it, just not available. Empty in a
+## classic shift, where products are drawn like any other card.
+var board: Array[CardInstance] = []
 var reshuffles: int = 0
 ## Non-null between PullCards.apply() staging a reveal and choose_pull()/
 ## cancel_pull() resolving it - see PendingPull's own comment. _draw_up()
@@ -238,6 +244,9 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	# shift built without one deals the fixed starter deck, exactly as before.
 	var deck := p_deck if p_deck != null else Deck.build_starting(card_pool)
 	draw = deck.cards.duplicate()
+	if cfg.products_on_board:
+		board.assign(draw.filter(func(i): return i.is_product()))
+		draw.assign(draw.filter(func(i): return not i.is_product()))
 	_shuffle(draw)
 	_draw_up()
 
@@ -487,7 +496,7 @@ func _walk(chair: int) -> void:
 	stat["customers_walked"] = int(stat["customers_walked"]) + 1
 	sale_streak = 0   # one walkout, anywhere on the floor, breaks the streak
 	if c.offer != null:
-		discard.append(c.offer.instance)
+		put_back(c.offer.instance)
 		c.offer = null
 	events.append("[%s] %s walks out%s." % [c.key, c.display_name,
 		" with $%d unsigned" % lost if lost > 0 else ""])
@@ -884,9 +893,11 @@ func _note_for(cmd: Array) -> Dictionary:
 	var verb := StringName(cmd[0])
 	var n := {"tick": tick, "standing": standing, "margin_banked": margin_banked,
 		"hand": hand.map(func(i): return String(i.card.id))}
-	var index := int(cmd[1]) if cmd.size() > 1 else -1
+	var index := int(cmd[1]) if cmd.size() > 1 and verb != &"place_board" else -1
 	if verb in [&"play_card", &"place", &"dig"] and index >= 0 and index < hand.size():
 		n["card"] = String(hand[index].card.id)
+	if verb == &"place_board":
+		n["card"] = String(cmd[1])
 	if verb == &"choose_pull" and pending_pull != null and index >= 0 \
 			and index < pending_pull.revealed.size():
 		n["card"] = String(pending_pull.revealed[index].card.id)
@@ -894,7 +905,7 @@ func _note_for(cmd: Array) -> Dictionary:
 	var chair := -1
 	if verb == &"approach":
 		chair = index
-	elif verb in [&"play_card", &"place"] and cmd.size() > 2 and int(cmd[2]) >= 0:
+	elif verb in [&"play_card", &"place", &"place_board"] and cmd.size() > 2 and int(cmd[2]) >= 0:
 		chair = int(cmd[2])
 	elif at != null:
 		chair = int(at)
@@ -926,6 +937,7 @@ func replay(cmd: Array) -> Result:
 		&"wait": return wait()
 		&"play_card": return play_card(int(args[0]), int(args[1]))
 		&"place": return place(int(args[0]), int(args[1]))
+		&"place_board": return place_board(StringName(args[0]), int(args[1]))
 		&"offer": return offer()
 		&"drop_offer": return drop_offer()
 		&"dig": return dig(int(args[0]))
@@ -1092,10 +1104,87 @@ func _place(index: int, chair: int = -1) -> Result:
 	var pair := _there(chair) if _is_away(chair) else _here()
 	if pair[1] != null:
 		return pair[1]
-	var c: Customer = pair[0]
 	if index < 0 or index >= hand.size():
 		return Result.new(false, "No such card.")
-	var inst: CardInstance = hand[index]
+	return _put_down(pair[0], hand[index])
+
+
+## Puts the menu's `product_id` (see board) on `chair`'s table - or, with no
+## chair, on the table of whoever you are standing with. Just like placing it
+## from the hand, but nothing leaves the hand: it goes back on the menu when it
+## comes off the table.
+func place_board(product_id: StringName, chair: int = -1) -> Result:
+	_noted([&"place_board", product_id, chair])
+	var pair := _there(chair) if _is_away(chair) else _here()
+	if pair[1] != null:
+		return pair[1]
+	var inst := board_product(product_id)
+	if inst == null:
+		return Result.new(false, "That is not on your menu.")
+	if exhausted.has(inst):
+		return Result.new(false, "The %s is gone for the rest of the shift."
+			% inst.card.display_name)
+	var holder = _table_holding(inst)
+	if holder != null:
+		return Result.new(false, "The %s is already on %s's table."
+			% [inst.card.display_name, holder.display_name])
+	return _put_down(pair[0], inst)
+
+
+## The menu's copy of `product_id`, or null.
+func board_product(product_id: StringName) -> CardInstance:
+	for inst in board:
+		if inst.card.id == product_id:
+			return inst
+	return null
+
+
+## Whether the menu's `inst` can go on a table now: not on one already, and not
+## sold to someone who took it out of the shift.
+func board_available(inst: CardInstance) -> bool:
+	return board.has(inst) and not exhausted.has(inst) and _table_holding(inst) == null
+
+
+## Who has `inst` on their table, or null.
+func _table_holding(inst: CardInstance):
+	for c in chairs:
+		if c != null and c.offer != null and c.offer.instance == inst:
+			return c
+	return null
+
+
+## Where a product goes when it comes off a table, and a card when it is spent:
+## the menu's own products straight back to it, everything else to the discard.
+func put_back(inst: CardInstance) -> void:
+	if not board.has(inst):
+		discard.append(inst)
+
+
+## In a menu shift, the interests of each category in the order the menu and
+## every customer's grid lay them out: the ones you have a product for first,
+## the empty ones last, each keeping the pool's own order. Empty in a classic
+## shift - the grid keeps the pool's order.
+func board_order() -> Dictionary:
+	var order := {}
+	if not cfg.products_on_board:
+		return order
+	var filled := {}
+	for inst in board:
+		filled[(inst.card as ProductCardDef).interest.id] = true
+	for cat in interests.categories:
+		var ids: Array[StringName] = []
+		var empty: Array[StringName] = []
+		for it in interests.in_category(cat):
+			if filled.has(it.id):
+				ids.append(it.id)
+			else:
+				empty.append(it.id)
+		ids.append_array(empty)
+		order[cat.id] = ids
+	return order
+
+
+func _put_down(c: Customer, inst: CardInstance) -> Result:
 	if not inst.is_product():
 		return Result.new(false, "%s is not a product." % inst.card.display_name)
 	if c.offer != null:
@@ -1111,7 +1200,7 @@ func _place(index: int, chair: int = -1) -> Result:
 		return Result.new(false, "%s will only look at %s products."
 			% [c.display_name, c.archetype.only_category.display_name])
 	if c.next_card_rejected():
-		return _reject(c, index, cfg.place_ticks)
+		return _reject(c, inst, cfg.place_ticks)
 	c.cards_since_rejection += 1
 
 	var product := inst.card as ProductCardDef
@@ -1164,7 +1253,7 @@ func _place(index: int, chair: int = -1) -> Result:
 	# own effect moves appeal should draw the band that reflects where the
 	# offer actually landed, the same rule _support()'s own comment states.
 	var band := band_for(c.line - c.offer.appeal)
-	hand.remove_at(index)
+	hand.erase(inst)
 	stat["places"] = int(stat["places"]) + 1
 	_draw_up()
 	# An archetype can react to where it ranks, the same way OnOffer does.
@@ -1253,16 +1342,15 @@ func _object(c: Customer, product: ProductCardDef) -> void:
 	_open(c, l)
 
 
-## The card at `index`, played at someone who waves it off - see
+## The card `inst`, played at someone who waves it off - see
 ## CustomerArchetype.rejects_every_nth_card. It is spent all the same: out of
-## your hand to the discard, its ticks burned, and nothing it does happens.
-## Their count starts over.
-func _reject(c: Customer, index: int, ticks: int) -> Result:
-	var inst: CardInstance = hand[index]
+## your hand to the discard (a menu product straight back to the menu), its
+## ticks burned, and nothing it does happens. Their count starts over.
+func _reject(c: Customer, inst: CardInstance, ticks: int) -> Result:
 	var before := _snapshot(c)
 	c.cards_since_rejection = 0
-	hand.remove_at(index)
-	discard.append(inst)
+	hand.erase(inst)
+	put_back(inst)
 	stat["cards_rejected"] = int(stat.get("cards_rejected", 0)) + 1
 	_draw_up()
 	var said := ""
@@ -1300,7 +1388,7 @@ func _support(c: Customer, index: int) -> Result:
 		return Result.new(false, "%s needs something on the table."
 			% def.display_name)
 	if c.next_card_rejected():
-		return _reject(c, index, inst.ticks())
+		return _reject(c, inst, inst.ticks())
 	c.cards_since_rejection += 1
 	# Yours is read off the table as you reach for the card, before its effects
 	# land; their reply below reads it after.
@@ -1504,7 +1592,7 @@ func _settle(c: Customer) -> Dictionary:
 	if c.archetype.sold_products_leave_deck:
 		exhausted.append(o.instance)
 	else:
-		discard.append(o.instance)
+		put_back(o.instance)
 	c.offer = null
 	c.objection = &""
 	stat["sales"] = int(stat["sales"]) + 1
@@ -1536,7 +1624,7 @@ func drop_offer() -> Result:
 	if c.offer == null:
 		return Result.new(false, "There is nothing on the table.")
 	var product_name: String = c.offer.product.display_name
-	discard.append(c.offer.instance)
+	put_back(c.offer.instance)
 	c.offer = null
 	c.objection = &""
 	stat["offers_dropped"] = int(stat["offers_dropped"]) + 1
@@ -1701,6 +1789,10 @@ func signing_blocked(c: Customer) -> bool:
 func has_something_left_to_sell(c: Customer) -> bool:
 	if c.offer != null:
 		return true
+	for inst in board:
+		if board_available(inst) and not c.owns(inst.card.id) \
+				and c.accepts(inst.card as ProductCardDef):
+			return true
 	for pile in [hand, draw, discard]:
 		for inst in pile:
 			if inst.is_product() and not c.owns(inst.card.id) \
@@ -1759,7 +1851,7 @@ func _sign(c: Customer) -> Result:
 	# and after _vacate() nothing can see them to do it.
 	_demand_saw(c, DemandResolve.CLOSE)
 	if c.offer != null:
-		discard.append(c.offer.instance)
+		put_back(c.offer.instance)
 		c.offer = null
 	var banked: int = c.unsigned_margin()
 	# How much of what they came in to spend you got.

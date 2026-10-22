@@ -22,6 +22,10 @@ class_name CardDef extends Resource
 ## upgrade can single out a family of cards without naming each one.
 @export var brand: StringName = &""
 @export var starter: bool = false
+## Only for a classic run: a card that sorts products from supports in the deck
+## means nothing in a menu run, whose deck holds no products. A menu run's store
+## never offers it.
+@export var classic_only: bool = false
 ## No price of its own: what the shop charges for a card is its rarity's rung
 ## on ShiftConfig.card_prices, so every card of a rarity costs the same and
 ## retuning the economy never means touching a card.

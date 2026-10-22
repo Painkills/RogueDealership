@@ -16,7 +16,7 @@ func apply(ctx: EffectContext) -> void:
 	# that leaves the table without being accounted for is a card the deck
 	# quietly loses for the rest of the shift.
 	if ctx.shift:
-		ctx.shift.discard.append(c.offer.instance)
+		ctx.shift.put_back(c.offer.instance)
 	c.offer = null
 
 func describe() -> String:

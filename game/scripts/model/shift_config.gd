@@ -189,6 +189,21 @@ func category_quota_in_week(week: int) -> int:
 ## min_deck_size floors, on composition instead of size.
 @export var min_products: int = 3
 
+## The menu (a menu run - RunState.menu): products are not drawn at all but
+## dealt face up beside the floor, one slot per interest, always there to put on
+## a table - Shift.board. Set on a shift's own copy by RunState.start_shift(),
+## never in the data: a classic run keeps it off.
+@export var products_on_board: bool = false
+## A menu run's hand. Support cards only, so fewer of them go further.
+@export var menu_hand_size: int = 4
+## Added to a menu run's starting deck, on top of the starter cards - a hand of
+## supports with every product always in reach makes reading a customer the
+## thing worth a card.
+@export var menu_starters: Array[CardDef] = []
+## A menu run's floor on removing cards in the store: support cards only, since
+## a product cannot be removed - only replaced by another for its interest.
+@export var menu_min_supports: int = 6
+
 func as_dict() -> Dictionary:
 	return {
 		"appeal_step": appeal_step,
