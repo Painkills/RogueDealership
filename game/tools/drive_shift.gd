@@ -3978,6 +3978,11 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	press.position = from
 	press.global_position = from
 	get_root().push_input(press)
+	# Without a display (CI's --headless) the GUI routes no pointer to a Control
+	# at all: the press goes to the slot's own input, as the GUI would hand it.
+	# With one, the real routing above is what is checked.
+	if board.held() == &"" and DisplayServer.get_name() == "headless":
+		slot.gui_input.emit(press)
 	var held := board.held()
 	inst = menu.board_product(held) if held != &"" else null
 	_check("pressing a slot picks its product up (%s)" % held,
@@ -3986,13 +3991,13 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	move.position = over
 	move.global_position = over
 	move.relative = over - from
-	get_root().push_input(move)
+	_send(move)
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
 	release.position = over
 	release.global_position = over
-	get_root().push_input(release)
+	_send(release)
 	_settle()
 	if inst == null:
 		return
@@ -4008,6 +4013,16 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	_check("dropped, it is back on the menu", menu.board_available(inst))
 	_check("and its card is off the table", not _controller._nodes.has(inst.uid))
 	_check("not in the discard", not menu.discard.has(inst))
+
+## Through the viewport, as a mouse sends it - or, with no display to route a
+## pointer (CI's --headless), straight to what is listening for it: the
+## controller's and the menu's own _input.
+func _send(event: InputEvent) -> void:
+	if DisplayServer.get_name() != "headless":
+		get_root().push_input(event)
+		return
+	_controller._input(event)
+	(_controller.get_node(^"%ProductBoard") as ProductBoard)._input(event)
 
 func _check(label: String, ok: bool) -> void:
 	_checks += 1
