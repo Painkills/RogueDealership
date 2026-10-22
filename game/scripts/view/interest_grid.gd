@@ -223,5 +223,5 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 	# A menu run's empty slot: nothing of yours for this interest yet.
 	if not _order.is_empty() and not _stocked.has(interest.id):
 		var veil := Palette.color(&"panel")
-		veil.a = 0.6
+		veil.a = 0.85
 		draw_rect(cell, veil, true)

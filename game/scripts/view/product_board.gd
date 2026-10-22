@@ -143,10 +143,10 @@ func _slot(shift: Shift, inst: CardInstance, focus) -> Control:
 		why.add_theme_font_size_override("font_size", 14)
 		why.add_theme_color_override("font_color", Palette.color(&"text"))
 		why.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		why.set_anchors_preset(Control.PRESET_CENTER)
-		why.position = Vector2(0, SLOT.y * 0.5 - 10)
-		why.size = Vector2(SLOT.x, 20)
+		why.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		why.autowrap_mode = TextServer.AUTOWRAP_WORD
 		box.add_child(why)
+		why.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.add_child(_badge(inst, focus))
 	box.mouse_entered.connect(_show_zoom.bind(inst, box))
 	box.mouse_exited.connect(_hide_zoom)
@@ -193,9 +193,12 @@ func _show_zoom(inst: CardInstance, over: Control) -> void:
 		return
 	_zoom.show_card(inst)
 	var r := over.get_global_rect()
+	# Level with the slot, but never up under the top bar: no higher than the
+	# rail's own top.
+	var top := get_global_rect().position.y
 	_zoom.global_position = Vector2(get_global_rect().position.x - ZOOM.x - 16,
-		clampf(r.get_center().y - ZOOM.y * 0.5, 8.0,
-			get_viewport_rect().size.y - ZOOM.y - 8.0))
+		clampf(r.get_center().y - ZOOM.y * 0.5, top,
+			maxf(top, get_viewport_rect().size.y - ZOOM.y - 8.0)))
 	_zoom.visible = true
 
 func _hide_zoom() -> void:
