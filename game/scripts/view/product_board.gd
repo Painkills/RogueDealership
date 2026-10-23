@@ -20,9 +20,11 @@ signal dropped(product_id: StringName, at: Vector2)
 ## How far a press has to move before it is a drag rather than a tap - a finger
 ## held still wobbles a little.
 const DRAG_FROM := 14.0
-## Where the dragged card rides: left of the finger, so the finger does not
-## cover it, and level with it.
+## Where the dragged card rides: left of the pointer, level with it - its right
+## edge's middle just short of where the finger is, so the finger covers none
+## of it.
 const BESIDE_FINGER := 24.0
+const BESIDE_FINGER_TOUCH := 12.0
 
 const SLOT := Vector2(104, 146)
 const GAP := 8
@@ -38,6 +40,10 @@ var _held: StringName = &""
 ## be a drag (DRAG_FROM).
 var _pressed_at := Vector2.ZERO
 var _dragging := false
+## On a touch screen the card dragged is full size: there is no hover there to
+## have read it first, and a finger is no pointer to aim a small one past. On a
+## mouse it is small - the big one was up while you hovered. Settable for checks.
+var big_drag := DisplayServer.is_touchscreen_available()
 ## product id -> its slot, from the last show_board().
 var _boxes: Dictionary = {}
 var _built := false
@@ -275,6 +281,8 @@ func _input(event: InputEvent) -> void:
 			_dragging = true
 			_hide_zoom()
 			_ghost.show_card(_shown[_held])
+			_fit(_ghost, ZOOM if big_drag else SLOT * 1.3)
+			_ghost.modulate.a = 1.0 if big_drag else 0.85
 			_ghost.visible = true
 		if _dragging:
 			_follow(moved_to)
@@ -297,5 +305,9 @@ func _input(event: InputEvent) -> void:
 		dropped.emit(id, released_at)
 
 func _follow(at: Vector2) -> void:
+	var gap := BESIDE_FINGER_TOUCH if big_drag else BESIDE_FINGER
+	var screen := get_viewport_rect().size
+	# Kept wholly on screen, so all of it can be read wherever the finger goes.
 	_ghost.global_position = Vector2(
-		maxf(0.0, at.x - _ghost.size.x - BESIDE_FINGER), at.y - _ghost.size.y * 0.5)
+		clampf(at.x - _ghost.size.x - gap, 0.0, maxf(0.0, screen.x - _ghost.size.x)),
+		clampf(at.y - _ghost.size.y * 0.5, 0.0, maxf(0.0, screen.y - _ghost.size.y)))

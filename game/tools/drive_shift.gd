@@ -4013,6 +4013,23 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	_check("let go over the customer's folder, nothing is placed - the table is the target",
 		c.offer == null)
 
+	# On a touch screen the dragged card is full size, the finger just off the
+	# middle of its right edge, all of it on screen.
+	board.big_drag = true
+	_press_slot(board, slot, from)
+	_send(_mouse_move(folder, from))
+	var big := ghost.get_global_rect()
+	_check("on a touch screen the dragged card is full size (%s)" % big.size,
+		big.size.is_equal_approx(board.ZOOM))
+	_check("with the finger just off the middle of its right edge (%s, finger at %s)"
+		% [big, folder], folder.x > big.end.x and folder.x - big.end.x <= 24.0
+			and absf(big.get_center().y - folder.y) <= 1.0
+				or big.position.y <= 0.0 or big.end.y >= get_root().get_visible_rect().size.y)
+	_check("and all of it on screen", get_root().get_visible_rect().encloses(big))
+	_send(_mouse_button(folder, false))
+	board.big_drag = false
+	_settle()
+
 	_press_slot(board, slot, from)
 	var held := board.held()
 	inst = menu.board_product(held) if held != &"" else null
