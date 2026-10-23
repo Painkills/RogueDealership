@@ -24,7 +24,7 @@ const DRAG_FROM := 14.0
 ## edge's middle just short of where the finger is, so the finger covers none
 ## of it.
 const BESIDE_FINGER := 24.0
-const BESIDE_FINGER_TOUCH := 36.0
+const BESIDE_FINGER_TOUCH := 48.0
 
 const SLOT := Vector2(104, 146)
 const GAP := 8
