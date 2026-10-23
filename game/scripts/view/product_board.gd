@@ -4,16 +4,25 @@ class_name ProductBoard extends PanelContainer
 ## columns in the order the customers' grids use too (Shift.board_order()), so
 ## the product in a column is the one for the cell above it on their folder.
 ##
-## Small, because there are nine; the one under the pointer is shown full size
-## beside the rail. Press one and drag it onto a customer's folder to put it on
-## their table - the floor (ShiftController) finds who it was let go over.
+## Small, because there are nine; the one under the pointer - or a finger's
+## tap or hold, where there is no pointer to hover - is shown full size beside
+## the rail. Drag it and the big card gives way to a small one beside your
+## finger; let go over the tablet on the table to put it there - the floor
+## (ShiftController) works out whose table that is.
 ##
 ## Each slot carries the customer you are looking at's rank for it - "?" until
 ## you have found it out - and greys out while it is on a table or gone for the
 ## shift.
 
-## Let go somewhere: the floor works out whose folder that is.
+## Let go somewhere: the floor works out whose table that is.
 signal dropped(product_id: StringName, at: Vector2)
+
+## How far a press has to move before it is a drag rather than a tap - a finger
+## held still wobbles a little.
+const DRAG_FROM := 14.0
+## Where the dragged card rides: left of the finger, so the finger does not
+## cover it, and level with it.
+const BESIDE_FINGER := 24.0
 
 const SLOT := Vector2(104, 146)
 const GAP := 8
@@ -25,6 +34,12 @@ var _grid: GridContainer
 var _zoom: ShopCardButton
 var _ghost: ShopCardButton
 var _held: StringName = &""
+## Where the held press went down, and whether it has moved far enough since to
+## be a drag (DRAG_FROM).
+var _pressed_at := Vector2.ZERO
+var _dragging := false
+## product id -> its slot, from the last show_board().
+var _boxes: Dictionary = {}
 var _built := false
 ## product id -> CardInstance, from the last show().
 var _shown: Dictionary = {}
@@ -47,7 +62,7 @@ func _build() -> void:
 	title.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	col.add_child(title)
 	var hint := Label.new()
-	hint.text = "Drag one onto a customer."
+	hint.text = "Drag one onto the tablet."
 	hint.add_theme_font_size_override("font_size", 16)
 	hint.add_theme_color_override("font_color", Palette.color(&"text_dim"))
 	col.add_child(hint)
@@ -91,6 +106,7 @@ func show_board(shift: Shift, focus) -> void:
 		_grid.remove_child(child)
 		child.queue_free()
 	_shown.clear()
+	_boxes.clear()
 	var by_interest := {}
 	for inst in shift.board:
 		by_interest[(inst.card as ProductCardDef).interest.id] = inst
@@ -150,8 +166,11 @@ func _slot(shift: Shift, inst: CardInstance, focus) -> Control:
 	box.add_child(_badge(inst, focus))
 	box.mouse_entered.connect(_show_zoom.bind(inst, box))
 	box.mouse_exited.connect(_hide_zoom)
-	if free:
-		box.gui_input.connect(_on_slot_input.bind(inst.card.id))
+	# Every slot answers a press - a tap is how a finger reads one - but only a
+	# product you can put down picks up.
+	box.set_meta("free", free)
+	box.gui_input.connect(_on_slot_input.bind(inst.card.id))
+	_boxes[inst.card.id] = box
 	return box
 
 ## Their rank for the product's interest, once you know it; "?" before.
@@ -205,32 +224,60 @@ func _hide_zoom() -> void:
 	_zoom.visible = false
 
 func _on_slot_input(event: InputEvent, product_id: StringName) -> void:
-	var pressed := false
+	var pressed_at = null
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		pressed = mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT
-	elif event is InputEventScreenTouch:
-		pressed = (event as InputEventScreenTouch).pressed
-	if not pressed or not _shown.has(product_id):
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			pressed_at = mb.global_position
+	elif event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
+		pressed_at = (event as InputEventScreenTouch).position
+	if pressed_at == null or not _shown.has(product_id):
+		return
+	accept_event()
+	# Full size first - a tap, or a finger held on it, is a look.
+	var box: Control = _boxes[product_id]
+	_show_zoom(_shown[product_id], box)
+	if not bool(box.get_meta("free", false)):
 		return
 	_held = product_id
-	_hide_zoom()
-	_ghost.show_card(_shown[product_id])
-	_ghost.visible = true
-	_follow(get_viewport().get_mouse_position())
-	accept_event()
+	_pressed_at = pressed_at
+	_dragging = false
 
-## Which product is being dragged off the menu, or &"".
+## Which product is being held on the menu - pressed, dragged or not yet - or &"".
 func held() -> StringName:
 	return _held
 
+## Whether the held product is being dragged (rather than only looked at).
+func dragging() -> bool:
+	return _dragging
+
+## Whether the full-size card is up.
+func zoomed() -> bool:
+	return _zoom.visible
+
 func _input(event: InputEvent) -> void:
+	# A press anywhere else puts a tapped card away - a finger never "leaves" a
+	# slot the way a pointer does. A press on a slot shows its own again after.
+	var down := (event is InputEventMouseButton and (event as InputEventMouseButton).pressed) \
+		or (event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed)
+	if down and _held == &"":
+		_hide_zoom()
 	if _held == &"":
 		return
+	var moved_to = null
 	if event is InputEventMouseMotion:
-		_follow((event as InputEventMouseMotion).position)
+		moved_to = (event as InputEventMouseMotion).position
 	elif event is InputEventScreenDrag:
-		_follow((event as InputEventScreenDrag).position)
+		moved_to = (event as InputEventScreenDrag).position
+	if moved_to != null:
+		if not _dragging and (moved_to as Vector2).distance_to(_pressed_at) >= DRAG_FROM:
+			# A drag now: the big card gives way to a small one by the finger.
+			_dragging = true
+			_hide_zoom()
+			_ghost.show_card(_shown[_held])
+			_ghost.visible = true
+		if _dragging:
+			_follow(moved_to)
 	var released_at = null
 	if event is InputEventMouseButton and not (event as InputEventMouseButton).pressed \
 			and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
@@ -240,9 +287,15 @@ func _input(event: InputEvent) -> void:
 	if released_at == null:
 		return
 	var id := _held
+	var was_dragged := _dragging
 	_held = &""
+	_dragging = false
 	_ghost.visible = false
-	dropped.emit(id, released_at)
+	# Let go without dragging, it was a look: the big card stays up until the
+	# next press. Dragged, it goes where it was let go.
+	if was_dragged:
+		dropped.emit(id, released_at)
 
 func _follow(at: Vector2) -> void:
-	_ghost.global_position = at - _ghost.size * 0.5
+	_ghost.global_position = Vector2(
+		maxf(0.0, at.x - _ghost.size.x - BESIDE_FINGER), at.y - _ghost.size.y * 0.5)

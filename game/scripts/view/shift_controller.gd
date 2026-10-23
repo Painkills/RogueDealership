@@ -1618,15 +1618,24 @@ func _clear_fx() -> void:
 func _menu() -> bool:
 	return _shift != null and _shift.cfg.products_on_board
 
-## A product dragged off the menu and let go at `at`: on whoever's folder that
-## is - where it lands is their table, whichever seat they are in.
+## A product dragged off the menu and let go at `at`: on the table it was let go
+## over - the tablet the offer stands on, at the seat you are working.
 func _on_board_dropped(product_id: StringName, at: Vector2) -> void:
 	if _shift == null or _shift.is_over() or _shift.pending_pull != null:
 		return
-	var chair := _pad_under(at)
+	var chair := _tablet_under(at)
 	if chair < 0 or chair >= _shift.chairs.size():
 		return
 	_apply(_shift.place_board(product_id, chair))
+
+## Which seat's tablet is under `p` on screen - only a tablet that is on, the
+## one at the seat you are working - or -1.
+func _tablet_under(p: Vector2) -> int:
+	for i in range(_tablets.size()):
+		var tablet: OfferTablet = _tablets[i]
+		if tablet.is_on() and _on_screen_rect(_card_rect(tablet, OfferTablet.SIZE)).has_point(p):
+			return i
+	return -1
 
 ## The menu, with the ranks of whoever you are looking at on it.
 func _render_board() -> void:

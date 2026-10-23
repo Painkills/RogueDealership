@@ -3980,39 +3980,50 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 		_check("there is a product on the menu to drag", false)
 		return
 	var from := slot.get_global_rect().get_center()
-	var over: Vector2 = _controller._camera.unproject_position(
+	var tablet: Vector2 = _controller._card_rect(_controller._tablets[0], OfferTablet.SIZE).get_center()
+	var folder: Vector2 = _controller._camera.unproject_position(
 		(_controller._hover_pads[0] as Node3D).global_position)
-	var press := InputEventMouseButton.new()
-	press.button_index = MOUSE_BUTTON_LEFT
-	press.pressed = true
-	press.position = from
-	press.global_position = from
-	get_root().push_input(press)
-	# Without a display (CI's --headless) the GUI routes no pointer to a Control
-	# at all: the press goes to the slot's own input, as the GUI would hand it.
-	# With one, the real routing above is what is checked.
-	if board.held() == &"" and DisplayServer.get_name() == "headless":
-		slot.gui_input.emit(press)
+	var c = menu.chairs[0]
+
+	# A tap is a look: the big card comes up, and nothing goes anywhere.
+	_press_slot(board, slot, from)
+	_check("a tap on a slot shows its card full size", board.zoomed())
+	_check("and holds its product, not yet dragging",
+		board.held() == StringName(slot.get_meta("product")) and not board.dragging())
+	_send(_mouse_button(from, false))
+	_check("let go where it was pressed, nothing is placed", c.offer == null)
+	_check("and the big card stays up to read", board.zoomed())
+	_send(_mouse_button(Vector2(8, 8), true))
+	_send(_mouse_button(Vector2(8, 8), false))
+	_check("a press anywhere else puts it away", not board.zoomed())
+
+	# A drag: the big card gives way to a small one left of the finger.
+	_press_slot(board, slot, from)
+	_send(_mouse_move(from + Vector2(4, 3), from))
+	_check("a finger's wobble is not a drag yet", board.zoomed() and not board.dragging())
+	_send(_mouse_move(folder, from))
+	var ghost := board._ghost as Control
+	_check("dragged, the big card goes", board.dragging() and not board.zoomed())
+	_check("and a small one rides left of the finger (%s, finger at %s)"
+		% [ghost.get_global_rect(), folder],
+		ghost.visible and ghost.get_global_rect().end.x <= folder.x
+			and ghost.get_global_rect().size.x < board.ZOOM.x)
+	_send(_mouse_button(folder, false))
+	_settle()
+	_check("let go over the customer's folder, nothing is placed - the table is the target",
+		c.offer == null)
+
+	_press_slot(board, slot, from)
 	var held := board.held()
 	inst = menu.board_product(held) if held != &"" else null
 	_check("pressing a slot picks its product up (%s)" % held,
 		inst != null and held == StringName(slot.get_meta("product")))
-	var move := InputEventMouseMotion.new()
-	move.position = over
-	move.global_position = over
-	move.relative = over - from
-	_send(move)
-	var release := InputEventMouseButton.new()
-	release.button_index = MOUSE_BUTTON_LEFT
-	release.pressed = false
-	release.position = over
-	release.global_position = over
-	_send(release)
+	_send(_mouse_move(tablet, from))
+	_send(_mouse_button(tablet, false))
 	_settle()
 	if inst == null:
 		return
-	var c = menu.chairs[0]
-	_check("let go over their folder, it is on their table (%s)"
+	_check("let go over the tablet, it is on their table (%s)"
 		% (str(c.offer.product.id) if c.offer != null else "nothing"),
 		c.offer != null and c.offer.instance == inst)
 	_check("and greyed on the menu", not menu.board_available(inst))
@@ -4023,6 +4034,29 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	_check("dropped, it is back on the menu", menu.board_available(inst))
 	_check("and its card is off the table", not _controller._nodes.has(inst.uid))
 	_check("not in the discard", not menu.discard.has(inst))
+
+## A press on `slot`, through the viewport - or, with no display to route a
+## pointer (CI's --headless), to the slot's own input, as the GUI would hand it.
+func _press_slot(board: ProductBoard, slot: Control, at: Vector2) -> void:
+	var press := _mouse_button(at, true)
+	_send(press)
+	if board.held() == &"" and not board.zoomed() and DisplayServer.get_name() == "headless":
+		slot.gui_input.emit(press)
+
+func _mouse_button(at: Vector2, down: bool) -> InputEventMouseButton:
+	var e := InputEventMouseButton.new()
+	e.button_index = MOUSE_BUTTON_LEFT
+	e.pressed = down
+	e.position = at
+	e.global_position = at
+	return e
+
+func _mouse_move(to: Vector2, from: Vector2) -> InputEventMouseMotion:
+	var e := InputEventMouseMotion.new()
+	e.position = to
+	e.global_position = to
+	e.relative = to - from
+	return e
 
 ## Through the viewport, as a mouse sends it - or, with no display to route a
 ## pointer (CI's --headless), straight to what is listening for it: the
