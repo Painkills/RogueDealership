@@ -30,6 +30,11 @@ const SLOT := Vector2(104, 146)
 const GAP := 8
 ## The one under the pointer, full size, left of the rail.
 const ZOOM := Vector2(300, 420)
+## How far left of the rail the full-size card sits: a little with a pointer,
+## more on a touch screen, where the finger on a slot would otherwise sit right
+## up against it.
+const ZOOM_GAP := 16.0
+const ZOOM_GAP_TOUCH := 80.0
 const BADGE := Vector2(38, 30)
 
 var _grid: GridContainer
@@ -251,7 +256,8 @@ func _show_zoom(inst: CardInstance, over: Control) -> void:
 	# Level with the slot, but never up under the top bar: no higher than the
 	# rail's own top.
 	var top := get_global_rect().position.y
-	_zoom.global_position = Vector2(get_global_rect().position.x - ZOOM.x - 16,
+	_zoom.global_position = Vector2(get_global_rect().position.x - ZOOM.x
+		- (ZOOM_GAP_TOUCH if big_drag else ZOOM_GAP),
 		clampf(r.get_center().y - ZOOM.y * 0.5, top,
 			maxf(top, get_viewport_rect().size.y - ZOOM.y - 8.0)))
 	_zoom.visible = true

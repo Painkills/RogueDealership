@@ -4017,6 +4017,10 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	# middle of its right edge, all of it on screen.
 	board.big_drag = true
 	_press_slot(board, slot, from)
+	var zoom_edge := (board._zoom as Control).get_global_rect().end.x
+	_check("a tap on a touch screen shows the card well clear of the finger (%d px left of the menu)"
+		% int(board.get_global_rect().position.x - zoom_edge),
+		board.get_global_rect().position.x - zoom_edge >= board.ZOOM_GAP_TOUCH - 1.0)
 	_send(_mouse_move(folder, from))
 	var big := ghost.get_global_rect()
 	_check("on a touch screen the dragged card is full size (%s)" % big.size,
