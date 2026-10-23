@@ -4022,6 +4022,16 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 		% int(board.get_global_rect().position.x - zoom_edge),
 		board.get_global_rect().position.x - zoom_edge >= board.ZOOM_GAP_TOUCH - 1.0)
 	_send(_mouse_move(folder, from))
+	# A touch screen sends the same finger twice - as a touch and as the mouse
+	# made of it. Following both flicked the card between them: the touch's
+	# copy, wherever it says, moves nothing.
+	var held_at := ghost.get_global_rect()
+	var stray := InputEventScreenDrag.new()
+	stray.position = Vector2(40, 40)
+	stray.relative = stray.position - folder
+	_send(stray)
+	_check("the touch's own copy of a drag does not move the card (%s -> %s)"
+		% [held_at, ghost.get_global_rect()], ghost.get_global_rect() == held_at)
 	var big := ghost.get_global_rect()
 	_check("on a touch screen the dragged card is full size (%s)" % big.size,
 		big.size.is_equal_approx(board.ZOOM))

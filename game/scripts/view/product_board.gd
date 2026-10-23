@@ -34,7 +34,7 @@ const ZOOM := Vector2(300, 420)
 ## more on a touch screen, where the finger on a slot would otherwise sit right
 ## up against it.
 const ZOOM_GAP := 16.0
-const ZOOM_GAP_TOUCH := 80.0
+const ZOOM_GAP_TOUCH := 48.0
 const BADGE := Vector2(38, 30)
 
 var _grid: GridContainer
@@ -265,14 +265,27 @@ func _show_zoom(inst: CardInstance, over: Control) -> void:
 func _hide_zoom() -> void:
 	_zoom.visible = false
 
+## A touch screen sends every touch twice: as the touch, and as a mouse the
+## engine makes of it (emulate_mouse_from_touch, on by default). Following both
+## made a dragged card flick between the two - and a touch's position in a
+## slot's own input is the slot's, not the screen's. With the mouse made of it,
+## the mouse is the one followed.
+static func _second_copy(event: InputEvent) -> bool:
+	return (event is InputEventScreenTouch or event is InputEventScreenDrag) \
+		and bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", true))
+
 func _on_slot_input(event: InputEvent, product_id: StringName) -> void:
+	if _second_copy(event):
+		return
 	var pressed_at = null
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 			pressed_at = mb.global_position
 	elif event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed:
-		pressed_at = (event as InputEventScreenTouch).position
+		# The slot's own position, made the screen's.
+		pressed_at = (_boxes[product_id] as Control).get_global_transform() \
+			* (event as InputEventScreenTouch).position
 	if pressed_at == null or not _shown.has(product_id):
 		return
 	accept_event()
@@ -298,6 +311,8 @@ func zoomed() -> bool:
 	return _zoom.visible
 
 func _input(event: InputEvent) -> void:
+	if _second_copy(event):
+		return
 	# A press anywhere else puts a tapped card away - a finger never "leaves" a
 	# slot the way a pointer does. A press on a slot shows its own again after.
 	var down := (event is InputEventMouseButton and (event as InputEventMouseButton).pressed) \
