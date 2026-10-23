@@ -21,9 +21,9 @@ func _bind() -> void:
 	_bound = true
 	var viewport := $SkyViewport as SubViewport
 	_sky = $SkyViewport/Sky as SkyView
-	# UPDATE_ALWAYS, the same as every card face: see card_face_3d.gd on the
-	# one-shot bake the Web export raced.
-	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	# Rendered while it settles and whenever the time of day changes, then left
+	# as it is - see RenderBurst.
+	RenderBurst.kick(self, [viewport])
 	var panes := $Panes.get_children()
 	for i in range(panes.size()):
 		var m := StandardMaterial3D.new()
@@ -40,6 +40,7 @@ func _bind() -> void:
 func show_time(id: StringName) -> void:
 	_bind()
 	_sky.time_of_day = id
+	RenderBurst.kick(self, [$SkyViewport as SubViewport])
 
 func time_of_day() -> StringName:
 	_bind()

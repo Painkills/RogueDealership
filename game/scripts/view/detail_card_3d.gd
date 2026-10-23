@@ -24,6 +24,8 @@ const CARD_SIZE := Vector2(4.0, 3.5)
 @export var card_size := CARD_SIZE
 @export var face_size := FRONT_SIZE
 
+## What the sheet last showed - see _redraw().
+var _shown := ""
 var _material := StandardMaterial3D.new()
 var _bound := false
 var _viewport: SubViewport
@@ -55,9 +57,7 @@ func _bind() -> void:
 	($FrontViewport/DetailFront as Control).size = Vector2(face_size)
 	CustomerCard3D.resize_quads(self, card_size)
 	_viewport.disable_3d = true
-	# UPDATE_ALWAYS, not UPDATE_ONCE: see card_face_3d.gd - the one-shot bake
-	# raced dynamic card creation on the Web export.
-	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	RenderBurst.kick(self, [_viewport])
 	_material.albedo_texture = _viewport.get_texture()
 	$CardMesh/CardFrontMesh.set_surface_override_material(0, _material)
 
@@ -77,8 +77,13 @@ func show_customer(c) -> void:
 	_table.text = CustomerCard3D.unsigned_text(c)
 	_redraw()
 
+## Rendered for a few frames when what it says changes, then left as it is - see
+## RenderBurst.
 func _redraw() -> void:
-	if _viewport != null:
-		# UPDATE_ALWAYS, not UPDATE_ONCE: see card_face_3d.gd - the one-shot bake
-		# raced dynamic card creation on the Web export.
-		_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	if _viewport == null:
+		return
+	var showing := "|".join([_customer_body.visible, _title.text, _sub.text, _does.text,
+		_table.text])
+	if showing != _shown:
+		_shown = showing
+		RenderBurst.kick(self, [_viewport])

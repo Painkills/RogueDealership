@@ -43,7 +43,8 @@ func _bind() -> void:
 
 	_viewport.size = FRONT_SIZE
 	_viewport.disable_3d = true
-	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	# Nothing to draw until show_card() gives it a card - which renders it.
+	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_texture.texture = _viewport.get_texture()
 	_texture.stretch_mode = TextureRect.STRETCH_SCALE
 	# The real fix, not stretch_mode - see card_preview_2d.gd's own comment
@@ -77,3 +78,5 @@ func show_card(inst: CardInstance) -> void:
 	_name.add_theme_color_override("font_color",
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
 	($SubViewport/CardFront as CardFront).dress(inst)
+	# Rendered while it settles, then left as it is - see RenderBurst.
+	RenderBurst.kick(self, [_viewport])

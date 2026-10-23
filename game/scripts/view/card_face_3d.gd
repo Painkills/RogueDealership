@@ -7,13 +7,10 @@ class_name CardFace3D extends Card3D
 ## authored large and minified onto the card, rather than being drawn at final
 ## size like Label3D text is.
 ##
-## UPDATE_ALWAYS: continuous rather than baked-once-per-write. UPDATE_ONCE
-## raced dynamic card creation on the Web export - hand cards, instantiated
-## during reconciliation rather than once at scene load, rendered blank there
-## while statically-created customer cards (identical technique) did not. A
-## handful of small 500x700 viewports rendering every frame is cheap enough
-## that trading the optimization for a mode no platform can race is the right
-## call - this is a card game, not a scene starved for frame budget.
+## Rendered for a few frames whenever what is on it changes, then not at all -
+## RenderBurst. Not UPDATE_ONCE: one render raced dynamic card creation on the
+## Web export and left hand cards blank. Not UPDATE_ALWAYS either, which it was:
+## thirty-odd faces re-rendering every frame were most of a phone's frame.
 
 const FRONT_SIZE := Vector2i(500, 700)   ## exactly the mesh's 2.5 x 3.5 aspect
 ## A card on the table, in world units: the addon's own card mesh.
@@ -36,6 +33,9 @@ var _body: Label
 var _body_icon: CategoryIconControl
 var _flavor: Label
 var _margin: Label
+## What the face last showed - setup() runs on every pass of the table, and a
+## face that has not changed is not rendered again.
+var _shown := ""
 
 func _ready() -> void:
 	_bind()
@@ -107,10 +107,11 @@ func setup(inst: CardInstance) -> void:
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
 	($FrontViewport/CardFront as CardFront).dress(inst)
 
-	_redraw()
+	var showing := "|".join([_name.text, _ticks.text, _kind.text, _body.text, _flavor.text,
+		_margin.text, inst.upgraded, inst.ticks()])
+	if showing != _shown:
+		_shown = showing
+		_redraw()
 
 func _redraw() -> void:
-	if _viewport != null:
-		_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	if _back_viewport != null:
-		_back_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	RenderBurst.kick(self, [_viewport, _back_viewport])

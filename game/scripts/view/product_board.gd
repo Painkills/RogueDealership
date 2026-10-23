@@ -46,6 +46,8 @@ var _dragging := false
 var big_drag := DisplayServer.is_touchscreen_available()
 ## product id -> its slot, from the last show_board().
 var _boxes: Dictionary = {}
+## What the slots were last built for - see show_board().
+var _layout := ""
 var _built := false
 ## product id -> CardInstance, from the last show().
 var _shown: Dictionary = {}
@@ -106,17 +108,35 @@ func _fit(card: ShopCardButton, sz: Vector2) -> void:
 	picture.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 ## Lays the menu out for `shift`, with `focus`'s ranks on it (null: nobody's).
+## The slots are built when what is on the menu changes - a new shift, a product
+## upgraded - and only brought up to date otherwise: every move of a shift
+## renders the floor, and nine cards made afresh each time was a stall a phone
+## could feel.
 func show_board(shift: Shift, focus) -> void:
 	_build()
+	var by_interest := {}
+	for inst in shift.board:
+		by_interest[(inst.card as ProductCardDef).interest.id] = inst
+	var order := shift.board_order()
+	var layout: Array[String] = []
+	for cat in shift.interests.categories:
+		for iid in order.get(cat.id, []):
+			var inst: CardInstance = by_interest.get(iid)
+			layout.append("%s:%s" % [iid, "%s/%d/%s" % [inst.card.id, inst.uid, inst.upgraded]
+				if inst != null else ""])
+	var key := ",".join(layout)
+	if key != _layout:
+		_layout = key
+		_lay_out(shift, order, by_interest)
+	for id in _shown:
+		_update_slot(shift, _shown[id], _boxes[id], focus)
+
+func _lay_out(shift: Shift, order: Dictionary, by_interest: Dictionary) -> void:
 	for child in _grid.get_children():
 		_grid.remove_child(child)
 		child.queue_free()
 	_shown.clear()
 	_boxes.clear()
-	var by_interest := {}
-	for inst in shift.board:
-		by_interest[(inst.card as ProductCardDef).interest.id] = inst
-	var order := shift.board_order()
 	for cat in shift.interests.categories:
 		for iid in order.get(cat.id, []):
 			var inst: CardInstance = by_interest.get(iid)
@@ -124,7 +144,7 @@ func show_board(shift: Shift, focus) -> void:
 				_grid.add_child(_empty_slot(shift.interests.by_id(iid)))
 			else:
 				_shown[inst.card.id] = inst
-				var slot := _slot(shift, inst, focus)
+				var slot := _slot(inst)
 				_grid.add_child(slot)
 				_fit(slot.get_child(0) as ShopCardButton, SLOT)
 
@@ -149,7 +169,9 @@ func _empty_slot(interest: Interest) -> Control:
 	box.add_child(label)
 	return box
 
-func _slot(shift: Shift, inst: CardInstance, focus) -> Control:
+## A product's slot: its card, what keeps it off the table when something does,
+## and the rank badge - filled in by _update_slot().
+func _slot(inst: CardInstance) -> Control:
 	var box := Control.new()
 	box.custom_minimum_size = SLOT
 	box.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -157,30 +179,33 @@ func _slot(shift: Shift, inst: CardInstance, focus) -> Control:
 	var card := _card()
 	card.show_card(inst)
 	box.add_child(card)
-	var free := shift.board_available(inst)
-	if not free:
-		card.modulate.a = 0.35
-		var why := Label.new()
-		why.text = "GONE" if shift.exhausted.has(inst) else "ON A TABLE"
-		why.add_theme_font_size_override("font_size", 14)
-		why.add_theme_color_override("font_color", Palette.color(&"text"))
-		why.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		why.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		why.autowrap_mode = TextServer.AUTOWRAP_WORD
-		box.add_child(why)
-		why.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.add_child(_badge(inst, focus))
+	var why := Label.new()
+	why.name = "Why"
+	why.add_theme_font_size_override("font_size", 14)
+	why.add_theme_color_override("font_color", Palette.color(&"text"))
+	why.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	why.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	why.autowrap_mode = TextServer.AUTOWRAP_WORD
+	box.add_child(why)
+	why.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.add_child(_badge())
 	box.mouse_entered.connect(_show_zoom.bind(inst, box))
 	box.mouse_exited.connect(_hide_zoom)
 	# Every slot answers a press - a tap is how a finger reads one - but only a
-	# product you can put down picks up.
-	box.set_meta("free", free)
+	# product you can put down picks up (the "free" meta, _update_slot()).
 	box.gui_input.connect(_on_slot_input.bind(inst.card.id))
 	_boxes[inst.card.id] = box
 	return box
 
-## Their rank for the product's interest, once you know it; "?" before.
-func _badge(inst: CardInstance, focus) -> Control:
+## Whether `inst` can go on a table now, and `focus`'s rank for it.
+func _update_slot(shift: Shift, inst: CardInstance, box: Control, focus) -> void:
+	var free := shift.board_available(inst)
+	box.set_meta("free", free)
+	(box.get_child(0) as Control).modulate.a = 1.0 if free else 0.35
+	var why := box.get_node(^"Why") as Label
+	why.visible = not free
+	why.text = "GONE" if shift.exhausted.has(inst) else "ON A TABLE"
+
 	var iid: StringName = (inst.card as ProductCardDef).interest.id
 	var text := ""
 	var fill := Palette.color(&"grid_cell")
@@ -193,18 +218,23 @@ func _badge(inst: CardInstance, focus) -> Control:
 			var rank := int(focus.known_ranks[iid])
 			text = str(rank)
 			fill = Palette.color(&"accent") if rank == 1 else Palette.color(&"patience_warn")
+	var badge := box.get_node(^"Badge") as PanelContainer
+	badge.visible = text != ""
+	(badge.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = fill
+	(badge.get_child(0) as Label).text = text
+
+## The rank badge in a slot's corner - its words and colour are _update_slot()'s.
+func _badge() -> Control:
 	var badge := PanelContainer.new()
+	badge.name = "Badge"
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.position = Vector2(-4, -4)
-	badge.visible = text != ""
 	var style := StyleBoxFlat.new()
-	style.bg_color = fill
 	style.set_corner_radius_all(8)
 	style.content_margin_left = 6
 	style.content_margin_right = 6
 	badge.add_theme_stylebox_override("panel", style)
 	var label := Label.new()
-	label.text = text
 	label.custom_minimum_size = Vector2(BADGE.x - 12, BADGE.y)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
