@@ -4066,6 +4066,21 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	_check("and its card is off the table", not _controller._nodes.has(inst.uid))
 	_check("not in the discard", not menu.discard.has(inst))
 
+	# A new run deals the same products as new cards, ids and uids and all: its
+	# menu starts with every one of them free, not still "on a table" from the
+	# cards of the run before.
+	_controller._apply(menu.place_board(inst.card.id))
+	var fresh := Shift.new(cfg, load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"), randi())
+	_controller.setup(fresh, cfg.standing_start)
+	_controller._render()
+	var taken: Array = []
+	for child in board._grid.get_children():
+		if child.has_meta("product") and (child.get_node(^"Why") as Control).visible:
+			taken.append(child.get_meta("product"))
+	_check("a new run's menu starts with every product free (shown taken: %s)" % [taken],
+		taken.is_empty())
+
 ## A press on `slot`, through the viewport - or, with no display to route a
 ## pointer (CI's --headless), to the slot's own input, as the GUI would hand it.
 func _press_slot(board: ProductBoard, slot: Control, at: Vector2) -> void:

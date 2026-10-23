@@ -127,8 +127,11 @@ func show_board(shift: Shift, focus) -> void:
 	for cat in shift.interests.categories:
 		for iid in order.get(cat.id, []):
 			var inst: CardInstance = by_interest.get(iid)
-			layout.append("%s:%s" % [iid, "%s/%d/%s" % [inst.card.id, inst.uid, inst.upgraded]
-				if inst != null else ""])
+			# The card object itself, not just its id and uid: a new run deals
+			# the same ids and uids as new cards, and slots kept from the last
+			# one would ask about cards this shift has never heard of.
+			layout.append("%s:%s" % [iid, "%s/%d/%s" % [inst.card.id, inst.get_instance_id(),
+				inst.upgraded] if inst != null else ""])
 	var key := ",".join(layout)
 	if key != _layout:
 		_layout = key
