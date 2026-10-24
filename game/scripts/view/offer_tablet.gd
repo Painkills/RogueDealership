@@ -147,8 +147,11 @@ func show_offer(c, band: String, meter_scale: int, blocked_ticks: int = 0) -> vo
 	_status.text = ""
 	if o == null:
 		# An empty meter, not no meter: the panel says what it measures before
-		# there is anything on the table to measure.
-		_bar.set_state(0, 0, meter_scale, "", false)
+		# there is anything on the table to measure - and a Line you have found
+		# out stays on it, product or not: knowing where they stand is worth
+		# most when you are choosing what to put down.
+		var known: bool = c != null and c.known_line
+		_bar.set_state(0, c.line if known else 0, meter_scale, "", known)
 		_margin.text = "-"
 	else:
 		_bar.set_state(o.appeal, c.line, meter_scale, band, c.known_line)

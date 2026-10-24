@@ -4062,7 +4062,20 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	_check("nothing left the hand", menu.hand.all(func(i): return not i.is_product()))
 	_controller._apply(menu.drop_offer())
 	_settle()
-	_check("dropped, it is back on the menu", menu.board_available(inst))
+	var left := menu.board_cooldown_left(inst)
+	_check("dropped, it is back on the menu, resting (%d ticks)" % left,
+		not menu.board_available(inst) and left == cfg.menu_cooldown_ticks)
+	var rest_slot: Control = board._boxes[inst.card.id]
+	var pie := rest_slot.get_node(^"Pie") as CooldownPie
+	_check("its slot greyed with a pie of the ticks left (%d of %d)" % [pie.left, pie.total],
+		pie.visible and pie.left == left and pie.total == cfg.menu_cooldown_ticks
+			and not (rest_slot.get_node(^"Why") as Control).visible
+			and (rest_slot.get_child(0) as Control).modulate.a < 1.0)
+	menu.tick += left
+	_controller._render()
+	_check("rested, it is free again with no pie",
+		menu.board_available(inst) and not pie.visible
+			and (rest_slot.get_child(0) as Control).modulate.a == 1.0)
 	_check("and its card is off the table", not _controller._nodes.has(inst.uid))
 	_check("not in the discard", not menu.discard.has(inst))
 

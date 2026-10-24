@@ -123,6 +123,9 @@ var exhausted: Array[CardInstance] = []
 ## on a table or exhausted is still on it, just not available. Empty in a
 ## classic shift, where products are drawn like any other card.
 var board: Array[CardInstance] = []
+## A menu product back from a table, by uid: the tick it can go on one again
+## (ShiftConfig.menu_cooldown_ticks after it came back). Absent once rested.
+var board_ready: Dictionary = {}
 var reshuffles: int = 0
 ## Non-null between PullCards.apply() staging a reveal and choose_pull()/
 ## cancel_pull() resolving it - see PendingPull's own comment. _draw_up()
@@ -1128,6 +1131,10 @@ func place_board(product_id: StringName, chair: int = -1) -> Result:
 	if holder != null:
 		return Result.new(false, "The %s is already on %s's table."
 			% [inst.card.display_name, holder.display_name])
+	var resting := board_cooldown_left(inst)
+	if resting > 0:
+		return Result.new(false, "The %s is back on the menu in %d tick%s."
+			% [inst.card.display_name, resting, "" if resting == 1 else "s"])
 	return _put_down(pair[0], inst)
 
 
@@ -1139,10 +1146,17 @@ func board_product(product_id: StringName) -> CardInstance:
 	return null
 
 
-## Whether the menu's `inst` can go on a table now: not on one already, and not
-## sold to someone who took it out of the shift.
+## Whether the menu's `inst` can go on a table now: not on one already, not
+## sold to someone who took it out of the shift, and rested since it was last on
+## one (board_cooldown_left()).
 func board_available(inst: CardInstance) -> bool:
-	return board.has(inst) and not exhausted.has(inst) and _table_holding(inst) == null
+	return board.has(inst) and not exhausted.has(inst) and _table_holding(inst) == null \
+		and board_cooldown_left(inst) == 0
+
+## How many ticks until the menu's `inst`, back from a table, can go on one
+## again - 0 once it has rested.
+func board_cooldown_left(inst: CardInstance) -> int:
+	return maxi(0, int(board_ready.get(inst.uid, 0)) - tick)
 
 
 ## Who has `inst` on their table, or null.
@@ -1158,6 +1172,8 @@ func _table_holding(inst: CardInstance):
 func put_back(inst: CardInstance) -> void:
 	if not board.has(inst):
 		discard.append(inst)
+	elif cfg.menu_cooldown_ticks > 0:
+		board_ready[inst.uid] = tick + cfg.menu_cooldown_ticks
 
 
 ## In a menu shift, the interests of each category in the order the menu and
@@ -1797,8 +1813,10 @@ func signing_blocked(c: Customer) -> bool:
 func has_something_left_to_sell(c: Customer) -> bool:
 	if c.offer != null:
 		return true
+	# Resting or on someone else's table, it is still yours to sell them: it
+	# comes back.
 	for inst in board:
-		if board_available(inst) and not c.owns(inst.card.id) \
+		if not exhausted.has(inst) and not c.owns(inst.card.id) \
 				and c.accepts(inst.card as ProductCardDef):
 			return true
 	for pile in [hand, draw, discard]:

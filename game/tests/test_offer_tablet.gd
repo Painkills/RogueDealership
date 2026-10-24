@@ -37,6 +37,30 @@ func test_an_empty_chair_shows_nobodys_numbers() -> void:
 	h.check("and no budget line", not t._budget.visible)
 	t.free()
 
+func _someone() -> Customer:
+	var interests: InterestPool = load("res://data/interests/interest_pool.tres")
+	var a := CustomerArchetype.new()
+	a.id = &"made_up_customer"
+	a.line = 20
+	a.patience = 20
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	return Customer.new("A", "Made-up Customer", a, Customer.make_ranks(interests, rng),
+		20, 20, CFG, interests)
+
+func test_a_line_found_out_stays_on_the_meter_with_nothing_on_the_table() -> void:
+	var t := _instance()
+	var c := _someone()
+	t.show_offer(c, "", _meter_scale())
+	h.check("not found out, there is no Line on the empty meter", t._bar.marker_y(Rect2(0, 0, 10, 100)) < 0.0)
+	c.known_line = true
+	t.show_offer(c, "", _meter_scale())
+	h.check("found out, it stays there with nothing on the table",
+		t._bar.marker_y(Rect2(0, 0, 10, 100)) >= 0.0)
+	h.eq("at their Line", t._bar._line, c.line)
+	h.eq("over an empty meter", t._bar._appeal, 0)
+	t.free()
+
 func _find_collider(node: Node) -> Node:
 	for child in node.get_children():
 		if child is CollisionObject3D:

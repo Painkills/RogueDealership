@@ -11,8 +11,8 @@ class_name ProductBoard extends PanelContainer
 ## (ShiftController) works out whose table that is.
 ##
 ## Each slot carries the customer you are looking at's rank for it - "?" until
-## you have found it out - and greys out while it is on a table or gone for the
-## shift.
+## you have found it out - and greys out while it is on a table, gone for the
+## shift, or resting after one (a pie of the ticks left - CooldownPie).
 
 ## Let go somewhere: the floor works out whose table that is.
 signal dropped(product_id: StringName, at: Vector2)
@@ -36,6 +36,8 @@ const ZOOM := Vector2(300, 420)
 const ZOOM_GAP := 16.0
 const ZOOM_GAP_TOUCH := 48.0
 const BADGE := Vector2(38, 30)
+## The rest timer over a slot (CooldownPie).
+const PIE := 64.0
 
 var _grid: GridContainer
 var _zoom: ShopCardButton
@@ -196,6 +198,13 @@ func _slot(inst: CardInstance) -> Control:
 	why.autowrap_mode = TextServer.AUTOWRAP_WORD
 	box.add_child(why)
 	why.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Resting after a table: how long until it can go on another.
+	var pie := CooldownPie.new()
+	pie.name = "Pie"
+	pie.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pie.size = Vector2(PIE, PIE)
+	pie.position = (SLOT - pie.size) * 0.5
+	box.add_child(pie)
 	box.add_child(_badge())
 	box.mouse_entered.connect(_show_zoom.bind(inst, box))
 	box.mouse_exited.connect(_hide_zoom)
@@ -210,9 +219,14 @@ func _update_slot(shift: Shift, inst: CardInstance, box: Control, focus) -> void
 	var free := shift.board_available(inst)
 	box.set_meta("free", free)
 	(box.get_child(0) as Control).modulate.a = 1.0 if free else 0.35
+	var gone := shift.exhausted.has(inst)
+	var resting := shift.board_cooldown_left(inst)
 	var why := box.get_node(^"Why") as Label
-	why.visible = not free
-	why.text = "GONE" if shift.exhausted.has(inst) else "ON A TABLE"
+	why.visible = not free and (gone or resting == 0)
+	why.text = "GONE" if gone else "ON A TABLE"
+	var pie := box.get_node(^"Pie") as CooldownPie
+	pie.visible = not gone and resting > 0
+	pie.show_rest(resting, shift.cfg.menu_cooldown_ticks)
 
 	var iid: StringName = (inst.card as ProductCardDef).interest.id
 	var text := ""

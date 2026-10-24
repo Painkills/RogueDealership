@@ -203,6 +203,9 @@ func category_quota_in_week(week: int) -> int:
 ## A menu run's floor on removing cards in the store: support cards only, since
 ## a product cannot be removed - only replaced by another for its interest.
 @export var menu_min_supports: int = 6
+## How many ticks a menu product rests once it comes off a table - sold,
+## dropped or waved off - before it can go on one again (Shift.board_ready).
+@export var menu_cooldown_ticks: int = 3
 
 func as_dict() -> Dictionary:
 	return {

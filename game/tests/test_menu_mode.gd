@@ -94,14 +94,23 @@ func test_placing_from_the_menu_puts_it_on_one_table_only() -> void:
 	h.check("with words to say why", again.msg != "")
 	h.check("nothing on their table", (s.chairs[1] as Customer).offer == null)
 
+## The clock moved on until `inst` has rested - the cooldown is read off the tick.
+func _rest(s: Shift, inst: CardInstance) -> void:
+	for _i in range(100):
+		if s.board_cooldown_left(inst) == 0:
+			return
+		s.tick += 1
+
 func test_a_dropped_product_goes_back_on_the_menu() -> void:
 	var s := _shift()
 	var inst := _any_product(s)
 	s.place_board(inst.card.id)
 	var r := s.drop_offer()
 	h.check("dropped (%s)" % r.msg, r.ok)
-	h.check("available again", s.board_available(inst))
 	h.check("not in the discard", not s.discard.has(inst))
+	h.eq("resting for the cooldown", s.board_cooldown_left(inst), s.cfg.menu_cooldown_ticks)
+	_rest(s, inst)
+	h.check("then available again", s.board_available(inst))
 
 func test_a_sold_product_goes_back_on_the_menu() -> void:
 	var s := _shift()
@@ -111,9 +120,43 @@ func test_a_sold_product_goes_back_on_the_menu() -> void:
 	c.line = c.offer.appeal
 	var r := s.offer()
 	h.check("sold (%s)" % r.msg, r.ok)
-	h.check("available for the next customer", s.board_available(inst))
 	h.check("not in the discard", not s.discard.has(inst))
+	_rest(s, inst)
+	h.check("available for the next customer once rested", s.board_available(inst))
 	h.check("but this customer will not take it twice", not s.place_board(inst.card.id).ok)
+
+func test_a_product_rests_after_a_table_before_it_goes_on_another() -> void:
+	var s := _shift()
+	if s.cfg.menu_cooldown_ticks <= 0:
+		h.check("no cooldown configured - nothing to rest", true)
+		return
+	var inst := _any_product(s)
+	s.place_board(inst.card.id)
+	s.drop_offer()
+	var back_at := s.tick
+	h.check("resting, it is not available", not s.board_available(inst))
+	var r := s.place_board(inst.card.id, 1)
+	h.check("and cannot go on another table yet", not r.ok)
+	h.check("saying when it can (%s)" % r.msg, r.msg.contains(str(s.board_cooldown_left(inst))))
+	s.tick += 1
+	h.eq("each tick brings it closer", s.board_cooldown_left(inst),
+		s.cfg.menu_cooldown_ticks - 1)
+	_rest(s, inst)
+	h.eq("it rests exactly the cooldown", s.tick - back_at, s.cfg.menu_cooldown_ticks)
+	h.check("then it can (%s)" % s.place_board(inst.card.id, 1).msg,
+		(s.chairs[1] as Customer).offer != null)
+
+func test_a_resting_product_still_counts_as_something_to_sell() -> void:
+	var s := _shift()
+	var inst := _any_product(s)
+	for other in s.board:
+		if other != inst:
+			s.exhausted.append(other)
+	s.place_board(inst.card.id)
+	s.drop_offer()
+	h.check("resting", not s.board_available(inst))
+	h.check("but it comes back, so there is still something to sell them",
+		s.has_something_left_to_sell(s.chairs[0]))
 
 func test_a_product_sold_out_of_the_shift_stays_off_the_menu() -> void:
 	var s := _shift(null, true, true)
