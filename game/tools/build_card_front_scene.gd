@@ -18,7 +18,7 @@ const PAD := 24
 const ART_H := 170
 ## The clock in the top left corner that shows the tick cost - the first thing
 ## read on a card, and where a fanned hand leaves every card uncovered.
-const CLOCK := 100
+const CLOCK := 88
 ## Where it sits: the top left corner, a little into the card's margin.
 const CLOCK_AT := Vector2(PAD - 6, 12)
 ## The room between the grey rules and what they frame.
