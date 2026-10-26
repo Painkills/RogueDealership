@@ -186,3 +186,58 @@ func test_give_us_a_minute_breaks_only_on_something_played() -> void:
 	for kind in [DemandResolve.SUPPORT, DemandResolve.PLACE, DemandResolve.OFFER, DemandResolve.CLOSE]:
 		h.check("%s breaks it" % kind, r.broken_by(kind, {}))
 	h.check("and waiting it out is the answer", r.succeeds_on_expiry())
+
+# ------------------------------------------- a card that reaches the floor
+## A support card whose effect gives the whole floor `n` patience, in your hand -
+## made up, so it stays true whatever the shipped cards become.
+func _floor_calm_in_hand(s: Shift, n: int) -> void:
+	var e := ChangePatienceFloor.new()
+	e.amount = n
+	var def := SupportCardDef.new()
+	def.id = &"made_up_floor_calm"
+	def.display_name = "Made-up Floor Calm"
+	def.needs_offer = false
+	def.effects = [e]
+	s.hand[0] = CardInstance.new(def, 9001)
+
+## Two at the floor, you with the first; the second waiting on `resolve`.
+func _asking_next_door(resolve: DemandResolve) -> Array:
+	var s := _shift([&"easygoing", &"easygoing"])
+	var here := _sat_a_while(s, 0)
+	var there := _sat_a_while(s, 1)
+	s.at = 0
+	s.last_customer = here
+	# Kept waiting a while, as anyone asking has been - room for patience to rise.
+	there.patience = there.max_patience / 2
+	here.patience = here.max_patience / 2
+	s.raise_demand(there, _made_up(5, resolve, _patience(-5)))
+	return [s, here, there]
+
+func test_a_floor_wide_card_answers_a_patience_ask_at_another_seat() -> void:
+	## "I was playing against 3 Karens and used Smooth Jazz ... the manager call
+	## went off and I lost the customer despite playing a patience card (not on
+	## the Karen who fired, but on the one at another seat)."
+	var set := _asking_next_door(IncreasePatience.new())
+	var s: Shift = set[0]
+	var there: Customer = set[2]
+	_floor_calm_in_hand(s, 4)
+	var before := there.patience
+	var r := s.play_card(0)
+	h.check("played on the one you are with (%s)" % r.msg, r.ok)
+	h.check("it reached the one next door (%d -> %d)" % [before, there.patience],
+		there.patience > before)
+	h.check("and answered their ask", there.demand == null)
+	h.eq("counted as met", int(s.stat["demands_met"]), 1)
+
+func test_a_floor_wide_card_is_not_a_card_played_on_the_others() -> void:
+	var set := _asking_next_door(PlayAnySupport.new())
+	var s: Shift = set[0]
+	_floor_calm_in_hand(s, 4)
+	s.play_card(0)
+	h.check("an ask for a card played on THEM is still open", (set[2] as Customer).demand != null)
+	var left := _asking_next_door(LeaveThemAlone.new())
+	s = left[0]
+	_floor_calm_in_hand(s, 4)
+	s.play_card(0)
+	h.check("and one to be left alone is not broken by it", (left[2] as Customer).demand != null)
+
