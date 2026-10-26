@@ -214,7 +214,7 @@ const FAN_RADIUS := 24.0
 ## Who is waiting for a chair, at the top of the LEFT rail. No height: it is
 ## only as tall as who is in it. As narrow as it is so the left flanker's
 ## folder clears it from the floor, where it is biggest.
-const WAITING_RECT := Rect2(18, 80, 370, 0)
+const WAITING_RECT := Rect2(18, 116, 370, 0)
 ## Each waiting customer's place in the queue, a round badge.
 const WAITING_BADGE := Vector2(34, 34)
 ## The shift log, down the RIGHT rail - the mirror of the waiting list's. Stops
@@ -238,6 +238,10 @@ const LOG_TOGGLE := Vector2(84, 34)
 ## The app bar across the top that the shift's numbers sit on. The log starts
 ## below it.
 const TOP_STRIP_HEIGHT := 66.0
+## The stopwatch beside the tick counter - the card's clock, as big as a badge:
+## it hangs below the bar at its left end, the shift's numbers along from it.
+const TICK_ICON := 100.0
+const TICK_ICON_AT := Vector2(14, 6)
 ## How far in from their folder's right-hand edge a customer's CLOSE SOON tag
 ## sits, in world units. It hangs in the strip beside the folder's tab, the
 ## one empty space on the folder.
@@ -903,9 +907,22 @@ func _build_hud(root: Node) -> void:
 	hud.add_child(strip)
 	strip.owner = root
 
+	# The card's own stopwatch, beside the ticks - what a tick looks like on
+	# every card, on the shift's clock too.
+	var tick_icon := Control.new()
+	tick_icon.name = "TickIcon"
+	tick_icon.set_script(load("res://scripts/view/tick_clock.gd"))
+	tick_icon.set("icon", true)
+	tick_icon.position = TICK_ICON_AT
+	tick_icon.size = Vector2(TICK_ICON, TICK_ICON)
+	tick_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tick_icon.unique_name_in_owner = true
+	hud.add_child(tick_icon)
+	tick_icon.owner = root
+
 	var top := HBoxContainer.new()
 	top.name = "TopBar"
-	top.position = Vector2(28, 14)
+	top.position = Vector2(TICK_ICON_AT.x + TICK_ICON + 10, 14)
 	top.unique_name_in_owner = true
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top.add_theme_constant_override("separation", 48)

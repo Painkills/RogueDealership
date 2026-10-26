@@ -537,6 +537,7 @@ func set_hud_dimmed(dimmed: bool) -> void:
 	# folder lying across the top of someone else's screen.
 	(%TopStrip as Control).visible = not dimmed
 	(%TopBar as Control).visible = not dimmed
+	(%TickIcon as Control).visible = not dimmed
 	# A new game's toolkit opens over its first calendar, before the floor has
 	# ever held a shift to draw - setup() renders it once one arrives.
 	if _shift != null:

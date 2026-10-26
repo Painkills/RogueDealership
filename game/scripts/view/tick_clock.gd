@@ -1,8 +1,11 @@
 class_name TickClock extends Control
 ## A card's tick cost on a little stopwatch - a crown, a face with its hour marks,
-## and the number in the middle.
+## and the number in the middle. As an icon, no number: just the stopwatch,
+## its hands up - beside the shift's own tick counter.
 
 var ticks := 1
+## Just the stopwatch, hands and all, no number - saved with the scene.
+@export var icon := false
 ## Marked in highlighter yellow - what an upgrade changes (CardFront.highlight_changes()).
 var highlighted := false
 
@@ -25,6 +28,12 @@ func _draw() -> void:
 		var a := TAU * k / 12.0
 		var d := Vector2(cos(a), sin(a))
 		draw_line(c + d * (r - 4.0), c + d * (r - (9.0 if k % 3 == 0 else 6.0)), ink, 2.0, true)
+	if icon:
+		# The icon: a minute hand at twelve, a second hand on its way round.
+		draw_line(c, c + Vector2(0, -r * 0.62), ink, 5.0, true)
+		draw_line(c, c + Vector2(r * 0.42, r * 0.22), ink, 4.0, true)
+		draw_circle(c, 5.0, ink)
+		return
 	var font := get_theme_default_font()
 	var text := str(ticks)
 	var fs := int(r * 1.15)
