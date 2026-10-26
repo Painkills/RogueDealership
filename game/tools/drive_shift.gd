@@ -2289,6 +2289,13 @@ func _check_hud_does_not_overlap_itself() -> void:
 	var waiting := _waiting_rect()
 	_check("the waiting list and the log keep to their own rails (%s vs %s)"
 		% [waiting, log_rect], not waiting.intersects(log_rect))
+	# "100 is too big, make sure it fits within the top bar."
+	var strip := (_controller.get_node(^"%TopStrip") as Control).get_global_rect()
+	var icon := (_controller.get_node(^"%TickIcon") as Control).get_global_rect()
+	_check("the tick counter's stopwatch fits inside the top bar (%s in %s)" % [icon, strip],
+		strip.encloses(icon))
+	_check("and the counter does not sit on it",
+		not icon.intersects(_controller._tick_label.get_global_rect()))
 
 	# The log's own button is a STOP control over a 3D table, so the log sitting
 	# on a card would be a click the card never sees.

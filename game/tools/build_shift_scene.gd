@@ -214,7 +214,7 @@ const FAN_RADIUS := 24.0
 ## Who is waiting for a chair, at the top of the LEFT rail. No height: it is
 ## only as tall as who is in it. As narrow as it is so the left flanker's
 ## folder clears it from the floor, where it is biggest.
-const WAITING_RECT := Rect2(18, 116, 370, 0)
+const WAITING_RECT := Rect2(18, 80, 370, 0)
 ## Each waiting customer's place in the queue, a round badge.
 const WAITING_BADGE := Vector2(34, 34)
 ## The shift log, down the RIGHT rail - the mirror of the waiting list's. Stops
@@ -238,10 +238,10 @@ const LOG_TOGGLE := Vector2(84, 34)
 ## The app bar across the top that the shift's numbers sit on. The log starts
 ## below it.
 const TOP_STRIP_HEIGHT := 66.0
-## The stopwatch beside the tick counter - the card's clock, as big as a badge:
-## it hangs below the bar at its left end, the shift's numbers along from it.
-const TICK_ICON := 100.0
-const TICK_ICON_AT := Vector2(14, 6)
+## The stopwatch beside the tick counter - the card's clock, at the bar's left
+## end and inside it, crown and all; the shift's numbers along from it.
+const TICK_ICON := 58.0
+const TICK_ICON_AT := Vector2(14, (TOP_STRIP_HEIGHT - TICK_ICON) * 0.5)
 ## How far in from their folder's right-hand edge a customer's CLOSE SOON tag
 ## sits, in world units. It hangs in the strip beside the folder's tab, the
 ## one empty space on the folder.
