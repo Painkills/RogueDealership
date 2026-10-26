@@ -47,8 +47,9 @@ class_name CustomerArchetype extends Resource
 ## the top ranks, the next category the ranks after it, and so on - shuffled
 ## within each. One rank you learn then places its whole category, and Active
 ## Listening names the category they want most rather than one interest (see
-## Customer.reveal_room()). The Karen's - they came in for a category. Off:
-## ranked interest by interest, at random.
+## Customer.reveal_room()). No archetype ships with it now - the Karen's
+## category is three favourites somewhere in her top few instead
+## (ShiftConfig.favourites_within). Off: ranked interest by interest, at random.
 @export var ranks_by_category: bool = false
 ## Will not sign for fewer than this many products (Shift.close()): the first is
 ## not enough for them. Never in the way of a deck with nothing more to sell them

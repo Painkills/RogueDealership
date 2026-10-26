@@ -212,8 +212,9 @@ func reveal_room(exact: bool = false, with_line: bool = true) -> void:
 	## you are doing well.
 	##
 	## Nothing is lit on their interest grid beyond the ranks themselves: a row
-	## is only lit for someone who ranks by category and came in for one (the
-	## Karen), and they announce it on arrival (Shift._spawn()).
+	## is only lit for someone who came in for a category or will only look at
+	## one (the Karen, the Speedster), and they announce it on arrival
+	## (Shift._spawn()) - the category they want, somewhere in their top few.
 	##
 	## `with_line` false tells you only what they want - a customer opening up
 	## (RevealRoom.line), not you reading them.
@@ -363,15 +364,18 @@ func margin_scale_for(product: ProductCardDef) -> float:
 
 
 static func make_ranks(pool: InterestPool, rng: RandomNumberGenerator,
-		favourites: Array[Interest] = [], by_category: bool = false) -> Dictionary:
+		favourites: Array[Interest] = [], by_category: bool = false,
+		within: int = 0) -> Dictionary:
 	## Dealt at random, for everyone - nothing about an archetype says what
 	## they want.
 	##
-	## `favourites`, when given, take the top ranks - the Karen's demanded
-	## category, which they want most because it is what they came in for.
+	## `favourites`, when given, rank somewhere in their top `within` - the
+	## Karen's demanded category, the Speedster's Vehicle, the Influencer's
+	## Status and Power: high on their list, but not always first. 0 (or fewer
+	## than there are favourites) puts them at the very top.
 	##
-	## `by_category`: dealt a category at a time instead - see
-	## CustomerArchetype.ranks_by_category and _ranks_by_category().
+	## `by_category`: dealt a category at a time instead, the favourite category
+	## first - see CustomerArchetype.ranks_by_category and _ranks_by_category().
 	if by_category:
 		return _ranks_by_category(pool, rng, favourites)
 	var top: Array = []
@@ -384,9 +388,19 @@ static func make_ranks(pool: InterestPool, rng: RandomNumberGenerator,
 			rest.append(i.id)
 	_shuffle(rest, rng)
 
+	# The ranks the favourites may take: any of the top `within`, drawn at random.
+	var total := top.size() + rest.size()
+	var span := clampi(maxi(within, top.size()), top.size(), total)
+	var places: Array = range(1, span + 1)
+	_shuffle(places, rng)
+	var theirs: Array = places.slice(0, top.size())
 	var out := {}
+	for k in range(top.size()):
+		out[top[k]] = theirs[k]
 	var rank := 1
-	for iid in top + rest:
+	for iid in rest:
+		while theirs.has(rank):
+			rank += 1
 		out[iid] = rank
 		rank += 1
 	return out
@@ -394,8 +408,8 @@ static func make_ranks(pool: InterestPool, rng: RandomNumberGenerator,
 
 ## Ranks a category at a time: their favourite category takes the first block
 ## of ranks, the next category the block after it, and so on, shuffled within
-## each block. The order of the categories is random - but the Karen's
-## demanded one (`favourites`) comes first.
+## each block. The order of the categories is random - but the favourite one
+## (`favourites`) comes first.
 static func _ranks_by_category(pool: InterestPool, rng: RandomNumberGenerator,
 		favourites: Array[Interest]) -> Dictionary:
 	var top: Category = null

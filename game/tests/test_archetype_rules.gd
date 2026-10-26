@@ -107,7 +107,9 @@ func test_someone_who_takes_one_category_wants_it_most_and_will_not_look_at_anot
 	for i in pool.in_category(only):
 		ranks.append(int(c.ranks[i.id]))
 	ranks.sort()
-	h.eq("their category takes the top ranks", ranks, range(1, ranks.size() + 1))
+	var within: int = s.cfg.favourites_within
+	h.check("their whole category ranks inside their top %d (%s)" % [within, str(ranks)],
+		ranks[-1] <= maxi(within, ranks.size()))
 	var other: Interest = null
 	for i in pool.interests:
 		if i.category.id != only.id:

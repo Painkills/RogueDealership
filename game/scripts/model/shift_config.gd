@@ -205,6 +205,10 @@ func category_quota_in_week(week: int) -> int:
 ## How many ticks a menu product rests once it comes off a table - sold,
 ## dropped or waved off - before it can go on one again (Shift.board_ready).
 @export var menu_cooldown_ticks: int = 3
+## Where a customer's favourite interests rank - the category a Karen came in
+## for, the Speedster's Vehicle, the Influencer's Status and Power: somewhere in
+## their top this-many, not always first (Customer.make_ranks()).
+@export var favourites_within: int = 6
 
 func as_dict() -> Dictionary:
 	return {

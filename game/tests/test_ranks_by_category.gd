@@ -68,18 +68,66 @@ func test_only_an_archetype_that_ranks_by_category_does() -> void:
 	h.check("everyone else's are dealt one by one (%d of 20 happened to block up)" % loose,
 		loose < 20)
 
-func test_a_category_they_came_in_for_ranks_first() -> void:
+func _within() -> int:
+	return (load("res://data/shift_config.tres") as ShiftConfig).favourites_within
+
+func test_a_category_they_came_in_for_ranks_in_their_top_few() -> void:
+	## "Make Karen's chosen category be within the top 6, not necessarily 1 2
+	## and 3. Same for Speedster." - "just ensure the whole category is in the
+	## top 6", not grouped.
+	var pool := _pool()
+	var within := _within()
+	var outside := 0
+	var not_first := 0
+	var dealt := 0
+	for cat in pool.categories:
+		for seed_value in range(12):
+			var rng := RandomNumberGenerator.new()
+			rng.seed = seed_value
+			var ranks := Customer.make_ranks(pool, rng, pool.in_category(cat), false, within)
+			var block := _block_of(ranks, pool, cat)
+			dealt += 1
+			if block[-1] > maxi(within, block.size()):
+				outside += 1
+			if block[-1] != block.size():
+				not_first += 1
+	h.eq("its whole category ranks inside their top %d" % within, outside, 0)
+	if within > pool.in_category(pool.categories[0]).size():
+		h.check("and not always first (%d of %d were not)" % [not_first, dealt], not_first > 0)
+
+func test_dealt_a_category_at_a_time_the_favourite_comes_first() -> void:
 	var pool := _pool()
 	var missed := 0
-	for by_category in [true, false]:
-		for cat in pool.categories:
-			var rng := RandomNumberGenerator.new()
-			rng.seed = 3
-			var ranks := Customer.make_ranks(pool, rng, pool.in_category(cat), by_category)
-			var block := _block_of(ranks, pool, cat)
-			if block[-1] != block.size():
-				missed += 1
-	h.eq("its interests take the top ranks, dealt either way", missed, 0)
+	for cat in pool.categories:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 3
+		var block := _block_of(Customer.make_ranks(pool, rng, pool.in_category(cat), true),
+			pool, cat)
+		if block[-1] != block.size():
+			missed += 1
+	h.eq("its block is the first", missed, 0)
+
+func test_with_no_room_given_they_take_the_very_top() -> void:
+	var pool := _pool()
+	var cat: Category = pool.categories[0]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var block := _block_of(Customer.make_ranks(pool, rng, pool.in_category(cat)), pool, cat)
+	h.eq("the top ranks, as before", block[-1], block.size())
+
+func test_what_they_pay_a_premium_for_ranks_in_their_top_few() -> void:
+	## "Same for Power and Status for the Influencer."
+	var pool := _pool()
+	var a := _made_up(false)
+	a.premium_interests.assign([pool.interests[0], pool.interests[pool.interests.size() - 1]])
+	a.premium_margin_scale = 2.0
+	var outside := 0
+	for seed_value in range(20):
+		var c := _seated(a, seed_value)
+		for i in a.premium_interests:
+			if int(c.ranks[i.id]) > _within():
+				outside += 1
+	h.eq("each of them inside their top %d, every time" % _within(), outside, 0)
 
 func test_active_listening_reads_the_top_three_in_order_for_them_too() -> void:
 	## Someone who ranks by category is read the way everyone is: their Line and
