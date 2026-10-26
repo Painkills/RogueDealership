@@ -1272,7 +1272,7 @@ func _put_down(c: Customer, inst: CardInstance) -> Result:
 			"fx": _fx_since(floor_before[c], c),
 			"fx_others": _fx_on_the_others(floor_before, c),
 		})
-		_tell_the_others(c, floor_before)
+		_tell_the_others(c, floor_before, effects)
 
 	# The band is read AFTER the effects land, not before - a product whose
 	# own effect moves appeal should draw the band that reflects where the
@@ -1504,7 +1504,7 @@ func _support(c: Customer, index: int) -> Result:
 	# than racing the very tick it costs to play it.
 	_demand_saw(c, DemandResolve.SUPPORT, {"card": def, "effects": effects,
 		"patience_before": patience_before})
-	_tell_the_others(c, floor_before)
+	_tell_the_others(c, floor_before, effects)
 	_settle_patience()
 	_burn(inst.ticks(), "cards")
 	return Result.new(true, def.display_name + ".", "support")
@@ -1925,13 +1925,15 @@ func _snapshot(c: Customer) -> Dictionary:
 ## A card of yours whose effect reached the whole floor answers whoever it
 ## reached, not only who it was played on: Smooth Jazz calms the Karen at the
 ## next desk who was about to call the manager. Each of the others hears it as
-## DemandResolve.SPILLOVER, with their patience before the card.
-func _tell_the_others(c: Customer, floor_before: Dictionary) -> void:
+## DemandResolve.SPILLOVER, with their patience before the card and the card's
+## effects that reach the floor - only those reached them.
+func _tell_the_others(c: Customer, floor_before: Dictionary, effects: Array) -> void:
+	var reached: Array = effects.filter(func(e): return _is_floor_wide(e))
 	for who in floor_before:
 		if who == c or not chairs.has(who):
 			continue
 		_demand_saw(who, DemandResolve.SPILLOVER,
-			{"patience_before": int(floor_before[who]["patience"])})
+			{"patience_before": int(floor_before[who]["patience"]), "effects": reached})
 
 
 func _floor_snapshots() -> Dictionary:
@@ -2132,6 +2134,7 @@ func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
 ## kind of action - see DemandResolve.satisfied() and met_on_expiry().
 func _state_of(c: Customer) -> Dictionary:
 	return {"patience": c.patience, "patience_at_raise": c.demand_patience_at_raise,
+		"patience_max": c.max_patience,
 		"table_empty": c.offer == null, "discards": c.discards_since_raise}
 
 
