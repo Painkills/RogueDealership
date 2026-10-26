@@ -244,13 +244,15 @@ func _update_slot(shift: Shift, inst: CardInstance, box: Control, focus) -> void
 	badge.visible = text != ""
 	(badge.get_theme_stylebox("panel") as StyleBoxFlat).bg_color = fill
 	(badge.get_child(0) as Label).text = text
+	# In the top right corner: the top left is the card's clock, never covered.
+	badge.reset_size()
+	badge.position = Vector2(SLOT.x - badge.size.x + 4, -4)
 
 ## The rank badge in a slot's corner - its words and colour are _update_slot()'s.
 func _badge() -> Control:
 	var badge := PanelContainer.new()
 	badge.name = "Badge"
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.position = Vector2(-4, -4)
 	var style := StyleBoxFlat.new()
 	style.set_corner_radius_all(8)
 	style.content_margin_left = 6

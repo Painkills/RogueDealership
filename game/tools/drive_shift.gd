@@ -3972,6 +3972,16 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 		_check("%s's card fits its slot on the menu (%s in %s)"
 			% [child.get_meta("product"), face.get_global_rect(), box],
 			box.encloses(face.get_global_rect()))
+		# "Ensure that in menu mode nothing covers the tick cost": its clock, as
+		# far down the face as it is drawn, clear of the rank badge.
+		var front := (child.get_child(0) as Control).get_node(^"SubViewport/CardFront") as CardFront
+		var clock := front.get_node(^"TickClock") as Control
+		var scale: float = face.size.x / front.size.x
+		var on_screen := Rect2(face.global_position + clock.position * scale, clock.size * scale)
+		var badge := child.get_node(^"Badge") as Control
+		_check("%s's clock is not under its rank badge (%s, badge %s)"
+			% [child.get_meta("product"), on_screen, badge.get_global_rect()],
+			not badge.visible or not badge.get_global_rect().intersects(on_screen))
 	# The first slot that holds a product you can put down.
 	var slot: Control = null
 	var inst: CardInstance = null

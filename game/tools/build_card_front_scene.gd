@@ -16,8 +16,11 @@ const H := 700
 const PAD := 24
 ## A card's picture, when it has one: as wide as the text, this tall.
 const ART_H := 170
-## The clock in the top right corner that shows the tick cost.
-const CLOCK := 72
+## The clock in the top left corner that shows the tick cost - the first thing
+## read on a card, and where a fanned hand leaves every card uncovered.
+const CLOCK := 100
+## Where it sits: the top left corner, a little into the card's margin.
+const CLOCK_AT := Vector2(PAD - 6, 12)
 ## The room between the grey rules and what they frame.
 const RULE_GAP := 8
 
@@ -67,9 +70,13 @@ func _init() -> void:
 	# shows the car, regardless of type - see CardBack2D), so what kind of
 	# card this is is the very first thing read, before the name competes
 	# for attention.
+	# On the right, level with the clock across from it - and as tall, so the
+	# name starts below the clock rather than under it.
 	var kind_row := HBoxContainer.new()
 	kind_row.name = "KindRow"
 	kind_row.add_theme_constant_override("separation", 10)
+	kind_row.alignment = BoxContainer.ALIGNMENT_END
+	kind_row.custom_minimum_size = Vector2(0, CLOCK_AT.y + CLOCK - PAD)
 	col.add_child(kind_row)
 	kind_row.owner = root
 
@@ -77,11 +84,13 @@ func _init() -> void:
 	kind_icon.name = "KindIcon"
 	kind_icon.set_script(load("res://scripts/view/card_type_icon_control.gd"))
 	kind_icon.custom_minimum_size = Vector2(34, 34)
+	kind_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	kind_row.add_child(kind_icon)
 	kind_icon.owner = root
 
 	var kind := _label("KindLabel", 33, Palette.color(&"accent"))
 	kind.text = "PRODUCT"
+	kind.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	kind_row.add_child(kind)
 	kind.owner = root
 
@@ -207,11 +216,11 @@ func _init() -> void:
 	col.add_child(money)
 	money.owner = root
 
-	# The tick cost, on a little stopwatch in the top right corner.
+	# The tick cost, on a stopwatch in the top left corner.
 	var clock := Control.new()
 	clock.name = "TickClock"
 	clock.set_script(load("res://scripts/view/tick_clock.gd"))
-	clock.position = Vector2(W - PAD - CLOCK, 18)
+	clock.position = CLOCK_AT
 	clock.size = Vector2(CLOCK, CLOCK)
 	clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(clock)

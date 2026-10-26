@@ -444,6 +444,11 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 	var uid: int = shop.upgrade_offers[0]
 	var inst := shop.find(uid)
 	var card := _slot_card(deck_row.get_child(0))
+	# Where you choose: the row shows each card as the upgrade would make it,
+	# what changes marked - not only once it is opened.
+	var row_marks: Array = (card.get_node(^"SubViewport/CardFront") as CardFront).highlighted()
+	_check("the upgrade row shows the card upgraded, its changes marked (%s)" % str(row_marks),
+		not row_marks.is_empty() and card._name.get_theme_color("font_color") == Palette.color(&"appeal"))
 	card.pressed.emit()
 	_check("clicking the deck card opens the detail overlay", detail.visible)
 	_check("titled after the card that was clicked (%s)" % detail._title.text,

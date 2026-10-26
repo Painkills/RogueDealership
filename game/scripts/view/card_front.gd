@@ -63,8 +63,7 @@ func dress(inst: CardInstance) -> void:
 func highlight_changes(before: CardInstance) -> void:
 	if not is_node_ready():
 		await ready
-	var shown := _clock.ticks
-	_clock.highlighted = before != null and before.ticks() != shown
+	_clock.highlighted = before != null and before.ticks() != _clock.ticks
 	_clock.queue_redraw()
 	_mark(_body, before != null and CardText.body(before) != _body.text)
 	_mark(_effect, before != null and CardText.flavor(before) != _effect.text)

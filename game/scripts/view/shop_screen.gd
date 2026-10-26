@@ -170,7 +170,12 @@ func _render() -> void:
 		var inst := _shop.find(uid)
 		if inst == null:
 			continue   # already dropped this visit
-		_build_slot(_deck_row, inst, _upgrade_label(inst)).pressed.connect(
+		# The card as the upgrade would make it, what changes marked - the cost,
+		# the effect, the price - so an upgrade that only takes a tick off is as
+		# plain as one that changes what the card does.
+		var upgraded := CardInstance.new(inst.card, -1)
+		upgraded.upgraded = true
+		_build_slot(_deck_row, upgraded, _upgrade_label(inst), inst).pressed.connect(
 			func(): _detail.show_card(_shop, inst))
 	if _deck_row.get_child_count() == 0:
 		_note(_deck_row, "Nothing of yours left to upgrade." if _shop.upgrades > 0
@@ -314,7 +319,10 @@ func _note(row: HBoxContainer, text: String) -> void:
 
 ## One card on offer: its rarity over it, the card itself (the thing you
 ## click), and what it costs under it. Returns the card.
-func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> ShopCardButton:
+## `changed_from`: for an upgrade, the card as it is - `inst` is then the card
+## upgraded, its changes marked, under an UPGRADED caption.
+func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String,
+		changed_from: CardInstance = null) -> ShopCardButton:
 	var slot := VBoxContainer.new()
 	slot.add_theme_constant_override("separation", 4)
 	slot.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -329,12 +337,17 @@ func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> 
 	rarity.add_theme_font_size_override("font_size", 17)
 	rarity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	rarity.text = CardText.rarity_name(inst)
+	rarity.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
+	# An upgrade shows the card upgraded: said over it, in the upgraded name's
+	# colour.
+	if changed_from != null:
+		rarity.text = "UPGRADED"
+		rarity.add_theme_color_override("font_color", Palette.color(&"appeal"))
 	# A menu run's product takes its interest's slot on the menu: which product
 	# it would push off - more to the point here than how rare it is.
-	if _shop.run.menu and inst.is_product() and inst.uid < 0:
+	elif _shop.run.menu and inst.is_product() and inst.uid < 0:
 		var old := _shop.replaces(inst.card)
 		rarity.text = "Replaces %s" % old.card.display_name if old != null else "New menu slot"
-	rarity.add_theme_color_override("font_color", Palette.rarity_color(inst.card.rarity))
 	slot.add_child(rarity)
 
 	var card: ShopCardButton = (load("res://scenes/cards/shop_card_button.tscn") \
@@ -342,7 +355,7 @@ func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String) -> 
 	card.custom_minimum_size = CARD_SIZE
 	card.size = CARD_SIZE
 	slot.add_child(card)
-	card.show_card(inst)
+	card.show_card(inst, changed_from)
 
 	var price := Label.new()
 	price.add_theme_font_size_override("font_size", 27)

@@ -15,9 +15,11 @@ func _draw() -> void:
 	var c := size * 0.5 + Vector2(0, 3)
 	var r := minf(size.x, size.y) * 0.5 - 6.0
 	if highlighted:
-		draw_circle(c, r + 6.0, Palette.color(&"sticky"))
+		draw_circle(c, r + 10.0, Palette.color(&"sticky"))
 	draw_rect(Rect2(c.x - 7, c.y - r - 9, 14, 7), ink)
-	draw_circle(c, r, Palette.color(&"panel"))
+	# Marked, the whole face is the highlighter's yellow - a cost that changed is
+	# the one thing on the card you must not miss.
+	draw_circle(c, r, Palette.color(&"sticky") if highlighted else Palette.color(&"panel"))
 	draw_arc(c, r, 0.0, TAU, 48, ink, 5.0, true)
 	for k in range(12):
 		var a := TAU * k / 12.0
