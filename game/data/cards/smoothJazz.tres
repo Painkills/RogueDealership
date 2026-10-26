@@ -7,16 +7,17 @@
 
 [sub_resource type="Resource" id="Resource_7nfcx"]
 script = ExtResource("2_7nfcx")
-amount = 4
+amount = 8
 metadata/_custom_type_script = "uid://c56u8ssbjh6yb"
 
 [sub_resource type="Resource" id="Resource_moj2g"]
 script = ExtResource("2_7nfcx")
-amount = 6
+amount = 12
 metadata/_custom_type_script = "uid://c56u8ssbjh6yb"
 
 [resource]
 script = ExtResource("2_djcht")
+ticks = 2
 player_dialogue_tags = Array[StringName]([&"player_jazz"])
 needs_offer = false
 id = &"jazz"

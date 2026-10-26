@@ -17,7 +17,6 @@ func _init() -> void:
 	cfg.walk_up_ticks_max = 8
 	cfg.hand_size = 4
 	cfg.approach_ticks = 1
-	cfg.place_ticks = 1
 	cfg.dig_ticks = 1
 	cfg.appeal_step = 5
 	cfg.line_per_sale = 3

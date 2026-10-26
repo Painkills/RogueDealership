@@ -8,7 +8,7 @@
 
 [sub_resource type="Resource" id="Sub_push"]
 script = ExtResource("2_pat")
-amount = -5
+amount = -10
 
 [sub_resource type="Resource" id="Sub_room"]
 script = ExtResource("5_line")
@@ -16,7 +16,7 @@ amount = -4
 
 [sub_resource type="Resource" id="Sub_calm"]
 script = ExtResource("2_pat")
-amount = 4
+amount = 8
 
 [sub_resource type="Resource" id="Sub_rsv"]
 script = ExtResource("3_rsv")

@@ -88,7 +88,7 @@ func test_placing_from_the_menu_puts_it_on_one_table_only() -> void:
 	h.eq("it is on their table", (s.chairs[0] as Customer).offer.instance, inst)
 	h.check("and no longer available", not s.board_available(inst))
 	h.eq("nothing left the hand", s.hand.size(), hand_before)
-	h.eq("placing costs what it always did", s.tick - tick, s.cfg.place_ticks)
+	h.eq("placing costs the product's own ticks", s.tick - tick, inst.ticks())
 	var again := s.place_board(inst.card.id, 1)
 	h.check("the other customer cannot have it too", not again.ok)
 	h.check("with words to say why", again.msg != "")

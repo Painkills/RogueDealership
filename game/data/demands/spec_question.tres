@@ -8,7 +8,7 @@
 
 [sub_resource type="Resource" id="Sub_cost"]
 script = ExtResource("2_pat")
-amount = -3
+amount = -6
 
 [sub_resource type="Resource" id="Sub_pay"]
 script = ExtResource("3_pay")

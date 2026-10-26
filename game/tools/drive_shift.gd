@@ -65,8 +65,12 @@ func _physics_process(_delta: float) -> bool:
 	# touches) are not populated until _ready() fires, and _ready() does not
 	# fire synchronously on a node added to the tree from within _init().
 	# A standalone driven shift has no real RunState behind it, so a full meter
-	# is the honest stand-in.
-	_controller.setup(Shift.new(load("res://data/shift_config.tres"),
+	# is the honest stand-in. And a long clock: this plays far more moves than
+	# any one shift holds, and products and strong cards cost more than a tick -
+	# its later checks need a floor that is still open.
+	var cfg := (load("res://data/shift_config.tres") as ShiftConfig).duplicate() as ShiftConfig
+	cfg.shift_ticks = 60
+	_controller.setup(Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"), randi()), 100)
@@ -2787,6 +2791,9 @@ func _check_card_numbers_appear_where_the_screen_shows_them() -> void:
 	line.amount = -2
 	var effects: Array[Effect] = [patience, appeal, margin, line]
 	def.effects = effects
+	# Room for the patience to rise: at their ceiling it would add nothing, and
+	# there would be no patience number for the rest to stack above.
+	c.patience = mini(c.patience, c.max_patience - patience.amount * 2)
 	s.hand.append(CardInstance.new(def, 998))
 	_controller._apply(s.play_card(s.hand.size() - 1))
 

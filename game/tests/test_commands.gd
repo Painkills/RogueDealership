@@ -82,14 +82,14 @@ func _synthetic_product(s: Shift, effects: Array[Effect],
 	return def
 
 # ----------------------------------------------------------- place and offer
-func test_placing_costs_a_tick_and_shows_where_it_ranks_and_only_a_band() -> void:
+func test_placing_costs_its_ticks_and_shows_where_it_ranks_and_only_a_band() -> void:
 	var s := _shift([&"easygoing"])
 	var c := _at(s)
 	_rank(c, [&"status", &"power", &"reliability"])
 	_hand(s, [&"vsc"])
 	var r := s.place(0)
 	h.check("placing is legal at any rank", r.ok)
-	h.eq("it costs a tick", s.tick, 1)
+	h.eq("it costs the product's own ticks", s.tick, s.card_pool.by_id(&"vsc").ticks)
 	h.eq("appeal opens at the rank value", c.offer.appeal, _appeal_for_rank(s, 3))
 	h.check("a band came back", r.data.has("band"))
 	h.eq("and where it ranks, on the grid at once", c.known_ranks.get(&"reliability", -1), 3)
@@ -160,9 +160,10 @@ func test_a_sale_refunds_patience_capped_at_max() -> void:
 	c.patience = 5
 	_rank(c, [&"reliability"])
 	_hand(s, [&"vsc"])
-	s.place(0)          # -1 tick
+	var ticks: int = s.hand[0].ticks()
+	s.place(0)          # -its ticks
 	s.offer()           # +cfg.patience_per_sale refund
-	h.eq("place burned, sale refunded", c.patience, 5 - 1 + s.cfg.patience_per_sale)
+	h.eq("place burned, sale refunded", c.patience, 5 - ticks + s.cfg.patience_per_sale)
 
 func test_a_shift_opens_with_you_sat_at_a_and_nothing_moves_you_off_it() -> void:
 	## "Start shift seated at A... Don't take me away from a seat even if they

@@ -18,11 +18,12 @@ metadata/_custom_type_script = "uid://bu5uqojkpf1vo"
 
 [resource]
 script = ExtResource("4_7ghae")
+ticks = 3
 player_dialogue_tags = Array[StringName]([&"player_pitch"])
 objection_tags = Array[StringName]([&"objection_walkaway"])
 interest = ExtResource("3_1osr0")
-margin = 2000
-upgraded_margin = 2500
+margin = 2800
+upgraded_margin = 3500
 id = &"wap"
 brand = &"walkaway"
 display_name = "WALKAWAY"

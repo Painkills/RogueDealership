@@ -106,7 +106,6 @@ func category_quota_in_week(week: int) -> int:
 ## this one number, and it applies uniformly rather than discounting the
 ## walk back to whoever you were last with.
 @export var approach_ticks: int = 0
-@export var place_ticks: int = 1
 @export var dig_ticks: int = 1
 
 ## One rung of appeal: what a product opens at drops by this for every place

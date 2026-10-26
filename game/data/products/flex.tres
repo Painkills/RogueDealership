@@ -6,11 +6,12 @@
 
 [resource]
 script = ExtResource("2_5xkvp")
+ticks = 1
 player_dialogue_tags = Array[StringName]([&"player_pitch"])
 objection_tags = Array[StringName]([&"objection"])
 interest = ExtResource("1_4feyp")
-margin = 900
-upgraded_margin = 1125
+margin = 750
+upgraded_margin = 940
 id = &"flex"
 display_name = "Payment Flex Plan"
 art = ExtResource("99_art")

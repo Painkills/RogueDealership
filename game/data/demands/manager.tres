@@ -8,7 +8,7 @@
 
 [sub_resource type="Resource" id="Sub_floor"]
 script = ExtResource("2_pfl")
-amount = -2
+amount = -4
 
 [sub_resource type="Resource" id="Sub_stand"]
 script = ExtResource("3_std")

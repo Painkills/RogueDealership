@@ -1105,7 +1105,7 @@ func place(index: int, chair: int = -1) -> Result:
 
 
 func _place(index: int, chair: int = -1) -> Result:
-	## Costs a tick and shows where the product ranks for them - and only a BAND
+	## Costs the product's ticks and shows where it ranks for them - and only a BAND
 	## of how far it is from their Line. Placing is the price of information
 	## here - reading a priority list by putting products in front of people
 	## costs the same as any other read in the game. On `chair`'s customer, when
@@ -1231,7 +1231,7 @@ func _put_down(c: Customer, inst: CardInstance) -> Result:
 		return Result.new(false, "%s will only look at %s products."
 			% [c.display_name, c.archetype.only_category.display_name])
 	if c.next_card_rejected():
-		return _reject(c, inst, cfg.place_ticks)
+		return _reject(c, inst, inst.ticks())
 	c.cards_since_rejection += 1
 
 	var product := inst.card as ProductCardDef
@@ -1294,7 +1294,9 @@ func _put_down(c: Customer, inst: CardInstance) -> Result:
 	# in the bubble - and read against the Line as it stands after that, which
 	# an archetype's own reaction may just have moved.
 	_object(c, product)
-	_burn(cfg.place_ticks, "place")
+	# What the product costs to put down is its own: a big earner takes longer
+	# to pitch, and the whole floor waits while you do.
+	_burn(inst.ticks(), "place")
 	return Result.new(true, "You put the %s in front of %s."
 		% [product.display_name, c.display_name], "place", {"band": band, "rank": rank})
 

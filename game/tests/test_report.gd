@@ -14,7 +14,9 @@ func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 		load("res://data/archetype_pool.tres"), 1, floor_ids)
 
 func test_closing_time_forfeits_whatever_is_unsigned() -> void:
-	var s := _shift([&"easygoing"], {"shift_ticks": 2})
+	# One tick more than putting the product down takes: the bell rings on the dig.
+	var place_ticks: int = (load("res://data/card_pool.tres") as CardPool).by_id(&"vsc").ticks
+	var s := _shift([&"easygoing"], {"shift_ticks": place_ticks + 1})
 	s.at = 0
 	s.last_customer = s.chairs[0]
 	var c: Customer = s.chairs[0]
@@ -23,11 +25,11 @@ func test_closing_time_forfeits_whatever_is_unsigned() -> void:
 	var vsc_margin: int = s.card_pool.by_id(&"vsc").margin
 	s.hand.clear()
 	s.hand.append(CardInstance.new(s.card_pool.by_id(&"vsc"), 901))
-	s.place(0)                       # tick 1
+	s.place(0)                       # all but the last tick
 	s.offer()
 	h.eq("agreed but unsigned", c.unsigned_margin(), vsc_margin)
 	s.hand.append(CardInstance.new(s.card_pool.by_id(&"explain"), 902))
-	s.dig(0)                         # tick 2 - the bell
+	s.dig(0)                         # the last tick - the bell
 	h.check("the day ended", s.is_over())
 	h.eq("nothing banked", s.margin_banked, 0)
 	h.eq("reported lost at the bell",

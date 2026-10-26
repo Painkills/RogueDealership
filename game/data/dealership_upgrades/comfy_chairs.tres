@@ -7,4 +7,4 @@ script = ExtResource("1_up")
 id = &"comfy_chairs"
 display_name = "Comfy Chairs"
 blurb = "Leather recliners in every office. +5 Patience for every customer."
-patience = 5
+patience = 10
