@@ -30,9 +30,10 @@ var lingering: Array[Dictionary] = []
 var known_ranks: Dictionary = {}
 var known_line: bool = false
 var known_top_category = null
-## Upgraded Read the Room's read: the three interests they want most that
-## are not sold yet, unordered. Empty until then.
-var known_top_three: Array[StringName] = []
+## Active Listening's read: the interests they want most that are not sold yet
+## - three, or six once it is upgraded - each with its rank in known_ranks.
+## Empty until then.
+var known_top: Array[StringName] = []
 
 ## The Karen: they will not sign until they have bought from the category they
 ## came in for. Announced on arrival - a free read, and then they charge the
@@ -201,11 +202,11 @@ func interests() -> InterestPool:
 	return _interests
 
 
-func reveal_room(exact: bool = false, with_line: bool = true) -> void:
+func reveal_room(exact: bool = false, with_line: bool = true, top_count: int = 3) -> void:
 	## Active Listening. The Line, always - since offering stopped teaching it,
-	## this is the ONLY way to learn it - and what they want. `exact` is the three
-	## they want most that are still open, each with its rank, so in order; not
-	## exact, only the one they want most.
+	## this is the ONLY way to learn it - and what they want. `exact` is the
+	## `top_count` they want most that are still open, each with its rank, so in
+	## order; not exact, only the one they want most.
 	##
 	## Whatever is highest-priority and NOT already sold. A read that keeps
 	## naming what you already closed would stop telling you anything the moment
@@ -227,8 +228,8 @@ func reveal_room(exact: bool = false, with_line: bool = true) -> void:
 	var top := top_unsold_interest_id()
 	known_ranks[top] = int(ranks[top])
 	if exact:
-		known_top_three = top_unsold_interest_ids(3)
-		for iid in known_top_three:
+		known_top = top_unsold_interest_ids(top_count)
+		for iid in known_top:
 			known_ranks[iid] = int(ranks[iid])
 
 

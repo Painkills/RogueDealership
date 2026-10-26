@@ -45,8 +45,8 @@ var _pool: InterestPool = null
 var _known: Dictionary = {}          ## interest id -> rank, 1..9
 var _top_category = null             ## StringName, or null
 var _sold: Dictionary = {}           ## interest id -> true
-## Upgraded Read the Room's three - Customer.known_top_three. Highlighted in
-## yellow, unordered: which three, not which is first.
+## Active Listening's read - Customer.known_top. Highlighted in yellow where a
+## rank is not known: which ones, not which is first.
 var _top_three: Array = []
 ## Flankers are small enough that a rank numeral stops being readable before
 ## the CELL does. Colour and fill survive the downscale; digits do not.
@@ -181,7 +181,7 @@ func _draw_cell(cell: Rect2, interest: Interest, in_top_category: bool,
 		# bar itself uses, so green only ever means "done."
 		draw_rect(cell, Palette.color(&"patience_warn"), true)
 	elif _top_three.has(interest.id):
-		# One of the three they want most, rank unknown - a highlighter's yellow.
+		# One of the ones they want most, rank unknown - a highlighter's yellow.
 		draw_rect(cell, Palette.color(&"sticky"), true)
 
 	var edge: Color = Palette.color(&"grid_edge")

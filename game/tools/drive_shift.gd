@@ -1611,11 +1611,11 @@ func _check_read_the_room_shows_you_something(who) -> void:
 	var was_cat = who.known_top_category
 	var was_line: bool = who.known_line
 	var was_ranks: Dictionary = who.known_ranks.duplicate()
-	var was_three: Array[StringName] = who.known_top_three.duplicate()
+	var was_three: Array[StringName] = who.known_top.duplicate()
 	who.known_top_category = null
 	who.known_line = false
 	who.known_ranks.clear()
-	who.known_top_three.clear()
+	who.known_top.clear()
 	_controller._render()
 	_check("before reading the room, no row of their grid is lit and no rank is known",
 		grid._top_category == null and grid._known.is_empty())
@@ -1625,7 +1625,7 @@ func _check_read_the_room_shows_you_something(who) -> void:
 	_check("reading the room puts their top three on the grid, ranked (%s)" % str(grid._known),
 		grid._known.size() == 3 and grid._top_three.size() == 3
 			and grid._known == who.known_ranks)
-	var in_order: Array = who.known_top_three.map(func(iid): return int(who.known_ranks[iid]))
+	var in_order: Array = who.known_top.map(func(iid): return int(who.known_ranks[iid]))
 	_check("in order (%s)" % str(in_order),
 		in_order[0] < in_order[1] and in_order[1] < in_order[2])
 	_check("and lights no row (%s)" % grid._top_category, grid._top_category == null)
@@ -1633,7 +1633,7 @@ func _check_read_the_room_shows_you_something(who) -> void:
 	who.known_top_category = was_cat
 	who.known_line = was_line
 	who.known_ranks = was_ranks
-	who.known_top_three = was_three
+	who.known_top = was_three
 	_controller._render()
 
 ## Bigger type is only an improvement while it still fits. A VBoxContainer whose

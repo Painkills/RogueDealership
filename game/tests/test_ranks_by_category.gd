@@ -136,7 +136,7 @@ func test_active_listening_reads_the_top_three_in_order_for_them_too() -> void:
 	c.reveal_room(true)
 	h.check("the Line", c.known_line)
 	var three := c.top_unsold_interest_ids(3)
-	h.eq("their three", c.known_top_three, three)
+	h.eq("their three", c.known_top, three)
 	for k in range(3):
 		h.eq("number %d, with its rank" % (k + 1), int(c.known_ranks.get(three[k], -1)), k + 1)
 	h.check("and the read names no category",

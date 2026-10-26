@@ -41,7 +41,7 @@ func test_an_exact_read_gives_the_line_and_their_top_three_in_order() -> void:
 	c.reveal_room(true)
 	h.check("the Line", c.known_line)
 	var three := c.top_unsold_interest_ids(3)
-	h.eq("three of them", c.known_top_three, three)
+	h.eq("three of them", c.known_top, three)
 	for k in range(3):
 		h.eq("number %d, with its rank" % (k + 1), int(c.known_ranks.get(three[k], -1)), k + 1)
 	h.check("and still nothing lit but the ranks", c.known_top_category == null)
@@ -51,7 +51,33 @@ func test_an_exact_read_gives_the_line_and_their_top_three_in_order() -> void:
 	c.reveal_room(true)
 	var next := c.top_unsold_interest_ids(3)
 	h.check("a read after a sale starts from what is left (%s)" % str(next),
-		not next.has(three[0]) and c.known_top_three == next)
+		not next.has(three[0]) and c.known_top == next)
+
+func test_a_deeper_read_gives_their_top_six_in_order() -> void:
+	## "Make Active Listening's upgrade provide top 6 products in order."
+	var c := _cust(&"easygoing", 2)
+	var read := RevealRoom.new()
+	read.exact = true
+	read.top = 6
+	var ctx := EffectContext.new()
+	ctx.customer = c
+	read.apply(ctx)
+	var six := c.top_unsold_interest_ids(6)
+	h.eq("six of them", c.known_top, six)
+	for k in range(6):
+		h.eq("number %d, with its rank" % (k + 1), int(c.known_ranks.get(six[k], -1)), k + 1)
+	h.eq("and the card says so", read.describe(), "reveals their Line and their top 6, in order")
+
+func test_the_upgraded_active_listening_reads_deeper_than_the_plain_one() -> void:
+	var pool: CardPool = load("res://data/card_pool.tres")
+	for def in pool.cards:
+		for base in def.effects:
+			if not (base is RevealRoom and base.exact):
+				continue
+			for up in def.upgraded_effects:
+				if up is RevealRoom:
+					h.check("%s upgraded reads deeper (%d -> %d)" % [def.id, base.top, up.top],
+						up.top > base.top)
 
 ## Any product answering `iid`, for a test that needs one sold.
 func _a_product_for(_c, iid: StringName) -> ProductCardDef:

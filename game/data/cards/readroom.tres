@@ -9,6 +9,11 @@
 script = ExtResource("2_mxwf3")
 exact = true
 
+[sub_resource type="Resource" id="Resource_top6"]
+script = ExtResource("2_mxwf3")
+exact = true
+top = 6
+
 [resource]
 script = ExtResource("3_kqu7d")
 player_dialogue_tags = Array[StringName]([&"player_listen"])
@@ -20,3 +25,4 @@ art = ExtResource("99_art")
 upgraded_ticks = 0
 text = "Stay calm and curious. Let them talk, and they'll tell you what matters."
 effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_ej50r")])
+upgraded_effects = Array[ExtResource("1_8vwyo")]([SubResource("Resource_top6")])

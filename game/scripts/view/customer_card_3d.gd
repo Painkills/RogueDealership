@@ -186,7 +186,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	_shown_demand = c.demand
 	_grid.visible = true
 	_grid.set_state(c.interests(), c.known_ranks, c.known_top_category,
-		sold_interests(c), not compact, c.known_top_three, menu_order, menu_stocked)
+		sold_interests(c), not compact, c.known_top, menu_order, menu_stocked)
 	_status.text = status_text(c)
 	_redraw()
 
