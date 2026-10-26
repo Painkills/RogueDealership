@@ -392,6 +392,13 @@ func _burn(n: int, kind: String) -> void:
 			fire(&"every", c)
 			fire(&"patience_below", c)
 
+	# An ask already answered by how they stand - their patience raised, by a
+	# card played on anyone - is met now, not left to the fuse.
+	for c in seated():
+		if c.demand != null and c.demand.resolve != null \
+				and c.demand.resolve.satisfied(&"", _state_of(c)):
+			_settle_demand(c, true)
+
 	# Fuses come due AFTER actions and BEFORE patience settles, so a WalkOut
 	# consequence leaves down the one path a customer has ever left by.
 	# seated() hands back a fresh array, and nothing here vacates a chair, so
@@ -2074,6 +2081,7 @@ func raise_demand(c: Customer, d: Demand) -> bool:
 	# cannot come due on that same burn before anyone could answer it.
 	c.demand_due_tick = tick + maxi(1, d.ticks)
 	c.demand_patience_at_raise = c.patience
+	c.demand_raises_at_raise = c.patience_raises
 	return true
 
 
@@ -2118,6 +2126,7 @@ func _demand_saw(c: Customer, kind: StringName, data: Dictionary = {}) -> void:
 ## kind of action - see DemandResolve.satisfied() and met_on_expiry().
 func _state_of(c: Customer) -> Dictionary:
 	return {"patience": c.patience, "patience_at_raise": c.demand_patience_at_raise,
+		"patience_raises": c.patience_raises, "patience_raises_at_raise": c.demand_raises_at_raise,
 		"table_empty": c.offer == null, "discards": c.discards_since_raise}
 
 
@@ -2156,6 +2165,7 @@ func _next_move(c: Customer) -> void:
 	c.demand = picked
 	c.demand_due_tick = tick + c.move_fuse(picked)
 	c.demand_patience_at_raise = c.patience
+	c.demand_raises_at_raise = c.patience_raises
 	c.discards_since_raise = 0
 	var hits := c.move_damage(picked)
 	var what := ""

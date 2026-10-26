@@ -54,6 +54,12 @@ var demand_settled_tick: int = -1
 ## and DemandResolve subclasses like IncreasePatience that answer "did it go
 ## up since then" regardless of what caused it.
 var demand_patience_at_raise: int = 0
+## How many times something has raised their patience - a card, a sale, anything
+## through add_patience() - counted whether or not it could still go up (it
+## stops at max_patience). What IncreasePatience reads.
+var patience_raises: int = 0
+## patience_raises the moment the live demand was raised.
+var demand_raises_at_raise: int = 0
 
 var state: String = "floor"        ## floor | signed | walked
 var sales: int = 0
@@ -130,6 +136,8 @@ func appeal_for(interest_id: StringName) -> int:
 
 
 func add_patience(n: int) -> void:
+	if n > 0:
+		patience_raises += 1
 	patience = min(max_patience, patience + n)
 
 

@@ -186,3 +186,72 @@ func test_give_us_a_minute_breaks_only_on_something_played() -> void:
 	for kind in [DemandResolve.SUPPORT, DemandResolve.PLACE, DemandResolve.OFFER, DemandResolve.CLOSE]:
 		h.check("%s breaks it" % kind, r.broken_by(kind, {}))
 	h.check("and waiting it out is the answer", r.succeeds_on_expiry())
+
+# ------------------------------------------- answered by patience raised
+## A made-up support card: `n` patience to the one it is played on, or - with
+## `floor` - to everyone; none at all for n = 0.
+func _calm_in_hand(s: Shift, n: int, floor: bool = false) -> void:
+	var def := SupportCardDef.new()
+	def.id = &"made_up_calm"
+	def.display_name = "Made-up Calm"
+	def.needs_offer = false
+	if n != 0:
+		var e: Effect = ChangePatienceFloor.new() if floor else ChangePatience.new()
+		e.amount = n
+		def.effects = [e]
+	s.hand[0] = CardInstance.new(def, 9001)
+
+## Two at the floor, you with the first; the one at `chair` asking for patience,
+## starting from `patience`.
+func _asking_for_patience(chair: int, patience: int = -1) -> Array:
+	var s := _shift([&"easygoing", &"easygoing"])
+	var here := _sat_a_while(s, 0)
+	var there := _sat_a_while(s, 1)
+	s.at = 0
+	s.last_customer = here
+	var asker: Customer = s.chairs[chair]
+	asker.patience = asker.max_patience / 2 if patience < 0 else patience
+	s.raise_demand(asker, _made_up(5, IncreasePatience.new(), _patience(-5)))
+	return [s, asker]
+
+func test_a_patience_ask_is_answered_by_patience_raised_by_a_card_on_anyone() -> void:
+	## "I was playing against 3 Karens and used Smooth Jazz ... the manager call
+	## went off and I lost the customer despite playing a patience card (not on
+	## the Karen who fired, but on the one at another seat)."
+	var set := _asking_for_patience(1)
+	var s: Shift = set[0]
+	var asker: Customer = set[1]
+	_calm_in_hand(s, 3, true)
+	s.play_card(0)
+	h.check("a card for the whole floor, played on someone else, answers them",
+		asker.demand == null)
+	h.eq("counted as met", int(s.stat["demands_met"]), 1)
+
+func test_a_patience_ask_is_answered_even_at_full_patience() -> void:
+	## "Make a patience card count even at full patience."
+	var set := _asking_for_patience(0, 0)
+	var s: Shift = set[0]
+	var asker: Customer = set[1]
+	asker.patience = asker.max_patience
+	_calm_in_hand(s, 3)
+	s.play_card(0)
+	h.check("their patience cannot pass its ceiling", asker.patience <= asker.max_patience)
+	h.check("but it was raised, and that answers them", asker.demand == null)
+
+func test_a_patience_ask_is_answered_by_any_raise_and_nothing_else() -> void:
+	var set := _asking_for_patience(0)
+	var s: Shift = set[0]
+	var asker: Customer = set[1]
+	_calm_in_hand(s, 0)
+	s.play_card(0)
+	h.check("a card that gives no patience does not answer them", asker.demand != null)
+	set = _asking_for_patience(1)
+	s = set[0]
+	asker = set[1]
+	_calm_in_hand(s, 3)
+	s.play_card(0)
+	h.check("nor does patience for somebody else", asker.demand != null)
+	asker.add_patience(1)
+	s._burn(1, "cards")
+	h.check("a raise from anywhere does, by the next tick", asker.demand == null)
+
