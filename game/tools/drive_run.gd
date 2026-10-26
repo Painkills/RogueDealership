@@ -465,6 +465,17 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 		detail._remove_btn.text == "remove %s" % Format.money(shop.remove_price()))
 	_check("and nothing to take or buy - it is already yours",
 		not detail._take_btn.visible and not detail._buy_btn.visible)
+	# "Whatever changes between base and upgrade should somehow be highlighted."
+	var preview := CardInstance.new(inst.card, -1)
+	preview.upgraded = true
+	var changes := CardText.upgrade_changes(inst, preview)
+	var marked: Array = (detail._upgraded.get_node(^"SubViewport/CardFront") as CardFront).highlighted()
+	_check("the upgrade's changes are marked on its face (%s; %s)" % [str(marked), str(changes)],
+		not changes.is_empty() and not marked.is_empty())
+	_check("and nothing on the card as it is now",
+		(detail._current.get_node(^"SubViewport/CardFront") as CardFront).highlighted().is_empty())
+	_check("and said in words under them (%s)" % detail._changes.text,
+		detail._changes.visible and changes.all(func(c): return detail._changes.text.contains(c)))
 
 	_run.money = 999999
 	var was_upgraded := inst.upgraded

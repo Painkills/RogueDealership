@@ -17,6 +17,8 @@ var _title: Label
 var _current: CardPreview2D
 var _upgraded: CardPreview2D
 var _upgraded_wrap: Control
+## What upgrading changes, in words, under the two cards.
+var _changes: Label
 var _take_btn: Button
 var _buy_btn: Button
 var _upgrade_btn: Button
@@ -38,6 +40,7 @@ func _bind() -> void:
 	_bound = true
 	_title = %DetailTitle
 	_current = %CurrentPreview
+	_changes = %ChangesLabel
 	_upgraded = %UpgradedPreview
 	_upgraded_wrap = %UpgradedWrap
 	_take_btn = %TakeButton
@@ -77,6 +80,7 @@ func _show_unowned(shop: Shop, def: CardDef) -> void:
 	# store's own card faces use for a card that is not owned yet.
 	_current.show_card(CardInstance.new(def, -1))
 	_upgraded_wrap.visible = false
+	_changes.visible = false
 	_take_btn.visible = false
 	_buy_btn.visible = false
 	_upgrade_btn.visible = false
@@ -95,8 +99,13 @@ func show_card(shop: Shop, inst: CardInstance) -> void:
 	# OWNED card does not have yet either.
 	var preview := CardInstance.new(inst.card, -1)
 	preview.upgraded = true
-	_upgraded.show_card(preview)
+	# What it changes, marked on the upgraded card and said under both - an
+	# upgrade that only takes a tick off is easy to miss on the card alone.
+	_upgraded.show_card(preview, inst)
 	_upgraded_wrap.visible = true
+	var changes := CardText.upgrade_changes(inst, preview)
+	_changes.text = "Upgrading: %s." % "; ".join(changes) if not changes.is_empty() else ""
+	_changes.visible = _changes.text != "" and not inst.upgraded
 
 	_take_btn.visible = false
 	_buy_btn.visible = false

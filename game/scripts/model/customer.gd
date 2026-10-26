@@ -157,6 +157,18 @@ func top_interest_id() -> StringName:
 
 
 ## Their `n` highest-priority interests not yet sold, best first.
+## The `n` interests they want most that you do not know the rank of yet and
+## they have not bought - what a read tells you (reveal_room()). In order.
+func top_unknown_interest_ids(n: int) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for iid in top_unsold_interest_ids(ranks.size()):
+		if out.size() >= n:
+			break
+		if not known_ranks.has(iid):
+			out.append(iid)
+	return out
+
+
 func top_unsold_interest_ids(n: int) -> Array[StringName]:
 	var sold := {}
 	for u in unsigned:
@@ -202,15 +214,17 @@ func interests() -> InterestPool:
 	return _interests
 
 
-func reveal_room(exact: bool = false, with_line: bool = true, top_count: int = 3) -> void:
+func reveal_room(exact: bool = false, with_line: bool = true) -> void:
 	## Active Listening. The Line, always - since offering stopped teaching it,
 	## this is the ONLY way to learn it - and what they want. `exact` is the
-	## `top_count` they want most that are still open, each with its rank, so in
-	## order; not exact, only the one they want most.
+	## three they want most that you do not know yet, each with its rank, so in
+	## order; not exact, only the one they want most that you do not know yet.
 	##
-	## Whatever is highest-priority and NOT already sold. A read that keeps
-	## naming what you already closed would stop telling you anything the moment
-	## you are doing well.
+	## Never what you already know - a rank a placed product showed you, or a
+	## read before this one - nor what they have already bought: sold their
+	## number one, a read gives 2, 3 and 4; knowing their 3, it gives 1, 2 and 4.
+	## A read that keeps naming what you already have would stop telling you
+	## anything the moment you are doing well.
 	##
 	## Nothing is lit on their interest grid beyond the ranks themselves: a row
 	## is only lit for someone who came in for a category or will only look at
@@ -225,12 +239,11 @@ func reveal_room(exact: bool = false, with_line: bool = true, top_count: int = 3
 	# priorities already walks known_ranks, so this needs no new case anywhere
 	# downstream of here. The rank is whatever top's real rank is - 2nd, 3rd,
 	# whatever is left - not hardcoded to 1.
-	var top := top_unsold_interest_id()
-	known_ranks[top] = int(ranks[top])
+	var unknown := top_unknown_interest_ids(3 if exact else 1)
 	if exact:
-		known_top = top_unsold_interest_ids(top_count)
-		for iid in known_top:
-			known_ranks[iid] = int(ranks[iid])
+		known_top = unknown
+	for iid in unknown:
+		known_ranks[iid] = int(ranks[iid])
 
 
 func owns(product_id: StringName) -> bool:

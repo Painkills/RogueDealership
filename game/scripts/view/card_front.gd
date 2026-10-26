@@ -57,6 +57,43 @@ func dress(inst: CardInstance) -> void:
 	# Only a product has a price; a support card gives the room to its words.
 	_price.visible = inst.is_product()
 
+## Marks in highlighter yellow what is different on this face from `before` -
+## the store's upgrade preview, so an upgrade that only takes a tick off the
+## cost is as plain as one that changes what the card does. Null: nothing marked.
+func highlight_changes(before: CardInstance) -> void:
+	if not is_node_ready():
+		await ready
+	var shown := _clock.ticks
+	_clock.highlighted = before != null and before.ticks() != shown
+	_clock.queue_redraw()
+	_mark(_body, before != null and CardText.body(before) != _body.text)
+	_mark(_effect, before != null and CardText.flavor(before) != _effect.text)
+	_mark(_price, before != null and CardText.margin(before) != _price.text)
+
+## What highlight_changes() marked, by part - for checks.
+func highlighted() -> Array[StringName]:
+	var out: Array[StringName] = []
+	if _clock.highlighted:
+		out.append(&"ticks")
+	if _body.has_theme_stylebox_override("normal"):
+		out.append(&"body")
+	if _effect.has_theme_stylebox_override("normal"):
+		out.append(&"effect")
+	if _price.has_theme_stylebox_override("normal"):
+		out.append(&"price")
+	return out
+
+func _mark(label: Label, on: bool) -> void:
+	if not on:
+		label.remove_theme_stylebox_override("normal")
+		return
+	var marker := StyleBoxFlat.new()
+	marker.bg_color = Palette.color(&"sticky")
+	marker.set_corner_radius_all(8)
+	marker.content_margin_left = 8
+	marker.content_margin_right = 8
+	label.add_theme_stylebox_override("normal", marker)
+
 ## Whether the picture is showing - for checks.
 func shows_art() -> bool:
 	return _art.visible

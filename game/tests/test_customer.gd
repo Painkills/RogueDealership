@@ -53,31 +53,30 @@ func test_an_exact_read_gives_the_line_and_their_top_three_in_order() -> void:
 	h.check("a read after a sale starts from what is left (%s)" % str(next),
 		not next.has(three[0]) and c.known_top == next)
 
-func test_a_deeper_read_gives_their_top_six_in_order() -> void:
-	## "Make Active Listening's upgrade provide top 6 products in order."
-	var c := _cust(&"easygoing", 2)
-	var read := RevealRoom.new()
-	read.exact = true
-	read.top = 6
-	var ctx := EffectContext.new()
-	ctx.customer = c
-	read.apply(ctx)
-	var six := c.top_unsold_interest_ids(6)
-	h.eq("six of them", c.known_top, six)
-	for k in range(6):
-		h.eq("number %d, with its rank" % (k + 1), int(c.known_ranks.get(six[k], -1)), k + 1)
-	h.eq("and the card says so", read.describe(), "reveals their Line and their top 6, in order")
+func test_a_read_gives_what_you_do_not_know_yet() -> void:
+	## "Make it 'top 3 unknown interests'. So if you have already sold them their
+	## number 1, it gives you 2, 3, 4. If you already gave 3, it tells you 1, 2, 4."
+	var c := _cust(&"easygoing", 3)
+	var order := c.top_unsold_interest_ids(c.ranks.size())
+	c.known_ranks[order[2]] = int(c.ranks[order[2]])
+	c.reveal_room(true)
+	h.eq("knowing their 3, it gives 1, 2 and 4", c.known_top, [order[0], order[1], order[3]])
+	var d := _cust(&"easygoing", 4)
+	var theirs := d.top_unsold_interest_ids(d.ranks.size())
+	d.unsigned.append({"product": _a_product_for(d, theirs[0]), "margin": 100})
+	d.reveal_room(true)
+	h.eq("sold their 1, it gives 2, 3 and 4", d.known_top, [theirs[1], theirs[2], theirs[3]])
+	d.reveal_room(true)
+	h.eq("and a second read goes on to the next three", d.known_top,
+		[theirs[4], theirs[5], theirs[6]])
 
-func test_the_upgraded_active_listening_reads_deeper_than_the_plain_one() -> void:
-	var pool: CardPool = load("res://data/card_pool.tres")
-	for def in pool.cards:
-		for base in def.effects:
-			if not (base is RevealRoom and base.exact):
-				continue
-			for up in def.upgraded_effects:
-				if up is RevealRoom:
-					h.check("%s upgraded reads deeper (%d -> %d)" % [def.id, base.top, up.top],
-						up.top > base.top)
+func test_a_plain_read_gives_the_one_they_want_most_that_you_do_not_know() -> void:
+	var c := _cust(&"easygoing", 5)
+	var order := c.top_unsold_interest_ids(c.ranks.size())
+	c.known_ranks[order[0]] = int(c.ranks[order[0]])
+	c.reveal_room(false)
+	h.check("their 2, since you know their 1", c.known_ranks.has(order[1]))
+	h.check("and nothing past it", not c.known_ranks.has(order[2]))
 
 ## Any product answering `iid`, for a test that needs one sold.
 func _a_product_for(_c, iid: StringName) -> ProductCardDef:

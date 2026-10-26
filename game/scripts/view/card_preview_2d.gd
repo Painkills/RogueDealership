@@ -64,7 +64,9 @@ func _bind() -> void:
 ## What is actually in front of you right now, on the exact same card face the
 ## floor uses - so "what does this offer look like" or "what does upgrading
 ## this actually change" is never a guess from a row of plain button text.
-func show_card(inst: CardInstance) -> void:
+## `changed_from`: the card it is being compared with - whatever differs from
+## it is marked (CardFront.highlight_changes()), for an upgrade's preview.
+func show_card(inst: CardInstance, changed_from: CardInstance = null) -> void:
 	_bind()
 	_name.text = CardText.title(inst)
 	_ticks.text = CardText.ticks(inst)
@@ -86,6 +88,7 @@ func show_card(inst: CardInstance) -> void:
 	_name.add_theme_color_override("font_color",
 		Palette.color(&"appeal") if inst.upgraded else Palette.color(&"text"))
 	($SubViewport/CardFront as CardFront).dress(inst)
+	($SubViewport/CardFront as CardFront).highlight_changes(changed_from)
 
 ## The same shape CustomerCard3D.setup(null) uses for an empty chair: one
 ## state on the SAME node rather than a second node to keep hidden and synced.

@@ -29,6 +29,20 @@ static func body(inst: CardInstance) -> String:
 		parts.append(e.describe())
 	return ", ".join(parts)
 
+## What upgrading `before` into `after` changes, a phrase each - the cost, what
+## it does, what it pays - for the store to say in words, not only mark.
+static func upgrade_changes(before: CardInstance, after: CardInstance) -> Array[String]:
+	var out: Array[String] = []
+	if before.ticks() != after.ticks():
+		out.append("costs %d tick%s instead of %d" % [after.ticks(),
+			"" if after.ticks() == 1 else "s", before.ticks()])
+	for part in [[body(before), body(after)], [flavor(before), flavor(after)]]:
+		if part[0] != part[1]:
+			out.append("%s instead of %s" % [part[1], part[0]])
+	if margin(before) != margin(after):
+		out.append("pays %s instead of %s" % [margin(after), margin(before)])
+	return out
+
 ## Empty for support cards - they have no margin of their own.
 static func margin(inst: CardInstance) -> String:
 	return Format.money(inst.margin()) if inst.is_product() else ""

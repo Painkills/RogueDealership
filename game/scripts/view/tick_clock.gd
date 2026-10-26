@@ -3,6 +3,8 @@ class_name TickClock extends Control
 ## and the number in the middle.
 
 var ticks := 1
+## Marked in highlighter yellow - what an upgrade changes (CardFront.highlight_changes()).
+var highlighted := false
 
 func show_ticks(n: int) -> void:
 	ticks = n
@@ -12,6 +14,8 @@ func _draw() -> void:
 	var ink := Palette.color(&"neutral_1")
 	var c := size * 0.5 + Vector2(0, 3)
 	var r := minf(size.x, size.y) * 0.5 - 6.0
+	if highlighted:
+		draw_circle(c, r + 6.0, Palette.color(&"sticky"))
 	draw_rect(Rect2(c.x - 7, c.y - r - 9, 14, 7), ink)
 	draw_circle(c, r, Palette.color(&"panel"))
 	draw_arc(c, r, 0.0, TAU, 48, ink, 5.0, true)

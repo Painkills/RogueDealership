@@ -41,6 +41,15 @@ func _init() -> void:
 	# - it has nothing "upgraded" to compare against, unlike show_card()'s.
 	upgraded_wrap.unique_name_in_owner = true
 
+	# What upgrading changes, in words - marked on the upgraded card too.
+	var changes := AppWindow.label(col, root, "ChangesLabel", "Upgrading: ...", 28, &"text",
+		false, true)
+	changes.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	changes.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	changes.custom_minimum_size = Vector2(760, 0)
+	changes.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	changes.visible = false
+
 	var button_row := HBoxContainer.new()
 	button_row.name = "ButtonRow"
 	button_row.add_theme_constant_override("separation", 16)
