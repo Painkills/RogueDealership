@@ -12,24 +12,11 @@ class_name IncreasePatience extends DemandResolve
 ## patience keeps draining while they wait, so after three ticks a sale's +3
 ## only got them back to where they asked - and "the increase of patience caused
 ## by an accepted offer is NOT clearing the karen's request for a manager."
-##
-## And by a card that gives them patience when they are already as patient as
-## they get: the number cannot move past their ceiling, but the card was the
-## answer all the same - "make a patience card count even at full patience".
 func satisfied(_kind: StringName, data: Dictionary) -> bool:
 	var now := int(data.get("patience", 0))
 	if now > int(data.get("patience_at_raise", 0)):
 		return true
-	if data.has("patience_before") and now > int(data["patience_before"]):
-		return true
-	return data.has("patience_max") and now >= int(data["patience_max"]) \
-		and _gives_patience(data.get("effects", []))
-
-static func _gives_patience(effects: Array) -> bool:
-	for e in effects:
-		if e is Effect and SupportCardDef._gives_patience(e):
-			return true
-	return false
+	return data.has("patience_before") and now > int(data["patience_before"])
 
 func describe() -> String:
 	return "raise their patience"
