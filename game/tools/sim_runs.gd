@@ -36,6 +36,8 @@ var _shop_mode := "greedy"
 ## boss=take (default): work a boss whenever one is on the calendar. boss=skip:
 ## never - the regular shift the strategy wants instead.
 var _boss_mode := "take"
+## `-- menu`: menu runs (RunState.make_menu) - products on the menu, not in hand.
+var _menu := false
 
 ## Each strategy: which tiers it would rather work on `day`, best first.
 var _strategies := {
@@ -67,6 +69,10 @@ func _what_ifs() -> void:
 		if arg == "fog":
 			SimPlayer.fog = true
 			print("Fog: playing on what a person can see.")
+			continue
+		if arg == "menu":
+			_menu = true
+			print("Menu mode: products on the menu.")
 			continue
 		if arg == "no_upgrades":
 			_upgrades = null
@@ -139,6 +145,8 @@ func _runs(strategy: Callable) -> Array:
 func _one_run(strategy: Callable, seed_value: int) -> Dictionary:
 	var run := RunState.new(_cfg, _interests, _cards, _arch, seed_value, null, _pool,
 		_upgrades)
+	if _menu:
+		run.make_menu()
 	var r := {"days": 0, "earned": 0, "bought": 0, "upgraded": 0, "standing": {},
 		"banked_on": {}, "quota_on": {}}
 	while not run.is_over():
@@ -201,6 +209,10 @@ func _shop(shop: Shop, r: Dictionary) -> void:
 			return (a as ProductCardDef).margin > (b as ProductCardDef).margin
 		return a.rarity > b.rarity)
 	for c in shelf:
+		# On a menu a product takes its interest's slot: never for less margin.
+		var old := shop.replaces(c)
+		if old != null and (old.card as ProductCardDef).margin >= (c as ProductCardDef).margin:
+			continue
 		if _shop_mode == "greedy" and shop.buy(c).ok:
 			r["bought"] += 1
 	for uid in shop.upgrade_offers.duplicate():

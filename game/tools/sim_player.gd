@@ -11,13 +11,17 @@ class_name SimPlayer extends RefCounted
 ## guesses a typical Line until Read the Room shows the real one. After placing
 ## it sees only the band, offers on INTERESTED, pushes or drops on the rest, and
 ## learns the exact gap the way you do - by offering, or by Read the Room.
+##
+## In a menu shift (ShiftConfig.products_on_board) it puts products down off the
+## menu instead of out of the hand - whichever of them are free to go on a table.
 
 static var fog := false
 ## What a fogged player guesses a Line is before anything has told it.
 const GUESSED_LINE := 24
 ## Where an interest is guessed to rank: in the category they announced they
-## came for (the Karen), or anything else.
-const GUESS_TOP := 2
+## came for (the Karen) - the middle of the top ShiftConfig.favourites_within,
+## where their favourites are dealt - or anything else.
+static var _guess_top := 2
 const GUESS_MIDDLE := 5
 
 ## The Line as this player knows it.
@@ -36,7 +40,7 @@ static func _est_rank(c: Customer, iid: StringName) -> int:
 	# does someone who will look at nothing else.
 	var cat_id: StringName = c.interests().by_id(iid).category.id
 	if (c.demands_category != null and cat_id == c.demands_category) or cat_id == _only(c):
-		return GUESS_TOP
+		return _guess_top
 	return GUESS_MIDDLE
 
 ## The one category they will look at, which is the one they want - or &"".
@@ -142,6 +146,7 @@ static func _note(c: Customer, ticks: int, banked: int, kind: String) -> void:
 
 static func play(s: Shift) -> void:
 	_parked.clear()
+	_guess_top = roundi((1 + s.cfg.favourites_within) / 2.0)
 	var guard := 0
 	while not s.is_over() and guard < 600:
 		guard += 1
@@ -204,12 +209,12 @@ static func _pick_target(s: Shift) -> int:
 			score = 850.0
 		elif c.demand != null and _can_answer(s, c):
 			score = 1000.0 - float(c.demand_due_tick - s.tick)
-		elif not c.unsigned.is_empty() and c.patience <= 3:
+		elif not c.unsigned.is_empty() and c.patience < s.cfg.leaving_soon_at:
 			score = 900.0 - float(c.patience)
 		else:
 			var p := _best_product(s, c)
-			if p >= 0:
-				score = float(_margin_of(s, p)) / 100.0 + (5.0 if s.at != null and int(s.at) == i else 0.0)
+			if p != null:
+				score = float(p.margin()) / 100.0 + (5.0 if s.at != null and int(s.at) == i else 0.0)
 			elif not c.unsigned.is_empty():
 				score = 1.0
 			else:
@@ -228,10 +233,10 @@ static func _can_answer(s: Shift, c: Customer) -> bool:
 	if r is IncreasePatience:
 		return _find(s, "patience") >= 0
 	if r is MakeAnOffer:
-		return c.offer != null or _best_product(s, c, true) >= 0
+		return c.offer != null or _best_product(s, c, true) != null
 	if r is OfferSomethingGood:
 		return (c.offer != null and _est_rank(c, c.offer.product.interest.id) <= 3) \
-			or _top3_product(s, c) >= 0
+			or _top3_product(s, c) != null
 	if r is PlayConcession:
 		return c.offer != null and _find(s, "concession") >= 0
 	if r is PlayAnySupport:
@@ -284,7 +289,7 @@ static func _act(s: Shift, c: Customer) -> bool:
 		# waits on the appeal the ordinary way, below.
 		if r is MakeAnOffer:
 			if c.offer == null:
-				return _did("answer a demand: make an offer", s.place(_best_product(s, c, true)).ok)
+				return _did("answer a demand: make an offer", _place(s, _best_product(s, c, true)))
 			if s.offer_refusal(c) == "":
 				return _did("answer a demand: make an offer", s.offer().ok)
 		if r is OfferSomethingGood:
@@ -294,7 +299,7 @@ static func _act(s: Shift, c: Customer) -> bool:
 			else:
 				if c.offer != null:
 					s.drop_offer()
-				return _did("answer a demand: offer a top-3", s.place(_top3_product(s, c)).ok)
+				return _did("answer a demand: offer a top-3", _place(s, _top3_product(s, c)))
 		if r is PlayConcession:
 			return _did("answer a demand: concession", s.play_card(_find(s, "concession")).ok)
 		if r is PlayAnySupport:
@@ -349,13 +354,13 @@ static func _act(s: Shift, c: Customer) -> bool:
 			return _did("appeal card", s.play_card(card).ok)
 		s.drop_offer()
 	var p := _best_product(s, c)
-	if p >= 0:
-		return _did("place a product", s.place(p).ok)
+	if p != null:
+		return _did("place a product", _place(s, p))
 	# Nothing in hand sells to them: a free draw card goes looking for it.
 	var draw := _free_draw(s)
 	if draw >= 0:
 		return _did("draw card", s.play_card(draw).ok)
-	if c.patience <= 4:
+	if c.patience <= s.cfg.leaving_soon_at:
 		var calm := _find(s, "patience")
 		if calm >= 0:
 			return _did("patience card", s.play_card(calm).ok)
@@ -401,7 +406,7 @@ static func _someone_else_to_work(s: Shift, c: Customer) -> bool:
 			continue
 		if o.demand != null and o.demand.resolve is LeaveThemAlone:
 			continue
-		if o.offer != null or not o.unsigned.is_empty() or _best_product(s, o) >= 0:
+		if o.offer != null or not o.unsigned.is_empty() or _best_product(s, o) != null:
 			return true
 	return false
 
@@ -426,21 +431,42 @@ static func _should_close(s: Shift, c: Customer) -> bool:
 		return false
 	if c.has_budget():
 		return true
-	return c.patience <= 3 or (s.tick_budget - s.tick) <= 2 \
-		or (c.offer == null and _best_product(s, c) < 0)
+	return c.patience < s.cfg.leaving_soon_at or (s.tick_budget - s.tick) <= 2 \
+		or (c.offer == null and _best_product(s, c) == null)
 
-## The product in hand that sells best to `c`: outright sales first, by margin;
-## then the smallest gap the appeal cards in hand can close. -1 if none can.
+## The products this player can put down now: the hand's - or in a menu shift,
+## the menu's that are free to go on a table.
+static func _products(s: Shift) -> Array[CardInstance]:
+	var out: Array[CardInstance] = []
+	if s.cfg.products_on_board:
+		for inst in s.board:
+			if s.board_available(inst):
+				out.append(inst)
+		return out
+	for inst in s.hand:
+		if inst.is_product():
+			out.append(inst)
+	return out
+
+## Puts `inst` on the table of whoever you are with - off the menu, or out of
+## the hand.
+static func _place(s: Shift, inst: CardInstance) -> bool:
+	if inst == null:
+		return false
+	if s.board.has(inst):
+		return s.place_board(inst.card.id).ok
+	return s.place(s.hand.find(inst)).ok
+
+## The product to hand that sells best to `c`: outright sales first, by margin;
+## then the smallest gap the appeal cards in hand can close. null if none can.
 ## `any_offer`: any product at all will do (a Kicker only wants to be asked).
-static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int:
+static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> CardInstance:
 	var boost := _appeal_in_hand(s)
 	var short := _quota_short(s)
-	var best := -1
+	var best: CardInstance = null
 	var best_key := -INF
-	for i in range(s.hand.size()):
-		var inst: CardInstance = s.hand[i]
-		if not inst.is_product() or c.owns(inst.card.id) \
-				or not c.accepts(inst.card as ProductCardDef):
+	for inst in _products(s):
+		if c.owns(inst.card.id) or not c.accepts(inst.card as ProductCardDef):
 			continue
 		var appeal: int = _est_appeal(c, (inst.card as ProductCardDef).interest.id)
 		var gap: int = _est_line(c) - appeal
@@ -453,7 +479,7 @@ static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> int
 			key += 1000000.0
 		if key > best_key:
 			best_key = key
-			best = i
+			best = inst
 	return best
 
 ## How many more of the day's quota category the shift still needs, counting
@@ -467,22 +493,17 @@ static func _in_quota(s: Shift, inst: CardInstance) -> bool:
 	return inst.is_product() \
 		and (inst.card as ProductCardDef).interest.category.id == s.category_quota
 
-static func _top3_product(s: Shift, c: Customer) -> int:
-	var best := -1
+static func _top3_product(s: Shift, c: Customer) -> CardInstance:
+	var best: CardInstance = null
 	var best_rank := 99
-	for i in range(s.hand.size()):
-		var inst: CardInstance = s.hand[i]
-		if not inst.is_product() or c.owns(inst.card.id) \
-				or not c.accepts(inst.card as ProductCardDef):
+	for inst in _products(s):
+		if c.owns(inst.card.id) or not c.accepts(inst.card as ProductCardDef):
 			continue
 		var rank: int = _est_rank(c, (inst.card as ProductCardDef).interest.id)
 		if rank <= 3 and rank < best_rank:
 			best_rank = rank
-			best = i
+			best = inst
 	return best
-
-static func _margin_of(s: Shift, i: int) -> int:
-	return (s.hand[i] as CardInstance).margin()
 
 ## How far a card closes the gap: its appeal - Back to Value's grows with
 ## `sales`, the products they have already taken - plus however far it lowers
@@ -629,9 +650,8 @@ static func _later_margin(s: Shift, c: Customer) -> int:
 	if s.tick_budget - s.tick <= 6:
 		return 0
 	var margins: Array[int] = []
-	for inst in s.hand:
-		if not inst.is_product() or c.owns(inst.card.id) \
-				or not c.accepts(inst.card as ProductCardDef):
+	for inst in _products(s):
+		if c.owns(inst.card.id) or not c.accepts(inst.card as ProductCardDef):
 			continue
 		if _est_rank(c, (inst.card as ProductCardDef).interest.id) > GUESS_MIDDLE:
 			continue

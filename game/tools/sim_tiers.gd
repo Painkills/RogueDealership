@@ -10,6 +10,9 @@ extends SceneTree
 ##
 ##     ... --script res://tools/sim_tiers.gd -- midday.patience_scale=0.85
 ##
+## cfg.field=value, card.<id>.field=value and arch.<id>.field=value as well, the
+## way sim_runs.gd takes them; `fog` plays fair, `menu` deals menu runs.
+##
 ## Every shift starts from the STARTER deck with full standing, so the tier and
 ## the day are the only differences between them - the numbers compare tiers,
 ## they do not predict a real run (where the deck grows in the store).
@@ -24,10 +27,18 @@ const TIERS: Array[StringName] = [&"morning", &"midday", &"night"]
 
 var _cfg: ShiftConfig
 var _pool: ShiftProfilePool
+## Held for the whole run: a what-if edits the cached resource, and one nothing
+## holds is dropped from the cache and loaded afresh, without the edit.
+var _cards: CardPool
+var _arch: ArchetypePool
+## `-- menu`: menu runs (RunState.make_menu) - products on the menu, not in hand.
+var _menu := false
 
 func _init() -> void:
 	_cfg = load("res://data/shift_config.tres")
 	_pool = load("res://data/shift_profile_pool.tres")
+	_cards = load("res://data/card_pool.tres")
+	_arch = load("res://data/archetype_pool.tres")
 	var days: int = _cfg.shifts_in_run
 	var profiles := {}
 	for tier in TIERS:
@@ -37,10 +48,27 @@ func _init() -> void:
 			SimPlayer.fog = true
 			print("Fog: playing on what a person can see.")
 			continue
+		if arg == "menu":
+			_menu = true
+			print("Menu mode: products on the menu.")
+			continue
 		var parts: PackedStringArray = arg.split("=")
 		var path: PackedStringArray = parts[0].split(".")
+		# cfg.field=value, card.<id>.field=value and arch.<id>.field=value, as
+		# sim_runs.gd takes them: the cached resources, for this process only.
+		var target: Resource = null
+		if parts.size() == 2 and path.size() == 2 and path[0] == "cfg":
+			target = _cfg
+		elif parts.size() == 2 and path.size() == 3 and path[0] == "card":
+			target = _cards.by_id(StringName(path[1]))
+		elif parts.size() == 2 and path.size() == 3 and path[0] == "arch":
+			target = _arch.by_id(StringName(path[1]))
+		if target != null:
+			target.set(path[-1], str_to_var(parts[1]))
+			print("what-if: %s = %s" % [parts[0], target.get(path[-1])])
+			continue
 		if parts.size() != 2 or path.size() != 2 or not profiles.has(StringName(path[0])):
-			print("ignoring %s - expected tier.field=value" % arg)
+			print("ignoring %s - expected tier.field=value, cfg.field=value, card.<id>.field=value or arch.<id>.field=value" % arg)
 			continue
 		var p: ShiftProfile = profiles[StringName(path[0])]
 		p.set(path[1], str_to_var(parts[1]))
@@ -61,9 +89,11 @@ func _cell(profile: ShiftProfile, day: int) -> Dictionary:
 		"quota": 0.0, "st_quota": 0.0, "st_walk": 0.0, "st_product": 0.0, "st_heal": 0.0}
 	for seed_value in range(SEEDS):
 		var run := RunState.new(_cfg, load("res://data/interests/interest_pool.tres"),
-			load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
+			_cards, _arch,
 			seed_value * 7919 + day)
 		run.shift_number = day
+		if _menu:
+			run.make_menu()
 		var s := run.start_shift(profile)
 		SimPlayer.play(s)
 		var r := s.report()
