@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_d8w72"]
 [ext_resource type="Script" uid="uid://ulx4li35o01c" path="res://scripts/model/effects/change_margin.gd" id="3_3kw8p"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="4_srclt"]
-[ext_resource type="Texture2D" path="res://art/cards/discount.png" id="99_art"]
+[ext_resource type="Texture2D" path="res://art/cards/finished/discount.png" id="99_art"]
 
 [sub_resource type="Resource" id="Resource_y1lle"]
 script = ExtResource("2_d8w72")
