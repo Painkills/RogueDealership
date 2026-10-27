@@ -17,7 +17,7 @@ class_name CustomerArchetype extends Resource
 @export_multiline var pattern: String    ## the ONE behaviour this teaches
 @export_multiline var tell: String       ## what you see on arrival
 @export var line: int = 35
-@export var patience: int = 32
+@export var patience: int = 24
 ## The most patience they can ever have - what you can build it up to with
 ## patience cards. 0 = no more than the patience they sit down with (`patience`,
 ## after the shift's scale); a number above it is a shield to grow. Never below it.

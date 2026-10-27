@@ -12,6 +12,6 @@ id = &"express_lane"
 display_name = "Express Lane"
 blurb = "Everyone's double-parked."
 difficulty = 14
-shift_ticks = 12
+shift_ticks = 16
 lineup = Array[ExtResource("2_arch")]([ExtResource("3_speedster"), ExtResource("4_easy"), ExtResource("3_speedster"), ExtResource("5_lay")])
 chance = 0.35

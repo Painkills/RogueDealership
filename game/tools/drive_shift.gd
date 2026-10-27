@@ -67,13 +67,16 @@ func _physics_process(_delta: float) -> bool:
 	# A standalone driven shift has no real RunState behind it, so a full meter
 	# is the honest stand-in. And a long clock: this plays far more moves than
 	# any one shift holds, and products and strong cards cost more than a tick -
-	# its later checks need a floor that is still open.
+	# its later checks need a floor that is still open. Patient customers for
+	# the same reason (the shift's patience scale): it plays more on one of them
+	# than anyone sits through, and its later checks need them still seated.
 	var cfg := (load("res://data/shift_config.tres") as ShiftConfig).duplicate() as ShiftConfig
 	cfg.shift_ticks = 60
 	_controller.setup(Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), randi()), 100)
+		load("res://data/archetype_pool.tres"), randi(),
+		[], null, 0, 1, 0, 0, null, 0, 2.0), 100)
 
 	_check("the viewport is picking, or no card can ever be clicked",
 		get_root().physics_object_picking)
