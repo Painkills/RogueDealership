@@ -927,6 +927,8 @@ func _check_the_hints_sit_flat_inside_their_cards() -> void:
 		_check("the table you arrived at is empty, so its note can be checked", false)
 		return
 	var note: Control = _controller._table_notes[at]
+	_put_the_hand_down()
+	_settle()
 	_check_tag_inside("empty table", note, _rect_of(_controller._chair_zones[at], CARD))
 	_check("nothing unsigned yet, so the note offers no close",
 		c.unsigned.is_empty() and not note.get_node(^"Lines/CloseRow").visible)
@@ -934,6 +936,27 @@ func _check_the_hints_sit_flat_inside_their_cards() -> void:
 		if i != at:
 			_check("seat %d's table is not showing, so neither is its note" % i,
 				not _controller._table_notes[i].visible)
+
+	# A hand card lifted to be read: the note is drawn over everything in 3D, so
+	# it steps aside until the card goes back down.
+	# Its lift run to the end, and the tags placed the way a frame would.
+	var card = _controller._hand_zone.cards[0]
+	card.set_hovered()
+	card.hover_tween.custom_step(2.0)
+	_controller._place_tags()
+	_check("a hovered hand card hides the empty table's note", not note.visible)
+	card.remove_hovered()
+	card.hover_tween.custom_step(2.0)
+	_controller._place_tags()
+	_check("and putting it down brings the note back", note.visible)
+
+## Every hand card back down. The checks that lift one (hovering, pressing,
+## dragging) have no real pointer to leave it, so it stays up - and a lifted
+## card hides the empty table's note.
+func _put_the_hand_down() -> void:
+	for card in _controller._hand_zone.cards:
+		card.remove_hovered()
+		card.hover_tween.custom_step(2.0)
 
 func _check_tag_inside(what: String, tag: Control, card: Rect2) -> void:
 	var r := tag.get_global_rect()
@@ -3720,6 +3743,7 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 			as CollisionShape3D).disabled)
 	_check("and the hint stays hidden", not _controller._close_hints[chair].visible)
 	var note: Control = _controller._table_notes[chair]
+	_put_the_hand_down()
 	_settle()
 	_check("the table's note still says what to do with it", note.visible)
 	_check("but offers no close - there is nothing to close",

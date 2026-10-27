@@ -1893,6 +1893,22 @@ func _place_tags() -> void:
 		return
 	for tag in _tags:
 		tag.follow(_camera)
+	# The empty table's note is on the HUD, over everything in 3D - so over a
+	# hand card lifted to be read, too. It steps aside until the card goes
+	# back down; a drag keeps it, as the place to put a product.
+	if _reading_a_hand_card():
+		for note in _table_notes:
+			note.visible = false
+
+## Whether a card in hand is lifted to be read - hovered, or pressed on touch -
+## and not being dragged somewhere.
+func _reading_a_hand_card() -> bool:
+	if _drag._dragging:
+		return false
+	for card in _hand_zone.cards:
+		if card.scale.x > 1.001:
+			return true
+	return false
 
 ## The picker and the drag lock rise and fall together - both exist only to
 ## enforce "resolve this before anything else," so one flag (pending_pull)
