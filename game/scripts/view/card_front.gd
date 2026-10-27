@@ -12,10 +12,10 @@ const CATEGORY_ICON := 40
 ## A support card's effect, and a product's: the line that says what it does.
 const EFFECT_FONT := 46
 const PRODUCT_EFFECT_FONT := 44
-## Whether cards show their pictures at all. Off while the art is being made:
-## the cards keep their pictures (CardDef.art, art/cards/), they just don't
-## show them until this is turned back on.
-const SHOW_ART := false
+## Where the stand-in pictures live (tools/render_card_art.gd draws them). A card
+## keeps its stand-in (CardDef.art) but doesn't show it while the real art is
+## made; a picture from anywhere else - art/cards/finished/ - shows.
+const PLACEHOLDER_ART := "res://art/cards"
 
 @onready var _art: Control = $Margin/Column/Art
 @onready var _picture: TextureRect = $Margin/Column/Art/Clip/Picture
@@ -31,7 +31,7 @@ func dress(inst: CardInstance) -> void:
 	if not is_node_ready():
 		await ready
 	var art: Texture2D = inst.card.art
-	_art.visible = SHOW_ART and art != null
+	_art.visible = shows_picture(art)
 	_picture.texture = art
 
 	_clock.show_ticks(inst.ticks())
@@ -96,6 +96,10 @@ func _mark(label: Label, on: bool) -> void:
 ## Whether the picture is showing - for checks.
 func shows_art() -> bool:
 	return _art.visible
+
+## Whether a card with `art` shows it: any picture but a stand-in.
+static func shows_picture(art: Texture2D) -> bool:
+	return art != null and art.resource_path.get_base_dir() != PLACEHOLDER_ART
 
 func ticks_shown() -> int:
 	return _clock.ticks

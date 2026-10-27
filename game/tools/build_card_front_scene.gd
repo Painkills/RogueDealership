@@ -14,8 +14,9 @@ extends SceneTree
 const W := 500
 const H := 700
 const PAD := 24
-## A card's picture, when it has one: as wide as the text, this tall.
-const ART_H := 170
+## A card's picture, when it has one: as wide as the text, this tall - short
+## enough that the wordiest card still fits with one (drive_card_text.gd).
+const ART_H := 140
 ## The clock in the top left corner that shows the tick cost - the first thing
 ## read on a card, and where a fanned hand leaves every card uncovered.
 const CLOCK := 88
@@ -118,39 +119,6 @@ func _init() -> void:
 	header.add_child(ticks)
 	ticks.owner = root
 
-	# The card's picture (CardDef.art), when it has one: clipped to rounded
-	# corners, with a thin dark frame over it. Hidden on a card without one.
-	var art := Panel.new()
-	art.name = "Art"
-	art.custom_minimum_size = Vector2(W - PAD * 2, ART_H)
-	art.add_theme_stylebox_override("panel", _rounded(Palette.color(&"paper_shade")))
-	art.visible = false
-	col.add_child(art)
-	art.owner = root
-	var clip := Panel.new()
-	clip.name = "Clip"
-	clip.set_anchors_preset(Control.PRESET_FULL_RECT)
-	clip.add_theme_stylebox_override("panel", _rounded(Palette.color(&"paper_shade")))
-	clip.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
-	art.add_child(clip)
-	clip.owner = root
-	var picture := TextureRect.new()
-	picture.name = "Picture"
-	picture.set_anchors_preset(Control.PRESET_FULL_RECT)
-	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	clip.add_child(picture)
-	picture.owner = root
-	var edge := _rounded(Palette.color(&"neutral_1"))
-	edge.draw_center = false
-	edge.set_border_width_all(6)
-	var art_frame := Panel.new()
-	art_frame.name = "Frame"
-	art_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	art_frame.add_theme_stylebox_override("panel", edge)
-	art.add_child(art_frame)
-	art_frame.owner = root
-
 	var rule := ColorRect.new()
 	rule.name = "Rule"
 	rule.custom_minimum_size = Vector2(0, 3)
@@ -202,6 +170,41 @@ func _init() -> void:
 	flavor_rule.color = Palette.color(&"neutral_2")
 	col.add_child(flavor_rule)
 	flavor_rule.owner = root
+
+	# The card's picture (CardDef.art), when it has one: clipped to rounded
+	# corners, with a thin dark frame over it. Hidden on a card without one.
+	# Under the effect, not over it: a fanned hand shows only the top of a
+	# card, and that has to be its cost, its name and what it does.
+	var art := Panel.new()
+	art.name = "Art"
+	art.custom_minimum_size = Vector2(W - PAD * 2, ART_H)
+	art.add_theme_stylebox_override("panel", _rounded(Palette.color(&"paper_shade")))
+	art.visible = false
+	col.add_child(art)
+	art.owner = root
+	var clip := Panel.new()
+	clip.name = "Clip"
+	clip.set_anchors_preset(Control.PRESET_FULL_RECT)
+	clip.add_theme_stylebox_override("panel", _rounded(Palette.color(&"paper_shade")))
+	clip.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+	art.add_child(clip)
+	clip.owner = root
+	var picture := TextureRect.new()
+	picture.name = "Picture"
+	picture.set_anchors_preset(Control.PRESET_FULL_RECT)
+	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	clip.add_child(picture)
+	picture.owner = root
+	var edge := _rounded(Palette.color(&"neutral_1"))
+	edge.draw_center = false
+	edge.set_border_width_all(6)
+	var art_frame := Panel.new()
+	art_frame.name = "Frame"
+	art_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art_frame.add_theme_stylebox_override("panel", edge)
+	art.add_child(art_frame)
+	art_frame.owner = root
 
 	# Whatever a short card leaves, so the price sits at the bottom on every card.
 	var rest := Control.new()

@@ -67,8 +67,8 @@ func _drive() -> void:
 		var inst: CardInstance = entry[2]
 		_check("%s: its tick cost on the clock (%d)" % [entry[1], dressed.ticks_shown()],
 			dressed.ticks_shown() == inst.ticks())
-		_check("%s: its picture shown only if it has one and pictures are on" % entry[1],
-			dressed.shows_art() == (CardFront.SHOW_ART and inst.card.art != null))
+		_check("%s: its picture shown only if it has one that isn't a stand-in" % entry[1],
+			dressed.shows_art() == CardFront.shows_picture(inst.card.art))
 		face.queue_free()
 	print("the tallest is %s, needing %d px" % [worst, int(tallest)])
 	_report()

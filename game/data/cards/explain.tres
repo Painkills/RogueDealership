@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="1_75fpj"]
 [ext_resource type="Script" uid="uid://djds75iee2ktw" path="res://scripts/model/effects/change_appeal.gd" id="2_ahtpb"]
 [ext_resource type="Script" uid="uid://56yr8s6ek5x3" path="res://scripts/model/data/support_card_def.gd" id="3_m8x0i"]
-[ext_resource type="Texture2D" path="res://art/cards/explain.webp" id="4_art"]
+[ext_resource type="Texture2D" path="res://art/cards/finished/explain.png" id="4_art"]
 
 [sub_resource type="Resource" id="Resource_crdwm"]
 script = ExtResource("2_ahtpb")

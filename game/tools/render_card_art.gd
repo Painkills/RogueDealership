@@ -3,8 +3,8 @@ extends SceneTree
 ## pool that has no art yet, to res://art/cards/<id>.png - and a contact sheet of
 ## them all to user://card_art_sheet.png to look at. Hooking each one up to its
 ## card is a separate step (CardDef.art); a card that has a picture is skipped,
-## so a real one is never overwritten. Pictures show only while
-## CardFront.SHOW_ART is on.
+## so a real one is never overwritten. These stand-ins don't show on the cards
+## (CardFront.PLACEHOLDER_ART); real art goes in art/cards/finished/.
 ##
 ##   godot --path game --script res://tools/render_card_art.gd
 
