@@ -22,6 +22,8 @@ const ART_H := 140
 const CLOCK := 88
 ## Where it sits: the top left corner, a little into the card's margin.
 const CLOCK_AT := Vector2(PAD - 6, 12)
+## The card's border, laid over the face.
+const BORDER := "res://art/cards/finished/border.png"
 ## The room between the grey rules and what they frame.
 const RULE_GAP := 8
 
@@ -216,6 +218,18 @@ func _init() -> void:
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(money)
 	money.owner = root
+
+	# The border, over the whole face: drawn at twice the face's size, its
+	# middle clear. Under the clock, which sits on its corner.
+	var border := TextureRect.new()
+	border.name = "Border"
+	border.texture = load(BORDER)
+	border.set_anchors_preset(Control.PRESET_FULL_RECT)
+	border.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	border.stretch_mode = TextureRect.STRETCH_SCALE
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(border)
+	border.owner = root
 
 	# The tick cost, on a stopwatch in the top left corner.
 	var clock := Control.new()

@@ -1,27 +1,28 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/view/card_front.gd" id="1_4egrp"]
-[ext_resource type="Script" path="res://scripts/view/card_type_icon_control.gd" id="2_e1nb3"]
-[ext_resource type="Script" path="res://scripts/view/category_icon_control.gd" id="3_7dkk7"]
-[ext_resource type="Script" path="res://scripts/view/tick_clock.gd" id="4_mo07p"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wa1rp"]
-bg_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
-border_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5lnx1"]
-bg_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
-border_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+[ext_resource type="Script" path="res://scripts/view/card_front.gd" id="1_e1nb3"]
+[ext_resource type="Script" path="res://scripts/view/card_type_icon_control.gd" id="2_7dkk7"]
+[ext_resource type="Script" path="res://scripts/view/category_icon_control.gd" id="3_mo07p"]
+[ext_resource type="Texture2D" path="res://art/cards/finished/border.png" id="4_wa1rp"]
+[ext_resource type="Script" path="res://scripts/view/tick_clock.gd" id="5_5lnx1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hvc1m"]
+bg_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
+border_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qd3nq"]
+bg_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
+border_color = Color(0.90588236, 0.92156863, 0.94509804, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_de1gx"]
 bg_color = Color(0.06666667, 0.09411765, 0.15294118, 1)
 draw_center = false
 border_width_left = 6
@@ -34,20 +35,20 @@ corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
-[node name="CardFront" type="Control" unique_id=1676017783]
+[node name="CardFront" type="Control" unique_id=1119058033]
 custom_minimum_size = Vector2(500, 700)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 500.0
 offset_bottom = 700.0
-script = ExtResource("1_4egrp")
+script = ExtResource("1_e1nb3")
 
-[node name="Background" type="ColorRect" parent="." unique_id=1128511837]
+[node name="Background" type="ColorRect" parent="." unique_id=343572042]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Inset" type="ColorRect" parent="." unique_id=1956995757]
+[node name="Inset" type="ColorRect" parent="." unique_id=1843461071]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -57,7 +58,7 @@ offset_right = -10.0
 offset_bottom = -10.0
 color = Color(0.9647059, 0.972549, 0.9843137, 1)
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1188680368]
+[node name="Margin" type="MarginContainer" parent="." unique_id=1948122882]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -66,23 +67,23 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="Column" type="VBoxContainer" parent="Margin" unique_id=813338565]
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1490847517]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="KindRow" type="HBoxContainer" parent="Margin/Column" unique_id=1517409139]
+[node name="KindRow" type="HBoxContainer" parent="Margin/Column" unique_id=1691224558]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 2
 
-[node name="KindIcon" type="Control" parent="Margin/Column/KindRow" unique_id=1381355674]
+[node name="KindIcon" type="Control" parent="Margin/Column/KindRow" unique_id=1166659766]
 custom_minimum_size = Vector2(34, 34)
 layout_mode = 2
 size_flags_vertical = 4
-script = ExtResource("2_e1nb3")
+script = ExtResource("2_7dkk7")
 
-[node name="KindLabel" type="Label" parent="Margin/Column/KindRow" unique_id=1473383083]
+[node name="KindLabel" type="Label" parent="Margin/Column/KindRow" unique_id=2095076776]
 layout_mode = 2
 theme_override_font_sizes/font_size = 33
 theme_override_colors/font_color = Color(0.91764706, 0.34509805, 0.047058824, 1)
@@ -92,11 +93,11 @@ theme_override_constants/shadow_offset_y = 2
 text = "PRODUCT"
 vertical_alignment = 1
 
-[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=1761124470]
+[node name="Header" type="HBoxContainer" parent="Margin/Column" unique_id=1548325338]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=112612277]
+[node name="NameLabel" type="Label" parent="Margin/Column/Header" unique_id=1347349370]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 53
@@ -107,7 +108,7 @@ theme_override_constants/shadow_offset_y = 2
 text = "Anti-Theft & Key Protection"
 autowrap_mode = 2
 
-[node name="TicksLabel" type="Label" parent="Margin/Column/Header" unique_id=474018392]
+[node name="TicksLabel" type="Label" parent="Margin/Column/Header" unique_id=1805572788]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
@@ -117,54 +118,54 @@ theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 text = "3t"
 
-[node name="Art" type="Panel" parent="Margin/Column" unique_id=351827610]
+[node name="Art" type="Panel" parent="Margin/Column" unique_id=531136294]
 visible = false
 custom_minimum_size = Vector2(452, 140)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_wa1rp")
+theme_override_styles/panel = SubResource("StyleBoxFlat_hvc1m")
 
-[node name="Clip" type="Panel" parent="Margin/Column/Art" unique_id=401192679]
+[node name="Clip" type="Panel" parent="Margin/Column/Art" unique_id=1519315322]
 clip_children = 2
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_5lnx1")
+theme_override_styles/panel = SubResource("StyleBoxFlat_qd3nq")
 
-[node name="Picture" type="TextureRect" parent="Margin/Column/Art/Clip" unique_id=1023536731]
+[node name="Picture" type="TextureRect" parent="Margin/Column/Art/Clip" unique_id=1634381923]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Frame" type="Panel" parent="Margin/Column/Art" unique_id=144243802]
+[node name="Frame" type="Panel" parent="Margin/Column/Art" unique_id=432020538]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_hvc1m")
+theme_override_styles/panel = SubResource("StyleBoxFlat_de1gx")
 
-[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=458007169]
+[node name="Rule" type="ColorRect" parent="Margin/Column" unique_id=1733718389]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 color = Color(0.8862745, 0.9019608, 0.9254902, 1)
 
-[node name="RuleGap" type="Control" parent="Margin/Column" unique_id=2111363734]
+[node name="RuleGap" type="Control" parent="Margin/Column" unique_id=1750274894]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="BodyRow" type="HBoxContainer" parent="Margin/Column" unique_id=1525858130]
+[node name="BodyRow" type="HBoxContainer" parent="Margin/Column" unique_id=1414869246]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=402634320]
+[node name="BodyIcon" type="Control" parent="Margin/Column/BodyRow" unique_id=1413222577]
 visible = false
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 size_flags_vertical = 4
-script = ExtResource("3_7dkk7")
+script = ExtResource("3_mo07p")
 
-[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=443493461]
+[node name="BodyLabel" type="Label" parent="Margin/Column/BodyRow" unique_id=1935344419]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 46
@@ -176,7 +177,7 @@ text = "reveals their Line and the category of their number one"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="FlavorLabel" type="Label" parent="Margin/Column" unique_id=420015797]
+[node name="FlavorLabel" type="Label" parent="Margin/Column" unique_id=675481845]
 layout_mode = 2
 theme_override_font_sizes/font_size = 44
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
@@ -187,20 +188,20 @@ text = "-2 Line for everyone"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="EffectGap" type="Control" parent="Margin/Column" unique_id=1336231952]
+[node name="EffectGap" type="Control" parent="Margin/Column" unique_id=1443300502]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="FlavorRule" type="ColorRect" parent="Margin/Column" unique_id=1632473318]
+[node name="FlavorRule" type="ColorRect" parent="Margin/Column" unique_id=1130375739]
 custom_minimum_size = Vector2(0, 3)
 layout_mode = 2
 color = Color(0.8862745, 0.9019608, 0.9254902, 1)
 
-[node name="Rest" type="Control" parent="Margin/Column" unique_id=1109853603]
+[node name="Rest" type="Control" parent="Margin/Column" unique_id=117052436]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=672736581]
+[node name="MarginLabel" type="Label" parent="Margin/Column" unique_id=971394629]
 layout_mode = 2
 theme_override_font_sizes/font_size = 62
 theme_override_colors/font_color = Color(0.08235294, 0.5019608, 0.23921569, 1)
@@ -210,11 +211,19 @@ theme_override_constants/shadow_offset_y = 2
 text = "$1,600"
 horizontal_alignment = 1
 
-[node name="TickClock" type="Control" parent="." unique_id=740255484]
+[node name="Border" type="TextureRect" parent="." unique_id=1379162653]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("4_wa1rp")
+expand_mode = 1
+
+[node name="TickClock" type="Control" parent="." unique_id=1933959519]
 anchors_preset = 0
 offset_left = 18.0
 offset_top = 12.0
 offset_right = 106.0
 offset_bottom = 100.0
 mouse_filter = 2
-script = ExtResource("4_mo07p")
+script = ExtResource("5_5lnx1")
