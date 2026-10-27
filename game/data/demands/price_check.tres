@@ -19,6 +19,6 @@ display_name = "Price Check"
 telegraph = "PRICE CHECK"
 dialogue_tags_met = Array[StringName]([&"relief"])
 dialogue_tags_missed = Array[StringName]([&"ignored"])
-ticks = 5
+ticks = 7
 resolve = SubResource("Sub_rsv")
 effects = Array[ExtResource("1_eff")]([SubResource("Sub_cost")])
