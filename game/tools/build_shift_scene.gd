@@ -424,10 +424,10 @@ func _init() -> void:
 		# does). Selecting and dragging the card are unaffected - only the
 		# lift-on-hover/press cosmetic is off.
 		chair.highlight_on_hover = false
-		# The slot's own outline - a pale sheet over the tablet's well - plus
-		# the anchor the HUD's TableNote%d hangs from. The note says "nothing
-		# on the table", and "or double-click to close the deal" underneath it
-		# when there is something to close.
+		# The slot's own outline - a pale sheet over the tablet's well. The
+		# words under it ("nothing on the table", and "or double-click to close
+		# the deal" when there is something to close) are on the tablet's own
+		# screen - see build_tablet_scene.gd's _well_note().
 		_mark(chair, root, Palette.color(&"paper"), 0.28)
 
 		# Double-tap-to-close, only when the table is actually empty - see
@@ -437,9 +437,9 @@ func _init() -> void:
 		# _render_details() is what turns this back on, exactly when there is
 		# nothing on the table AND something unsigned still to close.
 		_chair_pad(i, seat, root)
-		# Just the highlight now. The words live on the HUD's TableNote%d, as
-		# the second half of the empty-table note, so the two options read as
-		# one card offering both. Stamp red, like the words.
+		# Just the highlight now. The words are on the tablet's screen, as the
+		# second half of the empty-table note, so the two options read as one
+		# note offering both. Stamp red, like the words.
 		_drag_hint(chair, root, "CloseHint%d" % i, Palette.color(&"stamp"), false)
 
 		# A drop target that never actually holds a card - CardHomes never
@@ -883,7 +883,6 @@ func _build_hud(root: Node) -> void:
 		_tag(hints, root, "OfferTag%d" % i,
 			NodePath("Table/Carousel/Seat%d/CustomerZone%d/OfferDragHint%d/TagAnchor" % [i, i, i]),
 			&"primary", &"primary", [["Label", "OFFER PRODUCT", 24, &"paper"]])
-		_table_note(hints, root, i)
 		_close_soon_tag(hints, root, i)
 
 	# --- the shift bar, always ------------------------------------------
@@ -1374,45 +1373,6 @@ func _tag(parent: Node, owner_root: Node, node_name: String, anchor: NodePath,
 		if k == 0:
 			l.theme_type_variation = &"Heading"
 	return tag
-
-## The empty table's note: what to do with it, and - only once there is
-## something unsigned - the other thing you can do with it instead. One card,
-## two options, a rule and an "or" between them, so both read as choices
-## rather than as two unrelated messages that happen to share a card. The two
-## options are the same size and weight, and differ only in ink.
-##
-## Hard line breaks rather than autowrap. A wrapping Label only learns its
-## height after a layout pass has told it its width, so a note sized in the
-## same frame it changed would be measured against last frame's text.
-## drive_shift.gd checks the whole note fits inside the product card.
-func _table_note(parent: Node, owner_root: Node, i: int) -> void:
-	var note := _tag(parent, owner_root, "TableNote%d" % i,
-		NodePath("Table/Carousel/Seat%d/Chair%d/TagAnchor" % [i, i]), &"paper", &"neutral_3",
-		[["Title", "Nothing on the table", 21, &"ink"],
-			["Sub", "Place a product here", 17, &"ink_dim"]])
-	var col := note.get_node(^"Lines")
-
-	var close_row := VBoxContainer.new()
-	close_row.name = "CloseRow"
-	close_row.visible = false
-	close_row.add_theme_constant_override("separation", 2)
-	close_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(close_row)
-	close_row.owner = owner_root
-
-	var or_row := HBoxContainer.new()
-	or_row.name = "OrRow"
-	or_row.add_theme_constant_override("separation", 8)
-	or_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	close_row.add_child(or_row)
-	or_row.owner = owner_root
-	_rule(or_row, owner_root, "RuleLeft")
-	_line(or_row, owner_root, "Or", "or", 16, &"ink_dim")
-	_rule(or_row, owner_root, "RuleRight")
-
-	var close := _line(close_row, owner_root, "Close", "Double-click to\nclose the deal",
-		21, &"stamp")
-	close.theme_type_variation = &"Heading"
 
 ## A customer's CLOSE SOON: a small red tab tucked inside their folder's
 ## top-right corner, in the strip beside the folder's own tab - see the

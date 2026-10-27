@@ -57,6 +57,8 @@ var _worth: Label
 var _knobs: Label
 var _budget: Label
 var _clock: Label
+var _note: Control
+var _note_close: Control
 
 func _ready() -> void:
 	_bind()
@@ -78,6 +80,8 @@ func _bind() -> void:
 	_knobs = screen.get_node(^"DealPanel/Column/KnobsIndent/KnobsLabel")
 	_budget = screen.get_node(^"DealPanel/Column/BudgetLabel")
 	_clock = screen.get_node(^"StatusBar/ClockLabel")
+	_note = screen.get_node(^"WellNote")
+	_note_close = screen.get_node(^"WellNote/CloseRow")
 
 	_viewport.size = SIZE_PX
 	_viewport.disable_3d = true
@@ -115,6 +119,35 @@ func show_clock(text: String) -> void:
 func clock_text() -> String:
 	_bind()
 	return _clock.text
+
+## The empty well's note - "nothing on the table, place a product here" - and,
+## with `can_close`, its "or double-click to close the deal" half.
+func show_note(empty: bool, can_close: bool) -> void:
+	_bind()
+	_note.visible = empty
+	_note_close.visible = empty and can_close
+
+func note_showing() -> bool:
+	_bind()
+	return _note.visible
+
+func note_offers_close() -> bool:
+	_bind()
+	return _note_close.visible
+
+## The note's own text, for checks: every line of it that is showing.
+func note_text() -> String:
+	_bind()
+	var lines: Array[String] = []
+	for l in _note.find_children("*", "Label", true, false):
+		if (l as Label).is_visible_in_tree():
+			lines.append((l as Label).text.replace("\n", " "))
+	return " / ".join(lines)
+
+## Where the note sits on the screen, in the screen's own pixels.
+func note_px() -> Rect2:
+	_bind()
+	return _note.get_global_rect()
 
 ## The product in front of `c` and how it is landing. `band` comes from the
 ## model's own Shift.band_for(), so the colour thresholds are never re-derived

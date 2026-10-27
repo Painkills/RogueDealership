@@ -160,9 +160,6 @@ var _last_chair_tap_time: float = 0.0
 const CHAIR_DOUBLE_TAP_WINDOW := 0.4
 var _offer_drag_hints: Array = []    ## one Node3D (slab) per seat, hidden until dragged
 var _offer_tags: Array = []          ## "OFFER PRODUCT", following _offer_drag_hints
-## "Nothing on the table", plus "or double-click to close the deal" when there
-## is something to close. One per seat; only the seat you are at ever shows one.
-var _table_notes: Array = []
 var _tags: Array = []                ## every ScreenTag, placed together each frame
 var _seat_cam: Marker3D = null
 var _carousel: Node3D = null
@@ -234,10 +231,8 @@ func _ready() -> void:
 	_hover_pads = [%HoverPad0, %HoverPad1, %HoverPad2]
 	_customer_details = [%CustomerDetail0, %CustomerDetail1, %CustomerDetail2]
 	_offer_tags = [%OfferTag0, %OfferTag1, %OfferTag2]
-	_table_notes = [%TableNote0, %TableNote1, %TableNote2]
 	_tags = [_draw_tag, _discard_tag, _drop_tag]
 	_tags.append_array(_offer_tags)
-	_tags.append_array(_table_notes)
 	_tags.append_array(_close_soon_tags)
 	# The tag lives in the HUD and its anchor on the table, so the scene root
 	# (this node) is the one place a path between them resolves from.
@@ -1893,22 +1888,6 @@ func _place_tags() -> void:
 		return
 	for tag in _tags:
 		tag.follow(_camera)
-	# The empty table's note is on the HUD, over everything in 3D - so over a
-	# hand card lifted to be read, too. It steps aside until the card goes
-	# back down; a drag keeps it, as the place to put a product.
-	if _reading_a_hand_card():
-		for note in _table_notes:
-			note.visible = false
-
-## Whether a card in hand is lifted to be read - hovered, or pressed on touch -
-## and not being dragged somewhere.
-func _reading_a_hand_card() -> bool:
-	if _drag._dragging:
-		return false
-	for card in _hand_zone.cards:
-		if card.scale.x > 1.001:
-			return true
-	return false
 
 ## The picker and the drag lock rise and fall together - both exist only to
 ## enforce "resolve this before anything else," so one flag (pending_pull)
@@ -1995,10 +1974,11 @@ func _render_details() -> void:
 		(_chair_pads[i].get_node(^"CollisionShape3D") as CollisionShape3D).disabled \
 			= not can_close_empty
 		_close_hints[i].visible = can_close_empty
-		# The empty table's note, and its "or double-click to close" half on
-		# exactly the same condition as the pad that does the closing.
-		_table_notes[i].wanted = at_this_seat and c != null and c.offer == null
-		_table_notes[i].get_node(^"Lines/CloseRow").visible = can_close_empty
+		# The empty table's note, on the tablet's screen, and its "or
+		# double-click to close" half on exactly the same condition as the pad
+		# that does the closing.
+		_tablets[i].show_note(at_this_seat and c != null and c.offer == null,
+			can_close_empty)
 
 		# CLOSE SOON is NOT scoped to the seat you are at: a customer you are
 		# not with can still have something unsigned at risk when the clock

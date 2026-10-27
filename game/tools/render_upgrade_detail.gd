@@ -2,7 +2,9 @@ extends SceneTree
 ## Renders what upgrading looks like, to look at rather than only check: the
 ## store with its upgrade row (user://upgrade_store.png) and the detail opened
 ## on one card (user://upgrade_detail.png). And a menu run's floor
-## (user://menu_floor.png), for the cards' clocks and the menu's badges.
+## (user://menu_floor.png), for the cards' clocks and the menu's badges; then
+## seated at a desk (user://seated.png) and with a hand card lifted over its
+## tablet (user://seated_hover.png).
 ##
 ##   godot --path game --script res://tools/render_upgrade_detail.gd -- <card id>
 
@@ -54,4 +56,20 @@ func _go() -> void:
 	for _i in range(30):
 		await process_frame
 	_shot("user://menu_floor.png")
+
+	# Seated at the first desk, its tablet's empty well and the note on it - and
+	# a hand card lifted over it, as hovering does.
+	var key := InputEventKey.new()
+	key.keycode = KEY_A
+	key.pressed = true
+	Input.parse_input_event(key)
+	for _i in range(60):
+		await process_frame
+	_shot("user://seated.png")
+	var hand = floor.get(&"_hand_zone")
+	if hand != null and not hand.cards.is_empty():
+		hand.cards[hand.cards.size() / 2].set_hovered()
+		for _i in range(30):
+			await process_frame
+		_shot("user://seated_hover.png")
 	quit()

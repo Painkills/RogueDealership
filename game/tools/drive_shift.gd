@@ -926,37 +926,20 @@ func _check_the_hints_sit_flat_inside_their_cards() -> void:
 	if c == null or c.offer != null:
 		_check("the table you arrived at is empty, so its note can be checked", false)
 		return
-	var note: Control = _controller._table_notes[at]
-	_put_the_hand_down()
-	_settle()
-	_check_tag_inside("empty table", note, _rect_of(_controller._chair_zones[at], CARD))
+	# On the tablet's own screen, in the well the product stands in - drawn into
+	# the table like the tablet, so a card lifted over it covers it.
+	var tablet = _controller._tablets[at]
+	_check("the empty table's note is on the tablet (%s)" % tablet.note_text(),
+		tablet.note_showing() and tablet.note_text().to_lower().begins_with("nothing on the table"))
+	var well := Rect2(OfferTablet.WELL_RECT)
+	_check("and sits inside the well (%s in %s)" % [tablet.note_px(), well],
+		well.encloses(tablet.note_px()))
 	_check("nothing unsigned yet, so the note offers no close",
-		c.unsigned.is_empty() and not note.get_node(^"Lines/CloseRow").visible)
+		c.unsigned.is_empty() and not tablet.note_offers_close())
 	for i in range(3):
 		if i != at:
-			_check("seat %d's table is not showing, so neither is its note" % i,
-				not _controller._table_notes[i].visible)
-
-	# A hand card lifted to be read: the note is drawn over everything in 3D, so
-	# it steps aside until the card goes back down.
-	# Its lift run to the end, and the tags placed the way a frame would.
-	var card = _controller._hand_zone.cards[0]
-	card.set_hovered()
-	card.hover_tween.custom_step(2.0)
-	_controller._place_tags()
-	_check("a hovered hand card hides the empty table's note", not note.visible)
-	card.remove_hovered()
-	card.hover_tween.custom_step(2.0)
-	_controller._place_tags()
-	_check("and putting it down brings the note back", note.visible)
-
-## Every hand card back down. The checks that lift one (hovering, pressing,
-## dragging) have no real pointer to leave it, so it stays up - and a lifted
-## card hides the empty table's note.
-func _put_the_hand_down() -> void:
-	for card in _controller._hand_zone.cards:
-		card.remove_hovered()
-		card.hover_tween.custom_step(2.0)
+			_check("seat %d's tablet is off, note and all" % i,
+				not _controller._tablets[i].is_on())
 
 func _check_tag_inside(what: String, tag: Control, card: Rect2) -> void:
 	var r := tag.get_global_rect()
@@ -3555,7 +3538,7 @@ func _check_dragging_the_table_offer() -> void:
 	var offer_face: CardFace3D = _controller._nodes[uid]
 
 	_check("with a product on the table, its empty-table note is gone",
-		not _controller._table_notes[1].visible)
+		not _controller._tablets[1].note_showing())
 
 	# A hand card drag must never show these - they are offer-drag only.
 	var hand_card = hand.cards[0] if not hand.cards.is_empty() else null
@@ -3742,12 +3725,11 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 		(_controller._chair_pads[chair].get_node(^"CollisionShape3D")
 			as CollisionShape3D).disabled)
 	_check("and the hint stays hidden", not _controller._close_hints[chair].visible)
-	var note: Control = _controller._table_notes[chair]
-	_put_the_hand_down()
+	var tablet = _controller._tablets[chair]
 	_settle()
-	_check("the table's note still says what to do with it", note.visible)
+	_check("the table's note still says what to do with it", tablet.note_showing())
 	_check("but offers no close - there is nothing to close",
-		not note.get_node(^"Lines/CloseRow").visible)
+		not tablet.note_offers_close())
 
 	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "extra_margin": 0})
 	_controller._render()
@@ -3757,12 +3739,11 @@ func _check_double_tapping_the_empty_table_closes() -> void:
 	_check("and the hint shows", _controller._close_hints[chair].visible)
 	_settle()
 	_check("and the note grows its second option, under an \"or\"",
-		note.visible and note.get_node(^"Lines/CloseRow").visible)
-	_check("which says what it does (%s)" % note.get_node(^"Lines/CloseRow/Close").text,
-		note.get_node(^"Lines/CloseRow/Close").text.to_lower().replace("\n", " ")
-			== "double-click to close the deal")
-	_check_tag_inside("empty table, with a close on offer,", note,
-		_rect_of(_controller._chair_zones[chair], CARD))
+		tablet.note_showing() and tablet.note_offers_close())
+	_check("which says what it does (%s)" % tablet.note_text(),
+		tablet.note_text().to_lower().ends_with("or / double-click to close the deal"))
+	_check("and the whole note still fits in the well (%s)" % tablet.note_px(),
+		Rect2(OfferTablet.WELL_RECT).encloses(tablet.note_px()))
 
 	var signed_before: int = int(shift.stat.get("customers_signed", 0))
 	var double_click := InputEventMouseButton.new()

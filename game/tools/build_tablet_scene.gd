@@ -19,6 +19,8 @@ const VERDICT_H := 76
 ## is sunk into it, in world units - about 6 px on screen at the desk.
 const HARDWARE_OUT := 0.055
 const HARDWARE_IN := 0.015
+## How far in from the well's sides its note keeps.
+const NOTE_INSET := 30
 
 func _init() -> void:
 	var root := Node3D.new()
@@ -64,6 +66,7 @@ func _init() -> void:
 	well.set_border_width_all(3)
 	well.border_color = Palette.color(&"neutral_3")
 	_box(screen, root, "Well", Rect2(OfferTablet.WELL_RECT), well)
+	_well_note(screen, root)
 
 	# --- left: how it is landing -------------------------------------------
 	# Only as wide as its meter: "appeal" at the very top, the meter from just
@@ -226,6 +229,59 @@ func _status_bar(screen: Control, root: Node) -> void:
 	for i in range(4):
 		var tall := 8.0 + i * 4.0
 		_box(bar, root, "Signal%d" % i, Rect2(w - 156 + i * 9, 26 - tall, 6, tall), solid)
+
+## The empty well's note: what to do with it, and - only once there is
+## something unsigned - the other thing you can do with it instead, under an
+## "or". On the screen itself, so a card lifted over the tablet covers it like
+## it covers everything else there. Hidden until OfferTablet.show_note().
+##
+## Hard line breaks rather than autowrap, so the note is the same height the
+## frame it changes as every frame after.
+func _well_note(screen: Control, root: Node) -> void:
+	var r := OfferTablet.WELL_RECT
+	var note := VBoxContainer.new()
+	note.name = "WellNote"
+	note.position = Vector2(r.position) + Vector2(NOTE_INSET, 0)
+	note.size = Vector2(r.size.x - NOTE_INSET * 2, r.size.y)
+	note.alignment = BoxContainer.ALIGNMENT_CENTER
+	note.add_theme_constant_override("separation", 6)
+	note.visible = false
+	screen.add_child(note)
+	note.owner = root
+	_note_line(note, root, "Title", "Nothing on\nthe table", 40, &"ink", true)
+	_note_line(note, root, "Sub", "Place a product here", 30, &"ink_dim")
+
+	var close_row := VBoxContainer.new()
+	close_row.name = "CloseRow"
+	close_row.visible = false
+	close_row.add_theme_constant_override("separation", 6)
+	note.add_child(close_row)
+	close_row.owner = root
+	var or_row := HBoxContainer.new()
+	or_row.name = "OrRow"
+	or_row.add_theme_constant_override("separation", 12)
+	close_row.add_child(or_row)
+	or_row.owner = root
+	for side in ["RuleLeft", "Or", "RuleRight"]:
+		if side == "Or":
+			_note_line(or_row, root, "Or", "or", 28, &"ink_dim")
+			continue
+		var rule := PanelContainer.new()
+		rule.name = side
+		rule.custom_minimum_size = Vector2(0, 2)
+		rule.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rule.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var line := StyleBoxFlat.new()
+		line.bg_color = Palette.color(&"neutral_3")
+		rule.add_theme_stylebox_override("panel", line)
+		or_row.add_child(rule)
+		rule.owner = root
+	_note_line(close_row, root, "Close", "Double-click to\nclose the deal", 40, &"stamp", true)
+
+func _note_line(parent: Node, root: Node, node_name: String, text: String, size: int,
+		role: StringName, heading: bool = false) -> void:
+	var l := _label(parent, root, node_name, text, size, role, heading)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _flat(role: StringName, radius: int) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
