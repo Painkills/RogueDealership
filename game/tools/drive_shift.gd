@@ -3351,18 +3351,18 @@ func _check_a_held_card_forecasts_its_ticks() -> void:
 	_controller._hand_zone._hovered_card = card
 	_controller._show_forecast()
 	_check("a hovered card puts its forecast on their folder (%s)" % folder.patience_text(),
-		folder.patience_text().contains("→"))
+		folder.patience_text().contains("->"))
 	_check("and on the clock (%s)" % _controller._tick_label.text,
-		_controller._tick_label.text.contains("→"))
+		_controller._tick_label.text.contains("->"))
 	_controller._hand_zone._hovered_card = null
 	for c in _controller._hand_zone.cards:
 		c.remove_hovered()
 		c.hover_tween.custom_step(2.0)
 	_controller._show_forecast()
 	_check("let go, the folder is back as it was (%s)" % folder.patience_text(),
-		not folder.patience_text().contains("→"))
+		not folder.patience_text().contains("->"))
 	_check("and so is the clock (%s)" % _controller._tick_label.text,
-		not _controller._tick_label.text.contains("→"))
+		not _controller._tick_label.text.contains("->"))
 
 	# A request they want an offer for, one tick from due - a card that costs a
 	# tick answers nothing of the kind.
@@ -4101,9 +4101,9 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	_controller._show_forecast()
 	_check("a menu product held over a folder forecasts on it (%s)"
 		% _controller._customer_cards[0].patience_text(),
-		_controller._customer_cards[0].patience_text().contains("→"))
+		_controller._customer_cards[0].patience_text().contains("->"))
 	_check("and on the clock (%s)" % _controller._tick_label.text,
-		_controller._tick_label.text.contains("→"))
+		_controller._tick_label.text.contains("->"))
 	_controller._pointer = Callable()
 	var ghost := board._ghost as Control
 	_check("dragged, the big card goes", board.dragging() and not board.zoomed())

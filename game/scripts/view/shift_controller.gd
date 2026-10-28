@@ -1894,9 +1894,10 @@ func _tick_text(f: Dictionary = {}) -> String:
 	var text := "tick %d/%d" % [_shift.tick, _shift.tick_budget]
 	if f.is_empty():
 		return text
-	text += " → %d/%d" % [mini(int(f["tick_after"]), _shift.tick_budget), _shift.tick_budget]
+	# Plain ASCII: the Web build's font has no arrow or dash, and draws a box.
+	text += " -> %d/%d" % [mini(int(f["tick_after"]), _shift.tick_budget), _shift.tick_budget]
 	if bool(f["bell"]) and int(f["unsigned_lost"]) > 0:
-		text += " – %s unsigned lost" % Format.money(int(f["unsigned_lost"]))
+		text += " - %s unsigned lost" % Format.money(int(f["unsigned_lost"]))
 	return text
 
 ## The card being dragged, looked at or held up - from your hand, or a product
@@ -1951,7 +1952,8 @@ func _show_forecast() -> void:
 	for i in range(_customer_cards.size()):
 		_customer_cards[i].show_forecast(chairs[i] if i < chairs.size() else {})
 	_tick_label.text = _tick_text(f)
-	var red: bool = _shift.ticks_running_low() or bool(f.get("bell", false))
+	# Red while it forecasts - it is where you would be, not where you are.
+	var red: bool = _shift.ticks_running_low() or not f.is_empty()
 	_tick_label.add_theme_color_override("font_color",
 		Palette.color(&"alert") if red else Palette.color(&"text"))
 

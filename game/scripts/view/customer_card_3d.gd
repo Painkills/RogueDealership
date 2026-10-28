@@ -367,12 +367,10 @@ func show_forecast(f: Dictionary) -> void:
 		warn = "BREAKS " + c.demand.telegraph
 	elif f["misses"] != "" and c.demand != null:
 		warn = "MISSES " + c.demand.telegraph
-	_patience.text = "patience %d → %d" % [c.patience, after]
-	# Red the way the line already goes red: they would be about to leave.
-	var low: bool = not c.archetype.patience_is_shield \
-		and after <= int(c.cfg.get("leaving_soon_at", 4))
-	_patience.add_theme_color_override("font_color",
-		Palette.color(&"alert") if warn != "" or low else Palette.color(&"text"))
+	# Plain ASCII: the Web build's font has no arrow, and draws a box for one.
+	# Red, like everything a forecast changes - it is not what is, yet.
+	_patience.text = "patience %d -> %d" % [c.patience, after]
+	_patience.add_theme_color_override("font_color", Palette.color(&"alert"))
 	if warn != "":
 		_set_banner(warn, -1)
 	else:
