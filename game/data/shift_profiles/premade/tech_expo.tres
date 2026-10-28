@@ -16,7 +16,6 @@ chance = 1.0
 customers = 5
 difficulty_start = 26
 difficulty_per_day = 0.6
-allow_hard_duplicates = true
 upgrades = 0
 free_pick_min_rarity = 2
 dealership_upgrades = 3

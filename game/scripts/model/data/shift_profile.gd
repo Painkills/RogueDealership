@@ -26,9 +26,6 @@ class_name ShiftProfile extends Resource
 ## Multiplies the weight of every hard archetype (CustomerArchetype.hard) in
 ## this shift's pool - night brings in more of the difficult ones.
 @export var hard_weight_scale: float = 1.0
-## Lets two of the same hard archetype share the floor - see
-## ShiftConfig.unique_archetypes_on_floor, which this shift waives.
-@export var allow_hard_duplicates: bool = false
 ## Per-archetype multipliers on CustomerArchetype.weight for this shift, by
 ## archetype id - {&"family": 0.5} makes Family First half as common. Anyone
 ## not named keeps their own weight.

@@ -116,22 +116,14 @@ func test_nobody_comes_before_their_week_or_from_outside_who_the_shift_allows() 
 	h.check("a shift that names its customers gets only them",
 		named.lineup.all(func(a): return a == kept_out))
 
-func test_a_hard_one_comes_once_unless_the_slot_allows_more_or_there_is_nobody_else() -> void:
+func test_the_target_alone_decides_how_many_hard_ones_come() -> void:
 	var easy := _arch(&"easy", 1)
 	var hard_a := _arch(&"hard_a", 4, true)
-	var hard_b := _arch(&"hard_b", 4, true)
-	var pool := _pool([easy, hard_a, hard_b])
-	for seed_value in range(6):
-		var lineup := _regular(pool, _tier(5), 99, seed_value).lineup
-		h.check("seed %d: each hard one at most once" % seed_value,
-			_count(lineup, hard_a) <= 1 and _count(lineup, hard_b) <= 1)
-	var doubles := _tier(5)
-	doubles.allow_hard_duplicates = true
-	h.eq("a slot that allows it can fill up on them",
-		_regular(pool, doubles, 99, 1).difficulty, 20)
-	var only_hard := _pool([hard_a])
-	h.eq("and with nobody else to send, the rule gives way",
-		_regular(only_hard, _tier(5), 20, 1).lineup.size(), 5)
+	var pool := _pool([easy, hard_a])
+	h.eq("a slot that wants the dearest lineup gets the same hard one five times",
+		_count(_regular(pool, _tier(5), 20, 1).lineup, hard_a), 5)
+	h.eq("and one that wants the cheapest, none",
+		_count(_regular(pool, _tier(5), 5, 1).lineup, hard_a), 0)
 
 func test_the_same_seed_builds_the_same_shift() -> void:
 	var pool := _pool([_arch(&"one", 1), _arch(&"two", 2), _arch(&"three", 3)])

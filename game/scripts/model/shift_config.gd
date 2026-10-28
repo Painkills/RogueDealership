@@ -156,11 +156,6 @@ func category_quota_in_week(week: int) -> int:
 ## nobody's asks arrive like clockwork. Never sooner than one tick on.
 @export var action_cadence_jitter_ticks: int = 2
 
-## Never two of the same HARD archetype (CustomerArchetype.hard) on the floor
-## or in the waiting room at once - two Lay-Downs can share a floor, two
-## Karens cannot. Gives way when the pool has nobody else to send.
-@export var unique_archetypes_on_floor: bool = true
-
 # --- the shop --------------------------------------------------------------
 ## How many cards the house offers you after every shift, to take ONE of free.
 @export var free_card_choices: int = 3

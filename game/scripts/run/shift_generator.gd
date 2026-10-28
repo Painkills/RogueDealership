@@ -7,9 +7,9 @@ class_name ShiftGenerator extends RefCounted
 ## (CustomerArchetype.difficulty), a premade shift's own rules bring its
 ## `difficulty`, and each complicator its `points`. Who may come in is the
 ## door's own rule (Shift.eligible_archetypes) - so the hardest archetypes wait
-## for week 2, and within a week the budget decides how many of the difficult
-## ones a shift can afford: one Family First on an easy morning, two on a harder
-## one.
+## for week 2, and within a week the budget alone decides how many of the
+## difficult ones a shift can afford, and which: one Family First on an easy
+## morning, two on a harder one.
 ##
 ## Pure like the rest of scripts/run: every pool is handed in, and every roll
 ## comes from the rng handed in.
@@ -39,8 +39,7 @@ static func fill(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 		if premade:
 			w *= maxf(0.0, float(shift.archetype_weight_scales.get(a.id, 1.0)))
 		return w * (tier.hard_weight_scale if a.hard else 1.0)
-	var lineup := lineup_for(pool, count, for_customers, weight_of,
-		tier.allow_hard_duplicates or (premade and shift.allow_hard_duplicates), rng)
+	var lineup := lineup_for(pool, count, for_customers, weight_of, rng)
 	var got := _sum(lineup)
 	# Customers alone could not get there - week 1 has nobody harder to send - so
 	# complicators make up what they can of the rest.
@@ -54,17 +53,13 @@ static func fill(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 
 ## `count` customers from `pool` whose points come as near `want` as the pool
 ## allows: drawn by `weight_of` first, then swapped one at a time towards it.
-## Without `allow_hard_duplicates`, a hard archetype (CustomerArchetype.hard)
-## comes in at most once - the floor's own rule for those - unless the pool
-## has nobody else to send.
 static func lineup_for(pool: Array[CustomerArchetype], count: int, want: int,
-		weight_of: Callable, allow_hard_duplicates: bool,
-		rng: RandomNumberGenerator) -> Array[CustomerArchetype]:
+		weight_of: Callable, rng: RandomNumberGenerator) -> Array[CustomerArchetype]:
 	var out: Array[CustomerArchetype] = []
 	if pool.is_empty():
 		return out
 	for _i in range(count):
-		out.append(_draw(_open_for(pool, out, -1, allow_hard_duplicates), weight_of, rng))
+		out.append(_draw(pool, weight_of, rng))
 	for _step in range(count * 4):
 		var need := want - _sum(out)
 		if need == 0:
@@ -72,7 +67,7 @@ static func lineup_for(pool: Array[CustomerArchetype], count: int, want: int,
 		var swapped := false
 		for i in _shuffled_indices(count, rng):
 			var here: CustomerArchetype = out[i]
-			var options := _open_for(pool, out, i, allow_hard_duplicates).filter(
+			var options := pool.filter(
 				func(a): return absi(need - (a.difficulty - here.difficulty)) < absi(need))
 			if options.is_empty():
 				continue
@@ -97,20 +92,6 @@ static func _pool(shift: ShiftProfile, tier: ShiftProfile, week: int,
 	var sent: Array[CustomerArchetype] = []
 	sent.assign(pool.filter(func(a): return a.weight > 0.0))
 	return sent if not sent.is_empty() else pool
-
-## `pool` less the hard archetypes already in `out` - but the one at `skip`,
-## which is the one being swapped out.
-static func _open_for(pool: Array[CustomerArchetype], out: Array[CustomerArchetype],
-		skip: int, allow_hard_duplicates: bool) -> Array[CustomerArchetype]:
-	if allow_hard_duplicates:
-		return pool
-	var taken := {}
-	for i in range(out.size()):
-		if i != skip and out[i].hard:
-			taken[out[i]] = true
-	var open: Array[CustomerArchetype] = []
-	open.assign(pool.filter(func(a): return not taken.has(a)))
-	return open if not open.is_empty() else pool
 
 static func _draw(options: Array[CustomerArchetype], weight_of: Callable,
 		rng: RandomNumberGenerator) -> CustomerArchetype:

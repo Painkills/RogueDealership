@@ -25,7 +25,6 @@ func _init() -> void:
 	cfg.arrival_patience_min_fraction = 0.6
 	cfg.arrival_patience_floor = 4
 	cfg.leaving_soon_at = 4
-	cfg.unique_archetypes_on_floor = true
 	ResourceSaver.save(cfg, PATH)
 	print("seeded shift config")
 	quit(0)

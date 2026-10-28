@@ -87,19 +87,3 @@ func test_an_exclusion_takes_them_out_unless_that_leaves_nobody() -> void:
 	h.eq("but never down to nobody",
 		_ids(Shift.eligible_archetypes(pool, 1, [], [a, b])), [&"a", &"b"])
 
-func test_never_two_of_the_same_hard_one_on_the_floor() -> void:
-	var made: Array = []
-	for i in range(_pool().archetypes.size()):
-		var a := _made(StringName("hard_%d" % i), 1)
-		a.hard = true
-		made.append(a)
-	var pool := _pool_of(made)
-	var doubled: Array[int] = []
-	for seed_value in range(40):
-		var ids := {}
-		for c in _on(pool, 1, seed_value).seated():
-			if ids.has(c.archetype.id):
-				doubled.append(seed_value)
-			ids[c.archetype.id] = true
-	h.check("no floor seats the same hard one twice (seeds that did: %s)"
-		% str(doubled), doubled.is_empty())

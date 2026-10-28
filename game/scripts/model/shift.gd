@@ -53,10 +53,9 @@ var commission: float = 0.25
 var pay_scale: float = 1.0
 ## The picked ShiftProfile's heal_up_to - see healed().
 var heal_up_to: float = 0.0
-## The picked ShiftProfile's hard_weight_scale, allow_hard_duplicates and
-## archetype_weight_scales - see _pick_archetype().
+## The picked ShiftProfile's hard_weight_scale and archetype_weight_scales -
+## see _pick_archetype().
 var hard_weight_scale: float = 1.0
-var allow_hard_duplicates: bool = false
 var archetype_weight_scales: Dictionary = {}
 ## The boss's product quota for this shift: sell `category_quota_count` products
 ## from the `category_quota` category, or lose ShiftConfig.category_quota_standing
@@ -200,14 +199,13 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	if hand_bonus != 0:
 		cfg = cfg.duplicate() as ShiftConfig
 		cfg.hand_size = maxi(1, cfg.hand_size + hand_bonus)
-	# Who the door sends - ShiftProfile's hard_weight_scale,
-	# allow_hard_duplicates and archetype_weight_scales - and what they are like
+	# Who the door sends - ShiftProfile's hard_weight_scale and
+	# archetype_weight_scales - and what they are like
 	# when they sit down: its Line shift and combo scale. Set before the floor
 	# opens, so the first customers are picked under them like everyone after.
 	# And whether there is a clock at all (ShiftProfile.no_clock), before the
 	# tick budget below is read.
 	hard_weight_scale = float(p_arrivals.get("hard_weight_scale", 1.0))
-	allow_hard_duplicates = bool(p_arrivals.get("allow_hard_duplicates", false))
 	archetype_weight_scales = (p_arrivals.get("archetype_weight_scales", {}) as Dictionary).duplicate()
 	line_offset = int(p_arrivals.get("line_offset", 0))
 	combo_scale = float(p_arrivals.get("combo_scale", 1.0))
@@ -757,30 +755,12 @@ func _pick_archetype() -> CustomerArchetype:
 
 ## The `i`-th customer the door sends today (from 0, the first to sit down at
 ## opening). Rolled from door_rng alone, in order, so it is the same list whoever
-## looks at it and whenever - see upcoming().
-##
-## A hard archetype comes at most once a day: with the day settled before anyone
-## sits down, that is what keeps two of them off the floor together. The
-## dealership's own early arrivals count as having come.
+## looks at it and whenever - see upcoming(). How hard the day is, is the
+## calendar's to say (a run's shifts come with a lineup built to a difficulty
+## target - ShiftGenerator); this door only weighs who is likely.
 func _door_at(i: int) -> CustomerArchetype:
 	while _door.size() <= i:
-		var pool := _archetypes_available_this_shift()
-		if cfg.unique_archetypes_on_floor and not allow_hard_duplicates:
-			var taken := {}
-			for a in _door:
-				taken[a.id] = true
-			for u in dealership:
-				if u != null:
-					for a in u.waiting_at_open:
-						if a != null:
-							taken[a.id] = true
-			var fresh: Array[CustomerArchetype] = []
-			for a in pool:
-				if not (a.hard and taken.has(a.id)):
-					fresh.append(a)
-			if not fresh.is_empty():
-				pool = fresh
-		_door.append(_weighted_archetype(pool))
+		_door.append(_weighted_archetype(_archetypes_available_this_shift()))
 	return _door[i]
 
 

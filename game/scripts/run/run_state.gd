@@ -169,7 +169,6 @@ func start_shift(profile: ShiftProfile) -> Shift:
 		profile.only_archetypes, profile.lineup,
 		profile.excluded_archetypes, {
 			"hard_weight_scale": profile.hard_weight_scale,
-			"allow_hard_duplicates": profile.allow_hard_duplicates,
 			"archetype_weight_scales": profile.archetype_weight_scales,
 			"line_offset": profile.total_line_offset(),
 			"combo_scale": profile.total_combo_scale(),

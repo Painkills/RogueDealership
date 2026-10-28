@@ -230,18 +230,6 @@ func test_looking_ahead_changes_nothing() -> void:
 	b._burn(b.tick_budget - 1, "cards")
 	h.eq("a queue looked at and one not agree", _ids(a.waiting), _ids(b.waiting))
 
-func test_no_hard_archetype_comes_twice_in_a_day() -> void:
-	var s := _door_shift(3, 1)
-	var seen := {}
-	var doubled := false
-	for i in range(40):
-		var a := s._door_at(i)
-		if a.hard and seen.has(a.id):
-			doubled = true
-		seen[a.id] = true
-	var any_soft := s._archetypes_available_this_shift().any(func(a): return not a.hard)
-	h.check("no hard one is on the door twice", not doubled or not any_soft)
-
 func test_nobody_is_shown_who_the_bell_comes_before() -> void:
 	var cfg := _cfg()
 	var s := _shift(cfg, [], [], 0)
