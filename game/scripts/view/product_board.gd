@@ -42,6 +42,8 @@ const PIE := 64.0
 var _grid: GridContainer
 var _zoom: ShopCardButton
 var _ghost: ShopCardButton
+## The product the full-size card is showing.
+var _zoomed: CardInstance = null
 var _held: StringName = &""
 ## Where the held press went down, and whether it has moved far enough since to
 ## be a drag (DRAG_FROM).
@@ -271,6 +273,7 @@ func _show_zoom(inst: CardInstance, over: Control) -> void:
 	if _held != &"":
 		return
 	_zoom.show_card(inst)
+	_zoomed = inst
 	var r := over.get_global_rect()
 	# Level with the slot, but never up under the top bar: no higher than the
 	# rail's own top.
@@ -283,6 +286,13 @@ func _show_zoom(inst: CardInstance, over: Control) -> void:
 
 func _hide_zoom() -> void:
 	_zoom.visible = false
+
+## The product being looked at or held on the menu - for the floor to say what
+## playing it would do - or null.
+func in_hand() -> CardInstance:
+	if _held != &"" and _shown.has(_held):
+		return _shown[_held]
+	return _zoomed if _zoom.visible else null
 
 ## A touch screen sends every touch twice: as the touch, and as a mouse the
 ## engine makes of it (emulate_mouse_from_touch, on by default). Following both

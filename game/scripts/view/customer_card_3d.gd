@@ -50,6 +50,11 @@ var _banner := StyleBoxFlat.new()
 ## The action the banner last popped for - a new one pops it again.
 var _shown_demand = null
 var _pop: Tween = null
+## The countdown setup() last put on the banner, for a forecast to put back.
+var _banner_ticks := -1
+## What the card you are holding would do to them - see show_forecast(). {}
+## when nothing is.
+var _forecast := {}
 ## Numerals in the interest grid stop being readable before the cells do, so a
 ## card that is going to be drawn small says so once rather than guessing from
 ## its own size - the face is authored at 500x700 no matter where it lands.
@@ -136,6 +141,7 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 	if c != customer and _bubble != null:
 		_bubble.visible = false
 	customer = c
+	_forecast = {}
 	_note.visible = false
 	if _bubble != null:
 		# Quick to clear at the desk you are sitting at, where the grid under it
@@ -180,7 +186,8 @@ func setup(c, seated: bool = false, tick: int = 0) -> void:
 		Palette.color(&"alert") if c.leaving_soon() else Palette.color(&"text"))
 	# "Incoming" - a red banner across the folder, the countdown big at its left
 	# end, and a pop and a flash the moment something new comes up.
-	_set_banner(banner_text(c), maxi(0, c.demand_due_tick - tick) if c.demand != null else -1)
+	_banner_ticks = maxi(0, c.demand_due_tick - tick) if c.demand != null else -1
+	_set_banner(banner_text(c), _banner_ticks)
 	if c.demand != null and c.demand != _shown_demand:
 		_pop_banner()
 	_shown_demand = c.demand
@@ -334,6 +341,52 @@ static func banner_text(c) -> String:
 	if c.next_card_rejected():
 		parts.append(NEXT_CARD_REJECTED)
 	return "\n".join(parts)
+
+## What the card you are holding would do to them, over what setup() drew -
+## one chair of Shift.forecast(): their patience after it, and the banner
+## saying what goes wrong. WALKS OUT first, then an ask the card breaks, then
+## one that runs out. {} puts the folder back as setup() left it.
+func show_forecast(f: Dictionary) -> void:
+	_bind()
+	var c = customer
+	if c == null or f == _forecast:
+		return
+	_forecast = f
+	if f.is_empty():
+		_patience.text = "patience %d/%d" % [c.patience, c.max_patience]
+		_patience.add_theme_color_override("font_color",
+			Palette.color(&"alert") if c.leaving_soon() else Palette.color(&"text"))
+		_set_banner(banner_text(c), _banner_ticks)
+		_redraw()
+		return
+	var after := maxi(0, int(f["patience_after"]))
+	var warn := ""
+	if bool(f["walks"]):
+		warn = "WALKS OUT"
+	elif f["breaks"] != "" and c.demand != null:
+		warn = "BREAKS " + c.demand.telegraph
+	elif f["misses"] != "" and c.demand != null:
+		warn = "MISSES " + c.demand.telegraph
+	_patience.text = "patience %d → %d" % [c.patience, after]
+	# Red the way the line already goes red: they would be about to leave.
+	var low: bool = not c.archetype.patience_is_shield \
+		and after <= int(c.cfg.get("leaving_soon_at", 4))
+	_patience.add_theme_color_override("font_color",
+		Palette.color(&"alert") if warn != "" or low else Palette.color(&"text"))
+	if warn != "":
+		_set_banner(warn, -1)
+	else:
+		_set_banner(banner_text(c), _banner_ticks)
+	_redraw()
+
+## What the patience line and the banner say right now - for checks.
+func patience_text() -> String:
+	_bind()
+	return _patience.text
+
+func banner_words() -> String:
+	_bind()
+	return _demand.text
 
 ## The banner: red with white words when there is something to say, nothing at
 ## all when not; the countdown badge when there is a clock on it.

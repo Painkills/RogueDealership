@@ -66,9 +66,21 @@ func _go() -> void:
 	for _i in range(60):
 		await process_frame
 	_shot("user://seated.png")
+	# And a request one tick from running out on whoever you are with, so the
+	# lifted card's forecast has something to warn about.
+	if s.at != null and s.chairs[s.at] != null:
+		var d := Demand.new()
+		d.display_name = "Wants an offer"
+		d.telegraph = "OFFER ME"
+		d.resolve = MakeAnOffer.new()
+		s.chairs[s.at].demand = d
+		s.chairs[s.at].demand_due_tick = s.tick + 1
+		floor._render()
 	var hand = floor.get(&"_hand_zone")
 	if hand != null and not hand.cards.is_empty():
-		hand.cards[hand.cards.size() / 2].set_hovered()
+		var lifted = hand.cards[hand.cards.size() / 2]
+		lifted.set_hovered()
+		hand._hovered_card = lifted
 		for _i in range(30):
 			await process_frame
 		_shot("user://seated_hover.png")

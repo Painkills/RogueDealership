@@ -172,6 +172,9 @@ var _nodes: Dictionary = {}          ## uid -> CardFace3D
 ## sight, kept until the next shift is dealt - see _retire().
 var _retired: Array[CardFace3D] = []
 var _dragging: CardFace3D = null
+## What the forecast on the folders and the clock was last worked out for -
+## see _show_forecast(). [] when nothing is held.
+var _forecast_key: Array = []
 ## Whether the card being dragged was dropped into another collection - as
 ## opposed to bouncing off the table - see _on_drag_stopped().
 var _drag_dropped := false
@@ -1645,8 +1648,10 @@ func _render_board() -> void:
 
 func _render() -> void:
 	# A shift with no clock has no limit to count towards.
-	_tick_label.text = "tick %d/%d" % [_shift.tick, _shift.tick_budget] if _shift.has_clock \
-		else "tick %d - no clock" % _shift.tick
+	_tick_label.text = _tick_text()
+	# A render redraws the folders and the clock, so whatever card is held has
+	# its forecast put back on them next frame.
+	_forecast_key = [&"stale"]
 	# Before the numbers are written: a deal signed or a customer lost since
 	# the last render holds its number at the old value while it plays out.
 	_notice_departures()
@@ -1875,9 +1880,80 @@ func _icon_tile(arch: CustomerArchetype, side: float) -> PhotoFrame:
 ## than jump to where the card will end up.
 func _process(_delta: float) -> void:
 	_place_tags()
+	_show_forecast()
 	_release_pending_says()
 	_follow_stamps()
 	_release_holds()
+
+# --- what the card you are holding would do -------------------------------
+## The tick counter's words: where the clock is, and - with a forecast - where
+## the card you are holding would leave it, and what the bell would take.
+func _tick_text(f: Dictionary = {}) -> String:
+	if not _shift.has_clock:
+		return "tick %d - no clock" % _shift.tick
+	var text := "tick %d/%d" % [_shift.tick, _shift.tick_budget]
+	if f.is_empty():
+		return text
+	text += " → %d/%d" % [mini(int(f["tick_after"]), _shift.tick_budget), _shift.tick_budget]
+	if bool(f["bell"]) and int(f["unsigned_lost"]) > 0:
+		text += " – %s unsigned lost" % Format.money(int(f["unsigned_lost"]))
+	return text
+
+## The card being dragged, looked at or held up - from your hand, or a product
+## off the menu - and where it would go: [CardInstance, chair or -1, ticks], or
+## [] when nothing is. The chair under the pointer while it is dragged, else
+## the one you are at; over the discard pile it is a dig.
+func _held_card() -> Array:
+	if _shift == null or _shift.is_over() or _shift.pending_pull != null \
+			or _report_overlay.visible:
+		return []
+	var inst: CardInstance = null
+	var dragged := false
+	if _dragging != null and is_instance_valid(_dragging) and not _is_current_offer(_dragging):
+		inst = _dragging.instance
+		dragged = true
+		if _drag._hovered_collection == _discard_zone:
+			return [inst, -1, _shift.cfg.dig_ticks]
+	elif _menu() and _product_board.in_hand() != null:
+		inst = _product_board.in_hand()
+		dragged = _product_board.dragging()
+	else:
+		for card in _hand_zone.cards:
+			if card == _hand_zone._hovered_card or card.scale.x > 1.001:
+				inst = (card as CardFace3D).instance
+				break
+	if inst == null:
+		return []
+	var chair: int = int(_shift.at) if _shift.at != null else -1
+	if dragged:
+		var pad := _pad_under(_pointer_at())
+		if pad >= 0 and _shift.chairs[pad] != null:
+			chair = pad
+	# Not at a desk and not over anyone: nowhere it could be played.
+	if chair < 0:
+		return []
+	return [inst, chair, inst.ticks()]
+
+## Each folder says what the held card's ticks would do to them, and the clock
+## where it would leave you - Shift.forecast(), worked out again only when the
+## card, where it is going or the shift itself has changed.
+func _show_forecast() -> void:
+	if _shift == null:
+		return
+	var held := _held_card()
+	var key: Array = [] if held.is_empty() \
+		else [held[0].uid, held[1], held[2], _shift.tick, _shift.commands.size()]
+	if key == _forecast_key:
+		return
+	_forecast_key = key
+	var f: Dictionary = {} if held.is_empty() else _shift.forecast(held[2], held[1], held[0])
+	var chairs: Array = f.get("chairs", [])
+	for i in range(_customer_cards.size()):
+		_customer_cards[i].show_forecast(chairs[i] if i < chairs.size() else {})
+	_tick_label.text = _tick_text(f)
+	var red: bool = _shift.ticks_running_low() or bool(f.get("bell", false))
+	_tick_label.add_theme_color_override("font_color",
+		Palette.color(&"alert") if red else Palette.color(&"text"))
 
 func _place_tags() -> void:
 	# The report and the deck viewer each cover the table, so its hints go with

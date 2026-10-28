@@ -334,6 +334,95 @@ func ticks_running_low() -> bool:
 	return has_clock and not is_over() and (tick_budget - tick) <= cfg.low_tick_warning
 
 
+## What `ticks` more ticks would do - spent playing `card` on the customer in
+## chair `target` (-1: on nobody, as digging does) - read off the countdowns
+## already on the table, and touching nothing. For the screen to warn before a
+## card is played, not after.
+##
+## The same order _burn() keeps: the card's own patience lands first (only
+## what it does to patience, and nothing if they will wave it off), then the
+## drain, then fuses. What it cannot see is what nobody can: an ask a customer
+## has not made yet. Lingering cards are left out too, so it errs on the side
+## of a warning.
+##
+## {"tick_after", "bell" (the shift would end), "unsigned_lost" (what the bell
+## would take), "chairs": one per chair, {} when empty, else {"patience_after",
+## "walks", "misses", "breaks", "met"} - the last three a demand's name or ""}.
+func forecast(ticks: int, target: int = -1, card: CardInstance = null) -> Dictionary:
+	ticks = maxi(0, ticks)
+	var after := tick + ticks
+	var played_on: Customer = chairs[target] if target >= 0 and target < chairs.size() else null
+	var kind := &""
+	if card != null and played_on != null:
+		kind = DemandResolve.PLACE if card.is_product() else DemandResolve.SUPPORT
+	var effects: Array[Effect] = []
+	if card != null and played_on != null and not played_on.next_card_rejected() \
+			and card.card is SupportCardDef:
+		var def := card.card as SupportCardDef
+		effects = def.upgraded_effects if card.upgraded and not def.upgraded_effects.is_empty() \
+			else def.effects
+	var out := {"tick_after": after, "bell": has_clock and after >= tick_budget,
+		"unsigned_lost": 0, "chairs": []}
+	if out["bell"]:
+		out["unsigned_lost"] = margin_at_risk()
+	for c in chairs:
+		if c == null:
+			out["chairs"].append({})
+			continue
+		# The card's patience first, the way add_patience() takes it.
+		var patience: int = c.patience
+		var raises: int = c.patience_raises
+		for e in effects:
+			var gain := 0
+			if e is ChangePatience and c == played_on:
+				gain = roundi(e.amount * c.archetype.patience_card_scale) if e.amount > 0 \
+					else e.amount
+			elif e is ChangePatienceFloor:
+				gain = e.amount
+			if gain > 0:
+				raises += 1
+			patience = mini(c.max_patience, patience + gain)
+		var f := {"patience_after": patience - ticks, "walks": false,
+			"misses": "", "breaks": "", "met": ""}
+		var d: Demand = c.demand
+		if d != null and d.resolve != null:
+			var state := _state_of(c)
+			state["patience"] = patience
+			state["patience_raises"] = raises
+			var data := state.duplicate()
+			data.merge({"card": card.card if card != null else null, "effects": effects,
+				"patience_before": c.patience}, true)
+			var answered := false
+			var failed := false
+			if c == played_on and kind != &"":
+				if d.resolve.satisfied(kind, data):
+					answered = true
+				elif d.resolve.broken_by(kind, data):
+					failed = true
+					f["breaks"] = d.display_name
+			if not answered and not failed and d.resolve.satisfied(&"", state):
+				answered = true
+			if not answered and not failed and after >= c.demand_due_tick:
+				state["patience"] = patience - ticks
+				if d.resolve.met_on_expiry(state):
+					f["met"] = d.display_name
+				else:
+					failed = true
+					f["misses"] = d.display_name
+			# What failing them costs them, where it is their own patience - the
+			# kind of cost that walks them on top of the drain.
+			if failed:
+				for e in d.effects:
+					if e is WalkOut:
+						f["walks"] = not c.archetype.patience_is_shield
+					elif e is ChangePatience and e.amount < 0:
+						f["patience_after"] += e.amount
+		if f["patience_after"] <= 0 and not c.archetype.patience_is_shield:
+			f["walks"] = true
+		out["chairs"].append(f)
+	return out
+
+
 ## How many ticks until the next customer comes in, or -1 if nobody will
 ## before closing time - including while the waiting list is full, since the
 ## door's clock waits then (see _arrive()), and once a lineup has sent everyone

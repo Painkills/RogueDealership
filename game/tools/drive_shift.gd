@@ -136,6 +136,7 @@ func _physics_process(_delta: float) -> bool:
 	_check_they_answer_after_you_and_both_go_quiet()
 	_check_drop_zones_use_the_overridden_shape()
 	_check_the_clock_warns_when_time_is_short()
+	_check_a_held_card_forecasts_its_ticks()
 	_check_table("after approaching chair A")
 
 	_check_the_floor_key_flips()
@@ -3336,6 +3337,66 @@ func _check_the_last_tick_says_so_big(s: Shift) -> void:
 	s.tick = was
 	_controller._render()
 
+## Hovering a card in hand: every folder says what its ticks would do to them,
+## and the clock where it would leave you - put back the moment it is let go.
+## Then a request one tick from running out: a card that costs a tick and does
+## not answer it says it would be missed.
+func _check_a_held_card_forecasts_its_ticks() -> void:
+	var shift = _controller._shift
+	if shift.at == null or shift.chairs[_at()] == null or _controller._hand_zone.cards.is_empty():
+		_check("seated, with cards in hand, to check the forecast", false)
+		return
+	var folder = _controller._customer_cards[_at()]
+	var card = _controller._hand_zone.cards[0]
+	_controller._hand_zone._hovered_card = card
+	_controller._show_forecast()
+	_check("a hovered card puts its forecast on their folder (%s)" % folder.patience_text(),
+		folder.patience_text().contains("→"))
+	_check("and on the clock (%s)" % _controller._tick_label.text,
+		_controller._tick_label.text.contains("→"))
+	_controller._hand_zone._hovered_card = null
+	for c in _controller._hand_zone.cards:
+		c.remove_hovered()
+		c.hover_tween.custom_step(2.0)
+	_controller._show_forecast()
+	_check("let go, the folder is back as it was (%s)" % folder.patience_text(),
+		not folder.patience_text().contains("→"))
+	_check("and so is the clock (%s)" % _controller._tick_label.text,
+		not _controller._tick_label.text.contains("→"))
+
+	# A request they want an offer for, one tick from due - a card that costs a
+	# tick answers nothing of the kind.
+	var c = shift.chairs[_at()]
+	var held_demand = c.demand
+	var held_due: int = c.demand_due_tick
+	var d := Demand.new()
+	d.id = &"driver_ask"
+	d.display_name = "Driver Ask"
+	d.telegraph = "DRIVER ASK"
+	d.resolve = MakeAnOffer.new()
+	c.demand = d
+	c.demand_due_tick = shift.tick + 1
+	var costly = null
+	for hc in _controller._hand_zone.cards:
+		if (hc as CardFace3D).instance.ticks() >= 1:
+			costly = hc
+			break
+	if costly == null:
+		_check("a card in hand that costs a tick", false)
+	else:
+		_controller._hand_zone._hovered_card = costly
+		_controller._show_forecast()
+		_check("a card that runs their request out says so (%s)" % folder.banner_words(),
+			folder.banner_words() == "MISSES DRIVER ASK" or folder.banner_words() == "WALKS OUT")
+		_controller._hand_zone._hovered_card = null
+		_controller._show_forecast()
+		_check("and stops saying it once let go (%s)" % folder.banner_words(),
+			not folder.banner_words().begins_with("MISSES"))
+	c.demand = held_demand
+	c.demand_due_tick = held_due
+	_controller._render()
+	_settle()
+
 func _check_the_clock_warns_when_time_is_short() -> void:
 	if _controller._shift.at == null:
 		_check("still seated to check the clock warning", false)
@@ -4034,6 +4095,16 @@ func _check_a_menu_shift_places_from_the_menu() -> void:
 	_send(_mouse_move(from + Vector2(4, 3), from))
 	_check("a finger's wobble is not a drag yet", board.zoomed() and not board.dragging())
 	_send(_mouse_move(folder, from))
+	# Held over their folder, the menu's product says what its ticks would do,
+	# the same as a card from the hand.
+	_controller._pointer = func() -> Vector2: return folder
+	_controller._show_forecast()
+	_check("a menu product held over a folder forecasts on it (%s)"
+		% _controller._customer_cards[0].patience_text(),
+		_controller._customer_cards[0].patience_text().contains("→"))
+	_check("and on the clock (%s)" % _controller._tick_label.text,
+		_controller._tick_label.text.contains("→"))
+	_controller._pointer = Callable()
 	var ghost := board._ghost as Control
 	_check("dragged, the big card goes", board.dragging() and not board.zoomed())
 	_check("and a small one rides left of the finger (%s, finger at %s)"
