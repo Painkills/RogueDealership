@@ -2394,7 +2394,7 @@ func _check_the_waiting_list_shows_who_is_next() -> void:
 		var smalls: Array = [] if then == null else then.get_children().filter(
 			func(n): return n is PhotoFrame).map(func(n): return n.icon)
 		_check("the rest of who is coming are small pictures after them (%s)" % str(smalls),
-			smalls == coming.slice(1).map(func(a): return a.icon))
+			smalls == coming.slice(1, _controller.QUEUE_MOST_SHOWN + 1).map(func(a): return a.icon))
 	var empty_height: float = panel.size.y
 
 	_fill_the_waiting_list(s)
@@ -3149,6 +3149,8 @@ func _check_a_boss_fight_shows_its_move_its_budget_and_what_lands() -> void:
 	var boss := was.duplicate() as CustomerArchetype
 	boss.patience_is_shield = true
 	boss.budget_share = 1.0
+	# Whoever it was made from, its budget is the only thing in the way of closing.
+	boss.min_products_to_sign = 0
 	boss.moves.assign([move])
 	who.archetype = boss
 	who.budget = 4321

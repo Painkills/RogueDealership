@@ -183,45 +183,73 @@ func test_the_queue_shows_the_rest_of_a_lineup_in_order() -> void:
 	s._burn(10, "cards")
 	h.check("and nobody once they all have", s.upcoming().is_empty())
 
-func test_the_queue_shows_who_the_door_sends_next() -> void:
-	var s := _shift(_cfg(), [], [], 0)
-	s._pick_archetype()
-	var shown: Array = s.upcoming()
-	h.eq("one is shown", shown.size(), 1)
-	h.eq("and it is the one who comes", s._pick_archetype(), shown[0])
-	h.eq("then the one after", s.upcoming().size(), 1)
-
-func test_who_is_shown_coming_never_doubles_a_hard_archetype_already_waiting() -> void:
+## A shift on the door's own dice: a short day, room for everyone to wait, and
+## nobody walking out, so everyone the door sends comes in.
+func _door_shift(seed: int, gaps: int = 3) -> Shift:
 	var cfg := _cfg()
+	cfg.walk_up_ticks_min = gaps
+	cfg.walk_up_ticks_max = gaps
+	cfg.shift_ticks = 20
 	cfg.waiting_max = 99
-	var s := _shift(cfg, [], [], 0)
-	var doubled := false
-	var seen := {}
+	var s := Shift.new(cfg, load("res://data/interests/interest_pool.tres"),
+		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"), seed)
 	for c in s.seated():
-		if c.archetype.hard:
-			seen[c.archetype.id] = true
-	for _i in range(15):
-		var shown: Array = s.upcoming()
-		var a: CustomerArchetype = s._pick_archetype()
-		if not shown.is_empty() and shown[0] != a:
-			doubled = true
+		c.patience = 999
+	return s
+
+func test_the_queue_shows_everyone_the_door_sends_today() -> void:
+	var s := _door_shift(7)
+	var shown := _ids(s.upcoming())
+	h.check("more than the next one is shown (%s)" % str(shown), shown.size() > 1)
+	s._burn(s.tick_budget - 1, "cards")
+	h.eq("and they are exactly who comes in, in that order", _ids(s.waiting), shown)
+	h.check("and nobody else is shown once they have", s.upcoming().is_empty())
+
+func test_the_day_s_door_is_the_seed_s_however_it_is_played() -> void:
+	var a := _door_shift(11)
+	var b := _door_shift(11)
+	h.eq("the same seed shows the same day", _ids(a.upcoming()), _ids(b.upcoming()))
+	h.eq("and seats the same people", _ids(a.seated().map(func(c): return c.archetype)),
+		_ids(b.seated().map(func(c): return c.archetype)))
+	# Played differently: one in single ticks, drawing and digging between, the
+	# other in one long wait.
+	var shown := _ids(a.upcoming())
+	for _i in range(a.tick_budget - 1):
+		a.rng.randi()
+		a._burn(1, "cards")
+	b._burn(b.tick_budget - 1, "cards")
+	h.eq("who comes in does not depend on the play", _ids(a.waiting), _ids(b.waiting))
+	h.eq("and is who was shown", _ids(a.waiting), shown)
+
+func test_looking_ahead_changes_nothing() -> void:
+	var a := _door_shift(5)
+	var b := _door_shift(5)
+	for _i in range(10):
+		a.upcoming()
+	a._burn(a.tick_budget - 1, "cards")
+	b._burn(b.tick_budget - 1, "cards")
+	h.eq("a queue looked at and one not agree", _ids(a.waiting), _ids(b.waiting))
+
+func test_no_hard_archetype_comes_twice_in_a_day() -> void:
+	var s := _door_shift(3, 1)
+	var seen := {}
+	var doubled := false
+	for i in range(40):
+		var a := s._door_at(i)
 		if a.hard and seen.has(a.id):
 			doubled = true
-		if a.hard:
-			seen[a.id] = true
-		s.waiting.append(a)
-	h.check("nobody comes who was not shown, and no hard one comes twice", not doubled)
+		seen[a.id] = true
+	var any_soft := s._archetypes_available_this_shift().any(func(a): return not a.hard)
+	h.check("no hard one is on the door twice", not doubled or not any_soft)
 
 func test_nobody_is_shown_who_the_bell_comes_before() -> void:
 	var cfg := _cfg()
 	var s := _shift(cfg, [], [], 0)
-	s._pick_archetype()
 	h.check("someone is on their way early in the day", not s.upcoming().is_empty())
 	s.next_arrival = s.tick_budget - s.tick
 	h.check("none when the next is due after the bell", s.upcoming().is_empty())
-	s.waiting.assign(_some(cfg.waiting_max))
-	h.check("unless the list is full: that clock is stopped, so who knows",
-		not s.upcoming().is_empty())
+	s.next_arrival = s.tick_budget - s.tick - 1
+	h.eq("one when only the next makes it", s.upcoming().size(), 1)
 
 # ------------------------------------------------------- dealt by difficulty
 ## Made-up archetypes worth 1, 2 and 3 points, open from week 1.

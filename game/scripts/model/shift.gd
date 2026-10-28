@@ -19,6 +19,12 @@ var rng := RandomNumberGenerator.new()
 ## giving a card or a customer something to say, never changes who walks in
 ## next or what they want.
 var voice_rng := RandomNumberGenerator.new()
+## Who the door sends, and the ticks between them, are each their own stream too,
+## seeded from the shift's: the day's whole lineup is settled by the seed alone -
+## the same people, in the same order, however the shift is played - and the
+## queue can show all of it (upcoming()).
+var door_rng := RandomNumberGenerator.new()
+var gap_rng := RandomNumberGenerator.new()
 
 var tick: int = 0
 ## Ticks left on a debuff that stops your cards adding appeal (BlockAppeal).
@@ -164,9 +170,14 @@ var peak_combo_multiplier: float = 1.0
 
 var _forced: Array = []
 var _forced_next: int = 0
-## Who the door has already settled will walk in after whoever just did - see
-## _pick_archetype() and upcoming().
-var _peeked: CustomerArchetype = null
+## Everyone the door sends today, in order, rolled from door_rng as far as anyone
+## has looked - see _door_at(). _door_next is how many have come in.
+var _door: Array[CustomerArchetype] = []
+var _door_next: int = 0
+## The ticks between one arrival and the next, rolled from gap_rng as far as
+## anyone has looked - see _gap_at(). _gaps_used is how many the door has waited.
+var _gaps: Array[int] = []
+var _gaps_used: int = 0
 ## What is left to hand out of each archetype's names, by archetype id (&"" for
 ## the shared pool) - see _next_name().
 var _name_pools: Dictionary = {}
@@ -211,6 +222,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	dialogue = p_dialogue
 	rng.seed = p_seed
 	voice_rng.seed = hash(p_seed)
+	door_rng.seed = hash([p_seed, "door"])
+	gap_rng.seed = hash([p_seed, "gaps"])
 	_forced = p_forced
 	shift_number = p_shift_number
 	patience_scale = p_patience_scale
@@ -527,14 +540,22 @@ func _arrive(n: int) -> void:
 		next_arrival = _arrival_gap()
 
 
-## Ticks between one customer coming in and the next. Rolled fresh each time,
-## not a fixed wait: a door that always opened on the same tick told you
-## exactly when to be looking at it, the opposite of the triage the floor is
-## for. A night ShiftProfile stretches it - see ShiftProfile.walk_up_scale -
-## so fewer distinct customers come in across the same tick budget.
+## Ticks between one customer coming in and the next - the door's next wait.
 func _arrival_gap() -> int:
-	return maxi(1, roundi(rng.randi_range(
-		cfg.walk_up_ticks_min, cfg.walk_up_ticks_max) * walk_up_scale))
+	_gaps_used += 1
+	return _gap_at(_gaps_used - 1)
+
+
+## The door's `i`-th wait of the day. Rolled, not a fixed wait: a door that always
+## opened on the same tick told you exactly when to be looking at it, the opposite
+## of the triage the floor is for. A night ShiftProfile stretches it - see
+## ShiftProfile.walk_up_scale - so fewer distinct customers come in across the
+## same tick budget. From gap_rng alone, so looking ahead changes nothing.
+func _gap_at(i: int) -> int:
+	while _gaps.size() <= i:
+		_gaps.append(maxi(1, roundi(gap_rng.randi_range(
+			cfg.walk_up_ticks_min, cfg.walk_up_ticks_max) * walk_up_scale)))
+	return _gaps[i]
 
 
 ## Every empty chair takes whoever has waited longest, straight away.
@@ -729,54 +750,68 @@ func _pick_archetype() -> CustomerArchetype:
 			return null
 		_lineup_next += 1
 		return lineup[_lineup_next - 1]
-	# Who comes in is settled one arrival early, so the queue can show who is
-	# coming (upcoming()). The one after this is rolled now, with this one counted
-	# as already on the floor.
-	var arriving: CustomerArchetype = _peeked if _peeked != null else _roll_arrival(null)
-	_peeked = _roll_arrival(arriving)
-	return arriving
+	# The day's door, settled by the seed: whoever is next on it.
+	_door_next += 1
+	return _door_at(_door_next - 1)
 
 
-## One of the pool for the door to send, kept to one hard archetype at a time -
-## `arriving` being someone on their way in who is not on the floor yet.
-func _roll_arrival(arriving: CustomerArchetype) -> CustomerArchetype:
-	var pool := _archetypes_available_this_shift()
-	if cfg.unique_archetypes_on_floor and not allow_hard_duplicates:
-		# The waiting list counts as the floor: they are who sits down next.
-		# Only the hard ones are kept to one at a time.
-		var taken := {}
-		for c in seated():
-			taken[c.archetype.id] = true
-		for a in waiting:
-			taken[a.id] = true
-		if arriving != null:
-			taken[arriving.id] = true
-		var fresh: Array[CustomerArchetype] = []
-		for a in pool:
-			if not (a.hard and taken.has(a.id)):
-				fresh.append(a)
-		if not fresh.is_empty():
-			pool = fresh
-	return _weighted_archetype(pool)
+## The `i`-th customer the door sends today (from 0, the first to sit down at
+## opening). Rolled from door_rng alone, in order, so it is the same list whoever
+## looks at it and whenever - see upcoming().
+##
+## A hard archetype comes at most once a day: with the day settled before anyone
+## sits down, that is what keeps two of them off the floor together. The
+## dealership's own early arrivals count as having come.
+func _door_at(i: int) -> CustomerArchetype:
+	while _door.size() <= i:
+		var pool := _archetypes_available_this_shift()
+		if cfg.unique_archetypes_on_floor and not allow_hard_duplicates:
+			var taken := {}
+			for a in _door:
+				taken[a.id] = true
+			for u in dealership:
+				if u != null:
+					for a in u.waiting_at_open:
+						if a != null:
+							taken[a.id] = true
+			var fresh: Array[CustomerArchetype] = []
+			for a in pool:
+				if not (a.hard and taken.has(a.id)):
+					fresh.append(a)
+			if not fresh.is_empty():
+				pool = fresh
+		_door.append(_weighted_archetype(pool))
+	return _door[i]
 
 
-## Who is on their way in, soonest first, for the queue to show: the rest of a
-## premade shift's lineup, or the one the door has already settled on. Nobody the
-## bell comes before.
+## Who the door sends after them, `k` arrivals on (0: the next) - or null once a
+## lineup has sent everyone on it.
+func _coming(k: int) -> CustomerArchetype:
+	if not _forced.is_empty():
+		return archetypes.by_id(_forced[(_forced_next + k) % _forced.size()])
+	if not lineup.is_empty():
+		return lineup[_lineup_next + k] if _lineup_next + k < lineup.size() else null
+	return _door_at(_door_next + k)
+
+
+## Everyone on their way in before the bell, soonest first, for the queue to show:
+## the rest of the day's door, from the next one in. Counted from the door's own
+## clock and its waits to come - while the waiting list is full that clock is
+## stopped, so it is who could still make it, at best.
 func upcoming() -> Array[CustomerArchetype]:
 	var out: Array[CustomerArchetype] = []
 	if is_over():
 		return out
-	if not _forced.is_empty():
-		out.append(archetypes.by_id(_forced[_forced_next % _forced.size()]))
-	elif not lineup.is_empty():
-		out.assign(lineup.slice(_lineup_next))
-	elif _peeked != null:
-		out.append(_peeked)
-	# The door's clock is stopped while the waiting list is full, so nobody can
-	# be ruled out then; otherwise it is the time left that does.
-	if next_arrival >= tick_budget - tick and waiting.size() < cfg.waiting_max:
-		out.clear()
+	var left := tick_budget - tick
+	var due := next_arrival
+	var k := 0
+	while due < left:
+		var a := _coming(k)
+		if a == null:
+			break
+		out.append(a)
+		due += _gap_at(_gaps_used + k)
+		k += 1
 	return out
 
 
@@ -787,8 +822,8 @@ func _weighted_archetype(pool: Array[CustomerArchetype]) -> CustomerArchetype:
 	for a in pool:
 		total += _weight_of(a)
 	if total <= 0.0:
-		return pool[rng.randi_range(0, pool.size() - 1)]
-	var roll := rng.randf() * total
+		return pool[door_rng.randi_range(0, pool.size() - 1)]
+	var roll := door_rng.randf() * total
 	for a in pool:
 		roll -= _weight_of(a)
 		if roll < 0.0:
