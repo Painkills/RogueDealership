@@ -27,6 +27,8 @@ static func body(inst: CardInstance) -> String:
 	var parts: Array[String] = []
 	for e in effects:
 		parts.append(e.describe())
+	if s.retires:
+		parts.append("Retire")
 	return ", ".join(parts)
 
 ## What upgrading `before` into `after` changes, a phrase each - the cost, what

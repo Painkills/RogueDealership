@@ -17,7 +17,7 @@ metadata/_custom_type_script = "uid://c56u8ssbjh6yb"
 
 [resource]
 script = ExtResource("2_djcht")
-ticks = 2
+ticks = 1
 player_dialogue_tags = Array[StringName]([&"player_jazz"])
 needs_offer = false
 id = &"jazz"

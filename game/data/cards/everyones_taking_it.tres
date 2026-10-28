@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/meet_line_floor_wide.gd" id="2_fx"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Effect_base"]
+script = ExtResource("2_fx")
+amount = 0
+
+[sub_resource type="Resource" id="Effect_up"]
+script = ExtResource("2_fx")
+amount = 0
+
+[resource]
+script = ExtResource("3_def")
+needs_offer = false
+id = &"everyones_taking_it"
+display_name = "Everyone's Taking It!"
+text = "Look around - every one of them is signing. Why wouldn't you?"
+ticks = 2
+upgraded_ticks = 1
+rarity = 3
+effects = Array[ExtResource("1_eff")]([SubResource("Effect_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Effect_up")])

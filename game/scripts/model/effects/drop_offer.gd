@@ -17,7 +17,7 @@ func apply(ctx: EffectContext) -> void:
 	# quietly loses for the rest of the shift.
 	if ctx.shift:
 		ctx.shift.put_back(c.offer.instance)
-	c.offer = null
+	c.clear_table()
 
 func describe() -> String:
 	return "sweeps your product off the table"

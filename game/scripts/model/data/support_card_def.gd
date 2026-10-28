@@ -4,6 +4,9 @@ class_name SupportCardDef extends CardDef
 ## product can carry them too (Shift.place()).
 
 @export var needs_offer: bool = true
+## Retire: once played, it is out of the deck for the rest of the shift - not to
+## the discard to come round again (Shift.exhausted). Back in the deck next shift.
+@export var retires: bool = false
 
 ## Whether all this card does is give patience - to one customer, to everyone, or
 ## over a few ticks. A card you may play on someone you are not standing with

@@ -20,7 +20,7 @@ amount = 600
 
 [sub_resource type="Resource" id="Standing_up"]
 script = ExtResource("3_std")
-amount = -2
+amount = -1
 
 [resource]
 script = ExtResource("4_def")

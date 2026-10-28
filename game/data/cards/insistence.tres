@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/patience_to_appeal.gd" id="2_fx"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Effect_base"]
+script = ExtResource("2_fx")
+amount = 50
+
+[sub_resource type="Resource" id="Effect_up"]
+script = ExtResource("2_fx")
+amount = 50
+
+[resource]
+script = ExtResource("3_def")
+needs_offer = true
+id = &"insistence"
+display_name = "Insistence"
+text = "You don't let it go. They give in - and they won't stand for much more."
+ticks = 1
+upgraded_ticks = 0
+rarity = 1
+effects = Array[ExtResource("1_eff")]([SubResource("Effect_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Effect_up")])

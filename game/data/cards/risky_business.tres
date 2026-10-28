@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/margin_percent.gd" id="2_fx"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Effect_base"]
+script = ExtResource("2_fx")
+amount = 25
+low_amount = 50
+low_below = 0.2
+
+[sub_resource type="Resource" id="Effect_up"]
+script = ExtResource("2_fx")
+amount = 25
+low_amount = 50
+low_below = 0.2
+
+[resource]
+script = ExtResource("3_def")
+needs_offer = true
+id = &"risky_business"
+display_name = "Risky Business"
+text = "Mark it up while they're too worn down to argue."
+ticks = 1
+upgraded_ticks = 0
+rarity = 2
+effects = Array[ExtResource("1_eff")]([SubResource("Effect_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Effect_up")])

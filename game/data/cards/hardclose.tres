@@ -26,7 +26,7 @@ metadata/_custom_type_script = "uid://bswvlmlj77d75"
 
 [resource]
 script = ExtResource("4_g14ik")
-ticks = 2
+ticks = 1
 player_dialogue_tags = Array[StringName]([&"player_clarify"])
 id = &"hardclose"
 display_name = "Ask Clarifying Questions"

@@ -20,6 +20,10 @@ var patience: int
 var max_patience: int
 
 var offer                          ## Offer, or null
+## How many of the next products put in front of them face a Line of 0 (WaiveLine),
+## and the Line put aside while one of them is on the table (-1: none is).
+var line_waivers: int = 0
+var line_held: int = -1
 var unsigned: Array[Dictionary] = []
 ## Effects of your cards still playing out on them, a tick at a time (Linger):
 ## each {inner, ticks_left, card, fresh}. Ticked by Shift._burn().
@@ -463,3 +467,22 @@ static func _shuffle(arr: Array, rng: RandomNumberGenerator) -> void:
 		var tmp = arr[i]
 		arr[i] = arr[j]
 		arr[j] = tmp
+
+
+## A product just went on their table: if one of their waivers is left (WaiveLine),
+## their Line is put aside - 0 - while it is there.
+func waive_line_for_this_product() -> void:
+	if line_waivers <= 0 or line_held >= 0:
+		return
+	line_waivers -= 1
+	line_held = line
+	line = 0
+
+
+## Takes whatever is on their table off it - and gives back a Line put aside for
+## it, with whatever moved their Line while it was there on top.
+func clear_table() -> void:
+	offer = null
+	if line_held >= 0:
+		line = maxi(0, line_held + line)
+		line_held = -1

@@ -390,6 +390,8 @@ func forecast(ticks: int, target: int = -1, card: CardInstance = null) -> Dictio
 					else e.amount
 			elif e is ChangePatienceFloor:
 				gain = e.amount
+			elif e is PatienceToAppeal and c == played_on:
+				gain = -PatienceToAppeal.taken_from(patience, e.amount)
 			if gain > 0:
 				raises += 1
 			patience = mini(c.max_patience, patience + gain)
@@ -615,7 +617,7 @@ func _walk(chair: int) -> void:
 	sale_streak = 0   # one walkout, anywhere on the floor, breaks the streak
 	if c.offer != null:
 		put_back(c.offer.instance)
-		c.offer = null
+		c.clear_table()
 	events.append("[%s] %s walks out%s." % [c.key, c.display_name,
 		" with $%d unsigned" % lost if lost > 0 else ""])
 	# Immediate, not deferred to report() - the whole point of costing standing
@@ -1347,6 +1349,7 @@ func _put_down(c: Customer, inst: CardInstance) -> Result:
 	var rank: int = int(c.ranks[iid])
 	c.offer = Offer.new(inst, c.appeal_for(iid),
 		roundi(inst.margin() * (1.0 + perk(&"margin"))))
+	c.waive_line_for_this_product()
 	# Where it ranks on their list is on the grid the moment it is on the table:
 	# nobody should have to remember what asking about a product once taught them.
 	c.known_ranks[iid] = rank
@@ -1415,7 +1418,7 @@ func _put_down(c: Customer, inst: CardInstance) -> Result:
 ## floor-wide verbs join ChangePatienceFloor/ChangeLineFloorWide, rather than
 ## this list drifting out of sync between the two callers.
 func _is_floor_wide(e: Effect) -> bool:
-	return e is ChangePatienceFloor or e is ChangeLineFloorWide
+	return e is ChangePatienceFloor or e is ChangeLineFloorWide or e is MeetLineFloorWide
 
 
 ## What you say to `c`: a line from `tags` (a card's player_dialogue_tags, or
@@ -1613,7 +1616,10 @@ func _support(c: Customer, index: int) -> Result:
 	})
 
 	hand.remove_at(index)
-	discard.append(inst)
+	if def.retires:
+		exhausted.append(inst)
+	else:
+		discard.append(inst)
 	stat["cards_played"] = int(stat["cards_played"]) + 1
 	_draw_up()
 	# Before the burn, so playing the card they asked for answers them rather
@@ -1734,7 +1740,7 @@ func _settle(c: Customer) -> Dictionary:
 		exhausted.append(o.instance)
 	else:
 		put_back(o.instance)
-	c.offer = null
+	c.clear_table()
 	c.objection = &""
 	stat["sales"] = int(stat["sales"]) + 1
 	events.append("[%s] agrees to %s - unsigned%s%s."
@@ -1766,7 +1772,7 @@ func drop_offer() -> Result:
 		return Result.new(false, "There is nothing on the table.")
 	var product_name: String = c.offer.product.display_name
 	put_back(c.offer.instance)
-	c.offer = null
+	c.clear_table()
 	c.objection = &""
 	stat["offers_dropped"] = int(stat["offers_dropped"]) + 1
 	# "Get that off my desk" is answered by exactly this.
@@ -1995,7 +2001,7 @@ func _sign(c: Customer) -> Result:
 	_demand_saw(c, DemandResolve.CLOSE)
 	if c.offer != null:
 		put_back(c.offer.instance)
-		c.offer = null
+		c.clear_table()
 	var banked: int = c.unsigned_margin()
 	# How much of what they came in to spend you got.
 	if c.has_budget():

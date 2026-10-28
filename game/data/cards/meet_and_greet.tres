@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/standing_per_customer.gd" id="2_fx"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Effect_base"]
+script = ExtResource("2_fx")
+amount = 3
+
+[sub_resource type="Resource" id="Effect_up"]
+script = ExtResource("2_fx")
+amount = 4
+
+[resource]
+script = ExtResource("3_def")
+needs_offer = false
+retires = true
+id = &"meet_and_greet"
+display_name = "Meet and Greet"
+text = "A handshake for everyone on the floor. You can only pull it off once a shift."
+ticks = 3
+rarity = 2
+effects = Array[ExtResource("1_eff")]([SubResource("Effect_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Effect_up")])
