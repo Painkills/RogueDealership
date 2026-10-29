@@ -24,8 +24,14 @@ const GUESSED_LINE := 24
 static var _guess_top := 2
 const GUESS_MIDDLE := 5
 
+## Who the player is working on - what Insistence's appeal is reckoned from.
+static var _here: Customer = null
+
 ## The Line as this player knows it.
 static func _est_line(c: Customer) -> int:
+	# Mind Games played: the next product placed faces a Line of 0.
+	if c.line_waivers > 0 and c.offer == null:
+		return 0
 	if not fog or c.known_line:
 		return c.line
 	return GUESSED_LINE + c.line_per_sale * c.sales
@@ -271,6 +277,7 @@ static func _only_tells(d: Demand) -> bool:
 ## One move with customer `c`. False when there was nothing worth doing.
 static func _act(s: Shift, c: Customer) -> bool:
 	_parked.erase(c)
+	_here = c
 	# A boss's hit nothing in hand answers, coming due: shield up first.
 	if c.archetype.patience_is_shield and _incoming(c) > 0 and not _can_answer(s, c) \
 			and c.demand_due_tick - s.tick <= 2 and not _shield_covers(s, c):
@@ -355,6 +362,11 @@ static func _act(s: Shift, c: Customer) -> bool:
 		s.drop_offer()
 	var p := _best_product(s, c)
 	if p != null:
+		# Short of their Line: Mind Games first, if it is in hand.
+		var waive := _find(s, "waive")
+		if waive >= 0 and c.line_waivers <= 0 \
+				and _est_line(c) > _est_appeal(c, (p.card as ProductCardDef).interest.id):
+			return _did("mind games", s.play_card(waive).ok)
 		return _did("place a product", _place(s, p))
 	# Nothing in hand sells to them: a free draw card goes looking for it.
 	var draw := _free_draw(s)
@@ -368,6 +380,10 @@ static func _act(s: Shift, c: Customer) -> bool:
 	# hand runs dry: cycle a card instead (the caller digs).
 	if not c.unsigned.is_empty() and not c.has_budget():
 		return _did("close", s.close().ok)
+	# Nothing to sell: Meet and Greet, if standing has been lost.
+	var mend := _find(s, "standing")
+	if mend >= 0 and s.standing < s.cfg.standing_start and s.seated().size() >= 2:
+		return _did("meet and greet", s.play_card(mend).ok)
 	return false
 
 ## Think on it: appeal that builds a tick at a time for a few ticks while you are
@@ -462,6 +478,9 @@ static func _place(s: Shift, inst: CardInstance) -> bool:
 ## `any_offer`: any product at all will do (a Kicker only wants to be asked).
 static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> CardInstance:
 	var boost := _appeal_in_hand(s)
+	# Mind Games in hand: any product can be made to sell.
+	if _find(s, "waive") >= 0:
+		boost += 999
 	var short := _quota_short(s)
 	var best: CardInstance = null
 	var best_key := -INF
@@ -522,6 +541,12 @@ static func _appeal_of(inst: CardInstance, sales: int = 0) -> int:
 			total += e.inner.amount * (1 + sales)
 		elif (e is ChangeLineFloorWide or e is ChangeLine) and e.amount < 0:
 			total -= e.amount
+		# Insistence: a share of the patience of whoever the player is with.
+		elif e is PatienceToAppeal and _here != null:
+			total += PatienceToAppeal.taken_from(_here.patience, e.amount)
+		# Everyone's Taking It!: closes any gap - counted big, so it goes last.
+		elif e is MeetLineFloorWide:
+			total += 99
 	return total
 
 ## Sales already made to whoever you are sitting with.
@@ -617,6 +642,12 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 			if inner is MarginPerProductTaken:
 				money += inner.amount * c.unsigned.size()
 				varies = true
+			# Risky Business: a share of this product's margin.
+			if inner is MarginPercent:
+				var pct: int = inner.low_amount \
+					if c.patience < c.max_patience * inner.low_below else inner.amount
+				money += roundi(c.offer.margin * pct / 100.0)
+				varies = true
 			# Good Will: so much a point over the Line - it leaves them at it.
 			if inner is ConvertSurplusAppeal:
 				var over := _surplus(c)
@@ -710,6 +741,10 @@ static func _find(s: Shift, what: String) -> int:
 			if what == "concession" and e is ChangeMargin and e.amount < 0:
 				return i
 			if what == "read" and e is RevealRoom:
+				return i
+			if what == "waive" and e is WaiveLine:
+				return i
+			if what == "standing" and e is StandingPerCustomer:
 				return i
 	return -1
 

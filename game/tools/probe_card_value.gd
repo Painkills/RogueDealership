@@ -28,21 +28,27 @@ func _init() -> void:
 	if SimPlayer.fog:
 		print("Fog: playing on what a person can see.")
 	var base := _banked(null, false)
-	print("Starter deck banks %d a shift (midday day 4 and night day 6, %d shifts each)." % [base, SEEDS])
+	print("Starter deck banks %d a shift and ends on %.2f standing (midday day 4 and night day 6, %d shifts each)."
+		% [base.x, base.y, SEEDS])
 	print("")
-	print("card                        ticks   +1 copy   +1 upgraded")
+	print("card|rarity|ticks|copy margin|copy standing|upgraded margin|upgraded standing")
 	var blank := SupportCardDef.new()
 	blank.id = &"blank"
-	print("%-26s %5s   %+6d" % ["(a card that does nothing)", "-", _banked(blank, false) - base])
+	var b := _banked(blank, false) - base
+	print("(a card that does nothing)|-|-|%+d|%+.2f||" % [b.x, b.y])
 	for c in _cards.cards:
 		if c is ProductCardDef:
 			continue
-		print("%-26s %5d   %+6d    %+6d" % [c.display_name, c.ticks,
-			_banked(c, false) - base, _banked(c, true) - base])
+		var plain := _banked(c, false) - base
+		var up := _banked(c, true) - base
+		print("%s|%s|%d|%+d|%+.2f|%+d|%+.2f" % [c.display_name,
+			CardDef.Rarity.keys()[c.rarity], c.ticks, plain.x, plain.y, up.x, up.y])
 	quit(0)
 
-func _banked(extra: CardDef, upgraded: bool) -> int:
+## [margin banked, standing at the bell] a shift, averaged.
+func _banked(extra: CardDef, upgraded: bool) -> Vector2:
 	var total := 0
+	var standing := 0
 	for spot in SPOTS:
 		var profile: ShiftProfile = _pool.by_id(spot[0])
 		for seed_value in range(SEEDS):
@@ -56,4 +62,6 @@ func _banked(extra: CardDef, upgraded: bool) -> int:
 			var s := run.start_shift(profile)
 			SimPlayer.play(s)
 			total += int(s.report()["margin_banked"])
-	return total / (SEEDS * SPOTS.size())
+			standing += s.standing
+	var n := float(SEEDS * SPOTS.size())
+	return Vector2(roundf(total / n), standing / n)
