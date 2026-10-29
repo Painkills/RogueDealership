@@ -18,6 +18,7 @@ const SPOTS := [[&"midday", 4], [&"night", 6]]
 var _cfg: ShiftConfig
 var _pool: ShiftProfilePool
 var _cards: CardPool
+var _menu := false
 
 func _init() -> void:
 	_cfg = load("res://data/shift_config.tres")
@@ -27,6 +28,10 @@ func _init() -> void:
 	SimPlayer.fog = OS.get_cmdline_user_args().has("fog")
 	if SimPlayer.fog:
 		print("Fog: playing on what a person can see.")
+	# `-- menu`: menu runs (RunState.make_menu) - products on the menu, not in hand.
+	_menu = OS.get_cmdline_user_args().has("menu")
+	if _menu:
+		print("Menu mode: products on the menu.")
 	var base := _banked(null, false)
 	print("Starter deck banks %d a shift and ends on %.2f standing (midday day 4 and night day 6, %d shifts each)."
 		% [base.x, base.y, SEEDS])
@@ -55,6 +60,8 @@ func _banked(extra: CardDef, upgraded: bool) -> Vector2:
 			var run := RunState.new(_cfg, load("res://data/interests/interest_pool.tres"), _cards,
 				load("res://data/archetype_pool.tres"), seed_value * 7919 + int(spot[1]))
 			run.shift_number = int(spot[1])
+			if _menu:
+				run.make_menu()
 			if extra != null:
 				var inst := run.deck.add(extra)
 				if upgraded:

@@ -42,6 +42,9 @@ func _plays(card: CardDef, upgraded: bool) -> float:
 			var run := RunState.new(_cfg, load("res://data/interests/interest_pool.tres"), _cards,
 				load("res://data/archetype_pool.tres"), seed_value * 7919 + int(spot[1]))
 			run.shift_number = int(spot[1])
+			# `-- menu`: menu runs - products on the menu, not in hand.
+			if OS.get_cmdline_user_args().has("menu"):
+				run.make_menu()
 			for _i in range(3):
 				var inst := run.deck.add(card)
 				if upgraded:
