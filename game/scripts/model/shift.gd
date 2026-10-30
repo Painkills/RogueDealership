@@ -376,6 +376,9 @@ func forecast(ticks: int, target: int = -1, card: CardInstance = null) -> Dictio
 		"unsigned_lost": 0, "chairs": []}
 	if out["bell"]:
 		out["unsigned_lost"] = margin_at_risk()
+	# What missed demands cost everyone on the floor (Karen's Manager?) - landed
+	# on every chair once all of them are worked out, before anyone is walked.
+	var floor_hit := 0
 	for c in chairs:
 		if c == null:
 			out["chairs"].append({})
@@ -430,9 +433,16 @@ func forecast(ticks: int, target: int = -1, card: CardInstance = null) -> Dictio
 						f["walks"] = not c.archetype.patience_is_shield
 					elif e is ChangePatience and e.amount < 0:
 						f["patience_after"] += e.amount
-		if f["patience_after"] <= 0 and not c.archetype.patience_is_shield:
-			f["walks"] = true
+					elif e is ChangePatienceFloor and e.amount < 0:
+						floor_hit += e.amount
 		out["chairs"].append(f)
+	for i in range(chairs.size()):
+		var f: Dictionary = out["chairs"][i]
+		if f.is_empty():
+			continue
+		f["patience_after"] += floor_hit
+		if f["patience_after"] <= 0 and not chairs[i].archetype.patience_is_shield:
+			f["walks"] = true
 	return out
 
 

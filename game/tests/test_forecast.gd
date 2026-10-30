@@ -151,6 +151,25 @@ func test_a_demand_that_walks_them_when_missed_says_so() -> void:
 	h.check("and they walk with plenty of patience left", bool(f["walks"])
 		and int(f["patience_after"]) > 0)
 
+func test_a_missed_demand_that_costs_the_whole_floor_counts_on_everyone() -> void:
+	## Karen's Manager?: ignored, the FLOOR loses patience - the one asking, and
+	## the customer you are with, who the drain alone would have left standing.
+	var s := _shift()
+	var hit := ChangePatienceFloor.new()
+	hit.amount = -4
+	var floor_wide: Array[Effect] = [hit]
+	s.chairs[0].patience = 4
+	s.chairs[1].patience = 10
+	s.raise_demand(s.chairs[1], _demand(1, IncreasePatience.new(), floor_wide))
+	var f := s.forecast(1)
+	h.eq("the one you are with takes it too", int(_chair(f, 0)["patience_after"]), 4 - 1 - 4)
+	h.check("and walks", bool(_chair(f, 0)["walks"]))
+	h.eq("so does the one who asked", int(_chair(f, 1)["patience_after"]), 10 - 1 - 4)
+	h.check("who does not walk", not bool(_chair(f, 1)["walks"]))
+	# And it is what happens.
+	s._burn(1, "wait")
+	h.check("played out, the one with 4 walked", s.chairs[0] == null or s.chairs[0].state == "walked")
+
 # ------------------------------------------------------------------ the bell
 func test_the_bell_rings_exactly_at_the_budget() -> void:
 	var s := _shift()
