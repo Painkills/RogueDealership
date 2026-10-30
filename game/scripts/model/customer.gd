@@ -78,6 +78,10 @@ var action_state: Dictionary = {}
 var warned_leaving_soon: bool = false
 ## The same, for saying so out loud - see ShiftConfig.impatient_at.
 var said_impatient: bool = false
+## Why they walked, when it was not their own doing: someone else's ignored
+## demand that cost the whole floor ("Manager? ignored: everyone -4 patience").
+## "" otherwise - see Shift._settle_patience().
+var walked_because: String = ""
 ## What they are objecting to about the product on their table - "It's too
 ## expensive" - while you work through it. &"" when nothing is: see
 ## Shift._object(), and DialogueLine.becomes for how a conversation moves it.

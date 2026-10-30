@@ -579,6 +579,11 @@ func _seat_the_waiting() -> void:
 			_spawn(i, waiting.pop_front())
 
 
+## A missed demand that has just cost the whole floor patience, until the next
+## _settle_patience() walks whoever it emptied: {"by": the customer who asked,
+## "why": what to tell the rest}. {} otherwise.
+var _floor_blame: Dictionary = {}
+
 func _settle_patience() -> void:
 	## Anything that touches patience outside a tick still has to check the
 	## door. Every patience mutation in the engine ends here.
@@ -590,7 +595,12 @@ func _settle_patience() -> void:
 		if chairs[i].archetype.patience_is_shield:
 			chairs[i].patience = maxi(0, chairs[i].patience)
 		elif chairs[i].patience <= 0:
+			# Walked by someone else's ignored ask: they say so. The one who asked
+			# has it said over them already, as the demand settles.
+			if not _floor_blame.is_empty() and _floor_blame["by"] != chairs[i]:
+				chairs[i].walked_because = _floor_blame["why"]
 			_walk(i)
+	_floor_blame = {}
 	# One log line per ENTRY into the danger zone, not one per tick spent in
 	# it - re-armed the instant patience climbs back out, so a genuine second
 	# scare still warns. A customer this pass just walked out of is already
@@ -628,8 +638,9 @@ func _walk(chair: int) -> void:
 	if c.offer != null:
 		put_back(c.offer.instance)
 		c.clear_table()
-	events.append("[%s] %s walks out%s." % [c.key, c.display_name,
-		" with $%d unsigned" % lost if lost > 0 else ""])
+	events.append("[%s] %s walks out%s%s." % [c.key, c.display_name,
+		" with $%d unsigned" % lost if lost > 0 else "",
+		" - " + c.walked_because if c.walked_because != "" else ""])
 	# Immediate, not deferred to report() - the whole point of costing standing
 	# per walkout is that it should sting the moment it happens, not show up as
 	# a surprise on a screen five minutes later. maxi() rather than a bare
@@ -2352,11 +2363,17 @@ func _settle_demand(c: Customer, met: bool, sale: Dictionary = {}) -> void:
 	var effects: Array[Effect] = d.relief if met else d.effects
 	var descriptions: Array[String] = []
 	var floor_wide := false
+	var floor_patience := 0
 	for e in effects:
 		e.apply(ctx)
 		descriptions.append(e.describe())
 		if e is ChangePatienceFloor:
 			floor_wide = true
+			floor_patience += e.amount
+	# Whoever else that walks is told why, by _settle_patience().
+	if not met and floor_patience < 0:
+		_floor_blame = {"by": c, "why": "%s ignored: everyone %d patience"
+			% [d.display_name, floor_patience]}
 	# The end of their turn: what shield you built is spent.
 	if is_move and c.archetype.patience_resets_after_move:
 		c.patience = 0

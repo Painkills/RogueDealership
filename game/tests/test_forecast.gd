@@ -167,8 +167,16 @@ func test_a_missed_demand_that_costs_the_whole_floor_counts_on_everyone() -> voi
 	h.eq("so does the one who asked", int(_chair(f, 1)["patience_after"]), 10 - 1 - 4)
 	h.check("who does not walk", not bool(_chair(f, 1)["walks"]))
 	# And it is what happens.
+	var walker: Customer = s.chairs[0]
+	var asker: Customer = s.chairs[1]
 	s._burn(1, "wait")
-	h.check("played out, the one with 4 walked", s.chairs[0] == null or s.chairs[0].state == "walked")
+	h.check("played out, the one with 4 walked", walker.state == "walked")
+	# And they are told why: it was not their own doing.
+	h.check("their walkout says what did it (%s)" % walker.walked_because,
+		walker.walked_because.contains("Wants a thing") and walker.walked_because.contains("-4"))
+	var logged := s.events.filter(func(l): return l.contains("walks out"))
+	h.check("and so does the log", logged.any(func(l): return l.contains("Wants a thing")))
+	h.eq("the one who asked is not blamed on themselves", asker.walked_because, "")
 
 # ------------------------------------------------------------------ the bell
 func test_the_bell_rings_exactly_at_the_budget() -> void:

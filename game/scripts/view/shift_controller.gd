@@ -1090,12 +1090,13 @@ func _notice_departures() -> void:
 		if was.state == "signed":
 			_celebrate_close(i, was.unsigned_margin())
 		elif was.state == "walked":
-			_mourn_walkout(i, was.unsigned_margin())
+			_mourn_walkout(i, was.unsigned_margin(), was.walked_because)
 		else:
 			continue
 		Telemetry.record(was.state, {"tick": _shift.tick, "chair": i,
 			"archetype": String(was.archetype.id), "unsigned": was.unsigned_margin(),
-			"patience": was.patience, "products": was.unsigned.size(), "day": _shift.shift_number})
+			"patience": was.patience, "products": was.unsigned.size(), "day": _shift.shift_number,
+			"because": was.walked_because})
 		# "Wait to show the new customer who appears in the chair until the
 		# 'signed' or 'walk out' sign has disappeared."
 		_held[i] = {"who": was, "until": Time.get_ticks_msec() + int(HOLD_SECONDS * 1000.0)}
@@ -1306,9 +1307,12 @@ func _celebrate_the_yes(data: Dictionary, chair: int) -> void:
 		_fx_done(n)
 		_pulse(_at_risk_label, &"margin", false))
 
-func _mourn_walkout(chair: int, lost: int) -> void:
+func _mourn_walkout(chair: int, lost: int, because: String = "") -> void:
 	var at := _chair_on_screen(chair)
 	_stamp("WALKED OUT", &"alert", chair, 8.0)
+	# Walked by somebody else's ignored ask: what did it, under the stamp.
+	if because != "":
+		_rise(because, &"alert", chair)
 	if lost > 0:
 		# What they took with them: dropped, not banked.
 		var gone := _fx_label("-%s unsigned" % Format.money(lost), &"alert", 40,
