@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ProductCardDef" load_steps=6 format=3]
+
+[ext_resource type="Resource" path="res://data/interests/convenience.tres" id="1_int"]
+[ext_resource type="Script" uid="uid://cjjt8kflgpayg" path="res://scripts/model/data/product_card_def.gd" id="2_prod"]
+[ext_resource type="Script" uid="uid://c51pnf18p6dao" path="res://scripts/model/effects/effect.gd" id="3_eff"]
+[ext_resource type="Script" uid="uid://bswvlmlj77d75" path="res://scripts/model/effects/change_patience.gd" id="4_patience"]
+
+[sub_resource type="Resource" id="fx_0"]
+script = ExtResource("4_patience")
+amount = 2
+
+[resource]
+script = ExtResource("2_prod")
+ticks = 3
+player_dialogue_tags = Array[StringName]([&"player_pitch"])
+objection_tags = Array[StringName]([&"objection"])
+interest = ExtResource("1_int")
+margin = 2200
+upgraded_margin = 2750
+id = &"valet_club"
+display_name = "Valet Club"
+text = "We pick it up, service it, bring it back."
+rarity = 2
+effects = Array[ExtResource("3_eff")]([SubResource("fx_0")])

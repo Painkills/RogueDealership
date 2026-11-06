@@ -733,6 +733,8 @@ func _check_the_free_card_is_on_the_house() -> void:
 	var uids_before := {}
 	for c in _run.deck.cards:
 		uids_before[c.uid] = true
+	# A product takes its interest's slot on the menu: whatever held it leaves.
+	var swapped := 1 if shop.replaces(free) != null else 0
 	detail._take_btn.pressed.emit()
 	var added: Array = []
 	for c in _run.deck.cards:
@@ -747,7 +749,8 @@ func _check_the_free_card_is_on_the_house() -> void:
 		_taken_uid = added[0].uid
 	var another: CardDef = shop.free_cards[0]
 	_check("and no second free card this visit",
-		not shop.take_free(another).ok and _run.deck.cards.size() == uids_before.size() + 1)
+		not shop.take_free(another).ok
+			and _run.deck.cards.size() == uids_before.size() + 1 - swapped)
 
 ## The shelf routes through the SAME confirm-before-you-spend overlay:
 ## clicking the card opens it with a "buy" button, not an instant purchase -
@@ -770,6 +773,7 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	var uids_before := {}
 	for c in _run.deck.cards:
 		uids_before[c.uid] = true
+	var swapped := 1 if shop.replaces(offered) != null else 0
 	var detail: ShopCardDetail = shop_view.get_node(^"%Detail")
 	var card := _slot_card(shelf_row.get_child(0))
 	card.pressed.emit()
@@ -785,7 +789,7 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	detail._buy_btn.pressed.emit()
 	_check("pressing buy actually buys %s (deck %d -> %d)"
 		% [offered.display_name, before, _run.deck.cards.size()],
-		_run.deck.cards.size() == before + 1)
+		_run.deck.cards.size() == before + 1 - swapped)
 	_check("and closes the overlay", not detail.visible)
 	for c in _run.deck.cards:
 		if not uids_before.has(c.uid):
@@ -793,11 +797,13 @@ func _check_clicking_a_shelf_card_buys_it() -> void:
 	if not shop.offers.is_empty():
 		var next_def: CardDef = shop.offers[0]
 		var size_before_next := _run.deck.cards.size()
+		var next_swapped := 1 if shop.replaces(next_def) != null else 0
 		_slot_card(shelf_row.get_child(0)).pressed.emit()
 		detail._buy_btn.pressed.emit()
 		_check("and the next one on the shelf too - as many as the bonus covers (%s)"
 			% next_def.display_name,
-			_run.deck.cards.size() == size_before_next + 1 and not shop.offers.has(next_def))
+			_run.deck.cards.size() == size_before_next + 1 - next_swapped
+				and not shop.offers.has(next_def))
 	shop.run.money = was_affordable   # leave the rest of the run its own accounting
 
 ## "Pick one, or none": the popup's "no thanks" spends the visit's pick on
@@ -1214,6 +1220,9 @@ func _phase_2_leave_and_work_a_night() -> void:
 	for c in _root._shift_view._shift.draw:
 		uids[c.uid] = true
 	for c in _root._shift_view._shift.hand:
+		uids[c.uid] = true
+	# A product is on the menu, not in the draw.
+	for c in _root._shift_view._shift.board:
 		uids[c.uid] = true
 	_check("the card you took free is in the shift's deck",
 		_taken_uid >= 0 and uids.has(_taken_uid))

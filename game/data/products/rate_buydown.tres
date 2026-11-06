@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ProductCardDef" load_steps=3 format=3]
+
+[ext_resource type="Resource" path="res://data/interests/affordability.tres" id="1_int"]
+[ext_resource type="Script" uid="uid://cjjt8kflgpayg" path="res://scripts/model/data/product_card_def.gd" id="2_prod"]
+
+[resource]
+script = ExtResource("2_prod")
+ticks = 2
+player_dialogue_tags = Array[StringName]([&"player_pitch"])
+objection_tags = Array[StringName]([&"objection"])
+interest = ExtResource("1_int")
+margin = 1400
+upgraded_margin = 1750
+id = &"rate_buydown"
+display_name = "Rate Buy-Down"
+text = "A lower rate for the life of the loan, paid down today."
+rarity = 1

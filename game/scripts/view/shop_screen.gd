@@ -348,6 +348,11 @@ func _build_slot(row: HBoxContainer, inst: CardInstance, price_text: String,
 	elif _shop.run.menu and inst.is_product() and inst.uid < 0:
 		var old := _shop.replaces(inst.card)
 		rarity.text = "Replaces %s" % old.card.display_name if old != null else "New menu slot"
+		# Never wider than the card: a long name is cut short here and said whole
+		# on the card's detail, rather than stretching the slot - and the card.
+		rarity.clip_text = true
+		rarity.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		rarity.custom_minimum_size.x = CARD_SIZE.x
 	slot.add_child(rarity)
 
 	var card: ShopCardButton = (load("res://scenes/cards/shop_card_button.tscn") \

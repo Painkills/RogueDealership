@@ -63,3 +63,27 @@ func test_an_upgraded_copy_costs_its_upgraded_ticks_and_playing_it_burns_that() 
 	var tick_before := s.tick
 	h.check("the upgraded copy plays", s.play_card(0).ok)
 	h.eq("and costs no time", s.tick, tick_before)
+
+
+func test_no_product_is_better_than_another_for_its_interest_on_both_ticks_and_margin() -> void:
+	## The pool's design rule: in a menu run each interest is one slot, so a
+	## product that is quicker AND pays more than another for the same interest
+	## leaves that one no reason to exist.
+	var products: Array = _pool().cards.filter(func(c): return c is ProductCardDef)
+	for a in products:
+		for b in products:
+			if a == b or a.interest.id != b.interest.id:
+				continue
+			h.check("%s is not better than %s on both axes" % [a.id, b.id],
+				not (a.ticks <= b.ticks and a.margin >= b.margin
+					and (a.ticks < b.ticks or a.margin > b.margin)))
+
+func test_only_walkaway_products_lower_the_line() -> void:
+	## Taking their Line down is the WALKAWAY family's own thing; no other
+	## product does it, plain or upgraded.
+	for c in _pool().cards:
+		if not c is ProductCardDef or c.brand == &"walkaway":
+			continue
+		for e in c.effects + c.upgraded_effects:
+			var lowers: bool = (e is ChangeLine or e is ChangeLineFloorWide) and e.amount < 0
+			h.check("%s does not lower the Line" % c.id, not lowers)
