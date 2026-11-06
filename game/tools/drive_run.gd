@@ -1234,21 +1234,22 @@ func _phase_2_leave_and_work_a_night() -> void:
 ## distinguish between them).
 func _check_the_deck_viewer_hides_the_floor_side_panels() -> void:
 	var shift_view = _root._shift_view
-	var side_panel := shift_view.get_node(^"%SidePanel") as Control
+	# Every run is a menu run: the menu stands where the log did.
+	var side_panel := shift_view.get_node(^"%ProductBoard") as Control
 	var waiting := shift_view.get_node(^"%WaitingPanel") as Control
 	var top_strip := shift_view.get_node(^"%TopStrip") as Control
 	_check("a shift opens with you sat at chair A", shift_view._shift.at == 0)
-	_check("seated, so the log is showing to start with", side_panel.visible)
+	_check("seated, so the menu is showing to start with", side_panel.visible)
 	_check("and the waiting list", waiting.visible)
 	_check("and the shift's top bar", top_strip.visible)
 
 	_root._view_deck_btn.pressed.emit()
-	_check("opening the deck viewer hides the log", not side_panel.visible)
+	_check("opening the deck viewer hides the menu", not side_panel.visible)
 	_check("and the waiting list", not waiting.visible)
 	_check("and the top bar", not top_strip.visible)
 
 	(_root._deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
-	_check("closing it brings the log back", side_panel.visible)
+	_check("closing it brings the menu back", side_panel.visible)
 	_check("and the waiting list", waiting.visible)
 	_check("and the top bar", top_strip.visible)
 
@@ -1392,14 +1393,15 @@ func _check_the_run_is_in_the_play_metrics() -> void:
 ## "A button in the top right corner allowing you to quit a run. Have a popup to
 ## confirm saying the run will be lost." A run on the floor, a mind changed once,
 ## then quit for real.
-## TRY MENU MODE on the front door: a menu run (RunState.menu) - its shifts
-## deal the products onto the menu beside the floor - and CONTINUE puts one back
-## as a menu run, with a product it had on a table still there.
+## NEW GAME on the front door is a menu run (RunState.menu) - its shifts deal
+## the products onto the menu beside the floor - and CONTINUE puts one back as a
+## menu run, with a product it had on a table still there. There is no other.
 func _check_a_menu_run_starts_from_the_front_door_and_comes_back() -> void:
 	_reopen_the_game()
 	var title = _root._title_view
-	var button := title.get_node(^"%MenuGameButton") as Button
-	_check("the front door offers menu mode", button != null and button.is_visible_in_tree())
+	_check("the front door has no second kind of run",
+		not title.has_node(^"%MenuGameButton"))
+	var button := title.get_node(^"%NewGameButton") as Button
 	button.pressed.emit()
 	title.confirm_name()
 	(title.get_node(^"%StartDayButton") as Button).pressed.emit()

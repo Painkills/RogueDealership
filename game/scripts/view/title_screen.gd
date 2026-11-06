@@ -49,9 +49,6 @@ var _page := &""
 ## What the name popup goes on to once it is answered - &"new_game" or
 ## &"tutorial".
 var _after_name := &""
-## Whether the new game being started is a menu run (RunState.menu) - TRY MENU
-## MODE rather than NEW GAME.
-var menu_run := false
 ## Which board the high scores show - &"everyone" or &"yours".
 var _board := &""
 ## Everyone's scores, shared across players - see Leaderboard.
@@ -60,7 +57,6 @@ var leaderboard: Leaderboard
 func _ready() -> void:
 	_continue.pressed.connect(func(): continue_requested.emit())
 	_new_game.pressed.connect(ask_name.bind(&"new_game"))
-	(%MenuGameButton as Button).pressed.connect(ask_name.bind(&"menu_game"))
 	(%TutorialButton as Button).pressed.connect(ask_name.bind(&"tutorial"))
 	(%HighScoresButton as Button).pressed.connect(show_scores)
 	(%ScoresBackButton as Button).pressed.connect(show_menu)
@@ -269,8 +265,7 @@ func confirm_name() -> void:
 	PlayerProfile.set_player_name(_name_field.text)
 	_close_popup()
 	match _after_name:
-		&"new_game", &"menu_game":
-			menu_run = _after_name == &"menu_game"
+		&"new_game":
 			show_intro()
 		&"tutorial":
 			tutorial_requested.emit()

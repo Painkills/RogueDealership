@@ -153,8 +153,8 @@ func _ready() -> void:
 ## any run on this device that was still going.
 func _start_run() -> void:
 	_new_run()
-	if _title_view.menu_run:
-		_run.make_menu()
+	# Every run is a menu run: products on the menu, support cards in the hand.
+	_run.make_menu()
 	Telemetry.start_run("new", {"seed": _run.rng.seed,
 		"variant": "menu" if _run.menu else "classic"})
 	_begin_the_day()
@@ -483,11 +483,9 @@ func _on_shift_finished(report: Dictionary) -> void:
 		var fired := _run.standing <= 0
 		var rank := PlayerProfile.record_run(int(tally["total"]),
 			int(tally["margin_banked"]), fired)
-		# And onto everyone's board, under the name on your badge - a classic
-		# run's only, while menu mode is a prototype.
-		if not _run.menu:
-			_title_view.post_score(PlayerProfile.display_name(), int(tally["total"]),
-				int(tally["margin_banked"]), fired)
+		# And onto everyone's board, under the name on your badge.
+		_title_view.post_score(PlayerProfile.display_name(), int(tally["total"]),
+			int(tally["margin_banked"]), fired)
 		_summary_view.setup(tally, fired, rank)
 		_summary_view.visible = true
 		Telemetry.record("run_end", {"score": int(tally["total"]), "fired": fired,

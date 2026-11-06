@@ -620,6 +620,8 @@ func screen_rect_of(target: StringName) -> Rect2:
 			return _on_screen_rect(r)
 		&"discard":
 			return _on_screen_rect(_card_rect(_discard_zone, card))
+		&"menu":
+			return _product_board.get_global_rect() if _product_board.visible else Rect2()
 		&"clock":
 			return _tick_label.get_global_rect()
 	return Rect2()

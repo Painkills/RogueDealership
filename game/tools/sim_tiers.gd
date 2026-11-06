@@ -11,7 +11,7 @@ extends SceneTree
 ##     ... --script res://tools/sim_tiers.gd -- midday.patience_scale=0.85
 ##
 ## cfg.field=value, card.<id>.field=value and arch.<id>.field=value as well, the
-## way sim_runs.gd takes them; `fog` plays fair, `menu` deals menu runs.
+## way sim_runs.gd takes them; `fog` plays fair. Menu runs, as every run is.
 ##
 ## Every shift starts from the STARTER deck with full standing, so the tier and
 ## the day are the only differences between them - the numbers compare tiers,
@@ -31,8 +31,6 @@ var _pool: ShiftProfilePool
 ## holds is dropped from the cache and loaded afresh, without the edit.
 var _cards: CardPool
 var _arch: ArchetypePool
-## `-- menu`: menu runs (RunState.make_menu) - products on the menu, not in hand.
-var _menu := false
 
 func _init() -> void:
 	_cfg = load("res://data/shift_config.tres")
@@ -47,10 +45,6 @@ func _init() -> void:
 		if arg == "fog":
 			SimPlayer.fog = true
 			print("Fog: playing on what a person can see.")
-			continue
-		if arg == "menu":
-			_menu = true
-			print("Menu mode: products on the menu.")
 			continue
 		var parts: PackedStringArray = arg.split("=")
 		var path: PackedStringArray = parts[0].split(".")
@@ -92,8 +86,7 @@ func _cell(profile: ShiftProfile, day: int) -> Dictionary:
 			_cards, _arch,
 			seed_value * 7919 + day)
 		run.shift_number = day
-		if _menu:
-			run.make_menu()
+		run.make_menu()
 		var s := run.start_shift(profile)
 		SimPlayer.play(s)
 		var r := s.report()

@@ -90,10 +90,14 @@ func _drive() -> void:
 	_floor._on_customer_hover(0)
 	await _settle()
 	# There is no "sit down" lesson: the practice opens with you at their desk,
-	# hand up, so turning their card over goes straight to the hand.
-	_check("turning their card over moves it on to your hand", _coach.step_id() == &"hand")
+	# menu up, so turning their card over goes straight to the menu.
+	_check("turning their card over moves it on to your menu", _coach.step_id() == &"menu")
 	_floor._on_customer_unhover(0)
 	await _settle()
+	_check("a menu shift, like every run's", shift.cfg.products_on_board
+		and shift.hand.all(func(i): return not i.is_product()))
+	await _check_it_points_at_something("your menu")
+	await _next(&"hand")
 	await _check_it_points_at_something("your hand")
 
 	await _next(&"dig")
@@ -111,9 +115,9 @@ func _drive() -> void:
 	var low_name: String = shift.card_pool.by_id(Tutorial.LOW).display_name
 	_check("the memo names the product to put down (%s)" % low_name,
 		_coach._body.text.contains(low_name))
-	var product := _index_of(shift, Tutorial.LOW)
-	_check("the scripted product is still in hand to place", product >= 0)
-	_floor._apply(shift.play_card(product))
+	_check("the scripted product is on the menu to place",
+		shift.board_product(Tutorial.LOW) != null)
+	_floor._apply(shift.place_board(Tutorial.LOW))
 	await _settle()
 	_check("placing a product moves it on", _coach.step_id() == &"meter")
 	var c: Customer = shift.chairs[0]
@@ -148,9 +152,8 @@ func _drive() -> void:
 	_check("leaving the table empty", c.offer == null)
 
 	# The one they rank well, a support card short of their Line.
-	var high := _index_of(shift, Tutorial.HIGH)
-	_check("the product they want is in hand", high >= 0)
-	_floor._apply(shift.play_card(high))
+	_check("the product they want is on the menu", shift.board_product(Tutorial.HIGH) != null)
+	_floor._apply(shift.place_board(Tutorial.HIGH))
 	await _settle()
 	_check("placing it moves it on", _coach.step_id() == &"support")
 	_check("and their Line was tuned to it (appeal %d, Line %d)"

@@ -27,10 +27,10 @@ const PATIENCE := 20
 const LOW := &"tvp"
 ## The one they rank near the top - put down second, and sold.
 const HIGH := &"vsc"
-## Left to right: something to dig, the low product, the support card the coach
-## asks for, the high product, and the support card again - so digging one of
-## those still leaves the other.
-const HAND := [&"smalltalk", LOW, &"empathize", HIGH, &"empathize"]
+## The hand, left to right - support cards only, the products are on the menu:
+## something to dig, the support card the coach asks for, another, and the
+## support card again - so digging one of those still leaves the other.
+const HAND := [&"smalltalk", &"empathize", &"explain", &"empathize"]
 ## Once the high product is on the table, their Line sits this far above its
 ## Appeal - short enough that the one support card the coach asks for next is
 ## exactly what tips it over.
@@ -44,6 +44,9 @@ static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPo
 		archetypes: ArchetypePool, dialogue: DialoguePool = null) -> Shift:
 	var practice := cfg.duplicate() as ShiftConfig
 	practice.shift_ticks = TICKS
+	# A menu shift, like every run's: the products on the menu, supports in hand.
+	practice.products_on_board = true
+	practice.hand_size = cfg.menu_hand_size
 	# No quota to make in practice - "banked $0 / $3,600" on the top bar would
 	# be a target nobody is asking you to hit.
 	practice.quota = 0
@@ -54,6 +57,9 @@ static func build_shift(cfg: ShiftConfig, interests: InterestPool, cards: CardPo
 	# hold - the lesson answers an objection with Acknowledge & Empathize, a
 	# store card, before you have ever seen the store.
 	var deck := Deck.build_starting(cards)
+	for def in cfg.menu_starters:
+		if def != null:
+			deck.add(def)
 	var held := {}
 	for inst in deck.cards:
 		held[inst.card.id] = int(held.get(inst.card.id, 0)) + 1
