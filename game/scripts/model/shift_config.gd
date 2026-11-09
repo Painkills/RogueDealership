@@ -159,6 +159,10 @@ func category_quota_in_week(week: int) -> int:
 # --- the shop --------------------------------------------------------------
 ## How many cards the house offers you after every shift, to take ONE of free.
 @export var free_card_choices: int = 3
+## How many times likelier any one card the free pick and the store offer is a
+## support card than a product - 2: twice as many supports as products, before
+## rarity weighs which one of them it is.
+@export var support_odds: float = 2.0
 ## What the store stocks after it - cards for sale, and cards of yours to
 ## upgrade - is the shift's business: see ShiftProfile.
 ## What a card costs to buy, by rarity - Basic, Economy, Value, Preferred, in

@@ -273,3 +273,58 @@ func test_the_deck_can_never_be_stripped_of_products() -> void:
 		% remaining, remaining >= r.cfg.min_products)
 	h.check("and the refusal says something useful (%s)" % last_refusal,
 		last_refusal.to_lower().contains("product"))
+
+
+## A made-up store pool: `n` support cards and `n` products, all one rarity, so
+## only the kind - never rarity - tells them apart.
+func _even_pool(n: int) -> CardPool:
+	var pool := CardPool.new()
+	var cards: Array[CardDef] = []
+	for i in range(n):
+		var s := SupportCardDef.new()
+		s.id = StringName("made_up_support_%d" % i)
+		cards.append(s)
+		var p := ProductCardDef.new()
+		p.id = StringName("made_up_product_%d" % i)
+		cards.append(p)
+	pool.cards = cards
+	return pool
+
+func test_support_cards_turn_up_as_often_as_the_config_says_against_products() -> void:
+	## "Make support twice as common as product in the free card offering and
+	## store" - ShiftConfig.support_odds supports for every product, whatever it
+	## is set to, in the free pick and on the shelf alike.
+	for odds in [1.0, 3.0]:
+		var cfg: ShiftConfig = (load("res://data/shift_config.tres") as ShiftConfig).duplicate()
+		cfg.support_odds = odds
+		var supports := 0
+		var products := 0
+		for seed_value in range(400):
+			var r := RunState.new(cfg, load("res://data/interests/interest_pool.tres"),
+				_even_pool(6), load("res://data/archetype_pool.tres"), seed_value)
+			var shop := Shop.new(r, _profile(1))
+			for c in shop.free_cards + shop.offers:
+				if c is ProductCardDef:
+					products += 1
+				else:
+					supports += 1
+		var share := float(supports) / float(supports + products)
+		var want: float = odds / (odds + 1.0)
+		h.check("at odds %.0f, %.2f of what is offered are support cards (want %.2f)"
+			% [odds, share, want], absf(share - want) < 0.05)
+
+func test_a_pool_of_one_kind_still_fills_the_offer() -> void:
+	## Nothing of the other kind left to weigh: every slot still gets a card.
+	var pool := CardPool.new()
+	var cards: Array[CardDef] = []
+	for i in range(8):
+		var s := SupportCardDef.new()
+		s.id = StringName("only_support_%d" % i)
+		cards.append(s)
+	pool.cards = cards
+	var r := RunState.new(load("res://data/shift_config.tres"),
+		load("res://data/interests/interest_pool.tres"), pool,
+		load("res://data/archetype_pool.tres"), 3)
+	var shop := Shop.new(r, _profile(2))
+	h.eq("every free choice filled", shop.free_cards.size(), r.cfg.free_card_choices)
+	h.eq("and the shelf", shop.offers.size(), 2)

@@ -501,9 +501,18 @@ func _check_clicking_a_deck_card_opens_its_detail() -> void:
 		% ", ".join(labels),
 		labels[0] == "upgraded"
 			and labels.slice(1).all(func(t): return t.begins_with("upgrade ")))
-	var drop_uid: int = shop.upgrade_offers[1]
+	# A support card: a menu product is never dropped, only swapped for another.
+	var at := -1
+	for i in range(1, shop.upgrade_offers.size()):
+		if not shop.find(shop.upgrade_offers[i]).is_product():
+			at = i
+			break
+	if at < 0:
+		print("SKIP  drop check: no support card among the other upgrades")
+		return
+	var drop_uid: int = shop.upgrade_offers[at]
 	var deck_size_before_drop := _run.deck.cards.size()
-	_slot_card(deck_row.get_child(1)).pressed.emit()
+	_slot_card(deck_row.get_child(at)).pressed.emit()
 	_check("clicking a second card of yours opens its own detail", detail.visible)
 	_check("still offering its upgrade - as many as you can afford",
 		detail._upgrade_btn.visible)

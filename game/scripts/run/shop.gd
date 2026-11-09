@@ -148,16 +148,26 @@ func _roll_cards() -> void:
 	for _i in range(mini(cards_for_sale, pool.size())):
 		offers.append(pool.pop_at(_weighted_pick(pool)))
 
-## Roulette-wheel selection weighted by RARITY_WEIGHTS, so a common card is more
-## likely to turn up than a rare one rather than an equal draw from whatever is
-## left.
+## First which kind - a support card ShiftConfig.support_odds times as likely as
+## a product, while the pool still holds both - then roulette-wheel selection
+## within it, weighted by RARITY_WEIGHTS, so a common card is more likely to turn
+## up than a rare one rather than an equal draw from whatever is left.
 func _weighted_pick(pool: Array[CardDef]) -> int:
+	var supports := pool.any(func(c): return not c is ProductCardDef)
+	var products := pool.any(func(c): return c is ProductCardDef)
+	var want_product := products
+	if supports and products:
+		var odds := maxf(0.0, run.cfg.support_odds)
+		want_product = run.rng.randf() * (odds + 1.0) >= odds
 	var total := 0
 	for c in pool:
-		total += RARITY_WEIGHTS[c.rarity]
+		if (c is ProductCardDef) == want_product:
+			total += RARITY_WEIGHTS[c.rarity]
 	var roll := run.rng.randi_range(0, total - 1)
 	var running := 0
 	for i in range(pool.size()):
+		if (pool[i] is ProductCardDef) != want_product:
+			continue
 		running += RARITY_WEIGHTS[pool[i].rarity]
 		if roll < running:
 			return i
