@@ -7,18 +7,23 @@ extends SceneTree
 ## spread, and how many pairs have a lower tier worth as much as a higher one.
 ##
 ##     godot --headless --path game --script res://tools/product_values.gd
-##     ... -- patience=200 appeal=300 line=300      (what a point is worth)
-##     ... -- bands=650-950,950-1100,1100-1250,1250-1500
+##     ... -- patience=100 appeal=200 line=200      (what a point is worth)
+##     ... -- bands=650-950,1000-1100,1150-1250,1300-1500
 ##
-## `bands` is the value each tier should land in, Basic first: it then prints the
-## margin each product outside its band would need to land inside it (to the
-## nearest $50 toward the inside, as MARGIN|id|margin lines), where each tier
-## would sit after, and any pair of products for one interest where one would beat
-## the other on both ticks and margin - which the pool's design rule forbids.
+## `bands` is the value each tier should land in, Basic first, ends included - so a
+## band that stops at 950 and the next that starts at 1000 leave nothing between
+## them to overlap in. A 3-tick product is a big commitment, so it has to land in
+## the upper half of its band. With bands it prints the margin each product
+## outside its band would need to land inside it (to the nearest $50 toward the
+## inside, as MARGIN|id|margin lines), where each tier would sit after, and any pair
+## of products for one interest where one would beat the other on both ticks and
+## margin - which the pool's design rule forbids.
 
-const PATIENCE_VALUE := 200
-const APPEAL_VALUE := 300
-const LINE_VALUE := 300
+const PATIENCE_VALUE := 100
+const APPEAL_VALUE := 200
+const LINE_VALUE := 200
+## From this many ticks a product is a big commitment: see above.
+const BIG_COMMITMENT := 3
 
 var _patience := PATIENCE_VALUE
 var _appeal := APPEAL_VALUE
@@ -107,9 +112,12 @@ func _propose(rows: Array, names: Array, bands: Array) -> void:
 		var ticks := maxi(1, int(r["ticks"]))
 		var margin: int = r["margin"]
 		var v: float = r["value"]
-		if v < band[0] or v > band[1]:
-			var want: float = clampf(v, band[0], band[1]) * ticks - int(r["worth"])
-			margin = (ceili(want / 50.0) if v < band[0] else floori(want / 50.0)) * 50
+		var low: float = band[0]
+		if ticks >= BIG_COMMITMENT:
+			low = (band[0] + band[1]) / 2.0
+		if v < low or v > band[1]:
+			var want: float = clampf(v, low, band[1]) * ticks - int(r["worth"])
+			margin = (ceili(want / 50.0) if v < low else floori(want / 50.0)) * 50
 			print("%s|%s|%d|%d|%d|%d|%d" % [r["name"], names[r["rarity"]], r["ticks"],
 				r["margin"], margin, roundi(v), roundi(float(margin + int(r["worth"])) / ticks)])
 			print("MARGIN|%s|%d" % [r["id"], margin])
