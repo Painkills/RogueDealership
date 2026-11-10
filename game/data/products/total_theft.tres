@@ -7,16 +7,16 @@
 
 [sub_resource type="Resource" id="fx_0"]
 script = ExtResource("4_appeal")
-amount = 2
+amount = 3
 
 [resource]
 script = ExtResource("2_prod")
-ticks = 3
+ticks = 2
 player_dialogue_tags = Array[StringName]([&"player_pitch"])
 objection_tags = Array[StringName]([&"objection"])
 interest = ExtResource("1_int")
-margin = 3300
-upgraded_margin = 4125
+margin = 1750
+upgraded_margin = 2190
 id = &"total_theft"
 display_name = "Theft Shield"
 text = "Recovery, new keys, and cash if it's gone."

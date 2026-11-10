@@ -7,16 +7,16 @@
 
 [sub_resource type="Resource" id="fx_0"]
 script = ExtResource("4_patience")
-amount = 4
+amount = 3
 
 [resource]
 script = ExtResource("2_prod")
-ticks = 3
+ticks = 1
 player_dialogue_tags = Array[StringName]([&"player_pitch"])
 objection_tags = Array[StringName]([&"objection"])
 interest = ExtResource("1_int")
-margin = 3350
-upgraded_margin = 4190
+margin = 850
+upgraded_margin = 1065
 id = &"extended_term"
 display_name = "Term Extension"
 text = "A longer loan, and a payment that fits."

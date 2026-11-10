@@ -8,20 +8,20 @@
 
 [sub_resource type="Resource" id="fx_0"]
 script = ExtResource("4_appeal")
-amount = 3
+amount = 2
 
 [sub_resource type="Resource" id="fx_1"]
 script = ExtResource("4_patience")
-amount = 2
+amount = 1
 
 [resource]
 script = ExtResource("2_prod")
-ticks = 3
+ticks = 2
 player_dialogue_tags = Array[StringName]([&"player_pitch"])
 objection_tags = Array[StringName]([&"objection"])
 interest = ExtResource("1_int")
-margin = 3700
-upgraded_margin = 4625
+margin = 2250
+upgraded_margin = 2815
 id = &"signature_detail"
 display_name = "Signature Detail"
 text = "Ceramic coat, and a detail every season."

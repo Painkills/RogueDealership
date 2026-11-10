@@ -13,17 +13,21 @@ extends SceneTree
 ## `bands` is the value each tier should land in, Basic first, ends included - so a
 ## band that stops at 950 and the next that starts at 1000 leave nothing between
 ## them to overlap in. A 3-tick product is a big commitment, so it has to land in
-## the upper half of its band. With bands it prints the margin each product
-## outside its band would need to land inside it (to the nearest $50 toward the
-## inside, as MARGIN|id|margin lines), where each tier would sit after, and any pair
-## of products for one interest where one would beat the other on both ticks and
-## margin - which the pool's design rule forbids.
+## the upper half of its band - and in a tier that has one, the others stay in the
+## lower half, so the 3-tick ones are always worth more. With bands it prints the
+## margin each product outside its band would need to land inside it (to the
+## nearest $50 toward the inside, as MARGIN|id|margin lines), where each tier
+## would sit after, and any pair of products of one rarity for one interest where
+## one would beat the other on both ticks and margin - which the pool's design
+## rule forbids. An appeal effect above MAX_APPEAL is listed too.
 
 const PATIENCE_VALUE := 100
 const APPEAL_VALUE := 200
 const LINE_VALUE := 200
 ## From this many ticks a product is a big commitment: see above.
 const BIG_COMMITMENT := 3
+## The most appeal a product may give when it is placed - a full appeal step.
+const MAX_APPEAL := 4
 
 var _patience := PATIENCE_VALUE
 var _appeal := APPEAL_VALUE
@@ -81,6 +85,8 @@ func _worth(p: ProductCardDef) -> int:
 			total += _patience * e.amount
 		elif e is ChangeAppeal:
 			total += _appeal * e.amount
+			if e.amount > MAX_APPEAL:
+				print("APPEAL above %d on %s: +%d" % [MAX_APPEAL, p.display_name, e.amount])
 		elif e is ChangeLine:
 			total += _line * -e.amount
 		else:
@@ -107,16 +113,24 @@ func _propose(rows: Array, names: Array, bands: Array) -> void:
 	print("")
 	print("to land every product inside its tier's band:")
 	print("product|rarity|ticks|margin now|margin then|value now|value then")
+	var has_big := {}
+	for r in rows:
+		if int(r["ticks"]) >= BIG_COMMITMENT:
+			has_big[r["rarity"]] = true
 	for r in rows:
 		var band: Array = bands[r["rarity"]]
 		var ticks := maxi(1, int(r["ticks"]))
 		var margin: int = r["margin"]
 		var v: float = r["value"]
+		var middle: float = (band[0] + band[1]) / 2.0
 		var low: float = band[0]
+		var high: float = band[1]
 		if ticks >= BIG_COMMITMENT:
-			low = (band[0] + band[1]) / 2.0
-		if v < low or v > band[1]:
-			var want: float = clampf(v, low, band[1]) * ticks - int(r["worth"])
+			low = middle
+		elif has_big.has(r["rarity"]):
+			high = middle - 1.0
+		if v < low or v > high:
+			var want: float = clampf(v, low, high) * ticks - int(r["worth"])
 			margin = (ceili(want / 50.0) if v < low else floori(want / 50.0)) * 50
 			print("%s|%s|%d|%d|%d|%d|%d" % [r["name"], names[r["rarity"]], r["ticks"],
 				r["margin"], margin, roundi(v), roundi(float(margin + int(r["worth"])) / ticks)])
@@ -129,7 +143,8 @@ func _propose(rows: Array, names: Array, bands: Array) -> void:
 	var beaten := 0
 	for a in rows:
 		for b in rows:
-			if a != b and a["interest"] == b["interest"] and a["ticks"] <= b["ticks"] \
+			if a != b and a["interest"] == b["interest"] and a["rarity"] == b["rarity"] \
+					and a["ticks"] <= b["ticks"] \
 					and a["new_margin"] >= b["new_margin"] \
 					and (a["ticks"] < b["ticks"] or a["new_margin"] > b["new_margin"]):
 				beaten += 1

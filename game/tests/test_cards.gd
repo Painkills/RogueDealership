@@ -65,14 +65,16 @@ func test_an_upgraded_copy_costs_its_upgraded_ticks_and_playing_it_burns_that() 
 	h.eq("and costs no time", s.tick, tick_before)
 
 
-func test_no_product_is_better_than_another_for_its_interest_on_both_ticks_and_margin() -> void:
+func test_no_product_is_better_than_one_of_its_rarity_for_its_interest_on_both_ticks_and_margin() -> void:
 	## The pool's design rule: in a menu run each interest is one slot, so a
-	## product that is quicker AND pays more than another for the same interest
-	## leaves that one no reason to exist.
+	## product that is quicker AND pays more than another of its rarity for the
+	## same interest leaves that one no reason to exist. A rarer product beating a
+	## commoner one is what its price buys - that is not this.
 	var products: Array = _pool().cards.filter(func(c): return c is ProductCardDef)
+	h.check("the pool has products to compare", products.size() > 1)
 	for a in products:
 		for b in products:
-			if a == b or a.interest.id != b.interest.id:
+			if a == b or a.interest.id != b.interest.id or a.rarity != b.rarity:
 				continue
 			h.check("%s is not better than %s on both axes" % [a.id, b.id],
 				not (a.ticks <= b.ticks and a.margin >= b.margin
