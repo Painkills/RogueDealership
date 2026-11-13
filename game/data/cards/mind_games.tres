@@ -7,7 +7,7 @@
 [sub_resource type="Resource" id="Effect_base"]
 script = ExtResource("2_fx")
 amount = 1
-drop = 10
+drop = 12
 
 [sub_resource type="Resource" id="Effect_up"]
 script = ExtResource("2_fx")
