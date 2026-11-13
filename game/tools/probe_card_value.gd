@@ -18,6 +18,7 @@ const SPOTS := [[&"midday", 4], [&"night", 6]]
 var _cfg: ShiftConfig
 var _pool: ShiftProfilePool
 var _cards: CardPool
+var _line := 0
 
 func _init() -> void:
 	_cfg = load("res://data/shift_config.tres")
@@ -27,6 +28,18 @@ func _init() -> void:
 	SimPlayer.fog = OS.get_cmdline_user_args().has("fog")
 	if SimPlayer.fog:
 		print("Fog: playing on what a person can see.")
+	# What-ifs, for this process only: cfg.field=value (the ShiftConfig) and
+	# line=N (every customer's Line that much higher, on top of the tier's own).
+	for arg in OS.get_cmdline_user_args():
+		var parts := arg.split("=")
+		if parts.size() != 2:
+			continue
+		if parts[0].begins_with("cfg."):
+			_cfg.set(parts[0].trim_prefix("cfg."), str_to_var(parts[1]))
+			print("what-if: %s = %s" % [parts[0], _cfg.get(parts[0].trim_prefix("cfg."))])
+		elif parts[0] == "line":
+			_line = int(parts[1])
+			print("what-if: every Line %+d" % _line)
 	var base := _banked(null, false)
 	print("Starter deck banks %d a shift and ends on %.2f standing (midday day 4 and night day 6, %d shifts each)."
 		% [base.x, base.y, SEEDS])
@@ -51,6 +64,9 @@ func _banked(extra: CardDef, upgraded: bool) -> Vector2:
 	var standing := 0
 	for spot in SPOTS:
 		var profile: ShiftProfile = _pool.by_id(spot[0])
+		if _line != 0:
+			profile = profile.duplicate()
+			profile.line_offset += _line
 		for seed_value in range(SEEDS):
 			var run := RunState.new(_cfg, load("res://data/interests/interest_pool.tres"), _cards,
 				load("res://data/archetype_pool.tres"), seed_value * 7919 + int(spot[1]))
