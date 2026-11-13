@@ -9,7 +9,9 @@
 [ext_resource type="Resource" path="res://data/dealership_upgrades/fancy_showroom.tres" id="7_e"]
 [ext_resource type="Resource" path="res://data/dealership_upgrades/loyalty_program.tres" id="8_f"]
 [ext_resource type="Resource" path="res://data/dealership_upgrades/walkaway_digital_media.tres" id="9_g"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/spiff_board.tres" id="10_spiff_board"]
+[ext_resource type="Resource" path="res://data/dealership_upgrades/morning_huddle.tres" id="11_morning_huddle"]
 
 [resource]
 script = ExtResource("1_pool")
-upgrades = Array[ExtResource("2_up")]([ExtResource("3_a"), ExtResource("4_b"), ExtResource("5_c"), ExtResource("6_d"), ExtResource("7_e"), ExtResource("8_f"), ExtResource("9_g")])
+upgrades = Array[ExtResource("2_up")]([ExtResource("3_a"), ExtResource("4_b"), ExtResource("5_c"), ExtResource("6_d"), ExtResource("7_e"), ExtResource("8_f"), ExtResource("9_g"), ExtResource("10_spiff_board"), ExtResource("11_morning_huddle")])

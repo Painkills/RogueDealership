@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_effect"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="2_def"]
+[ext_resource type="Script" path="res://scripts/model/effects/scale_by_sales.gd" id="3_scale"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_combo.gd" id="4_combo"]
+
+[sub_resource type="Resource" id="Inner_base_0"]
+script = ExtResource("4_combo")
+amount = 40
+
+[sub_resource type="Resource" id="Effect_base_0"]
+script = ExtResource("3_scale")
+inner = SubResource("Inner_base_0")
+
+[sub_resource type="Resource" id="Inner_up_0"]
+script = ExtResource("4_combo")
+amount = 50
+
+[sub_resource type="Resource" id="Effect_up_0"]
+script = ExtResource("3_scale")
+inner = SubResource("Inner_up_0")
+
+[resource]
+script = ExtResource("2_def")
+needs_offer = false
+id = &"snowball"
+display_name = "Snowball"
+text = "Each deal rolls into a bigger one."
+ticks = 1
+upgraded_ticks = 0
+rarity = 3
+effects = Array[ExtResource("1_effect")]([SubResource("Effect_base_0")])
+upgraded_effects = Array[ExtResource("1_effect")]([SubResource("Effect_up_0")])

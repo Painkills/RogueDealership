@@ -45,6 +45,11 @@ class_name DealershipUpgrade extends Resource
 ## every card. Raising a Line is never touched.
 @export var line_drop_brand: StringName = &""
 @export var line_drop_extra: float = 0.0
+## Momentum (Shift.momentum) every sale gives: that many of your next cards cost
+## no ticks.
+@export var momentum_on_sale: int = 0
+## Momentum every shift opens with.
+@export var momentum_at_open: int = 0
 @export_group("")
 
 

@@ -107,6 +107,9 @@ func category_quota_in_week(week: int) -> int:
 ## walk back to whoever you were last with.
 @export var approach_ticks: int = 0
 @export var dig_ticks: int = 1
+## Momentum - the next cards that cost nothing (Shift.momentum) - never holds more
+## than this many at once, however much a card or a perk gives.
+@export var momentum_max: int = 3
 
 ## One rung of appeal: what a product opens at drops by this for every place
 ## down their list. Cards and Lines are tuned in rungs and half rungs of it.

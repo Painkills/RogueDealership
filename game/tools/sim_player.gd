@@ -362,6 +362,10 @@ static func _act(s: Shift, c: Customer) -> bool:
 		s.drop_offer()
 	var p := _best_product(s, c)
 	if p != null:
+		# Momentum first, if a card for it is in hand and the free plays would pay for it.
+		var surge := _momentum_card(s, c)
+		if surge >= 0:
+			return _did("momentum", s.play_card(surge).ok)
 		# Short of their Line: Mind Games first, if it is in hand.
 		var waive := _find(s, "waive")
 		if waive >= 0 and c.line_waivers <= 0 \
@@ -414,6 +418,34 @@ static func _park(s: Shift, c: Customer, gap: int) -> bool:
 			_parked[c] = true
 			return _did("park a card on them (think on it)", s.play_card(i).ok)
 	return false
+
+## A card in hand that earns momentum worth playing now - or -1. Only with none held
+## (a charge is not worth wasting on top of another), time left to use it, and when
+## the free cards it gives save more ticks than it costs: about a tick a card, so it
+## must give at least one more card than it costs ticks. The best of them by what it
+## nets.
+static func _momentum_card(s: Shift, c: Customer) -> int:
+	if s.momentum > 0 or s.tick_budget - s.tick <= 3:
+		return -1
+	var best := -1
+	var best_net := 0
+	for i in range(s.hand.size()):
+		var inst: CardInstance = s.hand[i]
+		if inst.is_product():
+			continue
+		var def := inst.card as SupportCardDef
+		var effects: Array = def.upgraded_effects \
+			if inst.upgraded and not def.upgraded_effects.is_empty() else def.effects
+		var gain := 0
+		for e in effects:
+			if e is GainMomentum:
+				gain += e.amount + e.per_sale * c.unsigned.size()
+		gain = mini(gain, s.cfg.momentum_max)
+		var net := gain - inst.ticks()
+		if gain > 0 and net >= 1 and net > best_net:
+			best_net = net
+			best = i
+	return best
 
 ## Whether somebody other than `c` is there with something to do about.
 static func _someone_else_to_work(s: Shift, c: Customer) -> bool:
@@ -632,8 +664,12 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 				money += inner.amount
 			# Keep It Coming: its percent of this product's margin, and of every
 			# one they would take after it.
+			# A combinator runs the wrapped effect once, and again for every product
+			# they have taken (Snowball, Premium Package).
+			var times: int = 1 + c.unsigned.size() if e is ScaleBySales else 1
 			if inner is ChangeCombo:
-				money += roundi(inner.amount / 100.0 * (c.offer.margin + _later_margin(s, c)))
+				money += roundi(inner.amount * times / 100.0
+					* (c.offer.margin + _later_margin(s, c)))
 				varies = true
 				flat = true
 			if inner is ChangeAppeal:
@@ -646,7 +682,7 @@ static func _money_card_for(s: Shift, c: Customer) -> int:
 			if inner is MarginPercent:
 				var pct: int = inner.low_amount \
 					if c.patience < c.max_patience * inner.low_below else inner.amount
-				money += roundi(c.offer.margin * pct / 100.0)
+				money += roundi(c.offer.margin * pct * times / 100.0)
 				varies = true
 			# Good Will: so much a point over the Line - it leaves them at it.
 			if inner is ConvertSurplusAppeal:

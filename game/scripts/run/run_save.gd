@@ -166,7 +166,7 @@ static func fingerprint_of(run: RunState, shift: Shift, shop: Shop) -> int:
 			shift.margin_banked, shift.standing, shift.at, seats,
 			shift.hand.map(func(i): return i.uid), shift.commands.size(),
 			shift.action_log.size(), shift.next_arrival,
-			shift.waiting.map(func(a): return a.id)])
+			shift.waiting.map(func(a): return a.id), shift.momentum])
 	if shop != null:
 		parts.append([shop.free_picks_left, shop.offers.map(func(d): return d.id),
 			shop.dealership_picks_left, shop.commands.size()])

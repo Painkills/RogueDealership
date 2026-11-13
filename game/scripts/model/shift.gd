@@ -68,6 +68,11 @@ var category_sold: int = 0
 ## The run's dealership upgrades - see DealershipUpgrade and perk(). Read as
 ## the floor opens, so set through the constructor, never afterwards.
 var dealership: Array[DealershipUpgrade] = []
+## Momentum: how many of your next cards cost no ticks - support cards, and
+## products put down; not a dig. Earned by cards (GainMomentum) and by the
+## dealership (DealershipUpgrade.momentum_on_sale, momentum_at_open), never past
+## ShiftConfig.momentum_max. Spent a charge a card, see _take_cost().
+var momentum: int = 0
 ## Who never comes in on this shift - ShiftProfile.excluded_archetypes.
 var excluded_archetypes: Array[CustomerArchetype] = []
 ## A premade shift's own customers - see ShiftProfile.only_archetypes and
@@ -241,7 +246,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 			"ticks_cards", "ticks_place", "ticks_digs", "ticks_approach",
 			"margin_conceded", "margin_padded", "margin_extra",
 			"customers_signed", "customers_walked",
-			"demands_met", "demands_missed", "budget_seen", "budget_spent"]:
+			"demands_met", "demands_missed", "budget_seen", "budget_spent",
+			"momentum_gained", "momentum_used", "ticks_saved"]:
 		stat[key] = 0
 
 	# A picked ShiftProfile (see RunState.start_shift()) may put fewer chairs
@@ -289,6 +295,8 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 	_seat_the_waiting()
 	if not chairs.is_empty() and last_customer == null:
 		last_customer = chairs[0]
+	# The shift opens with the dealership's head start, if it has one.
+	gain_momentum(int(perk(&"momentum_at_open")))
 	# The floor opens full, and nobody the door sent is waiting yet: the first to come in
 	# after opening does so on the same clock as everyone after them.
 	next_arrival = _arrival_gap()
@@ -301,6 +309,34 @@ func _init(p_cfg: ShiftConfig, p_interests: InterestPool, p_cards: CardPool,
 ## One of DealershipUpgrade's bonuses, summed over every upgrade the run owns.
 func perk(field: StringName) -> float:
 	return DealershipUpgrade.total(dealership, field)
+
+
+## `n` more cards free, never past ShiftConfig.momentum_max.
+func gain_momentum(n: int) -> void:
+	if n <= 0:
+		return
+	var before := momentum
+	momentum = mini(cfg.momentum_max, momentum + n)
+	stat["momentum_gained"] = int(stat.get("momentum_gained", 0)) + momentum - before
+
+
+## What playing `inst` would cost in ticks right now: its own, or nothing at all
+## while there is momentum to spend. Looks, spends nothing - the screen's preview.
+func cost_of(inst: CardInstance) -> int:
+	return 0 if momentum > 0 else inst.ticks()
+
+
+## What playing `inst` costs, spending the momentum that makes it free. A card
+## that costs nothing anyway wastes none. Called once per card played, before its
+## effects land, so a card that earns momentum never spends its own.
+func _take_cost(inst: CardInstance) -> int:
+	var cost := inst.ticks()
+	if momentum <= 0 or cost <= 0:
+		return cost
+	momentum -= 1
+	stat["momentum_used"] = int(stat.get("momentum_used", 0)) + 1
+	stat["ticks_saved"] = int(stat.get("ticks_saved", 0)) + cost
+	return 0
 
 
 func seated() -> Array:
@@ -1361,8 +1397,11 @@ func _put_down(c: Customer, inst: CardInstance) -> Result:
 	if not c.accepts(inst.card as ProductCardDef):
 		return Result.new(false, "%s will only look at %s products."
 			% [c.display_name, c.archetype.only_category.display_name])
+	# Before anything it does lands, so a product that earns momentum does not
+	# spend its own.
+	var cost := _take_cost(inst)
 	if c.next_card_rejected():
-		return _reject(c, inst, inst.ticks())
+		return _reject(c, inst, cost)
 	c.cards_since_rejection += 1
 
 	var product := inst.card as ProductCardDef
@@ -1428,7 +1467,7 @@ func _put_down(c: Customer, inst: CardInstance) -> Result:
 	_object(c, product)
 	# What the product costs to put down is its own: a big earner takes longer
 	# to pitch, and the whole floor waits while you do.
-	_burn(inst.ticks(), "place")
+	_burn(cost, "place")
 	return Result.new(true, "You put the %s in front of %s."
 		% [product.display_name, c.display_name], "place", {"band": band, "rank": rank})
 
@@ -1552,8 +1591,10 @@ func _support(c: Customer, index: int) -> Result:
 	if def.needs_offer and c.offer == null:
 		return Result.new(false, "%s needs something on the table."
 			% def.display_name)
+	# Before its effects land, so a card that earns momentum does not spend its own.
+	var cost := _take_cost(inst)
 	if c.next_card_rejected():
-		return _reject(c, inst, inst.ticks())
+		return _reject(c, inst, cost)
 	c.cards_since_rejection += 1
 	# Yours is read off the table as you reach for the card, before its effects
 	# land; their reply below reads it after.
@@ -1648,7 +1689,7 @@ func _support(c: Customer, index: int) -> Result:
 	_demand_saw(c, DemandResolve.SUPPORT, {"card": def, "effects": effects,
 		"patience_before": patience_before})
 	_settle_patience()
-	_burn(inst.ticks(), "cards")
+	_burn(cost, "cards")
 	return Result.new(true, def.display_name + ".", "support")
 
 
@@ -1703,6 +1744,8 @@ func offer() -> Result:
 	# being asked cannot retroactively sink an offer that already cleared.
 	var patience_before: int = c.patience
 	var sale := _settle(c)
+	# The dealership's reward for a yes: the next card is free.
+	gain_momentum(int(perk(&"momentum_on_sale")))
 	# They say yes out loud, about the product they just took where a line was
 	# written for it - before anything their archetype does about it, which is
 	# what happens next.

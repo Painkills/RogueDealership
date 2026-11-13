@@ -20,3 +20,4 @@ paycheck_raise_per_week = 100
 complicator_share = 0.5
 difficulty_tolerance = 1
 support_odds = 2.0
+momentum_max = 3

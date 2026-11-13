@@ -1895,16 +1895,18 @@ func _process(_delta: float) -> void:
 ## The tick counter's words: where the clock is, and - with a forecast - where
 ## the card you are holding would leave it, and what the bell would take.
 func _tick_text(f: Dictionary = {}) -> String:
+	# Momentum, while there is any: the next cards are free.
+	var momentum := "  MOMENTUM x%d" % _shift.momentum if _shift.momentum > 0 else ""
 	if not _shift.has_clock:
-		return "tick %d - no clock" % _shift.tick
+		return "tick %d - no clock%s" % [_shift.tick, momentum]
 	var text := "tick %d/%d" % [_shift.tick, _shift.tick_budget]
 	if f.is_empty():
-		return text
+		return text + momentum
 	# Plain ASCII: the Web build's font has no arrow or dash, and draws a box.
 	text += " -> %d/%d" % [mini(int(f["tick_after"]), _shift.tick_budget), _shift.tick_budget]
 	if bool(f["bell"]) and int(f["unsigned_lost"]) > 0:
 		text += " - %s unsigned lost" % Format.money(int(f["unsigned_lost"]))
-	return text
+	return text + momentum
 
 ## The card being dragged, looked at or held up - from your hand, or a product
 ## off the menu - and where it would go: [CardInstance, chair or -1, ticks], or
@@ -1939,7 +1941,7 @@ func _held_card() -> Array:
 	# Not at a desk and not over anyone: nowhere it could be played.
 	if chair < 0:
 		return []
-	return [inst, chair, inst.ticks()]
+	return [inst, chair, _shift.cost_of(inst)]
 
 ## Each folder says what the held card's ticks would do to them, and the clock
 ## where it would leave you - Shift.forecast(), worked out again only when the

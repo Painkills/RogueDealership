@@ -15,5 +15,7 @@ func apply(ctx: EffectContext) -> void:
 	ctx.offer.margin += roundi(ctx.offer.margin * percent / 100.0)
 
 func describe() -> String:
+	if low_amount == amount:
+		return "+%d%% Margin" % amount
 	return "+%d%% Margin, +%d%% under %d%% patience" % [amount, low_amount,
 		roundi(low_below * 100.0)]
