@@ -3170,8 +3170,10 @@ func _check_a_boss_fight_shows_its_move_its_budget_and_what_lands() -> void:
 	_check("the back of their folder is the short note, pointing at the side folders",
 		does == BossPanels.fight_text(who) and does.contains("Left folder")
 			and not does.to_lower().contains("shield"))
-	_check("the tablet says what is left of the budget",
-		OfferTablet.budget_text(who).contains(Format.money(4321)))
+	# Whatever they had already agreed to comes out of it.
+	_check("the tablet says what is left of the budget (%s)" % OfferTablet.budget_text(who),
+		who.budget_left() > 0
+			and OfferTablet.budget_text(who).contains(Format.money(who.budget_left())))
 	_check("and the top bar there is no clock (%s)" % _controller._tick_label.text,
 		_controller._tick_label.text.contains("no clock"))
 	# With a deal agreed to and the table empty, "double-click to close" is
@@ -3846,7 +3848,16 @@ func _check_double_tapping_the_empty_table_closes_on_touch_too() -> void:
 		shift.discard.append(c.offer.instance)
 	c.offer = null
 	c.unsigned.append({"product": shift.card_pool.by_id(&"vsc"), "margin": 1600, "extra_margin": 0})
+	# Whoever the door sat here, nothing of their own stands in the way of
+	# signing - this checks the tap, not what they came in for.
+	var plain := c.archetype.duplicate() as CustomerArchetype
+	plain.min_products_to_sign = 0
+	plain.budget_share = 0.0
+	c.archetype = plain
+	c.budget = 0
+	c.demands_category = null
 	_controller._render()
+	_check("they can be signed (%s)" % shift._signing_refusal(c), shift._signing_refusal(c) == "")
 
 	_controller._touch_check = func(): return true
 	var tap := InputEventMouseButton.new()

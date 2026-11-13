@@ -6,11 +6,11 @@
 
 [sub_resource type="Resource" id="Effect_base"]
 script = ExtResource("2_fx")
-amount = 0
+amount = 8
 
 [sub_resource type="Resource" id="Effect_up"]
 script = ExtResource("2_fx")
-amount = 0
+amount = 12
 
 [resource]
 script = ExtResource("3_def")

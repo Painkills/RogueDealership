@@ -118,6 +118,34 @@ func test_a_sale_on_a_waived_line_brings_the_line_back_with_its_rise() -> void:
 	h.check("sold at a Line of 0 (%s)" % res.msg, res.ok and c.offer == null)
 	h.eq("the real Line comes back, risen by the sale", c.line, 35)
 
+func test_a_waiver_with_a_drop_lowers_the_line_only_that_far() -> void:
+	var s := _shift()
+	var c := _seat(s, 0, _arch(30))
+	s.at = 0
+	var waive := WaiveLine.new()
+	waive.amount = 1
+	waive.drop = 10
+	_play(s, _card([waive], false))
+	_place(s, 0)
+	h.eq("10 lower, not 0", c.line, 20)
+	c.line += 4
+	s.drop_offer()
+	h.eq("back, with what moved it meanwhile", c.line, 34)
+	h.check("and it says how far", waive.describe().contains("10 lower"))
+
+func test_a_drop_never_takes_the_line_below_0() -> void:
+	var s := _shift()
+	var c := _seat(s, 0, _arch(6))
+	s.at = 0
+	var waive := WaiveLine.new()
+	waive.amount = 1
+	waive.drop = 10
+	_play(s, _card([waive], false))
+	_place(s, 0)
+	h.eq("0 at the least", c.line, 0)
+	s.drop_offer()
+	h.eq("and all of it comes back", c.line, 6)
+
 # --------------------------------------------------------- PatienceToAppeal
 func test_insistence_turns_half_their_patience_into_appeal() -> void:
 	var s := _shift()
@@ -201,6 +229,22 @@ func test_everyone_s_taking_it_brings_every_table_up_to_its_line() -> void:
 	h.eq("one past it keeps what it has", b.offer.appeal, 70)
 	h.check("an empty table stays empty", empty.offer == null)
 	h.check("and it counts as floor-wide", s._is_floor_wide(e))
+
+func test_everyone_s_taking_it_with_a_limit_goes_only_that_far() -> void:
+	var s := _shift()
+	var far := _seat(s, 0, _arch(40))
+	var near := _seat(s, 1, _arch(40))
+	_place(s, 0)
+	_place(s, 1, 1)
+	far.offer.appeal = 10
+	near.offer.appeal = 37
+	s.at = 0
+	var e := MeetLineFloorWide.new()
+	e.amount = 8
+	e.apply(s._yours(far))
+	h.eq("a long way short gets the 8", far.offer.appeal, 18)
+	h.eq("nearly there stops at the Line", near.offer.appeal, 40)
+	h.check("and it says its limit", e.describe().contains("8"))
 
 # -------------------------------------------------------------------- Retire
 func test_a_retiring_card_leaves_the_deck_for_the_shift() -> void:

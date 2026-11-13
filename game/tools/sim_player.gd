@@ -30,8 +30,13 @@ static var _here: Customer = null
 ## The Line as this player knows it.
 static func _est_line(c: Customer) -> int:
 	# Mind Games played: the next product placed faces a Line of 0.
-	if c.line_waivers > 0 and c.offer == null:
+	if c.line_waivers > 0 and c.offer == null and c.line_waiver_drop <= 0:
 		return 0
+	var waived: int = c.line_waiver_drop if c.line_waivers > 0 and c.offer == null else 0
+	if waived > 0:
+		var known: int = c.line if not fog or c.known_line \
+			else GUESSED_LINE + c.line_per_sale * c.sales
+		return maxi(0, known - waived)
 	if not fog or c.known_line:
 		return c.line
 	return GUESSED_LINE + c.line_per_sale * c.sales
@@ -511,8 +516,13 @@ static func _place(s: Shift, inst: CardInstance) -> bool:
 static func _best_product(s: Shift, c: Customer, any_offer: bool = false) -> CardInstance:
 	var boost := _appeal_in_hand(s)
 	# Mind Games in hand: any product can be made to sell.
-	if _find(s, "waive") >= 0:
-		boost += 999
+	var waiver := _find(s, "waive")
+	if waiver >= 0:
+		var drop := 0
+		for e in (s.hand[waiver].card as SupportCardDef).effects:
+			if e is WaiveLine:
+				drop = e.drop
+		boost += drop if drop > 0 else 999
 	var short := _quota_short(s)
 	var best: CardInstance = null
 	var best_key := -INF
@@ -578,7 +588,7 @@ static func _appeal_of(inst: CardInstance, sales: int = 0) -> int:
 			total += PatienceToAppeal.taken_from(_here.patience, e.amount)
 		# Everyone's Taking It!: closes any gap - counted big, so it goes last.
 		elif e is MeetLineFloorWide:
-			total += 99
+			total += e.amount if e.amount > 0 else 99
 	return total
 
 ## Sales already made to whoever you are sitting with.

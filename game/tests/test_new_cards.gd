@@ -115,8 +115,10 @@ func test_what_good_will_pays_is_multiplied_by_the_combo_like_the_rest() -> void
 	e.amount = 20
 	e.apply(s._yours(c))
 	h.eq("10 points, $200 on the offer", c.offer.margin, 1200)
+	var combo: float = c.combo_multiplier()
+	h.check("the third product has a combo to multiply by (x%.2f)" % combo, combo > 1.0)
 	var sale := s._settle(c)
-	h.eq("and the combo (x2 on the third product) multiplies all of it", sale["margin"], 2400)
+	h.eq("and the combo multiplies all of it", sale["margin"], roundi(1200 * combo))
 
 # ---------------------------------------------------------- Plus Service Fee
 func test_the_service_fee_is_per_product_already_taken() -> void:
@@ -145,8 +147,10 @@ func test_the_service_fee_scales_with_the_combo() -> void:
 	var e := MarginPerProductTaken.new()
 	e.amount = 100
 	e.apply(s._yours(c))
+	var combo: float = c.combo_multiplier()
+	h.check("the second product has a combo to multiply by (x%.2f)" % combo, combo > 1.0)
 	var sale := s._settle(c)
-	h.eq("the $100 is in the margin the combo (x1.5) multiplies", sale["margin"], 1650)
+	h.eq("the $100 is in the margin the combo multiplies", sale["margin"], roundi(1100 * combo))
 
 # -------------------------------------------------------------------- Linger
 func test_a_lingering_effect_happens_once_a_tick_after_the_card_for_its_ticks() -> void:

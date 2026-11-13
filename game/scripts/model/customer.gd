@@ -24,6 +24,10 @@ var offer                          ## Offer, or null
 ## and the Line put aside while one of them is on the table (-1: none is).
 var line_waivers: int = 0
 var line_held: int = -1
+## How far a waiver takes their Line down - 0: all the way to 0 (WaiveLine.drop) -
+## and where it stood once waived, so what moves it meanwhile can be told apart.
+var line_waiver_drop: int = 0
+var line_waived_to: int = 0
 var unsigned: Array[Dictionary] = []
 ## Effects of your cards still playing out on them, a tick at a time (Linger):
 ## each {inner, ticks_left, card, fresh}. Ticked by Shift._burn().
@@ -480,7 +484,8 @@ func waive_line_for_this_product() -> void:
 		return
 	line_waivers -= 1
 	line_held = line
-	line = 0
+	line_waived_to = maxi(0, line - line_waiver_drop) if line_waiver_drop > 0 else 0
+	line = line_waived_to
 
 
 ## Takes whatever is on their table off it - and gives back a Line put aside for
@@ -488,5 +493,5 @@ func waive_line_for_this_product() -> void:
 func clear_table() -> void:
 	offer = null
 	if line_held >= 0:
-		line = maxi(0, line_held + line)
+		line = maxi(0, line_held + line - line_waived_to)
 		line_held = -1

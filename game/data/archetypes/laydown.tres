@@ -15,6 +15,6 @@ names = Array[String](["Yesenia Mann", "Sy Nitt", "Oki Doakes", "Shirley Thing",
 icon = &"check"
 pattern = "Offer everything you've got!"
 tell = "already nodding, and has not asked a single question"
-line = 16
+line = 20
 line_per_sale = 1
 combo_weight = 0.5
