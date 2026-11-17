@@ -18,4 +18,4 @@ func apply(ctx: EffectContext) -> void:
 func describe() -> String:
 	if amount > 0:
 		return "every product on the floor: up to +%d Appeal, to its Line" % amount
-	return "every product on the floor meets its customer's Line"
+	return "every product on the floor meets its Line"

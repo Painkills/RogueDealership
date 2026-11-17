@@ -6,15 +6,16 @@
 
 [sub_resource type="Resource" id="Effect_base"]
 script = ExtResource("2_fx")
-amount = 8
+amount = 0
 
 [sub_resource type="Resource" id="Effect_up"]
 script = ExtResource("2_fx")
-amount = 12
+amount = 0
 
 [resource]
 script = ExtResource("3_def")
 needs_offer = false
+retires = true
 id = &"everyones_taking_it"
 display_name = "Everyone's Taking It!"
 text = "Look around - every one of them is signing. Why wouldn't you?"

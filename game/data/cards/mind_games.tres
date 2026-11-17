@@ -7,16 +7,15 @@
 [sub_resource type="Resource" id="Effect_base"]
 script = ExtResource("2_fx")
 amount = 1
-drop = 12
 
 [sub_resource type="Resource" id="Effect_up"]
 script = ExtResource("2_fx")
 amount = 2
-drop = 10
 
 [resource]
 script = ExtResource("3_def")
 needs_offer = false
+retires = true
 id = &"mind_games"
 display_name = "Mind Games"
 text = "Whatever you show them next, they've already talked themselves into it."
