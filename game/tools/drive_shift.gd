@@ -2715,6 +2715,13 @@ func _check_a_sale_lights_up_the_combo() -> void:
 	_check("their yes stamps ACCEPTED (%s)" % str(texts), texts.has("ACCEPTED"))
 	_finish_fx()
 	var c: Customer = s.chairs[_at()]
+	# Plain customers: this checks the stamp, not what anyone's archetype does
+	# as the clock moves - an action of theirs would put its own number up too.
+	for who in s.seated():
+		who.archetype = who.archetype.duplicate()
+		who.archetype.actions = [] as Array[CustomerAction]
+		who.archetype.rejects_every_nth_card = 0
+		who.archetype.happy_margin_scale = 1.0
 	var line_was := c.line
 	c.line = 0
 	var product: CardDef = null
@@ -3917,8 +3924,10 @@ func _check_an_empty_floor_does_not_end_the_shift() -> void:
 	if shift.is_over():
 		_check("the shift was still running, so an empty floor means something", false)
 		return
+	# Gone, whichever way each one breaks at zero patience.
 	for c in shift.seated():
 		c.patience = 0
+		c.walking_out = true
 	shift._settle_patience()
 	_check("every chair is empty with the clock still going (tick %d of %d)"
 		% [shift.tick, shift.tick_budget],

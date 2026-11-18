@@ -24,6 +24,9 @@ func _shift(seed_value: int = 1, overrides: Dictionary = {}) -> Shift:
 		var c: Customer = s.chairs[i]
 		c.archetype = c.archetype.duplicate()
 		c.archetype.actions = [] as Array[CustomerAction]
+		# Walkers at the clock's own pace, whatever the shipped archetype does.
+		c.archetype.complains = false
+		c.archetype.drain_per_tick = 1
 		c.action_state.clear()
 		c.ticks_on_floor = s.cfg.demand_grace_ticks
 	s.at = 0

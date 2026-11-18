@@ -4,6 +4,27 @@
 [ext_resource type="Script" uid="uid://bq4wasxd04xie" path="res://scripts/model/data/interest.gd" id="2_int"]
 [ext_resource type="Resource" path="res://data/interests/status.tres" id="3_status"]
 [ext_resource type="Resource" path="res://data/interests/power.tres" id="4_power"]
+[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="90_act_bored"]
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="91_eff_bored"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="92_pat_bored"]
+[ext_resource type="Script" path="res://scripts/model/triggers/every.gd" id="93_trg_bored"]
+
+[sub_resource type="Resource" id="Trg_bored"]
+script = ExtResource("93_trg_bored")
+ticks = 4
+only_when_table_empty = true
+
+[sub_resource type="Resource" id="Pat_bored"]
+script = ExtResource("92_pat_bored")
+amount = -3
+
+[sub_resource type="Resource" id="Act_bored"]
+script = ExtResource("90_act_bored")
+id = &"bored"
+display_name = "Bored"
+tell = "about every 4 ticks with nothing on their table they lose 3 patience - keep something in front of them"
+trigger = SubResource("Trg_bored")
+effects = Array[ExtResource("91_eff_bored")]([SubResource("Pat_bored")])
 
 [resource]
 script = ExtResource("1_arch")
@@ -21,3 +42,6 @@ line_per_sale = 0
 difficulty = 4
 premium_interests = Array[ExtResource("2_int")]([ExtResource("3_status"), ExtResource("4_power")])
 premium_margin_scale = 2.0
+complains = true
+complaint_per_point = 2
+actions = Array[ExtResource("90_act_bored")]([SubResource("Act_bored")])

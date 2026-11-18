@@ -52,7 +52,9 @@ func test_a_lineup_is_exactly_who_comes_in_and_in_that_order() -> void:
 func test_a_short_lineup_leaves_chairs_empty_and_the_day_ends_with_them() -> void:
 	var s := _shift(_cfg(), [], _some(1))
 	h.eq("one customer, one chair taken", s.seated().size(), 1)
+	# Gone, whichever way their archetype breaks at zero.
 	s.chairs[0].patience = 0
+	s.chairs[0].walking_out = true
 	s._settle_patience()
 	h.check("once they are gone nobody else is coming",
 		s.seated().is_empty() and s.door_closed())

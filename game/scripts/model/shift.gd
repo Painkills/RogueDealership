@@ -434,7 +434,8 @@ func forecast(ticks: int, target: int = -1, card: CardInstance = null) -> Dictio
 			if gain > 0:
 				raises += 1
 			patience = mini(c.max_patience, patience + gain)
-		var f := {"patience_after": patience - ticks, "walks": false,
+		var drained: int = ticks * maxi(0, c.archetype.drain_per_tick)
+		var f := {"patience_after": patience - drained, "walks": false, "complains": 0,
 			"misses": "", "breaks": "", "met": ""}
 		var d: Demand = c.demand
 		if d != null and d.resolve != null:
@@ -455,7 +456,7 @@ func forecast(ticks: int, target: int = -1, card: CardInstance = null) -> Dictio
 			if not answered and not failed and d.resolve.satisfied(&"", state):
 				answered = true
 			if not answered and not failed and after >= c.demand_due_tick:
-				state["patience"] = patience - ticks
+				state["patience"] = patience - drained
 				if d.resolve.met_on_expiry(state):
 					f["met"] = d.display_name
 				else:
@@ -477,7 +478,13 @@ func forecast(ticks: int, target: int = -1, card: CardInstance = null) -> Dictio
 		if f.is_empty():
 			continue
 		f["patience_after"] += floor_hit
-		if f["patience_after"] <= 0 and not chairs[i].archetype.patience_is_shield:
+		var arch: CustomerArchetype = chairs[i].archetype
+		if arch.patience_is_shield:
+			continue
+		if arch.complains:
+			# They stay: what goes past zero is what it costs you.
+			f["complains"] = maxi(0, -int(f["patience_after"])) * maxi(0, arch.complaint_per_point)
+		elif f["patience_after"] <= 0:
 			f["walks"] = true
 	return out
 
@@ -514,7 +521,7 @@ func _burn(n: int, kind: String) -> void:
 	stat[key] = int(stat.get(key, 0)) + n
 
 	for c in seated():
-		c.patience -= n
+		c.patience -= n * maxi(0, c.archetype.drain_per_tick)
 		c.ticks_on_floor += n
 	# What your cards are still doing to them, a tick at a time - after the
 	# patience each tick takes, so a coffee can save somebody at 0.
@@ -630,6 +637,11 @@ func _settle_patience() -> void:
 		# lands on you in full (CustomerArchetype.patience_is_shield).
 		if chairs[i].archetype.patience_is_shield:
 			chairs[i].patience = maxi(0, chairs[i].patience)
+		elif chairs[i].archetype.complains and not chairs[i].walking_out:
+			# They stay - and every point they lose past zero is standing instead.
+			if chairs[i].patience < 0:
+				_complain(chairs[i], -chairs[i].patience)
+				chairs[i].patience = 0
 		elif chairs[i].patience <= 0:
 			# Walked by someone else's ignored ask: they say so. The one who asked
 			# has it said over them already, as the demand settles.
@@ -662,6 +674,27 @@ func _settle_patience() -> void:
 		else:
 			c.said_impatient = false
 
+
+## A customer who complains (CustomerArchetype.complains), `points` of patience
+## past zero: that much times their complaint_per_point comes off your standing,
+## now - and shows over their folder, the way their actions' costs do.
+func _complain(c: Customer, points: int) -> void:
+	var before := standing
+	standing = maxi(0, standing - points * maxi(0, c.archetype.complaint_per_point))
+	var cost := before - standing
+	if cost <= 0:
+		return
+	stat["standing_complaints"] = int(stat.get("standing_complaints", 0)) + cost
+	events.append("[%s] %s complains - standing -%d." % [c.key, c.display_name, cost])
+	action_log.append({
+		"key": c.key,
+		"customer": c.display_name,
+		"name": "Complaining",
+		"dialogue": "",
+		"descriptions": ["standing -%d" % cost],
+		"floor_wide": false,
+		"fx": {"standing": -cost},
+	})
 
 func _walk(chair: int) -> void:
 	var c = chairs[chair]
@@ -1579,6 +1612,8 @@ func _reject(c: Customer, inst: CardInstance, ticks: int) -> Result:
 	# the card's effects ran.
 	_demand_saw(c, DemandResolve.PLACE if inst.is_product() else DemandResolve.SUPPORT,
 		{"card": inst.card, "effects": [], "patience_before": c.patience})
+	# And what waving it off costs them, where their archetype says so.
+	fire(&"on_reject", c)
 	_settle_patience()
 	_burn(ticks, "cards")
 	return Result.new(true, "%s waves off the %s."
@@ -1787,13 +1822,18 @@ func _settle(c: Customer) -> Dictionary:
 	var combo := roundi(o.margin * multiplier)
 	# What they pay over the odds for a product they prize, on top of it all.
 	var premium := roundi(combo * (c.margin_scale_for(o.product) - 1.0))
-	var margin := combo + premium
+	# And more again while they are happy - patience above their archetype's mark
+	# (CustomerArchetype.happy_margin_scale), read before the sale tops it up.
+	var happy := 0
+	if c.is_happy():
+		happy = roundi((combo + premium) * (c.archetype.happy_margin_scale - 1.0))
+	var margin := combo + premium + happy
 	# Someone on a budget pays it out of what they have left - and their last
 	# sale takes whatever that is (CustomerArchetype.budget_share).
 	if c.has_budget():
 		margin = mini(margin, c.budget_left())
 	var sale := {"product": o.product, "margin": margin, "extra_margin": 0,
-		"combo_margin": combo - o.margin, "premium": premium,
+		"combo_margin": combo - o.margin, "premium": premium, "happy": happy,
 		"base_margin": o.margin, "multiplier": multiplier}
 	c.unsigned.append(sale)
 	c.sales += 1
@@ -1807,10 +1847,11 @@ func _settle(c: Customer) -> Dictionary:
 	c.clear_table()
 	c.objection = &""
 	stat["sales"] = int(stat["sales"]) + 1
-	events.append("[%s] agrees to %s - unsigned%s%s."
+	events.append("[%s] agrees to %s - unsigned%s%s%s."
 		% [c.key, sale["product"].display_name,
 			" (×%.1f combo)" % multiplier if multiplier > 1.0 else "",
-			" (+$%d, a product they prize)" % premium if premium > 0 else ""])
+			" (+$%d, a product they prize)" % premium if premium > 0 else "",
+			" (+$%d, they're happy)" % happy if happy > 0 else ""])
 	return sale
 
 
@@ -2530,6 +2571,9 @@ func fire(trigger_type: StringName, c, extra: Dictionary = {}) -> Array:
 			# to action_cadence_jitter_ticks either side of the cadence - and
 			# never sooner than the next tick.
 			c.action_state[act.id] = c.ticks_on_floor + _cadence_jitter(cadence)
+			# Its own condition, as it comes round - the rhythm keeps either way.
+			if not act.trigger.matches(_context(c)):
+				continue
 		else:
 			var probe := _context(c)
 			probe.rank = int(extra.get("rank", 0))
@@ -2611,6 +2655,8 @@ func _trigger_name(t: Trigger) -> StringName:
 		return &"every"
 	if t is PatienceBelow:
 		return &"patience_below"
+	if t is OnReject:
+		return &"on_reject"
 	return &""
 
 
@@ -2639,6 +2685,8 @@ func report() -> Dictionary:
 		"customers_seen": served,
 		"customers_signed": int(stat["customers_signed"]),
 		"customers_walked": int(stat["customers_walked"]),
+		# What customers who complain at zero patience cost, in standing.
+		"standing_complaints": int(stat.get("standing_complaints", 0)),
 		"sales": int(stat["sales"]),
 		"offers": offers,
 		"failed_offers": int(stat["failed_offers"]),

@@ -225,7 +225,7 @@ func test_close_with_nothing_sold_is_refused() -> void:
 	h.eq("they are still sitting there", s.chairs[0], c)
 
 func test_walking_forfeits_the_entire_unsigned_deal() -> void:
-	var s := _shift([&"easygoing", &"easygoing"])
+	var s := _walkers(_shift([&"easygoing", &"easygoing"]))
 	var c := _at(s)
 	c.line = 20
 	_rank(c, [&"reliability", &"equity"])
@@ -451,3 +451,12 @@ func test_no_command_goes_ahead_while_a_pull_waits_on_your_choice() -> void:
 	h.eq("no time passed", s.tick, tick_before)
 	h.check("choosing still works", s.choose_pull(0).ok)
 	h.check("and then the commands do again", s.dig(0).ok)
+
+## Everyone seated walks at zero patience, whatever the shipped archetype does -
+## this file is about walking out.
+func _walkers(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.complains = false
+	return s

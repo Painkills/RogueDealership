@@ -8,11 +8,11 @@ func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:
 		cfg.set(k, overrides[k])
-	return Shift.new(cfg,
+	return _walkers(Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
 		load("res://data/archetype_pool.tres"),
-		1, floor_ids)
+		1, floor_ids))
 
 func test_one_tick_burns_every_customer_and_the_clock() -> void:
 	var s := _shift([&"easygoing", &"easygoing", &"easygoing"])
@@ -199,3 +199,12 @@ func test_same_seed_same_shift() -> void:
 		bh.append(c.card.id)
 	h.eq("same hand", ah, bh)
 	h.eq("same priorities", a.chairs[0].ranks, b.chairs[0].ranks)
+
+## Everyone seated walks at zero patience, whatever the shipped archetype does -
+## this file is about walking out.
+func _walkers(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.complains = false
+	return s

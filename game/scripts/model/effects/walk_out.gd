@@ -13,9 +13,13 @@ class_name WalkOut extends Effect
 ## not "-999 patience" - and because an Inspector dropdown should offer the
 ## thing you mean.
 
+##
+## Leaving on their own terms: it walks them whether they would complain at zero
+## patience or not (Customer.walking_out, CustomerArchetype.complains).
 func apply(ctx: EffectContext) -> void:
 	if ctx.customer:
 		ctx.customer.patience = 0
+		ctx.customer.walking_out = true
 
 func describe() -> String:
 	return "walks out on you"

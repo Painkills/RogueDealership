@@ -16,9 +16,9 @@ func _cfg() -> ShiftConfig:
 	return load("res://data/shift_config.tres")
 
 func _shift(seed_value: int = 7) -> Shift:
-	return Shift.new(_cfg(), load("res://data/interests/interest_pool.tres"),
+	return _walkers(Shift.new(_cfg(), load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
-		seed_value, [])
+		seed_value, []))
 
 ## Empty every chair the way the game does - by running them out of patience -
 ## so the door's clock is in the state a real deadlock would leave it.
@@ -84,3 +84,12 @@ func test_a_wait_never_returns_without_moving_the_clock() -> void:
 	h.check("and says so honestly (%s)" % res.data,
 		int(res.data.get("ticks", 0)) == s.tick - before)
 	s = null
+
+## Everyone seated walks at zero patience, whatever the shipped archetype does -
+## this file is about walking out.
+func _walkers(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.complains = false
+	return s

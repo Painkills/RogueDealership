@@ -6,6 +6,8 @@
 [ext_resource type="Script" uid="uid://b1upehclt1a48" path="res://scripts/model/effects/raise_demand.gd" id="3_raise"]
 [ext_resource type="Script" uid="uid://b766306iy15gl" path="res://scripts/model/triggers/every.gd" id="4_every"]
 [ext_resource type="Resource" uid="uid://cd2b46g70skpf" path="res://data/demands/price_check.tres" id="5_dmd"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="92_pat_wasting_time"]
+[ext_resource type="Script" path="res://scripts/model/triggers/on_place.gd" id="93_trg_wasting_time"]
 
 [sub_resource type="Resource" id="Sub_raise"]
 script = ExtResource("3_raise")
@@ -24,6 +26,22 @@ dialogue_tags = Array[StringName]([&"demand_price_check"])
 trigger = SubResource("Sub_every")
 effects = Array[ExtResource("2_eff")]([SubResource("Sub_raise")])
 
+[sub_resource type="Resource" id="Trg_wasting_time"]
+script = ExtResource("93_trg_wasting_time")
+rank_worse_than = 5
+
+[sub_resource type="Resource" id="Pat_wasting_time"]
+script = ExtResource("92_pat_wasting_time")
+amount = -4
+
+[sub_resource type="Resource" id="Act_wasting_time"]
+script = ExtResource("1_act")
+id = &"wasting_time"
+display_name = "Wasting My Time"
+tell = "anything you put on their table from outside their top 5 costs them 4 patience"
+trigger = SubResource("Trg_wasting_time")
+effects = Array[ExtResource("2_eff")]([SubResource("Pat_wasting_time")])
+
 [resource]
 script = ExtResource("8_ut76j")
 hard = true
@@ -32,11 +50,13 @@ id = &"hawk"
 display_name = "Budget Hawk"
 names = Array[String](["Penny Pinchley", "Hank Haggerty", "Percy Cent", "Dee Scount", "Hal F. Price", "Lowell Ball"])
 icon = &"hawk"
-pattern = "Only their top 5 at full price: anything further down needs a concession first."
+pattern = "Only their top 5 at full price - and anything further down wastes their time: a concession first, and it costs them patience."
 tell = "brought a printout, and keeps saying 'out the door'"
 line = 32
 line_per_sale = 2
 combo_weight = 1.25
 difficulty = 4
 needs_concession_past_rank = 5
-actions = Array[ExtResource("1_act")]([SubResource("Sub_price_check")])
+actions = Array[ExtResource("1_act")]([SubResource("Sub_price_check"), SubResource("Act_wasting_time")])
+complains = true
+complaint_per_point = 1

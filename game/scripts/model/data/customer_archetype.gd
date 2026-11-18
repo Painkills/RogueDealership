@@ -66,6 +66,24 @@ class_name CustomerArchetype extends Resource
 ## times its margin (Shift._settle()).
 @export var premium_interests: Array[Interest] = []
 @export var premium_margin_scale: float = 1.0
+
+@export_group("Patience")
+## What running out of patience does. Patience is the block in front of your
+## standing: at zero, a customer who walks takes their unsigned deals and
+## ShiftConfig.standing_cost_per_walkout with them; one who COMPLAINS stays - and
+## keeps buying - but every point of patience they lose past zero, to the clock
+## or anything else, costs you `complaint_per_point` standing instead, until
+## their patience comes back up or they sign.
+@export var complains: bool = false
+@export var complaint_per_point: int = 1
+## The patience the clock takes from them each tick. 1 for most; an impatient
+## customer loses it faster.
+@export var drain_per_tick: int = 1
+## Pays this times the margin on a sale made while their patience is above
+## `happy_above` of their most - a happy customer pays more. 1.0 = no difference.
+@export var happy_margin_scale: float = 1.0
+@export_range(0.0, 1.0, 0.05) var happy_above: float = 0.5
+@export_group("")
 ## The week of the run this archetype starts coming in: the hardest are held
 ## back for week 2. Within its week anyone unlocked may come in on any day -
 ## how many of the difficult ones a shift brings is its difficulty budget's

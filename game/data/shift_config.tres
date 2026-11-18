@@ -22,6 +22,7 @@ complicator_share = 0.5
 difficulty_tolerance = 1
 support_odds = 2.0
 momentum_max = 3
+standing_cost_per_walkout = 6
 combo_step = 0.5
 walk_up_ticks_min = 9
 walk_up_ticks_max = 12

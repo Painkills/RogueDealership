@@ -12,9 +12,9 @@ func _cfg(overrides: Dictionary = {}) -> ShiftConfig:
 	return cfg
 
 func _shift(overrides: Dictionary = {}, p_standing: int = 0) -> Shift:
-	return Shift.new(_cfg(overrides), load("res://data/interests/interest_pool.tres"),
+	return _walkers(Shift.new(_cfg(overrides), load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"),
-		7, [], null, 0, 1, p_standing)
+		7, [], null, 0, 1, p_standing))
 
 func test_a_walkout_docks_standing_immediately_mid_shift() -> void:
 	## Not "eventually, once report() is called" - the number itself has to
@@ -69,3 +69,12 @@ func test_run_state_hands_its_own_current_standing_into_the_next_shift() -> void
 	var s := r.start_shift(ShiftProfile.new())
 	h.eq("the new shift starts counting from exactly where the run left off",
 		s.standing, 63)
+
+## Everyone seated walks at zero patience, whatever the shipped archetype does -
+## this file is about walking out.
+func _walkers(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.complains = false
+	return s

@@ -42,3 +42,5 @@ demands_category = true
 difficulty = 5
 from_week = 2
 actions = Array[ExtResource("1_fi3b8")]([SubResource("Resource_jts1c")])
+complains = true
+complaint_per_point = 2

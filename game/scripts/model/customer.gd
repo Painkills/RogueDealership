@@ -27,6 +27,9 @@ var line_held: int = -1
 ## How far a waiver takes their Line down - 0: all the way to 0 (WaiveLine.drop) -
 ## and where it stood once waived, so what moves it meanwhile can be told apart.
 var line_waiver_drop: int = 0
+## Set by something that walks them on their own terms (WalkOut): they leave at
+## the next settling, whether or not they would complain at zero patience.
+var walking_out: bool = false
 var line_waived_to: int = 0
 var unsigned: Array[Dictionary] = []
 ## Effects of your cards still playing out on them, a tick at a time (Linger):
@@ -278,6 +281,17 @@ func owns_category(cat_id: StringName) -> bool:
 			return true
 	return false
 
+
+## Whether they pay their archetype's happy margin right now: patience above its
+## mark of their most (CustomerArchetype.happy_margin_scale, happy_above).
+func is_happy() -> bool:
+	return archetype.happy_margin_scale != 1.0 \
+		and patience > max_patience * archetype.happy_above
+
+## A customer who complains (CustomerArchetype.complains), out of patience: every
+## point they lose now comes off your standing.
+func complaining() -> bool:
+	return archetype.complains and patience <= 0
 
 func leaving_soon() -> bool:
 	# Someone whose patience is your shield never leaves - low on it, they are

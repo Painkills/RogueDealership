@@ -14,10 +14,10 @@ func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:
 		cfg.set(k, overrides[k])
-	return Shift.new(cfg,
+	return _walkers(Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), 1, floor_ids)
+		load("res://data/archetype_pool.tres"), 1, floor_ids))
 
 func _at(s: Shift, chair: int) -> Customer:
 	s.at = chair
@@ -85,3 +85,12 @@ func test_the_run_carries_the_streak_from_one_shift_into_the_next() -> void:
 	var next_shift := run.start_shift(ShiftProfile.new())
 	h.eq("and hands it to the next shift as its starting streak",
 		next_shift.sale_streak, 3)
+
+## Everyone seated walks at zero patience, whatever the shipped archetype does -
+## this file is about walking out.
+func _walkers(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.complains = false
+	return s

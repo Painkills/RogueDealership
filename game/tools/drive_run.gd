@@ -216,8 +216,10 @@ func _phase_0_open_and_finish_shift() -> void:
 	# standing_delta proves finish_shift() applied EXACTLY what the shift
 	# computed, which is the actual integration point worth checking, rather
 	# than a magic number this specific play pattern happens to produce today.
-	_check("at least one customer walked out along the way (%d)"
-		% int(r0["customers_walked"]), int(r0["customers_walked"]) > 0)
+	# Out of patience, each walks or complains - either way it costs standing.
+	_check("at least one customer walked out or complained along the way (%d walked, %d standing to complaints)"
+		% [int(r0["customers_walked"]), int(r0["standing_complaints"])],
+		int(r0["customers_walked"]) > 0 or int(r0["standing_complaints"]) > 0)
 	var expected_standing: int = clampi(
 		_run.cfg.standing_start + int(r0["standing_delta"]), 0, _run.cfg.standing_start)
 	_check("the wipeout (and walkouts) cost standing (%d) but did not end the run"

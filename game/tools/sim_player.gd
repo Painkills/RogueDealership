@@ -283,6 +283,12 @@ static func _only_tells(d: Demand) -> bool:
 static func _act(s: Shift, c: Customer) -> bool:
 	_parked.erase(c)
 	_here = c
+	# Complaining - every point they lose is standing: stop the bleeding first,
+	# with a patience card where there is one.
+	if c.complaining():
+		var calm_down := _find(s, "patience")
+		if calm_down >= 0:
+			return _did("calm a complainer", s.play_card(calm_down).ok)
 	# A boss's hit nothing in hand answers, coming due: shield up first.
 	if c.archetype.patience_is_shield and _incoming(c) > 0 and not _can_answer(s, c) \
 			and c.demand_due_tick - s.tick <= 2 and not _shield_covers(s, c):

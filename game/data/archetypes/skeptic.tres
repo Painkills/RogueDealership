@@ -1,6 +1,25 @@
 [gd_resource type="Resource" script_class="CustomerArchetype" format=3]
 
 [ext_resource type="Script" uid="uid://c15c3nl4s6sa6" path="res://scripts/model/data/customer_archetype.gd" id="1_arch"]
+[ext_resource type="Script" path="res://scripts/model/data/customer_action.gd" id="90_act_told_you_so"]
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="91_eff_told_you_so"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="92_pat_told_you_so"]
+[ext_resource type="Script" path="res://scripts/model/triggers/on_reject.gd" id="93_trg_told_you_so"]
+
+[sub_resource type="Resource" id="Trg_told_you_so"]
+script = ExtResource("93_trg_told_you_so")
+
+[sub_resource type="Resource" id="Pat_told_you_so"]
+script = ExtResource("92_pat_told_you_so")
+amount = -3
+
+[sub_resource type="Resource" id="Act_told_you_so"]
+script = ExtResource("90_act_told_you_so")
+id = &"told_you_so"
+display_name = "Told You So"
+tell = "every card they wave off costs them 3 patience as well"
+trigger = SubResource("Trg_told_you_so")
+effects = Array[ExtResource("91_eff_told_you_so")]([SubResource("Pat_told_you_so")])
 
 [resource]
 script = ExtResource("1_arch")
@@ -18,3 +37,4 @@ combo_weight = 1.5
 difficulty = 4
 from_week = 2
 rejects_every_nth_card = 3
+actions = Array[ExtResource("90_act_told_you_so")]([SubResource("Act_told_you_so")])

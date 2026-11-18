@@ -294,6 +294,18 @@ static func behaviour_text(c) -> String:
 	if c.archetype.pays_per_patience_left > 0:
 		tells.append("IN A HURRY - pays %s for every point of patience they have left when they sign."
 			% Format.money(c.archetype.pays_per_patience_left))
+	if c.archetype.drain_per_tick > 1:
+		tells.append("IMPATIENT - loses %d patience every tick." % c.archetype.drain_per_tick)
+	if c.archetype.happy_margin_scale > 1.0:
+		tells.append("HAPPY TO PAY - x%s margin on a sale while above %d%% of their patience."
+			% [String.num(c.archetype.happy_margin_scale, 2),
+				roundi(c.archetype.happy_above * 100.0)])
+	# Which way they break - the thing patience is guarding.
+	if c.archetype.complains:
+		tells.append("COMPLAINS at zero patience - stays, but every point they lose costs you %d standing until you raise it."
+			% c.archetype.complaint_per_point)
+	else:
+		tells.append("WALKS OUT at zero patience, taking anything unsigned with them.")
 	var prized: Array[String] = []
 	for i in c.archetype.premium_interests:
 		if i != null:
@@ -331,11 +343,15 @@ static func demand_text(c, tick: int) -> String:
 	return "\n".join(parts)
 
 const NEXT_CARD_REJECTED := "NEXT CARD REJECTED"
+const COMPLAINING := "COMPLAINING"
 
 ## The banner's words: what they are asking for, and the warning that the next
 ## card is wasted - the countdown goes on the badge, not in the words.
 static func banner_text(c) -> String:
 	var parts: Array[String] = []
+	# Out of patience and complaining: every point they lose is your standing.
+	if c.complaining():
+		parts.append(COMPLAINING)
 	if c.demand != null:
 		parts.append(c.demand.telegraph)
 	if c.next_card_rejected():
@@ -363,6 +379,9 @@ func show_forecast(f: Dictionary) -> void:
 	var warn := ""
 	if bool(f["walks"]):
 		warn = "WALKS OUT"
+	elif int(f.get("complains", 0)) > 0:
+		# Plain ASCII, like the rest of the forecast.
+		warn = "COMPLAINS - standing -%d" % int(f["complains"])
 	elif f["breaks"] != "" and c.demand != null:
 		warn = "BREAKS " + c.demand.telegraph
 	elif f["misses"] != "" and c.demand != null:
