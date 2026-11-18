@@ -18,3 +18,4 @@ tell = "already nodding, and has not asked a single question"
 line = 20
 line_per_sale = 1
 combo_weight = 0.5
+min_difficulty = 0

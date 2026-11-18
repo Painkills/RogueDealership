@@ -6,6 +6,6 @@
 script = ExtResource("1_comp")
 id = &"quota_up_100"
 display_text = "Quota x2"
-points = 0
+points = 16
 quota_scale = 2.0
 on_regular_shifts = true

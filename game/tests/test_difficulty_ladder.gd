@@ -203,6 +203,18 @@ func test_a_ladder_week_deals_every_slot_to_its_planned_target() -> void:
 	h.check("each slot planned from the day's target and dealt to it (%s)" % str(wrong),
 		wrong.is_empty())
 
+func test_the_weekday_sets_the_seats_whatever_they_cost() -> void:
+	var pool := _ladder_pool([0])
+	pool.ladder.seats_by_weekday.assign([1, 2, 3])
+	var week := Week.new(pool, 4, 2, 6, _points(), _cfg())
+	var seen := []
+	for day in range(1, 5):
+		seen.append(week.offers(day).map(func(p): return p.seats_on()))
+	h.eq("one, then two, then three - and the ladder picks past the list",
+		seen.slice(0, 3), [[1, 1, 1], [2, 2, 2], [3, 3, 3]])
+	h.check("each still within reach of its target",
+		week.offers(1).all(func(p): return absi(p.difficulty - p.planned) <= 1))
+
 func test_on_the_ladder_a_hard_shift_takes_the_days_hardest_slot() -> void:
 	var pool := _ladder_pool([-2, 0, 2])
 	var hard := ShiftProfile.new()

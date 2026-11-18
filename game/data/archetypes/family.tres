@@ -36,5 +36,6 @@ icon = &"family"
 pattern = "Give them room. They will not be rushed, and the tick you spend hovering over them is the one that loses them."
 tell = "there are two car seats in the trade-in"
 line_per_sale = 2
-difficulty = 2
+difficulty = 3
 actions = Array[ExtResource("1_syiqa")]([SubResource("Resource_idwwe")])
+min_difficulty = 0

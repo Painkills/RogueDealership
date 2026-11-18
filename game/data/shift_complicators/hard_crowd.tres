@@ -6,6 +6,6 @@
 script = ExtResource("1_comp")
 id = &"hard_crowd"
 display_text = "Line +4"
-points = 0
+points = 7
 line_offset = 4
 on_regular_shifts = true

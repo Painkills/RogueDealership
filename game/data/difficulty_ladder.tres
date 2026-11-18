@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DifficultyLadder" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/difficulty_ladder.gd" id="1_ladder"]
+
+[resource]
+script = ExtResource("1_ladder")
+start = 7.0
+per_day = 2.8
+spread = Array[int]([-3, 0, 3])
+seats_by_weekday = Array[int]([1, 2, 3, 3, 3, 3])
+quota_share_min = 0.45
+quota_share_max = 0.6
+conditions_share_min = 0.1
+conditions_share_max = 0.25

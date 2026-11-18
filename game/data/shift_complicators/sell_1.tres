@@ -6,6 +6,6 @@
 script = ExtResource("1_comp")
 id = &"sell_1"
 display_text = "Sell 1 of the day's category"
-points = 0
+points = 1
 product_quota_count = 1
 on_regular_shifts = true

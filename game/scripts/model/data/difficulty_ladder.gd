@@ -23,6 +23,16 @@ class_name DifficultyLadder extends Resource
 @export_range(0.0, 1.0, 0.05) var conditions_share_min: float = 0.1
 @export_range(0.0, 1.0, 0.05) var conditions_share_max: float = 0.3
 
+## The seats every shift of a weekday has - Monday first: 1, 2, then 3 for the
+## rest, so the floor fills up through the week. Each still costs its points
+## (a seat count is a modifier), and the rest of the shift makes up the
+## difference. 0, or a day past the end: the shift's budget picks.
+@export var seats_by_weekday: Array[int] = []
+
+## The seats `weekday` (0 = the week's first day) sets, or 0.
+func seats_on(weekday: int) -> int:
+	return seats_by_weekday[weekday] if weekday >= 0 and weekday < seats_by_weekday.size() else 0
+
 ## The day's target on `day` (1-based) of the run.
 func target_on(day: int) -> int:
 	return roundi(start + per_day * (day - 1))

@@ -130,7 +130,7 @@ func _build(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int, target
 	var copy: ShiftProfile
 	if _ladder != null:
 		copy = ShiftGenerator.fill_to_ladder(shift, tier, day, week, target, _archetypes,
-			complicators, _ladder, _tolerance, rng)
+			complicators, _ladder, _tolerance, rng, _ladder.seats_on((day - 1) % _week_length))
 	else:
 		copy = ShiftGenerator.fill(shift, tier, day, week, target, _archetypes, complicators,
 			_share, rng)

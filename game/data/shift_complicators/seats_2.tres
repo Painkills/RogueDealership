@@ -6,7 +6,7 @@
 script = ExtResource("1_comp")
 id = &"seats_2"
 display_text = "2 seats"
-points = 0
+points = 2
 seats = 2
 customers = 4
 on_regular_shifts = true

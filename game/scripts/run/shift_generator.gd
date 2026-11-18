@@ -62,13 +62,13 @@ static func fill(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 static func fill_to_ladder(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 		target: int, archetypes: ArchetypePool, complicators: Array,
 		ladder: DifficultyLadder, tolerance: int,
-		rng: RandomNumberGenerator) -> ShiftProfile:
+		rng: RandomNumberGenerator, seats: int = 0) -> ShiftProfile:
 	# A few draws, the first within tolerance kept - a seat count drawn at random
 	# can leave its customers too few, or too many, to make up their share.
 	var best: ShiftProfile = null
 	for _attempt in range(LADDER_ATTEMPTS):
 		var built := _one_ladder_build(shift, tier, day, week, target, archetypes,
-			complicators, ladder, tolerance, rng)
+			complicators, ladder, tolerance, rng, seats)
 		if best == null or absi(built.difficulty - target) < absi(best.difficulty - target):
 			best = built
 		if absi(best.difficulty - target) <= tolerance:
@@ -81,22 +81,31 @@ const LADDER_ATTEMPTS := 12
 static func _one_ladder_build(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int,
 		target: int, archetypes: ArchetypePool, complicators: Array,
 		ladder: DifficultyLadder, tolerance: int,
-		rng: RandomNumberGenerator) -> ShiftProfile:
+		rng: RandomNumberGenerator, seats: int = 0) -> ShiftProfile:
 	var premade := shift != tier
 	var rules := shift.difficulty if premade else 0
 	var budget := maxi(0, target - rules)
+	var touched := shift.touches()
+	var chosen: Array[ShiftComplicator] = []
+	# The seats the weekday sets come off the top, whatever they cost - so what
+	# is left is shared out, and a dear seat count leaves room for a gentler quota.
+	if seats > 0:
+		for c in _any_points(complicators, day, touched, not premade):
+			if c.seats == seats:
+				chosen.append(c)
+				budget = maxi(0, budget - c.points)
+				break
 	var quota_room := floori(budget * lerpf(ladder.quota_share_min, ladder.quota_share_max, rng.randf()))
 	var conditions_room := floori(budget * lerpf(ladder.conditions_share_min,
 		ladder.conditions_share_max, rng.randf()))
-	var touched := shift.touches()
 	var open := _eligible(complicators, day, touched, rng, not premade)
-	var chosen: Array[ShiftComplicator] = []
 	# The quota: the dearest step its share affords.
 	_add_dearest(chosen, open.filter(func(c): return c.touches().has(&"quota")), quota_room)
-	# A seat count its share affords, at random - free and easing ones always.
+	# Without the weekday's: a seat count its share affords, at random - free and
+	# easing ones always.
 	var seat_options := _any_points(complicators, day, touched, not premade).filter(
 		func(c): return c.seats > 0 and c.points <= conditions_room)
-	if not seat_options.is_empty():
+	if seats <= 0 and not seat_options.is_empty():
 		var seat: ShiftComplicator = seat_options[rng.randi_range(0, seat_options.size() - 1)]
 		chosen.append(seat)
 		conditions_room -= seat.points
@@ -109,7 +118,7 @@ static func _one_ladder_build(shift: ShiftProfile, tier: ShiftProfile, day: int,
 		if c.customers > 0:
 			count = c.customers
 	var pool := _pool(shift, tier, week, archetypes, target)
-	var for_customers := budget - _points(chosen)
+	var for_customers := maxi(0, target - rules) - _points(chosen)
 	var weight_of := func(a: CustomerArchetype) -> float:
 		var w := maxf(0.0, a.weight)
 		if premade:

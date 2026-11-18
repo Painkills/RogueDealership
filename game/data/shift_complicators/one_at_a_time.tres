@@ -8,3 +8,4 @@ id = &"one_at_a_time"
 display_text = "Combos halved"
 points = 1
 combo_scale = 0.5
+on_regular_shifts = true
