@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SupportCardDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
+[ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_fx"]
+[ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+
+[sub_resource type="Resource" id="Effect_base"]
+script = ExtResource("2_fx")
+amount = 4
+
+[sub_resource type="Resource" id="Effect_up"]
+script = ExtResource("2_fx")
+amount = 6
+
+[resource]
+script = ExtResource("3_def")
+needs_offer = false
+id = &"throw_a_compliment"
+display_name = "Throw a Compliment"
+text = "Nice watch. Great taste in trucks. It costs you nothing."
+ticks = 0
+rarity = 0
+starter = true
+effects = Array[ExtResource("1_eff")]([SubResource("Effect_base")])
+upgraded_effects = Array[ExtResource("1_eff")]([SubResource("Effect_up")])

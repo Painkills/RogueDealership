@@ -11,10 +11,10 @@ func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:
 		cfg.set(k, overrides[k])
-	return Shift.new(cfg,
+	return _plain(Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), 1, floor_ids)
+		load("res://data/archetype_pool.tres"), 1, floor_ids))
 
 func _rank(c: Customer, order: Array) -> void:
 	var rest := []
@@ -459,4 +459,13 @@ func _walkers(s: Shift) -> Shift:
 		if c != null:
 			c.archetype = c.archetype.duplicate()
 			c.archetype.complains = false
+	return s
+
+## Plain payers: this file checks the margin arithmetic, not an archetype's
+## happy margin (CustomerArchetype.happy_margin_scale).
+func _plain(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.happy_margin_scale = 1.0
 	return s

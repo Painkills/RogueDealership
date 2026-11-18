@@ -59,4 +59,4 @@ difficulty = 4
 needs_concession_past_rank = 5
 actions = Array[ExtResource("1_act")]([SubResource("Sub_price_check"), SubResource("Act_wasting_time")])
 complains = true
-complaint_per_point = 1
+complaint_per_point = 2

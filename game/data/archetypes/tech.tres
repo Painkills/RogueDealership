@@ -39,4 +39,4 @@ tell = "asked about the drivetrain before asking about the price"
 difficulty = 3
 actions = Array[ExtResource("1_miwln")]([SubResource("Resource_a55j1")])
 complains = true
-complaint_per_point = 1
+complaint_per_point = 2

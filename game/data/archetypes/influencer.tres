@@ -43,5 +43,5 @@ difficulty = 4
 premium_interests = Array[ExtResource("2_int")]([ExtResource("3_status"), ExtResource("4_power")])
 premium_margin_scale = 2.0
 complains = true
-complaint_per_point = 2
+complaint_per_point = 3
 actions = Array[ExtResource("90_act_bored")]([SubResource("Act_bored")])

@@ -14,10 +14,10 @@ func _shift(floor_ids: Array, overrides: Dictionary = {}) -> Shift:
 	cfg.arrival_patience_min_fraction = 1.0
 	for k in overrides:
 		cfg.set(k, overrides[k])
-	return Shift.new(cfg,
+	return _plain(Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), 1, floor_ids)
+		load("res://data/archetype_pool.tres"), 1, floor_ids))
 
 ## Places and offers one product, bypassing the rank/appeal read entirely by
 ## re-zeroing the Line before every call - every offer's appeal is >= 0, so
@@ -220,3 +220,12 @@ func test_peak_combo_multiplier_remembers_the_highest_reached_not_the_last() -> 
 	_sell(s, b, &"theft", 903)   # this customer's own first sale - x1.0
 	h.eq("a LATER, lower multiplier does not erase an earlier, higher peak",
 		s.peak_combo_multiplier, 2.0)
+
+## Plain payers: this file checks the margin arithmetic, not an archetype's
+## happy margin (CustomerArchetype.happy_margin_scale).
+func _plain(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.happy_margin_scale = 1.0
+	return s

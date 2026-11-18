@@ -5,10 +5,10 @@ func _shift() -> Shift:
 	var cfg: ShiftConfig = load("res://data/shift_config.tres").duplicate()
 	cfg.patience_jitter = 0
 	cfg.action_cadence_jitter_ticks = 0
-	return Shift.new(cfg,
+	return _plain(Shift.new(cfg,
 		load("res://data/interests/interest_pool.tres"),
 		load("res://data/card_pool.tres"),
-		load("res://data/archetype_pool.tres"), 1, [&"easygoing"])
+		load("res://data/archetype_pool.tres"), 1, [&"easygoing"]))
 
 func test_report_dictionary_has_every_key_the_report_panel_reads() -> void:
 	var s := _shift()
@@ -68,3 +68,12 @@ func test_a_products_category_and_interest_are_reachable_the_way_a_card_face_rea
 		vsc.interest.category != null)
 	h.check("category has a display name a card face can print",
 		vsc.interest.category.display_name.strip_edges() != "")
+
+## Plain payers: this file checks the margin arithmetic, not an archetype's
+## happy margin (CustomerArchetype.happy_margin_scale).
+func _plain(s: Shift) -> Shift:
+	for c in s.chairs:
+		if c != null:
+			c.archetype = c.archetype.duplicate()
+			c.archetype.happy_margin_scale = 1.0
+	return s

@@ -40,4 +40,6 @@ tell = "Pleasant, unhurried, no strong opinions about anything."
 line_per_sale = 1
 actions = Array[ExtResource("1_1cw48")]([SubResource("Sub_opens_up")])
 complains = true
-complaint_per_point = 1
+complaint_per_point = 2
+happy_margin_scale = 1.25
+happy_above = 0.5
