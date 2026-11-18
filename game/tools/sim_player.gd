@@ -17,7 +17,7 @@ class_name SimPlayer extends RefCounted
 
 static var fog := false
 ## What a fogged player guesses a Line is before anything has told it.
-const GUESSED_LINE := 24
+const GUESSED_LINE := 28
 ## Where an interest is guessed to rank: in the category they announced they
 ## came for (the Karen) - the middle of the top ShiftConfig.favourites_within,
 ## where their favourites are dealt - or anything else.
