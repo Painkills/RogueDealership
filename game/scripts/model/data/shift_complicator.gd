@@ -29,6 +29,16 @@ class_name ShiftComplicator extends Resource
 @export var combo_scale: float = 1.0
 ## Multiplies the shift's quota - 1.2 asks 20% more of the day's.
 @export var quota_scale: float = 1.0
+## How many of the floor's chairs are in use, and how many customers the shift
+## brings with them - a seat count comes with its own lineup length. 0 = the
+## shift's own.
+@export var seats: int = 0
+@export var customers: int = 0
+## How many can wait for a chair. 0 = the shift's own.
+@export var waiting_room: int = 0
+## Sell this many products from the day's category (RunState.day_category()).
+## 0 = no product quota of its own.
+@export var product_quota_count: int = 0
 @export_group("")
 
 ## May also be dealt onto a regular shift, not only a premade one that scales -
@@ -36,8 +46,9 @@ class_name ShiftComplicator extends Resource
 @export var on_regular_shifts: bool = false
 
 ## Which of the rules it changes - &"line", &"ticks", &"patience", &"hand",
-## &"combo", &"quota". Never added to a shift that sets one of them itself, or alongside
-## another complicator that changes the same one.
+## &"combo", &"quota", &"seats", &"waiting", &"product_quota". Never added to a
+## shift that sets one of them itself, or alongside another complicator that
+## changes the same one.
 func touches() -> Array[StringName]:
 	var out: Array[StringName] = []
 	if line_offset != 0:
@@ -52,4 +63,10 @@ func touches() -> Array[StringName]:
 		out.append(&"combo")
 	if quota_scale != 1.0:
 		out.append(&"quota")
+	if seats > 0:
+		out.append(&"seats")
+	if waiting_room > 0:
+		out.append(&"waiting")
+	if product_quota_count > 0:
+		out.append(&"product_quota")
 	return out

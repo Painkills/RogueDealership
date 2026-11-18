@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ShiftComplicator" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_complicator.gd" id="1_comp"]
+
+[resource]
+script = ExtResource("1_comp")
+id = &"seats_3"
+display_text = "3 seats"
+points = 0
+seats = 3
+customers = 5
+on_regular_shifts = true

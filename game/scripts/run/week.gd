@@ -2,9 +2,12 @@ class_name Week extends RefCounted
 ## The run's calendar: which shifts each day offers, dealt once when the run
 ## starts - so opening the calendar again never deals a day differently.
 ##
-## Each slot - morning, midday, night - has a difficulty target that climbs
-## over the run (ShiftProfile.difficulty_on()), and what is dealt there is built
-## to it:
+## Each slot - morning, midday, night - has a difficulty target, and what is
+## dealt there is built to it. With a DifficultyLadder (ShiftProfilePool.ladder)
+## the day plans one target and spreads it across the slots in an order drawn for
+## the day, and every shift is built the ladder's way - its quota, conditions
+## and customers all priced in the same points (ShiftGenerator.fill_to_ladder()).
+## Without one, each tier climbs its own way (ShiftProfile.difficulty_on()).
 ##
 ## 1. Boss categories that allow the day roll first. If one of their shifts
 ##    comes up, it takes the place of one of the day's shifts, at random -
@@ -39,6 +42,8 @@ class_name Week extends RefCounted
 var _days: Array = []   ## per day, from day 1: an Array[ShiftProfile]
 
 var _archetypes: ArchetypePool = null
+var _ladder: DifficultyLadder = null
+var _complicators: Array = []
 var _tolerance := 1
 var _share := 0.3
 var _week_length := 7
@@ -51,6 +56,8 @@ func _init(pool: ShiftProfilePool, day_count: int, seed_value: int,
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	_archetypes = archetypes
+	_ladder = pool.ladder
+	_complicators = pool.complicators
 	_week_length = maxi(1, week_length)
 	if cfg != null:
 		_tolerance = cfg.difficulty_tolerance
@@ -80,8 +87,14 @@ func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator) -> Arra
 	if tiers.is_empty():
 		tiers = pool.profiles.duplicate()
 	var week := Shift.week_of(day, _week_length)
+	# The ladder's plan for the day, by slot - or each tier's own climb.
+	var targets := {}
+	if _ladder != null:
+		var planned := _ladder.targets_on(day, tiers.size(), rng)
+		for i in range(tiers.size()):
+			targets[tiers[i].id] = planned[i]
 	for tier in tiers:
-		var target := tier.difficulty_on(day)
+		var target: int = targets.get(tier.id, tier.difficulty_on(day))
 		# A premade shift allowed in more than one slot still comes up once a
 		# day - and once a week.
 		var candidates: Array = _candidates(pool, day, false, tier.id, _week_length).filter(
@@ -95,16 +108,34 @@ func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator) -> Arra
 		_this_week[shift] = true
 		var copy: ShiftProfile
 		if _builds(tier) and shift.scales():
-			copy = ShiftGenerator.fill(shift, tier, day, week, target, _archetypes,
-				pool.complicators, _share, rng)
+			copy = _build(shift, tier, day, week, target, pool.complicators, rng)
 		else:
 			copy = shift.duplicate() as ShiftProfile
 		out.append(_dealt(premade, copy))
 		copy.take_rewards_from(tier)
 	if not boss.is_empty():
 		_this_week[boss["shift"]] = true
-		_seat_the_boss(out, boss, rng, day, week, pool.complicators)
+		_seat_the_boss(out, boss, rng, day, week, pool.complicators, targets)
+	# Every offer is a dealt copy once the calendar builds: each says what its
+	# slot planned, a fixed premade shift and a boss included.
+	if _ladder != null and _archetypes != null:
+		for p in out:
+			if p.planned == 0:
+				p.planned = int(targets.get(p.worked_at(), p.difficulty))
 	return out
+
+## `shift` built to `target` in `tier`'s slot - the ladder's way, where there is one.
+func _build(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int, target: int,
+		complicators: Array, rng: RandomNumberGenerator) -> ShiftProfile:
+	var copy: ShiftProfile
+	if _ladder != null:
+		copy = ShiftGenerator.fill_to_ladder(shift, tier, day, week, target, _archetypes,
+			complicators, _ladder, _tolerance, rng)
+	else:
+		copy = ShiftGenerator.fill(shift, tier, day, week, target, _archetypes, complicators,
+			_share, rng)
+	copy.planned = target
+	return copy
 
 ## Whether this calendar builds `tier`'s shifts to a difficulty target - it has
 ## archetypes to build them from, and the tier says how many customers.
@@ -117,7 +148,7 @@ func _regular(tier: ShiftProfile, day: int, week: int, target: int,
 		complicators: Array, rng: RandomNumberGenerator) -> ShiftProfile:
 	if not _builds(tier):
 		return tier
-	return ShiftGenerator.fill(tier, tier, day, week, target, _archetypes, complicators, _share, rng)
+	return _build(tier, tier, day, week, target, complicators, rng)
 
 ## Whether premade `shift` may be dealt into `tier`'s slot at `target` - see the
 ## top of this file. Every one fits a calendar that builds nothing.
@@ -162,7 +193,7 @@ func _fits(shift: ShiftProfile, tier: ShiftProfile, target: int, week: int,
 ## special shift already dealt that day keeps its place if it can.
 func _seat_the_boss(out: Array[ShiftProfile], boss: Dictionary,
 		rng: RandomNumberGenerator, day: int = 1, week: int = 1,
-		complicators: Array = []) -> void:
+		complicators: Array = [], targets: Dictionary = {}) -> void:
 	var category: ShiftCategory = boss["category"]
 	var places: Array[int] = []
 	for i in range(out.size()):
@@ -175,10 +206,22 @@ func _seat_the_boss(out: Array[ShiftProfile], boss: Dictionary,
 	if places.is_empty():
 		return
 	var at: int = places[rng.randi_range(0, places.size() - 1)]
+	# On the ladder a hard shift takes the day's hardest slot, and its target.
+	if _ladder != null and not targets.is_empty() and not category.takes_the_day:
+		for i in places:
+			if int(targets.get(out[i].worked_at(), 0)) > int(targets.get(out[at].worked_at(), 0)):
+				at = i
 	boss["slot"] = out[at].worked_at()
 	var picked: ShiftProfile = boss["shift"]
 	var built: ShiftProfile
-	if _archetypes != null and picked.lineup.is_empty() and picked.customers > 0 \
+	if _ladder != null and _archetypes != null and picked.lineup.is_empty() \
+			and picked.customers > 0 and targets.has(out[at].worked_at()) \
+			and not category.takes_the_day:
+		built = ShiftGenerator.fill_to_ladder(picked, ShiftProfile.new(), day, week,
+			int(targets[out[at].worked_at()]), _archetypes, complicators, _ladder,
+			_tolerance, rng)
+		built.planned = int(targets[out[at].worked_at()])
+	elif _archetypes != null and picked.lineup.is_empty() and picked.customers > 0 \
 			and picked.difficulty_start > 0:
 		# A special shift with a difficulty budget of its own: a lineup of its
 		# `customers` (from whoever it names), filled to the target the way a slot's

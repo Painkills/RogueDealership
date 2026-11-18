@@ -19,6 +19,10 @@ extends SceneTree
 ##               what its own rules add) and for every complicator.
 ## - archetypes  five of a kind of each archetype, and what that suggests each
 ##               is worth.
+## - modifiers   every modifier in data/shift_complicators, in the pool or not -
+##               the difficulty ladder's whole price list. A seat count is
+##               measured with its own lineup length, and priced apart from what
+##               its customers bring.
 ## - calendar    the calendar a couple of runs deal, day by day: each slot's
 ##               shift, its difficulty, who comes in and its complicators.
 
@@ -64,6 +68,9 @@ func _init() -> void:
 		"archetypes":
 			_baseline_curve()
 			_archetypes()
+		"modifiers":
+			_baseline_curve()
+			_modifiers()
 		_:
 			_baseline_curve()
 			_premade()
@@ -184,6 +191,42 @@ func _complicators() -> void:
 		var adds := _adds(ShiftProfile.new(), [c])
 		print("  %-22s adds %+.1f points   (set: %d)" % [c.display_text, adds, c.points])
 	print("")
+
+const MODIFIERS := "res://data/shift_complicators"
+
+func _modifiers() -> void:
+	print("Every modifier in %s:" % MODIFIERS)
+	print("  %-30s %8s   %s" % ["modifier", "points", "(set now)"])
+	var files := Array(DirAccess.get_files_at(MODIFIERS)).filter(
+		func(f): return f.ends_with(".tres"))
+	files.sort()
+	for f in files:
+		var c: ShiftComplicator = load(MODIFIERS.path_join(f))
+		if c == null:
+			continue
+		var adds := _adds_seats(c) if c.seats > 0 else _adds(ShiftProfile.new(), [c])
+		print("  %-30s %+8.1f   (set: %d)" % [c.display_text, adds, c.points])
+	print("")
+
+## What a seat count adds, in points, apart from its customers: its own lineup
+## length, at the same points a customer as each of SPAN's lineups, against what
+## those customers bring by themselves.
+func _adds_seats(c: ShiftComplicator) -> float:
+	var k := c.customers if c.customers > 0 else _tier.customers
+	var total := 0.0
+	for points in SPAN:
+		var want := roundi(points * float(k) / float(_tier.customers))
+		var m := _measure(func(seed_value: int) -> ShiftProfile:
+			var tier := _tier.duplicate() as ShiftProfile
+			tier.customers = k
+			var built := ShiftGenerator.fill(tier, tier, _day, _week(), want, _arch, [], 0.0,
+				_rng(seed_value))
+			var copy := ShiftProfile.new()
+			copy.lineup = built.lineup
+			copy.complicators.assign([c])
+			return copy)
+		total += _plays_like(m["lost"]) - float(want)
+	return total / SPAN.size()
 
 func _archetypes() -> void:
 	print("Five of a kind - what each archetype plays like, per customer:")

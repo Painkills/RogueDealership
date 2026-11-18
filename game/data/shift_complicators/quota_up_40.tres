@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ShiftComplicator" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_complicator.gd" id="1_comp"]
+
+[resource]
+script = ExtResource("1_comp")
+id = &"quota_up_40"
+display_text = "Quota +40%"
+points = 0
+quota_scale = 1.4
+on_regular_shifts = true

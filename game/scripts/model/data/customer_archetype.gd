@@ -76,11 +76,15 @@ class_name CustomerArchetype extends Resource
 ## is what its customers add up to (plus its own rules - see
 ## ShiftProfile.difficulty). Measured with tools/rate_shifts.gd -- archetypes.
 @export var difficulty: int = 1
+## The difficulty target a shift needs before they may come in on it - the
+## difficulty ladder's gate for the harder customers (DifficultyLadder,
+## ShiftGenerator.fill_to_ladder()). 0: any shift.
+@export var min_difficulty: int = 0
 ## How often they come in, relative to everyone else in the pool - not a
 ## percentage. 0 never.
 @export var weight: float = 1.0
-## One of the hard ones: never two of the same on the floor at once, and a
-## shift can weight them up (ShiftProfile.hard_weight_scale).
+## One of the hard ones: a shift can weight them up
+## (ShiftProfile.hard_weight_scale).
 @export var hard: bool = false
 @export var actions: Array[CustomerAction]
 

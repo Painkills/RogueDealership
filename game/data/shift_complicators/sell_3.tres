@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ShiftComplicator" format=3]
+
+[ext_resource type="Script" path="res://scripts/model/data/shift_complicator.gd" id="1_comp"]
+
+[resource]
+script = ExtResource("1_comp")
+id = &"sell_3"
+display_text = "Sell 3 of the day's category"
+points = 0
+product_quota_count = 3
+on_regular_shifts = true

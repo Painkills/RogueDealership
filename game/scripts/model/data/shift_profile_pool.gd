@@ -11,6 +11,9 @@ class_name ShiftProfilePool extends Resource
 ## The twists a premade shift that scales may be dealt with, to make a harder
 ## slot's difficulty - see ShiftComplicator and ShiftGenerator.
 @export var complicators: Array[ShiftComplicator] = []
+## The run's difficulty, planned - see DifficultyLadder. Null: each tier climbs
+## its own way (ShiftProfile.difficulty_start, difficulty_per_day).
+@export var ladder: DifficultyLadder = null
 
 func by_id(wanted: StringName) -> ShiftProfile:
 	for p in profiles:

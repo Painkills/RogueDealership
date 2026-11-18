@@ -139,6 +139,9 @@ var dealt_by: ShiftCategory = null
 ## Set on a dealt copy of a premade shift that scales: the twists it came with
 ## to make the slot's difficulty (see ShiftGenerator). Never authored.
 var complicators: Array[ShiftComplicator] = []
+## Set on a dealt copy: the difficulty its slot planned for it that day - see
+## DifficultyLadder. 0 = not planned.
+var planned: int = 0
 
 ## This shift's quota on a day whose own is `base` - the one number RunState
 ## runs it to and the calendar shows.
@@ -175,6 +178,12 @@ func touches() -> Array[StringName]:
 		out.append(&"combo")
 	if quota > 0 or quota_scale != 1.0 or quota_offset != 0:
 		out.append(&"quota")
+	if seats > 0:
+		out.append(&"seats")
+	if waiting_room > 0:
+		out.append(&"waiting")
+	if product_quota_count > 0:
+		out.append(&"product_quota")
 	return out
 
 ## The rules the shift is played under - its own, and its complicators' on top.
@@ -190,6 +199,37 @@ func hand_on(base: int) -> int:
 	for c in complicators:
 		hand += c.hand_size_delta
 	return maxi(1, hand)
+
+## Chairs in use - a complicator's seat count over the shift's own. 0 = all of
+## them (ShiftConfig.floor_size).
+func seats_on() -> int:
+	for c in complicators:
+		if c.seats > 0:
+			return c.seats
+	return seats
+
+## How many customers the shift's lineup brings - a seat count's own, or the
+## shift's. 0 = the door as it used to be.
+func customers_on() -> int:
+	for c in complicators:
+		if c.customers > 0:
+			return c.customers
+	return customers
+
+## How many may wait for a chair. 0 = ShiftConfig.waiting_max.
+func waiting_on() -> int:
+	for c in complicators:
+		if c.waiting_room > 0:
+			return c.waiting_room
+	return waiting_room
+
+## How many products of the day's category a complicator asks to be sold - 0 for
+## none. A shift's own product quota (product_quota_category) is apart from it.
+func product_quota_from_complicators() -> int:
+	var count := 0
+	for c in complicators:
+		count += c.product_quota_count
+	return count
 
 func total_line_offset() -> int:
 	var offset := line_offset

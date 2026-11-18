@@ -152,19 +152,20 @@ func start_shift(profile: ShiftProfile) -> Shift:
 	var shift_cfg := cfg
 	var ticks := profile.ticks_on(cfg.shift_ticks)
 	var hand := profile.hand_on(cfg.menu_hand_size if menu else cfg.hand_size)
-	if menu or ticks != cfg.shift_ticks or hand != cfg.hand_size or profile.waiting_room > 0:
+	var waiting := profile.waiting_on()
+	if menu or ticks != cfg.shift_ticks or hand != cfg.hand_size or waiting > 0:
 		shift_cfg = cfg.duplicate() as ShiftConfig
 		shift_cfg.shift_ticks = ticks
 		shift_cfg.hand_size = hand
-		if profile.waiting_room > 0:
-			shift_cfg.waiting_max = profile.waiting_room
+		if waiting > 0:
+			shift_cfg.waiting_max = waiting
 		if menu:
 			# Supports only in the hand: nothing for the product bias to do.
 			shift_cfg.products_on_board = true
 			shift_cfg.hand_min_products = 0
 	var s := Shift.new(shift_cfg, interests, card_pool, archetypes,
 		rng.randi(), [], deck, profile.quota_on(quota_for(shift_number)), shift_number,
-		standing, sale_streak, dialogue, profile.seats,
+		standing, sale_streak, dialogue, profile.seats_on(),
 		profile.total_patience_scale(), profile.walk_up_scale,
 		profile.only_archetypes, profile.lineup,
 		profile.excluded_archetypes, {
@@ -184,6 +185,13 @@ func start_shift(profile: ShiftProfile) -> Shift:
 		s.category_quota = profile.product_quota_category.id
 		s.category_quota_name = profile.product_quota_category.display_name
 		s.category_quota_count = profile.product_quota_count
+	elif profile.product_quota_from_complicators() > 0:
+		# A complicator's product quota sells from the day's category.
+		var cat := day_category(shift_number)
+		if cat != null:
+			s.category_quota = cat.id
+			s.category_quota_name = cat.display_name
+			s.category_quota_count = profile.product_quota_from_complicators()
 	elif not profile.is_boss_day():
 		var q := category_quota(shift_number)
 		if not q.is_empty():
@@ -198,12 +206,20 @@ func start_shift(profile: ShiftProfile) -> Shift:
 ## seed and the day, so asking never moves the run's own dice.
 func category_quota(day: int) -> Dictionary:
 	var count := cfg.category_quota_in_week(week_of(day))
-	if count <= 0 or interests == null or interests.categories.is_empty():
+	var cat := day_category(day)
+	if count <= 0 or cat == null:
 		return {}
+	return {"category": cat, "count": count}
+
+## The day's category for a product quota - whoever asks for one that day sells
+## from it. Null without categories.
+func day_category(day: int) -> Category:
+	if interests == null or interests.categories.is_empty():
+		return null
 	var day_rng := RandomNumberGenerator.new()
 	day_rng.seed = hash([rng.seed, day, "category_quota"])
 	var cats := interests.categories
-	return {"category": cats[day_rng.randi_range(0, cats.size() - 1)], "count": count}
+	return cats[day_rng.randi_range(0, cats.size() - 1)]
 
 func finish_shift(report: Dictionary) -> void:
 	## The quota is the house's cut and it comes out first. What you bank OVER it
