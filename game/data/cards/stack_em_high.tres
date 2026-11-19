@@ -22,6 +22,6 @@ display_name = "Stack 'Em High"
 text = "Every yes makes the next one easier."
 ticks = 2
 upgraded_ticks = 1
-rarity = 2
+rarity = 3
 effects = Array[ExtResource("1_effect")]([SubResource("Effect_base_0")])
 upgraded_effects = Array[ExtResource("1_effect")]([SubResource("Effect_up_0")])

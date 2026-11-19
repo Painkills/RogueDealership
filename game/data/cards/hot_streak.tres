@@ -16,5 +16,5 @@ display_name = "Hot Streak"
 text = "You're on a roll. Don't stop to think."
 ticks = 3
 upgraded_ticks = 2
-rarity = 1
+rarity = 2
 effects = Array[ExtResource("1_effect")]([SubResource("Effect_base_0")])
