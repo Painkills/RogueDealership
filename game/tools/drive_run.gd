@@ -908,6 +908,8 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	var was: Week = _run.week
 	var pool := ShiftProfilePool.new()
 	pool.profiles = (_root._profiles as ShiftProfilePool).profiles
+	# The run's own plan for the day's difficulty - the tiers have none of their own.
+	pool.ladder = (_root._profiles as ShiftProfilePool).ladder
 	var special := ShiftProfile.new()
 	special.id = &"drive_special"
 	special.display_name = "Drive Special"
@@ -960,6 +962,13 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	pool.complicators.append(twist)
 	var deal_cfg := _run.cfg.duplicate() as ShiftConfig
 	deal_cfg.complicator_share = 1.0
+	# On the ladder: the whole budget for conditions, none for quota.
+	if pool.ladder != null:
+		pool.ladder = pool.ladder.duplicate() as DifficultyLadder
+		pool.ladder.quota_share_min = 0.0
+		pool.ladder.quota_share_max = 0.0
+		pool.ladder.conditions_share_min = 1.0
+		pool.ladder.conditions_share_max = 1.0
 	_run.week = Week.new(pool, _run.cfg.shifts_in_run, 1, _run.cfg.days_per_week,
 		_run.archetypes, deal_cfg)
 	_root._open_the_picker()
@@ -1702,9 +1711,12 @@ func _check_week_two_shows_the_product_quota() -> void:
 	var q: Dictionary = _run.category_quota(_run.shift_number)
 	var shown: Array = _root._picker_view.find_children("ProductQuota", "Label", true, false)
 	var expected: Dictionary = _root._week_product_quotas()
+	# As many as the config's weeks ask for - none, where product quotas come only
+	# from a shift's own modifiers (DifficultyLadder).
 	_check("the week's days name their product quotas (%d labels, %d days)"
 		% [shown.size(), expected.size()],
-		shown.size() == expected.size() and not expected.is_empty())
+		shown.size() == expected.size()
+			and (expected.is_empty() == (_run.cfg.category_quota_in_week(_run.week_of(_run.shift_number)) <= 0)))
 	# A boss carries no product quota, so the first of today's regular shifts.
 	var regular := _run.todays_shifts().filter(func(p): return not p.is_boss_day())
 	if q.is_empty() or regular.is_empty():
