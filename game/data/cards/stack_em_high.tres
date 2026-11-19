@@ -6,12 +6,12 @@
 
 [sub_resource type="Resource" id="Effect_base_0"]
 script = ExtResource("3_momentum")
-amount = 1
+amount = 0
 per_sale = 1
 
 [sub_resource type="Resource" id="Effect_up_0"]
 script = ExtResource("3_momentum")
-amount = 1
+amount = 0
 per_sale = 2
 
 [resource]
@@ -20,8 +20,8 @@ needs_offer = false
 id = &"stack_em_high"
 display_name = "Stack 'Em High"
 text = "Every yes makes the next one easier."
-ticks = 1
-upgraded_ticks = 0
+ticks = 2
+upgraded_ticks = 1
 rarity = 2
 effects = Array[ExtResource("1_effect")]([SubResource("Effect_base_0")])
 upgraded_effects = Array[ExtResource("1_effect")]([SubResource("Effect_up_0")])

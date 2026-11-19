@@ -13,6 +13,8 @@ func apply(ctx: EffectContext) -> void:
 	ctx.shift.gain_momentum(amount + per_sale * ctx.sales_so_far)
 
 func describe() -> String:
+	if amount <= 0 and per_sale > 0:
+		return "Momentum: +%d free card per product taken" % per_sale
 	var base := "Momentum: next card free" if amount == 1 \
 		else "Momentum: next %d cards free" % amount
 	if per_sale > 0:
