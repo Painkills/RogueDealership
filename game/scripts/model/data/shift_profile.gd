@@ -128,8 +128,9 @@ class_name ShiftProfile extends Resource
 ## The lowest rarity the free pick after this shift offers - a boss's reward.
 @export_enum("Basic", "Economy", "Value", "Preferred") var free_pick_min_rarity: int = 0
 ## How many dealership upgrades the store after this shift offers, to pick ONE
-## from for the rest of the run - night's reward. 0 = none. See
-## DealershipUpgrade.
+## from for the rest of the run - offered only when its quota was made. The
+## day's ROUGH shift gets them (see Week), a boss may have its own. 0 = none.
+## See DealershipUpgrade.
 @export var dealership_upgrades: int = 0
 
 ## Set on the copy Week deals onto the calendar, never authored: the slot it
@@ -142,6 +143,9 @@ var complicators: Array[ShiftComplicator] = []
 ## Set on a dealt copy: the difficulty its slot planned for it that day - see
 ## DifficultyLadder. 0 = not planned.
 var planned: int = 0
+## Set on a dealt copy: &"rough" for the day's hardest offer, &"easy" for its
+## easiest - see Week. &"" otherwise.
+var flag: StringName = &""
 
 ## This shift's quota on a day whose own is `base` - the one number RunState
 ## runs it to and the calendar shows.

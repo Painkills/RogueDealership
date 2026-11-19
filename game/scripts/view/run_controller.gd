@@ -550,7 +550,7 @@ func _where_you_are() -> String:
 
 ## A shift as the calendar offers it, for the play metrics.
 func _offer_summary(p: ShiftProfile) -> Dictionary:
-	return {"id": String(p.id), "slot": String(p.worked_at()), "difficulty": p.difficulty,
+	return {"id": String(p.id), "slot": String(p.worked_at()), "difficulty": p.difficulty, "flag": String(p.flag),
 		"quota": p.quota_on(_run.quota_for(_run.shift_number)), "boss": p.is_boss_day(),
 		"rules": p.rules_preview(),
 		"lineup": p.lineup.map(func(a): return String(a.id) if a != null else "")}

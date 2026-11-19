@@ -122,7 +122,37 @@ func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator) -> Arra
 		for p in out:
 			if p.planned == 0:
 				p.planned = int(targets.get(p.worked_at(), p.difficulty))
+		_rewards_by_difficulty(out, day)
 	return out
+
+## On the ladder what a shift pays follows how hard it is: its store and
+## commission scaled by its difficulty over the day's target
+## (DifficultyLadder.reward_scale_min/max) - a boss keeps its own. And the day's
+## hardest offer is ROUGH, offering a perk for making its quota; its easiest EASY.
+## Nothing to compare on a day with one offer.
+func _rewards_by_difficulty(out: Array[ShiftProfile], day: int) -> void:
+	if out.size() < 2:
+		return
+	var base := float(maxi(1, _ladder.target_on(day)))
+	for p in out:
+		if p.is_boss_day():
+			continue
+		var f := clampf(float(p.difficulty) / base, _ladder.reward_scale_min, _ladder.reward_scale_max)
+		p.cards_for_sale = roundi(p.cards_for_sale * f)
+		p.upgrades = roundi(p.upgrades * f)
+		p.commission = minf(1.0, p.commission * f)
+	var hardest: ShiftProfile = out[0]
+	var easiest: ShiftProfile = out[0]
+	for p in out:
+		if p.difficulty > hardest.difficulty:
+			hardest = p
+		if p.difficulty < easiest.difficulty:
+			easiest = p
+	if hardest == easiest:
+		return
+	hardest.flag = &"rough"
+	hardest.dealership_upgrades = maxi(hardest.dealership_upgrades, _ladder.rough_perks)
+	easiest.flag = &"easy"
 
 ## `shift` built to `target` in `tier`'s slot - the ladder's way, where there is one.
 func _build(shift: ShiftProfile, tier: ShiftProfile, day: int, week: int, target: int,

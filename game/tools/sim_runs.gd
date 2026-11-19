@@ -46,6 +46,9 @@ var _strategies := {
 		return [&"midday", &"morning", &"night"] if d <= 5 else [&"night", &"midday", &"morning"],
 	"alternate mid/night": func(d: int):
 		return [&"midday", &"night", &"morning"] if d % 2 == 1 else [&"night", &"midday", &"morning"],
+	# The day's flags (ShiftProfile.flag): its hardest, or its easiest.
+	"always rough": func(_d: int): return [&"rough", &"midday", &"night", &"morning"],
+	"always easy": func(_d: int): return [&"easy", &"morning", &"midday", &"night"],
 }
 
 func _init() -> void:
@@ -118,7 +121,9 @@ func _what_ifs() -> void:
 		if parts.size() != 2 or path.size() != 2:
 			print("ignoring %s - expected tier.field=value or cfg.field=value" % arg)
 			continue
-		var target: Resource = _cfg if path[0] == "cfg" else _profile(StringName(path[0]))
+		# ladder.<field>=value - the DifficultyLadder, e.g. reward_scale_max=1.2.
+		var target: Resource = _cfg if path[0] == "cfg" \
+			else _pool.ladder if path[0] == "ladder" else _profile(StringName(path[0]))
 		if target == null:
 			print("ignoring %s - no such tier" % arg)
 			continue
@@ -173,7 +178,7 @@ func _choose(offers: Array[ShiftProfile], wants: Array) -> ShiftProfile:
 				return p
 	for id in wants:
 		for p in offers:
-			if p.id == id:
+			if p.id == id or p.flag == id:
 				return p
 	return offers[0]
 

@@ -237,6 +237,27 @@ func test_on_the_ladder_a_hard_shift_takes_the_days_hardest_slot() -> void:
 			wrong.append(seed_value)
 	h.check("always in the slot planned hardest (%s)" % str(wrong), wrong.is_empty())
 
+func test_the_days_hardest_is_rough_with_a_perk_its_easiest_easy_and_pay_follows_difficulty() -> void:
+	var pool := _ladder_pool([-4, 0, 4])
+	for t in pool.profiles:
+		t.cards_for_sale = 4
+		t.upgrades = 4
+		t.commission = 0.2
+	var wrong := []
+	for seed_value in range(6):
+		var offers := Week.new(pool, 2, seed_value, 6, _points(), _cfg()).offers(2)
+		offers.sort_custom(func(a, b): return a.difficulty < b.difficulty)
+		var flags := offers.map(func(p): return p.flag)
+		if flags[0] != &"easy" or flags[-1] != &"rough" or flags.count(&"") != offers.size() - 2:
+			wrong.append([seed_value, "flags", flags])
+		if offers[-1].dealership_upgrades <= 0 or offers[0].dealership_upgrades != 0:
+			wrong.append([seed_value, "perk only on the rough one"])
+		if offers[-1].cards_for_sale <= offers[0].cards_for_sale \
+				or offers[-1].upgrades <= offers[0].upgrades \
+				or offers[-1].commission <= offers[0].commission:
+			wrong.append([seed_value, "pay", offers.map(func(p): return [p.difficulty, p.cards_for_sale, p.commission])])
+	h.check("rough, easy and pay by difficulty (%s)" % str(wrong), wrong.is_empty())
+
 # ---------------------------------------------------------- reaching the floor
 func test_a_modifiers_seats_waiting_room_and_product_quota_reach_the_shift() -> void:
 	var run := RunState.new(load("res://data/shift_config.tres"),

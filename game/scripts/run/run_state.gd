@@ -27,7 +27,7 @@ var sale_streak: int = 0             ## carried shift to shift - see Shift.sale_
 ## Which shifts each day offers, dealt when the run starts - see Week. Null for
 ## a run built without the pool, which then has no calendar of its own.
 var week: Week = null
-## Every dealership upgrade there is - what a night shift's store offers from.
+## Every dealership upgrade there is - what a ROUGH shift's store offers from.
 ## Null for a run built without it: no store ever offers one.
 var upgrade_pool: DealershipUpgradePool = null
 ## The dealership upgrades this run has picked, in the order it picked them -

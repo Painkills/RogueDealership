@@ -182,6 +182,13 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	col.add_child(title_row)
 	var title := _line(title_row, profile.display_name, 22, Palette.color(&"text"), true)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# The day's hardest and easiest, said beside the name (see Week).
+	if profile.flag != &"":
+		var flag := _line(title_row, "ROUGH" if profile.flag == &"rough" else "EASY", 15,
+			Palette.color(&"alert") if profile.flag == &"rough" else Palette.color(&"patience_ok"), true)
+		flag.name = "Flag"
+		flag.autowrap_mode = TextServer.AUTOWRAP_OFF
+		flag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var when := _line(title_row, "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
 		CalendarDay.hour_label(int(hours[1]))], 15, Palette.color(&"text_dim"))
 	when.name = "Hours"

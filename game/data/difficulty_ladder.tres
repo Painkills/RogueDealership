@@ -6,9 +6,11 @@
 script = ExtResource("1_ladder")
 start = 7.0
 per_day = 2.8
-spread = Array[int]([-3, 0, 3])
+spread = Array[int]([-3, 0, 9])
 seats_by_weekday = Array[int]([1, 2, 3, 3, 3, 3])
 quota_share_min = 0.45
 quota_share_max = 0.6
 conditions_share_min = 0.1
 conditions_share_max = 0.25
+reward_scale_min = 0.75
+reward_scale_max = 1.25

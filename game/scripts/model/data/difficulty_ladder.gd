@@ -23,6 +23,15 @@ class_name DifficultyLadder extends Resource
 @export_range(0.0, 1.0, 0.05) var conditions_share_min: float = 0.1
 @export_range(0.0, 1.0, 0.05) var conditions_share_max: float = 0.3
 
+## What a shift pays follows how hard it is: its slot's store (cards for sale,
+## upgrades) and commission times its difficulty over the day's target, kept
+## between these two.
+@export var reward_scale_min: float = 0.5
+@export var reward_scale_max: float = 1.5
+## The day's hardest shift is ROUGH: making its quota offers this many
+## dealership perks to pick one from (ShiftProfile.dealership_upgrades).
+@export var rough_perks: int = 3
+
 ## The seats every shift of a weekday has - Monday first: 1, 2, then 3 for the
 ## rest, so the floor fills up through the week. Each still costs its points
 ## (a seat count is a modifier), and the rest of the shift makes up the
