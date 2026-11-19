@@ -70,7 +70,7 @@ var category_sold: int = 0
 var dealership: Array[DealershipUpgrade] = []
 ## Momentum: how many of your next cards cost no ticks - support cards, and
 ## products put down; not a dig. Earned by cards (GainMomentum) and by the
-## dealership (DealershipUpgrade.momentum_on_sale, momentum_at_open), never past
+## dealership (DealershipUpgrade.momentum_on_close, momentum_at_open), never past
 ## ShiftConfig.momentum_max. Spent a charge a card, see _take_cost().
 var momentum: int = 0
 ## Who never comes in on this shift - ShiftProfile.excluded_archetypes.
@@ -1779,8 +1779,6 @@ func offer() -> Result:
 	# being asked cannot retroactively sink an offer that already cleared.
 	var patience_before: int = c.patience
 	var sale := _settle(c)
-	# The dealership's reward for a yes: the next card is free.
-	gain_momentum(int(perk(&"momentum_on_sale")))
 	# They say yes out loud, about the product they just took where a line was
 	# written for it - before anything their archetype does about it, which is
 	# what happens next.
@@ -2127,6 +2125,8 @@ func _sign(c: Customer) -> Result:
 	stat["customers_signed"] = int(stat["customers_signed"]) + 1
 	sale_streak += 1
 	sale_streak_events.append(sale_streak)
+	# The dealership's reward for a closed customer: the next card is free.
+	gain_momentum(int(perk(&"momentum_on_close")))
 	events.append("[%s] %s signs for $%d." % [c.key, c.display_name, banked])
 	if last_customer == c:
 		last_customer = null

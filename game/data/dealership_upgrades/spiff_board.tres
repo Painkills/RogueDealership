@@ -6,5 +6,5 @@
 script = ExtResource("1_up")
 id = &"spiff_board"
 display_name = "Spiff Board"
-blurb = "Cash for every close, posted on the wall. Every sale gives you Momentum: your next card is free."
-momentum_on_sale = 1
+blurb = "Cash for every close, posted on the wall. Every customer you close gives you Momentum: your next card is free."
+momentum_on_close = 1

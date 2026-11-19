@@ -160,10 +160,10 @@ func test_what_they_do_never_gives_you_momentum() -> void:
 	h.eq("only your own cards do", s.momentum, 0)
 
 # ----------------------------------------------------------- the dealership
-func _perk(on_sale: int, at_open: int) -> DealershipUpgrade:
+func _perk(on_close: int, at_open: int) -> DealershipUpgrade:
 	var u := DealershipUpgrade.new()
 	u.id = &"made_up_perk"
-	u.momentum_on_sale = on_sale
+	u.momentum_on_close = on_close
 	u.momentum_at_open = at_open
 	return u
 
@@ -172,18 +172,22 @@ func test_a_perk_can_open_every_shift_with_momentum() -> void:
 	h.eq("two with it", _shift(3, [_perk(0, 2)]).momentum, 2)
 	h.eq("never more than the config holds", _shift(1, [_perk(0, 2)]).momentum, 1)
 
-func test_a_perk_can_pay_momentum_for_every_sale() -> void:
+func test_a_perk_can_pay_momentum_for_every_closed_customer_not_every_sale() -> void:
 	var s := _shift(3, [_perk(1, 0)])
 	_seat(s, 0, _arch(0))
 	_spent(s, _product(1))
 	h.eq("nothing before the yes", s.momentum, 0)
 	var res := s.offer()
 	h.check("they said yes (%s)" % res.msg, res.ok)
-	h.eq("and it paid a charge", s.momentum, 1)
+	h.eq("a product taken pays nothing yet", s.momentum, 0)
+	var closed := s.close()
+	h.check("then they signed (%s)" % closed.msg, closed.ok)
+	h.eq("and the close paid a charge", s.momentum, 1)
 	var plain := _shift()
 	_seat(plain, 0, _arch(0))
 	_spent(plain, _product(1))
 	plain.offer()
+	plain.close()
 	h.eq("without the perk it pays nothing", plain.momentum, 0)
 
 # ----------------------------------------------------------------- the words
