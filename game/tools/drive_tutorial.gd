@@ -50,13 +50,13 @@ func _drive() -> void:
 	_check_the_name_popup()
 	await _frames(3)
 	_check("practice has no week, so no VIEW CALENDAR",
-		not (_root.get_node(^"BuildBadge/ViewCalendarCornerButton") as Control).visible)
+		not (_root.get_node(^"%ViewCalendarCornerButton") as Control).visible)
 	_check("TUTORIAL opens the practice shift",
 		_coach.is_running() and not _root._picker_view.visible
 			and not _root._title_view.visible)
 	_check("on the real floor", (_floor.get_node(^"HUD") as CanvasLayer).visible)
 	_check("practice has its own way out, not QUIT RUN",
-		not (_root.get_node(^"BuildBadge/QuitRunCornerButton") as Control).visible)
+		not (_root.get_node(^"%QuitRunCornerButton") as Control).visible)
 	var shift: Shift = _floor.current_shift()
 	_check("with one chair", shift.chairs.size() == 1)
 	_check("it opens on the welcome", _coach.step_id() == &"welcome")
@@ -275,7 +275,7 @@ func _check_the_title_screen() -> void:
 	_check("and no CONTINUE, with no run going on this device",
 		not _title_button("ContinueButton").visible)
 	_check("with no toolkit button over the front door",
-		not (_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control).visible)
+		not (_root.get_node(^"%ViewDeckCornerButton") as Control).visible)
 	_check("and the calendar has no tutorial button of its own",
 		_root._picker_view.find_child("TutorialButton", true, false) == null)
 	_check("a dealership drawn behind it", _root._title_view._art.is_visible_in_tree())
@@ -304,7 +304,7 @@ func _check_the_menu_fits_with_continue() -> void:
 	_check("CHECK FOR UPDATES is the web app's alone - not here",
 		not _title_button("UpdateButton").visible)
 	_check("there is no run to quit from the front door",
-		not (_root.get_node(^"BuildBadge/QuitRunCornerButton") as Control).visible)
+		not (_root.get_node(^"%QuitRunCornerButton") as Control).visible)
 	title.offer_continue(4)
 	# The tallest the menu gets: CONTINUE, and the web app's update button and
 	# what it says.
@@ -394,7 +394,7 @@ func _check_a_new_game() -> void:
 	_check("on a fresh run's first day",
 		_root._run != before and _root._run.shift_number == 1)
 	_check("with the toolkit button back",
-		(_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control).visible)
+		(_root.get_node(^"%ViewDeckCornerButton") as Control).visible)
 
 func _next(expect: StringName) -> void:
 	# The welcome is not a memo: its way in is its own big button.
@@ -451,8 +451,8 @@ func _check_the_way_out_is_on_screen() -> void:
 	_check("filled, not a faint outline",
 		(exit.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Palette.color(&"ink"))
 	_check("clear of the memo", not r.intersects(_coach.memo_rect()))
-	_check("and of the VIEW TOOLKIT button beside it",
-		not r.intersects((_root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control)
+	_check("and of the MENU button beside it",
+		not r.intersects((_root.get_node(^"%MenuCornerButton") as Control)
 			.get_global_rect()))
 
 ## The memo points at the thing it is talking about - on screen, and never

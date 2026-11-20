@@ -3,9 +3,11 @@ extends SceneTree
 ## shop and switches between them.
 
 const DECK_VIEWER_SCENE := "res://scenes/deck_viewer.tscn"
-## The width the corner's QUIT RUN button takes, the toolkit and calendar
-## buttons moved over by it.
-const QUIT_W := 186
+## The corner's one MENU button, and the dropdown under it that holds VIEW
+## TOOLKIT, VIEW CALENDAR and QUIT RUN - three buttons side by side used to
+## cover the top bar's own information.
+const MENU_W := 200
+const ITEM_W := 240
 
 func _init() -> void:
 	var root := Node.new()
@@ -113,65 +115,65 @@ func _init() -> void:
 	badge.owner = root
 
 	# Top-right, same layer as the badge (always on screen, over any of the
-	# four screens or the deck viewer itself) - a reliable click target for
-	# "your toolkit" that does not depend on hitting the 3D draw pile's own
-	# pick shape, which is a real click target too (see shift_controller.gd's
-	# _draw_zone wiring) but a much smaller and less forgiving one.
-	var view_deck_btn := Button.new()
-	view_deck_btn.name = "ViewDeckCornerButton"
-	# The same words as the store's own button to the same page - one name
-	# for the thing, wherever you reach it from.
-	view_deck_btn.text = "VIEW TOOLKIT"
-	view_deck_btn.unique_name_in_owner = true
-	view_deck_btn.custom_minimum_size = Vector2(240, 56)
-	view_deck_btn.add_theme_font_size_override("font_size", 22)
-	view_deck_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	# four screens or the deck viewer itself): ONE MENU button. VIEW TOOLKIT, VIEW
+	# CALENDAR and QUIT RUN used to sit in a row here and cover the top bar's own
+	# information; they live in the dropdown under it now (MenuPanel), each still
+	# shown or not by the screen you are on - see run_controller.gd.
+	var menu_btn := Button.new()
+	menu_btn.name = "MenuCornerButton"
+	menu_btn.text = "MENU"
+	menu_btn.unique_name_in_owner = true
+	menu_btn.visible = false
+	menu_btn.custom_minimum_size = Vector2(MENU_W - 16, 56)
+	menu_btn.add_theme_font_size_override("font_size", 22)
+	menu_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	# Anchored to the right edge, so any growth has to go left, into the
 	# screen, rather than off it.
-	view_deck_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	view_deck_btn.offset_left = -256 - QUIT_W
-	view_deck_btn.offset_top = 8
-	view_deck_btn.offset_right = -16 - QUIT_W
-	view_deck_btn.offset_bottom = 64
-	badge_layer.add_child(view_deck_btn)
-	view_deck_btn.owner = root
+	menu_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	menu_btn.offset_left = -MENU_W
+	menu_btn.offset_top = 8
+	menu_btn.offset_right = -16
+	menu_btn.offset_bottom = 64
+	badge_layer.add_child(menu_btn)
+	menu_btn.owner = root
 
-	# Beside it, on the floor only: this week's calendar, to look at and not
-	# pick from - what the boss wants tomorrow, and when the boss day is.
-	var view_calendar_btn := Button.new()
-	view_calendar_btn.name = "ViewCalendarCornerButton"
-	view_calendar_btn.text = "VIEW CALENDAR"
-	view_calendar_btn.unique_name_in_owner = true
-	view_calendar_btn.visible = false
-	view_calendar_btn.custom_minimum_size = Vector2(240, 56)
-	view_calendar_btn.add_theme_font_size_override("font_size", 22)
-	view_calendar_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	view_calendar_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	view_calendar_btn.offset_left = -512 - QUIT_W
-	view_calendar_btn.offset_top = 8
-	view_calendar_btn.offset_right = -272 - QUIT_W
-	view_calendar_btn.offset_bottom = 64
-	badge_layer.add_child(view_calendar_btn)
-	view_calendar_btn.owner = root
+	# The dropdown: closed until MENU is pressed, and again once an item is.
+	var menu_panel := PanelContainer.new()
+	menu_panel.name = "MenuPanel"
+	menu_panel.unique_name_in_owner = true
+	menu_panel.visible = false
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Palette.color(&"panel")
+	panel_style.border_color = Palette.color(&"neutral_3")
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(12)
+	panel_style.shadow_color = Color(0, 0, 0, 0.35)
+	panel_style.shadow_size = 16
+	panel_style.set_content_margin_all(10)
+	menu_panel.add_theme_stylebox_override("panel", panel_style)
+	menu_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	menu_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	menu_panel.offset_left = -ITEM_W - 36
+	menu_panel.offset_top = 72
+	menu_panel.offset_right = -16
+	badge_layer.add_child(menu_panel)
+	menu_panel.owner = root
+	var items := VBoxContainer.new()
+	items.name = "Items"
+	items.add_theme_constant_override("separation", 8)
+	menu_panel.add_child(items)
+	items.owner = root
 
-	# The very corner, in a run only: give it up and go back to the front door -
-	# asked first, since a run quit is a run lost.
-	var quit_btn := Button.new()
-	quit_btn.name = "QuitRunCornerButton"
-	quit_btn.text = "QUIT RUN"
-	quit_btn.unique_name_in_owner = true
-	quit_btn.visible = false
-	quit_btn.custom_minimum_size = Vector2(QUIT_W - 16, 56)
-	quit_btn.add_theme_font_size_override("font_size", 22)
+	# The same words as the store's own button to the same page - one name
+	# for the thing, wherever you reach it from.
+	_menu_item(items, root, "ViewDeckCornerButton", "VIEW TOOLKIT", true)
+	# On the floor only: this week's calendar, to look at and not pick from -
+	# what the boss wants tomorrow, and when the boss day is.
+	_menu_item(items, root, "ViewCalendarCornerButton", "VIEW CALENDAR", false)
+	# In a run only: give it up and go back to the front door - asked first,
+	# since a run quit is a run lost.
+	var quit_btn := _menu_item(items, root, "QuitRunCornerButton", "QUIT RUN", false)
 	ButtonStyle.outlined(quit_btn, Palette.color(&"alert"))
-	quit_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	quit_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	quit_btn.offset_left = -QUIT_W
-	quit_btn.offset_top = 8
-	quit_btn.offset_right = -16
-	quit_btn.offset_bottom = 64
-	badge_layer.add_child(quit_btn)
-	quit_btn.owner = root
 
 	# Over the build badge, on the title screen only: the touch equivalent of
 	# Ctrl+B, a shortcut to the Whale's fight (run_controller.gd's
@@ -222,6 +224,19 @@ func _init() -> void:
 	print("saved run.tscn")
 	root.free()
 	quit(0)
+
+func _menu_item(parent: Node, root: Node, node_name: String, text: String,
+		shown: bool) -> Button:
+	var b := Button.new()
+	b.name = node_name
+	b.text = text
+	b.unique_name_in_owner = true
+	b.visible = shown
+	b.custom_minimum_size = Vector2(ITEM_W, 56)
+	b.add_theme_font_size_override("font_size", 22)
+	parent.add_child(b)
+	b.owner = root
+	return b
 
 ## "Have a popup to confirm saying the run will be lost": over everything, on the
 ## corner buttons' own layer, so nothing on any screen can be pressed behind it.

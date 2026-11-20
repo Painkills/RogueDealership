@@ -25,11 +25,16 @@ extends Node
 ## third way into the deck viewer, alongside the shop's own button and the
 ## floor's draw pile, and the one least dependent on hitting a specific
 ## click target.
-@onready var _view_deck_btn: Button = $BuildBadge/ViewDeckCornerButton
+## The corner is one MENU button over a dropdown (MenuPanel) holding this and the
+## two below. Each item's own .visible says whether the screen offers it; the
+## MENU button shows while any of them is on offer.
+@onready var _menu_btn: Button = %MenuCornerButton
+@onready var _menu_panel: Control = %MenuPanel
+@onready var _view_deck_btn: Button = %ViewDeckCornerButton
 ## On the floor only: this week's calendar to look at, not pick from.
-@onready var _view_calendar_btn: Button = $BuildBadge/ViewCalendarCornerButton
-## The very corner, in a run: give it up - asked first (QuitPopup).
-@onready var _quit_btn: Button = $BuildBadge/QuitRunCornerButton
+@onready var _view_calendar_btn: Button = %ViewCalendarCornerButton
+## In a run: give it up - asked first (QuitPopup).
+@onready var _quit_btn: Button = %QuitRunCornerButton
 @onready var _quit_popup: Control = $BuildBadge/QuitPopup
 ## Whether the calendar is up over the floor - see _open_the_calendar_view().
 var _calendar_open := false
@@ -109,6 +114,9 @@ func _ready() -> void:
 	_shift_view.deck_viewed.connect(_on_view_deck_requested)
 	_shop_view.done.connect(_on_shop_done)
 	_shop_view.view_deck_requested.connect(_on_view_deck_requested)
+	_menu_btn.pressed.connect(func(): _menu_panel.visible = not _menu_panel.visible)
+	for item in [_view_deck_btn, _view_calendar_btn, _quit_btn]:
+		item.pressed.connect(func(): _menu_panel.visible = false)
 	_view_deck_btn.pressed.connect(_on_view_deck_requested)
 	_view_calendar_btn.pressed.connect(_open_the_calendar_view)
 	_quit_btn.pressed.connect(_ask_to_quit)
@@ -202,7 +210,15 @@ func _continue_run() -> void:
 	else:
 		_open_the_day()
 
-## QUIT RUN, in the corner: nothing is given up until the popup says so.
+## The MENU button shows while the screen offers any of the menu's items, and
+## the dropdown shuts when there is nothing left in it.
+func _refresh_menu() -> void:
+	var any := _view_deck_btn.visible or _view_calendar_btn.visible or _quit_btn.visible
+	_menu_btn.visible = any
+	if not any:
+		_menu_panel.visible = false
+
+## QUIT RUN, from the menu: nothing is given up until the popup says so.
 ## While it is up the floor takes no keys - only the popup's two buttons.
 func _ask_to_quit() -> void:
 	_quit_popup.visible = true
@@ -390,12 +406,14 @@ func _open_the_calendar_view() -> void:
 	_set_up_the_calendar(_chosen_profile)
 	_picker_view.visible = true
 	_view_calendar_btn.visible = false
+	_refresh_menu()
 	_shift_view.set_hud_dimmed(true)
 
 func _close_the_calendar_view() -> void:
 	_calendar_open = false
 	_picker_view.visible = false
 	_view_calendar_btn.visible = true
+	_refresh_menu()
 	_shift_view.set_hud_dimmed(_deck_viewer.visible)
 
 ## The boss's product quota for every day of this week that has one - not a
@@ -586,4 +604,7 @@ func _show_only(screen: Node) -> void:
 	# Quitting is for a run - not the front door, and not practice, which has
 	# its own way out.
 	_quit_btn.visible = screen != _title_view and not _in_tutorial
+	# A new screen starts with the dropdown shut.
+	_menu_panel.visible = false
+	_refresh_menu()
 	_quit_popup.visible = false

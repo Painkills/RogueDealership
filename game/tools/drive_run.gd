@@ -280,10 +280,10 @@ func _check_window_fits(what: String, window: Control) -> void:
 	# centred in what is left below it.
 	var inset: float = float(window.get_meta(&"top_inset", 0.0))
 	var top: float = inset + (VIEWPORT.y - inset - h) * 0.5
-	var corner := _root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control
+	var corner := _root.get_node(^"%MenuCornerButton") as Control
 	var corner_bottom: float = corner.offset_bottom
 	_check("%s's window fits the screen (%d px tall)" % [what, int(h)], h <= VIEWPORT.y - inset)
-	_check("and starts below the corner VIEW TOOLKIT button (top %d, button ends %d)"
+	_check("and starts below the corner MENU button (top %d, button ends %d)"
 		% [int(top), int(corner_bottom)], top >= corner_bottom + 4.0)
 
 func _check_shop_layout_fits_on_screen() -> void:
@@ -1468,11 +1468,26 @@ func _check_quitting_a_run_asks_first_then_loses_it() -> void:
 	_root._start_run()
 	var first := _pick_tier_by(func(p): return p.cards_for_sale)
 	_check("a run under way (%s)" % first.id, _root._shift_view.visible)
-	var quit_btn := _root.get_node(^"BuildBadge/QuitRunCornerButton") as Button
+	var quit_btn := _root.get_node(^"%QuitRunCornerButton") as Button
 	var popup := _root.get_node(^"BuildBadge/QuitPopup") as Control
-	var toolkit := _root.get_node(^"BuildBadge/ViewDeckCornerButton") as Control
-	_check("QUIT RUN is in the very top-right corner, in a run",
-		quit_btn.visible and quit_btn.offset_right > toolkit.offset_right)
+	var menu_btn := _root.get_node(^"%MenuCornerButton") as Button
+	var menu_panel := _root.get_node(^"%MenuPanel") as Control
+	_check("the corner is one MENU button, in a run", menu_btn.visible and menu_btn.text == "MENU")
+	_check("with its dropdown shut", not menu_panel.visible)
+	menu_btn.pressed.emit()
+	_check("which opens on a press, QUIT RUN inside it",
+		menu_panel.visible and menu_panel.is_ancestor_of(quit_btn) and quit_btn.visible)
+	menu_btn.pressed.emit()
+	_check("and shuts on the next", not menu_panel.visible)
+	menu_btn.pressed.emit()
+	var toolkit_btn := _root.get_node(^"%ViewDeckCornerButton") as Control
+	_check("holding the toolkit and the floor's calendar too",
+		menu_panel.is_ancestor_of(toolkit_btn) and toolkit_btn.visible
+		and menu_panel.is_ancestor_of(_root.get_node(^"%ViewCalendarCornerButton")))
+	_check("and none of them left in a row over the top bar",
+		_root.get_node(^"BuildBadge").get_children().filter(func(n):
+			return n is Button and n.name.ends_with("CornerButton") and n != menu_btn).is_empty())
+	menu_btn.pressed.emit()
 	_root._keep_the_save_current()
 	_check("with the run on disk to lose", RunFile.read() != null)
 	quit_btn.pressed.emit()
@@ -1766,7 +1781,7 @@ func _check_an_unsigned_product_shows_on_the_top_bar(s: Shift, label: Label) -> 
 
 ## "Add a button to view calendar (view only) from the floor scene."
 func _check_the_calendar_from_the_floor() -> void:
-	var button := _root.get_node(^"BuildBadge/ViewCalendarCornerButton") as Button
+	var button := _root.get_node(^"%ViewCalendarCornerButton") as Button
 	var picker = _root._picker_view
 	_check("the floor has a VIEW CALENDAR button", button.visible)
 	button.pressed.emit()

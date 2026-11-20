@@ -34,30 +34,29 @@ bg_color = Color(0.101960786, 0.13725491, 0.19607843, 1)
 bg_color = Color(0.101960786, 0.13725491, 0.19607843, 0.92)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_685f2"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
 bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.14)
-shadow_size = 4
-shadow_offset = Vector2(0, 2)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72156864, 0.7529412, 0.8, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 16
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j6y2d"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -76,7 +75,7 @@ content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.98901963, 0.9319216, 0.9319216, 1)
+bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -95,7 +94,7 @@ content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.8737255, 0.21709804, 0.21709804, 1)
+bg_color = Color(0.98901963, 0.9319216, 0.9319216, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -110,9 +109,28 @@ shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qnv67"]
-bg_color = Color(0, 0, 0, 0.6)
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.8737255, 0.21709804, 0.21709804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l3hs8"]
+bg_color = Color(0, 0, 0, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_giobc"]
 content_margin_left = 40.0
 content_margin_top = 40.0
 content_margin_right = 40.0
@@ -130,7 +148,7 @@ corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.35)
 shadow_size = 30
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_giobc"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2cacg"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -145,7 +163,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2cacg"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r65st"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -160,7 +178,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r65st"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7js85"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -175,7 +193,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7js85"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6bufc"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
@@ -190,31 +208,12 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6bufc"]
-content_margin_left = 18.0
-content_margin_top = 8.0
-content_margin_right = 18.0
-content_margin_bottom = 8.0
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.14)
-shadow_size = 4
-shadow_offset = Vector2(0, 2)
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l1c36"]
 content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -233,7 +232,7 @@ content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
-bg_color = Color(0.98901963, 0.9319216, 0.9319216, 1)
+bg_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -252,6 +251,25 @@ content_margin_left = 18.0
 content_margin_top = 8.0
 content_margin_right = 18.0
 content_margin_bottom = 8.0
+bg_color = Color(0.98901963, 0.9319216, 0.9319216, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.14)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1rlg1"]
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
 bg_color = Color(0.8737255, 0.21709804, 0.21709804, 1)
 border_width_left = 2
 border_width_top = 2
@@ -266,7 +284,7 @@ shadow_color = Color(0, 0, 0, 0.14)
 shadow_size = 4
 shadow_offset = Vector2(0, 2)
 
-[node name="Run" type="Node" unique_id=164242673]
+[node name="Run" type="Node" unique_id=1713311005]
 script = ExtResource("1_47ec3")
 
 [node name="ShiftPickerView" type="PanelContainer" parent="." unique_id=1460737143 instance=ExtResource("2_lc2vt")]
@@ -319,14 +337,14 @@ anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hk8ax")
 script = ExtResource("15_pffcw")
 
-[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=137615234 instance=ExtResource("16_qo4cx")]
+[node name="TutorialCoach" type="CanvasLayer" parent="." unique_id=706384158 instance=ExtResource("16_qo4cx")]
 layer = 50
 script = ExtResource("17_1561w")
 
-[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=61579885]
+[node name="BuildBadge" type="CanvasLayer" parent="." unique_id=192262551]
 layer = 100
 
-[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=185066761]
+[node name="BuildLabel" type="Label" parent="BuildBadge" unique_id=151605345]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -345,51 +363,61 @@ text = "dev build"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge" unique_id=2050528705]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(240, 56)
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -442.0
-offset_top = 8.0
-offset_right = -202.0
-offset_bottom = 64.0
-grow_horizontal = 0
-theme_override_font_sizes/font_size = 22
-text = "VIEW TOOLKIT"
-
-[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge" unique_id=1572065806]
+[node name="MenuCornerButton" type="Button" parent="BuildBadge" unique_id=159334488]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(240, 56)
+custom_minimum_size = Vector2(184, 56)
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -698.0
-offset_top = 8.0
-offset_right = -458.0
-offset_bottom = 64.0
-grow_horizontal = 0
-theme_override_font_sizes/font_size = 22
-text = "VIEW CALENDAR"
-
-[node name="QuitRunCornerButton" type="Button" parent="BuildBadge" unique_id=1532920565]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(170, 56)
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -186.0
+offset_left = -200.0
 offset_top = 8.0
 offset_right = -16.0
 offset_bottom = 64.0
 grow_horizontal = 0
-theme_override_styles/normal = SubResource("StyleBoxFlat_685f2")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_j6y2d")
-theme_override_styles/hover = SubResource("StyleBoxFlat_yoial")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_5qj7y")
+theme_override_font_sizes/font_size = 22
+text = "MENU"
+
+[node name="MenuPanel" type="PanelContainer" parent="BuildBadge" unique_id=1650323373]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -276.0
+offset_top = 72.0
+offset_right = -16.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_685f2")
+
+[node name="Items" type="VBoxContainer" parent="BuildBadge/MenuPanel" unique_id=1696543315]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ViewDeckCornerButton" type="Button" parent="BuildBadge/MenuPanel/Items" unique_id=117646683]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 56)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "VIEW TOOLKIT"
+
+[node name="ViewCalendarCornerButton" type="Button" parent="BuildBadge/MenuPanel/Items" unique_id=1916189544]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(240, 56)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "VIEW CALENDAR"
+
+[node name="QuitRunCornerButton" type="Button" parent="BuildBadge/MenuPanel/Items" unique_id=1219388462]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(240, 56)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_j6y2d")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_yoial")
+theme_override_styles/hover = SubResource("StyleBoxFlat_5qj7y")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_qnv67")
 theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 theme_override_colors/font_focus_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
@@ -398,7 +426,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 22
 text = "QUIT RUN"
 
-[node name="WhaleTapTarget" type="Button" parent="BuildBadge" unique_id=237012417]
+[node name="WhaleTapTarget" type="Button" parent="BuildBadge" unique_id=1318846476]
 unique_name_in_owner = true
 visible = false
 anchors_preset = 3
@@ -415,7 +443,7 @@ grow_vertical = 0
 focus_mode = 0
 flat = true
 
-[node name="RepoManTapTarget" type="Button" parent="BuildBadge" unique_id=858398232]
+[node name="RepoManTapTarget" type="Button" parent="BuildBadge" unique_id=2008279431]
 unique_name_in_owner = true
 visible = false
 anchors_preset = 3
@@ -432,7 +460,7 @@ grow_vertical = 0
 focus_mode = 0
 flat = true
 
-[node name="QuitPopup" type="Control" parent="BuildBadge" unique_id=1333741810]
+[node name="QuitPopup" type="Control" parent="BuildBadge" unique_id=700181850]
 unique_name_in_owner = true
 visible = false
 layout_mode = 3
@@ -440,61 +468,61 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Dim" type="Panel" parent="BuildBadge/QuitPopup" unique_id=248146987]
+[node name="Dim" type="Panel" parent="BuildBadge/QuitPopup" unique_id=1732212518]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_qnv67")
-
-[node name="Centre" type="CenterContainer" parent="BuildBadge/QuitPopup" unique_id=595612124]
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-
-[node name="QuitCard" type="PanelContainer" parent="BuildBadge/QuitPopup/Centre" unique_id=93546202]
-custom_minimum_size = Vector2(640, 0)
-layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_l3hs8")
 
-[node name="Column" type="VBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard" unique_id=594462473]
+[node name="Centre" type="CenterContainer" parent="BuildBadge/QuitPopup" unique_id=1403885127]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="QuitCard" type="PanelContainer" parent="BuildBadge/QuitPopup/Centre" unique_id=1503486677]
+custom_minimum_size = Vector2(640, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_giobc")
+
+[node name="Column" type="VBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard" unique_id=1270012472]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="QuitEyebrow" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=571632119]
+[node name="QuitEyebrow" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=1269643861]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 text = "BEFORE YOU WALK OUT"
 
-[node name="QuitTitle" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=169225933]
+[node name="QuitTitle" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=1763479610]
 layout_mode = 2
 theme_type_variation = &"Heading"
 theme_override_font_sizes/font_size = 46
 theme_override_colors/font_color = Color(0.105882354, 0.13725491, 0.1882353, 1)
 text = "Quit this run?"
 
-[node name="QuitWhy" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=11235960]
+[node name="QuitWhy" type="Label" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=1021516663]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.37254903, 0.41960785, 0.47843137, 1)
 text = "The run will be lost - every day worked, your toolkit and your money. There's no getting it back."
 autowrap_mode = 3
 
-[node name="QuitButtons" type="HBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=780573721]
+[node name="QuitButtons" type="HBoxContainer" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column" unique_id=1941418050]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="KeepPlayingButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=9364459]
+[node name="KeepPlayingButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=651108946]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 64)
 layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_giobc")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_2cacg")
-theme_override_styles/hover = SubResource("StyleBoxFlat_r65st")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_7js85")
+theme_override_styles/normal = SubResource("StyleBoxFlat_2cacg")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_r65st")
+theme_override_styles/hover = SubResource("StyleBoxFlat_7js85")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_6bufc")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
@@ -503,18 +531,18 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 24
 text = "KEEP PLAYING"
 
-[node name="Spacer" type="Control" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=855319506]
+[node name="Spacer" type="Control" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1300178788]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ConfirmQuitButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1992932724]
+[node name="ConfirmQuitButton" type="Button" parent="BuildBadge/QuitPopup/Centre/QuitCard/Column/QuitButtons" unique_id=1394367458]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(220, 64)
 layout_mode = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_6bufc")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_l1c36")
-theme_override_styles/hover = SubResource("StyleBoxFlat_3sk3q")
-theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_mlj4e")
+theme_override_styles/normal = SubResource("StyleBoxFlat_l1c36")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_3sk3q")
+theme_override_styles/hover = SubResource("StyleBoxFlat_mlj4e")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_1rlg1")
 theme_override_colors/font_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 theme_override_colors/font_focus_color = Color(0.8627451, 0.14901961, 0.14901961, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
