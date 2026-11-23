@@ -185,6 +185,7 @@ func test_risky_business_adds_a_share_of_the_margin() -> void:
 	var c := _seat(s, 0, _arch(90))
 	_place(s, 0)
 	c.offer.margin = 1000
+	c.offer.placed_margin = 1000
 	c.patience = c.max_patience
 	var e := MarginPercent.new()
 	e.amount = 25
@@ -196,6 +197,27 @@ func test_risky_business_adds_a_share_of_the_margin() -> void:
 	c.patience = int(c.max_patience * 0.2) - 1
 	e.apply(s._yours(c))
 	h.eq("+50% under a fifth of their patience", c.offer.margin, 1500)
+
+func test_percentages_on_one_offer_add_up_and_never_compound() -> void:
+	var s := _shift()
+	var c := _seat(s, 0, _arch(90))
+	_place(s, 0)
+	c.offer.margin = 1000
+	c.offer.placed_margin = 1000
+	c.patience = c.max_patience
+	var e := MarginPercent.new()
+	e.amount = 50
+	e.low_amount = 50
+	for _i in range(4):
+		e.apply(s._yours(c))
+	h.eq("four +50%s are +200% of what it was put down at, not x5", c.offer.margin, 3000)
+	var per_sale := ScaleBySales.new()
+	per_sale.inner = e
+	c.offer.margin = 1000
+	var ctx := s._yours(c)
+	ctx.sales_so_far = 3
+	per_sale.apply(ctx)
+	h.eq("and once more per product taken is still added, not multiplied", c.offer.margin, 3000)
 
 # ------------------------------------------------------- StandingPerCustomer
 func test_meet_and_greet_pays_standing_for_everyone_on_the_floor() -> void:

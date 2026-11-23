@@ -1,7 +1,9 @@
 class_name MarginPercent extends Effect
 ## Risky Business: the product on the table pays `amount` percent more - or
 ## `low_amount` percent, pushed on someone whose patience is under `low_below` of
-## their most.
+## their most. A percentage of what it was put down at (Offer.placed_margin), so
+## two of them on one offer add up - two +30%s are +60% - instead of each
+## multiplying what the last one made.
 
 @export var low_amount: int = 50
 @export var low_below: float = 0.2
@@ -12,7 +14,7 @@ func apply(ctx: EffectContext) -> void:
 	var percent := amount
 	if ctx.customer != null and ctx.customer.patience < ctx.customer.max_patience * low_below:
 		percent = low_amount
-	ctx.offer.margin += roundi(ctx.offer.margin * percent / 100.0)
+	ctx.offer.margin += roundi(ctx.offer.placed_margin * percent / 100.0)
 
 func describe() -> String:
 	if low_amount == amount:

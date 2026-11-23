@@ -10,6 +10,9 @@ var product: ProductCardDef     ## convenience accessor for instance.card
 var appeal: int
 var opened_at: int
 var margin: int
+## The margin it was put down at - what a percentage on it (MarginPercent) is a
+## percentage OF, so two of them add up rather than compound.
+var placed_margin: int
 var applied: Array[String] = []
 ## Something played on it gave margin away - what a customer with
 ## CustomerArchetype.needs_concession_past_rank is waiting for.
@@ -21,3 +24,4 @@ func _init(p_instance: CardInstance, p_appeal: int, p_margin: int) -> void:
 	appeal = p_appeal
 	opened_at = p_appeal
 	margin = p_margin
+	placed_margin = p_margin
