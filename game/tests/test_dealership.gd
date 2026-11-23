@@ -17,6 +17,29 @@ func _run(pool: DealershipUpgradePool) -> RunState:
 		load("res://data/card_pool.tres"), load("res://data/archetype_pool.tres"), 5,
 		null, null, pool)
 
+func test_a_perk_can_sit_out_boss_fights_only() -> void:
+	var early: CustomerArchetype = (load("res://data/archetype_pool.tres") as ArchetypePool).archetypes[0]
+	var u := DealershipUpgrade.new()
+	u.id = &"made_up_perk"
+	u.waiting_at_open.append(early)
+	u.off_in_boss_fights = true
+	var run := _run(null)
+	run.dealership.append(u)
+	var plain := ShiftProfile.new()
+	plain.id = &"made_up"
+	var fight := ShiftProfile.new()
+	fight.id = &"made_up_boss"
+	fight.dealt_by = ShiftCategory.new()
+	fight.dealt_by.boss_day = true
+	fight.dealt_by.takes_the_day = true
+	var hard := ShiftProfile.new()
+	hard.id = &"made_up_hard"
+	hard.dealt_by = ShiftCategory.new()
+	hard.dealt_by.boss_day = true
+	h.check("works on a regular shift", run.start_shift(plain).waiting.has(early))
+	h.check("and on a hard one beside them", run.start_shift(hard).waiting.has(early))
+	h.check("but not in a boss fight", not run.start_shift(fight).waiting.has(early))
+
 func test_every_bonus_reaches_the_floor() -> void:
 	var u := DealershipUpgrade.new()
 	u.hand_size = 1

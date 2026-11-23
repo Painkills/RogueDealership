@@ -235,7 +235,10 @@ func test_on_the_ladder_a_hard_shift_takes_the_days_hardest_slot() -> void:
 		var dealt := offers.filter(func(p): return p.id == &"made_up_hard")
 		if dealt.size() != 1 or dealt[0].planned != top:
 			wrong.append(seed_value)
-	h.check("always in the slot planned hardest (%s)" % str(wrong), wrong.is_empty())
+		elif dealt[0].flag != &"rough" or offers.filter(func(p): return p.flag == &"rough").size() != 1:
+			wrong.append([seed_value, "not the one ROUGH"])
+	h.check("always in the slot planned hardest, and the day's one ROUGH shift (%s)" % str(wrong),
+		wrong.is_empty())
 
 func test_the_days_hardest_is_rough_with_a_perk_its_easiest_easy_and_pay_follows_difficulty() -> void:
 	var pool := _ladder_pool([-4, 0, 4])

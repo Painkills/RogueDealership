@@ -114,6 +114,9 @@ func _ready() -> void:
 	_shift_view.deck_viewed.connect(_on_view_deck_requested)
 	_shop_view.done.connect(_on_shop_done)
 	_shop_view.view_deck_requested.connect(_on_view_deck_requested)
+	_shop_view.perks_requested.connect(func():
+		Telemetry.record("perks_view", {"in": _where_you_are()}, true)
+		_deck_viewer.show_perks(_run))
 	_menu_btn.pressed.connect(func(): _menu_panel.visible = not _menu_panel.visible)
 	for item in [_view_deck_btn, _view_calendar_btn, _quit_btn]:
 		item.pressed.connect(func(): _menu_panel.visible = false)

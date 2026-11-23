@@ -11,5 +11,5 @@ script = ExtResource("1_4wy7u")
 display_name = "Hard shifts, Wednesdays and Fridays"
 days = 20
 boss_day = true
-sticker = "HARD SHIFT"
+sticker = ""
 shifts = Array[ExtResource("2_ojuxv")]([ExtResource("4_kicker"), ExtResource("5_karen"), ExtResource("6_skeptic")])

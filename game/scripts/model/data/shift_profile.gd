@@ -311,8 +311,13 @@ func sticker() -> String:
 func is_boss_day() -> bool:
 	return dealt_by != null and dealt_by.boss_day
 
+## A boss you fight: the boss is the day's only shift (ShiftCategory.takes_the_day)
+## - not a hard shift offered beside the regular ones.
+func is_boss_fight() -> bool:
+	return is_boss_day() and dealt_by.takes_the_day
+
 ## A static preview of the shop that follows, for the picker screen, BEFORE any
-## of it exists - Shop.perk_text() says the same thing from the live visit.
+## of it exists.
 ## The free card every shift ends with goes without saying; only what this
 ## shift's store adds is listed - a better free card, cards to buy or upgrade -
 ## and what making quota earns on top. Empty when it adds nothing.

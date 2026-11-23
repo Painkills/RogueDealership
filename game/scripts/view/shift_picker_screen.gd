@@ -174,7 +174,8 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	event.clip_contents = true
 	body.place(event, hours[0], hours[1])
 	var col := _event_text(event)
-	# The title row: the shift's name, and its hours at the far right.
+	# The title row: the shift's name. Its hours are the calendar's business -
+	# where the event sits says them.
 	var title_row := HBoxContainer.new()
 	title_row.name = "TitleRow"
 	title_row.add_theme_constant_override("separation", 8)
@@ -182,19 +183,13 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	col.add_child(title_row)
 	var title := _line(title_row, profile.display_name, 22, Palette.color(&"text"), true)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# The day's hardest and easiest, said beside the name (see Week).
-	if profile.flag != &"":
-		var flag := _line(title_row, "ROUGH" if profile.flag == &"rough" else "EASY", 15,
-			Palette.color(&"alert") if profile.flag == &"rough" else Palette.color(&"patience_ok"), true)
-		flag.name = "Flag"
-		flag.autowrap_mode = TextServer.AUTOWRAP_OFF
-		flag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var when := _line(title_row, "%s - %s" % [CalendarDay.hour_label(int(hours[0])),
-		CalendarDay.hour_label(int(hours[1]))], 15, Palette.color(&"text_dim"))
-	when.name = "Hours"
-	when.autowrap_mode = TextServer.AUTOWRAP_OFF
-	when.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	when.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# Room on the right of the name for a sticker, so the two never overlap.
+	var sticker_text := _sticker_text(profile)
+	if sticker_text != "":
+		var room := Control.new()
+		room.custom_minimum_size = Vector2(110, 0)
+		room.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		title_row.add_child(room)
 	# Every shift's quota and commission, under its name, whether or not they
 	# differ from anyone else's - what the shift is worth is half of choosing it.
 	var quota := profile.quota_on(_day_quota)
@@ -214,13 +209,14 @@ func _offer(body: CalendarDay, profile: ShiftProfile, pickable: bool = true) -> 
 	var rewards := profile.reward_preview()
 	if rewards != "":
 		_line(col, rewards, 15, hue.darkened(0.35))
-	# A boss says so with a sticker slapped across its hours: when in the day it
-	# runs is the calendar's business, not the choice's. Any other premade shift
-	# is just another shift to the player - its name, blurb and rules line are
-	# what set it apart.
-	if profile.is_boss_day():
-		when.modulate.a = 0.0
-		_sticker(event, profile.sticker(), hue)
+	# One sticker at most, slapped on the corner: a boss says BOSS SHIFT, and the
+	# day's hardest and easiest say ROUGH and EASY (see Week). Any other premade
+	# shift is just another shift to the player - its name, blurb and rules line
+	# are what set it apart.
+	if sticker_text != "":
+		var tag := _sticker(event, sticker_text, _sticker_hue(profile, hue))
+		if profile.sticker() == "":
+			tag.name = "FlagTag"
 	if pickable:
 		event.pressed.connect(func(): chosen.emit(profile))
 	else:
@@ -277,7 +273,23 @@ func _line(col: Container, text: String, size: int, color: Color,
 	col.add_child(l)
 	return l
 
-## A sticker in the event's top-right corner, over where its hours would be:
+## What the event's sticker says: a boss's own (BOSS SHIFT), else ROUGH or EASY
+## for the day's hardest and easiest, else nothing.
+func _sticker_text(profile: ShiftProfile) -> String:
+	if profile.sticker() != "":
+		return profile.sticker()
+	if profile.flag == &"rough":
+		return "ROUGH"
+	if profile.flag == &"easy":
+		return "EASY"
+	return ""
+
+func _sticker_hue(profile: ShiftProfile, hue: Color) -> Color:
+	if profile.sticker() != "":
+		return hue
+	return Palette.color(&"alert") if profile.flag == &"rough" else Palette.color(&"patience_ok")
+
+## A sticker in the event's top-right corner, beside its name:
 ## the shift's colour, white capitals, tilted the way a sticker slapped on by
 ## hand lands - clockwise, so its top leans out toward the event's corner.
 const STICKER_TILT_DEGREES := 8.0

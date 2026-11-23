@@ -1,7 +1,8 @@
 extends SceneTree
 ## Builds res://scenes/shop.tscn - the between-shifts screen, as the
 ## Store page of the dealership's employee portal: a website in a browser
-## window (see AppWindow). Its other page, My Toolkit, is the deck viewer.
+## window (see AppWindow). Its two tabs, My Toolkit and My Perks, open the deck
+## viewer on either of its pages.
 ##
 ## Every visit opens on a popup first - FreePick, a few cards on the house to
 ## take ONE of - and then the store behind it, two aisles side by side:
@@ -20,8 +21,8 @@ extends SceneTree
 
 const DETAIL_SCENE := "res://scenes/cards/shop_card_detail.tscn"
 const WINDOW := Vector2(1800, 1000)
-## Room kept clear at the top of the desktop, for the run's VIEW TOOLKIT button
-## in the corner - see AppWindow.build().
+## Room kept clear at the top of the desktop, for the run's MENU button in the
+## corner - see AppWindow.build().
 const TOP_INSET := 70.0
 ## One card on offer, as shop_screen.gd's _build_slot() stacks it: a rarity
 ## line, the 336-tall card itself, and a price line. drive_run.gd measures a
@@ -47,7 +48,8 @@ func _init() -> void:
 	col.add_theme_constant_override("separation", 10)
 
 	# The portal knows who is signed in - see shop_screen.gd's _render().
-	var header := AppWindow.portal_header(col, root, "Store")
+	# Neither tab underlined: the store is the page itself, the tabs what you own.
+	var header := AppWindow.portal_header(col, root, "")
 	var account := AppWindow.box(header, root, "Account", &"panel_hi", &"neutral_2", 12, 20)
 	account.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	AppWindow.label(account, root, "AccountLabel", "F&I Manager", 24, &"text", true, true)
@@ -67,8 +69,7 @@ func _init() -> void:
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	intro.add_child(titles)
 	titles.owner = root
-	AppWindow.label(titles, root, "TitleLabel", "Your perks for that shift", 44, &"text",
-		true, true)
+	AppWindow.label(titles, root, "TitleLabel", "Store", 44, &"text", true, true)
 
 	# The quota line doubles as a mobile stand-in for Ctrl+M (+$10,000) - the
 	# same "no keyboard on touch" gap the shift's tick counter has, and the
@@ -84,7 +85,7 @@ func _init() -> void:
 	titles.add_child(shift_wrap)
 	shift_wrap.owner = root
 
-	var shift_label := AppWindow.label(shift_wrap, root, "ShiftLabel", "shift 1 of 5", 26,
+	var shift_label := AppWindow.label(shift_wrap, root, "ShiftLabel", "Next: shift 1 of 5", 26,
 		&"text_dim", false, true)
 	# Wraps rather than widening the whole store: the dealership's upgrades are
 	# listed here, and that line grows over a run.
@@ -99,7 +100,7 @@ func _init() -> void:
 
 	# In the portal's header row, beside who is signed in: out of the way of the
 	# lines about the shift, which then get the whole width to say their piece.
-	var money := AppWindow.label(header, root, "MoneyLabel", "$0 to spend", 30, &"margin",
+	var money := AppWindow.label(header, root, "MoneyLabel", "$0 to spend", 28, &"margin",
 		true, true)
 	money.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -115,10 +116,9 @@ func _init() -> void:
 	col.add_child(aisles)
 	aisles.owner = root
 	_card_section(aisles, root, "ShelfSection", "OnShelfTitle", "FOR SALE", "ShelfRow", 1.0)
-	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADE YOUR CARDS",
-		"DeckRow", 1.0)
+	_card_section(aisles, root, "DeckSection", "DeckTitle", "UPGRADES", "DeckRow", 1.0)
 	var empty := AppWindow.label(aisles, root, "StoreEmptyNote",
-		"Nothing on the shelves after this shift.", 30, &"text_dim", false, true)
+		"Nothing in the store this time.", 30, &"text_dim", false, true)
 	empty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	empty.custom_minimum_size = Vector2(0, SLOT_HEIGHT)
 	empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -141,20 +141,10 @@ func _init() -> void:
 	log_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
-	var view_deck := Button.new()
-	view_deck.name = "ViewDeckButton"
-	view_deck.text = "VIEW TOOLKIT"
-	view_deck.custom_minimum_size = Vector2(300, 84)
-	view_deck.add_theme_font_size_override("font_size", 30)
-	ButtonStyle.outlined(view_deck, Palette.color(&"primary"))
-	view_deck.unique_name_in_owner = true
-	button_row.add_child(view_deck)
-	view_deck.owner = root
-
 	var done := Button.new()
 	done.name = "DoneButton"
-	done.text = "CLOCK IN FOR THE NEXT SHIFT"
-	done.custom_minimum_size = Vector2(500, 84)
+	done.text = "NEXT SHIFT"
+	done.custom_minimum_size = Vector2(360, 84)
 	done.add_theme_font_size_override("font_size", 32)
 	ButtonStyle.filled(done, Palette.color(&"primary"))
 	done.unique_name_in_owner = true
@@ -195,16 +185,16 @@ func _free_pick(root: Control) -> void:
 	root.add_child(popup)
 	popup.owner = root
 
-	var made := AppWindow.build(popup, root, "FreePickWindow", "On the house",
+	var made := AppWindow.build(popup, root, "FreePickWindow", "Free card",
 		FREE_PICK_WINDOW, "", 36)
 	var col: VBoxContainer = made["body"]
 	col.add_theme_constant_override("separation", 18)
 
-	var title := AppWindow.label(col, root, "FreePickTitle", "Pick one, on the house", 42,
+	var title := AppWindow.label(col, root, "FreePickTitle", "Pick a free card", 42,
 		&"text", true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sub := AppWindow.label(col, root, "FreePickSub",
-		"It goes straight into your toolkit. The store is next.", 26, &"text_dim")
+		"It goes into your toolkit.", 26, &"text_dim")
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	var row := HBoxContainer.new()
@@ -223,7 +213,7 @@ func _free_pick(root: Control) -> void:
 	buttons.owner = root
 	var skip := Button.new()
 	skip.name = "SkipFreeButton"
-	skip.text = "no thanks"
+	skip.text = "SKIP"
 	skip.custom_minimum_size = Vector2(250, 76)
 	skip.add_theme_font_size_override("font_size", 28)
 	ButtonStyle.outlined(skip, Palette.color(&"ink_dim"))
@@ -252,10 +242,10 @@ func _dealership_pick(root: Control) -> void:
 	col.add_theme_constant_override("separation", 18)
 
 	var title := AppWindow.label(col, root, "DealershipPickTitle",
-		"You made quota - pick a perk", 40, &"text", true)
+		"Quota made - pick a perk", 40, &"text", true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sub := AppWindow.label(col, root, "DealershipPickSub",
-		"Pick one. It stays for the rest of the run.", 26, &"text_dim")
+		"It lasts the rest of the run.", 26, &"text_dim")
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	var row := HBoxContainer.new()

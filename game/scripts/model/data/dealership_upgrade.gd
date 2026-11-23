@@ -48,6 +48,9 @@ class_name DealershipUpgrade extends Resource
 ## Momentum (Shift.momentum) every closed customer gives - a signing, not each
 ## product they take: that many of your next cards cost no ticks.
 @export var momentum_on_close: int = 0
+## On: does nothing in a boss fight (ShiftProfile.is_boss_fight()) - the run
+## leaves it at the door for those.
+@export var off_in_boss_fights: bool = false
 ## Momentum every shift opens with.
 @export var momentum_at_open: int = 0
 @export_group("")

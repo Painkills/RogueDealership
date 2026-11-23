@@ -30,20 +30,51 @@ const CHIP_SIZE := Vector2(260, 364)
 @onready var _products_col: GridContainer = %ProductsColumn
 @onready var _support_col: GridContainer = %SupportColumn
 @onready var _close: Button = %DeckCloseButton
-## The dealership's upgrades across the top - see _show_dealership().
-@onready var _dealership_strip: Control = %DealershipStrip
-@onready var _dealership_badges: HBoxContainer = %DealershipBadges
-@onready var _dealership_note: Label = %DealershipNote
+## The portal's two tabs, and the page each shows.
+@onready var _toolkit_tab: Button = %MyToolkitTab
+@onready var _perks_tab: Button = %MyPerksTab
+@onready var _toolkit_page: Control = %ToolkitPage
+@onready var _perks_page: Control = %PerksPage
+@onready var _perks_grid: GridContainer = %PerksGrid
+@onready var _no_perks: Control = %NoPerksNote
 
-const BADGE := Vector2(60, 60)
-const NOTE_HINT := "Hover or tap a badge to see what it does."
+## One perk card on the My Perks page.
+const PERK_CARD := Vector2(300, 240)
+
+## The run last shown, for switching tabs without being handed it again.
+var _run: RunState
 
 func _ready() -> void:
 	_close.pressed.connect(func(): visible = false)
+	_toolkit_tab.pressed.connect(func(): show_deck(_run))
+	_perks_tab.pressed.connect(func(): show_perks(_run))
+
+## The My Perks page: one little card per dealership perk the run has picked,
+## in the order it picked them.
+func show_perks(run: RunState) -> void:
+	_run = run
+	_page(false)
+	var owned := run.dealership.filter(func(u): return u != null)
+	_title.text = "%d perk%s" % [owned.size(), "" if owned.size() == 1 else "s"]
+	_clear(_perks_grid)
+	for u in owned:
+		_perks_grid.add_child(_perk_card(u))
+	_no_perks.visible = owned.is_empty()
+	visible = true
+
+func _page(toolkit: bool) -> void:
+	_toolkit_page.visible = toolkit
+	_perks_page.visible = not toolkit
+	AppWindow.dress_tab(_toolkit_tab, toolkit)
+	AppWindow.dress_tab(_perks_tab, not toolkit)
+	var address := find_child("Address", true, false) as Label
+	if address != null:
+		address.text = "portal.dealership.local/" + ("toolkit" if toolkit else "perks")
 
 func show_deck(run: RunState) -> void:
-	_title.text = "MY TOOLKIT  -  %d cards" % run.deck.cards.size()
-	_show_dealership(run.dealership)
+	_run = run
+	_page(true)
+	_title.text = "%d cards" % run.deck.cards.size()
 
 	var by_interest: Dictionary = {}   # interest id -> Array[CardInstance]
 	var support_insts: Array = []      # every support CardInstance, deck order
@@ -71,33 +102,66 @@ func show_deck(run: RunState) -> void:
 
 	visible = true
 
-## One badge per dealership upgrade the run owns, its icon or its initials:
-## hovering one (tooltip on a mouse) or tapping it (a touchscreen has no hover)
-## writes its name and what it does beside them. Hidden with none to show.
-func _show_dealership(owned: Array) -> void:
-	_clear(_dealership_badges)
-	_dealership_strip.visible = not owned.is_empty()
-	_dealership_note.text = NOTE_HINT
-	for u in owned:
-		if u == null:
-			continue
-		var b := Button.new()
-		b.name = "Badge_%s" % u.id
-		b.custom_minimum_size = BADGE
-		b.tooltip_text = "%s\n%s" % [u.display_name, u.blurb]
-		ButtonStyle.filled(b, Palette.color(&"primary"))
-		if u.icon != null:
-			b.icon = u.icon
-			b.expand_icon = true
-			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		else:
-			b.text = initials(u.display_name)
-			b.add_theme_font_size_override("font_size", 22)
-		var say := func(): _dealership_note.text = "%s - %s" % [u.display_name, u.blurb]
-		b.mouse_entered.connect(say)
-		b.pressed.connect(say)
-		b.mouse_exited.connect(func(): _dealership_note.text = NOTE_HINT)
-		_dealership_badges.add_child(b)
+## One perk, as a little card: its badge (icon, or initials), its name and what
+## it does - everything on show, nothing behind a hover.
+func _perk_card(u: DealershipUpgrade) -> Control:
+	var card := PanelContainer.new()
+	card.name = "Perk_%s" % u.id
+	card.custom_minimum_size = PERK_CARD
+	var style := StyleBoxFlat.new()
+	style.bg_color = Palette.color(&"paper")
+	style.border_color = Palette.color(&"primary")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.set_content_margin_all(16)
+	style.shadow_color = Color(0, 0, 0, 0.12)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(0, 2)
+	card.add_theme_stylebox_override("panel", style)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 10)
+	card.add_child(col)
+	var badge := PanelContainer.new()
+	badge.custom_minimum_size = Vector2(56, 56)
+	badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var disc := StyleBoxFlat.new()
+	disc.bg_color = Palette.color(&"primary")
+	disc.set_corner_radius_all(28)
+	badge.add_theme_stylebox_override("panel", disc)
+	col.add_child(badge)
+	if u.icon != null:
+		var icon := TextureRect.new()
+		icon.texture = u.icon
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		badge.add_child(icon)
+	else:
+		var letters := Label.new()
+		letters.text = initials(u.display_name)
+		letters.theme_type_variation = &"Heading"
+		letters.add_theme_font_size_override("font_size", 22)
+		letters.add_theme_color_override("font_color", Palette.color(&"paper"))
+		letters.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		letters.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		badge.add_child(letters)
+	var title := Label.new()
+	title.name = "PerkName"
+	title.text = u.display_name
+	title.theme_type_variation = &"Heading"
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Palette.color(&"text"))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(title)
+	var blurb := Label.new()
+	blurb.name = "PerkBlurb"
+	blurb.text = u.blurb
+	blurb.add_theme_font_size_override("font_size", 19)
+	blurb.add_theme_color_override("font_color", Palette.color(&"text_dim"))
+	blurb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(blurb)
+	return card
 
 ## "Walkaway Wednesday" -> "WW": the first letter of its first two words.
 static func initials(display_name: String) -> String:

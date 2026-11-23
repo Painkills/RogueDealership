@@ -632,16 +632,34 @@ func _check_the_view_deck_button_shows_the_whole_deck() -> void:
 	var shop: Shop = shop_view._shop
 	var deck_viewer = _root._deck_viewer
 	_check("the deck viewer starts hidden", not deck_viewer.visible)
-	var view_btn := shop_view.get_node(^"%ViewDeckButton") as Button
-	# "Replace all mentions of View deck with View Toolkit to make it
-	# consistent. Change My Toolkit to View Toolkit." One name for the one
-	# page, on both of the buttons that open it.
-	_check("the store's button to it says VIEW TOOLKIT (%s)" % view_btn.text,
-		view_btn.text == "VIEW TOOLKIT")
-	_check("and so does the corner button, word for word (%s)" % _root._view_deck_btn.text,
-		_root._view_deck_btn.text == view_btn.text)
+	# "It should instead have My Perks and My Toolkit": the portal's two tabs,
+	# clickable from the store.
+	var view_btn := shop_view.get_node(^"%MyToolkitTab") as Button
+	var perks_btn := shop_view.get_node(^"%MyPerksTab") as Button
+	_check("the store's tabs are My Toolkit and My Perks (%s, %s)" % [view_btn.text, perks_btn.text],
+		view_btn.text == "My Toolkit" and perks_btn.text == "My Perks")
+	_check("and no store tab of their own beside them",
+		shop_view.find_child("StoreTab", true, false) == null)
+	_check("nor a separate VIEW TOOLKIT button",
+		shop_view.find_child("ViewDeckButton", true, false) == null)
+	perks_btn.pressed.emit()
+	var perks_page := deck_viewer.get_node(^"%PerksPage") as Control
+	var toolkit_page := deck_viewer.get_node(^"%ToolkitPage") as Control
+	var perks_grid := deck_viewer.get_node(^"%PerksGrid") as Container
+	_check("My Perks opens the portal on its perks page",
+		deck_viewer.visible and perks_page.visible and not toolkit_page.visible)
+	_check("one perk card per perk the run has (%d for %d)"
+		% [perks_grid.get_child_count(), shop.run.dealership.size()],
+		perks_grid.get_child_count() == shop.run.dealership.size())
+	_check("and its note says how to earn one while there are none",
+		(deck_viewer.get_node(^"%NoPerksNote") as Control).visible == shop.run.dealership.is_empty())
+	(deck_viewer.get_node(^"%MyToolkitTab") as Button).pressed.emit()
+	_check("its own My Toolkit tab turns to the cards",
+		toolkit_page.visible and not perks_page.visible)
+	_check("which no longer list the perks", deck_viewer.find_child("DealershipStrip", true, false) == null)
+	(deck_viewer.get_node(^"%DeckCloseButton") as Button).pressed.emit()
 	view_btn.pressed.emit()
-	_check("clicking it opens the deck viewer", deck_viewer.visible)
+	_check("clicking My Toolkit opens the deck viewer", deck_viewer.visible and toolkit_page.visible)
 
 	var products_col := deck_viewer.get_node(^"%ProductsColumn") as GridContainer
 	var support_col := deck_viewer.get_node(^"%SupportColumn") as GridContainer
@@ -880,11 +898,17 @@ func _check_the_calendar_shows_the_week() -> void:
 		_check("%s's event shows its quota (%s) and commission (%s)"
 			% [profile.id, Format.money(quota), rate],
 			words.contains(Format.money(quota)) and words.contains(rate))
-		var hours := (events[i] as Node).find_child("Hours", true, false) as Label
-		_check("%s's hours sit at the far right of its title row" % profile.id,
-			hours != null and hours.get_parent().name == "TitleRow"
-				and hours.get_index() == hours.get_parent().get_child_count() - 1
-				and hours.horizontal_alignment == HORIZONTAL_ALIGNMENT_RIGHT)
+		# "Remove the time slot from the calendar entry."
+		_check("%s's event does not spell out its hours" % profile.id,
+			(events[i] as Node).find_child("Hours", true, false) == null)
+		# "There shouldn't be both ROUGH and HARD SHIFT": one sticker at most,
+		# and ROUGH / EASY are stickers like a boss's.
+		var tags := (events[i] as Node).find_children("*Tag", "Label", true, false)
+		var want := "ROUGH" if profile.flag == &"rough" else "EASY" if profile.flag == &"easy" \
+			else profile.sticker()
+		_check("%s wears one sticker at most, the right one (%s)"
+			% [profile.id, ", ".join(tags.map(func(t): return t.text))],
+			tags.size() == (0 if want == "" else 1) and (want == "" or tags[0].text == want))
 
 ## Which of the calendar's columns is today - column 0 is the hours, and the
 ## calendar shows one week at a time.
@@ -934,9 +958,8 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	# "They're just another shift to the player. Only bosses should have a
 	# differentiator."
 	var special_event: Button = specials[0]
-	_check("and looks like any other shift: no sticker, its hours showing",
-		events.all(func(e): return e.find_child("PremadeTag", true, false) == null \
-			and (e.find_child("Hours", true, false) as Label).modulate.a == 1.0))
+	_check("and looks like any other shift: no boss sticker",
+		events.all(func(e): return e.find_child("PremadeTag", true, false) == null))
 	var slot_role := StringName("shift_%s" % slot)
 	var slot_hue := Palette.color(slot_role) if Palette.ROLES.has(slot_role) \
 		else Palette.color(&"primary")
@@ -1000,12 +1023,10 @@ func _check_the_calendar_shows_premade_shifts() -> void:
 	if boss_tags.size() == 1:
 		var sticker: Label = boss_tags[0]
 		var boss_event: Node = sticker.get_parent()
-		_check("with a tilted sticker over its hours, which are hidden",
-			boss_event is Button and not is_zero_approx(sticker.rotation)
-				and is_zero_approx((boss_event.find_child("Hours", true, false) as Label).modulate.a))
-		_check("while every other shift still shows its hours",
-			events.filter(func(e): return e != boss_event).all(
-				func(e): return (e.find_child("Hours", true, false) as Label).modulate.a == 1.0))
+		_check("with a tilted sticker",
+			boss_event is Button and not is_zero_approx(sticker.rotation))
+		_check("and no ROUGH or EASY sticker beside it",
+			boss_event.find_child("FlagTag", true, false) == null)
 
 	_run.week = was
 	_root._open_the_picker()

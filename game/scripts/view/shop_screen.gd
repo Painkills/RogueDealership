@@ -20,6 +20,8 @@ signal done
 ## than something this screen instances itself. See deck_viewer.gd's own
 ## header comment on why one shared node beats a second instance.
 signal view_deck_requested
+## The My Perks tab - the same overlay, on its other page.
+signal perks_requested
 
 @onready var _money: Label = %MoneyLabel
 @onready var _shift_label: Label = %ShiftLabel
@@ -41,7 +43,9 @@ signal view_deck_requested
 @onready var _store_empty: Control = %StoreEmptyNote
 @onready var _log: Label = %LogLabel
 @onready var _done: Button = %DoneButton
-@onready var _view_deck: Button = %ViewDeckButton
+## The portal's tabs: what you have, a click away from what you could buy.
+@onready var _toolkit_tab: Button = %MyToolkitTab
+@onready var _perks_tab: Button = %MyPerksTab
 @onready var _detail: ShopCardDetail = %Detail
 ## Who the portal says is signed in - whoever wrote their name on the welcome's
 ## name tag (see PlayerProfile).
@@ -66,7 +70,8 @@ var _deck_title: Control
 func _ready() -> void:
 	_build_aisle_tabs()
 	_done.pressed.connect(func(): done.emit())
-	_view_deck.pressed.connect(func(): view_deck_requested.emit())
+	_toolkit_tab.pressed.connect(func(): view_deck_requested.emit())
+	_perks_tab.pressed.connect(func(): perks_requested.emit())
 	_detail.action_taken.connect(_apply)
 	_skip_free.pressed.connect(func(): _apply(_shop.pass_on_free()))
 	_bind_key(&"debug_add_money", KEY_M, true)   # Ctrl+M: +$10,000, for testing
@@ -108,26 +113,18 @@ func setup(shop: Shop) -> void:
 func _render() -> void:
 	var run := _shop.run
 	_account.text = PlayerProfile.display_name()
-	# Name what this pot IS and what just went into it. The budget stacks across
-	# the run, so a total on its own cannot tell you whether the shift you just
-	# played earned anything - and that is the number you came here to find out.
-	_money.text = "Money to spend: %s" % Format.money(run.money)
+	# What you have to spend, and what the shift you just worked put into it -
+	# the budget stacks across the run, so the total alone cannot say that.
+	_money.text = "%s to spend" % Format.money(run.money)
 	if run.last_pay > 0:
-		_money.text += "   (+%s from that shift)" % Format.money(run.last_pay)
-	elif not run.reports.is_empty():
-		_money.text += "   (no pay that shift)"
-	_money.text += "   |   Standing: %d/%d" % [run.standing, run.cfg.standing_start]
-	_shift_label.text = "shift %d of %d next - quota %s" % [run.shift_number,
+		_money.text += "  (+%s)" % Format.money(run.last_pay)
+	_money.text += "   Standing %d/%d" % [run.standing, run.cfg.standing_start]
+	# Under the title: what is next, and a missed perk if there was one. What is
+	# for sale says itself in the aisles.
+	_shift_label.text = "Next: shift %d of %d, quota %s" % [run.shift_number,
 		run.cfg.shifts_in_run, Format.money(run.quota_for(run.shift_number))]
-	# Smaller and dimmer than the money line on purpose - this is context for
-	# what is on offer below, not a number that needs the same weight as the
-	# budget you actually have to spend.
-	_shift_label.text += "\n" + _shop.perk_text()
-	if not run.dealership.is_empty():
-		var names: Array[String] = []
-		for u in run.dealership:
-			names.append(u.display_name)
-		_shift_label.text += "\nYour perks: " + ", ".join(names)
+	if _shop.dealership_missed:
+		_shift_label.text += "\nNo perk - that shift missed quota."
 
 	# A night's dealership upgrade comes first, over everything - the free card
 	# waits behind it.
@@ -162,8 +159,7 @@ func _render() -> void:
 	if _shelf_row.get_child_count() == 0:
 		# Bought, or never stocked: an aisle with nothing in it says which,
 		# rather than standing there empty like the page failed to load.
-		_note(_shelf_row, "Sold out - it is all in your toolkit now." if _shop.cards_for_sale > 0
-			else "Nothing for sale after that shift.")
+		_note(_shelf_row, "Sold out." if _shop.cards_for_sale > 0 else "Nothing for sale.")
 
 	_clear(_deck_row)
 	for uid in _shop.upgrade_offers:
@@ -178,8 +174,7 @@ func _render() -> void:
 		_build_slot(_deck_row, upgraded, _upgrade_label(inst), inst).pressed.connect(
 			func(): _detail.show_card(_shop, inst))
 	if _deck_row.get_child_count() == 0:
-		_note(_deck_row, "Nothing of yours left to upgrade." if _shop.upgrades > 0
-			else "No upgrades after that shift.")
+		_note(_deck_row, "Nothing left to upgrade." if _shop.upgrades > 0 else "No upgrades.")
 
 ## Only the aisles this shift stocks, each as wide as what it holds: five cards
 ## for sale take the whole store, two and two share it evenly. A shift that
@@ -214,7 +209,7 @@ func _lay_out_the_aisles() -> void:
 		column.move_child(_aisle_tabs, 0)
 		(_shelf_title if _aisle == &"shelf" else _deck_title).visible = false
 		_shelf_tab.text = "FOR SALE  %d" % _shop.offers.size()
-		_deck_tab.text = "UPGRADE YOUR CARDS  %d" % _shop.upgrade_offers.size()
+		_deck_tab.text = "UPGRADES  %d" % _shop.upgrade_offers.size()
 		_dress_aisle_tab(_shelf_tab, _aisle == &"shelf")
 		_dress_aisle_tab(_deck_tab, _aisle == &"deck")
 

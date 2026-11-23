@@ -174,7 +174,9 @@ func start_shift(profile: ShiftProfile) -> Shift:
 			"line_offset": profile.total_line_offset(),
 			"combo_scale": profile.total_combo_scale(),
 			"no_clock": profile.no_clock},
-		dealership)
+		# A perk that sits out boss fights is left at the door for one.
+		dealership.filter(func(u): return u == null or not (u.off_in_boss_fights
+			and profile.is_boss_fight())))
 	s.commission = profile.commission
 	s.pay_scale = profile.pay_scale
 	s.heal_up_to = profile.heal_up_to

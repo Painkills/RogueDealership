@@ -253,23 +253,6 @@ func upgrade_gain(inst: CardInstance) -> int:
 func remove_price() -> int:
 	return run.cfg.remove_price
 
-## What the store holds beyond the free card, in one line for its header -
-## lives here, not in shop_screen.gd, so the wording can never drift from what
-## the visit actually offers.
-func perk_text() -> String:
-	var extras: Array[String] = []
-	if cards_for_sale > 0:
-		extras.append("%d card%s for sale" % [cards_for_sale, "" if cards_for_sale == 1 else "s"])
-	if upgrades > 0:
-		extras.append("%d of your cards to upgrade" % upgrades)
-	var missed := " No perk - that shift missed quota." if dealership_missed else ""
-	if extras.is_empty():
-		return "Just your free card this visit - your money carries over." + missed
-	# A store opened with no free card (the last-fight shortcut) has none to be
-	# on top of.
-	var lead := "On top of your free card: " if not free_cards.is_empty() else "In the store: "
-	return "%s%s. Buy as many as your money covers.%s" % [lead, " and ".join(extras), missed]
-
 # --- the verbs ---------------------------------------------------------------
 
 ## "Out of which the player picks ONE. Once they've picked one, they can't pick
@@ -283,7 +266,7 @@ func take_free(def: CardDef) -> Result:
 	var replaced := _gain(def)
 	free_picks_left -= 1
 	free_taken = def
-	return Result.new(true, "You add the %s to your toolkit. On the house.%s"
+	return Result.new(true, "%s added to your toolkit.%s"
 		% [def.display_name, _replaced_note(replaced)], "take", {"price": 0})
 
 ## "Pick one, or none": passing spends the visit's pick on nothing.
@@ -292,7 +275,7 @@ func pass_on_free() -> Result:
 	if free_picks_left <= 0:
 		return Result.new(false, "You have already had this visit's free card.")
 	free_picks_left = 0
-	return Result.new(true, "You pass on the free cards this time.", "pass")
+	return Result.new(true, "Free card skipped.", "pass")
 
 func buy(def: CardDef) -> Result:
 	_noted([&"buy", def.id])
@@ -304,7 +287,7 @@ func buy(def: CardDef) -> Result:
 	run.money -= price
 	var replaced := _gain(def)
 	offers.erase(def)
-	return Result.new(true, "You add the %s to your toolkit.%s"
+	return Result.new(true, "%s added to your toolkit.%s"
 		% [def.display_name, _replaced_note(replaced)], "buy", {"price": price})
 
 ## Adds `def` to the deck - in a menu run, a product takes its interest's slot
@@ -331,7 +314,7 @@ func replaces(def: CardDef) -> CardInstance:
 	return null
 
 func _replaced_note(gone: String) -> String:
-	return " It replaces the %s on your menu." % gone if gone != "" else ""
+	return " It replaces %s on your menu." % gone if gone != "" else ""
 
 func _owns_product(def: CardDef) -> bool:
 	if not def is ProductCardDef:
@@ -362,7 +345,7 @@ func upgrade(uid: int) -> Result:
 			% inst.card.display_name)
 	run.money -= price
 	run.deck.upgrade(uid)
-	return Result.new(true, "You upgrade the %s." % inst.card.display_name,
+	return Result.new(true, "%s upgraded." % inst.card.display_name,
 		"upgrade", {"price": price})
 
 func remove(uid: int) -> Result:
@@ -398,7 +381,7 @@ func remove(uid: int) -> Result:
 			% inst.card.display_name)
 	run.money -= price
 	run.deck.remove(uid)
-	return Result.new(true, "You drop the %s." % inst.card.display_name,
+	return Result.new(true, "%s dropped." % inst.card.display_name,
 		"remove", {"price": price})
 
 ## Plays one entry of `commands` again - how RunSave puts a visit back where it

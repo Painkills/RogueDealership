@@ -8,6 +8,7 @@
 script = ExtResource("1_up")
 id = &"wacky_inflatable"
 display_name = "Wacky Inflatable Tube Man"
-blurb = "Flailing out front. Every shift opens with an Easygoing customer already waiting."
+blurb = "Flailing out front. Every shift opens with an Easygoing customer already waiting. Not in a boss fight."
 waiting_at_open = Array[ExtResource("2_arch")]([ExtResource("3_easy")])
 counts_against_door = true
+off_in_boss_fights = true

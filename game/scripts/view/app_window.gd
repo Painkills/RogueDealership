@@ -194,9 +194,11 @@ static func _address_bar(col: Node, owner: Node, url: String) -> void:
 	omnibox.add_child(address)
 	address.owner = owner
 
-## The employee portal's own header - its logo, its name, and its two pages
-## with the one you are on underlined - shared by the store and the toolkit so
-## they read as one website. Returns the row, so a page can add to its right.
+## The employee portal's own header - its logo, its name, and its two tabs, My
+## Toolkit and My Perks, the one you are on underlined (`active`; the store is
+## neither). Shared by the store and the toolkit/perks page so they read as one
+## website. The tabs are buttons (%MyToolkitTab, %MyPerksTab) the page wires up.
+## Returns the row, so a page can add to its right.
 static func portal_header(parent: Node, owner: Node, active: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "SiteHeader"
@@ -219,22 +221,17 @@ static func portal_header(parent: Node, owner: Node, active: String) -> HBoxCont
 	gap.custom_minimum_size = Vector2(24, 0)
 	row.add_child(gap)
 	gap.owner = owner
-	for page in ["Store", "My Toolkit"]:
-		var on: bool = page == active
-		var tab := PanelContainer.new()
+	for page in ["My Toolkit", "My Perks"]:
+		var tab := Button.new()
 		tab.name = page.replace(" ", "") + "Tab"
+		tab.text = page
+		tab.unique_name_in_owner = true
 		tab.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		var underline := StyleBoxFlat.new()
-		underline.bg_color = Color(0, 0, 0, 0)
-		underline.border_color = Palette.color(&"primary")
-		underline.border_width_bottom = 3 if on else 0
-		underline.content_margin_left = 6
-		underline.content_margin_right = 6
-		underline.content_margin_bottom = 6
-		tab.add_theme_stylebox_override("panel", underline)
+		tab.focus_mode = Control.FOCUS_NONE
+		tab.add_theme_font_size_override("font_size", 24)
 		row.add_child(tab)
 		tab.owner = owner
-		label(tab, owner, "Label", page, 22, &"primary" if on else &"text_dim", on)
+		dress_tab(tab, page == active)
 
 	var spacer := Control.new()
 	spacer.name = "Spacer"
@@ -242,6 +239,24 @@ static func portal_header(parent: Node, owner: Node, active: String) -> HBoxCont
 	row.add_child(spacer)
 	spacer.owner = owner
 	return row
+
+## A portal tab: underlined in the house blue while it is the page you are on,
+## dim until hovered while it is not.
+static func dress_tab(tab: Button, on: bool) -> void:
+	for state in ["normal", "hover", "pressed", "hover_pressed", "focus"]:
+		var underline := StyleBoxFlat.new()
+		underline.bg_color = Color(0, 0, 0, 0)
+		underline.border_color = Palette.color(&"primary")
+		underline.border_width_bottom = 3 if on or state in ["hover", "hover_pressed"] else 0
+		underline.content_margin_left = 8
+		underline.content_margin_right = 8
+		underline.content_margin_bottom = 6
+		tab.add_theme_stylebox_override(state, underline)
+	var color := Palette.color(&"primary") if on else Palette.color(&"text_dim")
+	for c in ["font_color", "font_focus_color", "font_pressed_color"]:
+		tab.add_theme_color_override(c, color)
+	tab.add_theme_color_override("font_hover_color", Palette.color(&"primary"))
+	tab.theme_type_variation = &"Heading" if on else &""
 
 ## A label in one of the palette's roles - the one every screen here needs a
 ## dozen of.

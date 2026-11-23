@@ -148,6 +148,16 @@ func _rewards_by_difficulty(out: Array[ShiftProfile], day: int) -> void:
 			hardest = p
 		if p.difficulty < easiest.difficulty:
 			easiest = p
+	# A hard shift dealt onto the day (a boss day's shift beside the regular
+	# ones) is the day's ROUGH one whatever its points say - one sticker for it.
+	for p in out:
+		if p.is_boss_day():
+			hardest = p
+			if easiest == p:
+				easiest = out[0] if out[0] != p else out[1]
+				for q in out:
+					if q != p and q.difficulty < easiest.difficulty:
+						easiest = q
 	if hardest == easiest:
 		return
 	hardest.flag = &"rough"

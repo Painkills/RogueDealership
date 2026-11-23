@@ -1,7 +1,8 @@
 extends SceneTree
-## Builds res://scenes/deck_viewer.tscn - the "see your whole deck" overlay,
-## reachable from both the shop and the floor, as the employee portal's
-## My Toolkit page (see AppWindow and build_shop_scene.gd's Store page).
+## Builds res://scenes/deck_viewer.tscn - the "see what you have" overlay,
+## reachable from both the shop and the floor, as the employee portal's two
+## tabbed pages: My Toolkit (your cards) and My Perks (your dealership perks).
+## See AppWindow and build_shop_scene.gd's Store page.
 ##
 ## ProductsColumn and SupportColumn are EMPTY GridContainers here, filled
 ## entirely at runtime by deck_viewer.gd, the same "structure varies, build it
@@ -13,7 +14,7 @@ extends SceneTree
 ## wrapping list for support cards.
 
 ## Nearly the whole screen: two 3-wide grids of full-size cards side by side.
-## Still clear of the corner VIEW TOOLKIT button above it.
+## Still clear of the corner MENU button above it.
 const WINDOW := Vector2(1840, 940)
 
 func _init() -> void:
@@ -36,7 +37,7 @@ func _init() -> void:
 	heading.name = "Heading"
 	col.add_child(heading)
 	heading.owner = root
-	var title := AppWindow.label(heading, root, "DeckViewerTitle", "MY TOOLKIT", 32,
+	var title := AppWindow.label(heading, root, "DeckViewerTitle", "0 cards", 32,
 		&"text", true, true)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var close := Button.new()
@@ -49,30 +50,38 @@ func _init() -> void:
 	heading.add_child(close)
 	close.owner = root
 
-	# The dealership's upgrades, as badges - filled at runtime by
-	# deck_viewer.gd, and hidden while the run has none.
-	var strip := HBoxContainer.new()
-	strip.name = "DealershipStrip"
-	strip.unique_name_in_owner = true
-	strip.add_theme_constant_override("separation", 12)
-	col.add_child(strip)
-	strip.owner = root
-	var strip_title := AppWindow.label(strip, root, "DealershipStripTitle", "MY PERKS", 20,
-		&"text_dim", true)
-	strip_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var badges := HBoxContainer.new()
-	badges.name = "DealershipBadges"
-	badges.unique_name_in_owner = true
-	badges.add_theme_constant_override("separation", 10)
-	strip.add_child(badges)
-	badges.owner = root
-	var note := AppWindow.label(strip, root, "DealershipNote", "", 19, &"text_dim", false, true)
-	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	note.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# The My Perks page: one little card per dealership perk the run has picked,
+	# filled at runtime by deck_viewer.gd. The toolkit page below is the other.
+	var perks := ScrollContainer.new()
+	perks.name = "PerksPage"
+	perks.unique_name_in_owner = true
+	perks.visible = false
+	perks.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	perks.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	col.add_child(perks)
+	perks.owner = root
+	var perks_col := VBoxContainer.new()
+	perks_col.name = "PerksColumn"
+	perks_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	perks.add_child(perks_col)
+	perks_col.owner = root
+	var grid := GridContainer.new()
+	grid.name = "PerksGrid"
+	grid.unique_name_in_owner = true
+	grid.columns = 5
+	grid.add_theme_constant_override("h_separation", 20)
+	grid.add_theme_constant_override("v_separation", 20)
+	perks_col.add_child(grid)
+	grid.owner = root
+	var none := AppWindow.label(perks_col, root, "NoPerksNote",
+		"No perks yet. Make quota on a ROUGH shift to earn one.", 26, &"text_dim", false, true)
+	none.custom_minimum_size = Vector2(0, 200)
+	none.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	none.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 	var scroll := ScrollContainer.new()
-	scroll.name = "Scroll"
+	scroll.name = "ToolkitPage"
+	scroll.unique_name_in_owner = true
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(scroll)

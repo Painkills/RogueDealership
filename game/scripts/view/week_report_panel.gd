@@ -109,7 +109,8 @@ func setup(run: RunState, history: Array) -> void:
 		for day in range(next_first, next_last + 1):
 			for p in run.week.offers(day):
 				if p.is_boss_day():
-					var kind: String = p.sticker().capitalize() + "s"
+					var kind: String = (p.sticker() if p.sticker() != "" else "Rough shift") \
+						.capitalize() + "s"
 					if not by_sticker.has(kind):
 						by_sticker[kind] = []
 					by_sticker[kind].append("%s %s" % [_day_name(day - 1, per_week).capitalize(),
