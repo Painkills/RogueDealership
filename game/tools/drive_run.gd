@@ -1484,6 +1484,25 @@ func _check_quitting_a_run_asks_first_then_loses_it() -> void:
 	_check("holding the toolkit and the floor's calendar too",
 		menu_panel.is_ancestor_of(toolkit_btn) and toolkit_btn.visible
 		and menu_panel.is_ancestor_of(_root.get_node(^"%ViewCalendarCornerButton")))
+	var away := InputEventMouseButton.new()
+	away.button_index = MOUSE_BUTTON_LEFT
+	away.pressed = true
+	away.position = Vector2(40, 600)
+	_root._input(away)
+	_check("a click outside it shuts it", not menu_panel.visible)
+	menu_btn.pressed.emit()
+	var inside := InputEventMouseButton.new()
+	inside.button_index = MOUSE_BUTTON_LEFT
+	inside.pressed = true
+	inside.position = menu_panel.get_global_rect().get_center()
+	_root._input(inside)
+	_check("but a click inside it does not", menu_panel.visible)
+	var esc := InputEventKey.new()
+	esc.keycode = KEY_ESCAPE
+	esc.pressed = true
+	_root._input(esc)
+	_check("and Escape shuts it", not menu_panel.visible)
+	menu_btn.pressed.emit()
 	_check("and none of them left in a row over the top bar",
 		_root.get_node(^"BuildBadge").get_children().filter(func(n):
 			return n is Button and n.name.ends_with("CornerButton") and n != menu_btn).is_empty())

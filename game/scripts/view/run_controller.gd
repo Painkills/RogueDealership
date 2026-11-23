@@ -286,6 +286,21 @@ func _bind_key(action: StringName, keycode: Key, ctrl: bool = false) -> void:
 	ev.ctrl_pressed = ctrl
 	InputMap.action_add_event(action, ev)
 
+## The menu's dropdown shuts on a click anywhere outside it and its button (that
+## click only closes it - it does not also press whatever was underneath), or on
+## Escape.
+func _input(event: InputEvent) -> void:
+	if not _menu_panel.visible:
+		return
+	if event is InputEventMouseButton and event.pressed:
+		if not _menu_panel.get_global_rect().has_point(event.position) \
+				and not _menu_btn.get_global_rect().has_point(event.position):
+			_menu_panel.visible = false
+			get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		_menu_panel.visible = false
+		get_viewport().set_input_as_handled()
+
 func _unhandled_input(event: InputEvent) -> void:
 	# On the title screen, but not while the name tag is being written.
 	if event.is_action_pressed("debug_whale_fight") and _title_view.visible \
