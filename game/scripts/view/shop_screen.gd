@@ -54,8 +54,8 @@ signal perks_requested
 var _shop: Shop
 ## Past this many cards across both aisles they no longer fit side by side, and the
 ## store shows one aisle at a time, with a button for each - see
-## _lay_out_the_aisles(). Five is what the page holds at full size.
-const SIDE_BY_SIDE_MOST := 5
+## _lay_out_the_aisles(). Six (3 and 3) is what the page holds at full size.
+const SIDE_BY_SIDE_MOST := 6
 ## One card on offer, as big as the page lets it be (the aisle holds six across).
 const CARD_SIZE := Vector2(240, 336)
 ## Which aisle a paged store is showing: &"shelf" or &"deck".

@@ -255,9 +255,9 @@ func test_the_days_hardest_is_rough_with_a_perk_its_easiest_easy_and_pay_follows
 			wrong.append([seed_value, "flags", flags])
 		if offers[-1].dealership_upgrades <= 0 or offers[0].dealership_upgrades != 0:
 			wrong.append([seed_value, "perk only on the rough one"])
-		if offers[-1].cards_for_sale <= offers[0].cards_for_sale \
-				or offers[-1].upgrades <= offers[0].upgrades \
-				or offers[-1].commission <= offers[0].commission:
+		if offers.any(func(p): return p.cards_for_sale != 4 or p.upgrades != 4):
+			wrong.append([seed_value, "the store's size is the slot's own"])
+		if offers[-1].commission <= offers[0].commission:
 			wrong.append([seed_value, "pay", offers.map(func(p): return [p.difficulty, p.cards_for_sale, p.commission])])
 	h.check("rough, easy and pay by difficulty (%s)" % str(wrong), wrong.is_empty())
 

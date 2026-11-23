@@ -23,9 +23,9 @@ class_name DifficultyLadder extends Resource
 @export_range(0.0, 1.0, 0.05) var conditions_share_min: float = 0.1
 @export_range(0.0, 1.0, 0.05) var conditions_share_max: float = 0.3
 
-## What a shift pays follows how hard it is: its slot's store (cards for sale,
-## upgrades) and commission times its difficulty over the day's target, kept
-## between these two.
+## What a shift pays follows how hard it is: its slot's commission times its
+## difficulty over the day's target, kept between these two. The store's size
+## never scales - it is the slot's own.
 @export var reward_scale_min: float = 0.5
 @export var reward_scale_max: float = 1.5
 ## The day's hardest shift is ROUGH: making its quota offers this many

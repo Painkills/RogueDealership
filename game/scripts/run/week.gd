@@ -125,8 +125,8 @@ func _deal(pool: ShiftProfilePool, day: int, rng: RandomNumberGenerator) -> Arra
 		_rewards_by_difficulty(out, day)
 	return out
 
-## On the ladder what a shift pays follows how hard it is: its store and
-## commission scaled by its difficulty over the day's target
+## On the ladder what a shift pays follows how hard it is: its commission
+## scaled by its difficulty over the day's target
 ## (DifficultyLadder.reward_scale_min/max) - a boss keeps its own. And the day's
 ## hardest offer is ROUGH, offering a perk for making its quota; its easiest EASY.
 ## Nothing to compare on a day with one offer.
@@ -137,9 +137,9 @@ func _rewards_by_difficulty(out: Array[ShiftProfile], day: int) -> void:
 	for p in out:
 		if p.is_boss_day():
 			continue
+		# Commission only: the store keeps its slot's own size (6 for sale, 6 to
+		# upgrade, or 3 and 3), whatever the difficulty.
 		var f := clampf(float(p.difficulty) / base, _ladder.reward_scale_min, _ladder.reward_scale_max)
-		p.cards_for_sale = roundi(p.cards_for_sale * f)
-		p.upgrades = roundi(p.upgrades * f)
 		p.commission = minf(1.0, p.commission * f)
 	var hardest: ShiftProfile = out[0]
 	var easiest: ShiftProfile = out[0]
