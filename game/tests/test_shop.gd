@@ -136,13 +136,52 @@ func test_the_cost_of_everything_is_the_shelf_and_every_upgrade_offered() -> voi
 			if inst.uid == uid:
 				want += shop.upgrade_price(inst)
 	h.check("something is on offer to cost", want > 0)
-	h.eq("the shelf, plus every upgrade offered", shop.cost_of_everything(), want)
+	# At least each upgrade's price on its own - more where two copies of one
+	# card are offered, the second dearer once the first is done.
+	h.check("the shelf, plus every upgrade offered (%d, each alone %d)"
+		% [shop.cost_of_everything(), want], shop.cost_of_everything() >= want)
 	r.money = shop.cost_of_everything()
 	for def in shop.offers.duplicate():
 		h.check("%s is affordable" % def.display_name, shop.buy(def).ok)
 	for uid in shop.upgrade_offers.duplicate():
 		h.check("so is upgrading card %d" % uid, shop.upgrade(uid).ok)
 	h.eq("and that is exactly the money it took", r.money, 0)
+
+func test_each_upgraded_copy_of_a_card_makes_the_next_dearer() -> void:
+	var r := _run()
+	r.cfg = r.cfg.duplicate()
+	r.cfg.upgrade_price_step = 0.5
+	var shop := Shop.new(r, _profile(0, 1))
+	var copies: Array = []
+	for c in r.deck.cards:
+		if shop.upgrade_gain(c) > 0 and r.deck.cards.filter(func(o): return o.card == c.card).size() >= 2:
+			copies = r.deck.cards.filter(func(o): return o.card == c.card)
+			break
+	h.check("the starter deck has two copies of something upgradable", copies.size() >= 2)
+	if copies.size() < 2:
+		return
+	var first := shop.upgrade_price(copies[0])
+	copies[0].upgraded = true
+	h.eq("the second copy costs half as much again", shop.upgrade_price(copies[1]),
+		roundi(first * 1.5))
+
+func test_every_drop_makes_the_next_dearer_whatever_the_card() -> void:
+	var r := _run()
+	r.cfg = r.cfg.duplicate()
+	r.cfg.remove_price = 500
+	r.cfg.remove_price_step = 250
+	r.money = 100000
+	var shop := Shop.new(r, _profile(0, 0))
+	h.eq("the first drop at the base price", shop.remove_price(), 500)
+	var dropped := 0
+	for c in r.deck.cards.duplicate():
+		if dropped == 2:
+			break
+		if shop.remove(c.uid).ok:
+			dropped += 1
+	h.eq("two drops in", dropped, 2)
+	h.eq("and the next costs two steps more", shop.remove_price(), 1000)
+	h.eq("the count rides in the save", int(r.snapshot()["removals"]), 2)
 
 func test_upgrading_costs_a_share_of_buying_the_card() -> void:
 	## An upgrade costs ShiftConfig.upgrade_price_share of what buying that very

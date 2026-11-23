@@ -209,10 +209,17 @@ func buy_price(def: CardDef) -> int:
 
 ## "Upgrades should cost half of a purchase": a share of what BUYING that card
 ## costs, whatever it would gain - nothing for a card with no upgrade to sell.
-func upgrade_price(inst: CardInstance) -> int:
+## Dearer for every copy of the same card already upgraded - `more` counts
+## copies about to be, for pricing several at once.
+func upgrade_price(inst: CardInstance, more: int = 0) -> int:
 	if upgrade_gain(inst) <= 0:
 		return 0
-	return roundi(buy_price(inst.card) * run.cfg.upgrade_price_share)
+	var done := more
+	for c in run.deck.cards:
+		if c != inst and c.card == inst.card and c.upgraded:
+			done += 1
+	return roundi(buy_price(inst.card) * run.cfg.upgrade_price_share
+		* (1.0 + run.cfg.upgrade_price_step * done))
 
 ## What it would cost to buy everything on the shelf and upgrade everything
 ## offered - the money that leaves nothing out of reach, for a store opened to
@@ -221,10 +228,16 @@ func cost_of_everything() -> int:
 	var total := 0
 	for def in offers:
 		total += buy_price(def)
+	# Upgraded one after another, each copy of a card makes the next dearer.
+	var bought := {}
 	for uid in upgrade_offers:
 		for inst in run.deck.cards:
 			if inst.uid == uid:
-				total += upgrade_price(inst)
+				var more: int = bought.get(inst.card, 0)
+				var price := upgrade_price(inst, more)
+				if price > 0:
+					bought[inst.card] = more + 1
+				total += price
 	return total
 
 ## Whether (and, for a product, by how much) a card improves. It no longer sets
@@ -250,8 +263,9 @@ func upgrade_gain(inst: CardInstance) -> int:
 		return 0
 	return p.upgraded_margin - p.margin
 
+## Dearer for every card dropped so far this run (RunState.removals).
 func remove_price() -> int:
-	return run.cfg.remove_price
+	return run.cfg.remove_price + run.cfg.remove_price_step * run.removals
 
 # --- the verbs ---------------------------------------------------------------
 
@@ -380,6 +394,7 @@ func remove(uid: int) -> Result:
 		return Result.new(false, "You cannot afford to drop the %s."
 			% inst.card.display_name)
 	run.money -= price
+	run.removals += 1
 	run.deck.remove(uid)
 	return Result.new(true, "%s dropped." % inst.card.display_name,
 		"remove", {"price": price})

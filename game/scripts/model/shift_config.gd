@@ -177,7 +177,14 @@ func category_quota_in_week(week: int) -> int:
 ## cheap for what an upgrade does - "upgrading in the store is really good, and
 ## should be more expensive" - so the shipped data has it at three quarters.
 @export var upgrade_price_share: float = 0.5
+## Each copy of a card you have already upgraded makes upgrading the next copy
+## of that same card this share of its price dearer: a second Explain at x1.5,
+## a third at x2.
+@export var upgrade_price_step: float = 0.5
 @export var remove_price: int = 500
+## Every card dropped this run, of any kind, makes the next drop this much
+## dearer - a lean deck of your key cards is strong, so it is paid for.
+@export var remove_price_step: int = 250
 ## Thinning below a full hand would leave _draw_up unable to fill one: nothing
 ## to dig, and nothing to wait for if you are seated. That is a softlock.
 @export var min_deck_size: int = 8

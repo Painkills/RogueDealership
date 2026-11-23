@@ -33,6 +33,9 @@ var upgrade_pool: DealershipUpgradePool = null
 ## The dealership upgrades this run has picked, in the order it picked them -
 ## every shift from here on is worked with all of them. See DealershipUpgrade.
 var dealership: Array[DealershipUpgrade] = []
+## Cards dropped in the store this run, of any kind - each makes the next drop
+## dearer (Shop.remove_price()).
+var removals: int = 0
 ## A menu run (ShiftConfig.products_on_board): its products sit on the menu
 ## beside the floor instead of being drawn, and the store swaps them by
 ## interest instead of piling them up. Set once, by make_menu(), as the run
@@ -98,6 +101,7 @@ func snapshot() -> Dictionary:
 		"sale_streak": sale_streak,
 		"dealership": perks,
 		"menu": menu,
+		"removals": removals,
 	}
 
 ## Puts this run - dealt from the same seed - where snapshot() left one. A card
@@ -113,6 +117,7 @@ func restore(data: Dictionary) -> void:
 	reports.assign((data["reports"] as Array).duplicate(true))
 	sale_streak = int(data["sale_streak"])
 	menu = bool(data.get("menu", false))
+	removals = int(data.get("removals", 0))
 	dealership.clear()
 	if upgrade_pool != null:
 		for id in data["dealership"]:
