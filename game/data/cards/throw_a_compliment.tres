@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/model/effects/effect.gd" id="1_eff"]
 [ext_resource type="Script" path="res://scripts/model/effects/change_patience.gd" id="2_fx"]
 [ext_resource type="Script" path="res://scripts/model/data/support_card_def.gd" id="3_def"]
+[ext_resource type="Texture2D" path="res://art/cards/finished/compliment.png" id="99_art"]
 
 [sub_resource type="Resource" id="Effect_base"]
 script = ExtResource("2_fx")
@@ -19,6 +20,7 @@ id = &"throw_a_compliment"
 display_name = "Throw a Compliment"
 text = "Nice watch. Great taste in trucks. It costs you nothing."
 ticks = 0
+art = ExtResource("99_art")
 rarity = 0
 starter = true
 effects = Array[ExtResource("1_eff")]([SubResource("Effect_base")])
