@@ -8,15 +8,15 @@
 
 ## Context
 
-m2 is fun. The stated limit on that fun is not the design — it is that a CLI is slow to read and
-slow to drive. Three customers, a hand, an appeal bar and a live negotiation do not fit in a
-scrolling terminal, so the player spends attention on parsing instead of deciding.
+m2 is fun. What holds it back isn't the design. It's that a CLI is slow to read and slow to
+drive. Three customers, a hand, an appeal bar and a live negotiation don't fit in a scrolling
+terminal, so you spend your attention parsing text instead of making decisions.
 
-So this is a port, not a redesign. The rules do not change. What changes is that the floor becomes
-a thing you look at instead of a thing you reconstruct.
+So this is a port, not a redesign. The rules don't change. What changes is that the floor becomes
+something you look at instead of something you piece together in your head.
 
-Three properties of the prototypes have to survive the move, because they are why the project has
-been able to throw away two designs without losing anything:
+Three things about the prototypes have to survive the move, because they're why I've been able to
+throw away two designs without losing anything:
 
 1. **The rules core is pure.** No I/O, no rendering, deterministic given a seed. `play.py` and
    `test_engine.py` drive the identical object, so they cannot drift.
@@ -24,9 +24,9 @@ been able to throw away two designs without losing anything:
 3. **Every data file states its `_DESIGN_RULE`** — the constraint new content must obey — and the
    tests enforce it where they can.
 
-`DESIGN.md` §7/§9/§10/§11 already sketched a Godot architecture along these lines. `DESIGN_V2` §10
-declared those sections dead, but it meant the *mechanics*; the technical bones are sound and this
-spec builds on them.
+I already sketched a Godot architecture along these lines in `DESIGN.md` §7/§9/§10/§11. In
+`DESIGN_V2` §10 I called those sections dead, but I meant the *mechanics*. The technical bones are
+fine, and this spec builds on them.
 
 ---
 
@@ -232,8 +232,8 @@ as a card you can look at.
 
 *That said*, the seam that would let modifiers in later costs nothing to leave open now: the deck
 is built by `Deck.build_starting_deck(pool)` and the shift reads its configuration through a single
-`ShiftConfig` object rather than from globals. When run modifiers are wanted, they hook those two
-places. Nothing is built for them today.
+`ShiftConfig` object rather than from globals. When I want run modifiers, they hook into those two
+places. I'm not building anything for them yet.
 
 ---
 
@@ -252,8 +252,8 @@ The model exposes command methods that mirror m2 exactly, each returning a `Resu
 | `dig(hand_index)` | 1 | discard and draw |
 | `wait()` | as many as it takes | **not in m2.** Only legal with every chair empty |
 
-`wait()` is the one command here that m2 does not have, and it exists because the port introduced a
-softlock m2 could not have. Every other command that moves the clock needs a customer to move it
+`wait()` is the one command here that m2 doesn't have. I added it because the port created a
+softlock that m2 couldn't have. Every other command that moves the clock needs a customer to move it
 on; the single exception, `dig`, reaches the clock through your hand — and the 3D view stows your
 hand below the bottom of the screen the whole time you are out on the floor. So the last customer
 walking out of a floor with empty chairs stopped time permanently: nothing to press, nobody to
@@ -284,10 +284,10 @@ mid-mutation, do not.
 ## 6. Screen
 
 **Revised at G1.5.** This section used to describe one flat 2D screen at 960×540 with all three
-seats and the negotiation visible at once. That is not what the game is. The port to
-[Card3D](https://github.com/tdecker91/Card3D) made the table three-dimensional, and 960×540 turned
-out to be the ceiling on legibility rather than a style choice — a 500×700 card face was landing on
-screen at 125 pixels tall. What follows is the design as built.
+seats and the negotiation visible at once. That's not the game I ended up with. Porting to
+[Card3D](https://github.com/tdecker91/Card3D) made the table 3D, and 960×540 turned out to be what
+was capping legibility, not a style choice: a 500×700 card face was landing on screen 125 pixels
+tall. What follows is the design as I built it.
 
 **Everything is a card, and every card has a back.** A customer is a card; what they do is that
 card's back. A product on the table is a card; what it is worth is that card's back. A "back" is a
@@ -366,8 +366,8 @@ shows the number.
 There are no `COOL` / `WARM` / `ALMOST` words on screen any more. The band was always a colour
 pretending to be a noun, and it is a colour now.
 
-**The view must show everything the model tells the player.** Two rules were set by the model and
-then silently dropped on the way to the screen, which is the same failure twice:
+**The view must show everything the model tells the player.** Twice I had a rule set by the model
+get silently dropped on the way to the screen. Same failure both times:
 
 - `customer.demands` — the Karen's "will not sign until they have bought from this category". It is
   enforced by `close()` and so never fires, never reaches the event log, and appeared nowhere. It
@@ -453,8 +453,8 @@ Icons are pulled, not drawn — Kenney.nl (CC0) and game-icons.net (CC BY) — p
 
 ## 9. Testing
 
-A zero-dependency headless runner in m2's style, so the output is the same line the project has
-been reading for three milestones:
+A zero-dependency headless runner in m2's style, so the output is the same line I've been reading
+for three milestones:
 
 ```bash
 godot --headless --script res://tests/run_tests.gd
@@ -510,9 +510,9 @@ build and add web at G3 — `DESIGN.md` §11.
 - **Godot Resource caching** shares instances project-wide. Any mutable state that reaches a
   Resource will leak between customers and between runs. The rule "runtime state is RefCounted,
   never Resource" is not stylistic, and a test enforces it.
-- **Parity drift after G0.** Once the Godot rules are authoritative, m2 becomes frozen reference.
-  Decide at G2 whether the Python engine is retired or kept as a fast balance sandbox; keeping both
-  editable is exactly the drift this project has avoided three times.
+- **Parity drift after G0.** Once the Godot rules are the real ones, m2 becomes a frozen reference.
+  At G2 I'll decide whether to retire the Python engine or keep it as a fast balance sandbox.
+  Keeping both editable is exactly the drift I've avoided three times so far.
 - **Scope creep at G2.** The shop is three verbs. Relics, shift conditions and run modifiers are all
   designed *around* it in this document and none are in it.
 
@@ -520,9 +520,9 @@ build and add web at G3 — `DESIGN.md` §11.
 
 ## 12. Open items
 
-- **Quota schedule across a run** — G2 needs a curve (flat? +15% a shift?). Undecided, and it wants
-  play data from G1 rather than a guess now.
-- **How many shifts is a run?** Undecided for the same reason.
+- **Quota schedule across a run.** G2 needs a curve (flat? +15% a shift?). I haven't decided, and
+  I'd rather get play data from G1 than guess now.
+- **How many shifts is a run?** Not decided, for the same reason.
 - **What "upgraded" means for a product card** — `upgraded_margin` is the mechanism, but whether a
   +$300 VSC is interesting or just numerically bigger is an open design question.
 - **Audio** — nothing decided beyond "at G3".

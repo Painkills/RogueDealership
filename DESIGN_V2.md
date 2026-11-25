@@ -4,12 +4,12 @@
 > **Status:** concept / pre-prototype — not yet built, not yet playtested even on paper
 > **Version:** v2.0 — **supersedes the approach in [`DESIGN.md`](DESIGN.md)**
 
-This document does not build on `DESIGN.md` or [`m0/README.md`](m0/README.md). Those describe
-an earlier design lineage — a Slay-the-Spire-style deck-builder with Energy/lanes/Resistance/
-Objections, later evolved into a "Buy-In" hidden-number model — and remain valuable as a
-historical record of real playtesting findings (rejected models, durable lessons about refusal
-costs and core-verb ceilings). **v2 is a clean pivot**, not a merge: it starts from a different
-premise and does not carry forward any mechanic from v1 or the m0 prototype.
+I'm not building on `DESIGN.md` or [`m0/README.md`](m0/README.md) here. Those cover my
+earlier take on the game: a Slay-the-Spire-style deck-builder with Energy, lanes, Resistance and
+Objections, which later turned into a "Buy-In" hidden-number model. I'm keeping them because
+they're a real record of what playtesting taught me (models I threw out, and lessons about
+refusal costs and core-verb ceilings that still hold). **v2 is a clean pivot**, not a merge. It
+starts from a different premise and doesn't carry over any mechanic from v1 or the m0 prototype.
 
 ---
 
@@ -49,25 +49,23 @@ Vehicle↔Person, Deal↔Person) — no category pairing is skipped, and no dual
 with itself.
 
 **"Needs," not "fears" — reframed on purpose, mechanics unchanged.**
-The design started from fear-matching (loss aversion: what is this customer afraid of) and was
-deliberately reframed to needs (positive framing: what is this customer seeking). This is a
-relabeling, not a mechanical change — the same 9 slots, the same categories, the same matching
-logic. A couple of terms were already neutral in either framing (Health) and needed no
-translation at all.
+I started from fear-matching (loss aversion: what is this customer afraid of?) and switched to
+needs on purpose (positive framing: what is this customer looking for?). It's a relabel, not a
+mechanical change: same 9 slots, same categories, same matching logic. Some terms (Health)
+already worked either way and didn't need changing.
 
 **Product margin is the main stat; customer-facing cost is deliberately not tracked.**
-Early iterations gave every product a "budget requirement" gate. That was cut: it double-counted
-what the **Affordability** need already represents, and it diluted focus away from the actual
-puzzle (does this product match this need, and does this customer trust me enough to accept
-it). Margin is what you're optimizing; dual products are deliberately capped below the flagship
-single's margin, because their reward is flexibility (matching either of two needs), not raw
-payout — letting a flexible card also pay the best would make precise single-need diagnosis
-pointless.
+My early versions gave every product a "budget requirement" gate. I cut it. It double-counted
+what the **Affordability** need already covers, and it pulled focus off the real puzzle: does
+this product match this need, and does this customer trust me enough to take it? Margin is what
+you're chasing. I capped the dual products below the flagship single's margin on purpose,
+because their payoff is flexibility (they match either of two needs), not raw money. If the
+flexible card also paid the best, there'd be no point diagnosing a single need precisely.
 
 **"Mandate" is a run-level modifier, not a property of any one card.**
-Which product your boss is pushing this shift should vary run to run (alongside other run
-modifiers like tariffs or a tough season) — hardcoding it onto one specific product would make
-that card's design and the run-variety system fight each other.
+Which product your boss is pushing this shift should change from run to run, along with other
+run modifiers like tariffs or a tough season. If I hardcoded it onto one product, that card's
+design and the run-variety system would end up fighting each other.
 
 ---
 
@@ -79,8 +77,8 @@ that card's design and the run-variety system fight each other.
 | **Deal** | Equity, Affordability, Value Retention |
 | **Person** | Health, Stability, Convenience |
 
-**Design provenance** (not shown to the player — internal reference only, mapping the original
-fear-framed working terms to their needs-framed replacements):
+**Where the names came from** (my reference only, never shown to the player: the original
+fear-framed working terms and the need-framed names that replaced them):
 
 | Original (fear-framed) | Current (need-framed) |
 |---|---|
@@ -208,8 +206,8 @@ weakened, only the bar a given customer sets is raised:
 
 ## 9. Run / meta layer *(conceptual only — not numerically specced)*
 
-This layer was discussed but not given concrete numbers; treat everything below as direction
-for the next design pass, not as locked rules:
+I've thought this layer through but haven't put numbers on it yet. Everything below is
+direction for my next design pass, not locked rules:
 
 - **Shift** = one floor session (§8) with a fixed number of rounds or until all customers
   resolve
@@ -231,12 +229,12 @@ for the next design pass, not as locked rules:
 
 ## 10. Open items
 
-- **No turn-by-turn pacing has been playtested**, even on paper — the Patience/Trust numbers in
-  §5–§7 are a first-pass model, not validated numbers (contrast with `m0/README.md`, where the
-  v1 lineage's numbers came from actual paper-prototype measurement)
-- **The run/calendar layer (§9) has no concrete numbers** — shift length, run length, modifier
-  magnitudes, and scoring weights are all undecided
-- **No technical/engine architecture has been discussed for v2** — v1's Godot-specific sections
-  (`DESIGN.md` §7, §9) do not apply here and have no v2 equivalent yet
-- **Card counts beyond the 12 products + 6 named cards above are undecided** — how many actions
-  per round, hand size, and total deck size have not been set
+- **I haven't playtested the turn-by-turn pacing**, not even on paper. The Patience and Trust
+  numbers in §5–§7 are a first guess, not tested numbers. (Compare `m0/README.md`, where I got
+  the v1 numbers from actually measuring a paper prototype.)
+- **The run/calendar layer (§9) has no numbers yet.** Shift length, run length, how strong the
+  modifiers are, and how scoring is weighted are all still open.
+- **I haven't worked out the engine architecture for v2.** v1's Godot sections (`DESIGN.md` §7,
+  §9) don't apply here, and there's nothing to replace them yet.
+- **I haven't decided card counts beyond the 12 products and 6 named cards above.** Actions per
+  round, hand size and deck size are all still open.

@@ -1,8 +1,8 @@
 # M2 — Rogue Dealership prototype (the negotiation model)
 
 The playable build. Its job is the same as [`m0/`](../m0/README.md)'s and
-[`m1/`](../m1/README.md)'s was: find out whether the loop is fun **before** any engine project
-exists. This file is m2's memory.
+[`m1/`](../m1/README.md)'s was: find out whether the loop is fun **before** I start an engine
+project. These are my notes for m2.
 
 ```bash
 python m2/play.py
@@ -34,9 +34,9 @@ exactly one of them.
 
 **Appeal opens at `5 × (9 − their rank)`.** Their number one opens at 40, their last at 0. A bad
 read is therefore **never a refusal — only an expensive starting position.** This is the single
-most important property of the design: there is no coin flip to dodge, so the gamble m1 spent
-three versions failing to get anyone to take (open problem #1, "the blind pitch is still never
-taken") simply does not exist here. It was replaced by a price gradient.
+most important property of the design: there's no coin flip to dodge, so the gamble I spent
+three versions of m1 failing to get anyone to take (open problem #1, "the blind pitch is still
+never taken") just doesn't exist here. I replaced it with a price gradient.
 
 **No card moves a full place on their list.** The best free card is +4 against a rank step of 5, so
 a card can never cheaply substitute for reading someone. `test_no_card_moves_a_full_place_on_their_list`
@@ -49,19 +49,19 @@ is the price of exposure. It also means you can pad a deal that would have close
 the whole reason the two moves are separate.
 
 **Knowledge is efficiency, never permission.** Nothing is gated, so no card is ever dead in hand
-and no turn is spent waiting — m1's two stated reasons v2 wasn't fun.
+and no turn is spent waiting. Those were the two reasons I gave in m1 for v2 not being fun.
 
 **The rules never say no; the arithmetic says "not worth it."** You may concede an offer to
-negative margin and the engine will let you bank the loss. Nothing caps the core verb — m0's
-durable lesson #2, learned the hard way when a pitch ceiling made pushing feel futile.
+negative margin and the engine will let you bank the loss. Nothing caps the core verb. That's
+lesson #2 from m0, which I learned the hard way when a pitch ceiling made pushing feel futile.
 
 **Ticks are the whole clock.** No rounds, no per-round budget. Every card costs its tick, and a
 tick burns that much patience from **every customer on the floor at once**, plus the shift clock.
 Walking to a *different* customer costs 1; going back to whoever you were last with is free.
 
 **Effects resolve, then the tick burns.** Small Talk saves someone at 1 patience; a sale lands on
-the tick that would have walked them. m0's discovered rule — you close *during* your turn, before
-the damage — pinned by `test_effects_resolve_before_the_tick_burns`.
+the tick that would have walked them. It's the rule I found in m0 (you close *during* your turn,
+before the damage), pinned by `test_effects_resolve_before_the_tick_burns`.
 
 **Nothing is yours until you sign.** A customer who says yes has not paid you: the product sits
 **unsigned**. `close` banks the lot and frees the chair. If their patience hits zero first they
@@ -76,8 +76,9 @@ is her whole character.
 
 Every archetype exists to teach one behaviour. Its numbers and its action are chosen to *force*
 that behaviour, not to decorate it, and everything it does is **telegraphed on arrival** in a
-`WHAT THEY DO` box on the customer sheet - and announced loudly, in dialogue, the moment it fires. m0 §2 found that a passive customer is *why* nothing was ever tight — "it was
-solitaire with a scoreboard." This is the fix.
+`WHAT THEY DO` box on the customer sheet, and announced loudly, in dialogue, the moment it fires.
+In m0 §2 I found that a passive customer is *why* nothing was ever tight: "it was solitaire with
+a scoreboard." This is the fix.
 
 | Archetype | The pattern it teaches | What forces it | Line | Pat |
 |---|---|---|---|---|
@@ -157,28 +158,29 @@ python m2/play.py --seed 7 --floor hawk,karen,kicker --set shift_ticks=12
 
 ## What changed in m2.1, and why
 
-Playing the first m2 produced 11 pieces of feedback. Three of them were one bug.
+Playing the first m2, I came away with 11 notes. Three of them were the same bug.
 
 **The scale was too small to express a small concession.** Appeal ran 0–8 and thresholds 4–9, so a
 Budget Hawk wanting 9 could not be sold *anything* cold — not even her favourite thing in the
 world — and the fix, one discount, moved 4 points on a 9-point scale while wiping 100% of a $3
-product's margin. Rescaling to steps of 5 and margins to dollars gave every concession somewhere to
-land, and gave the threshold ramp room to be gentle (+3 on a 40-wide scale) instead of brutal.
+product's margin. Rescaling to steps of 5, and margins to dollars, gave every concession somewhere
+to land, and gave the threshold ramp room to be gentle (+3 on a 40-wide scale) instead of brutal.
 
-**The customer was passive again.** m2 v1 had numbers that sat there. The objection engine is m0's
-lesson #2 rebuilt: archetype action pools, telegraphed on arrival.
+**The customer was passive again.** m2 v1 had numbers that just sat there. The objection engine is
+my m0 lesson rebuilt: archetype action pools, telegraphed on arrival.
 
-**Placing and offering split**, which turned out to be the same mechanism as the objection engine.
+**I split placing and offering**, which turned out to be the same mechanism as the objection engine.
 Once offering is free in ticks, nothing stops you asking after every card — unless asking is what
 provokes them. The two features give each other their price.
 
-Also: deck 21 → 14, hand 5 → 4, shift 50 → 24 ticks, returning to the same customer made free,
-partial arrivals and departure alerts restored, every product now shows `Category · Interest` so a
-category read is actionable, and the customer sheet grew a **permanent appeal bar** — a fixed scale
+Also: I cut the deck from 21 to 14, the hand from 5 to 4 and the shift from 50 ticks to 24, made
+going back to the same customer free, brought back partial arrivals and departure alerts, made
+every product show `Category · Interest` so a category read is actionable, and gave the customer
+sheet a **permanent appeal bar** — a fixed scale
 with a marker where they say yes, so a Lay-Down's marker sits early and a Hawk's sits late and you
 can read difficulty without reading a number.
 
-The bar is permanent on purpose. The first version drew it only while an offer was live *and*
+The bar is permanent on purpose. My first version only drew it while an offer was live *and*
 already asked, which meant a player whose offers were landing never saw it at all — the element
 that explains the whole game was invisible to anyone doing well. It now shows in every state:
 `?` before you know their bar, the marker alone once you do, and a filling bar with `N SHORT` once
@@ -188,9 +190,10 @@ you have asked.
 
 ## Where the balance sits
 
-**Not measured properly, and deliberately so.** There is no simulator and no bot in this directory
-— m0's durable lesson #7. A throwaway greedy probe was built to check the game is reachable, read
-once, and deleted; it is **not** a balance claim, and it played a game a human would not.
+**I haven't measured it properly, on purpose.** There's no simulator and no bot in this
+directory (lesson #7 from m0). I built a throwaway greedy probe to check the game can be finished,
+read its output once and deleted it. It's **not** a balance claim, and it played a game a person
+wouldn't.
 
 What it said, over 150 shifts each:
 
@@ -204,15 +207,15 @@ What it said, over 150 shifts each:
 Thinking beats not-thinking **3.0×**, the widest separation of the three milestones (m0: 30–44%,
 m1: 44%, m2 v1: 2.1×).
 
-**Quota is $3,600, and it is set against a human, not the bot.** The first real playthrough banked
-$5,800 against an earlier $2,400 quota — roughly double what the crude probe manages, which is the
-clearest evidence yet that the decisions in this build are ones a person can actually play better
-than a greedy heuristic. The probe clears $3,600 only 37% of the time; a competent human should
-clear it comfortably, so if it still feels soft the next stop is $4,500.
+**Quota is $3,600, and I set it against my own play, not the bot's.** My first real playthrough
+banked $5,800 against an earlier $2,400 quota, roughly double what the crude probe manages. That's
+the clearest sign yet that the decisions in this build are ones a person can actually play better
+than a greedy heuristic. The probe clears $3,600 only 37% of the time; a competent player should
+clear it comfortably, so if it still feels soft my next stop is $4,500.
 
-Retuning that mattered: at patience 12 the floor churned 8 customers past you in a 24-tick shift and
-4.4 of them walked untouched. Patience 16 cut walk-outs to 3.0 and raised margin 16% without
-touching a rule.
+The retuning that mattered: at patience 12 the floor churned 8 customers past you in a 24-tick
+shift and 4.4 of them walked untouched. Patience 16 cut walk-outs to 3.0 and raised margin 16%
+without touching a rule.
 
 ---
 
@@ -233,7 +236,7 @@ touching a rule.
 5. **Family First has no stopping point.** A flat Line means nothing ever prices you out of
    them; only their patience and your products do. Watch whether parking on her is simply correct —
    if so the fix is a +1 ramp, not abandoning the flat one.
-6. **Eleven changes landed at once.** If it still isn't fun the cause is hard to isolate. The
+6. **I made eleven changes at once.** If it still isn't fun, the cause will be hard to pin down. The
    rescale and the two-step offer are the two that could plausibly have made it worse.
 7. **No run layer.** m2 is one shift, like m1.
 

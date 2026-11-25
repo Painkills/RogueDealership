@@ -9,14 +9,14 @@
 
 ## 0. Why this document exists (read this first)
 
-The builder of this game has shipped **zero** completed projects out of three prior prototypes. The
-prototypes were not the problem — **finishing** was. The single greatest threat to this project is
-**scope creep**, not technical difficulty.
+I've made three prototypes before this and finished **zero** of them. The prototypes weren't the
+problem. **Finishing** was. The biggest threat to this project is **scope creep**, not anything
+technical.
 
-Therefore this document's #1 job is to **lock a small v1.0** and shove the exciting-but-endless
-content into a clearly separated backlog. The full 20-day vision is real and worth building — but
-only as **content poured into an already-shipped, working game.** Content added to a finished game is
-fun. Content added to an unfinished game is why the last three didn't ship.
+So the #1 job of this document is to **lock a small v1.0** and shove all the exciting, endless
+content into a separate backlog. The full 20-day vision is real and I want to build it, but only
+as **content poured into a game that has already shipped and works.** Adding content to a finished
+game is fun. Adding content to an unfinished game is why my last three never shipped.
 
 **Rule of the project:** _Do not grow v1.0 scope until v1.0 is shipped._
 
@@ -152,7 +152,8 @@ you must answer it while still building the deal.
   Budget is the jackpot outcome.
 - **Closing happens during your turn, before that turn's objection lands.** A tier you reach is
   bankable immediately — but if you push on for a better tier and they walk at end of turn, **you get
-  nothing.** This is the push-your-luck decision; M0 found the loop had none until this rule existed.
+  nothing.** This is the push-your-luck decision. In M0 I found the loop didn't have one until I
+  added this rule.
 
 ### StS mapping (for anyone who knows the reference)
 | This game | Slay the Spire analog |
@@ -237,9 +238,9 @@ Riders are the customer's mirror of the player's effect list — same executor, 
 | **Tech Enthusiast** | mid-high (~$40k) | low | Low resistance on Vehicle upsells; impatient, wants it fast | Comparison-shops and stalls |
 
 > **Card deal values are expressed as a share of the customer's Budget, not absolute dollars.**
-> M0 proved that absolute values make Budget secretly the difficulty dial — small-budget customers
-> become trivially easy and large-budget ones impossible. Difficulty must come from resistance,
-> patience, and objection pool instead.
+> M0 showed me that absolute values secretly make Budget the difficulty dial: small-budget customers
+> get trivially easy and big-budget ones impossible. Difficulty has to come from resistance,
+> patience and the objection pool instead.
 
 ### Objection set (5)
 | Objection | Damage | Rider | Countered by |
@@ -341,15 +342,15 @@ DESIGN.md
   flavor should lean into the bit (Doc Fee, Anchor High, "trust me"); art direction can be a little
   seedy/kitschy.
 - ✅ **v1.0 scope** — **keep the small §3 lock.** Full 20-day vision is post-ship (§4).
-- ✅ **The customer is an active opponent** (§6). M0 proved a passive customer makes the loop
-  solitaire — energy had no competing demand, so nothing was ever tight. Objections with visible
-  intent are the fix.
+- ✅ **The customer is an active opponent** (§6). M0 showed me a passive customer turns the loop
+  into solitaire: nothing else competed for energy, so nothing was ever tight. Objections with
+  visible intent fix that.
 - ✅ **Rapport is Block, not heal.** Shield absorbs the turn's objection damage and expires unused.
   Patience only ever goes down, so the clock stays real.
 - ✅ **Every objection damages patience; some carry riders.** Any Rapport card mitigates damage (so
   no dead hands); only the *specific* counter card negates a rider.
-- ✅ **Card values are budget-relative, and close tiers are graded** (60 / 80 / 100%). Both are
-  direct fixes to problems M0 measured — see `m0/README.md`.
+- ✅ **Card values are budget-relative, and close tiers are graded** (60 / 80 / 100%). Both fix
+  problems I measured in M0. See `m0/README.md`.
 
 **Still open (fine to defer):**
 - **Title** — keep "Auto Sales Executive," or something punchier?

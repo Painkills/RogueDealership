@@ -1,7 +1,7 @@
 # M1 — Rogue Dealership prototype (v3)
 
 The playable build. Its job is the same as [`m0/`](../m0/README.md)'s was: find out whether the
-loop is fun **before** any engine project exists. This file is m1's memory.
+loop is fun **before** I start an engine project. These are my notes for m1.
 
 ```bash
 python m1/play.py
@@ -113,19 +113,19 @@ python m1/play.py --set actions_per_round=4 --set hand_size=6
 
 ## What changed and why
 
-v3 was a response to playing v2 and finding it wasn't fun, for two specific reasons.
+I made v3 after playing v2 and finding it wasn't fun, for two specific reasons.
 
 **Product cards clogged the hand.** 12 of 26 deck cards were products you could not legally play
 until you had diagnosed something, so for most of an encounter they were dead weight occupying
-slots that should have held cards that advance you. **Fix:** products left the deck entirely for
-an always-visible tray.
+slots that should have held cards that advance you. **Fix:** I took products out of the deck
+entirely and put them on an always-visible tray.
 
 **Too many actions passed before anything happened.** The chain was rapport → ask → ask again →
-pitch, spread over several rounds before a single point of margin landed. **Fix:** Question cards
-deleted; crossing a Trust threshold reveals a need by itself. Measured below: first margin now
+pitch, spread over several rounds before a single point of margin landed. **Fix:** I deleted the
+Question cards; crossing a Trust threshold now reveals a need by itself. Measured below: first margin now
 lands on **action 2.9** instead of 4+.
 
-Also gone, and why:
+What else I cut, and why:
 
 - **9 needs → 6, categories deleted.** Categories existed in DESIGN_V2 purely to power a
   two-tier category-then-specific reveal. That reveal is gone, so they were decoration. 6 is now
@@ -135,7 +135,7 @@ Also gone, and why:
 - **Offer a Discount.** Reassure owns the Trust→Patience valve; two Patience sources were
   redundant.
 
-Then added back, after playing it:
+What I added back after playing it:
 
 - **Customer wallets**, from m0's lineage — margins double as prices, so a budget reads directly
   as what a customer is worth. This gives customers a second way to end other than the clock,
@@ -154,9 +154,10 @@ Reserved's entire axis.
 
 ## Where the balance sits
 
-**Not measured properly.** There is no simulator, per m0's lesson #7 — the question is whether
-it's fun, and only playing answers that. A throwaway greedy bot (built to check the game is
-reachable, then deleted — **not** a balance claim) over 60 shifts each:
+**I haven't measured it properly.** I didn't build a simulator, per my lesson #7 from m0: the
+question is whether it's fun, and only playing answers that. Here's a throwaway greedy bot (I
+built it to check the game can be finished, then deleted it, so this is **not** a balance claim)
+over 60 shifts each:
 
 | | Careful play | Just dumping your hand |
 |---|---|---|
@@ -167,8 +168,8 @@ reachable, then deleted — **not** a balance claim) over 60 shifts each:
 | Tapped out / walked per shift | **1.5 / 1.5** | 1.2 / 1.1 |
 | Wallet drained | **89%** | 66% |
 
-Thinking beats not-thinking by 44%, and the loop compression worked. Wallets did what they were
-added for: shifts dropped from 13.7 rounds to 8.3, and customers now end **half by being drained
+Thinking beats not-thinking by 44%, and the loop compression worked. Wallets did what I added
+them for: shifts dropped from 13.7 rounds to 8.3, and customers now end **half by being drained
 and half by the clock** rather than everyone stopping at the same "2 needs, 2 products" wall.
 
 ---
@@ -178,21 +179,21 @@ and half by the clock** rather than everyone stopping at the same "2 needs, 2 pr
 1. **The blind pitch is still never taken.** The careful bot took **0.0** blind offers per shift,
    across every version so far: only pitching what you already know is strictly safer, so the
    gamble the design is built around never gets played. This is the same failure mode as v2's
-   100% close rate and m0's decorative hidden threshold, and adding wallets did not shift it. If
-   a human also never gambles, the whole risk ladder (2/5 → 2/4 → 2/3) is dead weight and needs
+   100% close rate and m0's decorative hidden threshold, and adding wallets didn't change it. If
+   I never gamble either when I play, the whole risk ladder (2/5 → 2/4 → 2/3) is dead weight and needs
    either a carrot (bonus margin on a blind hit?) or a stick (thresholds that rise as the shift
    wears on). **This is the oldest unfixed problem in the project.**
 2. **1.4 of 3 actions go unused per round** — better than v3's 1.7 now that Small Talk is free,
-   but still well above the ~0.3 m0 considered healthy. Partly a limitation of the bot, which
+   but still well above the ~0.3 I called healthy in m0. Partly a limitation of the bot, which
    idles once a customer is fully read and sold out.
 3. **Stalling is possible.** Reassure can out-pace decay indefinitely — 2 Trust cards plus 1
    Reassure nets +5 Patience against a −1 to −3 burn. `max_rounds: 40` is a **safety valve, not a
    clock**; careful play ends around round 8 and never reaches it. Wallets made this much less
    reachable (the naive control fell from 40 rounds to 27), but the hole is still there.
-4. **Budget and the Affordability need may double-count.** DESIGN_V2 §2 cut budgets for exactly
-   this reason. They are back by choice, for differentiation — but if "this customer is poor"
-   and "this customer needs Affordability" start feeling like the same fact, that objection was
-   right and one of the two should go.
+4. **Budget and the Affordability need may double-count.** I cut budgets in DESIGN_V2 §2 for
+   exactly this reason. I brought them back on purpose, to make customers different from each
+   other. But if "this customer is poor" and "this customer needs Affordability" start feeling
+   like the same fact, I was right the first time and one of the two should go.
 5. **Starting Trust 0 makes every opening move a Trust card.** A forced first move is not a
    decision — though it now costs one action instead of three. Try `--set starting_trust=1`.
 6. **Only 4 card types.** A hand of 5 drawn from 4 types risks feeling samey.

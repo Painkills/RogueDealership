@@ -5,17 +5,16 @@
 
 ## Context
 
-G0 through G1.5 are on `master`: a pure rules core, and one shift that is fully playable and has
-now actually been played and called fun. What does not exist is any reason to play a *second*
-shift. `Shift` builds the same fixed 14-card starter deck every time, and the end-of-shift report's
+G0 through G1.5 are on `master`: a pure rules core, and one shift that's fully playable. I've
+played it, and it's fun. What's missing is any reason to play a *second* shift. `Shift` builds the same fixed 14-card starter deck every time, and the end-of-shift report's
 only button starts an identical shift over.
 
 G2 is the layer that makes a shift matter to the next one: a run of five shifts, a shop between
-them, and a deck that carries what you did to it. `GODOT_SPEC.md` §4 already fixed the shape of the
-meta layer — the shop does exactly three things, add / remove / upgrade a card, and nothing else.
-No relics, no run modifiers. One system to balance instead of two.
+them, and a deck that carries what you did to it. I already settled the shape of the meta layer in
+`GODOT_SPEC.md` §4: the shop does exactly three things, add / remove / upgrade a card, and nothing
+else. No relics, no run modifiers. One system to balance instead of two.
 
-Three things this build gets for free, because earlier milestones left the seams open:
+I get three things for free here, because I left the seams open in earlier milestones:
 
 - `Deck` already has `add(def)`, `remove(uid)` and `upgrade(uid)` — the three shop verbs, already
   written and tested.
@@ -111,10 +110,10 @@ archetype must obey and the suite already asserts every pool states its rule.
 | Buy a card | new `@export var price: int` on `CardDef` | Support cards have no margin to derive a price from, so this is authored per card — content is data |
 | Remove a card | flat, from `ShiftConfig` | Deck-thinning should be affordable, not free |
 
-**Every figure above is a first-pass guess**, in the same spirit as m2's README about its own
-numbers. Five shifts, 15%, and 4× payback are picks, not measurements — no multi-shift run has ever
-been played, because none has ever existed. They are all single numbers in `ShiftConfig` or authored
-data, so retuning is a data edit.
+**Every figure above is a first guess**, same as I said about m2's numbers in its README. Five
+shifts, 15% and 4× payback are picks, not measurements. I've never played a multi-shift run,
+because there's never been one to play. They're all single numbers in `ShiftConfig` or the data,
+so retuning is just a data edit.
 
 ## 4. Architecture
 
@@ -123,8 +122,8 @@ plain `RefCounted` — no Node, same discipline as the model, so both are headle
 
 **`test_architecture.gd`'s guards must be extended to reach them.** Both of them —
 "the model never reaches into the view" and "nothing calls the global RNG" — hardcode
-`res://scripts/model`, so a new sibling directory is silently outside the rules the project
-considers non-negotiable. The RNG one is not hypothetical here: **the shop needs randomness to
+`res://scripts/model`, so a new sibling directory would quietly sit outside rules I consider
+non-negotiable. The RNG one is not hypothetical here: **the shop needs randomness to
 decide what is on offer**, which is precisely where a bare `randi()` would get written and quietly
 destroy a run's reproducibility. `RunState` owns one seeded `RandomNumberGenerator` for the run and
 hands `Shift` its per-shift seed from it, exactly as `Shift` already does for its own rolls.
@@ -156,10 +155,10 @@ A new `run.tscn` with `run_controller.gd` instances `shift.tscn` and a new `shop
 between them. `shift_controller.gd` gives up `_start_new_shift()` in favour of `setup(shift)` and a
 `shift_finished` signal.
 
-That last part is a small refactor of code that just shipped, and it is worth doing rather than
-bolting the shop onto the existing controller: `shift_controller.gd` is already ~550 lines and owns
-the table, the framing, the HUD and reconciliation. Making it the run orchestrator as well is how it
-becomes the file nobody wants to open.
+That last part is a small refactor of code I just shipped, and I'd rather do it than bolt the shop
+onto the existing controller. `shift_controller.gd` is already ~550 lines and owns the table, the
+framing, the HUD and reconciliation. Making it run the whole run as well is how it turns into the
+file I never want to open.
 
 The shop is a plain 2D `Control` screen, in the spirit of the panels G1 used before the 3D pivot.
 G2's bar is mechanical — add, remove or upgrade a card — and says nothing about presentation.

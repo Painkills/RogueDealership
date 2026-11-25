@@ -142,11 +142,11 @@ that only matter in Godot:
 ## Writing tests that survive a balance pass
 
 The suite used to break on nearly every retune of a card price, an
-archetype's `line`, or a demand's fuse length - not because the balance
+archetype's `line`, or a demand's fuse length. Not because the balance
 change was wrong, but because a test had pinned the *old* tuned number as
-if it were a correctness invariant. A test-suite-triage pass cut those
-down to what's actually game-breaking (see git history around that work
-for the full before/after). The rules it left behind, for anything new:
+if it were a correctness rule. I did a cleanup pass that cut those down to
+what actually breaks the game (git history around that work has the full
+before and after). The rules I follow now, for anything new:
 
 1. **Read a tunable value from the same config/resource the production
    code reads** (`cfg.appeal_step`, `pool.by_id(id).margin`) — never
@@ -158,9 +158,9 @@ for the full before/after). The rules it left behind, for anything new:
    loop keyed on the resulting state**, not a fixed action count (`while
    c.demand == null and guard < 30: s.dig(0)`, not `for _i in range(3)`).
 4. **When a rare case needs a specific RNG seed, search for one at test
-   time in a bounded loop** — never hardcode a magic seed number. This
-   project chased one by hand across three balance passes (seed 8 → 15 →
-   17) before it was worth fixing properly.
+   time in a bounded loop** — never hardcode a magic seed number. I chased
+   one by hand across three balance passes (seed 8 → 15 → 17) before I
+   fixed it properly.
 5. **Don't assert "exactly N archetypes/cards do X" for a design opinion
    about the whole roster** — that's a constraint on how the game is
    allowed to be balanced, not a bug guard. Assert the mechanic works for
@@ -168,7 +168,7 @@ for the full before/after). The rules it left behind, for anything new:
 
 ---
 
-## Notes for whoever picks this up next
+## Things I keep having to remember
 
 - **`--import` after adding any `class_name` script.** Without it the headless
   runner cannot resolve the global class and every test in that file reports
@@ -191,11 +191,11 @@ for the full before/after). The rules it left behind, for anything new:
 - **No run layer, no shop, no save.** That is G2. `Deck` already supports
   add/remove/upgrade and `CardInstance` carries a stable uid, so the seams exist.
 - **Parity is proven case by case, not by RNG.** m2's tests force ranks and hands
-  explicitly, so they port directly; matching random streams across two languages
-  is not achievable and was never attempted.
-- **m2 is still editable.** Once the Godot rules are authoritative, m2 should be
-  frozen as reference — keeping both editable is exactly the drift this project
-  has avoided three times. That decision comes due at G2.
+  explicitly, so they port directly. Matching random streams across two languages
+  isn't achievable, and I never tried.
+- **m2 is still editable.** Once the Godot rules are the real ones, I should freeze
+  m2 as a reference. Keeping both editable is exactly the drift I've avoided three
+  times. I'll decide at G2.
 
 ---
 
@@ -229,7 +229,7 @@ game/
     format.gd               static class_name, money/patience text shared by every scene
 ```
 
-`Palette` and `Format` were originally planned as autoloads. Godot's
+I originally planned `Palette` and `Format` as autoloads. Godot's
 `--headless --script` test runner doesn't instantiate project autoloads at
 all — not even for compile-time symbol resolution — so they're plain static
 `class_name` classes instead, called the same way (`Palette.color(...)`,
@@ -265,45 +265,36 @@ Mouse-first, with a keyboard mirror of every action, 15 in total:
 | `Shift`+`C` | close |
 | `F` | step back to the floor, without closing |
 
-Two of these weren't in this plan's original scope. `dig_1`–`dig_4` exist
-because Global Constraints required a keyboard mirror for dig and no draft of
-this plan — including the one about to be dispatched — had ever actually
-wired one; the gap was only caught while writing Task 9. `floor_key` (`F`)
-exists because Task 6's own manual-verification notes flagged that there was
-no way to step back to the floor view without closing the customer you were
-with, and that gap sat unfixed until Task 9 added it. Both were found by
-someone reading the actual wiring, not planned up front.
+Two of these weren't in my original plan. I meant to have a keyboard mirror
+for dig from the start, but I never actually wired one until late, which is
+where `dig_1`–`dig_4` came from. `floor_key` (`F`) is there because I noticed
+there was no way to step back to the floor view without closing the customer
+I was with. I found both by reading the actual wiring, not by planning them.
 
 ### Open
 
-**No task in this implementation ever ran with an interactive display.**
-Neither the controller session nor any subagent could launch the editor and
-press Play — every "manual verification" step in Tasks 6, 7, and 9 was
-rescoped, out of necessity, into scripted headless checks: construct a
-`SceneTree`, drive it through state transitions or synthetic `InputEventKey`
-events, and assert on node state the same way a human's eyes would check it.
-Those checks are real, not theater — Task 1's fix loop found that Godot's
-`--script` mode never instantiates project autoloads, not even for
-compile-time symbol resolution, which forced Palette/Format off autoloads
-entirely; Task 9's driver found that an action registered without an
-explicit `shift_pressed` also fires on Shift-held input, which made
-`close_key` (Shift+C) unreachable until the `_unhandled_input` branches were
-reordered. But a script can only confirm that the wiring does what the code
-says it does. It cannot confirm the screen reads well, that the information
-model actually resolves the tension it's meant to, or that any of this is
-fun. G1's stated goal — more legible than the CLI it replaces — has not been
-judged by anyone yet. That happens the first time a human runs
-`godot --path game --editor`, presses Play, and looks at it.
+**I built all of G1 without ever pressing Play.** Every check was a scripted
+headless one: build a `SceneTree`, drive it through state changes or fake
+`InputEventKey` events, and check node state the way my eyes would. Those
+checks earned their keep. They caught that Godot's `--script` mode never
+loads project autoloads, not even to resolve symbols at compile time, which
+is why Palette and Format aren't autoloads. They also caught that an action
+registered without an explicit `shift_pressed` fires on Shift-held input
+too, which made `close_key` (Shift+C) unreachable until I reordered the
+`_unhandled_input` branches. But a script can only confirm the wiring does
+what the code says. It can't tell me the screen reads well, that the
+information model actually creates the tension it's meant to, or that any of
+it is fun. G1's goal (more readable than the CLI it replaces) gets judged the
+first time I run `godot --path game --editor`, press Play and look at it.
 
 Smaller, known gaps, all deliberate:
 
 - **No shop, no run layer, no save.** One shift, played once, then a report
   screen with a restart button. That's G2.
 - **No real art.** Floor card and hand card slots use the exact sizes and
-  palette roles `GODOT_SPEC.md` §7 specifies. The portrait and icon slots §7
-  also defines were never built — no task's design included them — and most
-  palette roles are applied ad hoc per-script rather than through a shared
-  `Theme` resource. Both are open for a later polish pass, not implemented
+  palette roles `GODOT_SPEC.md` §7 specifies. I never built the portrait and
+  icon slots §7 also defines, and most palette roles are applied ad hoc
+  per-script rather than through a shared `Theme` resource. Both are open for a later polish pass, not implemented
   placeholders waiting for art.
 - **No sound.** Nothing plays; nothing is wired to play anything.
 
@@ -317,9 +308,9 @@ The hand, the piles and the customers' tables are now real 3D cards, using
 it onto a customer.** Dropping on someone you are not standing with approaches
 them first, at the usual tick cost; dropping on the discard pile digs.
 
-The model did not change. Not one line under `scripts/model/`. That isolation is
-the entire reason a UI rewrite of this size was cheap, and it is worth saying
-plainly the first time it actually paid out.
+The model didn't change. Not one line under `scripts/model/`. Keeping it isolated
+is the whole reason a UI rewrite this big was cheap, and this is the first time
+it actually paid off, so I'm saying it plainly.
 
 `shift.tscn` is a `Node3D` table with a `CanvasLayer` HUD over it: a head-on
 `Camera3D`, a `WorldEnvironment`, and six `CardCollection3D` zones — three
@@ -336,7 +327,7 @@ see is its own back. The z-order has to come along, which is what rotating a
 shared parent (`FlipPair`) does. Sitting down instead slides both backs out to
 the LEFT and turns them face-front, so you have both halves side by side.
 
-That replaced the earlier idea of *growing* the customer card, which scaled it
+That replaced my earlier idea of *growing* the customer card, which scaled it
 up by a third and drove it straight down into the product slot below.
 
 The HUD keeps only what belongs to the player or to the shift: the top bar, the
@@ -352,7 +343,7 @@ framing whether you like it or not. A hidden seat must still refuse drops — bu
 that is enforced *during* a drag, never by arming a drop zone (see the next
 section, which is the most expensive lesson in this file).
 
-### Three rules that will bite whoever changes this next
+### Rules that will bite me next time I touch this
 
 **One stray `Control` makes every card in the game dead.** Godot resolves
 Control GUI input *before* 3D physics picking, so any Control with
@@ -453,17 +444,17 @@ card sits where the model says and that only hand cards are draggable. It cannot
 live in the suite: `run_tests.gd` works inside `_init()`, where `_ready()` has
 not fired.
 
-**The layout is asserted in screen pixels, not eyeballed.** Both of the last two
-rounds of "this looks wrong" — the customer card overlapped by the product card,
-and the offer panel landing on top of the product it described — were arithmetic
-that happened to be checked by a human. `drive_shift.gd` now unprojects every
+**The layout is asserted in screen pixels, not eyeballed.** Both of my last two
+rounds of "this looks wrong" (the customer card overlapped by the product card,
+and the offer panel landing on top of the product it described) were arithmetic
+I'd only been checking by eye. `drive_shift.gd` now unprojects every
 card in both framings and asserts the rectangles do not intersect, that each
 detail card is wholly to the right of its partner, that nothing reaches into the
 log's column, that no button sits on a card, and that a floor card is at least
 360 px tall. `probe_framing.gd` prints the same numbers instead of asserting
-them, which is how the camera constants were chosen — it asks the camera rather
-than reasoning about field of view, and reasoning about field of view is how the
-last three layouts went wrong.
+them, which is how I picked the camera constants. It asks the camera rather than
+reasoning about field of view, and reasoning about field of view is how my last
+three layouts went wrong.
 
 `probe_input.gd` answers the other question that keeps coming back: *why is
 nothing clickable?* There are two systems that can cause it and they have
@@ -484,26 +475,25 @@ pass.
 
 ### Still open
 
-**Somebody has looked at this now, and it played.** Everything above is
-structural or arithmetic - that the wiring matches the model, that no Control
-blocks picking, that the rectangles do not collide - and none of it could have
-answered whether the composition reads or the push-in feels like walking over to
-someone. That took several rounds of the same person actually sitting down with
-it: reporting cards that would not respond, a hover that stuttered, a hand whose
-left edge disappeared under the one to its right, a softlock when the floor
-emptied out. Every one of those was a real defect this file's checks could not
-see, and every one is fixed and pinned by a check now. The two single-constant
-knobs this section used to point at - `SEAT_CAM_Z`/`FLOOR_CAM` in
-`tools/build_shift_scene.gd`, and `DetailCard3D.SLIDE_OUT` - are exactly what
-those rounds tuned; they are not open questions any more.
+**I've played it now, and it works.** Everything above is structural or
+arithmetic (the wiring matches the model, no Control blocks picking, the
+rectangles don't collide), and none of it could tell me whether the composition
+reads or the push-in feels like walking over to someone. That took several
+rounds of me actually sitting down with it: cards that wouldn't respond, a hover
+that stuttered, a hand whose left edge disappeared under the card to its right,
+a softlock when the floor emptied out. Every one of those was a real bug the
+checks couldn't see, and every one is fixed and pinned by a check now. The two
+constants this section used to point at (`SEAT_CAM_Z`/`FLOOR_CAM` in
+`tools/build_shift_scene.gd`, and `DetailCard3D.SLIDE_OUT`) are exactly what I
+tuned in those rounds, so they're not open questions any more.
 
-What playing it produced, unprompted: "this is fun, this iteration feels
-engaging." That is G1's own exit criterion in `GODOT_SPEC.md` §10.
+My honest reaction after playing: this is fun, and this version feels engaging.
+That's G1's own exit criterion in `GODOT_SPEC.md` §10.
 
-What is still genuinely unverified, because two people who already know the
-design are not the same test as a stranger: whether it reads to someone sitting
-down with no context, and how the pacing holds up across a full shift played at
-real speed rather than in the short bursts each feedback round has been so far.
+What I still haven't tested, because I already know the design and a stranger
+doesn't: whether it reads for someone sitting down with no context, and how the
+pacing holds up over a full shift at real speed, rather than in the short bursts
+I've been playing so far.
 
 ---
 
@@ -547,11 +537,11 @@ beside it, since a total alone cannot tell you whether the shift you just
 played earned anything.
 
 The open balance question is `quota_growth`, which climbs 15% a shift on the
-stated premise that the deck is getting stronger in the shop to keep pace. That
-premise holds more weakly here than under a flat budget: a run that keeps
-scraping by faces a rising quota against a deck it could not afford to improve,
-and only the pooling saves it. Whether that pressure is the good kind is a
-playtest question - `quota`, `quota_growth` and every price are single values
+idea that the deck is getting stronger in the shop to keep pace. That idea holds
+up worse here than under a flat budget: a run that keeps scraping by faces a
+rising quota with a deck it couldn't afford to improve, and only the pooling
+saves it. Whether that's the good kind of pressure is something I'll find out by
+playing - `quota`, `quota_growth` and every price are single values
 in `shift_config.tres` and the card `.tres` files if it isn't.
 
 **Standing is the run's HP - the stake this economy was missing.** Before this,
@@ -729,16 +719,15 @@ softlock with no other way out.
 ### Open
 
 **No end-of-run screen.** Finishing the fifth shift logs `banked_total` and the
-shift count and rolls a fresh run rather than presenting one. That is out of
-scope for G2 by design - what mattered here was making the end of a run
-*legible*, not building the screen for it. The report button now says FINISH
+shift count and rolls a fresh run rather than presenting one. I left that out
+of G2 on purpose: what mattered here was making the end of a run *readable*,
+not building the screen for it. The report button now says FINISH
 THE RUN instead of Continue on that last shift, so pressing it does not read as
 just another shift wrapping up.
 
-**No save.** A run lives entirely in memory; closing the game loses it. m2's
-own G2 note flagged this as the point where m2 itself should be frozen as
-reference rather than kept editable alongside Godot - that decision has not
-been made yet.
+**No save.** A run lives entirely in memory; closing the game loses it. I'd
+marked G2 as the point to freeze m2 as a reference instead of keeping it
+editable alongside Godot. I haven't made that call yet.
 
 ## Touch - the first pass, ahead of any real mobile build
 
@@ -782,10 +771,9 @@ release signals instead (`input_event`'s button state for the floor,
 emulation working any particular way.
 
 **Confirmed on a real device: yes, touch-to-mouse emulation fires
-`mouse_entered` on a bare touch-down.** A phone approached on the very first
-tap, skipping the peek entirely - exactly the failure mode predicted above,
-now observed rather than theorized. The narrow fix predicted above was also
-the fix applied: `_touch_check` (an injectable `Callable`, defaulting to
+`mouse_entered` on a bare touch-down.** On my phone the very first tap
+approached, skipping the peek entirely: exactly the failure I predicted above,
+now seen for real. The narrow fix I predicted is the one I applied: `_touch_check` (an injectable `Callable`, defaulting to
 `DisplayServer.is_touchscreen_available`, so a test can force the branch
 without real touch hardware) gates the decision - a touchscreen never
 consults `_hovered` here at all, only its own explicit `_peeked`, which only a
@@ -797,8 +785,8 @@ of trusting the event.
 opposite direction.** `DragController._drag_card_start()` calls
 `remove_hovered()` the instant a real drag begins, on the assumption a mouse
 cursor needs no local offset once the card's root starts tracking it directly.
-The first cut of the touch fix reapplied the lift right after, for every
-device - which fixed touch and broke a real desktop: the dragged card grew
+My first cut of the touch fix reapplied the lift right after, for every
+device, which fixed touch and broke a real desktop: the dragged card grew
 AND stayed lifted for the *whole* drag, visibly detached from the drop-plane
 position `DragController` was actually tracking underneath it, so where the
 card looked like it would land and where it actually would stopped agreeing.
@@ -885,7 +873,7 @@ nine interests to three, the upgrade narrows those three to one. It records the
 answer as `known_ranks[top] = 1` rather than as its own flag, so everything that
 already walks `known_ranks` picked it up for free.
 
-Worth knowing for whoever balances this: "ALMOST" now replaces "3 SHORT" as your
+A note for when I balance this: "ALMOST" now replaces "3 SHORT" as your
 best read until you spend the tick, which is a real difficulty increase landing
 on top of everything else in G3. It is also the cheapest thing here to walk
 back - restoring `known_line` in `offer()` is one line.
@@ -932,13 +920,13 @@ a free pause. You cannot spend their minute standing there, because standing
 there does not move the clock. **The only way to give someone a minute is to go
 and spend it on somebody else**, which is the whole triage loop in one card.
 
-### Three rules inside `_burn()` that will bite whoever changes this next
+### Three rules inside `_burn()` that will bite me next time I touch it
 
 **The presence notice runs BEFORE the action pass.** A customer can raise a
-demand on the very tick you happen to be standing with them. The first cut ran
+demand on the very tick you happen to be standing with them. My first cut ran
 presence afterwards, and "give us a minute" broke on the same burn that created
-it - charging the player 5 patience for ignoring an ask they had not been shown
-yet. Found by a test, not by reasoning. Every demand gets one whole tick to
+it, charging the player 5 patience for ignoring an ask they hadn't been shown
+yet. A test caught that, not my reasoning. Every demand gets one whole tick to
 exist.
 
 **Fuses come due AFTER the action pass and BEFORE `_settle_patience()`**, so a
@@ -1022,7 +1010,7 @@ both on the axis.
 
 ### Why the lens had to change, and why no radius would have done instead
 
-This is the part worth knowing before anybody touches `CAM_FOV`. With seats on
+This is what I need to remember before I touch `CAM_FOV` again. With seats on
 a circle of radius `R`, camera at radius `D`, near depth `N = D-R` and far
 depth `F = D+R/2`:
 
@@ -1044,13 +1032,12 @@ at 60% size land around x 744/1176: bunched in the middle, overlapping the
 negotiation, and no radius anywhere fixes it. A longer lens compresses depth so
 they stay large while still subtending a wide angle.
 
-**`CAM_FOV = 28`**, `CAROUSEL_R = 6`, and the two constants were then chosen so
-that:
+**`CAM_FOV = 28`**, `CAROUSEL_R = 6`, and I picked the two constants so that:
 
 | | |
 |---|---|
 | the fronted floor card | **286 x 402 px** - pixel-identical to the pre-carousel floor card, so the `>= 360` readability floor survives untouched |
-| the seat's customer card and product slot | **256 x 358 px** at the same pixels they already occupied - the negotiation you already tuned did not move |
+| the seat's customer card and product slot | **256 x 358 px** at the same pixels they already occupied - the negotiation I already tuned didn't move |
 | the flankers | **194 x 272** on the floor, **179 x 251** at a seat - honest perspective, and the number the icon work has to survive |
 
 The tight seam in the whole layout is the offer detail against the left flanker:
@@ -1080,10 +1067,9 @@ quads and do not care about 9.8 degrees.
 **That counter-rotation had no test and nearly shipped without one.**
 Unprojecting a card's centre says where the card is and nothing about which way
 it points, so three cards edge-on to the camera pass every rectangle check in
-`drive_shift.gd`. Worse, the first facing check written for it ran at station
-0 - where the carousel is unrotated and a missing counter-rotation is
-indistinguishable from a working one - and passed against a deliberately broken
-build. The check that counts runs after moving to chair B, the first station
+`drive_shift.gd`. Worse, the first facing check I wrote for it ran at station
+0, where the carousel is unrotated and a missing counter-rotation looks exactly
+like a working one, and it passed against a build I'd broken on purpose. The check that counts runs after moving to chair B, the first station
 that actually turns.
 
 ### What else moved
@@ -1210,19 +1196,18 @@ number crossed a multiple of ten, and just as silently SHRANK back the moment
 it dropped below one again. Discount's +8 is the single biggest jump in the
 base deck, so it was the card most likely to push appeal across a boundary and
 visibly yank the bar's own endpoint out from under the fill that had just
-grown - exactly the bug report: *"it shouldn't resize or re-render its highest
-point, particularly when using discount cards."*
+grown. That's exactly what I'd noticed: it shouldn't resize or re-draw its
+highest point, especially when you play a discount card.
 
-First fix: give the scale somewhere to **live**, keyed to the `Offer`'s own
+My first fix gave the scale somewhere to **live**, keyed to the `Offer`'s own
 identity, growing only when the fill or the Line would otherwise overflow it
 and never shrinking. That stopped the bar moving under you mid-negotiation,
 but it did not stop the bar showing a DIFFERENT endpoint for every customer
 and every offer - which is its own version of the same problem: a meter you
 have to re-read from scratch every time you sit down is not a meter, it is a
-recalculation. "It should stay at that value at all times for everyone" was
-the next bug report.
+recalculation. It should stay at one value, all the time, for everyone.
 
-Fixed properly by dropping the memory entirely: `ShiftConfig.appeal_meter_scale`
+So I fixed it properly by dropping the memory entirely: `ShiftConfig.appeal_meter_scale`
 is one fixed number (80 by default - comfortably above the highest archetype
 Line today, the Budget Hawk's 40, plus real headroom for appeal cards to
 stack), the same for every bar on every card, always. `DetailCard3D` no longer
@@ -1255,12 +1240,12 @@ face-front, and only a hover that happens AFTER you arrive (or a flanker's
 card, checked without disturbing the one you are actually with) turns anything
 over.
 
-The first version of the arrival check did not actually exercise this: it
-pressed the approach key cold, and a synthetic keypress never touches
+My first version of the arrival check didn't actually test this: it pressed
+the approach key cold, and a synthetic keypress never touches
 `_hovered` at all, so the check passed whether or not the reset code was even
-there. Fixed by genuinely hovering the pad before approaching through it - the
-same shape a real click always arrives in - so the check is proven to fail
-without the reset before it is trusted to pass with it.
+there. I fixed it by really hovering the pad before approaching through it
+(the way a real click always arrives), and made sure the check fails without
+the reset before trusting it to pass with it.
 
 
 ---
@@ -1381,14 +1366,14 @@ now also in the button's own color.
 
 ### The ColorRect trap
 
-The first draft of the dividers used a plain `ColorRect`. `report.tscn` is
+My first draft of the dividers used a plain `ColorRect`. `report.tscn` is
 loaded as a **permanent, hidden child of the shift scene's own HUD** -
 `build_shift_scene.gd` instances it once and toggles `visible` rather than
 creating it fresh - and `test_the_background_is_the_environment_not_a_control()`
 bans any `ColorRect` anywhere under `HUD`, recursively, regardless of
 visibility: the G1 bug it guards against was a full-rect `ColorRect` eating
-clicks meant for the table. Confirmed by deliberately reverting to
-`ColorRect` and watching that exact test fail. The dividers are a styled
+clicks meant for the table. I confirmed it by switching back to `ColorRect`
+on purpose and watching that exact test fail. The dividers are a styled
 `PanelContainer` instead - the identical solid-strip look through the same
 `StyleBoxFlat` mechanism `Card`'s own background already uses, without being
 the class that guard is actually watching for.
@@ -1415,5 +1400,5 @@ geometry. It measures against a deliberately worst-case dict (seven-digit
 dollar figures, every branch that adds a line active at once) fed straight
 through the panel's own `setup()`, not a second copy of the formatting
 written in the driver - **784px against a 1080px viewport**, with real
-headroom to spare. Confirmed to actually catch an overflow by deliberately
-blowing the title up to 400pt and watching the same check fail at 1793px.
+headroom to spare. I confirmed it really catches an overflow by blowing the
+title up to 400pt on purpose and watching the same check fail at 1793px.

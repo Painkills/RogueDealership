@@ -1,8 +1,8 @@
 # M0 — Auto Sales Executive prototype
 
 The pre-engine milestone from [`DESIGN.md`](../DESIGN.md) §12. Its job is to find out whether
-the negotiation loop is fun **before** any Godot code exists. This file is the project's
-memory: what the game currently is, what we tried, what failed, and what is still open.
+the negotiation loop is fun **before** I write any Godot code. This file is my record of it:
+what the game is right now, what I tried, what failed, and what's still open.
 
 > ⚠️ **`AutoSalesExecutive_M0.xlsx` is stale** (models the abandoned resistance design) and
 > **`DESIGN.md` is out of date from §6 onward.** Both describe mechanics that no longer exist.
@@ -128,18 +128,18 @@ differs by how much money they have.
 
 ---
 
-## How we got here
+## How I got here
 
-Each of these was built, measured, and either kept or thrown away. The failures are the
+I built each of these, measured it, and either kept it or threw it away. The failures are the
 useful part.
 
 ### 1. Resistance model — rejected on design grounds
 Three lanes accumulating Deal Value against a hidden per-lane **Resistance %**, draining a
-budget. Measured too easy (Max Close fired 100% / 97% / 45%). Also found a structural bug:
+budget. It measured too easy (Max Close fired 100% / 97% / 45%). I also found a structural bug:
 thresholds were a *percentage of budget* while card values were *absolute dollars*, so budget
 secretly doubled as the difficulty dial and the Budget Buyer was the easiest customer.
 
-**Killed by a design objection, not the numbers:** resistance-as-a-multiplier is fiction. "The
+**I killed it over a design objection, not the numbers:** resistance-as-a-multiplier is fiction. "The
 customer accepts 70% of an extended warranty" is meaningless — products are binary, they take
 it or they don't. That made lines feel artificial and resistance feel irrelevant.
 
@@ -148,30 +148,31 @@ The customer was passive: a resistance number that sat there. That turned out to
 nothing was ever tight — energy had no competing demand, so it was solitaire with a scoreboard.
 Adding telegraphed objections gave energy a rival claim.
 
-This pass also found a **missing rule**: you close *during* your turn, before that turn's
+This pass also turned up a **missing rule**: you close *during* your turn, before that turn's
 objection lands. Without it you could build to 100% and lose them at the buzzer with nothing
-banked. That is the push-your-luck decision the design had promised and never had.
+banked. That's the push-your-luck decision the design promised and never actually had.
 
-Rapport-as-shield later became **Rapport-as-persistent-pool** so one resource could serve both
-defence and Key Questions instead of running two near-identical meters.
+Later I turned Rapport-as-shield into **Rapport-as-persistent-pool**, so one resource could
+cover both defence and Key Questions instead of running two near-identical meters.
 
 ### 3. Perceived Value / Surplus — rejected before building
-`Surplus = PV − Ask`, sale when surplus ≥ hidden threshold. Rejected on the same grounds as
+`Surplus = PV − Ask`, sale when surplus ≥ hidden threshold. I rejected it for the same reason as
 resistance: it asks the player to hold **three quantities and a threshold on the difference
 between two of them.** Too abstract to explain, let alone play.
 
 ### 4. Buy-In — the current core
-Collapsed everything to one visible number. Two rules had to be *discovered* by measurement:
+I collapsed everything down to one visible number. I only found two of the rules by
+measuring:
 
-- **A refusal must cost you the product.** When it was only a patience hit, the policy simply
-  re-offered the same item until it landed, so the entire search collapsed into the first
+- **A refusal must cost you the product.** When it was only a patience hit, the sim just
+  re-offered the same item until it landed, so the whole search collapsed into the first
   product and the stack taught nothing.
-- **Pitching had a ceiling** (+10 cap) so knowledge cards would matter. **This was a mistake**
-  and was later removed — it made the game's core verb feel futile. "You push and nothing
-  moves" is not worth whatever it protects.
+- **Pitching had a ceiling** (+10 cap) so knowledge cards would matter. **That was a mistake**
+  and I took it out later. It made the game's core verb feel futile. "You push and nothing
+  moves" isn't worth whatever it protects.
 
 ### 5. The testing failure — worth remembering
-A build was reported as balanced. It was trivially easy. Three causes:
+I had a build that was supposedly balanced. It was trivially easy. Three causes:
 
 1. **The simulator played a game a human wouldn't.** Its policy carefully targeted a buy-in
    and stopped; it never dumped the whole hand, which is what a human does when there's no
@@ -182,19 +183,20 @@ A build was reported as balanced. It was trivially easy. Three causes:
 3. **The controls compared two AIs to each other**, proving one policy beat another while
    saying nothing about whether a human faces a choice.
 
-Underneath all three: **nobody had played it.** Fixes: the `--naive` control (a player who
+Underneath all three: **I hadn't played it.** The fixes: the `--naive` control (a player who
 dumps their hand), decision-density metrics, and actually playing the thing.
 
 ### 6. The lean pass
-Ceiling removed, deck cut to 7 types, 9 products → 6, 15 turns → 10, objection severity roll
-added. Pacing fixed (7.8–9.3 turns). But removing the ceiling killed the learning loop — and
-measurement showed **the real cause was 2-deep stacks**, not the ceiling.
+I removed the ceiling, cut the deck to 7 types, went from 9 products to 6 and 15 turns to 10,
+and added the objection severity roll. That fixed pacing (7.8–9.3 turns). But removing the
+ceiling killed the learning loop, and when I measured it **the real cause was 2-deep stacks**,
+not the ceiling.
 
 ### 7. The budget
 `price_scale` (per-customer sticker scaling) was **the wrong fix** to "how is budget
-balanced?" — it made products cheaper for a Budget Buyer instead of making their wallet
-smaller, so the same roof rack cost $585 for one customer and $1,305 for another. Replaced
-with a real shared wallet.
+balanced?" It made products cheaper for a Budget Buyer instead of making their wallet
+smaller, so the same roof rack cost $585 for one customer and $1,305 for another. I replaced
+it with a real shared wallet.
 
 ---
 
@@ -245,25 +247,25 @@ need **two offers on the same line** to bracket a number — one gives a floor o
 never both — and 2-deep stacks give roughly one. Measured: only **~5% of lines** end with a
 usable bracket.
 
-Three fixes were tried and none worked: a tighter clock, patience-per-pitch, and a much larger
-markup payoff. This is not a tuning problem.
+I tried three fixes and none of them worked: a tighter clock, patience-per-pitch, and a much
+bigger markup payoff. This isn't a tuning problem.
 
-**Proposed answer (unbuilt):** move the learning to the **run** level. Make thresholds a
+**What I want to try (not built yet):** move the learning to the **run** level. Make thresholds a
 property of the *archetype*, persisting across the 5-day cycle — your first Family First is
 expensive tuition, and every one after that is where it pays off. Keeps 8-turn encounters and
 the lean deck, needs no ceiling and no 3-deep stacks, and makes the run structure carry the
 learning, which is what a roguelike is for.
 
-**2. `[k] skip` has no purpose.** The hope was that a tight wallet would make skipping the
-cheap opener correct — save the $900 for the $3,600 item behind it. Measured, it is a wash
+**2. `[k] skip` has no purpose.** I hoped a tight wallet would make skipping the cheap opener
+the right call: save the $900 for the $3,600 item behind it. When I measured it, it's a wash
 ($7,634 vs $7,497). Cheap products are only ~10% of a wallet, so skipping saves too little to
 offset losing a sale *and* the probe's information.
 
 **3. Markup by stack position rises but stays small** (~+6% → +9%). It scales with knowledge as
 designed, but is not yet a dramatic payoff.
 
-**4. Small Talk sits at 1 copy** while everything else is 2–3. No stated reason; may be
-deliberate, may be a slip. 6.5% of hands currently have no way to build buy-in.
+**4. Small Talk sits at 1 copy** while everything else is 2–3. I don't remember why; it might
+be deliberate, it might be a slip. 6.5% of hands currently have no way to build buy-in.
 
 ---
 
@@ -277,5 +279,5 @@ Whether it is **fun**. Everything above measures whether the numbers work. Play 
    you enjoy making?
 4. Do the three archetypes feel like different people?
 
-If those land, it is worth building in Godot. If not, that is the finding, and it cost a few
+If those land, it's worth building in Godot. If not, that's my answer, and it cost me a few
 scripts instead of a half-built engine project.
